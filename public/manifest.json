@@ -1,0 +1,19 @@
+{
+  "name": "ФІНІК",
+  "short_name": "ФІНІК",
+  "description": "Особистий фінансовий помічник",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0f3f8",
+  "theme_color": "#0d1726",
+  "lang": "uk",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

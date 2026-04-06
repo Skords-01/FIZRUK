@@ -1,0 +1,219 @@
+import { useState, useMemo } from "react";
+import { TxRow } from "../components/TxRow";
+import { getCategory, getIncomeCategory } from "../utils";
+import { MCC_CATEGORIES } from "../constants";
+import { Skeleton } from "@shared/components/ui/Skeleton";
+import { cn } from "@shared/lib/cn";
+
+const now = new Date();
+
+export function Transactions({ mono, storage }) {
+  const { realTx, loadingTx, lastUpdated, refresh, syncState, accounts, fetchMonth, historyTx, loadingHistory } = mono;
+  const { hiddenTxIds, hideTx, excludedTxIds, txCategories, overrideCategory } = storage;
+  const [filter, setFilter] = useState("all");
+  const [showHidden, setShowHidden] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selMonth, setSelMonth] = useState(() => ({ year: now.getFullYear(), month: now.getMonth() }));
+
+  const isCurrentMonth = selMonth.year === now.getFullYear() && selMonth.month === now.getMonth();
+  const activeTx = isCurrentMonth ? realTx : historyTx;
+  const activeLoading = isCurrentMonth ? loadingTx : loadingHistory;
+
+  const goMonth = (delta) => {
+    setSelMonth(prev => {
+      let m = prev.month + delta;
+      let y = prev.year;
+      if (m < 0) { m = 11; y--; }
+      if (m > 11) { m = 0; y++; }
+      if (!(y === now.getFullYear() && m === now.getMonth())) fetchMonth(y, m);
+      return { year: y, month: m };
+    });
+  };
+
+  const monthLabel = new Date(selMonth.year, selMonth.month, 1)
+    .toLocaleDateString("uk-UA", { month: "long", year: "numeric" });
+
+  const creditAccIds = useMemo(
+    () => new Set((accounts || []).filter(a => a.creditLimit > 0).map(a => a.id)),
+    [accounts]
+  );
+
+  const getEffectiveCat = (t) => t.amount > 0
+    ? getIncomeCategory(t.description, txCategories[t.id])
+    : getCategory(t.description, t.mcc, txCategories[t.id]);
+
+  const statTx = useMemo(
+    () => activeTx.filter(t => !excludedTxIds.has(t.id)),
+    [activeTx, excludedTxIds]
+  );
+  const catSpends = useMemo(() =>
+    MCC_CATEGORIES.filter(c => c.id !== "income").map(cat => ({
+      ...cat,
+      spent: Math.round(statTx.filter(t => t.amount < 0 && getEffectiveCat(t).id === cat.id).reduce((s, t) => s + Math.abs(t.amount / 100), 0))
+    })).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent),
+    [statTx]
+  );
+
+  const txsToShow = useMemo(
+    () => showHidden ? activeTx : activeTx.filter(t => !hiddenTxIds.includes(t.id)),
+    [activeTx, hiddenTxIds, showHidden]
+  );
+  const filtered = useMemo(() => txsToShow.filter(t => {
+    const matchFilter = filter === "all" ? true
+      : filter === "income" ? t.amount > 0
+      : filter === "expense" ? t.amount < 0
+      : filter === "credit" ? creditAccIds.has(t._accountId)
+      : getEffectiveCat(t).id === filter;
+    const matchSearch = !search.trim() || (t.description || "").toLowerCase().includes(search.toLowerCase());
+    return matchFilter && matchSearch;
+  }), [txsToShow, filter, search, creditAccIds]);
+
+  const exportCSV = () => {
+    const rows = [["Дата", "Опис", "Сума (₴)", "Категорія"]];
+    filtered.forEach(t => {
+      const d = new Date(t.time * 1000).toLocaleDateString("uk-UA");
+      const cat = getEffectiveCat(t).label.replace(/^[^\s]+\s/, "");
+      rows.push([d, `"${(t.description || "").replace(/"/g, "'")}"`, (t.amount / 100).toFixed(2), cat]);
+    });
+    const csv = rows.map(r => r.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `finyk-${monthLabel}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const syncColor = syncState?.status === "error"
+    ? "text-danger" : syncState?.status === "partial"
+      ? "text-warning" : "text-subtle";
+
+  return (
+    <div className="flex-1 overflow-y-auto">
+      <div className="max-w-2xl mx-auto px-4 pt-4 pb-16">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1">
+            <button onClick={() => goMonth(-1)} className="w-8 h-8 flex items-center justify-center rounded-xl text-subtle hover:text-text hover:bg-panelHi transition-colors text-lg">‹</button>
+            <span className="text-sm font-semibold text-text capitalize px-1">{monthLabel}</span>
+            <button onClick={() => goMonth(1)} disabled={isCurrentMonth} className="w-8 h-8 flex items-center justify-center rounded-xl text-subtle hover:text-text hover:bg-panelHi transition-colors text-lg disabled:opacity-30">›</button>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {filtered.length > 0 && (
+              <button onClick={exportCSV} className="text-xs px-3 py-2 rounded-full border border-line text-subtle hover:text-text hover:border-muted transition-colors min-h-[36px]" title="Завантажити CSV">
+                ↓ CSV
+              </button>
+            )}
+            {hiddenTxIds.length > 0 && (
+              <button onClick={() => setShowHidden(v => !v)} className={cn("text-xs px-3 py-2 rounded-full border border-line transition-colors min-h-[36px]", showHidden ? "text-primary border-primary" : "text-subtle")}>
+                {showHidden ? "👁" : `🗑 ${hiddenTxIds.length}`}
+              </button>
+            )}
+            <button onClick={refresh} disabled={activeLoading} className="text-xs px-3 py-2 rounded-full border border-line text-subtle hover:text-text hover:border-muted transition-colors disabled:opacity-40 min-h-[36px]">
+              {activeLoading ? "⟳" : "🔄"}
+            </button>
+          </div>
+        </div>
+
+        {/* Sync status */}
+        {syncState?.status !== "idle" && (
+          <div className={cn("text-xs mb-1", syncColor)}>
+            {syncState.status === "loading" ? "⟳ оновлення..."
+              : syncState.status === "success" ? "✓ синхронізовано"
+              : syncState.status === "partial" ? "⚠ частково"
+              : "✕ помилка"} ·{" "}
+            {syncState.source === "network" ? "мережа" : syncState.source === "cache" ? "кеш" : "нема"} ·{" "}
+            {syncState.accountsOk}/{syncState.accountsTotal} акаунтів
+          </div>
+        )}
+        {lastUpdated && (
+          <div className="text-xs text-subtle mb-3">
+            Оновлено: {lastUpdated.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="relative mb-3">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle text-sm">🔍</span>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Пошук по транзакціях..."
+            className="w-full bg-panelHi border border-line rounded-2xl pl-9 pr-4 py-2.5 text-sm text-text placeholder:text-subtle focus:outline-none focus:border-primary/50 transition-colors"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-text"
+            >✕</button>
+          )}
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {[
+            { id: "all", label: "Всі" },
+            { id: "expense", label: "Витрати" },
+            { id: "income", label: "Доходи" },
+            ...(creditAccIds.size > 0 ? [{ id: "credit", label: "💳 Кредитна" }] : []),
+            ...catSpends.map(c => ({ id: c.id, label: c.label.split(" ")[0] + " " + c.label.slice(3) }))
+          ].map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={cn(
+                "text-xs px-4 py-2 rounded-full border transition-colors min-h-[36px]",
+                filter === f.id
+                  ? "bg-primary border-primary text-white"
+                  : "bg-transparent border-line text-subtle hover:border-muted hover:text-muted"
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Skeleton */}
+        {activeLoading && activeTx.length === 0 && (
+          <div className="space-y-2">
+            {Array(10).fill(0).map((_, i) => (
+              <Skeleton key={i} className={cn("h-14", i % 3 === 0 ? "opacity-100" : i % 3 === 1 ? "opacity-70" : "opacity-40")} />
+            ))}
+          </div>
+        )}
+
+        {/* Empty */}
+        {filtered.length === 0 && !activeLoading && (
+          <p className="text-center text-sm text-subtle py-12">
+            {search ? `Нічого не знайдено за «${search}»` : "Немає транзакцій"}
+          </p>
+        )}
+
+        {/* List */}
+        <div>
+          {filtered.slice(0, 150).map((t) => (
+            <TxRow
+              key={t.id}
+              tx={t}
+              onHide={hideTx}
+              hidden={hiddenTxIds.includes(t.id)}
+              overrideCatId={txCategories[t.id]}
+              onCatChange={overrideCategory}
+              accounts={accounts}
+            />
+          ))}
+        </div>
+
+        {activeLoading && activeTx.length > 0 && (
+          <p className="text-center text-xs text-subtle py-2">⟳ оновлення...</p>
+        )}
+        {filtered.length > 150 && (
+          <p className="text-center text-xs text-subtle py-4">Показано 150 з {filtered.length}</p>
+        )}
+      </div>
+    </div>
+  );
+}

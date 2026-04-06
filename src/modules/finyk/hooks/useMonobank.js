@@ -1,0 +1,368 @@
+import { useState, useEffect } from "react";
+import { TX_CACHE_TTL, CURRENCY } from "../constants";
+
+const CACHE_KEY = "finto_tx_cache";
+const INFO_CACHE_KEY = "finto_info_cache";
+
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    if (Date.now() - cache.timestamp > TX_CACHE_TTL) return null;
+    if (!cache.txs || cache.txs.length === 0) return null;
+    return cache;
+  } catch {
+    return null;
+  }
+}
+
+function loadAnyCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    if (!cache.txs || cache.txs.length === 0) return null;
+    return cache;
+  } catch {
+    return null;
+  }
+}
+
+function saveCache(txs) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ txs, timestamp: Date.now() }));
+  } catch {}
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchStatementWithRetry(tok, accId, from, to, maxAttempts = 3) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch(
+        `/api/mono?path=${encodeURIComponent(`/personal/statement/${accId}/${from}/${to}`)}`,
+        { headers: { "X-Token": tok } }
+      );
+      if (!res.ok) {
+        let message = `HTTP ${res.status}`;
+        try {
+          const payload = await res.json();
+          message = payload?.error || message;
+        } catch {}
+        throw new Error(message);
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      lastError = e;
+      if (attempt < maxAttempts) {
+        await sleep(1000 * attempt);
+      }
+    }
+  }
+  throw lastError || new Error("Помилка отримання транзакцій");
+}
+
+export function useMonobank() {
+  const [token, setToken] = useState(() => {
+    try {
+      return localStorage.getItem("finto_token") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [clientInfo, setClientInfo] = useState(null);
+  const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [connecting, setConnecting] = useState(false);
+  const [loadingTx, setLoadingTx] = useState(false);
+  const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [historyTx, setHistoryTx] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [syncState, setSyncState] = useState({
+    status: "idle",
+    source: "none",
+    lastSuccess: null,
+    lastError: "",
+    accountsTotal: 0,
+    accountsOk: 0,
+  });
+
+  useEffect(() => {
+    if (token) connect(token, false);
+  }, []);
+
+  const fetchAllTx = async (tok, allAccounts) => {
+    const targetAccounts = allAccounts.filter(a => a.currencyCode === CURRENCY.UAH);
+    if (targetAccounts.length === 0) {
+      setTransactions([]);
+      setSyncState({
+        status: "success",
+        source: "network",
+        lastSuccess: new Date(),
+        lastError: "",
+        accountsTotal: 0,
+        accountsOk: 0,
+      });
+      return;
+    }
+
+    setLoadingTx(true);
+    setSyncState({
+      status: "loading",
+      source: "none",
+      lastSuccess: syncState.lastSuccess,
+      lastError: "",
+      accountsTotal: targetAccounts.length,
+      accountsOk: 0,
+    });
+    try {
+      const results = [];
+      const errors = [];
+      const now = new Date();
+      const from = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1) / 1000);
+      const to = Math.floor(Date.now() / 1000);
+      let accountsOk = 0;
+
+      // Monobank часто ріже запити, тому послідовно + retry/backoff.
+      for (let i = 0; i < targetAccounts.length; i++) {
+        const acc = targetAccounts[i];
+        try {
+          const txs = await fetchStatementWithRetry(tok, acc.id, from, to);
+          results.push(txs.map(t => ({ ...t, _accountId: acc.id })));
+          accountsOk += 1;
+        } catch (e) {
+          errors.push(`${acc.id}: ${e?.message || "Помилка отримання транзакцій"}`);
+        }
+        if (i < targetAccounts.length - 1) {
+          await sleep(800);
+        }
+      }
+
+      const unique = Array.from(new Map(results.flat().map(t => [t.id, t])).values()).sort(
+        (a, b) => b.time - a.time
+      );
+
+      if (unique.length > 0) {
+        setTransactions(unique);
+        saveCache(unique);
+        const nowTs = new Date();
+        setLastUpdated(nowTs);
+        setError(errors.length > 0 ? "Частина рахунків не оновилась (тимчасово)." : "");
+        setSyncState({
+          status: errors.length > 0 ? "partial" : "success",
+          source: "network",
+          lastSuccess: nowTs,
+          lastError: errors.join("; "),
+          accountsTotal: targetAccounts.length,
+          accountsOk,
+        });
+      } else {
+        const fallback = loadAnyCache();
+        if (fallback) {
+          setTransactions(fallback.txs);
+          setLastUpdated(new Date(fallback.timestamp));
+          setSyncState({
+            status: "partial",
+            source: "cache",
+            lastSuccess: new Date(fallback.timestamp),
+            lastError: errors.join("; "),
+            accountsTotal: targetAccounts.length,
+            accountsOk,
+          });
+        } else {
+          setTransactions([]);
+          setSyncState({
+            status: "error",
+            source: "none",
+            lastSuccess: null,
+            lastError: errors.join("; "),
+            accountsTotal: targetAccounts.length,
+            accountsOk,
+          });
+        }
+        if (errors.length > 0) {
+          setError("Mono API тимчасово обмежив запити. Повторіть через 1-2 хв.");
+        }
+      }
+    } catch (e) {
+      setError(e?.message || "Помилка завантаження транзакцій");
+      setSyncState({
+        status: "error",
+        source: "none",
+        lastSuccess: syncState.lastSuccess,
+        lastError: e?.message || "Помилка завантаження транзакцій",
+        accountsTotal: targetAccounts.length,
+        accountsOk: 0,
+      });
+    } finally {
+      setLoadingTx(false);
+    }
+  };
+
+  const connect = async (tok, forceRefresh = false) => {
+    setConnecting(true);
+    setError("");
+
+    const cleanToken = tok.trim();
+    if (!cleanToken) {
+      setError("Введіть токен");
+      setConnecting(false);
+      return;
+    }
+
+    try {
+      let info;
+      const infoCache = localStorage.getItem(INFO_CACHE_KEY);
+      if (!forceRefresh && infoCache) {
+        info = JSON.parse(infoCache);
+      } else {
+        const res = await fetch(`/api/mono?path=${encodeURIComponent("/personal/client-info")}`, {
+          headers: { "X-Token": cleanToken },
+        });
+
+        if (!res.ok) {
+          let errorMessage = "Помилка з'єднання";
+          try {
+            const errorData = await res.json();
+            errorMessage = errorData.error || `Помилка ${res.status}`;
+          } catch {
+            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+          }
+          throw new Error(errorMessage);
+        }
+
+        info = await res.json();
+        try {
+          localStorage.setItem(INFO_CACHE_KEY, JSON.stringify(info));
+        } catch {}
+      }
+
+      setClientInfo(info);
+      setAccounts(info.accounts || []);
+      try {
+        localStorage.setItem("finto_token", cleanToken);
+      } catch {}
+      setToken(cleanToken);
+
+      const cache = forceRefresh ? null : loadCache();
+      if (cache) {
+        setTransactions(cache.txs);
+        setLastUpdated(new Date(cache.timestamp));
+        setSyncState({
+          status: "success",
+          source: "cache",
+          lastSuccess: new Date(cache.timestamp),
+          lastError: "",
+          accountsTotal: (info.accounts || []).filter(a => a.currencyCode === CURRENCY.UAH).length,
+          accountsOk: (info.accounts || []).filter(a => a.currencyCode === CURRENCY.UAH).length,
+        });
+      } else {
+        await fetchAllTx(cleanToken, info.accounts || []);
+      }
+    } catch (e) {
+      setError(e?.message || "Помилка авторизації");
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const fetchMonth = async (year, month) => {
+    const cacheKey = `finto_tx_cache_${year}_${month}`;
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached.txs && cached.txs.length > 0) { setHistoryTx(cached.txs); return; }
+      }
+    } catch {}
+
+    setLoadingHistory(true);
+    try {
+      const targetAccounts = accounts.filter(a => a.currencyCode === CURRENCY.UAH);
+      const from = Math.floor(new Date(year, month, 1) / 1000);
+      const to = Math.floor(new Date(year, month + 1, 0, 23, 59, 59) / 1000);
+      const results = [];
+      for (let i = 0; i < targetAccounts.length; i++) {
+        const acc = targetAccounts[i];
+        try {
+          const txs = await fetchStatementWithRetry(token, acc.id, from, to);
+          results.push(txs.map(t => ({ ...t, _accountId: acc.id })));
+        } catch {}
+        if (i < targetAccounts.length - 1) await sleep(800);
+      }
+      const unique = Array.from(new Map(results.flat().map(t => [t.id, t])).values()).sort((a, b) => b.time - a.time);
+      setHistoryTx(unique);
+      if (unique.length > 0) {
+        try { localStorage.setItem(cacheKey, JSON.stringify({ txs: unique, timestamp: Date.now() })); } catch {}
+      }
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const refresh = async () => {
+    try {
+      localStorage.removeItem(CACHE_KEY);
+    } catch {}
+    // Також оновлюємо баланси рахунків (client-info), щоб нетворс був актуальним
+    try {
+      const res = await fetch(`/api/mono?path=${encodeURIComponent("/personal/client-info")}`, {
+        headers: { "X-Token": token },
+      });
+      if (res.ok) {
+        const info = await res.json();
+        setClientInfo(info);
+        setAccounts(info.accounts || []);
+        try { localStorage.setItem(INFO_CACHE_KEY, JSON.stringify(info)); } catch {}
+        await fetchAllTx(token, info.accounts || []);
+        return;
+      }
+    } catch {}
+    await fetchAllTx(token, accounts);
+  };
+
+  const disconnect = () => {
+    setToken("");
+    setClientInfo(null);
+    setAccounts([]);
+    setTransactions([]);
+    setSyncState({
+      status: "idle",
+      source: "none",
+      lastSuccess: null,
+      lastError: "",
+      accountsTotal: 0,
+      accountsOk: 0,
+    });
+    try {
+      localStorage.removeItem("finto_token");
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(INFO_CACHE_KEY);
+    } catch {}
+  };
+
+  return {
+    token,
+    clientInfo,
+    accounts,
+    transactions,
+    realTx: transactions,
+    connecting,
+    loadingTx,
+    error,
+    lastUpdated,
+    syncState,
+    connect,
+    refresh,
+    fetchMonth,
+    historyTx,
+    loadingHistory,
+    disconnect,
+  };
+}

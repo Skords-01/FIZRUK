@@ -1,0 +1,383 @@
+import { useMemo, useEffect } from "react";
+import { CategoryChart } from "../components/CategoryChart";
+import { NetworthChart } from "../components/NetworthChart";
+import { MCC_CATEGORIES, CURRENCY } from "../constants";
+import { getDebtPaid, getRecvPaid, calcCategorySpent, getMonoTotals } from "../utils";
+import { Skeleton } from "@shared/components/ui/Skeleton";
+import { cn } from "@shared/lib/cn";
+
+const parseLocalDate = (isoDate) => {
+  const [y, m, d] = (isoDate || "").split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+};
+const formatDaysLeft = (days) => {
+  if (days === 0) return "сьогодні";
+  if (days === 1) return "завтра";
+  if (days <= 3) return `через ${days} дн`;
+  return `через ${days} дн`;
+};
+const getNextBillingDate = (billingDay, now) => {
+  const y = now.getFullYear(), m = now.getMonth();
+  let d = new Date(y, m, Math.min(billingDay, new Date(y, m + 1, 0).getDate()));
+  if (d < new Date(y, m, now.getDate())) d = new Date(y, m + 1, Math.min(billingDay, new Date(y, m + 2, 0).getDate()));
+  return d;
+};
+
+function FlowRow({ flow }) {
+  const isGreen = flow.color === "#22c55e";
+  return (
+    <div className="flex justify-between items-center py-3 border-b border-line last:border-0">
+      <div className="min-w-0 mr-3">
+        <div className="text-[15px] font-medium leading-snug truncate">{flow.title}</div>
+        <div className="text-xs text-subtle mt-0.5">{flow.hint}</div>
+      </div>
+      <div className={cn("text-[15px] font-bold tabular-nums shrink-0", isGreen ? "text-success" : "text-danger")}>
+        {flow.amount === null ? `${flow.sign}?` : `${flow.sign}${flow.amount.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}`} {flow.currency}
+      </div>
+    </div>
+  );
+}
+
+export function Overview({ mono, storage, onNavigate }) {
+  const { realTx, loadingTx, clientInfo, accounts, transactions } = mono;
+  const { budgets, subscriptions, manualDebts, receivables, hiddenAccounts, excludedTxIds, monthlyPlan, networthHistory, saveNetworthSnapshot } = storage;
+
+  // Показуємо скелетон якщо дані ще не завантажились вперше
+  if (loadingTx && realTx.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-4 pt-4 pb-6 space-y-3 max-w-2xl mx-auto">
+          <Skeleton className="h-[168px]" />
+          <Skeleton className="h-[120px] opacity-80" />
+          <Skeleton className="h-[110px] opacity-60" />
+          <Skeleton className="h-[90px] opacity-40" />
+        </div>
+      </div>
+    );
+  }
+
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysPassed = now.getDate();
+
+  const statTx = useMemo(() => realTx.filter(t => !excludedTxIds.has(t.id)), [realTx, excludedTxIds]);
+  const spent = useMemo(() => statTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount / 100), 0), [statTx]);
+  const income = useMemo(() => statTx.filter(t => t.amount > 0).reduce((s, t) => s + t.amount / 100, 0), [statTx]);
+  const projectedSpend = daysPassed > 0 ? (spent / daysPassed) * daysInMonth : 0;
+
+  const { balance: monoTotal, debt: monoTotalDebt } = useMemo(() => getMonoTotals(accounts, hiddenAccounts), [accounts, hiddenAccounts]);
+  const manualDebtTotal = useMemo(() => manualDebts.reduce((s, d) => s + Math.max(0, d.totalAmount - getDebtPaid(d, transactions)), 0), [manualDebts, transactions]);
+  const totalDebt = monoTotalDebt + manualDebtTotal;
+  const totalReceivable = useMemo(() => receivables.reduce((s, r) => s + Math.max(0, r.amount - getRecvPaid(r, transactions)), 0), [receivables, transactions]);
+  const manualAssetTotal = useMemo(() => storage.manualAssets.filter(a => a.currency === "UAH").reduce((s, a) => s + Number(a.amount), 0), [storage.manualAssets]);
+  const networth = monoTotal + manualAssetTotal + totalReceivable - totalDebt;
+
+  const limitBudgets = budgets.filter(b => b.type === "limit");
+  const goalBudgets = budgets.filter(b => b.type === "goal");
+  const catSpends = useMemo(() => MCC_CATEGORIES.filter(c => c.id !== "income").map(cat => ({
+    ...cat, spent: calcCategorySpent(statTx, cat.id)
+  })).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent), [statTx]);
+
+  // Зберігаємо знімок нетворсу раз при завантаженні свіжих даних
+  useEffect(() => {
+    if (networth !== 0 && accounts.length > 0) {
+      saveNetworthSnapshot(networth);
+    }
+  }, [accounts]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const budgetAlerts = useMemo(() => limitBudgets.filter(b => {
+    const s = calcCategorySpent(statTx, b.categoryId);
+    return b.limit > 0 && s / b.limit >= 0.8;
+  }), [limitBudgets, statTx]);
+
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const subscriptionFlows = subscriptions.map(sub => {
+    const lastTx = transactions.find(t => t.amount < 0 && sub.keyword && (t.description || "").toLowerCase().includes(sub.keyword.toLowerCase()));
+    const amount = lastTx ? Math.abs(lastTx.amount / 100) : null;
+    const dueDate = getNextBillingDate(sub.billingDay, now);
+    const daysLeft = Math.ceil((dueDate - todayStart) / 86400000);
+    const currency = lastTx ? (lastTx.currencyCode === CURRENCY.USD ? "$" : "₴") : (sub.currency === "USD" ? "$" : "₴");
+    return { id: `sub-${sub.id}`, title: `${sub.emoji} ${sub.name}`, amount, sign: "-", color: "#f87171", daysLeft, hint: formatDaysLeft(daysLeft), currency, dueDate };
+  });
+
+  const debtOutFlows = manualDebts
+    .map(d => ({ ...d, remaining: Math.max(0, d.totalAmount - getDebtPaid(d, transactions)) }))
+    .filter(d => d.dueDate && d.remaining > 0)
+    .map(d => {
+      const daysLeft = Math.ceil((parseLocalDate(d.dueDate) - todayStart) / 86400000);
+      return { id: `debt-${d.id}`, title: `${d.emoji || "💸"} ${d.name}`, amount: d.remaining, sign: "-", color: "#f87171", daysLeft, hint: formatDaysLeft(daysLeft), currency: "₴", dueDate: parseLocalDate(d.dueDate) };
+    });
+
+  const debtInFlows = receivables
+    .map(r => ({ ...r, remaining: Math.max(0, r.amount - getRecvPaid(r, transactions)) }))
+    .filter(r => r.dueDate && r.remaining > 0)
+    .map(r => {
+      const daysLeft = Math.ceil((parseLocalDate(r.dueDate) - todayStart) / 86400000);
+      return { id: `recv-${r.id}`, title: `${r.emoji || "💰"} ${r.name}`, amount: r.remaining, sign: "+", color: "#22c55e", daysLeft, hint: formatDaysLeft(daysLeft), currency: "₴", dueDate: parseLocalDate(r.dueDate) };
+    });
+
+  const plannedFlows = [...subscriptionFlows, ...debtOutFlows, ...debtInFlows]
+    .filter(x => x.daysLeft >= 0 && x.daysLeft <= 10).sort((a, b) => a.daysLeft - b.daysLeft);
+
+  const planIncome = Number(monthlyPlan?.income || 0);
+  const planExpense = Number(monthlyPlan?.expense || 0);
+  const planSavings = Number(monthlyPlan?.savings || 0);
+  const factSavings = income - spent;
+  const remainingDays = Math.max(1, daysInMonth - daysPassed + 1);
+  const expenseTarget = planExpense > 0 ? planExpense : projectedSpend;
+  const monthFlows = [...subscriptionFlows, ...debtOutFlows, ...debtInFlows]
+    .filter(f => f.daysLeft >= 0 && f.dueDate && f.dueDate <= new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  const recurringOutThisMonth = monthFlows.filter(f => f.sign === "-" && typeof f.amount === "number").reduce((sum, f) => sum + f.amount, 0);
+  const recurringInThisMonth = monthFlows.filter(f => f.sign === "+" && typeof f.amount === "number").reduce((sum, f) => sum + f.amount, 0);
+  const unknownOutCount = monthFlows.filter(f => f.sign === "-" && f.amount === null).length;
+  const expenseLeft = expenseTarget - spent - recurringOutThisMonth + recurringInThisMonth;
+  const dayBudget = expenseLeft / remainingDays;
+
+  const pulseGood = dayBudget >= 200;
+  const pulseWarn = dayBudget >= 0 && dayBudget < 200;
+  const pulseBad = dayBudget < 0;
+  const pulseColor = pulseGood ? "text-success" : pulseWarn ? "text-warning" : "text-danger";
+  const pulseBg = pulseGood ? "bg-pulse-ok" : pulseWarn ? "bg-pulse-w" : "bg-pulse-b";
+  const pulseBorder = pulseGood ? "border-success/30" : pulseWarn ? "border-warning/30" : "border-danger/30";
+
+  const firstName = clientInfo?.name?.split(" ")[1] || clientInfo?.name?.split(" ")[0] || "друже";
+  const monthBalance = income - spent;
+  const spendPct = Math.min(100, income > 0 ? (spent / income) * 100 : 0);
+  const dateLabel = now.toLocaleDateString("uk-UA", { day: "numeric", month: "long" });
+
+  return (
+    <div className="flex-1 overflow-y-auto overscroll-contain">
+      <div className="px-4 pt-4 pb-6 space-y-3 max-w-2xl mx-auto">
+
+        {/* ── Hero ── */}
+        <div className="rounded-3xl bg-hero border border-line p-5 shadow-float">
+          <div className="text-xs text-subtle font-medium">
+            {dateLabel} &nbsp;·&nbsp; {firstName}
+          </div>
+          <div className={cn(
+            "text-[44px] font-bold tracking-tight leading-none mt-2.5 tabular-nums",
+            networth >= 0 ? "text-text" : "text-danger"
+          )}>
+            {networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
+            <span className="text-2xl font-semibold text-muted ml-1.5">₴</span>
+          </div>
+          <div className="text-xs text-subtle/70 mt-1">Загальний нетворс</div>
+
+          <div className="flex gap-4 mt-4 pt-4 border-t border-line/60">
+            <div>
+              <div className="text-[11px] text-subtle mb-0.5">На картках</div>
+              <div className="text-sm font-semibold text-success tabular-nums">
+                +{monoTotal.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+              </div>
+            </div>
+            <div className="w-px bg-line" />
+            <div>
+              <div className="text-[11px] text-subtle mb-0.5">Борги</div>
+              <div className="text-sm font-semibold text-danger tabular-nums">
+                −{totalDebt.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+              </div>
+            </div>
+            <div className="w-px bg-line" />
+            <div>
+              <div className="text-[11px] text-subtle mb-0.5">Баланс місяця</div>
+              <div className={cn("text-sm font-semibold tabular-nums", monthBalance >= 0 ? "text-success" : "text-danger")}>
+                {monthBalance >= 0 ? "+" : "−"}{Math.abs(monthBalance).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Networth chart ── */}
+        {networthHistory.length >= 2 && (
+          <div className="bg-panel border border-line/60 rounded-2xl px-5 pt-4 pb-3 shadow-card">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-subtle">Динаміка нетворсу</span>
+              <span className="text-xs text-subtle/60">{networthHistory.length} міс.</span>
+            </div>
+            <NetworthChart data={networthHistory} />
+          </div>
+        )}
+
+        {/* ── Budget alerts ── */}
+        {budgetAlerts.length > 0 && (
+          <div className="space-y-1.5">
+            {budgetAlerts.map((b, i) => {
+              const cat = MCC_CATEGORIES.find(c => c.id === b.categoryId);
+              const s = calcCategorySpent(statTx, b.categoryId);
+              const pct = Math.round(s / b.limit * 100);
+              return (
+                <div key={i} className={cn("rounded-2xl px-4 py-3 flex items-center justify-between border", pct >= 100 ? "bg-danger/8 border-danger/20" : "bg-warning/8 border-warning/20")}>
+                  <span className="text-sm font-medium">{cat?.label || b.categoryId}</span>
+                  <span className={cn("text-sm font-bold tabular-nums", pct >= 100 ? "text-danger" : "text-warning")}>
+                    {pct}% {pct >= 100 ? "⚠ перевищено" : "· майже ліміт"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Pulse ── */}
+        <div className={cn("rounded-2xl border p-5 shadow-card", pulseBg, pulseBorder, "bg-panel")}>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-subtle">Фінпульс</span>
+            <span className="text-xs text-subtle/60">{remainingDays} дн. до кінця місяця</span>
+          </div>
+          <div className={cn("text-[34px] font-bold leading-tight tabular-nums mt-2", pulseColor)}>
+            {Math.abs(dayBudget).toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
+            <span className="text-base font-medium text-subtle ml-1">₴/день</span>
+          </div>
+          <div className={cn("text-sm mt-0.5", pulseColor)}>
+            {pulseBad ? "Перевитрата" : pulseWarn ? "Обережно — майже вичерпано" : "В нормі"}
+          </div>
+          {(recurringOutThisMonth > 0 || recurringInThisMonth > 0) && (
+            <div className="text-[11px] text-subtle/70 mt-2 leading-relaxed">
+              Враховано планових: −{recurringOutThisMonth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} / +{recurringInThisMonth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+              {unknownOutCount > 0 && ` + ${unknownOutCount} без суми`}
+            </div>
+          )}
+        </div>
+
+        {/* ── Spending ── */}
+        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <div className="text-xs text-subtle font-medium">Витрати</div>
+              <div className="text-[26px] font-bold tabular-nums mt-1 leading-tight">
+                {spent.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
+                <span className="text-base font-medium text-muted ml-1">₴</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-subtle font-medium">Дохід</div>
+              <div className="text-[26px] font-bold tabular-nums mt-1 leading-tight text-success">
+                +{income.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
+                <span className="text-base font-medium text-success/70 ml-1">₴</span>
+              </div>
+            </div>
+          </div>
+          <div className="h-1.5 bg-bg rounded-full overflow-hidden">
+            <div
+              className={cn("h-full rounded-full transition-all duration-700", spent > income ? "bg-danger" : "bg-success")}
+              style={{ width: `${spendPct}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-[11px] text-subtle/70">{Math.round(spendPct)}% доходу</span>
+            <span className="text-[11px] text-subtle/70">прогноз {projectedSpend.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴</span>
+          </div>
+        </div>
+
+        {/* ── Plan/Fact ── */}
+        {(planIncome > 0 || planExpense > 0 || planSavings > 0) && (
+          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+            <div className="text-xs font-medium text-subtle mb-3">План / Факт</div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <div className="text-[11px] text-subtle/60 mb-1">План</div>
+                <div className="text-sm text-muted tabular-nums">+{planIncome.toLocaleString("uk-UA")} ₴</div>
+                <div className="text-sm text-muted tabular-nums">−{planExpense.toLocaleString("uk-UA")} ₴</div>
+                <div className="text-sm text-muted tabular-nums">{planSavings.toLocaleString("uk-UA")} ₴ збер.</div>
+              </div>
+              <div className="space-y-1.5">
+                <div className="text-[11px] text-subtle/60 mb-1">Факт</div>
+                <div className="text-sm text-success tabular-nums">+{income.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴</div>
+                <div className="text-sm text-danger tabular-nums">−{spent.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴</div>
+                <div className={cn("text-sm tabular-nums", factSavings >= 0 ? "text-success" : "text-danger")}>
+                  {factSavings.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴ збер.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Planned flows ── */}
+        {plannedFlows.length > 0 && (
+          <div className="bg-panel border border-line/60 rounded-2xl overflow-hidden shadow-card">
+            <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+              <span className="text-xs font-medium text-subtle">Найближчі платежі</span>
+              <button onClick={() => onNavigate("payments")} className="text-xs text-primary/80 hover:text-primary transition-colors py-2 px-1 min-h-[36px]">Усі →</button>
+            </div>
+            <div className="px-5 pb-3">
+              {plannedFlows.slice(0, 5).map(f => <FlowRow key={f.id} flow={f} />)}
+            </div>
+          </div>
+        )}
+
+        {/* ── Limits ── */}
+        {limitBudgets.length > 0 && (
+          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card space-y-4">
+            <div className="text-xs font-medium text-subtle">Ліміти</div>
+            {limitBudgets.map((b, i) => {
+              const cat = MCC_CATEGORIES.find(c => c.id === b.categoryId);
+              const bspent = calcCategorySpent(statTx, b.categoryId);
+              const pct = Math.min(100, b.limit > 0 ? Math.round(bspent / b.limit * 100) : 0);
+              const over = pct >= 90;
+              return (
+                <div key={i}>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium">{cat?.label || "—"}</span>
+                    <span className={cn("text-xs tabular-nums", over ? "text-danger" : "text-subtle")}>
+                      {bspent.toLocaleString("uk-UA")} / {b.limit.toLocaleString("uk-UA")} ₴
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-bg rounded-full overflow-hidden">
+                    <div className={cn("h-full rounded-full transition-all duration-700", over ? "bg-danger" : "bg-success")} style={{ width: `${pct}%` }} />
+                  </div>
+                  {over && <div className="text-[11px] text-danger mt-1">{pct}% — ліміт майже вичерпано</div>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Goals ── */}
+        {goalBudgets.length > 0 && (
+          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card space-y-4">
+            <div className="text-xs font-medium text-subtle">Цілі</div>
+            {goalBudgets.map((b, i) => {
+              const saved = b.savedAmount || 0;
+              const pct = Math.min(100, b.targetAmount > 0 ? Math.round(saved / b.targetAmount * 100) : 0);
+              const daysLeft = b.targetDate ? Math.ceil((new Date(b.targetDate) - now) / 86400000) : null;
+              return (
+                <div key={i}>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-sm font-medium">{b.emoji || "🎯"} {b.name}</span>
+                    <span className="text-xs text-subtle tabular-nums">{pct}%</span>
+                  </div>
+                  <div className="h-1.5 bg-bg rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-success transition-all duration-700" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="flex justify-between mt-1.5">
+                    <span className="text-[11px] text-subtle/70 tabular-nums">{saved.toLocaleString("uk-UA")} / {b.targetAmount.toLocaleString("uk-UA")} ₴</span>
+                    <span className="text-[11px] text-subtle/70">{daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} дн.` : "Прострочено") : "—"}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Category chart ── */}
+        {catSpends.length > 0 && (
+          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+            <div className="text-xs font-medium text-subtle mb-4">Витрати за категоріями</div>
+            <CategoryChart data={catSpends.slice(0, 6)} />
+          </div>
+        )}
+
+        {/* ── Tx link ── */}
+        {realTx.length > 0 && (
+          <button
+            onClick={() => onNavigate("transactions")}
+            className="w-full py-4 text-sm font-medium text-subtle/70 border border-line/40 border-dashed rounded-2xl hover:border-muted/50 hover:text-muted transition-colors min-h-[52px]"
+          >
+            Усі операції ({realTx.length}) →
+          </button>
+        )}
+        {loadingTx && <p className="text-center text-xs text-subtle py-4">Оновлення...</p>}
+      </div>
+    </div>
+  );
+}
