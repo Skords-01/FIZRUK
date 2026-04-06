@@ -1,7 +1,7 @@
 {
-  "name": "ФІНІК",
-  "short_name": "ФІНІК",
-  "description": "Особистий фінансовий помічник",
+  "name": "ФІЗРУК",
+  "short_name": "ФІЗРУК",
+  "description": "Особистий простір: фінанси, спорт та більше",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
