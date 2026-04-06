@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button } from "./ui/Button";
+import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
 
 export function SyncModal({ storage, onClose }) {

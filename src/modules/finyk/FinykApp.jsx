@@ -4,7 +4,7 @@ import { useStorage } from "./hooks/useStorage";
 import { PAGES } from "./constants";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
-import { SyncModal } from "./SyncModal";
+import { SyncModal } from "./components/SyncModal";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { cn } from "@shared/lib/cn";
 
