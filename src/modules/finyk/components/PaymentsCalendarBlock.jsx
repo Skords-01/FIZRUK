@@ -1,5 +1,5 @@
 import { getDebtPaid, getRecvPaid } from "../utils";
-import { cn } from "../lib/cn";
+import { cn } from "@shared/lib/cn";
 
 const parseLocalDate = (isoDate) => {
   const [y, m, d] = (isoDate || "").split("-").map(Number);

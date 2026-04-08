@@ -3,8 +3,8 @@ import { CategoryChart } from "../components/CategoryChart";
 import { NetworthChart } from "../components/NetworthChart";
 import { MCC_CATEGORIES, CURRENCY } from "../constants";
 import { getDebtPaid, getRecvPaid, calcCategorySpent, getMonoTotals } from "../utils";
-import { Skeleton } from "../components/ui/Skeleton";
-import { cn } from "../lib/cn";
+import { Skeleton } from "@shared/components/ui/Skeleton";
+import { cn } from "@shared/lib/cn";
 
 const parseLocalDate = (isoDate) => {
   const [y, m, d] = (isoDate || "").split("-").map(Number);

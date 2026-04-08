@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Button } from "../components/ui/Button";
+import { Button } from "@shared/components/ui/Button";
 import { SyncModal } from "../components/SyncModal";
 import { getAccountLabel } from "../utils";
-import { cn } from "../lib/cn";
+import { cn } from "@shared/lib/cn";
 
 function Section({ title, children }) {
   return (

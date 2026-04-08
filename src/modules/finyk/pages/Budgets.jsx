@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Button } from "../components/ui/Button";
+import { Button } from "@shared/components/ui/Button";
 import { PaymentsCalendarBlock } from "../components/PaymentsCalendarBlock";
 import { calcCategorySpent } from "../utils";
 import { MCC_CATEGORIES } from "../constants";
-import { cn } from "../lib/cn";
+import { cn } from "@shared/lib/cn";
 
 const formInp = "w-full h-10 rounded-xl border border-line bg-bg px-3 text-sm text-text outline-none focus:border-primary";
 

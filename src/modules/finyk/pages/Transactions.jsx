@@ -2,8 +2,8 @@ import { useState, useMemo } from "react";
 import { TxRow } from "../components/TxRow";
 import { getCategory, getIncomeCategory } from "../utils";
 import { MCC_CATEGORIES } from "../constants";
-import { Skeleton } from "../components/ui/Skeleton";
-import { cn } from "../lib/cn";
+import { Skeleton } from "@shared/components/ui/Skeleton";
+import { cn } from "@shared/lib/cn";
 
 const now = new Date();
 

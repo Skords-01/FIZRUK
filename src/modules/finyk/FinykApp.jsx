@@ -2,11 +2,11 @@ import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useMonobank } from "./hooks/useMonobank";
 import { useStorage } from "./hooks/useStorage";
 import { PAGES } from "./constants";
-import { Button } from "./components/ui/Button";
-import { Input } from "./components/ui/Input";
+import { Button } from "@shared/components/ui/Button";
+import { Input } from "@shared/components/ui/Input";
 import { SyncModal } from "./components/SyncModal";
-import { Skeleton } from "./components/ui/Skeleton";
-import { cn } from "./lib/cn";
+import { Skeleton } from "@shared/components/ui/Skeleton";
+import { cn } from "@shared/lib/cn";
 
 const Overview       = lazy(() => import("./pages/Overview").then(m => ({ default: m.Overview })));
 const Transactions   = lazy(() => import("./pages/Transactions").then(m => ({ default: m.Transactions })));
