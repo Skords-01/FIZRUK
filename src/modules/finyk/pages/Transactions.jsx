@@ -74,7 +74,7 @@ export function Transactions({ mono, storage }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 pt-4 pb-16">
+      <div className="max-w-2xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
@@ -131,7 +131,8 @@ export function Transactions({ mono, storage }) {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="mb-4 -mx-4 px-4 overflow-x-auto no-scrollbar">
+          <div className="flex gap-1.5 whitespace-nowrap">
           {[
             { id: "all", label: "Всі" },
             { id: "expense", label: "Витрати" },
@@ -152,6 +153,7 @@ export function Transactions({ mono, storage }) {
               {f.label}
             </button>
           ))}
+          </div>
         </div>
 
         {/* Skeleton */}

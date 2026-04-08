@@ -35,6 +35,66 @@ function saveCache(txs) {
   } catch {}
 }
 
+/** Останній повний знімок — якщо поточний кеш зіпсований (мало транзакцій), відновлюємо звідси */
+const LAST_GOOD_KEY = "finto_tx_cache_last_good";
+
+function saveLastGoodBackup(txs) {
+  try {
+    if (!txs || txs.length < 3) return;
+    localStorage.setItem(LAST_GOOD_KEY, JSON.stringify({ txs, timestamp: Date.now() }));
+  } catch {}
+}
+
+function loadLastGoodBackup() {
+  try {
+    const raw = localStorage.getItem(LAST_GOOD_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    if (!c.txs || c.txs.length === 0) return null;
+    return c;
+  } catch {
+    return null;
+  }
+}
+
+function dedupeByIdSort(txs) {
+  const map = new Map(txs.map(t => [t.id, t]));
+  return Array.from(map.values()).sort((a, b) => b.time - a.time);
+}
+
+/**
+ * Зливає нові транзакції з попередніми: для рахунків, де запит впав, лишаємо старі дані.
+ * Транзакції без _accountId лишаємо лише якщо є хоча б один невдалий рахунок (можливо вони з нього).
+ */
+function mergeTxWithPrevious(prevTxs, fetchedByAccount, succeededAccountIds, allTargetAccountIds) {
+  const succ = new Set(succeededAccountIds);
+  const flatNew = Object.values(fetchedByAccount).flat();
+  const newById = new Map(flatNew.map(t => [t.id, t]));
+
+  const hasFailure = allTargetAccountIds.some(id => !succ.has(id));
+
+  if (!hasFailure && flatNew.length > 0) {
+    return dedupeByIdSort(flatNew);
+  }
+
+  if (!hasFailure && flatNew.length === 0 && prevTxs.length > 0) {
+    return prevTxs;
+  }
+
+  if (!hasFailure && flatNew.length === 0) {
+    return [];
+  }
+
+  const keepFromPrev = prevTxs.filter(t => {
+    if (newById.has(t.id)) return false;
+    const aid = t._accountId;
+    if (aid == null) return hasFailure;
+    return !succ.has(aid);
+  });
+
+  return dedupeByIdSort([...keepFromPrev, ...flatNew]);
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -122,38 +182,57 @@ export function useMonobank() {
       accountsOk: 0,
     });
     try {
-      const results = [];
+      const prevSnapshot = loadAnyCache();
+      const prevTxs = prevSnapshot?.txs || [];
       const errors = [];
       const now = new Date();
       const from = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1) / 1000);
       const to = Math.floor(Date.now() / 1000);
       let accountsOk = 0;
+      const fetchedByAccount = {};
+      const succeededIds = [];
 
-      // Monobank часто ріже запити, тому послідовно + retry/backoff.
+      // Monobank часто ріже запити — послідовно + retry; при падінні рахунку лишаємо старі транзакції з нього.
       for (let i = 0; i < targetAccounts.length; i++) {
         const acc = targetAccounts[i];
         try {
           const txs = await fetchStatementWithRetry(tok, acc.id, from, to);
-          results.push(txs.map(t => ({ ...t, _accountId: acc.id })));
+          const tagged = txs.map(t => ({ ...t, _accountId: acc.id }));
+          fetchedByAccount[acc.id] = tagged;
+          succeededIds.push(acc.id);
           accountsOk += 1;
         } catch (e) {
           errors.push(`${acc.id}: ${e?.message || "Помилка отримання транзакцій"}`);
         }
         if (i < targetAccounts.length - 1) {
-          await sleep(800);
+          await sleep(1200);
         }
       }
 
-      const unique = Array.from(new Map(results.flat().map(t => [t.id, t])).values()).sort(
-        (a, b) => b.time - a.time
-      );
+      const allIds = targetAccounts.map(a => a.id);
+      let unique = mergeTxWithPrevious(prevTxs, fetchedByAccount, succeededIds, allIds);
+
+      // Якщо API повернув майже нічого, а в кеші було більше — не втрачаємо дані
+      if (unique.length < Math.min(prevTxs.length, 8) && prevTxs.length > unique.length + 3) {
+        const backup = loadLastGoodBackup();
+        if (backup && backup.txs.length > unique.length) {
+          unique = mergeTxWithPrevious(backup.txs, fetchedByAccount, succeededIds, allIds);
+        }
+      }
+
+      if (unique.length === 0 && prevTxs.length > 0) {
+        unique = prevTxs;
+      }
 
       if (unique.length > 0) {
         setTransactions(unique);
         saveCache(unique);
+        if (accountsOk === targetAccounts.length || unique.length >= 15) {
+          saveLastGoodBackup(unique);
+        }
         const nowTs = new Date();
         setLastUpdated(nowTs);
-        setError(errors.length > 0 ? "Частина рахунків не оновилась (тимчасово)." : "");
+        setError(errors.length > 0 ? "Частина рахунків не оновилась — показано злиті дані (старі + нові)." : "");
         setSyncState({
           status: errors.length > 0 ? "partial" : "success",
           source: "network",
@@ -163,7 +242,7 @@ export function useMonobank() {
           accountsOk,
         });
       } else {
-        const fallback = loadAnyCache();
+        const fallback = loadAnyCache() || loadLastGoodBackup();
         if (fallback) {
           setTransactions(fallback.txs);
           setLastUpdated(new Date(fallback.timestamp));
@@ -307,9 +386,7 @@ export function useMonobank() {
   };
 
   const refresh = async () => {
-    try {
-      localStorage.removeItem(CACHE_KEY);
-    } catch {}
+    // Не видаляємо кеш до запиту — інакше при частковій відповіді втрачаються старі транзакції
     // Також оновлюємо баланси рахунків (client-info), щоб нетворс був актуальним
     try {
       const res = await fetch(`/api/mono?path=${encodeURIComponent("/personal/client-info")}`, {
@@ -343,6 +420,7 @@ export function useMonobank() {
     try {
       localStorage.removeItem("finto_token");
       localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(LAST_GOOD_KEY);
       localStorage.removeItem(INFO_CACHE_KEY);
     } catch {}
   };

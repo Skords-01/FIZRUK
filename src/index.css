@@ -52,6 +52,13 @@
   .safe-bottom-h {
     height: calc(60px + env(safe-area-inset-bottom, 0px));
   }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 /* iOS auto-zoom prevention: inputs < 16px trigger zoom on focus.

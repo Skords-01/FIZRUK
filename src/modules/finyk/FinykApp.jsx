@@ -119,6 +119,14 @@ export default function App() {
   const { clientInfo, connecting, error, connect, disconnect } = mono;
   const handleNavigate = (p) => { navigate(p); setMenuOpen(false); };
 
+  const syncTone = mono?.syncState?.status === "error"
+    ? { dot: "bg-danger", text: "помилка" }
+    : mono?.syncState?.status === "partial"
+      ? { dot: "bg-warning", text: "частково" }
+      : mono?.syncState?.status === "loading"
+        ? { dot: "bg-muted", text: "оновлення" }
+        : { dot: "bg-success", text: "ок" };
+
   // Swipe + pull-to-refresh
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
@@ -216,16 +224,23 @@ export default function App() {
       <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-20" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div className="flex h-14 items-center justify-between px-5">
           <span className="text-[16px] font-semibold tracking-wide text-text">ФІНІК</span>
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="w-11 h-11 -mr-1.5 flex items-center justify-center text-subtle hover:text-text transition-colors"
-          >
-            <svg width="18" height="13" viewBox="0 0 18 13" fill="none">
-              <rect width="18" height="1.6" rx="0.8" fill="currentColor"/>
-              <rect y="5.7" width="12" height="1.6" rx="0.8" fill="currentColor"/>
-              <rect y="11.4" width="7" height="1.6" rx="0.8" fill="currentColor"/>
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-xs text-subtle select-none">
+              <span className={cn("w-2 h-2 rounded-full", syncTone.dot)} />
+              <span className="hidden sm:inline">{syncTone.text}</span>
+            </div>
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="w-11 h-11 -mr-1.5 flex items-center justify-center text-subtle hover:text-text transition-colors"
+              aria-label="Меню"
+            >
+              <svg width="18" height="13" viewBox="0 0 18 13" fill="none">
+                <rect width="18" height="1.6" rx="0.8" fill="currentColor"/>
+                <rect y="5.7" width="12" height="1.6" rx="0.8" fill="currentColor"/>
+                <rect y="11.4" width="7" height="1.6" rx="0.8" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 

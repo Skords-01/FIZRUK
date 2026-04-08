@@ -1,0 +1,51 @@
+import fs from "node:fs";
+import path from "node:path";
+
+const repoRoot = path.resolve(process.cwd());
+const finykRoot = path.join(repoRoot, "src", "modules", "finyk");
+
+const forbidden = [
+  { re: /from\s+["']\.\/components\/ui\//g, hint: "Використовуй @shared/components/ui/* замість ./components/ui/*" },
+  { re: /from\s+["']\.\.\/components\/ui\//g, hint: "Використовуй @shared/components/ui/* замість ../components/ui/*" },
+  { re: /from\s+["']\.\/lib\/cn["']/g, hint: "Використовуй @shared/lib/cn замість ./lib/cn" },
+  { re: /from\s+["']\.\.\/lib\/cn["']/g, hint: "Використовуй @shared/lib/cn замість ../lib/cn" },
+];
+
+function walk(dir) {
+  const out = [];
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (ent.name === "node_modules" || ent.name.startsWith(".")) continue;
+    const p = path.join(dir, ent.name);
+    if (ent.isDirectory()) out.push(...walk(p));
+    else out.push(p);
+  }
+  return out;
+}
+
+function isTextFile(p) {
+  return /\.(mjs|js|jsx|ts|tsx)$/.test(p);
+}
+
+let failures = [];
+
+if (fs.existsSync(finykRoot)) {
+  for (const file of walk(finykRoot)) {
+    if (!isTextFile(file)) continue;
+    const rel = path.relative(repoRoot, file).replaceAll("\\", "/");
+    const src = fs.readFileSync(file, "utf8");
+    for (const rule of forbidden) {
+      if (rule.re.test(src)) {
+        failures.push(`- ${rel}: ${rule.hint}`);
+        rule.re.lastIndex = 0;
+      }
+    }
+  }
+}
+
+if (failures.length) {
+  console.error("❌ Forbidden imports detected in finyk:\n" + failures.join("\n") + "\n");
+  process.exit(1);
+} else {
+  console.log("✅ Import check passed.");
+}
+
