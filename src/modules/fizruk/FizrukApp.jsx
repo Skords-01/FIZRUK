@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dashboard } from "./pages/Dashboard";
+import { Atlas } from "./pages/Atlas";
 import { Workouts } from "./pages/Workouts";
 import { Progress } from "./pages/Progress";
 import { Measurements } from "./pages/Measurements";
@@ -26,41 +27,60 @@ const NAV = [
 
 export default function FizrukApp() {
   const [page, setPage] = useState("dashboard");
+  const isAtlas = page === "atlas";
 
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       {/* Header */}
       <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-20" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <div className="flex h-14 items-center px-5 pl-14">
-          <span className="text-[16px] font-semibold tracking-wide text-text">ФІЗРУК</span>
+        <div className="flex h-14 items-center px-5 gap-3">
+          {isAtlas ? (
+            <button
+              onClick={() => setPage("dashboard")}
+              className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-muted hover:text-text transition-colors"
+              aria-label="Назад"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          ) : (
+            <div className="w-10" />
+          )}
+          <span className="text-[16px] font-semibold tracking-wide text-text">
+            {isAtlas ? "Атлас" : "ФІЗРУК"}
+          </span>
         </div>
       </div>
 
       {/* Page content */}
       <div className="flex-1 overflow-hidden flex flex-col">
-        {page === "dashboard" && <Dashboard />}
+        {page === "dashboard" && <Dashboard onOpenAtlas={() => setPage("atlas")} />}
+        {page === "atlas" && <Atlas />}
         {page === "workouts"  && <Workouts />}
         {page === "progress"  && <Progress />}
         {page === "measurements"  && <Measurements />}
       </div>
 
       {/* Bottom nav */}
-      <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-        <div className="flex h-[58px]">
-          {NAV.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setPage(item.id)}
-              className={cn("flex-1 flex flex-col items-center justify-center gap-1 transition-all", page === item.id ? "text-text" : "text-muted")}
-            >
-              {item.icon}
-              <span className={cn("text-[11px] leading-none font-semibold", page === item.id ? "text-text" : "text-muted")}>
-                {item.label}
-              </span>
-            </button>
-          ))}
-        </div>
-      </nav>
+      {!isAtlas && (
+        <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div className="flex h-[58px]">
+            {NAV.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setPage(item.id)}
+                className={cn("flex-1 flex flex-col items-center justify-center gap-1 transition-all", page === item.id ? "text-text" : "text-muted")}
+              >
+                {item.icon}
+                <span className={cn("text-[11px] leading-none font-semibold", page === item.id ? "text-text" : "text-muted")}>
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

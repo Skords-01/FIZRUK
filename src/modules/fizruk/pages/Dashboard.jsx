@@ -1,15 +1,13 @@
-import { useState } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
 import { useRecovery } from "../hooks/useRecovery";
 import { useWorkouts } from "../hooks/useWorkouts";
 import { BodyAtlas } from "../components/BodyAtlas";
 
-export function Dashboard() {
+export function Dashboard({ onOpenAtlas }) {
   const today = new Date().toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
   const rec = useRecovery();
   const { workouts } = useWorkouts();
-  const [atlasOpen, setAtlasOpen] = useState(false);
 
   const monthCount = (() => {
     const now = new Date();
@@ -86,11 +84,16 @@ export function Dashboard() {
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs font-medium text-subtle">Статус відновлення</div>
-            <Button variant="ghost" size="sm" className="h-9 px-4" onClick={() => setAtlasOpen(true)}>
-              На весь екран
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 px-4"
+              onClick={() => onOpenAtlas?.()}
+            >
+              Атлас
             </Button>
           </div>
-          <BodyAtlas statusByMuscle={statusByMuscle} height={220} showLegend={false} />
+          <BodyAtlas statusByMuscle={statusByMuscle} height={160} showLegend={false} />
         </div>
 
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
@@ -142,38 +145,6 @@ export function Dashboard() {
         </div>
 
       </div>
-
-      {atlasOpen && (
-        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setAtlasOpen(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div
-            className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft"
-            style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-line rounded-full" />
-            </div>
-            <div className="px-5 pb-6">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="min-w-0">
-                  <div className="text-lg font-extrabold text-text leading-tight">Атлас мʼязів</div>
-                  <div className="text-xs text-subtle mt-1">Зелений/жовтий/червоний — за відновленням</div>
-                </div>
-                <button
-                  onClick={() => setAtlasOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text text-lg transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="bg-bg border border-line rounded-2xl p-3">
-                <BodyAtlas statusByMuscle={statusByMuscle} height={420} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
