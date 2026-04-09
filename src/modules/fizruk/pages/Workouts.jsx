@@ -61,8 +61,8 @@ export function Workouts() {
     // show only known labels first
     return ids.filter(id => musclesUk?.[id]);
   }, [form.primaryGroup, musclesByPrimaryGroup, musclesUk]);
-  const list = useMemo(() => search(q), [q]);
-  const pickList = useMemo(() => search(pickQ).slice(0, 60), [pickQ]);
+  const list = useMemo(() => search(q), [search, q]);
+  const pickList = useMemo(() => search(pickQ).slice(0, 60), [search, pickQ]);
   const activeWorkout = workouts.find(w => w.id === activeWorkoutId) || null;
 
   useEffect(() => {

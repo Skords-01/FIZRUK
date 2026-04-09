@@ -42,7 +42,7 @@ export function useExerciseCatalog() {
     });
   }, [customExercises, baseExercises]);
 
-  const search = (query) => {
+  const search = useCallback((query) => {
     const q = norm(query);
     if (!q) return exercises;
 
@@ -62,7 +62,7 @@ export function useExerciseCatalog() {
         groupUk.includes(q)
       );
     });
-  };
+  }, [exercises]);
 
   const addExercise = useCallback((ex) => {
     if (!ex?.id) throw new Error("id is required");
