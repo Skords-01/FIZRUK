@@ -27,15 +27,13 @@ function slugify(s) {
     .replace(/^_+|_+$/g, "");
 }
 
-function parseCsv(s) {
-  return (s || "")
-    .split(",")
-    .map(x => x.trim())
-    .filter(Boolean);
+function toggleArr(arr, value) {
+  const a = Array.isArray(arr) ? arr : [];
+  return a.includes(value) ? a.filter(x => x !== value) : [...a, value];
 }
 
 export function Workouts() {
-  const { search, primaryGroupsUk, musclesUk, addExercise } = useExerciseCatalog();
+  const { search, primaryGroupsUk, musclesUk, musclesByPrimaryGroup, addExercise } = useExerciseCatalog();
   const { workouts, createWorkout, deleteWorkout, addItem, updateItem, removeItem } = useWorkouts();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState(null);
@@ -48,12 +46,17 @@ export function Workouts() {
   const [form, setForm] = useState(() => ({
     nameUk: "",
     primaryGroup: "chest",
-    musclesPrimary: "",
-    equipment: "bodyweight",
+    musclesPrimary: [],
+    musclesSecondary: [],
+    equipment: ["bodyweight"],
     description: "",
-    imageUrl1: "",
-    imageUrl2: "",
   }));
+  const suggestedMuscles = useMemo(() => {
+    const g = form.primaryGroup;
+    const ids = musclesByPrimaryGroup?.[g] || [];
+    // show only known labels first
+    return ids.filter(id => musclesUk?.[id]);
+  }, [form.primaryGroup, musclesByPrimaryGroup, musclesUk]);
   const list = useMemo(() => search(q), [q]);
   const pickList = useMemo(() => search(pickQ).slice(0, 60), [pickQ]);
   const activeWorkout = workouts.find(w => w.id === activeWorkoutId) || null;
@@ -563,7 +566,7 @@ export function Workouts() {
                       <select
                         className="w-full h-10 bg-transparent text-sm text-text outline-none"
                         value={form.primaryGroup}
-                        onChange={e => setForm(f => ({ ...f, primaryGroup: e.target.value }))}
+                        onChange={e => setForm(f => ({ ...f, primaryGroup: e.target.value, musclesPrimary: [], musclesSecondary: [] }))}
                       >
                         {Object.keys(primaryGroupsUk).map(id => (
                           <option key={id} value={id}>{primaryGroupsUk[id]}</option>
@@ -572,62 +575,73 @@ export function Workouts() {
                     </div>
                     <div className="rounded-2xl border border-line bg-panelHi px-3">
                       <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">Обладнання</div>
-                      <select
-                        className="w-full h-10 bg-transparent text-sm text-text outline-none"
-                        value={form.equipment}
-                        onChange={e => setForm(f => ({ ...f, equipment: e.target.value }))}
-                      >
-                        {EQUIPMENT_OPTIONS.map(o => (
-                          <option key={o.id} value={o.id}>{o.label}</option>
-                        ))}
-                      </select>
+                      <div className="py-2 flex flex-wrap gap-1.5">
+                        {EQUIPMENT_OPTIONS.map(o => {
+                          const active = (form.equipment || []).includes(o.id);
+                          return (
+                            <button
+                              key={o.id}
+                              type="button"
+                              onClick={() => setForm(f => ({ ...f, equipment: toggleArr(f.equipment, o.id) }))}
+                              className={cn(
+                                "text-[11px] px-3 py-1.5 rounded-full border transition-colors",
+                                active ? "bg-text text-white border-text" : "border-line bg-bg text-muted hover:border-muted hover:text-text"
+                              )}
+                            >
+                              {o.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                   
                   <div className="rounded-2xl border border-line bg-panelHi px-3 py-2">
                     <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Основні мʼязи</div>
-                    <div className="text-xs text-subtle mt-1">
-                      Вкажи через кому (ID), напр: <span className="font-semibold text-muted">pectoralis_major, triceps</span>
-                    </div>
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {Object.entries(musclesUk).slice(0, 10).map(([id, label]) => (
+                      {suggestedMuscles.map((id) => (
                         <button
                           key={id}
                           type="button"
-                          className="text-[11px] px-3 py-1.5 rounded-full border border-line bg-bg text-muted hover:text-text hover:border-muted transition-colors"
-                          onClick={() => setForm(f => ({
-                            ...f,
-                            musclesPrimary: f.musclesPrimary?.includes(id)
-                              ? f.musclesPrimary
-                              : (f.musclesPrimary ? `${f.musclesPrimary}, ${id}` : id)
-                          }))}
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full border transition-colors",
+                            (form.musclesPrimary || []).includes(id)
+                              ? "bg-primary border-primary text-white"
+                              : "border-line bg-bg text-muted hover:border-muted hover:text-text"
+                          )}
+                          onClick={() => setForm(f => ({ ...f, musclesPrimary: toggleArr(f.musclesPrimary, id) }))}
                         >
-                          {label}
+                          {musclesUk[id] || id}
                         </button>
                       ))}
-                      <span className="text-[11px] text-subtle px-1 py-1.5">…</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-line bg-panelHi px-3 py-2">
+                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Супутні мʼязи</div>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {suggestedMuscles.map((id) => (
+                        <button
+                          key={id}
+                          type="button"
+                          className={cn(
+                            "text-[11px] px-3 py-1.5 rounded-full border transition-colors",
+                            (form.musclesSecondary || []).includes(id)
+                              ? "bg-text/80 border-text/80 text-white"
+                              : "border-line bg-bg text-muted hover:border-muted hover:text-text"
+                          )}
+                          onClick={() => setForm(f => ({ ...f, musclesSecondary: toggleArr(f.musclesSecondary, id) }))}
+                        >
+                          {musclesUk[id] || id}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
                   <Input
-                    placeholder="Основні мʼязи (через кому), напр: pectoralis_major, triceps"
-                    value={form.musclesPrimary}
-                    onChange={e => setForm(f => ({ ...f, musclesPrimary: e.target.value }))}
-                  />
-                  <Input
                     placeholder="Опис"
                     value={form.description}
                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  />
-                  <Input
-                    placeholder="Картинка URL 1 (опц.)"
-                    value={form.imageUrl1}
-                    onChange={e => setForm(f => ({ ...f, imageUrl1: e.target.value }))}
-                  />
-                  <Input
-                    placeholder="Картинка URL 2 (опц.)"
-                    value={form.imageUrl2}
-                    onChange={e => setForm(f => ({ ...f, imageUrl2: e.target.value }))}
                   />
                 </div>
 
@@ -638,28 +652,25 @@ export function Workouts() {
                       const nameUk = (form.nameUk || "").trim();
                       if (!nameUk) return;
                       const id = `custom_${slugify(nameUk) || Date.now()}`;
-                      const images = [form.imageUrl1, form.imageUrl2].map(s => (s || "").trim()).filter(Boolean);
                       addExercise({
                         id,
                         name: { uk: nameUk, en: nameUk },
                         primaryGroup: form.primaryGroup,
                         primaryGroupUk: primaryGroupsUk[form.primaryGroup] || form.primaryGroup,
-                        muscles: { primary: parseCsv(form.musclesPrimary), secondary: [], stabilizers: [] },
-                        equipment: [form.equipment],
-                        equipmentUk: [EQUIPMENT_OPTIONS.find(x => x.id === form.equipment)?.label || form.equipment],
+                        muscles: { primary: form.musclesPrimary || [], secondary: form.musclesSecondary || [], stabilizers: [] },
+                        equipment: form.equipment || [],
+                        equipmentUk: (form.equipment || []).map(eid => EQUIPMENT_OPTIONS.find(x => x.id === eid)?.label || eid),
                         description: (form.description || "").trim(),
-                        images,
                         source: "manual",
                       });
                       setAddOpen(false);
                       setForm({
                         nameUk: "",
                         primaryGroup: "chest",
-                        musclesPrimary: "",
-                        equipment: "bodyweight",
+                        musclesPrimary: [],
+                        musclesSecondary: [],
+                        equipment: ["bodyweight"],
                         description: "",
-                        imageUrl1: "",
-                        imageUrl2: "",
                       });
                     }}
                   >

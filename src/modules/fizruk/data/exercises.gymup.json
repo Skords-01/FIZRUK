@@ -41,6 +41,17 @@
       "adductors": "Привідні",
       "abductors": "Відвідні",
       "neck": "Шия"
+    },
+    "musclesByPrimaryGroup": {
+      "chest": ["pectoralis_major", "pectoralis_minor", "serratus_anterior", "front_deltoid", "triceps"],
+      "back": ["latissimus_dorsi", "rhomboids", "trapezius", "upper_back", "erector_spinae", "rear_deltoid", "biceps", "forearms"],
+      "shoulders": ["front_deltoid", "lateral_deltoid", "rear_deltoid", "trapezius", "triceps"],
+      "arms": ["biceps", "triceps", "forearms"],
+      "core": ["rectus_abdominis", "obliques"],
+      "legs": ["quadriceps", "hamstrings", "calves", "adductors", "abductors"],
+      "glutes": ["gluteus_maximus", "gluteus_medius", "hamstrings"],
+      "cardio": [],
+      "full_body": ["pectoralis_major", "latissimus_dorsi", "quadriceps", "hamstrings", "gluteus_maximus", "rectus_abdominis"]
     }
   },
   "exercises": []

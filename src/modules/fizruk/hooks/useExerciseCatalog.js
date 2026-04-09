@@ -14,6 +14,7 @@ export function useExerciseCatalog() {
   const baseExercises = catalog.exercises || [];
   const primaryGroupsUk = catalog.labels?.primaryGroupsUk || {};
   const musclesUk = catalog.labels?.musclesUk || {};
+  const musclesByPrimaryGroup = catalog.labels?.musclesByPrimaryGroup || {};
   const [customExercises, setCustomExercises] = useState([]);
 
   useEffect(() => {
@@ -70,6 +71,6 @@ export function useExerciseCatalog() {
     persistCustom(next);
   }, [customExercises, persistCustom]);
 
-  return { catalog, exercises, search, primaryGroupsUk, musclesUk, addExercise, customExercises };
+  return { catalog, exercises, search, primaryGroupsUk, musclesUk, musclesByPrimaryGroup, addExercise, customExercises };
 }
 
