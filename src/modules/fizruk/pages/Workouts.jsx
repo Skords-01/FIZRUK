@@ -617,7 +617,7 @@ export function Workouts() {
 
         {/* Details sheet */}
         {selected && (
-          <div className="fixed inset-0 z-50 flex items-end" onClick={() => setSelected(null)}>
+          <div className="fixed inset-0 z-[100] flex items-end" onClick={() => setSelected(null)}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div
               className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft"
@@ -753,7 +753,7 @@ export function Workouts() {
 
         {/* Add exercise sheet */}
         {addOpen && (
-          <div className="fixed inset-0 z-50 flex items-end" onClick={() => setAddOpen(false)} role="presentation">
+          <div className="fixed inset-0 z-[100] flex items-end" onClick={() => setAddOpen(false)} role="presentation">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div
               className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft max-h-[92dvh] flex flex-col"
@@ -918,7 +918,7 @@ export function Workouts() {
 
         {/* Exercise picker for workout */}
         {pickerOpen && (
-          <div className="fixed inset-0 z-50 flex items-end" onClick={() => setPickerOpen(false)}>
+          <div className="fixed inset-0 z-[100] flex items-end" onClick={() => setPickerOpen(false)}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div
               className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft"
@@ -1032,7 +1032,7 @@ export function Workouts() {
 
         {finishFlash && (
           <div
-            className="fixed left-0 right-0 z-[60] px-4 pointer-events-none"
+            className="fixed left-0 right-0 z-[100] px-4 pointer-events-none"
             style={{ bottom: "calc(58px + env(safe-area-inset-bottom, 0px))" }}
             role="region"
             aria-label="Підсумок тренування"

@@ -55,7 +55,7 @@ export default function FizrukApp() {
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-20" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div className="flex h-14 items-center px-4 sm:px-5 gap-3">
           {isAtlas || isExercise ? (
             <button
@@ -98,7 +98,7 @@ export default function FizrukApp() {
 
       {/* Bottom nav */}
       {!isAtlas && !isExercise && (
-        <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           <div className="flex h-[58px]">
             {NAV.map(item => {
               const active = page === item.id;

@@ -48,7 +48,7 @@ export function Overview({ mono, storage, onNavigate, showBalance = true }) {
   if (loadingTx && realTx.length === 0) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="px-4 pt-4 pb-6 space-y-4 max-w-4xl mx-auto">
+        <div className="px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4 max-w-4xl mx-auto">
           <Skeleton className="h-[168px] rounded-3xl" />
           <Skeleton className="h-[120px] opacity-80 rounded-2xl" />
           <Skeleton className="h-[110px] opacity-60 rounded-2xl" />
@@ -157,7 +157,7 @@ export function Overview({ mono, storage, onNavigate, showBalance = true }) {
 
   return (
     <div className="flex-1 overflow-y-auto overscroll-contain">
-      <div className="px-4 pt-4 pb-6 space-y-4 max-w-4xl mx-auto">
+      <div className="px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4 max-w-4xl mx-auto">
 
         {/* ── Hero (як у прототипі: градієнт + зведення) ── */}
         <div className="rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-5 shadow-float border border-white/10">

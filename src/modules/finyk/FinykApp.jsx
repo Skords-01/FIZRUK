@@ -16,7 +16,7 @@ const Settings       = lazy(() => import("./pages/Settings").then(m => ({ defaul
 
 function PageLoader() {
   return (
-    <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 space-y-3 max-w-4xl mx-auto w-full">
+    <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-3 max-w-4xl mx-auto w-full">
       <Skeleton className="h-40 rounded-3xl" />
       <Skeleton className="h-28 opacity-80 rounded-2xl" />
       <Skeleton className="h-24 opacity-60 rounded-2xl" />
@@ -134,47 +134,23 @@ export default function App({ onBackToHub } = {}) {
         ? { dot: "bg-muted", text: "оновлення" }
         : { dot: "bg-success", text: "ок" };
 
-  // Swipe + pull-to-refresh
+  // Свайп між вкладками (без pull-to-refresh: скрол живе всередині сторінок, зовнішній scrollTop завжди 0)
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
-  const pullEligibleRef = useRef(false);
-  const contentRef = useRef(null);
-  const [pullDist, setPullDist] = useState(0);
-  const [pullRefreshing, setPullRefreshing] = useState(false);
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
-    const scrollTop = contentRef.current?.scrollTop ?? 1;
-    // Pull-to-refresh only if gesture starts at the top.
-    pullEligibleRef.current = scrollTop <= 0;
-  };
-  const handleTouchMove = (e) => {
-    if (touchStartY.current === null) return;
-    if (!pullEligibleRef.current) return;
-    const dy = e.touches[0].clientY - touchStartY.current;
-    const dx = e.touches[0].clientX - touchStartX.current;
-    const scrollTop = contentRef.current?.scrollTop ?? 1;
-    if (dy > 0 && scrollTop <= 0 && Math.abs(dy) > Math.abs(dx) * 1.2) {
-      setPullDist(Math.min(dy * 0.5, 64));
-    }
   };
   const handleTouchEnd = (e) => {
-    if (touchStartX.current === null) return;
+    if (touchStartX.current === null || touchStartY.current === null) return;
     const dx = touchStartX.current - e.changedTouches[0].clientX;
     const dy = touchStartY.current - e.changedTouches[0].clientY;
-
-    if (pullEligibleRef.current && pullDist >= 52 && !pullRefreshing) {
-      setPullRefreshing(true);
-      mono.refresh().finally(() => { setPullRefreshing(false); setPullDist(0); });
-    } else {
-      setPullDist(0);
-    }
     touchStartX.current = null;
     touchStartY.current = null;
-    pullEligibleRef.current = false;
 
-    if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.7) return;
+    if (menuOpen || syncOpen) return;
+    if (Math.abs(dx) < 100 || Math.abs(dy) > Math.abs(dx) * 0.85) return;
     const curIdx = NAV_IDS.indexOf(page);
     if (curIdx === -1) return;
     const next = curIdx + (dx > 0 ? 1 : -1);
@@ -249,7 +225,7 @@ export default function App({ onBackToHub } = {}) {
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
 
       {/* Header */}
-      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-20" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div className="flex h-14 items-center justify-between px-4 sm:px-5 gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="shrink-0 w-9 h-9 rounded-xl bg-emerald-500/12 flex items-center justify-center text-emerald-600 border border-emerald-500/15" aria-hidden>
@@ -370,7 +346,7 @@ export default function App({ onBackToHub } = {}) {
       {/* Toast */}
       {toast && (
         <div className={cn(
-          "fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-2xl text-sm font-semibold shadow-soft transition-all",
+          "fixed top-16 left-1/2 -translate-x-1/2 z-[110] px-4 py-3 rounded-2xl text-sm font-semibold shadow-soft transition-all",
           toast.type === "error" ? "bg-danger/90 text-white" : "bg-success/90 text-white"
         )}>
           {toast.msg}
@@ -380,28 +356,10 @@ export default function App({ onBackToHub } = {}) {
       {/* Sync modal */}
       {syncOpen && <SyncModal storage={storage} onClose={() => setSyncOpen(false)} />}
 
-      {/* Pull-to-refresh indicator */}
-      {(pullDist > 0 || pullRefreshing) && (
-        <div
-          className="absolute left-1/2 -translate-x-1/2 z-30 flex items-center justify-center transition-all"
-          style={{ top: `calc(56px + env(safe-area-inset-top, 0px) + ${pullDist}px - 28px)` }}
-        >
-          <div className={cn(
-            "w-8 h-8 rounded-full bg-panel border border-line shadow-card flex items-center justify-center text-sm transition-transform",
-            pullRefreshing ? "animate-spin" : ""
-          )}>
-            {pullRefreshing ? "⟳" : pullDist >= 52 ? "↑" : "↓"}
-          </div>
-        </div>
-      )}
-
       {/* Page content */}
       <div
-        ref={contentRef}
-        className="flex-1 overflow-hidden flex flex-col"
-        style={{ transform: pullDist > 0 ? `translateY(${pullDist}px)` : undefined, transition: pullDist === 0 ? "transform 0.2s" : undefined }}
+        className="flex-1 overflow-hidden flex flex-col min-h-0 touch-pan-y"
         onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         <Suspense fallback={<PageLoader />}>
@@ -415,7 +373,7 @@ export default function App({ onBackToHub } = {}) {
 
       {/* Bottom navigation */}
       <nav
-        className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60"
+        className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="flex h-[58px]">
