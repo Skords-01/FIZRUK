@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
+import { WorkoutTemplatesSection } from "../components/WorkoutTemplatesSection";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useRecovery } from "../hooks/useRecovery";
+import { useWorkoutTemplates } from "../hooks/useWorkoutTemplates";
 import { useWorkouts } from "../hooks/useWorkouts";
 import { recoveryConflictsForExercise, recoveryConflictsForWorkoutItem } from "../lib/recoveryConflict";
 
@@ -61,6 +63,12 @@ function formatDurShort(sec) {
   return `${m} хв ${s} с`;
 }
 
+function formatRestClock(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export function Workouts() {
   const { search, primaryGroupsUk, musclesUk, musclesByPrimaryGroup, addExercise, removeExercise } = useExerciseCatalog();
   const rec = useRecovery();
@@ -69,7 +77,8 @@ export function Workouts() {
   const [selected, setSelected] = useState(null);
   const [open, setOpen] = useState(() => ({}));
   const [addOpen, setAddOpen] = useState(false);
-  const [mode, setMode] = useState("catalog"); // catalog | log
+  const [mode, setMode] = useState("catalog"); // catalog | log | templates
+  const [restTimer, setRestTimer] = useState(null);
   const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
     try { return localStorage.getItem(ACTIVE_WORKOUT_KEY) || null; } catch { return null; }
   });
@@ -112,6 +121,30 @@ export function Workouts() {
       else localStorage.setItem(ACTIVE_WORKOUT_KEY, activeWorkoutId);
     } catch {}
   }, [activeWorkoutId]);
+
+  useEffect(() => {
+    try {
+      const m = sessionStorage.getItem("fizruk_workouts_mode");
+      if (m === "templates") {
+        setMode("templates");
+        sessionStorage.removeItem("fizruk_workouts_mode");
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!restTimer || restTimer.remaining <= 0) return;
+    const id = setInterval(() => {
+      setRestTimer(r => {
+        if (!r || r.remaining <= 1) {
+          try { navigator.vibrate?.(200); } catch {}
+          return null;
+        }
+        return { ...r, remaining: r.remaining - 1 };
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [restTimer]);
 
   useEffect(() => {
     if (!pickerOpen) setPendingPick(null);
@@ -177,23 +210,35 @@ export function Workouts() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-2xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
-        <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
           <div className="text-sm font-semibold text-muted">Тренування</div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              className={cn("text-xs px-3 py-2 rounded-full border transition-colors", mode === "catalog" ? "bg-text text-white border-text" : "border-line text-subtle hover:text-text")}
+              type="button"
+              className={cn("text-xs px-3 py-2.5 min-h-[44px] rounded-full border transition-colors", mode === "catalog" ? "bg-text text-white border-text" : "border-line text-subtle hover:text-text")}
               onClick={() => setMode("catalog")}
+              aria-pressed={mode === "catalog"}
             >
               Каталог
             </button>
             <button
-              className={cn("text-xs px-3 py-2 rounded-full border transition-colors", mode === "log" ? "bg-text text-white border-text" : "border-line text-subtle hover:text-text")}
+              type="button"
+              className={cn("text-xs px-3 py-2.5 min-h-[44px] rounded-full border transition-colors", mode === "log" ? "bg-text text-white border-text" : "border-line text-subtle hover:text-text")}
               onClick={() => setMode("log")}
+              aria-pressed={mode === "log"}
             >
               Журнал
             </button>
+            <button
+              type="button"
+              className={cn("text-xs px-3 py-2.5 min-h-[44px] rounded-full border transition-colors", mode === "templates" ? "bg-text text-white border-text" : "border-line text-subtle hover:text-text")}
+              onClick={() => setMode("templates")}
+              aria-pressed={mode === "templates"}
+            >
+              Шаблони
+            </button>
             {mode === "catalog" && (
-              <Button size="sm" className="h-9 px-4" onClick={() => setAddOpen(true)}>
+              <Button size="sm" className="h-9 min-h-[44px] px-4" onClick={() => setAddOpen(true)} aria-label="Додати вправу в каталог">
                 + Додати
               </Button>
             )}
@@ -239,8 +284,18 @@ export function Workouts() {
                         className="h-9 px-4"
                         onClick={() => {
                           const sum = summarizeWorkoutForFinish(activeWorkout);
-                          endWorkout(activeWorkout.id);
-                          if (sum) setFinishFlash({ collapsed: false, ...sum });
+                          const wid = activeWorkout.id;
+                          endWorkout(wid);
+                          if (sum) {
+                            setFinishFlash({
+                              step: "wellbeing",
+                              collapsed: false,
+                              ...sum,
+                              workoutId: wid,
+                              energy: null,
+                              mood: null,
+                            });
+                          }
                         }}
                       >
                         Завершити
@@ -378,11 +433,26 @@ export function Workouts() {
                             ))}
                             <Button
                               variant="ghost"
-                              className="w-full h-10"
+                              className="w-full h-10 min-h-[44px]"
                               onClick={() => updateItem(activeWorkout.id, it.id, { sets: [...(it.sets || []), { weightKg: 0, reps: 0 }] })}
                             >
                               + Підхід
                             </Button>
+                            {!activeWorkout.endedAt && (
+                              <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-line/60">
+                                <span className="text-[10px] font-bold text-subtle uppercase tracking-widest w-full">Таймер відпочинку</span>
+                                {[60, 90, 120].map(sec => (
+                                  <button
+                                    key={sec}
+                                    type="button"
+                                    className="min-h-[44px] px-4 rounded-xl border border-line bg-panelHi text-sm text-text hover:bg-panel transition-colors"
+                                    onClick={() => setRestTimer({ remaining: sec, total: sec })}
+                                  >
+                                    {sec} с
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -452,6 +522,17 @@ export function Workouts() {
               )}
             </div>
           </div>
+        )}
+
+        {mode === "templates" && (
+          <WorkoutTemplatesSection
+            exercises={exercises}
+            search={search}
+            templates={templateApi.templates}
+            addTemplate={templateApi.addTemplate}
+            updateTemplate={templateApi.updateTemplate}
+            removeTemplate={templateApi.removeTemplate}
+          />
         )}
 
         {mode === "catalog" && (
@@ -672,70 +753,77 @@ export function Workouts() {
 
         {/* Add exercise sheet */}
         {addOpen && (
-          <div className="fixed inset-0 z-50 flex items-end" onClick={() => setAddOpen(false)}>
+          <div className="fixed inset-0 z-50 flex items-end" onClick={() => setAddOpen(false)} role="presentation">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div
-              className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft"
+              className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft max-h-[92dvh] flex flex-col"
               style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
               onClick={e => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="add-ex-title"
             >
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 bg-line rounded-full" />
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 bg-line rounded-full" aria-hidden />
               </div>
-              <div className="px-5 pb-6">
+              <div className="px-4 sm:px-5 pb-6 overflow-y-auto flex-1 min-h-0">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <div className="text-lg font-extrabold text-text leading-tight">Додати вправу</div>
+                    <div id="add-ex-title" className="text-lg font-extrabold text-text leading-tight">Додати вправу</div>
                     <div className="text-xs text-subtle mt-1">Збережеться локально на цьому пристрої</div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setAddOpen(false)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text text-lg transition-colors"
+                    className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text text-lg transition-colors"
+                    aria-label="Закрити форму"
                   >
                     ✕
                   </button>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Input
                     placeholder="Назва (укр) *"
                     value={form.nameUk}
                     onChange={e => setForm(f => ({ ...f, nameUk: e.target.value }))}
+                    aria-label="Назва вправи українською"
                   />
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-2xl border border-line bg-panelHi px-3">
-                      <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">Основна група</div>
-                      <select
-                        className="w-full h-10 bg-transparent text-sm text-text outline-none"
-                        value={form.primaryGroup}
-                        onChange={e => setForm(f => ({ ...f, primaryGroup: e.target.value, musclesPrimary: [], musclesSecondary: [] }))}
-                      >
-                        {Object.keys(primaryGroupsUk).map(id => (
-                          <option key={id} value={id}>{primaryGroupsUk[id]}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="rounded-2xl border border-line bg-panelHi px-3">
-                      <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">Обладнання</div>
-                      <div className="py-2 flex flex-wrap gap-1.5">
-                        {EQUIPMENT_OPTIONS.map(o => {
-                          const active = (form.equipment || []).includes(o.id);
-                          return (
-                            <button
-                              key={o.id}
-                              type="button"
-                              onClick={() => setForm(f => ({ ...f, equipment: toggleArr(f.equipment, o.id) }))}
-                              className={cn(
-                                "text-[11px] px-3 py-1.5 rounded-full border transition-colors",
-                                active ? "bg-text text-white border-text" : "border-line bg-bg text-muted hover:border-muted hover:text-text"
-                              )}
-                            >
-                              {o.label}
-                            </button>
-                          );
-                        })}
-                      </div>
+                  <div className="rounded-2xl border border-line bg-panelHi px-3">
+                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">Основна група</div>
+                    <select
+                      className="w-full min-h-[44px] bg-transparent text-sm text-text outline-none py-2"
+                      value={form.primaryGroup}
+                      onChange={e => setForm(f => ({ ...f, primaryGroup: e.target.value, musclesPrimary: [], musclesSecondary: [] }))}
+                      aria-label="Основна група м’язів"
+                    >
+                      {Object.keys(primaryGroupsUk).map(id => (
+                        <option key={id} value={id}>{primaryGroupsUk[id]}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="rounded-2xl border border-line bg-panelHi px-3 py-2">
+                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Обладнання</div>
+                    <div className="py-2 flex flex-wrap gap-2">
+                      {EQUIPMENT_OPTIONS.map(o => {
+                        const active = (form.equipment || []).includes(o.id);
+                        return (
+                          <button
+                            key={o.id}
+                            type="button"
+                            onClick={() => setForm(f => ({ ...f, equipment: toggleArr(f.equipment, o.id) }))}
+                            className={cn(
+                              "text-xs px-3 py-2.5 min-h-[44px] rounded-full border transition-colors",
+                              active ? "bg-text text-white border-text" : "border-line bg-bg text-muted hover:border-muted hover:text-text"
+                            )}
+                            aria-pressed={active}
+                          >
+                            {o.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                   
@@ -747,7 +835,7 @@ export function Workouts() {
                           key={id}
                           type="button"
                           className={cn(
-                            "text-[11px] px-3 py-1.5 rounded-full border transition-colors",
+                            "text-xs px-3 py-2 min-h-[44px] rounded-full border transition-colors",
                             (form.musclesPrimary || []).includes(id)
                               ? "bg-primary border-primary text-white"
                               : "border-line bg-bg text-muted hover:border-muted hover:text-text"
@@ -768,7 +856,7 @@ export function Workouts() {
                           key={id}
                           type="button"
                           className={cn(
-                            "text-[11px] px-3 py-1.5 rounded-full border transition-colors",
+                            "text-xs px-3 py-2 min-h-[44px] rounded-full border transition-colors",
                             (form.musclesSecondary || []).includes(id)
                               ? "bg-text/80 border-text/80 text-white"
                               : "border-line bg-bg text-muted hover:border-muted hover:text-text"
@@ -788,9 +876,9 @@ export function Workouts() {
                   />
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-2">
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Button
-                    className="h-12"
+                    className="h-12 min-h-[44px]"
                     onClick={() => {
                       const nameUk = (form.nameUk || "").trim();
                       if (!nameUk) return;
@@ -819,7 +907,7 @@ export function Workouts() {
                   >
                     Зберегти
                   </Button>
-                  <Button variant="ghost" className="h-12" onClick={() => setAddOpen(false)}>
+                  <Button variant="ghost" className="h-12 min-h-[44px]" onClick={() => setAddOpen(false)}>
                     Скасувати
                   </Button>
                 </div>
@@ -922,42 +1010,150 @@ export function Workouts() {
           </div>
         )}
 
+        {restTimer && (
+          <div
+            className="fixed left-0 right-0 z-[55] px-4 pointer-events-none"
+            style={{ bottom: "calc(58px + env(safe-area-inset-bottom, 0px))" }}
+            role="timer"
+            aria-live="polite"
+            aria-label={`Відпочинок, залишилось ${restTimer.remaining} секунд`}
+          >
+            <div className="pointer-events-auto max-w-2xl mx-auto flex items-center justify-between gap-3 rounded-2xl border border-line bg-panel px-4 py-3 shadow-float">
+              <div>
+                <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Відпочинок</div>
+                <div className="text-3xl font-extrabold tabular-nums text-text leading-tight">{formatRestClock(restTimer.remaining)}</div>
+              </div>
+              <Button variant="ghost" className="h-11 min-h-[44px] px-4" type="button" onClick={() => setRestTimer(null)}>
+                Скасувати
+              </Button>
+            </div>
+          </div>
+        )}
+
         {finishFlash && (
           <div
             className="fixed left-0 right-0 z-[60] px-4 pointer-events-none"
             style={{ bottom: "calc(58px + env(safe-area-inset-bottom, 0px))" }}
+            role="region"
+            aria-label="Підсумок тренування"
           >
             <div className="pointer-events-auto max-w-2xl mx-auto">
-              {finishFlash.collapsed ? (
+              {finishFlash.step === "wellbeing" && (
+                <div className="rounded-2xl border border-line bg-panel p-4 shadow-float space-y-4 max-h-[min(70vh,520px)] overflow-y-auto">
+                  <div className="text-sm font-bold text-text">Самопочуття</div>
+                  <p className="text-xs text-subtle leading-relaxed">Оціни по шкалі 1–5 (можна пропустити).</p>
+                  <div>
+                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">Енергія</div>
+                    <div className="flex flex-wrap gap-2">
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <button
+                          key={`e${n}`}
+                          type="button"
+                          className={cn(
+                            "min-w-[44px] min-h-[44px] rounded-xl border text-sm font-semibold transition-colors",
+                            finishFlash.energy === n ? "bg-text text-white border-text" : "border-line bg-bg text-muted hover:border-muted"
+                          )}
+                          onClick={() => setFinishFlash(f => f && ({ ...f, energy: n }))}
+                          aria-pressed={finishFlash.energy === n}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">Настрій</div>
+                    <div className="flex flex-wrap gap-2">
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <button
+                          key={`m${n}`}
+                          type="button"
+                          className={cn(
+                            "min-w-[44px] min-h-[44px] rounded-xl border text-sm font-semibold transition-colors",
+                            finishFlash.mood === n ? "bg-text text-white border-text" : "border-line bg-bg text-muted hover:border-muted"
+                          )}
+                          onClick={() => setFinishFlash(f => f && ({ ...f, mood: n }))}
+                          aria-pressed={finishFlash.mood === n}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      className="flex-1 h-12 min-h-[44px]"
+                      type="button"
+                      onClick={() => setFinishFlash(f => f && ({ ...f, step: "summary" }))}
+                    >
+                      Пропустити
+                    </Button>
+                    <Button
+                      className="flex-1 h-12 min-h-[44px]"
+                      type="button"
+                      onClick={() => {
+                        const wid = finishFlash.workoutId;
+                        if (wid && (finishFlash.energy || finishFlash.mood)) {
+                          updateWorkout(wid, {
+                            wellbeing: {
+                              energy: finishFlash.energy ?? undefined,
+                              mood: finishFlash.mood ?? undefined,
+                            },
+                          });
+                        }
+                        setFinishFlash(f => f && ({
+                          ...f,
+                          step: "summary",
+                          savedWellbeing: (f.energy || f.mood) ? { energy: f.energy, mood: f.mood } : null,
+                        }));
+                      }}
+                    >
+                      Зберегти
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {finishFlash.step === "summary" && finishFlash.collapsed && (
                 <button
                   type="button"
-                  className="w-full flex items-center justify-between gap-3 rounded-2xl border border-line bg-panel px-4 py-2.5 shadow-float text-left"
+                  className="w-full flex items-center justify-between gap-3 rounded-2xl border border-line bg-panel px-4 py-3 min-h-[44px] shadow-float text-left"
                   onClick={() => setFinishFlash(f => f && ({ ...f, collapsed: false }))}
                 >
-                  <span className="text-sm font-semibold text-text">✓ Тренування завершено</span>
+                  <span className="text-sm font-semibold text-text">✓ Результати</span>
                   <span className="text-xs text-subtle tabular-nums">{formatDurShort(finishFlash.durationSec)}</span>
                 </button>
-              ) : (
-                <div className="rounded-2xl border border-line bg-panel p-4 shadow-float space-y-3">
+              )}
+
+              {finishFlash.step === "summary" && !finishFlash.collapsed && (
+                <div className="rounded-2xl border border-line bg-panel p-4 shadow-float space-y-3 max-h-[min(75vh,560px)] overflow-y-auto">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="text-sm font-bold text-text">Тренування завершено</div>
-                      <div className="text-xs text-subtle mt-1">
-                        Тривалість: <span className="font-semibold text-muted tabular-nums">{formatDurShort(finishFlash.durationSec)}</span>
-                        {" · "}
-                        Вправ: <span className="font-semibold text-muted">{finishFlash.items}</span>
-                        {finishFlash.tonnageKg > 0 ? (
-                          <>
-                            {" · "}
-                            Обʼєм: <span className="font-semibold text-muted tabular-nums">{Math.round(finishFlash.tonnageKg)} кг×повт</span>
-                          </>
+                      <div className="text-xs text-subtle mt-1 space-y-1">
+                        <div>
+                          Тривалість: <span className="font-semibold text-muted tabular-nums">{formatDurShort(finishFlash.durationSec)}</span>
+                          {" · "}
+                          Вправ: <span className="font-semibold text-muted">{finishFlash.items}</span>
+                          {finishFlash.tonnageKg > 0 ? (
+                            <>
+                              {" · "}
+                              Обʼєм: <span className="font-semibold text-muted tabular-nums">{Math.round(finishFlash.tonnageKg)} кг×повт</span>
+                            </>
+                          ) : null}
+                        </div>
+                        {finishFlash.savedWellbeing && (finishFlash.savedWellbeing.energy || finishFlash.savedWellbeing.mood) ? (
+                          <div className="text-muted">
+                            Самопочуття: енергія {finishFlash.savedWellbeing.energy ?? "—"}/5 · настрій {finishFlash.savedWellbeing.mood ?? "—"}/5
+                          </div>
                         ) : null}
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
-                        className="w-9 h-9 rounded-full bg-panelHi text-muted hover:text-text text-sm"
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-panelHi text-muted hover:text-text text-sm"
                         aria-label="Згорнути"
                         onClick={() => setFinishFlash(f => f && ({ ...f, collapsed: true }))}
                       >
@@ -965,7 +1161,7 @@ export function Workouts() {
                       </button>
                       <button
                         type="button"
-                        className="w-9 h-9 rounded-full bg-panelHi text-muted hover:text-text text-lg leading-none"
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-panelHi text-muted hover:text-text text-lg leading-none"
                         aria-label="Закрити"
                         onClick={() => setFinishFlash(null)}
                       >
@@ -974,10 +1170,10 @@ export function Workouts() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" className="flex-1 h-10" onClick={() => setFinishFlash(f => f && ({ ...f, collapsed: true }))}>
+                    <Button variant="ghost" className="flex-1 h-12 min-h-[44px]" type="button" onClick={() => setFinishFlash(f => f && ({ ...f, collapsed: true }))}>
                       Згорнути
                     </Button>
-                    <Button className="flex-1 h-10" onClick={() => setFinishFlash(null)}>
+                    <Button className="flex-1 h-12 min-h-[44px]" type="button" onClick={() => setFinishFlash(null)}>
                       Ок
                     </Button>
                   </div>

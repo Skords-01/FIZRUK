@@ -8,6 +8,8 @@ import { useWorkouts } from "../hooks/useWorkouts";
 const WORKOUTS_KEY = "fizruk_workouts_v1";
 const MEASUREMENTS_KEY = "fizruk_measurements_v1";
 const CUSTOM_EX_KEY = "fizruk_custom_exercises_v1";
+const TEMPLATES_KEY = "fizruk_workout_templates_v1";
+const SELECTED_TEMPLATE_KEY = "fizruk_selected_template_id_v1";
 
 function epley1rm(weightKg, reps) {
   const w = Number(weightKg) || 0;
@@ -114,6 +116,8 @@ export function Progress() {
         [WORKOUTS_KEY]: localStorage.getItem(WORKOUTS_KEY),
         [MEASUREMENTS_KEY]: localStorage.getItem(MEASUREMENTS_KEY),
         [CUSTOM_EX_KEY]: localStorage.getItem(CUSTOM_EX_KEY),
+        [TEMPLATES_KEY]: localStorage.getItem(TEMPLATES_KEY),
+        [SELECTED_TEMPLATE_KEY]: localStorage.getItem(SELECTED_TEMPLATE_KEY),
       },
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -128,7 +132,7 @@ export function Progress() {
     const text = await file.text();
     const parsed = JSON.parse(text);
     const d = parsed?.data || {};
-    for (const k of [WORKOUTS_KEY, MEASUREMENTS_KEY, CUSTOM_EX_KEY]) {
+    for (const k of [WORKOUTS_KEY, MEASUREMENTS_KEY, CUSTOM_EX_KEY, TEMPLATES_KEY, SELECTED_TEMPLATE_KEY]) {
       const v = d[k];
       if (typeof v === "string") localStorage.setItem(k, v);
     }
@@ -137,13 +141,44 @@ export function Progress() {
 
   const resetAll = () => {
     if (!confirm("Скинути всі дані Фізрука на цьому пристрої?")) return;
-    for (const k of [WORKOUTS_KEY, MEASUREMENTS_KEY, CUSTOM_EX_KEY, "fizruk_active_workout_id_v1", "fizruk_plan_template_v1"]) {
+    for (const k of [WORKOUTS_KEY, MEASUREMENTS_KEY, CUSTOM_EX_KEY, TEMPLATES_KEY, SELECTED_TEMPLATE_KEY, "fizruk_active_workout_id_v1", "fizruk_plan_template_v1"]) {
       try { localStorage.removeItem(k); } catch {}
     }
     window.location.reload();
   };
 
   const hasAny = (workouts?.length || 0) > 0 || (entries?.length || 0) > 0;
+
+  const exportCsv = () => {
+    const rows = [["startedAt", "endedAt", "workout_id", "exercise", "type", "detail", "energy_1_5", "mood_1_5"]];
+    for (const w of workouts || []) {
+      const we = w.wellbeing?.energy ?? "";
+      const wm = w.wellbeing?.mood ?? "";
+      for (const it of w.items || []) {
+        let detail = "";
+        if (it.type === "strength") detail = (it.sets || []).map(s => `${s.weightKg ?? 0}x${s.reps ?? 0}`).join(";");
+        else if (it.type === "distance") detail = `${it.distanceM ?? 0}m/${it.durationSec ?? 0}s`;
+        else detail = String(it.durationSec ?? "");
+        rows.push([
+          w.startedAt || "",
+          w.endedAt || "",
+          w.id,
+          (it.nameUk || "").replace(/"/g, "'"),
+          it.type || "",
+          detail,
+          we,
+          wm,
+        ]);
+      }
+    }
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `fizruk-workouts-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -236,9 +271,12 @@ export function Progress() {
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
           <div className="text-xs font-medium text-subtle mb-3">Дані</div>
           <div className="grid grid-cols-2 gap-2">
-            <Button className="h-12" onClick={exportJson}>Експорт (backup)</Button>
-            <Button className="h-12" variant="ghost" onClick={() => fileRef.current?.click()}>Імпорт</Button>
+            <Button className="h-12 min-h-[44px]" onClick={exportJson}>Експорт (backup)</Button>
+            <Button className="h-12 min-h-[44px]" variant="ghost" onClick={() => fileRef.current?.click()}>Імпорт</Button>
           </div>
+          <Button className="w-full h-12 min-h-[44px] mt-2" variant="ghost" onClick={exportCsv}>
+            Експорт тренувань (CSV)
+          </Button>
           <input
             ref={fileRef}
             type="file"

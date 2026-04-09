@@ -1,32 +1,35 @@
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useRecovery } from "../hooks/useRecovery";
+import { useWorkoutTemplates } from "../hooks/useWorkoutTemplates";
 import { useWorkouts } from "../hooks/useWorkouts";
 import { BodyAtlas } from "../components/BodyAtlas";
 import { recoveryConflictsForExercise } from "../lib/recoveryConflict";
 
-const TEMPLATE_KEY = "fizruk_plan_template_v1";
-
-const TEMPLATES = [
-  { id: "full_body", label: "Full body", groups: ["full_body", "legs", "back", "chest", "shoulders", "core", "arms", "glutes"] },
-  { id: "upper", label: "Upper", groups: ["chest", "back", "shoulders", "arms", "core"] },
-  { id: "lower", label: "Lower", groups: ["legs", "glutes", "core"] },
-  { id: "push", label: "Push", groups: ["chest", "shoulders", "arms", "core"] },
-  { id: "pull", label: "Pull", groups: ["back", "arms", "core"] },
-  { id: "legs", label: "Legs", groups: ["legs", "glutes", "core"] },
-  { id: "cardio", label: "Cardio", groups: ["cardio"] },
-];
+const SELECTED_TEMPLATE_KEY = "fizruk_selected_template_id_v1";
 
 export function Dashboard({ onOpenAtlas }) {
   const today = new Date().toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
   const rec = useRecovery();
   const { workouts, createWorkout, addItem } = useWorkouts();
   const { exercises, primaryGroupsUk, musclesUk } = useExerciseCatalog();
-  const [templateId, setTemplateId] = useState(() => {
-    try { return localStorage.getItem(TEMPLATE_KEY) || "full_body"; } catch { return "full_body"; }
+  const { templates } = useWorkoutTemplates();
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState(() => {
+    try { return localStorage.getItem(SELECTED_TEMPLATE_KEY) || ""; } catch { return ""; }
   });
+  const [planConfirmOpen, setPlanConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (selectedTemplateId) return;
+    const first = templates[0]?.id;
+    if (first) {
+      setSelectedTemplateId(first);
+      try { localStorage.setItem(SELECTED_TEMPLATE_KEY, first); } catch {}
+    }
+  }, [templates, selectedTemplateId]);
 
   const monthCount = (() => {
     const now = new Date();
@@ -56,7 +59,6 @@ export function Dashboard({ onOpenAtlas }) {
   })();
 
   const statusByMuscle = (() => {
-    // Map our muscle ids to body-highlighter muscle keys.
     const map = (id) => {
       if (!id) return null;
       if (id === "pectoralis_major" || id === "pectoralis_minor") return "chest";
@@ -91,40 +93,45 @@ export function Dashboard({ onOpenAtlas }) {
   })();
 
   const plan = useMemo(() => {
-    const t = TEMPLATES.find(x => x.id === templateId) || TEMPLATES[0];
-    const readyIds = new Set((rec.ready || []).map(x => x.id).filter(Boolean));
-    const avoidIds = new Set((rec.avoid || []).map(x => x.id).filter(Boolean));
-
-    const scored = (exercises || [])
-      .filter(ex => t.groups.includes(ex.primaryGroup || "full_body"))
-      .map(ex => {
-        const primary = ex?.muscles?.primary || [];
-        const secondary = ex?.muscles?.secondary || [];
-        const bad = primary.some(id => avoidIds.has(id));
-        const scoreReady = primary.filter(id => readyIds.has(id)).length * 2 + secondary.filter(id => readyIds.has(id)).length;
-        const score = scoreReady + (bad ? -3 : 0);
-        return { ex, score, bad, primary };
-      })
-      .filter(x => x.score > 0 || (t.id === "cardio" && (x.ex.primaryGroup === "cardio")))
-      .sort((a, b) => (b.score - a.score) || (a.bad - b.bad));
-
-    const picked = [];
-    const usedPrimary = new Set();
-    for (const s of scored) {
-      if (picked.length >= 6) break;
-      const key = s.ex.id;
-      if (!key) continue;
-      // prefer variety: do not repeat the same primary muscle twice if we have options
-      const p0 = s.primary?.[0];
-      if (p0 && usedPrimary.has(p0) && picked.length < 4) continue;
-      picked.push(s.ex);
-      if (p0) usedPrimary.add(p0);
-    }
+    const tpl = templates.find(t => t.id === selectedTemplateId);
+    const picked = tpl
+      ? tpl.exerciseIds.map(id => exercises.find(e => e.id === id)).filter(Boolean)
+      : [];
 
     const focus = (rec.ready || []).slice(0, 4).map(m => ({ id: m.id, label: musclesUk?.[m.id] || m.label || m.id, daysSince: m.daysSince }));
     const avoid = (rec.avoid || []).slice(0, 4).map(m => ({ id: m.id, label: musclesUk?.[m.id] || m.label || m.id }));
-    return { template: t, picked, focus, avoid };
-  }, [templateId, rec.ready, rec.avoid, exercises, musclesUk]);
+    return { picked, focus, avoid, templateName: tpl?.name || "" };
+  }, [selectedTemplateId, templates, exercises, rec.ready, rec.avoid, musclesUk]);
+
+  const startWorkoutFromPlan = (picks) => {
+    const w = createWorkout();
+    for (const ex of picks) {
+      const isCardio = ex.primaryGroup === "cardio";
+      addItem(w.id, {
+        exerciseId: ex.id,
+        nameUk: ex?.name?.uk || ex?.name?.en,
+        primaryGroup: ex.primaryGroup,
+        musclesPrimary: ex?.muscles?.primary || [],
+        musclesSecondary: ex?.muscles?.secondary || [],
+        type: isCardio ? "distance" : "strength",
+        sets: isCardio ? undefined : [{ weightKg: 0, reps: 0 }],
+        durationSec: 0,
+        distanceM: isCardio ? 0 : 0,
+      });
+    }
+    window.location.hash = "#workouts";
+  };
+
+  const onClickStartPlan = () => {
+    const picks = plan.picked;
+    if (!picks.length) return;
+    const risky = picks.some(ex => recoveryConflictsForExercise(ex, rec.by).hasWarning);
+    if (risky) {
+      setPlanConfirmOpen(true);
+      return;
+    }
+    startWorkoutFromPlan(picks);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -142,8 +149,9 @@ export function Dashboard({ onOpenAtlas }) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 px-4"
+              className="h-9 min-h-[44px] px-4"
               onClick={() => onOpenAtlas?.()}
+              aria-label="Відкрити атлас мʼязів"
             >
               Атлас
             </Button>
@@ -154,24 +162,45 @@ export function Dashboard({ onOpenAtlas }) {
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
           <div className="text-xs font-medium text-subtle mb-3">План на сьогодні</div>
           <div className="rounded-2xl border border-line bg-panelHi px-3">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">Шаблон</div>
+            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">Мій шаблон</div>
             <select
-              className="w-full h-10 bg-transparent text-sm text-text outline-none"
-              value={templateId}
+              className="w-full min-h-[44px] bg-transparent text-sm text-text outline-none"
+              value={selectedTemplateId}
               onChange={(e) => {
                 const v = e.target.value;
-                setTemplateId(v);
-                try { localStorage.setItem(TEMPLATE_KEY, v); } catch {}
+                setSelectedTemplateId(v);
+                try { localStorage.setItem(SELECTED_TEMPLATE_KEY, v); } catch {}
               }}
+              aria-label="Обрати збережений шаблон тренування"
             >
-              {TEMPLATES.map(t => (
-                <option key={t.id} value={t.id}>{t.label}</option>
-              ))}
+              {templates.length === 0 ? (
+                <option value="">— немає шаблонів —</option>
+              ) : (
+                templates.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))
+              )}
             </select>
           </div>
 
+          {templates.length === 0 && (
+            <div className="mt-3 text-sm text-subtle text-center py-2">
+              Створи шаблон у розділі{" "}
+              <button
+                type="button"
+                className="font-semibold text-text underline"
+                onClick={() => {
+                  try { sessionStorage.setItem("fizruk_workouts_mode", "templates"); } catch {}
+                  window.location.hash = "#workouts";
+                }}
+              >
+                Тренування → Шаблони
+              </button>
+            </div>
+          )}
+
           {!workouts?.length ? (
-            <div className="text-sm text-subtle text-center py-6">Додай перше тренування, щоб план став точнішим</div>
+            <div className="text-sm text-subtle text-center py-4">Додай перше тренування, щоб статистика була точнішою</div>
           ) : null}
 
           <div className="mt-3 space-y-2">
@@ -193,13 +222,16 @@ export function Dashboard({ onOpenAtlas }) {
           </div>
 
           <div className="mt-4">
-            <div className="text-xs text-subtle mb-2">Рекомендовані вправи:</div>
+            <div className="text-xs text-subtle mb-2">
+              Вправи з шаблону{plan.templateName ? ` «${plan.templateName}»` : ""}:
+            </div>
             {plan.picked.length ? (
               <div className="space-y-2">
-                {plan.picked.slice(0, 6).map(ex => (
+                {plan.picked.map(ex => (
                   <button
                     key={ex.id}
-                    className="w-full text-left border border-line rounded-2xl p-3 bg-bg hover:bg-panelHi transition-colors"
+                    type="button"
+                    className="w-full text-left border border-line rounded-2xl p-3 min-h-[44px] bg-bg hover:bg-panelHi transition-colors"
                     onClick={() => { window.location.hash = `#exercise/${ex.id}`; }}
                   >
                     <div className="text-sm font-semibold text-text truncate">{ex?.name?.uk || ex?.name?.en}</div>
@@ -209,43 +241,22 @@ export function Dashboard({ onOpenAtlas }) {
               </div>
             ) : (
               <div className="text-sm text-subtle text-center py-6">
-                Додай вправи в каталозі (з мʼязами), щоб я міг запропонувати план
+                {templates.length ? "У шаблоні немає вправ або вправи видалені з каталогу" : "Обери або створи шаблон"}
               </div>
             )}
           </div>
 
           <div className="mt-3 flex gap-2">
             <Button
-              className="flex-1 h-12"
-              onClick={() => {
-                if (!plan.picked.length) return;
-                const picks = plan.picked.slice(0, 6);
-                const risky = picks.some(ex => recoveryConflictsForExercise(ex, rec.by).hasWarning);
-                if (risky && !confirm("У плані є вправи на мʼязи, які ще відновлюються. Продовжити?")) return;
-                const w = createWorkout();
-                for (const ex of picks) {
-                  const isCardio = ex.primaryGroup === "cardio";
-                  addItem(w.id, {
-                    exerciseId: ex.id,
-                    nameUk: ex?.name?.uk || ex?.name?.en,
-                    primaryGroup: ex.primaryGroup,
-                    musclesPrimary: ex?.muscles?.primary || [],
-                    musclesSecondary: ex?.muscles?.secondary || [],
-                    type: isCardio ? "distance" : "strength",
-                    sets: isCardio ? undefined : [{ weightKg: 0, reps: 0 }],
-                    durationSec: 0,
-                    distanceM: isCardio ? 0 : 0,
-                  });
-                }
-                window.location.hash = "#workouts";
-              }}
+              className="flex-1 h-12 min-h-[44px]"
+              onClick={onClickStartPlan}
               disabled={!plan.picked.length}
             >
               Стартувати тренування
             </Button>
             <Button
               variant="ghost"
-              className="h-12 px-4"
+              className="h-12 min-h-[44px] px-4"
               onClick={() => { window.location.hash = "#workouts"; }}
             >
               Журнал
@@ -283,6 +294,35 @@ export function Dashboard({ onOpenAtlas }) {
         </div>
 
       </div>
+
+      {planConfirmOpen && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center" role="dialog" aria-modal="true" aria-labelledby="plan-confirm-title">
+          <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label="Закрити" onClick={() => setPlanConfirmOpen(false)} />
+          <div
+            className="relative w-full max-w-2xl bg-panel border-t border-line rounded-t-3xl p-5 shadow-soft"
+            style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
+          >
+            <div id="plan-confirm-title" className="text-lg font-extrabold text-text">Увага</div>
+            <p className="text-sm text-subtle mt-2 leading-relaxed">
+              У цьому шаблоні є вправи на мʼязи, які ще відновлюються. Продовжити старт тренування?
+            </p>
+            <div className="flex gap-2 mt-4">
+              <Button variant="ghost" className="flex-1 h-12 min-h-[44px]" onClick={() => setPlanConfirmOpen(false)}>
+                Скасувати
+              </Button>
+              <Button
+                className="flex-1 h-12 min-h-[44px]"
+                onClick={() => {
+                  setPlanConfirmOpen(false);
+                  startWorkoutFromPlan(plan.picked);
+                }}
+              >
+                Продовжити
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
