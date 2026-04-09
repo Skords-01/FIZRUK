@@ -1,14 +1,52 @@
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
 import { useEffect, useMemo, useState } from "react";
+import { WeeklyVolumeChart } from "../components/WeeklyVolumeChart";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useRecovery } from "../hooks/useRecovery";
 import { useWorkoutTemplates } from "../hooks/useWorkoutTemplates";
 import { useWorkouts } from "../hooks/useWorkouts";
 import { BodyAtlas } from "../components/BodyAtlas";
 import { recoveryConflictsForExercise } from "../lib/recoveryConflict";
+import {
+  completedWorkoutsCount,
+  countCompletedInCurrentWeek,
+  formatCompactKg,
+  personalRecordsExerciseCount,
+  totalCompletedVolumeKg,
+  weeklyVolumeSeriesNow,
+  workoutDurationSec,
+  workoutTonnageKg,
+} from "../lib/workoutStats";
 
 const SELECTED_TEMPLATE_KEY = "fizruk_selected_template_id_v1";
+
+function formatDurShort(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m <= 0) return `${s} с`;
+  return `${m} хв ${s} с`;
+}
+
+function relDayLabel(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "—";
+  const now = new Date();
+  const d = new Date(t);
+  const DAY = 24 * 60 * 60 * 1000;
+  const a = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const b = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diff = Math.round((a - b) / DAY);
+  if (diff === 0) return "Сьогодні";
+  if (diff === 1) return "Вчора";
+  return d.toLocaleDateString("uk-UA", { day: "numeric", month: "short" });
+}
+
+function workoutLineTitle(w) {
+  const names = (w.items || []).map(it => it.nameUk).filter(Boolean);
+  if (names.length) return `${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}`;
+  return "Тренування";
+}
 
 export function Dashboard({ onOpenAtlas }) {
   const today = new Date().toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
@@ -30,16 +68,6 @@ export function Dashboard({ onOpenAtlas }) {
       try { localStorage.setItem(SELECTED_TEMPLATE_KEY, first); } catch {}
     }
   }, [templates, selectedTemplateId]);
-
-  const monthCount = (() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    return (workouts || []).filter(w => {
-      const d = w.startedAt ? new Date(w.startedAt) : null;
-      return d && d.getFullYear() === y && d.getMonth() === m;
-    }).length;
-  })();
 
   const streakDays = (() => {
     const days = new Set((workouts || [])
@@ -103,6 +131,20 @@ export function Dashboard({ onOpenAtlas }) {
     return { picked, focus, avoid, templateName: tpl?.name || "" };
   }, [selectedTemplateId, templates, exercises, rec.ready, rec.avoid, musclesUk]);
 
+  const weekly = useMemo(() => weeklyVolumeSeriesNow(workouts), [workouts]);
+
+  const dashMetrics = useMemo(() => ({
+    total: completedWorkoutsCount(workouts),
+    week: countCompletedInCurrentWeek(workouts),
+    volume: totalCompletedVolumeKg(workouts),
+    pr: personalRecordsExerciseCount(workouts),
+  }), [workouts]);
+
+  const recentDone = useMemo(
+    () => (workouts || []).filter(w => w.endedAt).slice(0, 5),
+    [workouts],
+  );
+
   const startWorkoutFromPlan = (picks) => {
     const w = createWorkout();
     for (const ex of picks) {
@@ -133,14 +175,174 @@ export function Dashboard({ onOpenAtlas }) {
     startWorkoutFromPlan(picks);
   };
 
+  const kpi = [
+    {
+      id: "total",
+      label: "Всього тренувань",
+      value: String(dashMetrics.total),
+      sub: "завершених",
+      icon: "dumbbell",
+    },
+    {
+      id: "week",
+      label: "Цього тижня",
+      value: String(dashMetrics.week),
+      sub: streakDays > 0 ? `${streakDays} дн поспіль` : "поточний тиждень",
+      icon: "flame",
+    },
+    {
+      id: "vol",
+      label: "Загальний обʼєм",
+      value: `${formatCompactKg(dashMetrics.volume)}`,
+      sub: "кг × повторення",
+      icon: "chart",
+    },
+    {
+      id: "pr",
+      label: "Рекорди (вправи)",
+      value: String(dashMetrics.pr),
+      sub: "за оцінкою 1ПМ",
+      icon: "trophy",
+    },
+  ];
+
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 pt-4 pb-16 space-y-3">
+      <div className="max-w-4xl mx-auto px-4 pt-4 pb-16 space-y-4">
 
-        <div className="bg-panel border border-line rounded-3xl p-5 shadow-float">
-          <div className="text-xs text-subtle capitalize">{today}</div>
-          <div className="text-3xl font-bold mt-2 text-text">Привіт, тренере 💪</div>
-          <div className="text-sm text-subtle mt-1">Відновлення, баланс та план на сьогодні</div>
+        <section
+          className="rounded-3xl border border-line bg-gradient-to-br from-panel via-panel to-panelHi p-5 shadow-float"
+          aria-label="Огляд Фізрука"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="shrink-0 w-12 h-12 rounded-2xl bg-success/12 flex items-center justify-center text-success" aria-hidden>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-xs text-subtle capitalize">{today}</div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-text tracking-tight mt-0.5">Фізрук</h1>
+                <p className="text-sm text-muted mt-0.5">Відновлення, план і статистика в одному місці</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-end">
+              <Button
+                className="w-full sm:w-auto min-h-[48px] shrink-0 !bg-success !text-white hover:!bg-success/90 border-0 shadow-md font-semibold"
+                onClick={onClickStartPlan}
+                disabled={!plan.picked.length}
+                aria-label="Почати тренування за планом"
+              >
+                + Почати тренування
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full sm:w-auto min-h-[48px]"
+                onClick={() => { window.location.hash = "#workouts"; }}
+                aria-label="Відкрити журнал тренувань"
+              >
+                Журнал
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" role="list" aria-label="Ключові показники">
+          {kpi.map(card => (
+            <div
+              key={card.id}
+              role="listitem"
+              className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card min-h-[100px]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-2xl font-extrabold text-text tabular-nums leading-none">{card.value}</div>
+                  <div className="text-2xs font-semibold text-subtle uppercase tracking-wide mt-2">{card.label}</div>
+                  <div className="text-[9px] text-muted mt-0.5 leading-snug">{card.sub}</div>
+                </div>
+                <div
+                  className="shrink-0 w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center text-success"
+                  aria-hidden
+                >
+                  {card.icon === "dumbbell" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3" />
+                    </svg>
+                  )}
+                  {card.icon === "flame" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.5-.5-3-1.5-4.5 2 2.5 2.5 5 1.5 7.5-1 2.5-3 4-5.5 4-3 0-5-2.5-5-5.5 0-3 2-5.5 5-7 0 3 1 5.5 3 7.5z" />
+                    </svg>
+                  )}
+                  {card.icon === "chart" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 3v18h18" />
+                      <path d="M7 12l4-4 4 4 5-6" />
+                    </svg>
+                  )}
+                  {card.icon === "trophy" && (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 21h8" />
+                      <path d="M12 17v4" />
+                      <path d="M7 4h10v4a5 5 0 0 1-10 0V4z" />
+                      <path d="M7 8H5a2 2 0 0 1-2-2V4h4M17 8h2a2 2 0 0 0 2-2V4h-4" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+            <WeeklyVolumeChart volumeKg={weekly.volumeKg} />
+          </div>
+          <div className="lg:col-span-1 bg-panel border border-line/60 rounded-2xl p-5 shadow-card flex flex-col min-h-[220px]">
+            <div className="flex items-center gap-2 mb-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="text-muted shrink-0" aria-hidden>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              <h2 className="text-sm font-bold text-text">Останні тренування</h2>
+            </div>
+            <div className="flex-1 space-y-2 overflow-y-auto min-h-0">
+              {recentDone.length === 0 ? (
+                <p className="text-xs text-subtle py-4 text-center leading-relaxed">Ще немає завершених тренувань — заверши сесію в журналі</p>
+              ) : (
+                recentDone.map(w => {
+                  const ton = workoutTonnageKg(w);
+                  const dur = workoutDurationSec(w);
+                  return (
+                    <div
+                      key={w.id}
+                      className="flex items-start gap-2 rounded-xl border border-line/80 bg-panelHi/60 p-3"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-text line-clamp-2">{workoutLineTitle(w)}</div>
+                        <div className="text-2xs text-subtle mt-1">
+                          {relDayLabel(w.startedAt)}
+                          {" · "}
+                          {formatDurShort(dur)}
+                          {ton > 0 ? ` · ${Math.round(ton)} кг×повт` : ""}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 min-h-[40px] px-3 text-xs"
+                        onClick={() => { window.location.hash = "#workouts"; }}
+                        aria-label={`Журнал: ${workoutLineTitle(w)}`}
+                      >
+                        Журнал
+                      </Button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
@@ -277,20 +479,6 @@ export function Dashboard({ onOpenAtlas }) {
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: "Тренувань", value: String(monthCount), sub: "цього місяця" },
-            { label: "Серія", value: String(streakDays), sub: "днів поспіль" },
-            { label: "Ціль", value: "—", sub: "не задана" },
-          ].map((s, i) => (
-            <div key={i} className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
-              <div className="text-xl font-bold text-text">{s.value}</div>
-              <div className="text-[10px] font-semibold text-subtle mt-0.5">{s.label}</div>
-              <div className="text-[9px] text-subtle/60 mt-0.5">{s.sub}</div>
-            </div>
-          ))}
         </div>
 
       </div>
