@@ -22,10 +22,14 @@ export const MEASURE_FIELDS = [
   { id: "chestCm", label: "Груди", unit: "см" },
   { id: "waistCm", label: "Талія", unit: "см" },
   { id: "hipsCm", label: "Стегна (обхват)", unit: "см" },
-  { id: "bicepCm", label: "Біцепс", unit: "см" },
-  { id: "forearmCm", label: "Передпліччя", unit: "см" },
-  { id: "thighCm", label: "Стегно", unit: "см" },
-  { id: "calfCm", label: "Литка", unit: "см" },
+  { id: "bicepLCm", label: "Біцепс (Л)", unit: "см" },
+  { id: "bicepRCm", label: "Біцепс (П)", unit: "см" },
+  { id: "forearmLCm", label: "Передпліччя (Л)", unit: "см" },
+  { id: "forearmRCm", label: "Передпліччя (П)", unit: "см" },
+  { id: "thighLCm", label: "Стегно (Л)", unit: "см" },
+  { id: "thighRCm", label: "Стегно (П)", unit: "см" },
+  { id: "calfLCm", label: "Литка (Л)", unit: "см" },
+  { id: "calfRCm", label: "Литка (П)", unit: "см" },
 ];
 
 export function useMeasurements() {

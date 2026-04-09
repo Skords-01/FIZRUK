@@ -35,11 +35,21 @@ export function useWorkouts() {
     const w = {
       id: uid("w"),
       startedAt: new Date().toISOString(),
+      endedAt: null,
       items: [],
       note: "",
     };
     persist([w, ...workouts]);
     return w;
+  }, [persist, workouts]);
+
+  const endWorkout = useCallback((id) => {
+    const nowIso = new Date().toISOString();
+    persist(workouts.map(w => {
+      if (w.id !== id) return w;
+      if (w.endedAt) return w;
+      return { ...w, endedAt: nowIso };
+    }));
   }, [persist, workouts]);
 
   const updateWorkout = useCallback((id, patch) => {
@@ -83,6 +93,7 @@ export function useWorkouts() {
     createWorkout,
     updateWorkout,
     deleteWorkout,
+    endWorkout,
     addItem,
     updateItem,
     removeItem,

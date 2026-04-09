@@ -36,7 +36,7 @@ function toggleArr(arr, value) {
 
 export function Workouts() {
   const { search, primaryGroupsUk, musclesUk, musclesByPrimaryGroup, addExercise } = useExerciseCatalog();
-  const { workouts, createWorkout, deleteWorkout, addItem, updateItem, removeItem } = useWorkouts();
+  const { workouts, createWorkout, deleteWorkout, endWorkout, addItem, updateItem, removeItem } = useWorkouts();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState(null);
   const [open, setOpen] = useState(() => ({}));
@@ -64,6 +64,17 @@ export function Workouts() {
   const list = useMemo(() => search(q), [search, q]);
   const pickList = useMemo(() => search(pickQ).slice(0, 60), [search, pickQ]);
   const activeWorkout = workouts.find(w => w.id === activeWorkoutId) || null;
+
+  const activeDuration = useMemo(() => {
+    if (!activeWorkout?.startedAt) return null;
+    const start = Date.parse(activeWorkout.startedAt);
+    const end = activeWorkout.endedAt ? Date.parse(activeWorkout.endedAt) : Date.now();
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+    const sec = Math.floor((end - start) / 1000);
+    const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+    const ss = String(sec % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  }, [activeWorkout?.startedAt, activeWorkout?.endedAt]);
 
   useEffect(() => {
     try {
@@ -165,21 +176,35 @@ export function Workouts() {
                     <div className="text-sm font-bold text-text">Активне тренування</div>
                     <div className="text-xs text-subtle mt-0.5">
                       {new Date(activeWorkout.startedAt).toLocaleString("uk-UA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      {activeDuration ? <span className="ml-2">· {activeDuration}</span> : null}
                     </div>
                   </div>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    className="h-9 px-4"
-                    onClick={() => {
-                      if (confirm("Видалити тренування?")) {
-                        deleteWorkout(activeWorkout.id);
-                        setActiveWorkoutId(prev => (prev === activeWorkout.id ? null : prev));
-                      }
-                    }}
-                  >
-                    Видалити
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {!activeWorkout.endedAt ? (
+                      <Button
+                        size="sm"
+                        className="h-9 px-4"
+                        onClick={() => endWorkout(activeWorkout.id)}
+                      >
+                        Завершити
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-subtle">Завершено</span>
+                    )}
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="h-9 px-4"
+                      onClick={() => {
+                        if (confirm("Видалити тренування?")) {
+                          deleteWorkout(activeWorkout.id);
+                          setActiveWorkoutId(prev => (prev === activeWorkout.id ? null : prev));
+                        }
+                      }}
+                    >
+                      Видалити
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="mt-3 space-y-2">
