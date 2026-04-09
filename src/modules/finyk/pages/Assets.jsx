@@ -26,7 +26,7 @@ function SectionBar({ title, summary, open, onToggle }) {
 
 const formInp = "w-full h-11 rounded-2xl border border-line bg-panelHi px-4 text-text outline-none focus:border-muted transition-colors";
 
-export function Assets({ mono, storage }) {
+export function Assets({ mono, storage, showBalance = true }) {
   const { accounts, transactions } = mono;
   const { hiddenAccounts, manualAssets, setManualAssets, manualDebts, setManualDebts, receivables, setReceivables, toggleLinkedTx, subscriptions, setSubscriptions, monoDebtLinkedTxIds, toggleMonoDebtTx } = storage;
 
@@ -97,6 +97,7 @@ export function Assets({ mono, storage }) {
                       highlighted={isLinked}
                       onClick={() => toggleMonoDebtTx(txPicker.id, t.id)}
                       accounts={accounts}
+                      hideAmount={!showBalance}
                     />
                   </div>
                 );
@@ -139,7 +140,7 @@ export function Assets({ mono, storage }) {
                   {isLinked && (
                     <div className="text-xs font-bold px-1 py-1" style={{ color: role.color }}>{role.label}</div>
                   )}
-                  <TxRow tx={t} highlighted={isLinked} onClick={() => toggleLinkedTx(txPicker.id, t.id, txPicker.type)} />
+                  <TxRow tx={t} highlighted={isLinked} onClick={() => toggleLinkedTx(txPicker.id, t.id, txPicker.type)} hideAmount={!showBalance} />
                 </div>
               );
             })}
@@ -154,13 +155,21 @@ export function Assets({ mono, storage }) {
       <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-1">
 
         {/* Networth */}
-        <div className="bg-panel border border-line rounded-xl p-5 mb-3">
-          <div className="text-xs text-subtle mb-1">Загальний нетворс</div>
-          <div className={cn("text-3xl font-extrabold tracking-tight", networth >= 0 ? "text-text" : "text-danger")}>
-            {networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+        <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl p-5 mb-3 border border-white/10 shadow-float">
+          <div className="text-xs text-emerald-100/90 mb-1">Загальний нетворс</div>
+          <div className={cn("text-3xl font-extrabold tracking-tight", !showBalance && "tracking-widest")}>
+            {showBalance
+              ? `${networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴`
+              : "••••••"}
           </div>
-          <div className="text-xs text-subtle mt-1">
-            Активи: {(monoTotal + manualAssetTotal + totalReceivable).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴ · Пасиви: −{totalDebt.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+          <div className="text-xs text-emerald-100/85 mt-1">
+            {showBalance ? (
+              <>
+                Активи: {(monoTotal + manualAssetTotal + totalReceivable).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴ · Пасиви: −{totalDebt.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+              </>
+            ) : (
+              "Суми приховано"
+            )}
           </div>
         </div>
 

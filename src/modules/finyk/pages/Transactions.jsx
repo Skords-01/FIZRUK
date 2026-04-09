@@ -7,7 +7,7 @@ import { cn } from "@shared/lib/cn";
 
 const now = new Date();
 
-export function Transactions({ mono, storage }) {
+export function Transactions({ mono, storage, showBalance = true }) {
   const { realTx, loadingTx, lastUpdated, refresh, syncState, accounts, fetchMonth, historyTx, loadingHistory } = mono;
   const { hiddenTxIds, hideTx, excludedTxIds, txCategories, overrideCategory } = storage;
   const [filter, setFilter] = useState("all");
@@ -183,6 +183,7 @@ export function Transactions({ mono, storage }) {
               overrideCatId={txCategories[t.id]}
               onCatChange={overrideCategory}
               accounts={accounts}
+              hideAmount={!showBalance}
             />
           ))}
         </div>

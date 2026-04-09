@@ -87,7 +87,7 @@ function useHashRouter(defaultPage = "overview") {
   return [ALL_PAGE_IDS.includes(page) ? page : defaultPage, navigate];
 }
 
-export default function App() {
+export default function App({ onBackToHub } = {}) {
   const mono = useMonobank();
   const storage = useStorage();
   const [page, navigate] = useHashRouter();
@@ -96,6 +96,13 @@ export default function App() {
   const [tokenInput, setTokenInput] = useState("");
   const [showToken, setShowToken] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showBalance, setShowBalance] = useState(() => {
+    try { return localStorage.getItem("finyk_show_balance_v1") !== "0"; } catch { return true; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem("finyk_show_balance_v1", showBalance ? "1" : "0"); } catch {}
+  }, [showBalance]);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -180,26 +187,30 @@ export default function App() {
       <div className="min-h-dvh flex items-center justify-center p-5 bg-bg" style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="inline-flex w-16 h-16 rounded-2xl bg-emerald-500/12 text-emerald-600 items-center justify-center mb-4 mx-auto shadow-card border border-emerald-500/15">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <rect x="2" y="5" width="20" height="14" rx="2" />
-                <line x1="2" y1="10" x2="22" y2="10" />
+            <div className="w-20 h-20 mx-auto bg-emerald-500/12 rounded-3xl flex items-center justify-center mb-4 border border-emerald-500/15 shadow-card">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600" aria-hidden>
+                <rect x="3" y="8" width="18" height="12" rx="2" />
+                <path d="M7 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" />
+                <line x1="3" y1="12" x2="21" y2="12" />
               </svg>
             </div>
-            <div className="text-[28px] font-semibold tracking-wide text-text mb-1">ФІНІК</div>
-            <div className="text-sm text-muted">Персональний фінансист</div>
+            <h1 className="text-2xl font-bold text-text">ФІНІК</h1>
+            <p className="text-sm text-muted mt-1">Персональний фінансовий менеджер</p>
           </div>
 
           <div className="bg-panel border border-line rounded-3xl p-6 shadow-float">
-            <div className="text-xs text-subtle mb-1">Mono → Налаштування → Інші → API</div>
-            <div className="relative mt-3">
+            <label className="text-sm text-muted mb-2 block" htmlFor="finyk-mono-token">API токен Monobank</label>
+            <p className="text-xs text-subtle mb-2">Mono → Налаштування → Інші → API</p>
+            <div className="relative mt-1">
               <Input
+                id="finyk-mono-token"
                 className="pr-20"
                 type={showToken ? "text" : "password"}
                 placeholder="Вставте токен Mono API"
                 value={tokenInput}
                 onChange={e => setTokenInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && connect(tokenInput.trim())}
+                autoComplete="off"
               />
               <Button type="button" size="sm" variant="ghost"
                 className="absolute right-10 top-1/2 -translate-y-1/2 h-7 w-7 p-0 border-0"
@@ -219,9 +230,14 @@ export default function App() {
             )}
 
             <Button className="mt-4 w-full h-12 min-h-[48px] text-base !bg-emerald-600 !text-white hover:!bg-emerald-700 border-0 shadow-md" onClick={() => connect(tokenInput.trim())} disabled={connecting}>
-              {connecting ? "Підключення..." : "Підключити →"}
+              {connecting ? "Підключення..." : "Підключити"}
             </Button>
-            <p className="mt-3 text-center text-xs text-subtle">🔒 Токен зберігається лише у твоєму браузері</p>
+            {typeof onBackToHub === "function" && (
+              <Button type="button" variant="ghost" className="mt-2 w-full min-h-[44px]" onClick={onBackToHub}>
+                ← Назад до хабу
+              </Button>
+            )}
+            <p className="mt-4 text-center text-xs text-subtle">🔒 Токен зберігається лише у твоєму браузері</p>
           </div>
         </div>
       </div>
@@ -253,8 +269,28 @@ export default function App() {
               <span className="hidden sm:inline">{syncTone.text}</span>
             </div>
             <button
+              type="button"
+              onClick={() => setShowBalance(v => !v)}
+              className="w-11 h-11 flex items-center justify-center rounded-xl text-subtle hover:text-text hover:bg-panelHi transition-colors"
+              aria-label={showBalance ? "Приховати суми" : "Показати суми"}
+              title={showBalance ? "Приховати суми" : "Показати суми"}
+            >
+              {showBalance ? (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              ) : (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              )}
+            </button>
+            <button
+              type="button"
               onClick={() => setMenuOpen(true)}
-              className="w-11 h-11 -mr-1.5 flex items-center justify-center text-subtle hover:text-text transition-colors"
+              className="w-11 h-11 -mr-1.5 flex items-center justify-center text-subtle hover:text-text transition-colors rounded-xl hover:bg-panelHi"
               aria-label="Меню"
             >
               <svg width="18" height="13" viewBox="0 0 18 13" fill="none">
@@ -276,11 +312,24 @@ export default function App() {
             onClick={e => e.stopPropagation()}
             style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
-            <div className="px-5 py-4 border-b border-line">
-              <div className="text-sm font-semibold text-text">
-                {clientInfo?.name || "ФІНІК"}
+            <div className="px-5 py-4 border-b border-line flex items-start justify-between gap-2">
+              <div>
+                <div className="text-sm font-semibold text-text">
+                  {clientInfo?.name || "ФІНІК"}
+                </div>
+                <div className="text-xs text-subtle mt-0.5">Особисті фінанси</div>
               </div>
-              <div className="text-xs text-subtle mt-0.5">Особистий фінансист</div>
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                aria-label="Закрити меню"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
               {[...PAGES, { id: "settings", label: "Налаштування" }].map(p => {
@@ -356,10 +405,10 @@ export default function App() {
         onTouchEnd={handleTouchEnd}
       >
         <Suspense fallback={<PageLoader />}>
-          {page === "overview"     && <Overview      mono={mono} storage={storage} onNavigate={handleNavigate} />}
-          {page === "transactions" && <Transactions  mono={mono} storage={storage} />}
+          {page === "overview"     && <Overview      mono={mono} storage={storage} onNavigate={handleNavigate} showBalance={showBalance} />}
+          {page === "transactions" && <Transactions  mono={mono} storage={storage} showBalance={showBalance} />}
           {page === "budgets"      && <Budgets       mono={mono} storage={storage} />}
-          {page === "assets"       && <Assets        mono={mono} storage={storage} />}
+          {page === "assets"       && <Assets        mono={mono} storage={storage} showBalance={showBalance} />}
           {page === "settings"     && <Settings      mono={mono} storage={storage} />}
         </Suspense>
       </div>

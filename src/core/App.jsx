@@ -48,26 +48,63 @@ export default function App() {
   // Головний екран — вибір модуля
   if (!activeModule) {
     return (
-      <div className="min-h-screen bg-bg flex flex-col items-center justify-center p-6">
-        <div className="text-center mb-10">
-          <div className="text-2xl font-bold tracking-wide text-text mb-1">Мій простір</div>
-          <div className="text-sm text-subtle">Обери модуль</div>
-        </div>
-        <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-          {MODULES.map(m => (
-            <button
-              key={m.id}
-              onClick={() => setActiveModule(m.id)}
-              className="bg-panel border border-line rounded-3xl p-6 flex flex-col items-center gap-3 shadow-card hover:shadow-float hover:border-muted/50 transition-all active:scale-95"
-            >
-              <span className="text-text opacity-70">{m.icon}</span>
-              <div>
-                <div className="text-sm font-bold text-text">{m.label}</div>
-                <div className="text-xs text-subtle">{m.desc}</div>
-              </div>
-            </button>
-          ))}
-        </div>
+      <div
+        className="min-h-dvh bg-bg flex flex-col"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <header className="px-6 pt-10 pb-2 max-w-lg mx-auto w-full">
+          <h1 className="text-3xl font-bold text-text tracking-tight">Мій простір</h1>
+          <p className="text-sm text-muted mt-1">Обери модуль для початку</p>
+        </header>
+        <main className="flex-1 px-6 pb-10 max-w-lg mx-auto w-full flex flex-col justify-center">
+          <div className="grid gap-4">
+            {MODULES.map(m => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setActiveModule(m.id)}
+                className={cn(
+                  "group relative w-full p-6 rounded-3xl border border-line bg-panel text-left",
+                  "shadow-card hover:shadow-float transition-all duration-300",
+                  "active:scale-[0.98] overflow-hidden",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+                )}
+              >
+                <div
+                  className={cn(
+                    "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none",
+                    m.gradient,
+                  )}
+                />
+                <div className="relative flex items-center gap-5">
+                  <div
+                    className={cn(
+                      "flex items-center justify-center w-16 h-16 rounded-2xl shrink-0 transition-colors",
+                      m.iconClass,
+                    )}
+                  >
+                    {m.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-semibold text-text tracking-tight">{m.label}</h2>
+                    <p className="text-sm text-subtle mt-0.5">{m.desc}</p>
+                  </div>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-muted shrink-0 ml-auto opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+                    aria-hidden
+                  >
+                    <path d="M9 18l6-6-6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </button>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }
@@ -91,7 +128,7 @@ export default function App() {
       </div>
 
       <Suspense fallback={<PageLoader />}>
-        {activeModule === "finyk"  && <FinykApp />}
+        {activeModule === "finyk"  && <FinykApp onBackToHub={() => setActiveModule(null)} />}
         {activeModule === "fizruk" && <FizrukApp />}
       </Suspense>
     </div>

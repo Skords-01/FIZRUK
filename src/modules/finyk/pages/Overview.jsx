@@ -2,7 +2,7 @@ import { useMemo, useEffect } from "react";
 import { CategoryChart } from "../components/CategoryChart";
 import { NetworthChart } from "../components/NetworthChart";
 import { MCC_CATEGORIES, CURRENCY } from "../constants";
-import { getDebtPaid, getRecvPaid, calcCategorySpent, getMonoTotals } from "../utils";
+import { getDebtPaid, getRecvPaid, calcCategorySpent, getMonoTotals, fmtAmt, fmtDate } from "../utils";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { cn } from "@shared/lib/cn";
 
@@ -23,7 +23,7 @@ const getNextBillingDate = (billingDay, now) => {
   return d;
 };
 
-function FlowRow({ flow }) {
+function FlowRow({ flow, showAmount = true }) {
   const isGreen = flow.color === "#22c55e";
   return (
     <div className="flex justify-between items-center py-3 border-b border-line last:border-0">
@@ -32,13 +32,15 @@ function FlowRow({ flow }) {
         <div className="text-xs text-subtle mt-0.5">{flow.hint}</div>
       </div>
       <div className={cn("text-[15px] font-bold tabular-nums shrink-0", isGreen ? "text-success" : "text-danger")}>
-        {flow.amount === null ? `${flow.sign}?` : `${flow.sign}${flow.amount.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}`} {flow.currency}
+        {showAmount
+          ? (flow.amount === null ? `${flow.sign}?` : `${flow.sign}${flow.amount.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}`) + ` ${flow.currency}`
+          : "••••"}
       </div>
     </div>
   );
 }
 
-export function Overview({ mono, storage, onNavigate }) {
+export function Overview({ mono, storage, onNavigate, showBalance = true }) {
   const { realTx, loadingTx, clientInfo, accounts, transactions } = mono;
   const { budgets, subscriptions, manualDebts, receivables, hiddenAccounts, excludedTxIds, monthlyPlan, networthHistory, saveNetworthSnapshot, txCategories } = storage;
 
@@ -77,6 +79,13 @@ export function Overview({ mono, storage, onNavigate }) {
   const catSpends = useMemo(() => MCC_CATEGORIES.filter(c => c.id !== "income").map(cat => ({
     ...cat, spent: calcCategorySpent(statTx, cat.id, txCategories)
   })).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent), [statTx, txCategories]);
+
+  const recentTx = useMemo(
+    () => [...statTx].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 5),
+    [statTx],
+  );
+
+  const budgetPreviewColors = ["bg-emerald-500", "bg-sky-500", "bg-amber-500", "bg-violet-500"];
 
   // Зберігаємо знімок нетворсу раз при завантаженні свіжих даних
   useEffect(() => {
@@ -150,54 +159,144 @@ export function Overview({ mono, storage, onNavigate }) {
     <div className="flex-1 overflow-y-auto overscroll-contain">
       <div className="px-4 pt-4 pb-6 space-y-4 max-w-4xl mx-auto">
 
-        {/* ── Hero ── */}
-        <div className="rounded-3xl bg-gradient-to-br from-panel via-panel to-emerald-500/[0.06] border border-line p-5 shadow-float">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex w-10 h-10 rounded-xl bg-emerald-500/12 text-emerald-600 items-center justify-center border border-emerald-500/15" aria-hidden>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="5" width="20" height="14" rx="2" />
-                <line x1="2" y1="10" x2="22" y2="10" />
-              </svg>
+        {/* ── Hero (як у прототипі: градієнт + зведення) ── */}
+        <div className="rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-5 shadow-float border border-white/10">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-emerald-100/90 text-sm">Загальний нетворс</p>
+              <p className="text-[11px] text-emerald-200/70 mt-0.5">{firstName} · {dateLabel}</p>
+            </div>
+          </div>
+          <div className={cn("text-[40px] font-bold tracking-tight leading-tight mt-2 tabular-nums", !showBalance && "tracking-widest")}>
+            {showBalance ? (
+              <>
+                {networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
+                <span className="text-2xl font-semibold text-emerald-100 ml-1">₴</span>
+              </>
+            ) : (
+              "••••••"
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-3 text-emerald-100">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-90" aria-hidden>
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+              <polyline points="17 6 23 6 23 12" />
+            </svg>
+            <span className="text-sm">
+              {showBalance
+                ? `Баланс місяця: ${monthBalance >= 0 ? "+" : "−"}${Math.abs(monthBalance).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴`
+                : "••••"}
             </span>
-            <div>
-              <div className="text-xs text-subtle font-medium">Огляд</div>
-              <div className="text-sm font-semibold text-text leading-tight">
-                {dateLabel} · {firstName}
-              </div>
-            </div>
           </div>
-          <div className={cn(
-            "text-[44px] font-bold tracking-tight leading-none mt-2 tabular-nums",
-            networth >= 0 ? "text-text" : "text-danger"
-          )}>
-            {networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
-            <span className="text-2xl font-semibold text-muted ml-1.5">₴</span>
-          </div>
-          <div className="text-xs text-subtle/70 mt-1">Загальний нетворс</div>
-
-          <div className="flex gap-4 mt-4 pt-4 border-t border-line/60">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 pt-4 border-t border-white/20 text-sm">
             <div>
-              <div className="text-[11px] text-subtle mb-0.5">На картках</div>
-              <div className="text-sm font-semibold text-success tabular-nums">
-                +{monoTotal.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+              <div className="text-[11px] text-emerald-200/80 mb-0.5">На картках</div>
+              <div className="font-semibold tabular-nums text-emerald-50">
+                {showBalance ? `+${monoTotal.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴` : "••••"}
               </div>
             </div>
-            <div className="w-px bg-line" />
+            <div className="w-px bg-white/25 hidden sm:block self-stretch min-h-[2.5rem]" />
             <div>
-              <div className="text-[11px] text-subtle mb-0.5">Борги</div>
-              <div className="text-sm font-semibold text-danger tabular-nums">
-                −{totalDebt.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+              <div className="text-[11px] text-emerald-200/80 mb-0.5">Борги</div>
+              <div className="font-semibold tabular-nums text-emerald-50">
+                {showBalance ? `−${totalDebt.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴` : "••••"}
               </div>
             </div>
-            <div className="w-px bg-line" />
+            <div className="w-px bg-white/25 hidden sm:block self-stretch min-h-[2.5rem]" />
             <div>
-              <div className="text-[11px] text-subtle mb-0.5">Баланс місяця</div>
-              <div className={cn("text-sm font-semibold tabular-nums", monthBalance >= 0 ? "text-success" : "text-danger")}>
-                {monthBalance >= 0 ? "+" : "−"}{Math.abs(monthBalance).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+              <div className="text-[11px] text-emerald-200/80 mb-0.5">Місяць</div>
+              <div className={cn("font-semibold tabular-nums", monthBalance >= 0 ? "text-emerald-50" : "text-amber-200")}>
+                {showBalance
+                  ? `${monthBalance >= 0 ? "+" : "−"}${Math.abs(monthBalance).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴`
+                  : "••••"}
               </div>
             </div>
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+            <div className="flex items-center gap-2 text-emerald-600">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+              <span className="text-xs text-subtle">Дохід</span>
+            </div>
+            <p className="text-xl font-semibold mt-1 tabular-nums text-text">
+              {showBalance ? `+${income.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}` : "••••"} <span className="text-base font-medium text-muted">₴</span>
+            </p>
+          </div>
+          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+            <div className="flex items-center gap-2 text-red-500">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+                <polyline points="17 18 23 18 23 12" />
+              </svg>
+              <span className="text-xs text-subtle">Витрати</span>
+            </div>
+            <p className="text-xl font-semibold mt-1 tabular-nums text-text">
+              {showBalance ? `−${spent.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}` : "••••"} <span className="text-base font-medium text-muted">₴</span>
+            </p>
+          </div>
+        </div>
+
+        {recentTx.length > 0 && (
+          <div className="bg-panel border border-line/60 rounded-2xl overflow-hidden shadow-card">
+            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+              <span className="text-base font-semibold text-text">Останні операції</span>
+              <button type="button" onClick={() => onNavigate("transactions")} className="text-xs font-medium text-emerald-600 hover:text-emerald-700 py-2 px-1 min-h-[40px]">
+                Усі →
+              </button>
+            </div>
+            <div className="px-4 pb-3 space-y-0 divide-y divide-line/60">
+              {recentTx.map(t => (
+                <div key={t.id} className="flex items-center justify-between gap-3 py-3 first:pt-0">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-text truncate">{t.description || "Операція"}</p>
+                    <p className="text-xs text-subtle mt-0.5">{fmtDate(t.time)}</p>
+                  </div>
+                  <span className={cn("font-semibold text-sm tabular-nums shrink-0", t.amount > 0 ? "text-success" : "text-text")}>
+                    {showBalance ? fmtAmt(t.amount, CURRENCY.UAH) : "••••"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {limitBudgets.length > 0 && (
+          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+            <div className="text-base font-semibold text-text mb-3">Виконання бюджету</div>
+            <div className="space-y-4">
+              {limitBudgets.slice(0, 3).map((b, i) => {
+                const cat = MCC_CATEGORIES.find(c => c.id === b.categoryId);
+                const s = calcCategorySpent(statTx, b.categoryId, txCategories);
+                const pct = b.limit > 0 ? Math.min(100, Math.round((s / b.limit) * 100)) : 0;
+                const bar = budgetPreviewColors[i % budgetPreviewColors.length];
+                return (
+                  <div key={`${b.categoryId}-${i}`}>
+                    <div className="flex justify-between text-sm mb-1.5 gap-2">
+                      <span className="font-medium truncate">{cat?.label || b.categoryId}</span>
+                      <span className="text-muted tabular-nums text-xs shrink-0">
+                        {showBalance ? `${s.toLocaleString("uk-UA")} / ${b.limit.toLocaleString("uk-UA")} ₴` : "••••"}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-panelHi rounded-full overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-all duration-700", bar)}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button type="button" onClick={() => onNavigate("budgets")} className="w-full mt-4 text-sm font-medium text-emerald-600 py-2 min-h-[44px] rounded-xl hover:bg-emerald-500/5 transition-colors">
+              Усі бюджети →
+            </button>
+          </div>
+        )}
 
         {/* ── Networth chart ── */}
         {networthHistory.length >= 2 && (
@@ -235,14 +334,20 @@ export function Overview({ mono, storage, onNavigate }) {
             <span className="text-xs font-medium text-subtle">Фінпульс</span>
             <span className="text-xs text-subtle/60">{remainingDays} дн. до кінця місяця</span>
           </div>
-          <div className={cn("text-[34px] font-bold leading-tight tabular-nums mt-2", pulseColor)}>
-            {Math.abs(dayBudget).toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
-            <span className="text-base font-medium text-subtle ml-1">₴/день</span>
+          <div className={cn("text-[34px] font-bold leading-tight tabular-nums mt-2", pulseColor, !showBalance && "tracking-widest")}>
+            {showBalance ? (
+              <>
+                {Math.abs(dayBudget).toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
+                <span className="text-base font-medium text-subtle ml-1">₴/день</span>
+              </>
+            ) : (
+              "••••"
+            )}
           </div>
           <div className={cn("text-sm mt-0.5", pulseColor)}>
             {pulseBad ? "Перевитрата" : pulseWarn ? "Обережно — майже вичерпано" : "В нормі"}
           </div>
-          {(recurringOutThisMonth > 0 || recurringInThisMonth > 0) && (
+          {(recurringOutThisMonth > 0 || recurringInThisMonth > 0) && showBalance && (
             <div className="text-[11px] text-subtle/70 mt-2 leading-relaxed">
               Враховано планових: −{recurringOutThisMonth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} / +{recurringInThisMonth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
               {unknownOutCount > 0 && ` + ${unknownOutCount} без суми`}
@@ -256,27 +361,33 @@ export function Overview({ mono, storage, onNavigate }) {
             <div>
               <div className="text-xs text-subtle font-medium">Витрати</div>
               <div className="text-[26px] font-bold tabular-nums mt-1 leading-tight">
-                {spent.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
-                <span className="text-base font-medium text-muted ml-1">₴</span>
+                {showBalance ? spent.toLocaleString("uk-UA", { maximumFractionDigits: 0 }) : "••••"}
+                {showBalance && <span className="text-base font-medium text-muted ml-1">₴</span>}
               </div>
             </div>
             <div className="text-right">
               <div className="text-xs text-subtle font-medium">Дохід</div>
               <div className="text-[26px] font-bold tabular-nums mt-1 leading-tight text-success">
-                +{income.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
-                <span className="text-base font-medium text-success/70 ml-1">₴</span>
+                {showBalance ? (
+                  <>
+                    +{income.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
+                    <span className="text-base font-medium text-success/70 ml-1">₴</span>
+                  </>
+                ) : (
+                  "••••"
+                )}
               </div>
             </div>
           </div>
           <div className="h-1.5 bg-bg rounded-full overflow-hidden">
             <div
               className={cn("h-full rounded-full transition-all duration-700", spent > income ? "bg-danger" : "bg-success")}
-              style={{ width: `${spendPct}%` }}
+              style={{ width: showBalance ? `${spendPct}%` : "0%" }}
             />
           </div>
           <div className="flex justify-between mt-2">
-            <span className="text-[11px] text-subtle/70">{Math.round(spendPct)}% доходу</span>
-            <span className="text-[11px] text-subtle/70">прогноз {projectedSpend.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴</span>
+            <span className="text-[11px] text-subtle/70">{showBalance ? `${Math.round(spendPct)}% доходу` : "—"}</span>
+            <span className="text-[11px] text-subtle/70">{showBalance ? `прогноз ${projectedSpend.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴` : "—"}</span>
           </div>
         </div>
 
@@ -311,7 +422,7 @@ export function Overview({ mono, storage, onNavigate }) {
               <button onClick={() => onNavigate("budgets")} className="text-xs text-primary/80 hover:text-primary transition-colors py-2 px-1 min-h-[36px]">Усі →</button>
             </div>
             <div className="px-5 pb-3">
-              {plannedFlows.slice(0, 5).map(f => <FlowRow key={f.id} flow={f} />)}
+              {plannedFlows.slice(0, 5).map(f => <FlowRow key={f.id} flow={f} showAmount={showBalance} />)}
             </div>
           </div>
         )}

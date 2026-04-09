@@ -18,7 +18,7 @@ function getAccountShortName(acc) {
   return typeMap[acc.type] || acc.type || "Рахунок";
 }
 
-export function TxRow({ tx, onClick, highlighted, onHide, hidden, overrideCatId, onCatChange, accounts }) {
+export function TxRow({ tx, onClick, highlighted, onHide, hidden, overrideCatId, onCatChange, accounts, hideAmount = false }) {
   const [catPicker, setCatPicker] = useState(false);
   const isIncome = tx.amount > 0;
   const cat = isIncome
@@ -74,11 +74,11 @@ export function TxRow({ tx, onClick, highlighted, onHide, hidden, overrideCatId,
           <div className="flex items-center gap-1 shrink-0 ml-2">
           <div className="text-right">
             <div className={cn("text-sm font-semibold tabular-nums", tx.amount > 0 ? "text-success" : "text-text")}>
-              {fmtAmt(tx.amount, CURRENCY.UAH)}
+              {hideAmount ? "••••" : fmtAmt(tx.amount, CURRENCY.UAH)}
             </div>
             {tx.currencyCode !== CURRENCY.UAH && tx.operationAmount && (
               <div className="text-[10px] text-subtle/70 tabular-nums">
-                {fmtAmt(tx.operationAmount, tx.currencyCode)}
+                {hideAmount ? "••••" : fmtAmt(tx.operationAmount, tx.currencyCode)}
               </div>
             )}
           </div>
