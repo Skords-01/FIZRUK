@@ -33,6 +33,13 @@ function parseCsv(s) {
     .filter(Boolean);
 }
 
+function proxyImg(src) {
+  if (!src) return src;
+  if (src.startsWith("data:")) return src;
+  if (src.startsWith("/")) return src;
+  return `/api/img?url=${encodeURIComponent(src)}`;
+}
+
 export function Workouts() {
   const { search, primaryGroupsUk, addExercise } = useExerciseCatalog();
   const [q, setQ] = useState("");
@@ -191,7 +198,7 @@ export function Workouts() {
                       {selected.images.slice(0, 5).map((src) => (
                         <img
                           key={src}
-                          src={src}
+                          src={proxyImg(src)}
                           alt={selected?.name?.uk || selected?.name?.en || "exercise"}
                           loading="lazy"
                           className="h-40 w-40 rounded-2xl object-cover border border-line bg-bg"
