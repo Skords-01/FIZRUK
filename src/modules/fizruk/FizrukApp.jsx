@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dashboard } from "./pages/Dashboard";
 import { Workouts } from "./pages/Workouts";
 import { Progress } from "./pages/Progress";
+import { Measurements } from "./pages/Measurements";
 import { cn } from "@shared/lib/cn";
 
 const NAV = [
@@ -16,6 +17,10 @@ const NAV = [
   {
     id: "progress", label: "Прогрес",
     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+  },
+  {
+    id: "measurements", label: "Заміри",
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-2-2h-3"/><path d="M8 6H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/><path d="M16 3v18"/><path d="M8 3v18"/></svg>,
   },
 ];
 
@@ -36,6 +41,7 @@ export default function FizrukApp() {
         {page === "dashboard" && <Dashboard />}
         {page === "workouts"  && <Workouts />}
         {page === "progress"  && <Progress />}
+        {page === "measurements"  && <Measurements />}
       </div>
 
       {/* Bottom nav */}
