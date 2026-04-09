@@ -58,6 +58,22 @@ export function Workouts() {
   const pickList = useMemo(() => search(pickQ).slice(0, 60), [pickQ]);
   const activeWorkout = workouts.find(w => w.id === activeWorkoutId) || null;
 
+  const lastByExerciseId = useMemo(() => {
+    const out = {};
+    for (const w of workouts || []) {
+      if (w.id === activeWorkoutId) continue;
+      for (const it of w.items || []) {
+        const exId = it.exerciseId;
+        if (!exId) continue;
+        const existing = out[exId];
+        if (!existing || (w.startedAt || "").localeCompare(existing._startedAt || "") > 0) {
+          out[exId] = { ...it, _startedAt: w.startedAt };
+        }
+      }
+    }
+    return out;
+  }, [workouts, activeWorkoutId]);
+
   const grouped = useMemo(() => {
     const m = new Map();
     for (const ex of list) {
@@ -82,7 +98,7 @@ export function Workouts() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 pt-4 pb-16">
+      <div className="max-w-2xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="text-sm font-semibold text-muted">Тренування</div>
           <div className="flex items-center gap-2">
@@ -98,6 +114,11 @@ export function Workouts() {
             >
               Журнал
             </button>
+            {mode === "catalog" && (
+              <Button size="sm" className="h-9 px-4" onClick={() => setAddOpen(true)}>
+                + Додати
+              </Button>
+            )}
           </div>
         </div>
 
@@ -153,6 +174,21 @@ export function Workouts() {
                   ) : (
                     (activeWorkout.items || []).map((it) => (
                       <div key={it.id} className="border border-line rounded-2xl p-3 bg-bg">
+                        {it.exerciseId && lastByExerciseId[it.exerciseId] && (
+                          <div className="text-[11px] text-subtle/70 mb-1">
+                            Минулого разу{" "}
+                            {lastByExerciseId[it.exerciseId]._startedAt
+                              ? `(${new Date(lastByExerciseId[it.exerciseId]._startedAt).toLocaleDateString("uk-UA", { month: "short", day: "numeric" })})`
+                              : ""}:
+                            {" "}
+                            {lastByExerciseId[it.exerciseId].type === "strength"
+                              ? (lastByExerciseId[it.exerciseId].sets || []).map(s => `${s.weightKg ?? 0}×${s.reps ?? 0}`).slice(0, 3).join(", ")
+                              : lastByExerciseId[it.exerciseId].type === "distance"
+                                ? `${lastByExerciseId[it.exerciseId].distanceM ?? 0}м за ${lastByExerciseId[it.exerciseId].durationSec ?? 0}с`
+                                : `${lastByExerciseId[it.exerciseId].durationSec ?? 0}с`
+                            }
+                          </div>
+                        )}
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="text-sm font-semibold text-text truncate">{it.nameUk}</div>
