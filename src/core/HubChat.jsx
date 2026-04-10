@@ -372,12 +372,11 @@ export function HubChat({ onClose }) {
   }, [speaking]);
 
   const sendRef = useRef(null);
-  sendRef.current = send;
 
   const { listening, toggle: toggleMic, supported: speechSupported } = useSpeech((text) => {
     if (text.trim()) {
       lastWasVoice.current = true;
-      sendRef.current(text.trim());
+      sendRef.current?.(text.trim());
     }
   });
 
@@ -459,6 +458,7 @@ export function HubChat({ onClose }) {
       setLoading(false);
     }
   };
+  sendRef.current = send;
 
   const clearChat = () => {
     stopSpeaking();
