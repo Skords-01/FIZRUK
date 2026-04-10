@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useStorage } from "../modules/finyk/hooks/useStorage";
+import { useMonobank } from "../modules/finyk/hooks/useMonobank";
+import { getCategory, getMonoTotals, getDebtPaid } from "../modules/finyk/utils";
 import { cn } from "@shared/lib/cn";
 
 // Читаємо дані Фізрука з localStorage без монтування модуля
@@ -16,42 +18,87 @@ function getFizrukContext() {
   } catch { return null; }
 }
 
-function buildContext(storage) {
-  const { budgets, manualDebts, receivables, subscriptions, monthlyPlan } = storage;
+function buildContext(storage, mono) {
+  const { budgets, manualDebts, receivables, subscriptions, monthlyPlan, excludedTxIds, txCategories } = storage;
+  const { realTx, accounts, transactions, hiddenAccounts, clientInfo } = mono;
   const parts = [];
 
-  if (monthlyPlan?.income || monthlyPlan?.expense) {
-    parts.push(`Фінплан: дохід ${monthlyPlan.income || 0}₴/міс, витрати ${monthlyPlan.expense || 0}₴/міс`);
+  // Ім'я
+  if (clientInfo?.name) parts.push(`Користувач: ${clientInfo.name}`);
+
+  // Баланс і борги з Mono
+  if (accounts?.length > 0) {
+    const { balance, debt } = getMonoTotals(accounts, hiddenAccounts || []);
+    parts.push(`На картках: ${balance.toFixed(0)}₴, борг по кредитках: ${debt.toFixed(0)}₴`);
   }
 
+  // Витрати і дохід місяця
+  if (realTx?.length > 0) {
+    const statTx = realTx.filter(t => !excludedTxIds?.has(t.id));
+    const spent = statTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount / 100), 0);
+    const income = statTx.filter(t => t.amount > 0).reduce((s, t) => s + t.amount / 100, 0);
+    parts.push(`Витрати місяця: ${spent.toFixed(0)}₴, дохід: ${income.toFixed(0)}₴`);
+
+    // Топ категорій
+    const catMap = {};
+    statTx.filter(t => t.amount < 0).forEach(t => {
+      const cat = getCategory(t.description, t.mcc, txCategories?.[t.id])?.label || "Інше";
+      catMap[cat] = (catMap[cat] || 0) + Math.abs(t.amount / 100);
+    });
+    const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 4)
+      .map(([k, v]) => `${k}: ${v.toFixed(0)}₴`).join(", ");
+    if (topCats) parts.push(`Топ витрат: ${topCats}`);
+
+    // Останні 5 транзакцій
+    const recent = [...statTx].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 5)
+      .map(t => `${t.description || "—"}: ${(t.amount / 100).toFixed(0)}₴`).join("; ");
+    if (recent) parts.push(`Останні операції: ${recent}`);
+  }
+
+  // Ручні борги
   const debts = manualDebts.filter(d => d.totalAmount > 0);
   if (debts.length > 0) {
-    parts.push(`Борги: ${debts.map(d => `${d.name} ${d.totalAmount}₴`).join(", ")}`);
+    const debtStr = debts.map(d => {
+      const paid = getDebtPaid(d, transactions || []);
+      const rem = Math.max(0, d.totalAmount - paid);
+      return `${d.name}: залишок ${rem.toFixed(0)}₴`;
+    }).join(", ");
+    parts.push(`Борги: ${debtStr}`);
   }
 
+  // Дебіторка
   const recv = receivables.filter(r => r.amount > 0);
   if (recv.length > 0) {
     parts.push(`Мені винні: ${recv.map(r => `${r.name} ${r.amount}₴`).join(", ")}`);
   }
 
+  // Ліміти бюджету
   const limits = budgets.filter(b => b.type === "limit");
   if (limits.length > 0) {
-    parts.push(`Ліміти витрат: ${limits.map(b => `${b.categoryId} — ${b.limit}₴`).join(", ")}`);
+    parts.push(`Ліміти: ${limits.map(b => `${b.categoryId} ${b.limit}₴`).join(", ")}`);
   }
 
+  // Цілі
   const goals = budgets.filter(b => b.type === "goal");
   if (goals.length > 0) {
     parts.push(`Цілі: ${goals.map(b => `${b.name} — ${b.savedAmount || 0}/${b.targetAmount}₴`).join(", ")}`);
   }
 
-  if (subscriptions.length > 0) {
-    parts.push(`Підписки: ${subscriptions.map(s => `${s.name} (${s.billingDay}-го)`).join(", ")}`);
+  // Фінплан
+  if (monthlyPlan?.income || monthlyPlan?.expense) {
+    parts.push(`Фінплан: дохід ${monthlyPlan.income || 0}₴/міс, витрати ${monthlyPlan.expense || 0}₴/міс`);
   }
 
+  // Підписки
+  if (subscriptions?.length > 0) {
+    parts.push(`Підписки: ${subscriptions.map(s => s.name).join(", ")}`);
+  }
+
+  // Фізрук
   const fizruk = getFizrukContext();
   if (fizruk) parts.push(fizruk);
 
-  if (parts.length === 0) return "Дані не налаштовані. Відповідай загально.";
+  if (parts.length === 0) return "Фінансових даних немає. Користувач ще не підключив Monobank.";
   return parts.join(". ");
 }
 
@@ -102,6 +149,7 @@ function useSpeech(onResult) {
 
 export function HubChat({ onClose }) {
   const storage = useStorage();
+  const mono = useMonobank();
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Привіт! Я бачу твої фінанси та тренування. Запитуй — відповім коротко 💬" },
   ]);
@@ -131,7 +179,7 @@ export function HubChat({ onClose }) {
     setLoading(true);
 
     try {
-      const context = buildContext(storage);
+      const context = buildContext(storage, mono);
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

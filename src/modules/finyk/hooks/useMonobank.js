@@ -1,8 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { TX_CACHE_TTL, CURRENCY } from "../constants";
 
-const CACHE_KEY = "finto_tx_cache";
-const INFO_CACHE_KEY = "finto_info_cache";
+const CACHE_KEY = "finyk_tx_cache";
+const INFO_CACHE_KEY = "finyk_info_cache";
+
+// Міграція старих ключів
+try {
+  for (const [o, n] of [["finto_tx_cache","finyk_tx_cache"],["finto_info_cache","finyk_info_cache"],["finto_token","finyk_token"]]) {
+    const v = localStorage.getItem(o);
+    if (v !== null && localStorage.getItem(n) === null) localStorage.setItem(n, v);
+    if (v !== null) localStorage.removeItem(o);
+  }
+} catch {}
 
 function loadCache() {
   try {
@@ -130,7 +139,7 @@ async function fetchStatementWithRetry(tok, accId, from, to, maxAttempts = 3) {
 export function useMonobank() {
   const [token, setToken] = useState(() => {
     try {
-      return localStorage.getItem("finto_token") || "";
+      return localStorage.getItem("finyk_token") || "";
     } catch {
       return "";
     }
@@ -355,7 +364,7 @@ export function useMonobank() {
       setClientInfo(info);
       setAccounts(info.accounts || []);
       try {
-        localStorage.setItem("finto_token", cleanToken);
+        localStorage.setItem("finyk_token", cleanToken);
       } catch {}
       setToken(cleanToken);
 
