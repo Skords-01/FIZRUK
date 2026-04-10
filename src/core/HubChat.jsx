@@ -145,10 +145,17 @@ function buildContext() {
     const w = raw ? JSON.parse(raw) : [];
     if (Array.isArray(w) && w.length > 0) {
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const cnt = w.filter(x => x.startedAt > weekAgo).length;
-      const last = [...w].sort((a, b) => b.startedAt - a.startedAt)[0];
+      const withTs = w.map(x => ({ ...x, _ts: new Date(x.startedAt).getTime() }));
+      const cnt = withTs.filter(x => x._ts > weekAgo).length;
+      const sorted = [...withTs].sort((a, b) => b._ts - a._ts);
+      const last = sorted[0];
       const dt = last ? new Date(last.startedAt).toLocaleDateString("uk-UA", { day: "numeric", month: "short" }) : "—";
-      lines.push(`[Тренування] останнє: ${dt}, за тиждень: ${cnt}`);
+      const totalAll = w.length;
+      lines.push(`[Тренування] всього: ${totalAll}, за тиждень: ${cnt}, останнє: ${dt}`);
+      if (sorted.length > 0 && sorted[0].items?.length > 0) {
+        const exercises = sorted[0].items.map(i => i.name || i.exercise || "—").join(", ");
+        lines.push(`[Останнє тренування] ${exercises}`);
+      }
     }
   } catch {}
 
@@ -235,23 +242,33 @@ function executeAction(action) {
 function useSpeech(onResult) {
   const [listening, setListening] = useState(false);
   const recRef = useRef(null);
+  const cbRef = useRef(onResult);
+  cbRef.current = onResult;
+
   const supported = typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
   const toggle = useCallback(() => {
     if (!supported) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (listening) { recRef.current?.stop(); setListening(false); return; }
+    if (listening) { recRef.current?.abort(); setListening(false); return; }
     const rec = new SR();
     recRef.current = rec;
     rec.lang = "uk-UA";
+    rec.continuous = false;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-    rec.onresult = (e) => onResult(e.results[0][0].transcript);
-    rec.onerror = () => setListening(false);
+    rec.onresult = (e) => {
+      const transcript = e.results[0]?.[0]?.transcript;
+      if (transcript) cbRef.current(transcript);
+    };
+    rec.onerror = (e) => {
+      console.warn("Speech error:", e.error);
+      setListening(false);
+    };
     rec.onend = () => setListening(false);
     rec.start();
     setListening(true);
-  }, [listening, onResult, supported]);
+  }, [listening, supported]);
 
   return { listening, toggle, supported };
 }
@@ -288,8 +305,13 @@ export function HubChat({ onClose }) {
   useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages, loading]);
   useEffect(() => { setTimeout(() => inputRef.current?.focus(), 100); }, []);
 
+  const sendRef = useRef(null);
+  sendRef.current = send;
+
   const { listening, toggle: toggleMic, supported: speechSupported } = useSpeech((text) => {
-    setInput((p) => (p ? `${p} ${text}` : text));
+    if (text.trim()) {
+      sendRef.current(text.trim());
+    }
   });
 
   const hasData = useMemo(() => {
