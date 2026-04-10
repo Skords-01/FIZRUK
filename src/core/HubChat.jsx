@@ -32,10 +32,12 @@ function buildContext(storage, mono) {
   // Ім'я
   if (clientInfo?.name) parts.push(`Користувач: ${clientInfo.name}`);
 
-  // Баланс і борги з Mono
+  // Баланс і борги (як в Overview)
   if (accounts?.length > 0) {
-    const { balance, debt } = getMonoTotals(accounts, hiddenAccounts || []);
-    parts.push(`На картках: ${balance.toFixed(0)}₴, борг по кредитках: ${debt.toFixed(0)}₴`);
+    const { balance, debt: monoDebt } = getMonoTotals(accounts, hiddenAccounts || []);
+    const manualDebtTotal = manualDebts.reduce((s, d) => s + Math.max(0, d.totalAmount - getDebtPaid(d, transactions || [])), 0);
+    const totalDebt = monoDebt + manualDebtTotal;
+    parts.push(`На картках: ${balance.toFixed(0)}₴, загальний борг: ${totalDebt.toFixed(0)}₴ (кредитки ${monoDebt.toFixed(0)}₴ + ручні ${manualDebtTotal.toFixed(0)}₴)`);
   }
 
   // Витрати і дохід місяця
@@ -61,7 +63,7 @@ function buildContext(storage, mono) {
     if (recent) parts.push(`Останні операції: ${recent}`);
   }
 
-  // Ручні борги
+  // Ручні борги (деталі)
   const debts = manualDebts.filter(d => d.totalAmount > 0);
   if (debts.length > 0) {
     const debtStr = debts.map(d => {
@@ -69,7 +71,7 @@ function buildContext(storage, mono) {
       const rem = Math.max(0, d.totalAmount - paid);
       return `${d.name}: залишок ${rem.toFixed(0)}₴`;
     }).join(", ");
-    parts.push(`Борги: ${debtStr}`);
+    parts.push(`Деталі боргів: ${debtStr}`);
   }
 
   // Дебіторка
