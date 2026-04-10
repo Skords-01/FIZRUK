@@ -322,7 +322,7 @@ export function HubChat({ onClose }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-      // Якщо є tool_calls — виконуємо і відправляємо результат
+      // Якщо є tool_calls — виконуємо і відправляємо результат для фінальної відповіді
       if (data.tool_calls && data.tool_calls.length > 0) {
         const toolResults = data.tool_calls.map(tc => ({
           tool_use_id: tc.id,
@@ -331,20 +331,26 @@ export function HubChat({ onClose }) {
 
         const actionsText = toolResults.map(r => `✅ ${r.content}`).join("\n");
 
-        const res2 = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            context: buildContext(),
-            messages: history,
-            tool_results: toolResults,
-            tool_calls_raw: data.tool_calls_raw,
-          }),
-        });
-        const data2 = await res2.json();
-        if (!res2.ok) throw new Error(data2.error || `HTTP ${res2.status}`);
+        let followUp = "";
+        try {
+          const res2 = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              context: buildContext(),
+              messages: history,
+              tool_results: toolResults,
+              tool_calls_raw: data.tool_calls_raw,
+            }),
+          });
+          const data2 = await res2.json();
+          if (res2.ok && data2.text) followUp = data2.text;
+        } catch {}
 
-        setMessages(m => [...m, { role: "assistant", text: `${actionsText}\n\n${data2.text || "Готово."}` }]);
+        setMessages(m => [...m, {
+          role: "assistant",
+          text: followUp ? `${actionsText}\n\n${followUp}` : actionsText,
+        }]);
 
         window.dispatchEvent(new Event("storage"));
       } else {

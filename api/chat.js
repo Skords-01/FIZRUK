@@ -100,18 +100,21 @@ export default async function handler(req, res) {
   try {
     const { context = "", messages = [], tool_results, tool_calls_raw } = req.body || {};
 
-    // Якщо є tool_results — це другий крок (після виконання дій на клієнті)
+    // Другий крок: клієнт виконав tool calls і повертає результати
     if (tool_results && tool_calls_raw) {
       const toolResultMessages = tool_results.map(r => ({
         type: "tool_result",
         tool_use_id: r.tool_use_id,
-        content: r.content,
+        content: String(r.content || "ok"),
       }));
 
-      // Відтворюємо conversation: messages + assistant tool_use + user tool_result
-      const cleaned = sanitizeMessages(messages);
+      // Беремо лише останнє user-повідомлення (питання що спричинило tool call)
+      const lastUserMsg = [...(Array.isArray(messages) ? messages : [])]
+        .reverse()
+        .find(m => m?.role === "user" && typeof m?.content === "string" && m.content.trim());
+
       const fullMessages = [
-        ...cleaned,
+        ...(lastUserMsg ? [{ role: "user", content: lastUserMsg.content }] : []),
         { role: "assistant", content: tool_calls_raw },
         { role: "user", content: toolResultMessages },
       ];
