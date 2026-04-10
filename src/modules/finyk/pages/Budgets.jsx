@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Button } from "@shared/components/ui/Button";
-import { PaymentsCalendarBlock } from "../components/PaymentsCalendarBlock";
 import { calcCategorySpent } from "../utils";
 import { MCC_CATEGORIES } from "../constants";
 import { cn } from "@shared/lib/cn";
@@ -142,7 +141,6 @@ export function Budgets({ mono, storage }) {
           );
         })}
 
-        <PaymentsCalendarBlock mono={mono} storage={storage} />
 
         {/* Add form */}
         {showForm ? (
