@@ -61,6 +61,14 @@ function buildContext() {
   const d = readAllData();
   const lines = [];
 
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysLeft = daysInMonth - dayOfMonth;
+
+  lines.push(`[Сьогодні] ${now.toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`);
+  lines.push(`[День місяця] ${dayOfMonth} з ${daysInMonth} (залишилось ${daysLeft} днів)`);
+
   if (d.cacheTime) {
     const ts = new Intl.DateTimeFormat("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(d.cacheTime));
     lines.push(`[Оновлено] ${ts}`);
@@ -79,9 +87,14 @@ function buildContext() {
   if (d.statTx.length > 0) {
     const spent = d.statTx.filter(t => t.amount < 0).reduce((s, t) => s + getTxStatAmount(t, d.txSplits), 0);
     const income = d.statTx.filter(t => t.amount > 0).reduce((s, t) => s + t.amount / 100, 0);
+    const avgPerDay = dayOfMonth > 0 ? spent / dayOfMonth : 0;
+    const projected = avgPerDay * daysInMonth;
+
     lines.push(`[Витрати місяця] ${fmt(spent)} грн`);
     lines.push(`[Дохід місяця] ${fmt(income)} грн`);
     lines.push(`[Баланс місяця] ${fmt(income - spent)} грн`);
+    lines.push(`[Середня витрата/день] ${fmt(avgPerDay)} грн`);
+    lines.push(`[Прогноз витрат до кінця місяця] ${fmt(projected)} грн`);
 
     const cats = MCC_CATEGORIES
       .filter(c => c.id !== "income" && c.id !== INTERNAL_TRANSFER_ID)
@@ -92,12 +105,13 @@ function buildContext() {
       lines.push(`[Категорії витрат] ${cats.map(c => `${c.label}: ${fmt(c.spent)} грн`).join(", ")}`);
     }
 
-    const recent = [...d.statTx].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 8);
+    const recent = [...d.statTx].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 10);
     if (recent.length > 0) {
       lines.push("[Останні операції]");
       recent.forEach(t => {
         const cat = getCategory(t.description, t.mcc, d.txCategories[t.id]);
-        lines.push(`  id:${t.id} | ${t.description || "—"} | ${fmt(t.amount / 100)} грн | ${cat.label}`);
+        const date = t.time ? new Date(t.time * 1000).toLocaleDateString("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+        lines.push(`  id:${t.id} | ${date} | ${t.description || "—"} | ${fmt(t.amount / 100)} грн | ${cat.label}`);
       });
     }
   }
