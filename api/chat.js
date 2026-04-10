@@ -23,16 +23,39 @@ export default async function handler(req, res) {
 
   try {
     const { context = "", messages = [] } = req.body || {};
-    const cleanMessages = Array.isArray(messages)
-      ? messages
-          .filter(m => m?.role === "user" && typeof m?.content === "string" && m.content.trim())
-          .slice(-12)
+
+    const cleaned = Array.isArray(messages)
+      ? messages.filter(m => (m?.role === "user" || m?.role === "assistant") && typeof m?.content === "string" && m.content.trim())
       : [];
-    const system = `Ти персональний асистент. Бачиш дані фінансів (бюджети, борги, підписки) і тренувань користувача. Відповідай українською, стисло (2-4 речення). Якщо питання не стосується наявних даних — відповідай загально.
 
-Усі числа, суми, залишки, борги, доходи та витрати бери ТІЛЬКИ з блоку "Дані" нижче. Не використовуй числа з попередніх відповідей асистента, не перераховуй їх самостійно і не вигадуй нових. Якщо в "Дані" чогось немає або воно суперечливе — прямо скажи про це.
+    // Anthropic requires alternating user/assistant; dedupe consecutive same-role
+    const alternating = [];
+    for (const m of cleaned.slice(-12)) {
+      if (alternating.length > 0 && alternating[alternating.length - 1].role === m.role) continue;
+      alternating.push(m);
+    }
+    // Must start with user
+    while (alternating.length > 0 && alternating[0].role !== "user") alternating.shift();
+    // Must end with user
+    while (alternating.length > 0 && alternating[alternating.length - 1].role !== "user") alternating.pop();
 
-Дані: ${context}`;
+    if (alternating.length === 0) {
+      return res.status(400).json({ error: "Немає повідомлень" });
+    }
+
+    const system = [
+      "Ти фінансовий асистент користувача. Відповідай ТІЛЬКИ українською.",
+      "",
+      "ПРАВИЛА:",
+      "- Відповідай стисло: 2–4 речення, без вступних фраз.",
+      "- Усі числа, суми, залишки, борги — бери ВИКЛЮЧНО з блоку ДАНІ нижче.",
+      "- НІКОЛИ не вигадуй, не округлюй, не перераховуй числа самостійно.",
+      "- Якщо в ДАНІ чогось немає — скажи що не маєш цієї інформації.",
+      "- Не повторюй дані цілком — відповідай лише на конкретне питання.",
+      "",
+      "ДАНІ:",
+      context,
+    ].join("\n");
 
     const response = await fetch(ANTHROPIC_URL, {
       method: "POST",
@@ -43,9 +66,9 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
-        max_tokens: 800,
+        max_tokens: 600,
         system,
-        messages: cleanMessages,
+        messages: alternating,
       }),
     });
 
