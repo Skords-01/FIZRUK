@@ -87,12 +87,12 @@ export function Overview({ mono, storage, onNavigate, showBalance = true }) {
 
   const budgetPreviewColors = ["bg-emerald-500", "bg-sky-500", "bg-amber-500", "bg-violet-500"];
 
-  // Зберігаємо знімок нетворсу раз при завантаженні свіжих даних
+  // Зберігаємо знімок нетворсу при зміні будь-якої складової
   useEffect(() => {
     if (networth !== 0 && accounts.length > 0) {
       saveNetworthSnapshot(networth);
     }
-  }, [accounts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [networth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const budgetAlerts = useMemo(() => limitBudgets.filter(b => {
     const s = calcCategorySpent(statTx, b.categoryId, txCategories, txSplits);

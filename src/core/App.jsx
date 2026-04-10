@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@shared/lib/cn";
+import { HubChat } from "./HubChat";
 
 // Модулі — ліниво завантажуємо
 import { lazy, Suspense } from "react";
@@ -44,6 +45,7 @@ function PageLoader() {
 
 export default function App() {
   const [activeModule, setActiveModule] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Головний екран — вибір модуля
   if (!activeModule) {
@@ -56,7 +58,7 @@ export default function App() {
           <h1 className="text-3xl font-bold text-text tracking-tight">Мій простір</h1>
           <p className="text-sm text-muted mt-1">Обери модуль для початку</p>
         </header>
-        <main className="flex-1 px-6 pb-10 max-w-lg mx-auto w-full flex flex-col justify-center">
+        <main className="flex-1 px-6 pb-24 max-w-lg mx-auto w-full flex flex-col justify-center">
           <div className="grid gap-4">
             {MODULES.map(m => (
               <button
@@ -105,6 +107,22 @@ export default function App() {
             ))}
           </div>
         </main>
+
+        {/* Chat FAB */}
+        <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-6" style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom,0px))" }}>
+          <button
+            type="button"
+            onClick={() => setChatOpen(true)}
+            className="flex items-center gap-2.5 px-5 h-12 rounded-full bg-primary text-white shadow-float hover:brightness-110 active:scale-95 transition-all font-medium text-sm"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Асистент
+          </button>
+        </div>
+
+        {chatOpen && <HubChat onClose={() => setChatOpen(false)} />}
       </div>
     );
   }

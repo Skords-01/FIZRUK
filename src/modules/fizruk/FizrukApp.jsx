@@ -26,11 +26,15 @@ const NAV = [
   },
 ];
 
+const VALID_FIZRUK_PAGES = ["dashboard", "atlas", "workouts", "progress", "measurements", "exercise"];
+
 function parseHash() {
   const raw = (window.location.hash || "").replace(/^#/, "").trim();
-  if (!raw) return { page: "dashboard" };
+  // Ігноруємо хеш формату Фініка (#/page)
+  if (!raw || raw.startsWith("/")) return { page: "dashboard" };
   const [page, ...rest] = raw.split("/").filter(Boolean);
   if (page === "exercise" && rest[0]) return { page, exerciseId: rest[0] };
+  if (!VALID_FIZRUK_PAGES.includes(page)) return { page: "dashboard" };
   return { page };
 }
 

@@ -1,0 +1,266 @@
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useStorage } from "../modules/finyk/hooks/useStorage";
+import { cn } from "@shared/lib/cn";
+
+// Читаємо дані Фізрука з localStorage без монтування модуля
+function getFizrukContext() {
+  try {
+    const raw = localStorage.getItem("fizruk_workouts_v1");
+    const workouts = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(workouts) || workouts.length === 0) return null;
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentCount = workouts.filter(w => w.startedAt > weekAgo).length;
+    const last = [...workouts].sort((a, b) => b.startedAt - a.startedAt)[0];
+    const lastDate = last ? new Date(last.startedAt).toLocaleDateString("uk-UA", { day: "numeric", month: "short" }) : "—";
+    return `Тренування: останнє — ${lastDate}, за тиждень — ${recentCount} шт.`;
+  } catch { return null; }
+}
+
+function buildContext(storage) {
+  const { budgets, manualDebts, receivables, subscriptions, monthlyPlan } = storage;
+  const parts = [];
+
+  if (monthlyPlan?.income || monthlyPlan?.expense) {
+    parts.push(`Фінплан: дохід ${monthlyPlan.income || 0}₴/міс, витрати ${monthlyPlan.expense || 0}₴/міс`);
+  }
+
+  const debts = manualDebts.filter(d => d.totalAmount > 0);
+  if (debts.length > 0) {
+    parts.push(`Борги: ${debts.map(d => `${d.name} ${d.totalAmount}₴`).join(", ")}`);
+  }
+
+  const recv = receivables.filter(r => r.amount > 0);
+  if (recv.length > 0) {
+    parts.push(`Мені винні: ${recv.map(r => `${r.name} ${r.amount}₴`).join(", ")}`);
+  }
+
+  const limits = budgets.filter(b => b.type === "limit");
+  if (limits.length > 0) {
+    parts.push(`Ліміти витрат: ${limits.map(b => `${b.categoryId} — ${b.limit}₴`).join(", ")}`);
+  }
+
+  const goals = budgets.filter(b => b.type === "goal");
+  if (goals.length > 0) {
+    parts.push(`Цілі: ${goals.map(b => `${b.name} — ${b.savedAmount || 0}/${b.targetAmount}₴`).join(", ")}`);
+  }
+
+  if (subscriptions.length > 0) {
+    parts.push(`Підписки: ${subscriptions.map(s => `${s.name} (${s.billingDay}-го)`).join(", ")}`);
+  }
+
+  const fizruk = getFizrukContext();
+  if (fizruk) parts.push(fizruk);
+
+  if (parts.length === 0) return "Дані не налаштовані. Відповідай загально.";
+  return parts.join(". ");
+}
+
+const QUICK = [
+  "Як справи з бюджетом?",
+  "Які борги маю?",
+  "Скільки до кінця ліміту?",
+  "Порадь щось",
+  "Як мої тренування?",
+];
+
+// Web Speech API
+function useSpeech(onResult) {
+  const [listening, setListening] = useState(false);
+  const recRef = useRef(null);
+
+  const supported = typeof window !== "undefined" &&
+    !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+  const toggle = useCallback(() => {
+    if (!supported) return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (listening) {
+      recRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
+    const rec = new SpeechRecognition();
+    recRef.current = rec;
+    rec.lang = "uk-UA";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+
+    rec.onresult = (e) => {
+      const text = e.results[0][0].transcript;
+      onResult(text);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    rec.start();
+    setListening(true);
+  }, [listening, onResult, supported]);
+
+  return { listening, toggle, supported };
+}
+
+export function HubChat({ onClose }) {
+  const storage = useStorage();
+  const [messages, setMessages] = useState([
+    { role: "assistant", text: "Привіт! Я бачу твої фінанси та тренування. Запитуй — відповім коротко 💬" },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const chatRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [messages]);
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
+
+  const { listening, toggle: toggleMic, supported: speechSupported } = useSpeech((text) => {
+    setInput(prev => prev ? `${prev} ${text}` : text);
+  });
+
+  const send = async (text) => {
+    const msg = (text || input).trim();
+    if (!msg || loading) return;
+    const next = [...messages, { role: "user", text: msg }];
+    setMessages(next);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const context = buildContext(storage);
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          context,
+          messages: next.map(m => ({ role: m.role, content: m.text })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setMessages(m => [...m, { role: "assistant", text: data.text || "Немає відповіді." }]);
+    } catch (e) {
+      setMessages(m => [...m, { role: "assistant", text: `Помилка: ${e.message}` }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ paddingTop: "env(safe-area-inset-top,0px)", paddingBottom: "env(safe-area-inset-bottom,0px)" }}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Sheet */}
+      <div className="relative mt-auto flex flex-col bg-bg border-t border-line rounded-t-3xl shadow-float max-h-[92dvh]">
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1 shrink-0">
+          <div className="w-10 h-1 bg-line rounded-full" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 pb-3 shrink-0 border-b border-line/60">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl leading-none">🤖</span>
+            <div>
+              <div className="text-sm font-semibold text-text">Асистент</div>
+              <div className="text-[10px] text-subtle">Фінік · Фізрук</div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div ref={chatRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
+          {messages.map((m, i) => (
+            <div key={i} className={cn("flex items-end gap-2", m.role === "user" ? "flex-row-reverse" : "flex-row")}>
+              {m.role === "assistant" && <span className="text-lg shrink-0 mb-0.5 leading-none">🤖</span>}
+              <div className={cn(
+                "max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+                m.role === "user"
+                  ? "bg-primary text-white rounded-br-sm"
+                  : "bg-panel border border-line text-text rounded-bl-sm"
+              )}>
+                {m.text}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="flex items-end gap-2">
+              <span className="text-lg shrink-0 mb-0.5 leading-none">🤖</span>
+              <div className="bg-panel border border-line rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1.5 items-center">
+                {[0, 0.15, 0.3].map((d, i) => (
+                  <span key={i} className="w-1.5 h-1.5 bg-subtle rounded-full animate-bounce" style={{ animationDelay: `${d}s` }} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Quick prompts */}
+        <div className="flex gap-2 px-4 pt-2 pb-1 overflow-x-auto scrollbar-hide shrink-0">
+          {QUICK.map((q, i) => (
+            <button
+              key={i}
+              onClick={() => send(q)}
+              className="text-xs px-3 py-1.5 bg-panel border border-line rounded-full text-subtle hover:text-text hover:border-muted whitespace-nowrap transition-colors shrink-0"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+
+        {/* Input */}
+        <div className="flex gap-2 px-4 pt-2 pb-4 shrink-0">
+          <input
+            ref={inputRef}
+            className="flex-1 bg-panel border border-line rounded-2xl px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors"
+            placeholder="Запитай про фінанси або тренування..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
+          />
+          {speechSupported && (
+            <button
+              onClick={toggleMic}
+              className={cn(
+                "w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all border",
+                listening
+                  ? "bg-danger text-white border-danger animate-pulse"
+                  : "bg-panel border-line text-muted hover:text-text hover:border-muted"
+              )}
+              title={listening ? "Зупинити" : "Голосовий ввід"}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={listening ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </button>
+          )}
+          <button
+            onClick={() => send()}
+            disabled={loading || !input.trim()}
+            className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center shrink-0 hover:brightness-110 transition-all disabled:opacity-40"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

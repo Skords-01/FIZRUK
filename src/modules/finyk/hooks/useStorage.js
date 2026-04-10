@@ -1,6 +1,31 @@
 import { useState, useEffect } from "react";
 import { DEFAULT_SUBSCRIPTIONS, INTERNAL_TRANSFER_ID } from "../constants";
 
+// Одноразова міграція ключів finto_* → finyk_*
+const LEGACY_KEYS = [
+  ["finto_hidden",           "finyk_hidden"],
+  ["finto_budgets",          "finyk_budgets"],
+  ["finto_subs",             "finyk_subs"],
+  ["finto_assets",           "finyk_assets"],
+  ["finto_debts",            "finyk_debts"],
+  ["finto_recv",             "finyk_recv"],
+  ["finto_hidden_txs",       "finyk_hidden_txs"],
+  ["finto_monthly_plan",     "finyk_monthly_plan"],
+  ["finto_tx_cats",          "finyk_tx_cats"],
+  ["finto_mono_debt_linked", "finyk_mono_debt_linked"],
+  ["finto_networth_history", "finyk_networth_history"],
+  ["finto_tx_splits",        "finyk_tx_splits"],
+];
+try {
+  for (const [oldKey, newKey] of LEGACY_KEYS) {
+    const old = localStorage.getItem(oldKey);
+    if (old !== null && localStorage.getItem(newKey) === null) {
+      localStorage.setItem(newKey, old);
+    }
+    if (old !== null) localStorage.removeItem(oldKey);
+  }
+} catch {}
+
 function usePersist(key, defaultVal) {
   const [val, setVal] = useState(() => {
     try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : defaultVal; } catch { return defaultVal; }
@@ -11,18 +36,18 @@ function usePersist(key, defaultVal) {
 
 export function useStorage() {
   const defaultMonthlyPlan = { income: "", expense: "", savings: "" };
-  const [hiddenAccounts, setHiddenAccounts] = usePersist("finto_hidden", []);
-  const [budgets, setBudgets] = usePersist("finto_budgets", []);
-  const [subscriptions, setSubscriptions] = usePersist("finto_subs", DEFAULT_SUBSCRIPTIONS);
-  const [manualAssets, setManualAssets] = usePersist("finto_assets", []);
-  const [manualDebts, setManualDebts] = usePersist("finto_debts", []);
-  const [receivables, setReceivables] = usePersist("finto_recv", []);
-  const [hiddenTxIds, setHiddenTxIds] = usePersist("finto_hidden_txs", []);
-  const [monthlyPlan, setMonthlyPlan] = usePersist("finto_monthly_plan", defaultMonthlyPlan);
-  const [txCategories, setTxCategories] = usePersist("finto_tx_cats", {});
-  const [monoDebtLinkedTxIds, setMonoDebtLinkedTxIds] = usePersist("finto_mono_debt_linked", {});
-  const [networthHistory, setNetworthHistory] = usePersist("finto_networth_history", []);
-  const [txSplits, setTxSplits] = usePersist("finto_tx_splits", {});
+  const [hiddenAccounts, setHiddenAccounts] = usePersist("finyk_hidden", []);
+  const [budgets, setBudgets] = usePersist("finyk_budgets", []);
+  const [subscriptions, setSubscriptions] = usePersist("finyk_subs", DEFAULT_SUBSCRIPTIONS);
+  const [manualAssets, setManualAssets] = usePersist("finyk_assets", []);
+  const [manualDebts, setManualDebts] = usePersist("finyk_debts", []);
+  const [receivables, setReceivables] = usePersist("finyk_recv", []);
+  const [hiddenTxIds, setHiddenTxIds] = usePersist("finyk_hidden_txs", []);
+  const [monthlyPlan, setMonthlyPlan] = usePersist("finyk_monthly_plan", defaultMonthlyPlan);
+  const [txCategories, setTxCategories] = usePersist("finyk_tx_cats", {});
+  const [monoDebtLinkedTxIds, setMonoDebtLinkedTxIds] = usePersist("finyk_mono_debt_linked", {});
+  const [networthHistory, setNetworthHistory] = usePersist("finyk_networth_history", []);
+  const [txSplits, setTxSplits] = usePersist("finyk_tx_splits", {});
 
   const toggleHideAccount = (id) => setHiddenAccounts(h => h.includes(id) ? h.filter(x => x !== id) : [...h, id]);
 

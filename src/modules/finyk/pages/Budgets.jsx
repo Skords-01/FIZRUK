@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@shared/components/ui/Button";
+import { Skeleton } from "@shared/components/ui/Skeleton";
 import { calcCategorySpent } from "../utils";
 import { MCC_CATEGORIES } from "../constants";
 import { cn } from "@shared/lib/cn";
@@ -7,7 +8,7 @@ import { cn } from "@shared/lib/cn";
 const formInp = "w-full h-10 rounded-xl border border-line bg-bg px-3 text-sm text-text outline-none focus:border-primary";
 
 export function Budgets({ mono, storage }) {
-  const { realTx } = mono;
+  const { realTx, loadingTx } = mono;
   const { budgets, setBudgets, excludedTxIds, monthlyPlan, setMonthlyPlan, txCategories, txSplits } = storage;
   const statTx = realTx.filter(t => !excludedTxIds.has(t.id));
   const [editIdx, setEditIdx] = useState(null);
@@ -35,6 +36,16 @@ export function Budgets({ mono, storage }) {
       setShowForm(false);
     }
   };
+
+  if (loadingTx && realTx.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-3 max-w-4xl mx-auto w-full">
+        <Skeleton className="h-28 rounded-xl" />
+        <Skeleton className="h-20 opacity-80 rounded-xl" />
+        <Skeleton className="h-20 opacity-60 rounded-xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto">

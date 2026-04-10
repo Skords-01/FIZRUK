@@ -4,7 +4,6 @@ import { useStorage } from "./hooks/useStorage";
 import { PAGES } from "./constants";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
-import { SyncModal } from "./components/SyncModal";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { cn } from "@shared/lib/cn";
 
@@ -92,7 +91,6 @@ export default function App({ onBackToHub } = {}) {
   const storage = useStorage();
   const [page, navigate] = useHashRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [syncOpen, setSyncOpen] = useState(false);
   const [tokenInput, setTokenInput] = useState("");
   const [showToken, setShowToken] = useState(false);
   const [toast, setToast] = useState(null);
@@ -149,7 +147,7 @@ export default function App({ onBackToHub } = {}) {
     touchStartX.current = null;
     touchStartY.current = null;
 
-    if (menuOpen || syncOpen) return;
+    if (menuOpen) return;
     if (Math.abs(dx) < 100 || Math.abs(dy) > Math.abs(dx) * 0.85) return;
     const curIdx = NAV_IDS.indexOf(page);
     if (curIdx === -1) return;
@@ -352,9 +350,6 @@ export default function App({ onBackToHub } = {}) {
           {toast.msg}
         </div>
       )}
-
-      {/* Sync modal */}
-      {syncOpen && <SyncModal storage={storage} onClose={() => setSyncOpen(false)} />}
 
       {/* Page content */}
       <div

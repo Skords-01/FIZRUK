@@ -6,6 +6,7 @@ export default async function handler(req, res) {
     "http://localhost:5173",
     "http://localhost:4173",
     "https://finto-flame.vercel.app",
+    "https://fizruk.vercel.app",
   ];
 
   if (allowedOrigins.includes(origin)) {
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
   try {
     const { context = "", messages = [] } = req.body || {};
     const cleanMessages = Array.isArray(messages) ? messages.slice(-20) : [];
-    const system = `Ти персональний фінансовий помічник. Відповідай українською, коротко (3-5 речень). Дані: ${context}`;
+    const system = `Ти персональний асистент. Бачиш дані фінансів (бюджети, борги, підписки) і тренувань користувача. Відповідай українською, стисло (2-4 речення). Якщо питання не стосується наявних даних — відповідай загально. Дані: ${context}`;
 
     const response = await fetch(ANTHROPIC_URL, {
       method: "POST",
