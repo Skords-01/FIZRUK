@@ -1,154 +1,246 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useStorage } from "../modules/finyk/hooks/useStorage";
-import { useMonobank } from "../modules/finyk/hooks/useMonobank";
-import { getCategory, getMonoTotals, getDebtPaid, getTxStatAmount, calcCategorySpent } from "../modules/finyk/utils";
-import { MCC_CATEGORIES } from "../modules/finyk/constants";
+import { MCC_CATEGORIES, INTERNAL_TRANSFER_ID } from "../modules/finyk/constants";
+import { getCategory, getMonoTotals, getDebtPaid, getTxStatAmount, calcCategorySpent, isMonoDebt, getMonoDebt } from "../modules/finyk/utils";
 import { cn } from "@shared/lib/cn";
 
-function getFizrukContext() {
-  try {
-    const raw = localStorage.getItem("fizruk_workouts_v1");
-    const workouts = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(workouts) || workouts.length === 0) return "";
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const recentCount = workouts.filter(w => w.startedAt > weekAgo).length;
-    const last = [...workouts].sort((a, b) => b.startedAt - a.startedAt)[0];
-    const lastDate = last
-      ? new Date(last.startedAt).toLocaleDateString("uk-UA", { day: "numeric", month: "short" })
-      : "—";
-    return `Останнє тренування: ${lastDate}\nТренувань за тиждень: ${recentCount}`;
-  } catch {
-    return "";
-  }
+// ──────────────────────────────────────────────
+// 1. Пряме читання localStorage — єдине джерело правди
+// ──────────────────────────────────────────────
+
+function ls(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
 }
 
-function fmt(n) {
-  return Math.round(n).toLocaleString("uk-UA");
+function lsSet(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
-function buildContext(storage, mono) {
-  const {
-    budgets, manualDebts, receivables, subscriptions,
-    monthlyPlan, excludedTxIds, txCategories, txSplits,
-    hiddenAccounts,
-  } = storage;
-  const { realTx, accounts, transactions, clientInfo, lastUpdated } = mono;
+function readAllData() {
+  const txCache = ls("finyk_tx_cache", null);
+  const infoCache = ls("finyk_info_cache", null);
 
+  const transactions = txCache?.txs || [];
+  const accounts = infoCache?.accounts || [];
+  const clientName = infoCache?.name || "";
+  const cacheTime = txCache?.timestamp || null;
+
+  const hiddenAccounts = ls("finyk_hidden", []);
+  const budgets = ls("finyk_budgets", []);
+  const manualDebts = ls("finyk_debts", []);
+  const receivables = ls("finyk_recv", []);
+  const hiddenTxIds = ls("finyk_hidden_txs", []);
+  const txCategories = ls("finyk_tx_cats", {});
+  const txSplits = ls("finyk_tx_splits", {});
+  const monthlyPlan = ls("finyk_monthly_plan", {});
+  const subscriptions = ls("finyk_subs", []);
+  const monoDebtLinked = ls("finyk_mono_debt_linked", {});
+
+  const transferTxIds = Object.entries(txCategories)
+    .filter(([, catId]) => catId === INTERNAL_TRANSFER_ID)
+    .map(([txId]) => txId);
+
+  const excludedIds = new Set([
+    ...hiddenTxIds,
+    ...transferTxIds,
+    ...receivables.flatMap(r => r.linkedTxIds || []),
+  ]);
+
+  const statTx = transactions.filter(t => !excludedIds.has(t.id));
+
+  return {
+    transactions, accounts, clientName, cacheTime,
+    hiddenAccounts, budgets, manualDebts, receivables,
+    txCategories, txSplits, monthlyPlan, subscriptions,
+    monoDebtLinked, statTx, excludedIds,
+  };
+}
+
+function fmt(n) { return Math.round(n).toLocaleString("uk-UA"); }
+
+function buildContext() {
+  const d = readAllData();
   const lines = [];
 
-  const ts = lastUpdated
-    ? new Intl.DateTimeFormat("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(lastUpdated)
-    : "невідомо";
-  lines.push(`[Оновлено] ${ts}`);
+  if (d.cacheTime) {
+    const ts = new Intl.DateTimeFormat("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(d.cacheTime));
+    lines.push(`[Оновлено] ${ts}`);
+  }
+  if (d.clientName) lines.push(`[Користувач] ${d.clientName}`);
 
-  if (clientInfo?.name) lines.push(`[Користувач] ${clientInfo.name}`);
-
-  if (accounts?.length > 0) {
-    const { balance, debt: monoDebt } = getMonoTotals(accounts, hiddenAccounts || []);
-    const manualDebtTotal = manualDebts.reduce(
-      (s, d) => s + Math.max(0, d.totalAmount - getDebtPaid(d, transactions || [])), 0,
-    );
+  if (d.accounts.length > 0) {
+    const { balance, debt: monoDebt } = getMonoTotals(d.accounts, d.hiddenAccounts);
+    const manualDebtTotal = d.manualDebts.reduce((s, debt) => s + Math.max(0, debt.totalAmount - getDebtPaid(debt, d.transactions)), 0);
     lines.push(`[Баланс карток] ${fmt(balance)} грн`);
     lines.push(`[Борг кредитки] ${fmt(monoDebt)} грн`);
     if (manualDebtTotal > 0) lines.push(`[Борг ручний] ${fmt(manualDebtTotal)} грн`);
     lines.push(`[Борг загальний] ${fmt(monoDebt + manualDebtTotal)} грн`);
   }
 
-  if (realTx?.length > 0) {
-    const statTx = realTx.filter(t => !excludedTxIds?.has(t.id));
-    const spent = statTx
-      .filter(t => t.amount < 0)
-      .reduce((s, t) => s + getTxStatAmount(t, txSplits), 0);
-    const income = statTx
-      .filter(t => t.amount > 0)
-      .reduce((s, t) => s + t.amount / 100, 0);
-
+  if (d.statTx.length > 0) {
+    const spent = d.statTx.filter(t => t.amount < 0).reduce((s, t) => s + getTxStatAmount(t, d.txSplits), 0);
+    const income = d.statTx.filter(t => t.amount > 0).reduce((s, t) => s + t.amount / 100, 0);
     lines.push(`[Витрати місяця] ${fmt(spent)} грн`);
     lines.push(`[Дохід місяця] ${fmt(income)} грн`);
     lines.push(`[Баланс місяця] ${fmt(income - spent)} грн`);
 
     const cats = MCC_CATEGORIES
-      .filter(c => c.id !== "income")
-      .map(c => ({ label: c.label, spent: calcCategorySpent(statTx, c.id, txCategories, txSplits) }))
+      .filter(c => c.id !== "income" && c.id !== INTERNAL_TRANSFER_ID)
+      .map(c => ({ id: c.id, label: c.label, spent: calcCategorySpent(d.statTx, c.id, d.txCategories, d.txSplits) }))
       .filter(c => c.spent > 0)
-      .sort((a, b) => b.spent - a.spent)
-      .slice(0, 6);
+      .sort((a, b) => b.spent - a.spent);
     if (cats.length > 0) {
-      lines.push(`[Топ категорій] ${cats.map(c => `${c.label}: ${fmt(c.spent)} грн`).join(", ")}`);
+      lines.push(`[Категорії витрат] ${cats.map(c => `${c.label}: ${fmt(c.spent)} грн`).join(", ")}`);
     }
 
-    const recent = [...statTx].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 5);
+    const recent = [...d.statTx].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 8);
     if (recent.length > 0) {
-      lines.push(`[Останні операції] ${recent.map(t => `${t.description || "—"} ${fmt(t.amount / 100)} грн`).join("; ")}`);
+      lines.push("[Останні операції]");
+      recent.forEach(t => {
+        const cat = getCategory(t.description, t.mcc, d.txCategories[t.id]);
+        lines.push(`  id:${t.id} | ${t.description || "—"} | ${fmt(t.amount / 100)} грн | ${cat.label}`);
+      });
     }
   }
 
-  const debts = manualDebts.filter(d => d.totalAmount > 0);
-  if (debts.length > 0) {
-    lines.push(`[Деталі боргів] ${debts.map(d => {
-      const rem = Math.max(0, d.totalAmount - getDebtPaid(d, transactions || []));
-      return `${d.name}: залишок ${fmt(rem)} грн`;
+  if (d.manualDebts.filter(x => x.totalAmount > 0).length > 0) {
+    lines.push(`[Деталі боргів] ${d.manualDebts.filter(x => x.totalAmount > 0).map(x => {
+      const rem = Math.max(0, x.totalAmount - getDebtPaid(x, d.transactions));
+      return `${x.name}: залишок ${fmt(rem)} грн (id:${x.id})`;
     }).join(", ")}`);
   }
 
-  const recv = receivables.filter(r => r.amount > 0);
+  const recv = d.receivables.filter(r => r.amount > 0);
   if (recv.length > 0) {
-    lines.push(`[Мені винні] ${recv.map(r => `${r.name} ${fmt(r.amount)} грн`).join(", ")}`);
+    lines.push(`[Мені винні] ${recv.map(r => `${r.name}: ${fmt(r.amount)} грн (id:${r.id})`).join(", ")}`);
   }
 
-  const limits = budgets.filter(b => b.type === "limit");
+  const limits = d.budgets.filter(b => b.type === "limit");
   if (limits.length > 0) {
+    const statTx = d.statTx;
     lines.push(`[Ліміти] ${limits.map(b => {
       const cat = MCC_CATEGORIES.find(c => c.id === b.categoryId);
-      return `${cat?.label || b.categoryId}: ${fmt(b.limit)} грн`;
+      const spent = calcCategorySpent(statTx, b.categoryId, d.txCategories, d.txSplits);
+      return `${cat?.label || b.categoryId}: ${fmt(spent)}/${fmt(b.limit)} грн`;
     }).join(", ")}`);
   }
 
-  const goals = budgets.filter(b => b.type === "goal");
+  const goals = d.budgets.filter(b => b.type === "goal");
   if (goals.length > 0) {
     lines.push(`[Цілі] ${goals.map(b => `${b.name}: ${fmt(b.savedAmount || 0)}/${fmt(b.targetAmount)} грн`).join(", ")}`);
   }
 
-  if (monthlyPlan?.income || monthlyPlan?.expense) {
-    lines.push(`[Фінплан] дохід ${fmt(monthlyPlan.income || 0)} грн/міс, витрати ${fmt(monthlyPlan.expense || 0)} грн/міс`);
+  if (d.monthlyPlan?.income || d.monthlyPlan?.expense) {
+    lines.push(`[Фінплан] дохід ${fmt(d.monthlyPlan.income || 0)} грн/міс, витрати ${fmt(d.monthlyPlan.expense || 0)} грн/міс`);
   }
 
-  if (subscriptions?.length > 0) {
-    lines.push(`[Підписки] ${subscriptions.map(s => s.name).join(", ")}`);
+  if (d.subscriptions?.length > 0) {
+    lines.push(`[Підписки] ${d.subscriptions.map(s => s.name).join(", ")}`);
   }
 
-  const fizruk = getFizrukContext();
-  if (fizruk) lines.push(`[Тренування] ${fizruk}`);
+  // Доступні категорії для зміни
+  lines.push(`[Категорії] ${MCC_CATEGORIES.map(c => `${c.id}="${c.label}"`).join(", ")}`);
 
-  return lines.length > 0 ? lines.join("\n") : "Даних немає. Monobank не підключено.";
+  try {
+    const raw = localStorage.getItem("fizruk_workouts_v1");
+    const w = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(w) && w.length > 0) {
+      const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const cnt = w.filter(x => x.startedAt > weekAgo).length;
+      const last = [...w].sort((a, b) => b.startedAt - a.startedAt)[0];
+      const dt = last ? new Date(last.startedAt).toLocaleDateString("uk-UA", { day: "numeric", month: "short" }) : "—";
+      lines.push(`[Тренування] останнє: ${dt}, за тиждень: ${cnt}`);
+    }
+  } catch {}
+
+  return lines.length > 1 ? lines.join("\n") : "Даних немає. Monobank не підключено.";
 }
 
-const QUICK = [
-  "Як справи з бюджетом?",
-  "Які борги маю?",
-  "Скільки витратив цього місяця?",
-  "Порадь щось",
-  "Як мої тренування?",
-];
+// ──────────────────────────────────────────────
+// 2. Виконання дій (tool results)
+// ──────────────────────────────────────────────
+
+function executeAction(action) {
+  try {
+    switch (action.name) {
+      case "change_category": {
+        const { tx_id, category_id } = action.input;
+        const cats = ls("finyk_tx_cats", {});
+        cats[tx_id] = category_id;
+        lsSet("finyk_tx_cats", cats);
+        const cat = MCC_CATEGORIES.find(c => c.id === category_id);
+        return `Категорію транзакції ${tx_id} змінено на ${cat?.label || category_id}`;
+      }
+      case "create_debt": {
+        const { name, amount, due_date, emoji } = action.input;
+        const debts = ls("finyk_debts", []);
+        const newDebt = {
+          id: `d_${Date.now()}`,
+          name,
+          totalAmount: Number(amount),
+          dueDate: due_date || "",
+          emoji: emoji || "💸",
+          linkedTxIds: [],
+        };
+        debts.push(newDebt);
+        lsSet("finyk_debts", debts);
+        return `Борг "${name}" на ${amount} грн створено (id:${newDebt.id})`;
+      }
+      case "create_receivable": {
+        const { name, amount } = action.input;
+        const recv = ls("finyk_recv", []);
+        const newRecv = {
+          id: `r_${Date.now()}`,
+          name,
+          amount: Number(amount),
+          linkedTxIds: [],
+        };
+        recv.push(newRecv);
+        lsSet("finyk_recv", recv);
+        return `Дебіторку "${name}" на ${amount} грн додано (id:${newRecv.id})`;
+      }
+      case "hide_transaction": {
+        const { tx_id } = action.input;
+        const hidden = ls("finyk_hidden_txs", []);
+        if (!hidden.includes(tx_id)) {
+          hidden.push(tx_id);
+          lsSet("finyk_hidden_txs", hidden);
+        }
+        return `Транзакцію ${tx_id} приховано зі статистики`;
+      }
+      case "set_budget_limit": {
+        const { category_id, limit } = action.input;
+        const budgets = ls("finyk_budgets", []);
+        const idx = budgets.findIndex(b => b.type === "limit" && b.categoryId === category_id);
+        if (idx >= 0) {
+          budgets[idx].limit = Number(limit);
+        } else {
+          budgets.push({ id: `b_${Date.now()}`, type: "limit", categoryId: category_id, limit: Number(limit) });
+        }
+        lsSet("finyk_budgets", budgets);
+        const cat = MCC_CATEGORIES.find(c => c.id === category_id);
+        return `Ліміт ${cat?.label || category_id} встановлено: ${limit} грн`;
+      }
+      default:
+        return `Невідома дія: ${action.name}`;
+    }
+  } catch (e) {
+    return `Помилка виконання: ${e.message}`;
+  }
+}
+
+// ──────────────────────────────────────────────
+// 3. Speech
+// ──────────────────────────────────────────────
 
 function useSpeech(onResult) {
   const [listening, setListening] = useState(false);
   const recRef = useRef(null);
-
-  const supported =
-    typeof window !== "undefined" &&
-    !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const supported = typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
   const toggle = useCallback(() => {
     if (!supported) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (listening) {
-      recRef.current?.stop();
-      setListening(false);
-      return;
-    }
-
+    if (listening) { recRef.current?.stop(); setListening(false); return; }
     const rec = new SR();
     recRef.current = rec;
     rec.lang = "uk-UA";
@@ -164,29 +256,24 @@ function useSpeech(onResult) {
   return { listening, toggle, supported };
 }
 
+// ──────────────────────────────────────────────
+// 4. Chat component
+// ──────────────────────────────────────────────
+
+const QUICK = [
+  "Як справи з бюджетом?",
+  "Які борги маю?",
+  "Скільки витратив?",
+  "Порадь щось",
+];
+
 export function HubChat({ onClose }) {
-  const storage = useStorage();
-  const mono = useMonobank();
-
-  const dataReady = !!(mono.token && mono.lastUpdated && mono.transactions.length > 0);
-  const dataLoading = mono.connecting || mono.loadingTx;
-
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    if (refreshing || dataLoading) return;
-    setRefreshing(true);
-    try { await mono.refresh(); } finally { setRefreshing(false); }
-  };
-
   const [messages, setMessages] = useState(() => {
     try {
       const saved = localStorage.getItem("hub_chat_history");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
+      if (saved) { const p = JSON.parse(saved); if (Array.isArray(p) && p.length) return p; }
     } catch {}
-    return [{ role: "assistant", text: "Привіт! Запитуй про фінанси чи тренування — відповім коротко." }];
+    return [{ role: "assistant", text: "Привіт! Запитуй про фінанси чи тренування. Можу також змінювати категорії, додавати борги тощо." }];
   });
 
   useEffect(() => {
@@ -198,24 +285,16 @@ export function HubChat({ onClose }) {
   const chatRef = useRef(null);
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
-  }, [messages, loading]);
-
-  useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 100);
-  }, []);
+  useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages, loading]);
+  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 100); }, []);
 
   const { listening, toggle: toggleMic, supported: speechSupported } = useSpeech((text) => {
-    setInput((prev) => (prev ? `${prev} ${text}` : text));
+    setInput((p) => (p ? `${p} ${text}` : text));
   });
 
-  const context = useMemo(() => buildContext(storage, mono), [
-    storage.budgets, storage.manualDebts, storage.receivables,
-    storage.subscriptions, storage.monthlyPlan, storage.excludedTxIds,
-    storage.txCategories, storage.txSplits, storage.hiddenAccounts,
-    mono.realTx, mono.accounts, mono.transactions, mono.clientInfo, mono.lastUpdated,
-  ]);
+  const hasData = useMemo(() => {
+    try { const c = ls("finyk_tx_cache", null); return !!(c?.txs?.length); } catch { return false; }
+  }, []);
 
   const send = async (text) => {
     const msg = (text || input).trim();
@@ -228,37 +307,60 @@ export function HubChat({ onClose }) {
     setLoading(true);
 
     try {
+      const context = buildContext();
+
       const history = next
         .filter(m => m.role === "user" || m.role === "assistant")
-        .slice(-10);
+        .slice(-10)
+        .map(m => ({ role: m.role, content: m.text }));
 
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ context, messages: history.map(m => ({ role: m.role, content: m.text })) }),
+        body: JSON.stringify({ context, messages: history }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setMessages((m) => [...m, { role: "assistant", text: data.text || "Немає відповіді." }]);
+
+      // Якщо є tool_calls — виконуємо і відправляємо результат
+      if (data.tool_calls && data.tool_calls.length > 0) {
+        const toolResults = data.tool_calls.map(tc => ({
+          tool_use_id: tc.id,
+          content: executeAction(tc),
+        }));
+
+        const actionsText = toolResults.map(r => `✅ ${r.content}`).join("\n");
+
+        const res2 = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            context: buildContext(),
+            messages: history,
+            tool_results: toolResults,
+            tool_calls_raw: data.tool_calls_raw,
+          }),
+        });
+        const data2 = await res2.json();
+        if (!res2.ok) throw new Error(data2.error || `HTTP ${res2.status}`);
+
+        setMessages(m => [...m, { role: "assistant", text: `${actionsText}\n\n${data2.text || "Готово."}` }]);
+
+        window.dispatchEvent(new Event("storage"));
+      } else {
+        setMessages(m => [...m, { role: "assistant", text: data.text || "Немає відповіді." }]);
+      }
     } catch (e) {
-      setMessages((m) => [...m, { role: "assistant", text: `Помилка: ${e.message}` }]);
+      setMessages(m => [...m, { role: "assistant", text: `Помилка: ${e.message}` }]);
     } finally {
       setLoading(false);
     }
   };
 
   const clearChat = () => {
-    setMessages([{ role: "assistant", text: "Чат очищено. Чим допомогти?" }]);
+    setMessages([{ role: "assistant", text: "Чат очищено." }]);
     try { localStorage.removeItem("hub_chat_history"); } catch {}
   };
-
-  const statusText = dataLoading || refreshing
-    ? "Оновлення…"
-    : mono.lastUpdated
-      ? `Дані: ${new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit" }).format(mono.lastUpdated)}`
-      : mono.token
-        ? "Завантаження…"
-        : "Mono не підключено";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ paddingTop: "env(safe-area-inset-top,0px)", paddingBottom: "env(safe-area-inset-bottom,0px)" }}>
@@ -275,20 +377,12 @@ export function HubChat({ onClose }) {
             <span className="text-2xl leading-none">🤖</span>
             <div>
               <div className="text-sm font-semibold text-text">Асистент</div>
-              <div className={cn("text-[10px]", dataReady ? "text-subtle" : "text-warning")}>{statusText}</div>
+              <div className={cn("text-[10px]", hasData ? "text-subtle" : "text-warning")}>
+                {hasData ? "Фінік · Фізрук" : "Mono не підключено"}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing || dataLoading}
-              className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-primary hover:bg-primary/8 transition-colors disabled:opacity-40"
-              title="Оновити дані"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={refreshing || dataLoading ? "animate-spin" : ""}>
-                <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-              </svg>
-            </button>
             <button onClick={clearChat} className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-danger hover:bg-danger/8 transition-colors" title="Очистити чат">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /><path d="M10 11v6M14 11v6" />
@@ -332,12 +426,7 @@ export function HubChat({ onClose }) {
         {/* Quick prompts */}
         <div className="flex gap-2 px-4 pt-2 pb-1 overflow-x-auto scrollbar-hide shrink-0">
           {QUICK.map((q, i) => (
-            <button
-              key={i}
-              onClick={() => send(q)}
-              disabled={loading || !dataReady}
-              className="text-xs px-3 py-1.5 bg-panel border border-line rounded-full text-subtle hover:text-text hover:border-muted whitespace-nowrap transition-colors shrink-0 disabled:opacity-40"
-            >
+            <button key={i} onClick={() => send(q)} disabled={loading} className="text-xs px-3 py-1.5 bg-panel border border-line rounded-full text-subtle hover:text-text hover:border-muted whitespace-nowrap transition-colors shrink-0 disabled:opacity-40">
               {q}
             </button>
           ))}
@@ -348,21 +437,19 @@ export function HubChat({ onClose }) {
           <input
             ref={inputRef}
             className="flex-1 bg-panel border border-line rounded-2xl px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors"
-            placeholder={dataReady ? "Запитай про фінанси або тренування…" : "Зачекай, дані завантажуються…"}
+            placeholder="Запитай або попроси змінити щось…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
-            disabled={!dataReady}
           />
           {speechSupported && (
             <button
               onClick={toggleMic}
-              disabled={!dataReady}
               className={cn(
                 "w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all border",
                 listening
                   ? "bg-danger text-white border-danger animate-pulse"
-                  : "bg-panel border-line text-muted hover:text-text hover:border-muted disabled:opacity-40",
+                  : "bg-panel border-line text-muted hover:text-text hover:border-muted",
               )}
               title={listening ? "Зупинити" : "Голосовий ввід"}
             >
@@ -375,7 +462,7 @@ export function HubChat({ onClose }) {
           )}
           <button
             onClick={() => send()}
-            disabled={loading || !input.trim() || !dataReady}
+            disabled={loading || !input.trim()}
             className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center shrink-0 hover:brightness-110 transition-all disabled:opacity-40"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
