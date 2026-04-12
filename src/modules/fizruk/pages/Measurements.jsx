@@ -76,6 +76,18 @@ export function Measurements() {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 gap-2">
+          <a
+            href="https://www.wikihow.com/Take-Body-Measurements"
+            target="_blank"
+            rel="noreferrer"
+            className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center flex flex-col items-center justify-center min-h-[76px]"
+          >
+            <div className="text-[10px] font-semibold text-subtle uppercase tracking-widest">Підказка</div>
+            <div className="text-sm font-bold text-success mt-1">Як робити заміри</div>
+          </a>
+        </div>
+
         <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
           <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">Додати замір</div>
           <div className="grid grid-cols-2 gap-2">
@@ -116,8 +128,9 @@ export function Measurements() {
           <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-bold text-subtle uppercase tracking-widest">Останній замір</div>
-                <div className="text-xs text-subtle mt-1">{new Date(latest.at).toLocaleString("uk-UA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                <div className="text-xs font-bold text-subtle uppercase tracking-widest">
+                  Останній замір <span className="ml-1 normal-case tracking-normal font-medium text-subtle">· {stats.latestAt}</span>
+                </div>
               </div>
               <div className="text-xs text-subtle">
                 {Object.keys(deltas).length ? "Δ від попереднього" : ""}
