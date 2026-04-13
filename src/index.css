@@ -56,6 +56,27 @@
   .fizruk-summary-header {
     @apply p-4 bg-forest-grad;
   }
+
+  /* Нижній відступ контенту над таб-баром Фізрука (58px nav + safe-area) */
+  .fizruk-page-scroll-pad {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Bottom sheet над навігацією */
+  .fizruk-sheet-pad {
+    padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 72px);
+  }
+
+  /* Фіксовані панелі (таймер, підсумок) — над таб-баром */
+  .fizruk-above-tabbar {
+    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Видимий фокус у модальних шитах Фізрука */
+  .fizruk-sheet button:focus-visible,
+  .fizruk-sheet a:focus-visible {
+    @apply outline-none ring-2 ring-forest/45 ring-offset-2 ring-offset-panel rounded-lg;
+  }
 }
 
 @layer utilities {

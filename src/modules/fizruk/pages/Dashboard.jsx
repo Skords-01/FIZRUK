@@ -1,6 +1,7 @@
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
-import { useEffect, useMemo, useState } from "react";
+import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { usePushups } from "../hooks/usePushups";
 import { useRecovery } from "../hooks/useRecovery";
@@ -19,7 +20,6 @@ import {
 } from "../lib/workoutStats";
 
 const SELECTED_TEMPLATE_KEY = "fizruk_selected_template_id_v1";
-const SHEET_BOTTOM_PADDING = "calc(env(safe-area-inset-bottom, 16px) + 72px)";
 
 function formatDurShort(sec) {
   const m = Math.floor(sec / 60);
@@ -64,6 +64,12 @@ export function Dashboard({ onOpenAtlas }) {
   });
   const [planConfirmOpen, setPlanConfirmOpen] = useState(false);
   const [pendingPicks, setPendingPicks] = useState(null);
+  const planConfirmRef = useRef(null);
+  const pushupModalRef = useRef(null);
+  useDialogFocusTrap(planConfirmOpen, planConfirmRef, {
+    onEscape: () => { setPlanConfirmOpen(false); setPendingPicks(null); },
+  });
+  useDialogFocusTrap(pushupModalOpen, pushupModalRef, { onEscape: () => setPushupModalOpen(false) });
 
   useEffect(() => {
     if (selectedTemplateId) return;
@@ -246,7 +252,7 @@ export function Dashboard({ onOpenAtlas }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4">
+      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad space-y-4">
 
         <section
           className="rounded-3xl p-6 overflow-hidden"
@@ -653,7 +659,7 @@ export function Dashboard({ onOpenAtlas }) {
       </div>
 
       {planConfirmOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center" role="dialog" aria-modal="true" aria-labelledby="plan-confirm-title">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center fizruk-sheet" role="presentation">
           <button
             type="button"
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -661,8 +667,11 @@ export function Dashboard({ onOpenAtlas }) {
             onClick={() => { setPlanConfirmOpen(false); setPendingPicks(null); }}
           />
           <div
-            className="relative w-full max-w-4xl bg-panel border-t border-line rounded-t-3xl p-5 shadow-soft"
-            style={{ paddingBottom: SHEET_BOTTOM_PADDING }}
+            ref={planConfirmRef}
+            className="relative w-full max-w-4xl bg-panel border-t border-line rounded-t-3xl p-5 shadow-soft fizruk-sheet-pad"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="plan-confirm-title"
           >
             <div id="plan-confirm-title" className="text-lg font-extrabold text-text">Увага</div>
             <p className="text-sm text-subtle mt-2 leading-relaxed">
@@ -690,7 +699,7 @@ export function Dashboard({ onOpenAtlas }) {
 
       {/* Pushup modal */}
       {pushupModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center" role="dialog" aria-modal="true" aria-labelledby="pushup-modal-title">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center fizruk-sheet" role="presentation">
           <button
             type="button"
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -698,8 +707,11 @@ export function Dashboard({ onOpenAtlas }) {
             onClick={() => setPushupModalOpen(false)}
           />
           <div
-            className="relative w-full max-w-4xl bg-panel border-t border-line rounded-t-3xl p-5 shadow-soft"
-            style={{ paddingBottom: SHEET_BOTTOM_PADDING }}
+            ref={pushupModalRef}
+            className="relative w-full max-w-4xl bg-panel border-t border-line rounded-t-3xl p-5 shadow-soft fizruk-sheet-pad"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pushup-modal-title"
           >
             <div className="w-10 h-1 bg-line rounded-full mx-auto mb-4" aria-hidden />
             <div id="pushup-modal-title" className="text-lg font-extrabold text-text mb-4">Додати відтискання</div>

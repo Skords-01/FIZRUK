@@ -1,6 +1,23 @@
+import { ChartEmptyState } from "./ChartEmptyState";
+
 /** Grouped bar chart: energy (green) + mood (purple) per workout. */
 export function WellbeingChart({ data }) {
-  if (!data || data.length < 2) return null;
+  if (!data || data.length === 0) {
+    return (
+      <ChartEmptyState
+        title="Немає даних для графіка"
+        hint="Після кількох тренувань з оцінкою енергії та настрою тут зʼявиться діаграма."
+      />
+    );
+  }
+  if (data.length < 2) {
+    return (
+      <ChartEmptyState
+        title="Замало точок"
+        hint="Потрібно щонайменше два тренування з оцінкою самопочуття, щоб порівняти динаміку."
+      />
+    );
+  }
 
   const w = 320;
   const h = 90;

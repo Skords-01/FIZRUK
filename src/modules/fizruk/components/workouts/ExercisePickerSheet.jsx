@@ -1,8 +1,10 @@
+import { useEffect, useRef } from "react";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
+import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { recoveryConflictsForExercise } from "../../lib/recoveryConflict";
-import { SHEET_BOTTOM_PADDING, SHEET_Z } from "../../lib/workoutUi";
+import { FIZRUK_SHEET_PAD_CLASS, SHEET_Z } from "../../lib/workoutUi";
 
 export function ExercisePickerSheet({
   open,
@@ -18,13 +20,23 @@ export function ExercisePickerSheet({
   onPendingPick,
   onAddExercise,
 }) {
+  const sheetRef = useRef(null);
+  const searchRef = useRef(null);
+  useDialogFocusTrap(open, sheetRef, { onEscape: onClose });
+
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => searchRef.current?.focus(), 50);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
   if (!open) return null;
   return (
-    <div className={cn("fixed inset-0 flex items-end", SHEET_Z)} onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+    <div className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)} onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden />
       <div
-        className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft"
-        style={{ paddingBottom: SHEET_BOTTOM_PADDING }}
+        ref={sheetRef}
+        className={cn("relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft", FIZRUK_SHEET_PAD_CLASS)}
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -51,6 +63,7 @@ export function ExercisePickerSheet({
 
           <div className="relative mb-3">
             <Input
+              ref={searchRef}
               placeholder="Пошук вправи…"
               value={pickQ}
               onChange={e => onPickQ(e.target.value)}

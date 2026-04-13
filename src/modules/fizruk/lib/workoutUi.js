@@ -1,8 +1,10 @@
 /** UI helpers for workout logging (pure, no React). */
 
 export const ACTIVE_WORKOUT_KEY = "fizruk_active_workout_id_v1";
+/** @deprecated Використовуй клас `fizruk-sheet-pad` у index.css */
 export const SHEET_BOTTOM_PADDING = "calc(env(safe-area-inset-bottom, 16px) + 72px)";
 export const SHEET_Z = "z-[100]";
+export const FIZRUK_SHEET_PAD_CLASS = "fizruk-sheet-pad";
 
 export function summarizeWorkoutForFinish(w) {
   if (!w?.startedAt) return null;
