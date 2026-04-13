@@ -27,6 +27,14 @@ export function getDebtPaid(debt, transactions = []) {
     .reduce((sum, tx) => sum + toAmountUAH(tx), 0);
 }
 
+/** Додатковий борг за прив'язаними транзакціями (надходження на кредит / зростання боргу), amount > 0 */
+export function getDebtOriginated(debt, transactions = []) {
+  const linked = findLinkedTx(debt?.linkedTxIds || [], transactions);
+  return linked
+    .filter(tx => tx.amount > 0)
+    .reduce((sum, tx) => sum + toAmountUAH(tx), 0);
+}
+
 // Мені винні: погашення рахуємо тільки по надходженнях (amount > 0)
 export function getReceivablePaid(receivable, transactions = []) {
   const linked = findLinkedTx(receivable?.linkedTxIds || [], transactions);
@@ -35,10 +43,27 @@ export function getReceivablePaid(receivable, transactions = []) {
     .reduce((sum, tx) => sum + toAmountUAH(tx), 0);
 }
 
+/** Додаткова сума боргу перед мені за прив'язаними витратами (позика тощо), amount < 0 */
+export function getReceivableOriginated(receivable, transactions = []) {
+  const linked = findLinkedTx(receivable?.linkedTxIds || [], transactions);
+  return linked
+    .filter(tx => tx.amount < 0)
+    .reduce((sum, tx) => sum + toAmountUAH(tx), 0);
+}
+
+/** База + виникнення по транзакціях (для шкали «з … ₴»). */
+export function getDebtEffectiveTotal(debt, transactions = []) {
+  return Number(debt?.totalAmount || 0) + getDebtOriginated(debt, transactions);
+}
+
+export function getReceivableEffectiveTotal(receivable, transactions = []) {
+  return Number(receivable?.amount || 0) + getReceivableOriginated(receivable, transactions);
+}
+
 export function calcDebtRemaining(debt, transactions = []) {
-  return Math.max(0, Number(debt?.totalAmount || 0) - getDebtPaid(debt, transactions));
+  return Math.max(0, getDebtEffectiveTotal(debt, transactions) - getDebtPaid(debt, transactions));
 }
 
 export function calcReceivableRemaining(receivable, transactions = []) {
-  return Math.max(0, Number(receivable?.amount || 0) - getReceivablePaid(receivable, transactions));
+  return Math.max(0, getReceivableEffectiveTotal(receivable, transactions) - getReceivablePaid(receivable, transactions));
 }
