@@ -2,7 +2,7 @@ import { useMemo, useEffect } from "react";
 import { CategoryChart } from "../components/CategoryChart";
 import { NetworthChart } from "../components/NetworthChart";
 import { MCC_CATEGORIES, CURRENCY } from "../constants";
-import { getDebtPaid, getRecvPaid, calcCategorySpent, getMonoTotals, getTxStatAmount } from "../utils";
+import { calcDebtRemaining, calcReceivableRemaining, calcCategorySpent, getMonoTotals, getTxStatAmount } from "../utils";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { cn } from "@shared/lib/cn";
 
@@ -68,9 +68,9 @@ export function Overview({ mono, storage, onNavigate, onCategoryClick, showBalan
   const projectedSpend = daysPassed > 0 ? (spent / daysPassed) * daysInMonth : 0;
 
   const { balance: monoTotal, debt: monoTotalDebt } = useMemo(() => getMonoTotals(accounts, hiddenAccounts), [accounts, hiddenAccounts]);
-  const manualDebtTotal = useMemo(() => manualDebts.reduce((s, d) => s + Math.max(0, d.totalAmount - getDebtPaid(d, transactions)), 0), [manualDebts, transactions]);
+  const manualDebtTotal = useMemo(() => manualDebts.reduce((s, d) => s + calcDebtRemaining(d, transactions), 0), [manualDebts, transactions]);
   const totalDebt = monoTotalDebt + manualDebtTotal;
-  const totalReceivable = useMemo(() => receivables.reduce((s, r) => s + Math.max(0, r.amount - getRecvPaid(r, transactions)), 0), [receivables, transactions]);
+  const totalReceivable = useMemo(() => receivables.reduce((s, r) => s + calcReceivableRemaining(r, transactions), 0), [receivables, transactions]);
   const manualAssetTotal = useMemo(() => storage.manualAssets.filter(a => a.currency === "UAH").reduce((s, a) => s + Number(a.amount), 0), [storage.manualAssets]);
   const networth = monoTotal + manualAssetTotal + totalReceivable - totalDebt;
 
@@ -111,7 +111,7 @@ export function Overview({ mono, storage, onNavigate, onCategoryClick, showBalan
   });
 
   const debtOutFlows = manualDebts
-    .map(d => ({ ...d, remaining: Math.max(0, d.totalAmount - getDebtPaid(d, transactions)) }))
+    .map(d => ({ ...d, remaining: calcDebtRemaining(d, transactions) }))
     .filter(d => d.dueDate && d.remaining > 0)
     .map(d => {
       const daysLeft = Math.ceil((parseLocalDate(d.dueDate) - todayStart) / 86400000);
@@ -119,7 +119,7 @@ export function Overview({ mono, storage, onNavigate, onCategoryClick, showBalan
     });
 
   const debtInFlows = receivables
-    .map(r => ({ ...r, remaining: Math.max(0, r.amount - getRecvPaid(r, transactions)) }))
+    .map(r => ({ ...r, remaining: calcReceivableRemaining(r, transactions) }))
     .filter(r => r.dueDate && r.remaining > 0)
     .map(r => {
       const daysLeft = Math.ceil((parseLocalDate(r.dueDate) - todayStart) / 86400000);

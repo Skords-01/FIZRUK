@@ -2,7 +2,13 @@ import { MCC_CATEGORIES, INCOME_CATEGORIES, CURRENCY, INTERNAL_TRANSFER_ID } fro
 import {
   getDebtPaid as debtEngineGetDebtPaid,
   getReceivablePaid,
+  calcDebtRemaining,
+  calcReceivableRemaining,
+  getDebtEffectiveTotal,
+  getReceivableEffectiveTotal,
 } from "./domain/debtEngine";
+
+export { calcDebtRemaining, calcReceivableRemaining, getDebtEffectiveTotal, getReceivableEffectiveTotal };
 
 export function getIncomeCategory(desc = "", overrideId = null) {
   if (overrideId) {

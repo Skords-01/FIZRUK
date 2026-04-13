@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { MCC_CATEGORIES } from "../constants";
-import { getCategory, isMonoDebt, getMonoDebt, getDebtPaid, calcCategorySpent, getMonoTotals } from "../utils";
+import { getCategory, isMonoDebt, getMonoDebt, calcDebtRemaining, calcCategorySpent, getMonoTotals } from "../utils";
 import { cn } from "@shared/lib/cn";
 
 export function Chat({ mono, storage }) {
@@ -16,7 +16,7 @@ export function Chat({ mono, storage }) {
   useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages]);
 
   const { balance: monoTotal, debt: monoTotalDebt } = getMonoTotals(accounts, hiddenAccounts);
-  const manualDebtTotal = manualDebts.reduce((s, d) => s + Math.max(0, d.totalAmount - getDebtPaid(d, transactions)), 0);
+  const manualDebtTotal = manualDebts.reduce((s, d) => s + calcDebtRemaining(d, transactions), 0);
   const totalDebt = monoTotalDebt + manualDebtTotal;
   const spent = statTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount / 100), 0);
   const income = statTx.filter(t => t.amount > 0).reduce((s, t) => s + t.amount / 100, 0);

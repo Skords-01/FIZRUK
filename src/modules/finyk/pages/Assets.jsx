@@ -5,7 +5,18 @@ import { TxRow } from "../components/TxRow";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { Select } from "@shared/components/ui/Select";
-import { getAccountLabel, getMonoDebt, isMonoDebt, getDebtPaid, getRecvPaid, getMonoTotals } from "../utils";
+import {
+  getAccountLabel,
+  getMonoDebt,
+  isMonoDebt,
+  getDebtPaid,
+  getRecvPaid,
+  getMonoTotals,
+  calcDebtRemaining,
+  calcReceivableRemaining,
+  getDebtEffectiveTotal,
+  getReceivableEffectiveTotal,
+} from "../utils";
 import { getDebtTxRole, getReceivableTxRole } from "../domain/debtEngine";
 import { cn } from "@shared/lib/cn";
 
@@ -43,9 +54,9 @@ export function Assets({ mono, storage, showBalance = true }) {
 
   const { balance: monoTotal, debt: monoTotalDebt } = getMonoTotals(accounts, hiddenAccounts);
   const monoDebtAccounts = accounts.filter(a => isMonoDebt(a));
-  const manualDebtTotal = manualDebts.reduce((s, d) => s + Math.max(0, d.totalAmount - getDebtPaid(d, transactions)), 0);
+  const manualDebtTotal = manualDebts.reduce((s, d) => s + calcDebtRemaining(d, transactions), 0);
   const totalDebt = monoTotalDebt + manualDebtTotal;
-  const totalReceivable = receivables.reduce((s, r) => s + Math.max(0, r.amount - getRecvPaid(r, transactions)), 0);
+  const totalReceivable = receivables.reduce((s, r) => s + calcReceivableRemaining(r, transactions), 0);
   const manualAssetTotal = manualAssets.filter(a => a.currency === "UAH").reduce((s, a) => s + Number(a.amount), 0);
   const networth = monoTotal + manualAssetTotal + totalReceivable - totalDebt;
 
@@ -114,7 +125,8 @@ export function Assets({ mono, storage, showBalance = true }) {
     const item = items.find(d => d.id === txPicker.id);
     const linked = item?.linkedTxIds || [];
     const paid = isDebt ? getDebtPaid(item, transactions) : getRecvPaid(item, transactions);
-    const total = isDebt ? item?.totalAmount : item?.amount;
+    const total = isDebt ? getDebtEffectiveTotal(item, transactions) : getReceivableEffectiveTotal(item, transactions);
+    const remaining = isDebt ? calcDebtRemaining(item, transactions) : calcReceivableRemaining(item, transactions);
     const getTxRole = (tx) => (isDebt ? getDebtTxRole(tx) : getReceivableTxRole(tx));
 
     return (
@@ -128,7 +140,7 @@ export function Assets({ mono, storage, showBalance = true }) {
             <div className="bg-panel border border-line rounded-xl p-4 mb-4">
               <div className="text-xs text-subtle">{item?.emoji} {item?.name}</div>
               <div className={cn("text-2xl font-extrabold mt-1", isDebt ? "text-danger" : "text-success")}>
-                {isDebt ? "−" : "+"}{Math.max(0, total - paid).toLocaleString("uk-UA")} ₴ залишок
+                {isDebt ? "−" : "+"}{remaining.toLocaleString("uk-UA")} ₴ залишок
               </div>
               <div className="text-xs text-subtle mt-1">Сплачено: {paid.toLocaleString("uk-UA")} з {total?.toLocaleString("uk-UA")} ₴</div>
             </div>
@@ -232,8 +244,8 @@ export function Assets({ mono, storage, showBalance = true }) {
             <div className="text-[11px] font-bold text-subtle uppercase tracking-widest pt-2">💰 Мені винні</div>
             {receivables.map(r => (
               <DebtCard key={r.id} name={r.name} emoji={r.emoji}
-                remaining={Math.max(0, r.amount - getRecvPaid(r, transactions))}
-                paid={getRecvPaid(r, transactions)} total={r.amount} dueDate={r.dueDate}
+                remaining={calcReceivableRemaining(r, transactions)}
+                paid={getRecvPaid(r, transactions)} total={getReceivableEffectiveTotal(r, transactions)} dueDate={r.dueDate}
                 isReceivable onDelete={() => setReceivables(rs => rs.filter(x => x.id !== r.id))}
                 onLink={() => setTxPicker({ id: r.id, type: "recv" })} linkedCount={r.linkedTxIds?.length || 0}
               />
@@ -318,8 +330,8 @@ export function Assets({ mono, storage, showBalance = true }) {
             })}
             {manualDebts.map(d => (
               <DebtCard key={d.id} name={d.name} emoji={d.emoji}
-                remaining={Math.max(0, d.totalAmount - getDebtPaid(d, transactions))}
-                paid={getDebtPaid(d, transactions)} total={d.totalAmount} dueDate={d.dueDate}
+                remaining={calcDebtRemaining(d, transactions)}
+                paid={getDebtPaid(d, transactions)} total={getDebtEffectiveTotal(d, transactions)} dueDate={d.dueDate}
                 onDelete={() => setManualDebts(ds => ds.filter(x => x.id !== d.id))}
                 onLink={() => setTxPicker({ id: d.id, type: "debt" })}
                 linkedCount={d.linkedTxIds?.length || 0}
