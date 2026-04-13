@@ -32,13 +32,19 @@ export function ExercisePickerSheet({
 
   if (!open) return null;
   return (
-    <div
-      className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}
-      onClick={onClose}
-    >
+    <div className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}>
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        aria-hidden
+        role="button"
+        tabIndex={0}
+        aria-label="Закрити"
+        onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClose();
+          }
+        }}
       />
       <div
         ref={sheetRef}
@@ -46,7 +52,7 @@ export function ExercisePickerSheet({
           "relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft",
           FIZRUK_SHEET_PAD_CLASS,
         )}
-        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="ex-picker-title"

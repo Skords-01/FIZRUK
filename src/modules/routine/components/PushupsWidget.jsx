@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { cn } from "@shared/lib/cn";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { useRoutinePushups } from "../hooks/useRoutinePushups.js";
@@ -15,8 +15,15 @@ export function PushupsWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const ref = useRef(null);
+  const inputRef = useRef(null);
   const keyboardInset = useVisualKeyboardInset(open);
   useDialogFocusTrap(open, ref, { onEscape: () => setOpen(false) });
+
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [open]);
 
   return (
     <>
@@ -150,6 +157,7 @@ export function PushupsWidget() {
             </p>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
               <input
+                ref={inputRef}
                 type="number"
                 inputMode="numeric"
                 min="1"
@@ -164,7 +172,6 @@ export function PushupsWidget() {
                     setOpen(false);
                   }
                 }}
-                autoFocus
               />
               <button
                 type="button"

@@ -800,11 +800,19 @@ export function Workouts() {
         {selected && (
           <div
             className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}
-            onClick={() => setSelected(null)}
           >
             <div
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              aria-hidden
+              role="button"
+              tabIndex={0}
+              aria-label="Закрити"
+              onClick={() => setSelected(null)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelected(null);
+                }
+              }}
             />
             <div
               ref={detailsSheetRef}
@@ -812,7 +820,7 @@ export function Workouts() {
                 "relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft",
                 FIZRUK_SHEET_PAD_CLASS,
               )}
-              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby="fizruk-ex-details-title"
@@ -1028,12 +1036,20 @@ export function Workouts() {
         {addOpen && (
           <div
             className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}
-            onClick={() => setAddOpen(false)}
             role="presentation"
           >
             <div
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              aria-hidden
+              role="button"
+              tabIndex={0}
+              aria-label="Закрити"
+              onClick={() => setAddOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setAddOpen(false);
+                }
+              }}
             />
             <div
               ref={addExerciseSheetRef}
@@ -1041,7 +1057,7 @@ export function Workouts() {
                 "relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft max-h-[92dvh] flex flex-col",
                 FIZRUK_SHEET_PAD_CLASS,
               )}
-              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby="add-ex-title"

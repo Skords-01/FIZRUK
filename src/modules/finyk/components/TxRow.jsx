@@ -102,6 +102,53 @@ export function TxRow({
     setSplitEditor(false);
   };
 
+  const mainRowInner = (
+    <>
+      <span className="text-xl shrink-0 leading-none">
+        {highlighted ? "✅" : catIcon}
+      </span>
+      <div className="min-w-0">
+        <div
+          className={cn(
+            "text-sm font-medium text-text truncate",
+            hidden && "line-through",
+          )}
+        >
+          {tx.description || "Транзакція"}
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <span className="text-xs text-subtle">{catName}</span>
+          {cat.id === INTERNAL_TRANSFER_ID && (
+            <span className="text-[9px] bg-muted/15 text-muted px-1.5 py-0.5 rounded-full font-semibold">
+              не в статистиці
+            </span>
+          )}
+          {overrideCatId && cat.id !== INTERNAL_TRANSFER_ID && (
+            <span className="text-[9px] bg-text/8 text-muted px-1.5 py-0.5 rounded-full font-semibold">
+              змін.
+            </span>
+          )}
+          {existingSplits.length > 0 && (
+            <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
+              ⅔ спліт
+            </span>
+          )}
+          {isCreditCard && (
+            <span className="text-[9px] bg-danger/8 text-danger px-1.5 py-0.5 rounded-full font-semibold">
+              💳 {accountName}
+            </span>
+          )}
+          {!isCreditCard && account && (
+            <span className="text-[9px] text-subtle/50 px-1 py-0.5">
+              {accountName}
+            </span>
+          )}
+          <span className="text-xs text-subtle">· {fmtDate(tx.time)}</span>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div
       className={cn(
@@ -117,56 +164,22 @@ export function TxRow({
           hidden && "opacity-35",
         )}
       >
-        <div
-          onClick={onClick}
-          className={cn(
-            "flex items-center gap-3 flex-1 min-w-0",
-            onClick && "cursor-pointer",
-          )}
-        >
-          <span className="text-xl shrink-0 leading-none">
-            {highlighted ? "✅" : catIcon}
-          </span>
-          <div className="min-w-0">
-            <div
-              className={cn(
-                "text-sm font-medium text-text truncate",
-                hidden && "line-through",
-              )}
-            >
-              {tx.description || "Транзакція"}
-            </div>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <span className="text-xs text-subtle">{catName}</span>
-              {cat.id === INTERNAL_TRANSFER_ID && (
-                <span className="text-[9px] bg-muted/15 text-muted px-1.5 py-0.5 rounded-full font-semibold">
-                  не в статистиці
-                </span>
-              )}
-              {overrideCatId && cat.id !== INTERNAL_TRANSFER_ID && (
-                <span className="text-[9px] bg-text/8 text-muted px-1.5 py-0.5 rounded-full font-semibold">
-                  змін.
-                </span>
-              )}
-              {existingSplits.length > 0 && (
-                <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
-                  ⅔ спліт
-                </span>
-              )}
-              {isCreditCard && (
-                <span className="text-[9px] bg-danger/8 text-danger px-1.5 py-0.5 rounded-full font-semibold">
-                  💳 {accountName}
-                </span>
-              )}
-              {!isCreditCard && account && (
-                <span className="text-[9px] text-subtle/50 px-1 py-0.5">
-                  {accountName}
-                </span>
-              )}
-              <span className="text-xs text-subtle">· {fmtDate(tx.time)}</span>
-            </div>
+        {onClick ? (
+          <button
+            type="button"
+            onClick={onClick}
+            className={cn(
+              "flex items-center gap-3 flex-1 min-w-0 cursor-pointer text-left",
+              "border-0 bg-transparent p-0 font-inherit",
+            )}
+          >
+            {mainRowInner}
+          </button>
+        ) : (
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {mainRowInner}
           </div>
-        </div>
+        )}
 
         <div className="flex items-center gap-1 shrink-0 ml-2">
           <div className="text-right">

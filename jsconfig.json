@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["src/shared/*"],
+      "@finyk/*": ["src/modules/finyk/*"],
+      "@fizruk/*": ["src/modules/fizruk/*"]
+    },
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "checkJs": false,
+    "strict": false
+  },
+  "include": [
+    "src/**/*",
+    "api/**/*",
+    "scripts/**/*",
+    "vite.config.js",
+    "vitest.config.js",
+    "eslint.config.js"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

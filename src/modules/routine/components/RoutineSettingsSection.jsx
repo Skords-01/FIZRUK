@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useId } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
@@ -47,6 +47,10 @@ export function RoutineSettingsSection({
   const [dragId, setDragId] = useState(null);
   const [habitListQuery, setHabitListQuery] = useState("");
   const backupRef = useRef(null);
+  const habitDateFieldIds = useId();
+  const habitStartDateId = `${habitDateFieldIds}-start`;
+  const habitEndDateId = `${habitDateFieldIds}-end`;
+  const habitTimeId = `${habitDateFieldIds}-time`;
 
   const q = habitListQuery.trim().toLowerCase();
   const filteredActiveHabits = useMemo(() => {
@@ -282,9 +286,13 @@ export function RoutineSettingsSection({
         </label>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="block text-xs text-subtle">
+          <label
+            className="block text-xs text-subtle"
+            htmlFor={habitStartDateId}
+          >
             Початок (дата)
             <Input
+              id={habitStartDateId}
               type="date"
               className="routine-touch-field mt-1 w-full"
               value={habitDraft.startDate || ""}
@@ -293,9 +301,10 @@ export function RoutineSettingsSection({
               }
             />
           </label>
-          <label className="block text-xs text-subtle">
+          <label className="block text-xs text-subtle" htmlFor={habitEndDateId}>
             Кінець (необовʼязково)
             <Input
+              id={habitEndDateId}
               type="date"
               className="routine-touch-field mt-1 w-full"
               value={habitDraft.endDate || ""}
@@ -306,9 +315,10 @@ export function RoutineSettingsSection({
           </label>
         </div>
 
-        <label className="block text-xs text-subtle">
+        <label className="block text-xs text-subtle" htmlFor={habitTimeId}>
           Час нагадування (необовʼязково)
           <Input
+            id={habitTimeId}
             type="time"
             className="routine-touch-field mt-1 w-full"
             value={habitDraft.timeOfDay || ""}
