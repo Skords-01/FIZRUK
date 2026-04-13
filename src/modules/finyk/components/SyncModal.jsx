@@ -37,13 +37,27 @@ export function SyncModal({ storage, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-[100] flex items-end">
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        role="button"
+        tabIndex={0}
+        aria-label="Закрити"
+        onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+      />
 
       <div
         className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
-        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">

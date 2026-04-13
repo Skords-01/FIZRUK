@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { recoveryConflictsForWorkoutItem } from "../../lib/recoveryConflict";
 
@@ -28,6 +29,10 @@ export function ActiveWorkoutPanel({
   onFinishClick,
   onDeleteWorkout,
 }) {
+  const dtFieldsId = useId();
+  const workoutStartId = `${dtFieldsId}-started`;
+  const workoutEndId = `${dtFieldsId}-ended`;
+
   if (!activeWorkout) return null;
   return (
     <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
@@ -76,8 +81,14 @@ export function ActiveWorkoutPanel({
           Час тренування
         </summary>
         <div className="mt-2 space-y-2">
-          <label className="block text-[10px] text-subtle">Початок</label>
+          <label
+            className="block text-[10px] text-subtle"
+            htmlFor={workoutStartId}
+          >
+            Початок
+          </label>
           <input
+            id={workoutStartId}
             type="datetime-local"
             className="w-full h-11 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
             value={isoToDatetimeLocalValue(activeWorkout.startedAt)}
@@ -88,10 +99,14 @@ export function ActiveWorkoutPanel({
           />
           {activeWorkout.endedAt ? (
             <>
-              <label className="block text-[10px] text-subtle">
+              <label
+                className="block text-[10px] text-subtle"
+                htmlFor={workoutEndId}
+              >
                 Завершення (можна виправити після занесення)
               </label>
               <input
+                id={workoutEndId}
                 type="datetime-local"
                 className="w-full h-11 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
                 value={isoToDatetimeLocalValue(activeWorkout.endedAt)}
