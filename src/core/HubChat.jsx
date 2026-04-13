@@ -945,13 +945,7 @@ function HubChat({ onClose }) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col"
-      style={{
-        paddingTop: "env(safe-area-inset-top,0px)",
-        paddingBottom: "env(safe-area-inset-bottom,0px)",
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex flex-col safe-area-pt-pb">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}

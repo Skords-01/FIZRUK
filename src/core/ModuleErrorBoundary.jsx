@@ -17,17 +17,11 @@ export default class ModuleErrorBoundary extends Component {
     if (this.state.error) {
       const { onBackToHub } = this.props;
       return (
-        <div
-          className="min-h-dvh bg-bg flex flex-col items-center justify-center p-6 text-text"
-          style={{
-            paddingTop: "env(safe-area-inset-top, 0px)",
-            paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          }}
-        >
+        <div className="min-h-dvh bg-bg flex flex-col items-center justify-center p-6 text-text safe-area-pt-pb">
           <p className="text-sm text-muted mb-2 text-center">
             Помилка в модулі
           </p>
-          <pre className="text-xs text-red-600 dark:text-red-400 mb-6 max-w-lg w-full overflow-auto whitespace-pre-wrap break-words">
+          <pre className="text-xs text-danger mb-6 max-w-lg w-full overflow-auto whitespace-pre-wrap break-words">
             {this.state.error.message}
           </pre>
           <button

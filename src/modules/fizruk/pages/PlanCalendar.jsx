@@ -120,7 +120,7 @@ export function PlanCalendar() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
         <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
           <h2 className="text-sm font-semibold text-text mb-3">Нагадування</h2>
           <p className="text-[11px] text-subtle mb-3 leading-snug">

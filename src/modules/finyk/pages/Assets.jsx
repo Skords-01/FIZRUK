@@ -140,7 +140,7 @@ export function Assets({ mono, storage, showBalance = true }) {
             <span className="text-sm font-bold">Погашення: {label}</span>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
+            <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
               <div className="bg-panel border border-line rounded-xl p-4 mb-3">
                 <div className="text-xs text-subtle mb-1">{label}</div>
                 <div className="text-2xl font-extrabold text-danger">
@@ -233,7 +233,7 @@ export function Assets({ mono, storage, showBalance = true }) {
             </span>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
+            <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
               <div className="bg-panel border border-line rounded-xl p-4 mb-4">
                 <p className="text-xs text-subtle leading-relaxed">
                   Обери списання (наприклад через Apple/Google). День місяця з
@@ -315,7 +315,7 @@ export function Assets({ mono, storage, showBalance = true }) {
           </span>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
+          <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
             <div className="bg-panel border border-line rounded-xl p-4 mb-4">
               <div className="text-xs text-subtle">
                 {item?.emoji} {item?.name}
@@ -367,7 +367,7 @@ export function Assets({ mono, storage, showBalance = true }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-1">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-1">
         {/* Networth */}
         <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl p-5 mb-3 border border-white/10 shadow-float">
           <div className="text-xs text-emerald-100/90 mb-1">
@@ -660,7 +660,7 @@ export function Assets({ mono, storage, showBalance = true }) {
             {manualAssets.map((a, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2.5 border-b border-[#0f172a]"
+                className="flex items-center justify-between py-2.5 border-b border-text"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xl leading-none">{a.emoji}</span>

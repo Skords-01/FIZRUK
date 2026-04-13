@@ -13,6 +13,7 @@ import {
 import { getSubscriptionAmountMeta } from "../domain/subscriptionUtils.js";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { cn } from "@shared/lib/cn";
+import { THEME_HEX } from "@shared/lib/themeHex.js";
 
 const parseLocalDate = (isoDate) => {
   const [y, m, d] = (isoDate || "").split("-").map(Number);
@@ -38,7 +39,7 @@ const getNextBillingDate = (billingDay, now) => {
 };
 
 function FlowRow({ flow, showAmount = true }) {
-  const isGreen = flow.color === "#22c55e";
+  const isGreen = flow.color === THEME_HEX.success;
   return (
     <div className="flex justify-between items-center py-3 border-b border-line last:border-0">
       <div className="min-w-0 mr-3">
@@ -196,7 +197,7 @@ export function Overview({
   if (loadingTx && realTx.length === 0) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4 max-w-4xl mx-auto">
+        <div className="px-4 pt-4 page-tabbar-pad space-y-4 max-w-4xl mx-auto">
           <Skeleton className="h-[168px] rounded-3xl" />
           <Skeleton className="h-[120px] opacity-80 rounded-2xl" />
           <Skeleton className="h-[110px] opacity-60 rounded-2xl" />
@@ -217,7 +218,7 @@ export function Overview({
       title: `${sub.emoji} ${sub.name}`,
       amount,
       sign: "-",
-      color: "#f87171",
+      color: THEME_HEX.danger,
       daysLeft,
       hint: formatDaysLeft(daysLeft),
       currency,
@@ -237,7 +238,7 @@ export function Overview({
         title: `${d.emoji || "💸"} ${d.name}`,
         amount: d.remaining,
         sign: "-",
-        color: "#f87171",
+        color: THEME_HEX.danger,
         daysLeft,
         hint: formatDaysLeft(daysLeft),
         currency: "₴",
@@ -257,7 +258,7 @@ export function Overview({
         title: `${r.emoji || "💰"} ${r.name}`,
         amount: r.remaining,
         sign: "+",
-        color: "#22c55e",
+        color: THEME_HEX.success,
         daysLeft,
         hint: formatDaysLeft(daysLeft),
         currency: "₴",
@@ -381,7 +382,7 @@ export function Overview({
 
   return (
     <div className="flex-1 overflow-y-auto overscroll-contain">
-      <div className="px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4 max-w-4xl mx-auto">
+      <div className="px-4 pt-4 page-tabbar-pad space-y-4 max-w-4xl mx-auto">
         {/* ── Hero (як у прототипі: градієнт + зведення) ── */}
         <div className="rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-5 shadow-float border border-white/10">
           <div className="flex items-start justify-between gap-2">

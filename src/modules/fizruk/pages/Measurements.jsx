@@ -45,7 +45,7 @@ export function Measurements() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad space-y-3">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-3">
         <a
           href="https://www.wikihow.com/Take-Body-Measurements"
           target="_blank"
@@ -129,8 +129,7 @@ export function Measurements() {
           <div className="mt-3">
             <button
               type="button"
-              className="w-full py-4 rounded-full font-bold text-[15px] bg-accent transition-all active:scale-[0.98]"
-              style={{ color: "#0f2d1a" }}
+              className="w-full py-4 rounded-full font-bold text-[15px] bg-accent text-forest transition-all active:scale-[0.98]"
               onClick={() => {
                 const payload = {};
                 for (const f of MEASURE_FIELDS) {

@@ -86,7 +86,8 @@ const MODULES = [
     label: "РУТИНА",
     desc: "Календар Hub, звички, план",
     gradient: "from-orange-400/15 to-rose-400/10",
-    iconClass: "bg-[#fff0eb] text-[#c24133] border border-[#f5c4b8]/60",
+    iconClass:
+      "bg-routine-surface text-routine-strong border border-routine-line/60",
     icon: (
       <svg
         width="32"
@@ -136,13 +137,7 @@ export default function App() {
 
   if (!activeModule) {
     return (
-      <div
-        className="min-h-dvh bg-bg flex flex-col"
-        style={{
-          paddingTop: "env(safe-area-inset-top, 0px)",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        }}
-      >
+      <div className="min-h-dvh bg-bg flex flex-col safe-area-pt-pb">
         <header className="px-6 pt-10 pb-2 max-w-lg mx-auto w-full">
           <h1 className="text-3xl font-bold text-text tracking-tight">
             Мій простір
@@ -208,12 +203,7 @@ export default function App() {
           </div>
         </main>
 
-        <div
-          className="fixed bottom-0 left-0 right-0 flex justify-center pb-6"
-          style={{
-            paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom,0px))",
-          }}
-        >
+        <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
           <button
             type="button"
             onClick={() => setChatOpen(true)}
@@ -249,10 +239,7 @@ export default function App() {
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       {activeModule !== "fizruk" && activeModule !== "routine" && (
-        <div
-          className="shrink-0 absolute top-0 left-0 z-50 p-2"
-          style={{ paddingTop: "env(safe-area-inset-top, 8px)" }}
-        >
+        <div className="shrink-0 absolute top-0 left-0 z-50 p-2 safe-area-pt-8">
           <button
             type="button"
             onClick={goToHub}

@@ -349,7 +349,7 @@ export function Workouts() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
         <section className="fizruk-hero-card mb-3" aria-label="Огляд тренувань">
           <div className="text-[11px] font-bold tracking-widest uppercase text-accent">
             Тренування

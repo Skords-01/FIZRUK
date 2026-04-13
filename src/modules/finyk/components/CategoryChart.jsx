@@ -1,13 +1,4 @@
-const COLORS = [
-  "#818cf8",
-  "#34d399",
-  "#f59e0b",
-  "#f87171",
-  "#60a5fa",
-  "#c084fc",
-  "#fb923c",
-  "#4ade80",
-];
+import { chartPaletteList as COLORS } from "../constants/chartPalette.js";
 
 export function CategoryChart({ data, onBarClick }) {
   const maxVal = data[0]?.spent || 1;

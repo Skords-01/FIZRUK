@@ -32,7 +32,7 @@ const Settings = lazy(() =>
 
 function PageLoader() {
   return (
-    <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-3 max-w-4xl mx-auto w-full">
+    <div className="flex-1 overflow-y-auto px-4 pt-4 page-tabbar-pad space-y-3 max-w-4xl mx-auto w-full">
       <Skeleton className="h-40 rounded-3xl" />
       <Skeleton className="h-28 opacity-80 rounded-2xl" />
       <Skeleton className="h-24 opacity-60 rounded-2xl" />
@@ -248,13 +248,7 @@ export default function App({ onBackToHub } = {}) {
   // ── Login screen ──────────────────────────────────────────────────────
   if (!clientInfo) {
     return (
-      <div
-        className="min-h-dvh flex items-center justify-center p-5 bg-bg"
-        style={{
-          paddingTop: "env(safe-area-inset-top, 0px)",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        }}
-      >
+      <div className="min-h-dvh flex items-center justify-center p-5 bg-bg safe-area-pt-pb">
         <FinykToast toast={toast} />
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
@@ -369,10 +363,7 @@ export default function App({ onBackToHub } = {}) {
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       {/* Header */}
-      <div
-        className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-      >
+      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative safe-area-pt">
         <div className="flex h-14 items-center justify-between px-4 sm:px-5 gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div
@@ -491,10 +482,7 @@ export default function App({ onBackToHub } = {}) {
       </div>
 
       {/* Bottom navigation */}
-      <nav
-        className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
+      <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30 safe-area-pb">
         <div className="flex h-[58px]">
           {NAV_ITEMS.map((item) => {
             const active = page === item.id;

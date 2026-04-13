@@ -14,16 +14,15 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.error) {
       return (
-        <div style={{ padding: 32, fontFamily: "sans-serif" }}>
-          <h2>Щось пішло не так</h2>
-          <pre
-            style={{ fontSize: 12, color: "#dc2626", whiteSpace: "pre-wrap" }}
-          >
+        <div className="p-8 font-sans">
+          <h2 className="text-lg font-semibold text-text">Щось пішло не так</h2>
+          <pre className="text-xs text-danger whitespace-pre-wrap mt-2">
             {this.state.error.message}
           </pre>
           <button
+            type="button"
             onClick={() => window.location.reload()}
-            style={{ marginTop: 16, padding: "8px 16px" }}
+            className="mt-4 px-4 py-2 rounded-xl border border-line bg-panel text-sm font-medium text-text"
           >
             Перезавантажити
           </button>

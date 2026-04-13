@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import createBodyHighlighter from "body-highlighter";
 import { cn } from "@shared/lib/cn";
+import { THEME_HEX } from "@shared/lib/themeHex.js";
 
 const STATUS_TO_FREQ = { yellow: 1, red: 2 };
 
@@ -36,8 +37,8 @@ export function BodyAtlas({ statusByMuscle, height = 320, showLegend = true }) {
       type: view,
       data,
       // green as "ready" baseline
-      bodyColor: "#16a34a",
-      highlightedColors: ["#b45309", "#dc2626"],
+      bodyColor: THEME_HEX.success,
+      highlightedColors: [THEME_HEX.warning, THEME_HEX.danger],
       // body-highlighter sometimes injects an SVG with its own height;
       // enforce scaling by constraining container and SVG.
       svgStyle: {
