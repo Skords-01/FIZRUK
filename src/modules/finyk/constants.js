@@ -44,7 +44,6 @@ export const PAGES = [
   { id: "transactions", label: "📋 Транзакції" },
   { id: "budgets",      label: "📅 Планування" },
   { id: "assets",       label: "🏦 Активи та пасиви" },
-  { id: "chat",         label: "🤖 AI Асистент" },
 ];
 
 export const TX_CACHE_TTL = 15 * 60 * 1000; // 15 хвилин
