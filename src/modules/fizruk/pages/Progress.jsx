@@ -314,7 +314,7 @@ export function Progress() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad space-y-3">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-3">
         {/* Hero */}
         <section
           className="rounded-3xl p-4 border border-line/20 bg-forest-grad"

@@ -463,7 +463,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         <main
           id="routine-main"
-          className="flex-1 overflow-y-auto routine-page-scroll-pad routine-main-pad max-w-4xl mx-auto w-full pt-4 space-y-4"
+          className="flex-1 overflow-y-auto page-tabbar-pad routine-main-pad max-w-4xl mx-auto w-full pt-4 space-y-4"
           tabIndex={-1}
         >
           <RoutineCalendarPanel

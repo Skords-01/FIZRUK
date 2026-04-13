@@ -45,7 +45,7 @@ export function Measurements() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad space-y-3">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-3">
         <a
           href="https://www.wikihow.com/Take-Body-Measurements"
           target="_blank"

@@ -61,14 +61,8 @@
     @apply p-4 bg-forest-grad;
   }
 
-  /* Нижній відступ над таб-баром (58px nav + safe-area): хаб-модулі з нижньою навігацією */
-  .fizruk-page-scroll-pad,
+  /* Нижній відступ над таб-баром (58px nav + safe-area): Фінік, Фізрук, Рутина */
   .page-tabbar-pad {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
-  }
-
-  /* Рутина: відступ над нижньою навігацією (як у Фізрука) */
-  .routine-page-scroll-pad {
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 

@@ -269,7 +269,7 @@ export function Dashboard({ onOpenAtlas }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad space-y-4">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
         <section
           className="rounded-3xl p-6 overflow-hidden bg-forest-grad"
           aria-label="Привітання"

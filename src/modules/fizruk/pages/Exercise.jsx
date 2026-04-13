@@ -81,7 +81,7 @@ export function Exercise({ exerciseId }) {
   if (!exerciseId) {
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad">
+        <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
           <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card text-sm text-subtle">
             Невірний ID вправи
           </div>
@@ -92,7 +92,7 @@ export function Exercise({ exerciseId }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad space-y-3">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-3">
         <section
           className="rounded-3xl p-5 border border-line/20 bg-forest-grad"
           aria-label="Профіль вправи"
