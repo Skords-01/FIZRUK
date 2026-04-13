@@ -64,6 +64,18 @@ const TOOLS = [
       required: ["category_id", "limit"],
     },
   },
+  {
+    name: "set_monthly_plan",
+    description: "Задати або оновити місячний фінплан (планові дохід, витрати, заощадження у грн/міс). Можна передати лише ті поля, які змінюються.",
+    input_schema: {
+      type: "object",
+      properties: {
+        income: { type: "number", description: "Плановий дохід грн/міс (опційно)" },
+        expense: { type: "number", description: "Планові витрати грн/міс (опційно)" },
+        savings: { type: "number", description: "Планові заощадження грн/міс (опційно)" },
+      },
+    },
+  },
 ];
 
 const SYSTEM_PREFIX = `Ти фінансовий асистент додатку "Фінік" та фітнес-трекера "Фізрук". Відповідай ТІЛЬКИ українською, стисло (2-4 речення).
@@ -71,7 +83,7 @@ const SYSTEM_PREFIX = `Ти фінансовий асистент додатку
 ПРАВИЛА:
 - Усі числа бери з блоку ДАНІ нижче — там є дата, витрати, доходи, середня на день, прогноз, борги, тренування тощо.
 - Якщо потрібно порахувати (середня/день, прогноз, залишок ліміту) — рахуй на основі наданих чисел. В ДАНІ є [День місяця], [Середня витрата/день], [Прогноз витрат].
-- Якщо користувач просить змінити дані — використай відповідний tool.
+- Якщо користувач просить змінити дані — використай відповідний tool (у т.ч. set_monthly_plan для планового доходу/витрат/заощаджень на місяць).
 - Транзакції мають id і дату — використовуй для tool calls.
 - Категорії та їх id перелічені в [Категорії].
 - Ти бачиш і фінанси (Фінік) і тренування (Фізрук). Відповідай на будь-які питання по обох модулях.
@@ -92,7 +104,7 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
 
   try {
-    const { context = "", messages = [], tool_results, tool_calls_raw } = req.body || {};
+    const { context = "", messages = [], tool_results, tool_calls_raw, stream } = req.body || {};
 
     // Другий крок: клієнт виконав tool calls і повертає результати
     if (tool_results && tool_calls_raw) {
@@ -113,6 +125,19 @@ export default async function handler(req, res) {
         { role: "user", content: toolResultMessages },
       ];
 
+      const payload = {
+        model: "claude-sonnet-4-6",
+        max_tokens: 400,
+        system: SYSTEM_PREFIX + context,
+        tools: TOOLS,
+        messages: fullMessages,
+      };
+
+      if (stream) {
+        await streamAnthropicToSse(res, apiKey, payload);
+        return;
+      }
+
       const response = await fetch(ANTHROPIC_URL, {
         method: "POST",
         headers: {
@@ -120,13 +145,7 @@ export default async function handler(req, res) {
           "x-api-key": apiKey,
           "anthropic-version": "2023-06-01",
         },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 400,
-          system: SYSTEM_PREFIX + context,
-          tools: TOOLS,
-          messages: fullMessages,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -181,6 +200,77 @@ export default async function handler(req, res) {
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Помилка AI сервера" });
   }
+}
+
+/**
+ * Anthropic Messages API stream → SSE для клієнта (data: {"t":"фрагмент"}).
+ */
+async function streamAnthropicToSse(res, apiKey, payload) {
+  const response = await fetch(ANTHROPIC_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({ ...payload, stream: true }),
+  });
+
+  if (!response.ok) {
+    let errMsg = "AI error";
+    try {
+      const j = await response.json();
+      errMsg = j?.error?.message || errMsg;
+    } catch {
+      try {
+        errMsg = await response.text();
+      } catch { /* ignore */ }
+    }
+    res.status(response.status).json({ error: errMsg });
+    return;
+  }
+
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("X-Accel-Buffering", "no");
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    res.status(500).json({ error: "No response body" });
+    return;
+  }
+
+  const decoder = new TextDecoder();
+  let lineBuf = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      lineBuf += decoder.decode(value, { stream: true });
+      for (;;) {
+        const nl = lineBuf.indexOf("\n");
+        if (nl === -1) break;
+        const line = lineBuf.slice(0, nl).replace(/\r$/, "");
+        lineBuf = lineBuf.slice(nl + 1);
+        if (!line.startsWith("data: ")) continue;
+        const raw = line.slice(6).trim();
+        if (raw === "[DONE]") continue;
+        let ev;
+        try {
+          ev = JSON.parse(raw);
+        } catch {
+          continue;
+        }
+        if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
+          res.write(`data: ${JSON.stringify({ t: ev.delta.text })}\n\n`);
+        }
+      }
+    }
+  } catch (e) {
+    res.write(`data: ${JSON.stringify({ err: String(e?.message || e) })}\n\n`);
+  }
+  res.write("data: [DONE]\n\n");
+  res.end();
 }
 
 function sanitizeMessages(messages) {
