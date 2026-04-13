@@ -3,11 +3,12 @@ import { cn } from "@shared/lib/cn";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
 import { HubBackupPanel } from "./HubBackupPanel.jsx";
 
+import RoutineApp from "../modules/routine/RoutineApp.jsx";
+
 const HubChat = lazy(() => import("./HubChat"));
 
 const FinykApp = lazy(() => import("../modules/finyk/FinykApp"));
 const FizrukApp = lazy(() => import("../modules/fizruk/FizrukApp"));
-const RoutineApp = lazy(() => import("../modules/routine/RoutineApp"));
 
 const HUB_MODULE_KEY = "hub_last_module";
 const VALID_MODULES = new Set(["finyk", "fizruk", "routine"]);

@@ -4,6 +4,9 @@ import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    host: true,
+  },
   resolve: {
     alias: {
       "@shared": resolve(__dirname, "src/shared"),
