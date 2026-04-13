@@ -233,7 +233,7 @@ export function Progress() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-3">
+      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad space-y-3">
 
         {/* Hero */}
         <section
@@ -344,7 +344,7 @@ export function Progress() {
         {weightTrend.filter(d => d.value != null).length >= 2 && (
           <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">Тренд ваги</div>
-            <MiniLineChart data={weightTrend} unit="кг" color="rgb(22 163 74)" />
+            <MiniLineChart data={weightTrend} unit="кг" color="rgb(22 163 74)" metricLabel="вагу тіла" />
           </div>
         )}
 
@@ -352,7 +352,7 @@ export function Progress() {
         {fatTrend.filter(d => d.value != null).length >= 2 && (
           <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">Тренд % жиру</div>
-            <MiniLineChart data={fatTrend} unit="%" color="rgb(234 179 8)" />
+            <MiniLineChart data={fatTrend} unit="%" color="rgb(234 179 8)" metricLabel="відсоток жиру" />
           </div>
         )}
 

@@ -1,20 +1,29 @@
+import { useRef } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
+import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { formatDurShort } from "../../lib/workoutUi";
 
 export function WorkoutFinishSheets({ finishFlash, setFinishFlash, updateWorkout }) {
+  const trapRef = useRef(null);
+  useDialogFocusTrap(!!finishFlash, trapRef, { onEscape: () => setFinishFlash(null) });
+
   if (!finishFlash) return null;
   return (
     <div
-      className="fixed left-0 right-0 z-[100] px-4 pointer-events-none"
-      style={{ bottom: "calc(58px + env(safe-area-inset-bottom, 0px))" }}
+      className="fixed left-0 right-0 z-[100] px-4 pointer-events-none fizruk-above-tabbar"
       role="region"
       aria-label="Підсумок тренування"
     >
-      <div className="pointer-events-auto max-w-4xl mx-auto">
+      <div ref={trapRef} className="pointer-events-auto max-w-4xl mx-auto fizruk-sheet">
         {finishFlash.step === "wellbeing" && (
-          <div className="rounded-2xl border border-line bg-panel p-4 shadow-float space-y-4 max-h-[min(70vh,520px)] overflow-y-auto">
-            <div className="text-sm font-bold text-text">Самопочуття</div>
+          <div
+            className="rounded-2xl border border-line bg-panel p-4 shadow-float space-y-4 max-h-[min(70vh,520px)] overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="fizruk-wellbeing-title"
+          >
+            <div id="fizruk-wellbeing-title" className="text-sm font-bold text-text">Самопочуття</div>
             <p className="text-xs text-subtle leading-relaxed">Оціни по шкалі 1–5 (можна пропустити).</p>
             <div>
               <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">Енергія</div>

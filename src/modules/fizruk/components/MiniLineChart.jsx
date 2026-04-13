@@ -1,7 +1,24 @@
+import { ChartEmptyState } from "./ChartEmptyState";
+
 /** SVG line chart for measurement trends (weight, body fat %). */
-export function MiniLineChart({ data, unit, color }) {
+export function MiniLineChart({ data, unit, color, metricLabel = "показник" }) {
   const valid = (data || []).filter(d => d.value != null && Number.isFinite(Number(d.value)));
-  if (valid.length < 2) return null;
+  if (valid.length === 0) {
+    return (
+      <ChartEmptyState
+        title="Немає числових даних"
+        hint={`Додай записи в розділі «Заміри», щоб відстежувати ${metricLabel}.`}
+      />
+    );
+  }
+  if (valid.length < 2) {
+    return (
+      <ChartEmptyState
+        title="Замало точок для лінії"
+        hint={`Потрібні щонайменше два заміри з ${metricLabel}, щоб побудувати тренд.`}
+      />
+    );
+  }
 
   const vals = valid.map(d => Number(d.value));
   const minVal = Math.min(...vals);

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
+import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { WorkoutTemplatesSection } from "../components/WorkoutTemplatesSection";
 import { ActiveWorkoutPanel } from "../components/workouts/ActiveWorkoutPanel";
 import { ExercisePickerSheet } from "../components/workouts/ExercisePickerSheet";
@@ -13,7 +14,7 @@ import { useRecovery } from "../hooks/useRecovery";
 import { useWorkoutTemplates } from "../hooks/useWorkoutTemplates";
 import { useWorkouts } from "../hooks/useWorkouts";
 import { recoveryConflictsForExercise } from "../lib/recoveryConflict";
-import { ACTIVE_WORKOUT_KEY, SHEET_BOTTOM_PADDING, SHEET_Z, mondayStartMs, summarizeWorkoutForFinish } from "../lib/workoutUi";
+import { ACTIVE_WORKOUT_KEY, FIZRUK_SHEET_PAD_CLASS, SHEET_Z, mondayStartMs, summarizeWorkoutForFinish } from "../lib/workoutUi";
 
 
 const EQUIPMENT_OPTIONS = [
@@ -71,6 +72,10 @@ export function Workouts() {
     equipment: ["bodyweight"],
     description: "",
   }));
+  const detailsSheetRef = useRef(null);
+  const addExerciseSheetRef = useRef(null);
+  useDialogFocusTrap(!!selected, detailsSheetRef, { onEscape: () => setSelected(null) });
+  useDialogFocusTrap(addOpen, addExerciseSheetRef, { onEscape: () => setAddOpen(false) });
   const suggestedMuscles = useMemo(() => {
     const g = form.primaryGroup;
     const ids = musclesByPrimaryGroup?.[g] || [];
@@ -225,7 +230,7 @@ export function Workouts() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
+      <div className="max-w-4xl mx-auto px-4 pt-4 fizruk-page-scroll-pad">
         <section className="fizruk-hero-card mb-3" aria-label="Огляд тренувань">
           <div className="text-[11px] font-bold tracking-widest uppercase text-accent">Тренування</div>
           <div className="grid grid-cols-3 gap-2 mt-3">
@@ -514,12 +519,15 @@ export function Workouts() {
 
         {/* Details sheet */}
         {selected && (
-          <div className={cn("fixed inset-0 flex items-end", SHEET_Z)} onClick={() => setSelected(null)}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)} onClick={() => setSelected(null)}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden />
             <div
-              className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft"
-              style={{ paddingBottom: SHEET_BOTTOM_PADDING }}
+              ref={detailsSheetRef}
+              className={cn("relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft", FIZRUK_SHEET_PAD_CLASS)}
               onClick={e => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="fizruk-ex-details-title"
             >
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 bg-line rounded-full" />
@@ -527,7 +535,7 @@ export function Workouts() {
               <div className="px-5 pb-6">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <div className="text-lg font-extrabold text-text leading-tight">{selected?.name?.uk || selected?.name?.en}</div>
+                    <div id="fizruk-ex-details-title" className="text-lg font-extrabold text-text leading-tight">{selected?.name?.uk || selected?.name?.en}</div>
                     <div className="text-xs text-subtle mt-1">
                       Основна група: <span className="font-semibold text-muted">{selected.primaryGroupUk || selected.primaryGroup}</span>
                       {selected.level ? <> · рівень: <span className="font-semibold text-muted">{selected.level}</span></> : null}
@@ -650,11 +658,11 @@ export function Workouts() {
 
         {/* Add exercise sheet */}
         {addOpen && (
-          <div className={cn("fixed inset-0 flex items-end", SHEET_Z)} onClick={() => setAddOpen(false)} role="presentation">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)} onClick={() => setAddOpen(false)} role="presentation">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden />
             <div
-              className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft max-h-[92dvh] flex flex-col"
-              style={{ paddingBottom: SHEET_BOTTOM_PADDING }}
+              ref={addExerciseSheetRef}
+              className={cn("relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft max-h-[92dvh] flex flex-col", FIZRUK_SHEET_PAD_CLASS)}
               onClick={e => e.stopPropagation()}
               role="dialog"
               aria-modal="true"

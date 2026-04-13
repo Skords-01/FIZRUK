@@ -1,10 +1,31 @@
 import { cn } from "@shared/lib/cn";
+import { ChartEmptyState } from "./ChartEmptyState";
 
 const LABELS_UK = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 
 /** Легкий area-chart без залежностей; акцент — success з tailwind. */
 export function WeeklyVolumeChart({ volumeKg, className }) {
   const vals = Array.isArray(volumeKg) && volumeKg.length === 7 ? volumeKg : [0, 0, 0, 0, 0, 0, 0];
+  const totalVol = vals.reduce((a, v) => a + (Number(v) || 0), 0);
+
+  if (totalVol <= 0) {
+    return (
+      <div className={cn("w-full", className)}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-text">Тижневий обʼєм</span>
+          <span className="text-2xs text-subtle flex items-center gap-1.5" aria-hidden>
+            <span className="inline-block w-2 h-2 rounded-full bg-success" />
+            кг×повт
+          </span>
+        </div>
+        <ChartEmptyState
+          title="Поки без обʼєму за тиждень"
+          hint="Заверши тренування з силовими підходами — тут зʼявиться сумарний обʼєм (кг×повторення) по днях."
+        />
+      </div>
+    );
+  }
+
   const max = Math.max(1, ...vals.map(v => Number(v) || 0));
   const w = 320;
   const h = 120;
