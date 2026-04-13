@@ -5,7 +5,6 @@ import { cn } from "@shared/lib/cn";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { WorkoutTemplatesSection } from "../components/WorkoutTemplatesSection";
 import { ActiveWorkoutPanel } from "../components/workouts/ActiveWorkoutPanel";
-import { ExercisePickerSheet } from "../components/workouts/ExercisePickerSheet";
 import { RestTimerOverlay } from "../components/workouts/RestTimerOverlay";
 import { WorkoutFinishSheets } from "../components/workouts/WorkoutFinishSheets";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
@@ -57,9 +56,6 @@ export function Workouts() {
   const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
     try { return localStorage.getItem(ACTIVE_WORKOUT_KEY) || null; } catch { return null; }
   });
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickQ, setPickQ] = useState("");
-  const [pendingPick, setPendingPick] = useState(null);
   const [finishFlash, setFinishFlash] = useState(null);
   const [journalLimit, setJournalLimit] = useState(12);
   const [now, setNow] = useState(Date.now());
@@ -88,23 +84,6 @@ export function Workouts() {
     return ids.filter(id => musclesUk?.[id]);
   }, [form.primaryGroup, musclesByPrimaryGroup, musclesUk]);
   const list = useMemo(() => search(q), [search, q]);
-  const pickList = useMemo(() => search(pickQ).slice(0, 60), [search, pickQ]);
-  const pickGrouped = useMemo(() => {
-    const m = new Map();
-    for (const ex of pickList) {
-      const gid = ex.primaryGroup || "full_body";
-      if (!m.has(gid)) m.set(gid, []);
-      m.get(gid).push(ex);
-    }
-    const order = ["chest", "back", "shoulders", "arms", "core", "legs", "glutes", "full_body", "cardio"];
-    return Array.from(m.entries())
-      .sort((a, b) => {
-        const ai = order.indexOf(a[0]);
-        const bi = order.indexOf(b[0]);
-        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-      })
-      .map(([gid, items]) => ({ id: gid, label: primaryGroupsUk[gid] || gid, items }));
-  }, [pickList, primaryGroupsUk]);
   const activeWorkout = workouts.find(w => w.id === activeWorkoutId) || null;
   const workoutQuickStats = useMemo(() => {
     const done = (workouts || []).filter(w => w.endedAt);
@@ -166,10 +145,6 @@ export function Workouts() {
     return () => clearInterval(id);
   }, [restTimer]);
 
-  useEffect(() => {
-    if (!pickerOpen) setPendingPick(null);
-  }, [pickerOpen]);
-
   // Live timer tick — only when there is an active, unfinished workout
   useEffect(() => {
     if (!activeWorkout || activeWorkout.endedAt) return;
@@ -177,24 +152,43 @@ export function Workouts() {
     return () => clearInterval(id);
   }, [activeWorkout?.id, activeWorkout?.endedAt]);
 
-  const addExerciseToActive = (ex) => {
-    if (!activeWorkoutId) return;
-    const isCardio = ex.primaryGroup === "cardio";
-    addItem(activeWorkoutId, {
-      exerciseId: ex.id,
-      nameUk: ex?.name?.uk || ex?.name?.en,
-      primaryGroup: ex.primaryGroup,
-      musclesPrimary: ex?.muscles?.primary || [],
-      musclesSecondary: ex?.muscles?.secondary || [],
-      type: isCardio ? "distance" : "strength",
-      sets: isCardio ? undefined : [{ weightKg: 0, reps: 0 }],
-      durationSec: isCardio ? 0 : 0,
-      distanceM: isCardio ? 0 : 0,
-    });
-    setPickerOpen(false);
-    setPickQ("");
-    setPendingPick(null);
-  };
+  const addExerciseToActive = useCallback(
+    (ex) => {
+      if (!activeWorkoutId) return;
+      const isCardio = ex.primaryGroup === "cardio";
+      addItem(activeWorkoutId, {
+        exerciseId: ex.id,
+        nameUk: ex?.name?.uk || ex?.name?.en,
+        primaryGroup: ex.primaryGroup,
+        musclesPrimary: ex?.muscles?.primary || [],
+        musclesSecondary: ex?.muscles?.secondary || [],
+        type: isCardio ? "distance" : "strength",
+        sets: isCardio ? undefined : [{ weightKg: 0, reps: 0 }],
+        durationSec: isCardio ? 0 : 0,
+        distanceM: isCardio ? 0 : 0,
+      });
+    },
+    [activeWorkoutId, addItem],
+  );
+
+  const handleExerciseInListClick = useCallback(
+    (ex) => {
+      if (mode !== "log") {
+        setSelected(ex);
+        return;
+      }
+      if (!activeWorkoutId) {
+        window.alert("Спочатку натисни «+ Нове» у блоці нижче, щоб з’явилось активне тренування.");
+        return;
+      }
+      if (activeWorkout?.endedAt) {
+        window.alert("Це тренування вже завершено. Обери чернетку в «Останні тренування» або створи нове.");
+        return;
+      }
+      addExerciseToActive(ex);
+    },
+    [mode, activeWorkoutId, activeWorkout?.endedAt, addExerciseToActive],
+  );
 
   const startWorkoutFromTemplate = useCallback(
     (tpl) => {
@@ -359,33 +353,13 @@ export function Workouts() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="fizruk-cta-accent flex-1 py-3.5 rounded-full text-[15px]"
-                  onClick={() => {
-                    const w = createWorkout();
-                    setActiveWorkoutId(w.id);
-                  }}
-                >
-                  + Нове тренування
-                </button>
-                <Button
-                  variant="ghost"
-                  className="h-[52px] px-4 rounded-full"
-                  onClick={() => setPickerOpen(true)}
-                  disabled={!activeWorkoutId}
-                >
-                  + Вправа
-                </Button>
-              </div>
               <button
                 type="button"
                 className="w-full py-3 rounded-2xl border border-line bg-panel text-sm font-semibold text-text hover:bg-panelHi transition-colors"
                 onClick={() => setRetroOpen((o) => !o)}
                 aria-expanded={retroOpen}
               >
-                Занести тренування заднім числом
+                Записати тренування заднім числом
               </button>
               {retroOpen && (
                 <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
@@ -422,7 +396,9 @@ export function Workouts() {
             {!activeWorkout && (
               <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card text-center">
                 <div className="text-sm font-semibold text-text">Немає активного тренування</div>
-                <div className="text-xs text-subtle mt-1">Нове тренування, занесення заднім числом або шаблон — обери варіант вище</div>
+                <div className="text-xs text-subtle mt-1">
+                  Створи «+ Нове» або відкрий «Шаблони». Вправи з каталогу нижче додаються тапом по назві після цього.
+                </div>
                 <div className="mt-3 flex gap-2">
                   <Button
                     className="flex-1 h-11"
@@ -535,7 +511,7 @@ export function Workouts() {
           />
         )}
 
-        {mode === "catalog" && (
+        {(mode === "catalog" || mode === "log") && (
         <div className="relative mb-3">
           <Input
             placeholder="Пошук (жим, підтягування, спина...)"
@@ -553,6 +529,13 @@ export function Workouts() {
         </div>
         )}
 
+        {mode === "log" && (
+          <p className="text-xs text-subtle mb-2 leading-relaxed">
+            Каталог вправ: розкрий групу (груди, спина…) і натисни вправу — вона додасться до активного тренування.
+          </p>
+        )}
+
+        {mode !== "templates" && (
         <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
           {grouped.length === 0 ? (
             <div className="p-6 text-center text-sm text-subtle">
@@ -580,8 +563,12 @@ export function Workouts() {
                         return (
                         <button
                           key={ex.id}
-                          onClick={() => setSelected(ex)}
-                          className="w-full text-left px-4 py-3 border-t border-line hover:bg-panelHi transition-colors"
+                          type="button"
+                          onClick={() => handleExerciseInListClick(ex)}
+                          className={cn(
+                            "w-full text-left px-4 py-3 border-t border-line transition-colors",
+                            mode === "log" ? "hover:bg-success/10 active:bg-success/15" : "hover:bg-panelHi",
+                          )}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -614,6 +601,7 @@ export function Workouts() {
             })
           )}
         </div>
+        )}
 
         {/* Details sheet */}
         {selected && (
@@ -918,21 +906,6 @@ export function Workouts() {
             </div>
           </div>
         )}
-
-        <ExercisePickerSheet
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          pickQ={pickQ}
-          onPickQ={setPickQ}
-          pickList={pickList}
-          pickGrouped={pickGrouped}
-          primaryGroupsUk={primaryGroupsUk}
-          recBy={rec.by}
-          activeWorkoutId={activeWorkoutId}
-          pendingPick={pendingPick}
-          onPendingPick={setPendingPick}
-          onAddExercise={addExerciseToActive}
-        />
 
         <RestTimerOverlay restTimer={restTimer} onCancel={() => setRestTimer(null)} />
 
