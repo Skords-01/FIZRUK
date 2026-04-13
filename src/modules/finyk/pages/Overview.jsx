@@ -1,8 +1,9 @@
 import { useMemo, useEffect } from "react";
 import { CategoryChart } from "../components/CategoryChart";
 import { NetworthChart } from "../components/NetworthChart";
-import { MCC_CATEGORIES, CURRENCY } from "../constants";
+import { MCC_CATEGORIES } from "../constants";
 import { calcDebtRemaining, calcReceivableRemaining, calcCategorySpent, getMonoTotals, getTxStatAmount } from "../utils";
+import { getSubscriptionAmountMeta } from "../domain/subscriptionUtils.js";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { cn } from "@shared/lib/cn";
 
@@ -110,11 +111,9 @@ export function Overview({ mono, storage, onNavigate, onCategoryClick, showBalan
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const subscriptionFlows = subscriptions.map(sub => {
-    const lastTx = transactions.find(t => t.amount < 0 && sub.keyword && (t.description || "").toLowerCase().includes(sub.keyword.toLowerCase()));
-    const amount = lastTx ? Math.abs(lastTx.amount / 100) : null;
+    const { amount, currency } = getSubscriptionAmountMeta(sub, transactions);
     const dueDate = getNextBillingDate(sub.billingDay, now);
     const daysLeft = Math.ceil((dueDate - todayStart) / 86400000);
-    const currency = lastTx ? (lastTx.currencyCode === CURRENCY.USD ? "$" : "₴") : (sub.currency === "USD" ? "$" : "₴");
     return { id: `sub-${sub.id}`, title: `${sub.emoji} ${sub.name}`, amount, sign: "-", color: "#f87171", daysLeft, hint: formatDaysLeft(daysLeft), currency, dueDate };
   });
 

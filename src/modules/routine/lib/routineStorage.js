@@ -39,6 +39,8 @@ const defaultState = () => ({
   schemaVersion: 3,
   prefs: {
     showFizrukInCalendar: true,
+    /** Планові списання підписок Фініка в календарі Hub */
+    showFinykSubscriptionsInCalendar: true,
     tagScope: "routine",
     /** Браузерні нагадування у вказаний час (якщо дозволено Notification) */
     routineRemindersEnabled: false,
@@ -267,6 +269,25 @@ export function moveHabitInOrder(state, habitId, delta) {
   const copy = [...order];
   [copy[i], copy[j]] = [copy[j], copy[i]];
   const next = { ...state, habitOrder: copy };
+  saveRoutineState(next);
+  return next;
+}
+
+/** Повний порядок активних звичок (наприклад після drag-and-drop) */
+export function setHabitOrder(state, orderedActiveIds) {
+  const active = state.habits.filter((h) => !h.archived).map((h) => h.id);
+  const seen = new Set();
+  const order = [];
+  for (const id of orderedActiveIds) {
+    if (active.includes(id) && !seen.has(id)) {
+      order.push(id);
+      seen.add(id);
+    }
+  }
+  for (const id of active) {
+    if (!seen.has(id)) order.push(id);
+  }
+  const next = { ...state, habitOrder: order };
   saveRoutineState(next);
   return next;
 }

@@ -15,10 +15,13 @@ import {
   setHabitArchived,
   setCompletionNote,
   moveHabitInOrder,
+  setHabitOrder,
   buildRoutineBackupPayload,
   applyRoutineBackupPayload,
   ROUTINE_EVENT,
 } from "./lib/routineStorage.js";
+import { addDays, startOfIsoWeek } from "./lib/weekUtils.js";
+import { WeekDayStrip } from "./components/WeekDayStrip.jsx";
 import { completionNoteKey } from "./lib/completionNoteKey.js";
 import { sortHabitsByOrder } from "./lib/habitOrder.js";
 import { maxActiveStreak } from "./lib/streaks.js";
@@ -31,6 +34,8 @@ import {
   FIZRUK_GROUP_LABEL,
   parseDateKey,
 } from "./lib/hubCalendarAggregate.js";
+import { FINYK_SUB_GROUP_LABEL } from "./lib/finykSubscriptionCalendar.js";
+import { HUB_FINYK_ROUTINE_SYNC_EVENT, HUB_FINYK_TX_CACHE_EVENT } from "../finyk/hubRoutineSync.js";
 
 const FIZRUK_PLAN_SYNC = "fizruk-storage-monthly-plan";
 
@@ -77,20 +82,6 @@ function todayDate() {
   const d = new Date();
   d.setHours(12, 0, 0, 0);
   return d;
-}
-
-function addDays(base, n) {
-  const d = new Date(base);
-  d.setDate(d.getDate() + n);
-  return d;
-}
-
-function startOfIsoWeek(d) {
-  const x = new Date(d);
-  const wd = (x.getDay() + 6) % 7;
-  x.setDate(x.getDate() - wd);
-  x.setHours(12, 0, 0, 0);
-  return x;
 }
 
 function monthBounds(y, m0) {
@@ -163,7 +154,11 @@ function emptyHabitDraft() {
 function groupEventsForList(events) {
   const map = new Map();
   for (const e of events) {
-    const head = e.fizruk ? FIZRUK_GROUP_LABEL : e.tagLabels[0] || "Інше";
+    const head = e.fizruk
+      ? FIZRUK_GROUP_LABEL
+      : e.finykSub
+        ? FINYK_SUB_GROUP_LABEL
+        : e.tagLabels[0] || "Інше";
     if (!map.has(head)) map.set(head, []);
     map.get(head).push(e);
   }
@@ -172,6 +167,16 @@ function groupEventsForList(events) {
 
 export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   const [routine, setRoutine] = useRoutineState();
+  const [finykCalendarTick, setFinykCalendarTick] = useState(0);
+  useEffect(() => {
+    const bump = () => setFinykCalendarTick((n) => n + 1);
+    window.addEventListener(HUB_FINYK_ROUTINE_SYNC_EVENT, bump);
+    window.addEventListener(HUB_FINYK_TX_CACHE_EVENT, bump);
+    return () => {
+      window.removeEventListener(HUB_FINYK_ROUTINE_SYNC_EVENT, bump);
+      window.removeEventListener(HUB_FINYK_TX_CACHE_EVENT, bump);
+    };
+  }, []);
   useRoutineReminders(routine);
   const [mainTab, setMainTab] = useState("calendar");
   const [timeMode, setTimeMode] = useState("today");
@@ -185,9 +190,10 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   const [catDraft, setCatDraft] = useState({ name: "", emoji: "" });
 
   useEffect(() => {
+    if (timeMode !== "month") return;
     const { startKey, endKey } = monthBounds(monthCursor.y, monthCursor.m);
     setSelectedDay((d) => (d < startKey || d > endKey ? startKey : d));
-  }, [monthCursor.y, monthCursor.m]);
+  }, [monthCursor.y, monthCursor.m, timeMode]);
 
   const range = useMemo(() => {
     const t = todayDate();
@@ -198,26 +204,32 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
       const k = dateKeyFromDate(d);
       return { startKey: k, endKey: k };
     }
+    if (timeMode === "day") {
+      return { startKey: selectedDay, endKey: selectedDay };
+    }
     if (timeMode === "week") {
-      const s = startOfIsoWeek(t);
+      const anchor = parseDateKey(selectedDay);
+      const s = startOfIsoWeek(anchor);
       const e = addDays(s, 6);
       return { startKey: dateKeyFromDate(s), endKey: dateKeyFromDate(e) };
     }
     return monthBounds(monthCursor.y, monthCursor.m);
-  }, [timeMode, monthCursor.y, monthCursor.m]);
+  }, [timeMode, monthCursor.y, monthCursor.m, selectedDay]);
 
   const events = useMemo(
     () =>
       buildHubCalendarEvents(routine, range, {
         showFizruk: routine.prefs.showFizrukInCalendar !== false,
+        showFinykSubs: routine.prefs.showFinykSubscriptionsInCalendar !== false,
       }),
-    [routine, range],
+    [routine, range, finykCalendarTick],
   );
 
   const filtered = useMemo(() => {
     let ev = events;
     if (tagFilter) {
       if (tagFilter === "__fizruk") ev = ev.filter((e) => e.fizruk);
+      else if (tagFilter === "__finyk_sub") ev = ev.filter((e) => e.finykSub);
       else ev = ev.filter((e) => e.tagLabels.includes(tagFilter));
     }
     const q = listQuery.trim().toLowerCase();
@@ -242,7 +254,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
     for (const t of routine.tags) set.add(t.name);
     for (const e of events) {
       for (const x of e.tagLabels) {
-        if (x !== FIZRUK_GROUP_LABEL) set.add(x);
+        if (x !== FIZRUK_GROUP_LABEL && x !== FINYK_SUB_GROUP_LABEL) set.add(x);
       }
     }
     return [...set].sort((a, b) => a.localeCompare(b, "uk"));
@@ -272,6 +284,34 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
     setSelectedDay(dateKeyFromDate(t));
   }, []);
 
+  const applyTimeMode = useCallback((id) => {
+    const t = todayDate();
+    const tk = dateKeyFromDate(t);
+    if (id === "today") {
+      setSelectedDay(tk);
+      setTimeMode("today");
+    } else if (id === "tomorrow") {
+      setSelectedDay(dateKeyFromDate(addDays(t, 1)));
+      setTimeMode("tomorrow");
+    } else if (id === "week") {
+      setSelectedDay(tk);
+      setTimeMode("week");
+    } else if (id === "month") {
+      setMonthCursor({ y: t.getFullYear(), m: t.getMonth() });
+      setSelectedDay(tk);
+      setTimeMode("month");
+    }
+  }, []);
+
+  const shiftWeekStrip = useCallback((deltaWeeks) => {
+    setSelectedDay((prev) => {
+      const d = parseDateKey(prev);
+      d.setDate(d.getDate() + 7 * deltaWeeks);
+      return dateKeyFromDate(d);
+    });
+    setTimeMode("day");
+  }, []);
+
   const onToggleHabit = useCallback(
     (habitId, dateKey) => {
       setRoutine((prev) => toggleHabitCompletion(prev, habitId, dateKey));
@@ -289,17 +329,30 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   const rangeLabel = useMemo(() => {
     if (timeMode === "today") return "Сьогодні";
     if (timeMode === "tomorrow") return "Завтра";
-    if (timeMode === "week") return "Поточний тиждень";
+    if (timeMode === "day") {
+      return parseDateKey(selectedDay).toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+    }
+    if (timeMode === "week") return "Тиждень у зрізі";
     return monthTitle;
-  }, [timeMode, monthTitle]);
+  }, [timeMode, monthTitle, selectedDay]);
 
-  const headlineDate = todayDate().toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+  const headlineDate = useMemo(() => {
+    if (timeMode === "day") {
+      return parseDateKey(selectedDay).toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+    }
+    return todayDate().toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+  }, [timeMode, selectedDay]);
 
   const todayKey = dateKeyFromDate(todayDate());
   const streakMax = useMemo(
     () => maxActiveStreak(routine.habits, routine.completions, todayKey),
     [routine.habits, routine.completions, todayKey],
   );
+
+  const activeHabitsCount = routine.habits.filter((h) => !h.archived).length;
+  const hasNoHabits = activeHabitsCount === 0;
+  const hasListFilter = Boolean(tagFilter) || listQuery.trim().length > 0;
+  const listIsEmpty = grouped.length === 0;
 
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
@@ -354,7 +407,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
               <section className="routine-hero-card" aria-label="Огляд періоду">
                 <p className="text-[11px] font-bold tracking-widest uppercase text-[#b45348]/90">{rangeLabel}</p>
                 <p className="text-xs text-subtle mt-1">{headlineDate}</p>
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   <div className="rounded-2xl bg-white/70 border border-[#f5c4b8]/50 p-3 text-center shadow-sm">
                     <p className="text-[10px] uppercase tracking-wide text-subtle">Подій у зрізі</p>
                     <p className="text-2xl font-black text-text tabular-nums mt-0.5">{filtered.length}</p>
@@ -375,6 +428,12 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                       {routine.prefs.showFizrukInCalendar !== false ? "Увімкнено" : "Вимкнено"}
                     </p>
                   </div>
+                  <div className="rounded-2xl bg-white/70 border border-emerald-200/60 p-3 text-center shadow-sm">
+                    <p className="text-[10px] uppercase tracking-wide text-subtle">Підписки Фініка</p>
+                    <p className="text-sm font-semibold text-text mt-1.5">
+                      {routine.prefs.showFinykSubscriptionsInCalendar !== false ? "Увімкнено" : "Вимкнено"}
+                    </p>
+                  </div>
                 </div>
               </section>
 
@@ -385,7 +444,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                   <button
                     key={tm.id}
                     type="button"
-                    onClick={() => setTimeMode(tm.id)}
+                    onClick={() => applyTimeMode(tm.id)}
                     className={cn(
                       "px-3 py-2 rounded-full text-xs font-semibold border transition-all",
                       timeMode === tm.id ? C.chipOn : C.chipOff,
@@ -394,6 +453,23 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                     {tm.label}
                   </button>
                 ))}
+              </div>
+
+              <div className="rounded-2xl border border-line/60 bg-panel/80 p-3 shadow-card">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-subtle">Тиждень</p>
+                <WeekDayStrip
+                  anchorKey={selectedDay}
+                  selectedDay={selectedDay}
+                  todayKey={todayKey}
+                  onSelectDay={(k) => {
+                    setSelectedDay(k);
+                    setTimeMode("day");
+                  }}
+                  onShiftWeek={shiftWeekStrip}
+                />
+                {timeMode === "day" && (
+                  <p className="mt-2 text-center text-[10px] text-subtle">Обрано один день — натисни «Сьогодні» або «Тиждень», щоб повернути зріз</p>
+                )}
               </div>
 
               <Input
@@ -423,6 +499,20 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                     )}
                   >
                     {FIZRUK_GROUP_LABEL}
+                  </button>
+                )}
+                {routine.prefs.showFinykSubscriptionsInCalendar !== false && (
+                  <button
+                    type="button"
+                    onClick={() => setTagFilter((f) => (f === "__finyk_sub" ? null : "__finyk_sub"))}
+                    className={cn(
+                      "px-2.5 py-1.5 rounded-full text-[11px] font-medium border max-w-[200px] truncate",
+                      tagFilter === "__finyk_sub"
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-text"
+                        : C.chipOff,
+                    )}
+                  >
+                    Підписки Фініка
                   </button>
                 )}
                 {tagChips.map((name) => (
@@ -520,10 +610,55 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
               )}
 
               <section className="space-y-4 pb-2">
-                {grouped.length === 0 && (
-                  <div className="rounded-2xl border border-line/60 bg-panel p-8 text-center shadow-card">
+                {listIsEmpty && hasListFilter && (
+                  <div className="rounded-2xl border border-line/60 bg-panel p-6 text-center shadow-card">
+                    <p className="text-sm text-muted">
+                      Нічого не знайдено за фільтром{hasNoHabits ? " (і звичок ще немає)" : ""}.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="mt-3 border border-line/70"
+                      onClick={() => {
+                        setTagFilter(null);
+                        setListQuery("");
+                      }}
+                    >
+                      Скинути фільтри
+                    </Button>
+                  </div>
+                )}
+                {listIsEmpty && !hasListFilter && hasNoHabits && (
+                  <div className="rounded-2xl border border-[#f5c4b8]/60 bg-[#fff8f5] p-6 text-center shadow-card">
+                    <p className="text-base font-semibold text-text">Почни з однієї звички</p>
+                    <p className="mt-2 text-sm text-muted leading-relaxed">
+                      Потім вона зʼявиться тут і в календарі. Відтискання вже можна лічити блоком вище.
+                    </p>
+                    <Button
+                      type="button"
+                      className={cn("mt-4 w-full max-w-xs font-bold", C.primary)}
+                      onClick={() => setMainTab("settings")}
+                    >
+                      Додати звичку в «Рутина»
+                    </Button>
+                  </div>
+                )}
+                {listIsEmpty && !hasListFilter && !hasNoHabits && (
+                  <div className="rounded-2xl border border-line/60 bg-panel p-6 text-center shadow-card">
                     <p className="text-sm text-muted leading-relaxed">
-                      Немає подій у цьому періоді. Додай звички в «Рутина» або заповни план у Фізруку.
+                      У цьому періоді подій немає. Перевір регулярність звичок або{" "}
+                      {typeof onOpenModule === "function" ? (
+                        <button
+                          type="button"
+                          className="font-semibold text-[#c24133] underline decoration-[#f0a090]/80"
+                          onClick={() => onOpenModule("fizruk", { hash: "plan" })}
+                        >
+                          план Фізрука
+                        </button>
+                      ) : (
+                        "план Фізрука"
+                      )}
+                      .
                     </p>
                   </div>
                 )}
@@ -536,7 +671,13 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                           key={e.id}
                           className={cn(
                             "overflow-hidden rounded-2xl border border-line/60 bg-panel pl-4 pr-4 py-3 shadow-card flex flex-col gap-2 border-l-4",
-                            e.fizruk ? "border-l-sky-500" : e.habitId ? "border-l-[#e0786c]" : "border-l-transparent",
+                            e.fizruk
+                              ? "border-l-sky-500"
+                              : e.finykSub
+                                ? "border-l-emerald-500"
+                                : e.habitId
+                                  ? "border-l-[#e0786c]"
+                                  : "border-l-transparent",
                             e.completed && e.habitId && "opacity-90",
                           )}
                         >
@@ -562,6 +703,17 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                                   onClick={() => onOpenModule("fizruk", { hash: "plan" })}
                                 >
                                   План
+                                </Button>
+                              )}
+                              {e.finykSub && typeof onOpenModule === "function" && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="!h-9 !px-3 !text-xs border border-emerald-500/25 bg-emerald-500/5"
+                                  type="button"
+                                  onClick={() => onOpenModule("finyk", { hash: "assets" })}
+                                >
+                                  Фінік
                                 </Button>
                               )}
                               {e.habitId && (
@@ -609,6 +761,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
               setTagDraft={setTagDraft}
               catDraft={catDraft}
               setCatDraft={setCatDraft}
+              onOpenCalendar={() => setMainTab("calendar")}
             />
           )}
         </main>
@@ -667,8 +820,10 @@ function SettingsSection({
   setTagDraft,
   catDraft,
   setCatDraft,
+  onOpenCalendar,
 }) {
   const [editingId, setEditingId] = useState(null);
+  const [dragId, setDragId] = useState(null);
   const backupRef = useRef(null);
 
   const loadHabitIntoDraft = (h) => {
@@ -717,6 +872,15 @@ function SettingsSection({
             className="w-5 h-5 accent-[#e0786c]"
             checked={routine.prefs.showFizrukInCalendar !== false}
             onChange={(ev) => setRoutine((s) => setPref(s, "showFizrukInCalendar", ev.target.checked))}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted">Показувати планові платежі підписок Фініка</span>
+          <input
+            type="checkbox"
+            className="w-5 h-5 accent-[#e0786c]"
+            checked={routine.prefs.showFinykSubscriptionsInCalendar !== false}
+            onChange={(ev) => setRoutine((s) => setPref(s, "showFinykSubscriptionsInCalendar", ev.target.checked))}
           />
         </label>
         <label className="flex items-center justify-between gap-3 text-sm">
@@ -1022,8 +1186,18 @@ function SettingsSection({
 
       <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-2">
         <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">Активні звички</h2>
+        <p className="text-[10px] text-subtle leading-snug">
+          Порядок у списку = порядок у календарі. На десктопі можна перетягнути; на телефоні — кнопки ↑↓.
+        </p>
         {routine.habits.filter((h) => !h.archived).length === 0 && (
-          <p className="text-xs text-muted">Поки порожньо — додай першу звичку вище.</p>
+          <div className="rounded-xl border border-dashed border-line/70 bg-panelHi/50 p-4 text-center">
+            <p className="text-sm text-muted">Поки порожньо — додай першу звичку формою вище.</p>
+            {typeof onOpenCalendar === "function" && (
+              <Button type="button" variant="ghost" className="mt-3 border border-line/70" onClick={onOpenCalendar}>
+                Перейти до календаря
+              </Button>
+            )}
+          </div>
         )}
         <ul className="space-y-2">
           {sortHabitsByOrder(
@@ -1034,10 +1208,49 @@ function SettingsSection({
               return (
                 <li
                   key={h.id}
+                  draggable
                   className={cn(
-                    "flex flex-col gap-2 border-b border-line/40 pb-3 last:border-0 last:pb-0",
+                    "flex flex-col gap-2 border-b border-line/40 pb-3 last:border-0 last:pb-0 cursor-grab active:cursor-grabbing",
                     editingId === h.id && "ring-2 ring-[#f0a090]/60 rounded-xl p-2 -mx-1",
+                    dragId === h.id && "opacity-70",
                   )}
+                  onDragStart={(e) => {
+                    setDragId(h.id);
+                    try {
+                      e.dataTransfer.setData("text/plain", h.id);
+                      e.dataTransfer.effectAllowed = "move";
+                    } catch {
+                      /* noop */
+                    }
+                  }}
+                  onDragEnd={() => setDragId(null)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    try {
+                      e.dataTransfer.dropEffect = "move";
+                    } catch {
+                      /* noop */
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const fromId = e.dataTransfer.getData("text/plain");
+                    setDragId(null);
+                    if (!fromId || fromId === h.id) return;
+                    setRoutine((s) => {
+                      const ordered = sortHabitsByOrder(
+                        s.habits.filter((x) => !x.archived),
+                        s.habitOrder || [],
+                      ).map((x) => x.id);
+                      const fi = ordered.indexOf(fromId);
+                      const ti = ordered.indexOf(h.id);
+                      if (fi < 0 || ti < 0) return s;
+                      const next = [...ordered];
+                      const [row] = next.splice(fi, 1);
+                      next.splice(ti, 0, row);
+                      return setHabitOrder(s, next);
+                    });
+                  }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">

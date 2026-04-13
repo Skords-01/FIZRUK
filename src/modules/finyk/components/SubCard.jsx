@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { daysUntil, fmtDate } from "../utils";
 import { cn } from "@shared/lib/cn";
+import { getLastTxForSubscription, getSubscriptionAmountMeta } from "../domain/subscriptionUtils.js";
 
 const EMOJI_OPTIONS = ["📱","🎵","☁️","▶️","🎬","📧","📸","🤖","🎮","📚","🏋️","💊","🔒","🌐","📡"];
 
-export function SubCard({ sub, transactions, onDelete, onEdit }) {
+export function SubCard({ sub, transactions, onDelete, onEdit, onLinkTransactions }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: sub.name, emoji: sub.emoji, keyword: sub.keyword || "", billingDay: sub.billingDay, currency: sub.currency || "UAH" });
 
-  const lastTx = transactions.find(
-    t => t.amount < 0 && sub.keyword && (t.description || "").toLowerCase().includes(sub.keyword.toLowerCase())
-  );
+  const lastTx = getLastTxForSubscription(sub, transactions);
+  const { amount, currency } = getSubscriptionAmountMeta(sub, transactions);
   const days = daysUntil(sub.billingDay);
-  const amount = lastTx ? Math.abs(lastTx.amount / 100) : null;
-  const currency = lastTx ? (lastTx.currencyCode === 840 ? "$" : "₴") : (sub.currency === "USD" ? "$" : "₴");
   const veryClose = days <= 1;
   const soon = days <= 3;
 
@@ -43,7 +41,7 @@ export function SubCard({ sub, transactions, onDelete, onEdit }) {
         />
         <input
           className="w-full bg-bg border border-line rounded-xl px-3 py-2.5 text-sm text-text placeholder:text-subtle outline-none focus:border-primary/50"
-          placeholder="Ключове слово з транзакції"
+          placeholder="Ключове слово з транзакції (якщо без ручної привʼязки)"
           value={form.keyword}
           onChange={e => setForm(f => ({ ...f, keyword: e.target.value }))}
         />
@@ -94,16 +92,28 @@ export function SubCard({ sub, transactions, onDelete, onEdit }) {
         <div className={cn("text-xs mt-0.5", veryClose ? "text-danger" : soon ? "text-amber-400" : "text-subtle")}>
           {veryClose ? "⚠️ Завтра" : soon ? `⏰ Через ${days} дні` : `📅 Через ${days} днів`} · {sub.billingDay}-го
         </div>
+        {sub.linkedTxId && lastTx && (
+          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Привʼязано до транзакції · оновлює суму та дату</div>
+        )}
         {lastTx && <div className="text-xs text-subtle mt-0.5">Останнє: {fmtDate(lastTx.time)}</div>}
       </div>
       <div className="flex flex-col items-end gap-1 shrink-0">
-        {amount
+        {amount != null
           ? <div className="text-sm font-bold">{amount.toLocaleString("uk-UA", { maximumFractionDigits: 2 })}{currency}</div>
           : <div className="text-xs text-subtle">ще не списувалось</div>
         }
-        <div className="flex gap-2 mt-1">
-          {onEdit && <button onClick={() => setEditing(true)} className="text-subtle hover:text-primary text-sm transition-colors">✏️</button>}
-          <button onClick={onDelete} className="text-subtle hover:text-danger text-sm transition-colors">🗑</button>
+        <div className="flex flex-wrap justify-end gap-1.5 mt-1">
+          {onLinkTransactions && (
+            <button
+              type="button"
+              onClick={onLinkTransactions}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              {sub.linkedTxId ? "Змінити транзакцію" : "Привʼязати транзакцію"}
+            </button>
+          )}
+          {onEdit && <button type="button" onClick={() => setEditing(true)} className="text-subtle hover:text-primary text-sm transition-colors">✏️</button>}
+          <button type="button" onClick={onDelete} className="text-subtle hover:text-danger text-sm transition-colors">🗑</button>
         </div>
       </div>
     </div>
