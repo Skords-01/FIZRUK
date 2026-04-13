@@ -8,6 +8,7 @@ export function WorkoutTemplatesSection({
   addTemplate,
   updateTemplate,
   removeTemplate,
+  onStartTemplate,
 }) {
   const [q, setQ] = useState("");
   const [editingId, setEditingId] = useState(null);
@@ -74,7 +75,7 @@ export function WorkoutTemplatesSection({
   return (
     <div className="space-y-3">
       <div className="text-xs text-subtle leading-relaxed">
-        Шаблони — лише твої: додай назву й послідовність вправ з каталогу. План на головній будується тільки з цих шаблонів.
+        Шаблони — лише твої: додай назву й послідовність вправ з каталогу. План на головній будується з цих шаблонів. Щоб стартувати тренування зі списку нижче — натисни «Почати» біля шаблону (відкриється журнал з активним тренуванням).
       </div>
 
       {!editingId && (
@@ -171,12 +172,22 @@ export function WorkoutTemplatesSection({
           <div className="p-6 text-center text-sm text-subtle">Поки немає шаблонів</div>
         ) : (
           (templates || []).map(t => (
-            <div key={t.id} className="px-4 py-3 border-b border-line last:border-0 flex items-center justify-between gap-2">
-              <div className="min-w-0">
+            <div key={t.id} className="px-4 py-3 border-b border-line last:border-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-text truncate">{t.name}</div>
                 <div className="text-xs text-subtle">{(t.exerciseIds || []).length} вправ</div>
               </div>
-              <div className="flex gap-1 shrink-0">
+              <div className="flex flex-wrap gap-1.5 shrink-0 justify-end">
+                {typeof onStartTemplate === "function" && (
+                  <Button
+                    size="sm"
+                    className="h-10 min-h-[44px] px-3 bg-forest text-white border-forest hover:bg-forest/90"
+                    onClick={() => onStartTemplate(t)}
+                    disabled={!(t.exerciseIds || []).length}
+                  >
+                    Почати
+                  </Button>
+                )}
                 <Button size="sm" variant="ghost" className="h-10 min-w-[44px] px-3" onClick={() => startEdit(t)}>
                   Змінити
                 </Button>

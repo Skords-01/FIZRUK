@@ -20,11 +20,14 @@ export function useWorkouts() {
     } catch {}
   }, []);
 
-  const persist = useCallback((next) => {
-    setWorkouts(next);
-    try {
-      localStorage.setItem(WORKOUTS_STORAGE_KEY, serializeWorkoutsToStorage(next));
-    } catch {}
+  const persist = useCallback((nextOrUpdater) => {
+    setWorkouts((prev) => {
+      const next = typeof nextOrUpdater === "function" ? nextOrUpdater(prev) : nextOrUpdater;
+      try {
+        localStorage.setItem(WORKOUTS_STORAGE_KEY, serializeWorkoutsToStorage(next));
+      } catch {}
+      return next;
+    });
   }, []);
 
   const createWorkout = useCallback(() => {
@@ -35,56 +38,64 @@ export function useWorkouts() {
       items: [],
       note: "",
     };
-    persist([w, ...workouts]);
+    persist((prev) => [w, ...prev]);
     return w;
-  }, [persist, workouts]);
+  }, [persist]);
 
   const endWorkout = useCallback((id) => {
     const nowIso = new Date().toISOString();
     let ended = null;
-    persist(workouts.map(w => {
-      if (w.id !== id) return w;
-      if (w.endedAt) {
-        ended = w;
-        return w;
-      }
-      ended = { ...w, endedAt: nowIso };
-      return ended;
-    }));
+    persist((prev) =>
+      prev.map((w) => {
+        if (w.id !== id) return w;
+        if (w.endedAt) {
+          ended = w;
+          return w;
+        }
+        ended = { ...w, endedAt: nowIso };
+        return ended;
+      }),
+    );
     return ended;
-  }, [persist, workouts]);
+  }, [persist]);
 
   const updateWorkout = useCallback((id, patch) => {
-    persist(workouts.map(w => w.id === id ? { ...w, ...patch } : w));
-  }, [persist, workouts]);
+    persist((prev) => prev.map((w) => (w.id === id ? { ...w, ...patch } : w)));
+  }, [persist]);
 
   const deleteWorkout = useCallback((id) => {
-    persist(workouts.filter(w => w.id !== id));
-  }, [persist, workouts]);
+    persist((prev) => prev.filter((w) => w.id !== id));
+  }, [persist]);
 
   const addItem = useCallback((workoutId, item) => {
-    persist(workouts.map(w => {
-      if (w.id !== workoutId) return w;
-      return { ...w, items: [{ id: uid("i"), ...item }, ...(w.items || [])] };
-    }));
-  }, [persist, workouts]);
+    persist((prev) =>
+      prev.map((w) => {
+        if (w.id !== workoutId) return w;
+        return { ...w, items: [{ id: uid("i"), ...item }, ...(w.items || [])] };
+      }),
+    );
+  }, [persist]);
 
   const updateItem = useCallback((workoutId, itemId, patch) => {
-    persist(workouts.map(w => {
-      if (w.id !== workoutId) return w;
-      return {
-        ...w,
-        items: (w.items || []).map(i => i.id === itemId ? { ...i, ...patch } : i),
-      };
-    }));
-  }, [persist, workouts]);
+    persist((prev) =>
+      prev.map((w) => {
+        if (w.id !== workoutId) return w;
+        return {
+          ...w,
+          items: (w.items || []).map((i) => (i.id === itemId ? { ...i, ...patch } : i)),
+        };
+      }),
+    );
+  }, [persist]);
 
   const removeItem = useCallback((workoutId, itemId) => {
-    persist(workouts.map(w => {
-      if (w.id !== workoutId) return w;
-      return { ...w, items: (w.items || []).filter(i => i.id !== itemId) };
-    }));
-  }, [persist, workouts]);
+    persist((prev) =>
+      prev.map((w) => {
+        if (w.id !== workoutId) return w;
+        return { ...w, items: (w.items || []).filter((i) => i.id !== itemId) };
+      }),
+    );
+  }, [persist]);
 
   const sorted = useMemo(() => {
     return [...workouts].sort((a, b) => (b.startedAt || "").localeCompare(a.startedAt || ""));
