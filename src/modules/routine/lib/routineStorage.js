@@ -271,6 +271,25 @@ export function moveHabitInOrder(state, habitId, delta) {
   return next;
 }
 
+/** Повний порядок активних звичок (наприклад після drag-and-drop) */
+export function setHabitOrder(state, orderedActiveIds) {
+  const active = state.habits.filter((h) => !h.archived).map((h) => h.id);
+  const seen = new Set();
+  const order = [];
+  for (const id of orderedActiveIds) {
+    if (active.includes(id) && !seen.has(id)) {
+      order.push(id);
+      seen.add(id);
+    }
+  }
+  for (const id of active) {
+    if (!seen.has(id)) order.push(id);
+  }
+  const next = { ...state, habitOrder: order };
+  saveRoutineState(next);
+  return next;
+}
+
 export function setCompletionNote(state, habitId, dateKey, text) {
   const k = completionNoteKey(habitId, dateKey);
   const notes = { ...(state.completionNotes || {}) };

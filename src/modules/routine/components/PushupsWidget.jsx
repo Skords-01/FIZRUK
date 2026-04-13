@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { useRoutinePushups } from "../hooks/useRoutinePushups.js";
+import { useVisualKeyboardInset } from "../hooks/useVisualKeyboardInset.js";
 
 const C = {
   primary: "!bg-[#e0786c] hover:!bg-[#d46356] !text-white border-0",
@@ -14,6 +15,7 @@ export function PushupsWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const ref = useRef(null);
+  const keyboardInset = useVisualKeyboardInset(open);
   useDialogFocusTrap(open, ref, { onEscape: () => setOpen(false) });
 
   return (
@@ -70,7 +72,8 @@ export function PushupsWidget() {
           <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label="Закрити" onClick={() => setOpen(false)} />
           <div
             ref={ref}
-            className="routine-sheet-pad relative max-h-[min(92dvh,100%)] w-full max-w-4xl overflow-y-auto overflow-x-hidden rounded-t-3xl border-t border-line bg-panel p-5 shadow-soft"
+            className="routine-sheet-pad relative max-h-[min(92dvh,100%)] w-full max-w-4xl overflow-y-auto overflow-x-hidden rounded-t-3xl border-t border-line bg-panel p-5 shadow-soft transition-transform duration-150 ease-out"
+            style={{ transform: keyboardInset > 0 ? `translateY(-${keyboardInset}px)` : undefined }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="routine-pushup-modal-title"
