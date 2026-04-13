@@ -1,11 +1,11 @@
 {
-  "name": "ФІЗРУК",
-  "short_name": "ФІЗРУК",
-  "description": "Особистий простір: фінанси, спорт та більше",
+  "name": "Мій простір",
+  "short_name": "Hub",
+  "description": "Особистий простір: фінанси, спорт та звички",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f0f3f8",
+  "background_color": "#0b1120",
   "theme_color": "#0d1726",
   "lang": "uk",
   "icons": [
