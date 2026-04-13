@@ -47,4 +47,4 @@ npm run dev
 
 ## Деплой
 
-Vercel — автоматично при пуші в `main`.
+Vercel — автоматично при пуші в `main`. У корені [`vercel.json`](vercel.json): rewrite на `index.html` для Vite SPA (глибокі посилання); каталог [`api/`](api/) — serverless-функції (`/api/mono`, `/api/chat`). Дані модулів залишаються в **localStorage** браузера; окрема БД на сервері потрібна лише для синхронізації між пристроями або облікових записів.
