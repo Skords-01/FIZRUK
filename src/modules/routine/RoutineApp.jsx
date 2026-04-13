@@ -67,17 +67,6 @@ function useRoutineState() {
     };
   }, []);
 
-  useEffect(() => {
-    const onErr = (ev) => {
-      const msg = ev.detail?.message || "невідома помилка";
-      window.alert(
-        `Не вдалося зберегти дані Рутини (${msg}). Можливо, браузер переповнив сховище — звільни місце або експортуй резервну копію в розділі «Рутина».`,
-      );
-    };
-    window.addEventListener(ROUTINE_STORAGE_ERROR, onErr);
-    return () => window.removeEventListener(ROUTINE_STORAGE_ERROR, onErr);
-  }, []);
-
   return [state, setState];
 }
 
@@ -95,8 +84,30 @@ function groupEventsForList(events) {
   return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "uk"));
 }
 
+function RoutineStorageToast({ message, onDismiss }) {
+  if (!message) return null;
+  return (
+    <div
+      className="fixed top-[max(4.5rem,env(safe-area-inset-top,0px)+3.5rem)] left-1/2 -translate-x-1/2 z-[80] max-w-[min(92vw,24rem)] px-4 py-3 rounded-2xl text-sm font-medium shadow-lg bg-danger/95 text-white"
+      role="alert"
+    >
+      <div className="flex gap-3 items-start">
+        <p className="min-w-0 flex-1 leading-snug">{message}</p>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="shrink-0 text-white/90 hover:text-white text-xs font-bold uppercase tracking-wide"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   const [routine, setRoutine] = useRoutineState();
+  const [storageErrorToast, setStorageErrorToast] = useState(null);
   const [finykCalendarTick, setFinykCalendarTick] = useState(0);
   useEffect(() => {
     const bump = () => setFinykCalendarTick((n) => n + 1);
@@ -107,6 +118,24 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
       window.removeEventListener(HUB_FINYK_TX_CACHE_EVENT, bump);
     };
   }, []);
+
+  useEffect(() => {
+    const onErr = (ev) => {
+      const msg = ev.detail?.message || "невідома помилка";
+      setStorageErrorToast(
+        `Не вдалося зберегти дані Рутини (${msg}). Можливо, браузер переповнив сховище — звільни місце або експортуй резервну копію в розділі «Рутина».`,
+      );
+    };
+    window.addEventListener(ROUTINE_STORAGE_ERROR, onErr);
+    return () => window.removeEventListener(ROUTINE_STORAGE_ERROR, onErr);
+  }, []);
+
+  useEffect(() => {
+    if (!storageErrorToast) return undefined;
+    const t = window.setTimeout(() => setStorageErrorToast(null), 7000);
+    return () => window.clearTimeout(t);
+  }, [storageErrorToast]);
+
   useRoutineReminders(routine);
 
   const [mainTab, setMainTab] = useState("calendar");
@@ -293,7 +322,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
     if (timeMode === "day") {
       return parseDateKey(selectedDay).toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
     }
-    if (timeMode === "week") return "Тиждень у зрізі";
+    if (timeMode === "week") return "Цей тиждень";
     return monthTitle;
   }, [timeMode, monthTitle, selectedDay]);
 
@@ -361,16 +390,22 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
             <span className="text-[16px] font-semibold tracking-wide text-text block leading-tight">РУТИНА</span>
             <span className="text-[10px] text-subtle font-medium truncate">Звички · план Фізрука · один розклад</span>
           </div>
-          <div className={cn("shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border", C.iconBox)} aria-hidden>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-          </div>
+          <button
+            type="button"
+            onClick={() => applyTimeMode("today")}
+            className={cn(
+              "shrink-0 min-h-[40px] px-3 rounded-xl text-xs font-bold border transition-colors",
+              C.chipOn,
+            )}
+            title="Перейти до сьогоднішнього дня"
+            aria-label="Перейти на сьогоднішній день"
+          >
+            Сьогодні
+          </button>
         </div>
       </div>
+
+      <RoutineStorageToast message={storageErrorToast} onDismiss={() => setStorageErrorToast(null)} />
 
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         <main

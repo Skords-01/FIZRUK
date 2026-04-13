@@ -53,28 +53,28 @@ export function RoutineCalendarPanel({
       className="space-y-4"
     >
       <section className="routine-hero-card" aria-label="Огляд періоду">
-        <p className="text-[11px] font-bold tracking-widest uppercase text-[#b45348]/90">{rangeLabel}</p>
+        <p className={cn("text-[11px] font-bold tracking-widest uppercase", C.heroKicker)}>{rangeLabel}</p>
         <p className="text-xs text-subtle mt-1">{headlineDate}</p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          <div className="rounded-2xl bg-white/70 border border-[#f5c4b8]/50 p-3 text-center shadow-sm">
+          <div className={C.statCard}>
             <p className="text-[10px] uppercase tracking-wide text-subtle">Подій у зрізі</p>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">{filtered.length}</p>
           </div>
-          <div className="rounded-2xl bg-white/70 border border-[#f5c4b8]/50 p-3 text-center shadow-sm">
+          <div className={C.statCard}>
             <p className="text-[10px] uppercase tracking-wide text-subtle">Звичок активних</p>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">{routine.habits.filter((h) => !h.archived).length}</p>
           </div>
-          <div className="rounded-2xl bg-white/70 border border-[#f5c4b8]/50 p-3 text-center shadow-sm">
+          <div className={C.statCard}>
             <p className="text-[10px] uppercase tracking-wide text-subtle">Серія max</p>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">{streakMax}</p>
           </div>
-          <div className="rounded-2xl bg-white/70 border border-[#f5c4b8]/50 p-3 text-center shadow-sm">
+          <div className={C.statCard}>
             <p className="text-[10px] uppercase tracking-wide text-subtle">Фізрук у стрічці</p>
             <p className="text-sm font-semibold text-text mt-1.5">
               {routine.prefs.showFizrukInCalendar !== false ? "Увімкнено" : "Вимкнено"}
             </p>
           </div>
-          <div className="rounded-2xl bg-white/70 border border-emerald-200/60 p-3 text-center shadow-sm">
+          <div className={C.statCardEmerald}>
             <p className="text-[10px] uppercase tracking-wide text-subtle">Підписки Фініка</p>
             <p className="text-sm font-semibold text-text mt-1.5">
               {routine.prefs.showFinykSubscriptionsInCalendar !== false ? "Увімкнено" : "Вимкнено"}
@@ -279,7 +279,7 @@ export function RoutineCalendarPanel({
           </div>
         )}
         {listIsEmpty && !hasListFilter && hasNoHabits && (
-          <div className="rounded-2xl border border-[#f5c4b8]/60 bg-[#fff8f5] p-6 text-center shadow-card">
+          <div className={C.emptyStateWarm}>
             <p className="text-base font-semibold text-text">Почни з однієї звички</p>
             <p className="mt-2 text-sm text-muted leading-relaxed">Потім вона зʼявиться тут і в календарі. Відтискання вже можна лічити блоком вище.</p>
             <Button type="button" className={cn("mt-4 w-full max-w-xs font-bold", C.primary)} onClick={() => setMainTab("settings")}>
@@ -294,7 +294,7 @@ export function RoutineCalendarPanel({
               {typeof onOpenModule === "function" ? (
                 <button
                   type="button"
-                  className="font-semibold text-[#c24133] underline decoration-[#f0a090]/80"
+                  className={C.linkAccent}
                   onClick={() => onOpenModule("fizruk", { hash: "plan" })}
                 >
                   план Фізрука
@@ -315,7 +315,7 @@ export function RoutineCalendarPanel({
                   key={e.id}
                   className={cn(
                     "overflow-hidden rounded-2xl border border-line/60 bg-panel pl-4 pr-4 py-3 shadow-card flex flex-col gap-2 border-l-4",
-                    e.fizruk ? "border-l-sky-500" : e.finykSub ? "border-l-emerald-500" : e.habitId ? "border-l-[#e0786c]" : "border-l-transparent",
+                    e.fizruk ? "border-l-sky-500" : e.finykSub ? "border-l-emerald-500" : e.habitId ? C.habitRowAccent : "border-l-transparent",
                     e.completed && e.habitId && "opacity-90",
                   )}
                 >

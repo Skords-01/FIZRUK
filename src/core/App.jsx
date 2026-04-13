@@ -1,5 +1,6 @@
 import { useState, useCallback, lazy, Suspense } from "react";
 import { cn } from "@shared/lib/cn";
+import ModuleErrorBoundary from "./ModuleErrorBoundary";
 
 const HubChat = lazy(() => import("./HubChat"));
 
@@ -211,9 +212,11 @@ export default function App() {
       )}
 
       <Suspense fallback={<PageLoader />}>
-        {activeModule === "finyk" && <FinykApp onBackToHub={goToHub} />}
-        {activeModule === "fizruk" && <FizrukApp onBackToHub={goToHub} />}
-        {activeModule === "routine" && <RoutineApp onBackToHub={goToHub} onOpenModule={openModule} />}
+        <ModuleErrorBoundary key={activeModule} onBackToHub={goToHub}>
+          {activeModule === "finyk" && <FinykApp onBackToHub={goToHub} />}
+          {activeModule === "fizruk" && <FizrukApp onBackToHub={goToHub} />}
+          {activeModule === "routine" && <RoutineApp onBackToHub={goToHub} onOpenModule={openModule} />}
+        </ModuleErrorBoundary>
       </Suspense>
     </div>
   );
