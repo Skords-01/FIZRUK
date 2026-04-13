@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
@@ -139,6 +139,9 @@ export function Workouts() {
       if (m === "templates") {
         setMode("templates");
         sessionStorage.removeItem("fizruk_workouts_mode");
+      } else if (m === "log") {
+        setMode("log");
+        sessionStorage.removeItem("fizruk_workouts_mode");
       }
     } catch {}
   }, []);
@@ -186,6 +189,44 @@ export function Workouts() {
     setPickQ("");
     setPendingPick(null);
   };
+
+  const startWorkoutFromTemplate = useCallback(
+    (tpl) => {
+      const picks = (tpl?.exerciseIds || []).map((id) => exercises.find((e) => e.id === id)).filter(Boolean);
+      if (!picks.length) {
+        window.alert("У шаблоні немає вправ з каталогу. Відредагуй шаблон і додай вправи.");
+        return;
+      }
+      const risky = picks.some((ex) => recoveryConflictsForExercise(ex, rec.by).hasWarning);
+      if (risky) {
+        const ok = window.confirm(
+          "У шаблоні є вправи на групи мʼязів, які ще відновлюються. Почати тренування все одно?",
+        );
+        if (!ok) return;
+      }
+      const w = createWorkout();
+      for (const ex of picks) {
+        const isCardio = ex.primaryGroup === "cardio";
+        addItem(w.id, {
+          exerciseId: ex.id,
+          nameUk: ex?.name?.uk || ex?.name?.en,
+          primaryGroup: ex.primaryGroup,
+          musclesPrimary: ex?.muscles?.primary || [],
+          musclesSecondary: ex?.muscles?.secondary || [],
+          type: isCardio ? "distance" : "strength",
+          sets: isCardio ? undefined : [{ weightKg: 0, reps: 0 }],
+          durationSec: 0,
+          distanceM: isCardio ? 0 : 0,
+        });
+      }
+      try {
+        localStorage.setItem(ACTIVE_WORKOUT_KEY, w.id);
+      } catch {}
+      setActiveWorkoutId(w.id);
+      setMode("log");
+    },
+    [exercises, rec.by, createWorkout, addItem],
+  );
 
   const lastByExerciseId = useMemo(() => {
     const out = {};
@@ -432,6 +473,7 @@ export function Workouts() {
             addTemplate={templateApi.addTemplate}
             updateTemplate={templateApi.updateTemplate}
             removeTemplate={templateApi.removeTemplate}
+            onStartTemplate={startWorkoutFromTemplate}
           />
         )}
 
