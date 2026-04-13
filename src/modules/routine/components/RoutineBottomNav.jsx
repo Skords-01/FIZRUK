@@ -51,8 +51,7 @@ const NAV = [
 export function RoutineBottomNav({ mainTab, onSelectTab }) {
   return (
     <nav
-      className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30 safe-area-pb"
       aria-label="Розділи Рутини"
     >
       <div className="flex h-[58px]" role="tablist">

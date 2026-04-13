@@ -1,8 +1,19 @@
+import { chartPalette } from "./src/modules/finyk/constants/chartPalette.js";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          '"DM Sans"',
+          "system-ui",
+          "-apple-system",
+          '"Segoe UI"',
+          "sans-serif",
+        ],
+      },
       colors: {
         bg: "#f0f3f8", // light blue-gray page bg
         panel: "#ffffff", // white cards
@@ -17,6 +28,8 @@ export default {
         warning: "#b45309", // amber
         accent: "#a3e635", // lime-green CTA (hero buttons)
         forest: "#0f2d1a", // dark green hero card background
+        /** Фінік: сегменти діаграми категорій (джерело — chartPalette.js) */
+        chart: chartPalette,
         /** Модуль «Рутина» — коралова палітра */
         routine: {
           DEFAULT: "#e0786c",

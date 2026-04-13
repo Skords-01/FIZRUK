@@ -213,7 +213,7 @@ export function Transactions({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1">

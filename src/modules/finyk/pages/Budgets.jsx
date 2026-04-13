@@ -112,7 +112,7 @@ export function Budgets({ mono, storage }) {
 
   if (loadingTx && realTx.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-3 max-w-4xl mx-auto w-full">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 page-tabbar-pad space-y-3 max-w-4xl mx-auto w-full">
         <Skeleton className="h-28 rounded-xl" />
         <Skeleton className="h-20 opacity-80 rounded-xl" />
         <Skeleton className="h-20 opacity-60 rounded-xl" />
@@ -122,7 +122,7 @@ export function Budgets({ mono, storage }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4">
+      <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
         {/* Monthly plan */}
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
           <div className="text-[11px] font-bold text-subtle uppercase tracking-widest mb-3">

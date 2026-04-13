@@ -1,3 +1,5 @@
+import { THEME_HEX } from "@shared/lib/themeHex.js";
+
 function toAmountUAH(tx) {
   return Math.abs((tx?.amount || 0) / 100);
 }
@@ -9,14 +11,26 @@ function findLinkedTx(linkedTxIds = [], transactions = []) {
 
 export function getDebtTxRole(tx) {
   return tx.amount > 0
-    ? { kind: "origin", label: "📥 Виникнення боргу", color: "#f87171" }
-    : { kind: "payment", label: "✅ Сплата боргу", color: "#22c55e" };
+    ? {
+        kind: "origin",
+        label: "📥 Виникнення боргу",
+        color: THEME_HEX.danger,
+      }
+    : { kind: "payment", label: "✅ Сплата боргу", color: THEME_HEX.success };
 }
 
 export function getReceivableTxRole(tx) {
   return tx.amount < 0
-    ? { kind: "origin", label: "📤 Виникнення боргу", color: "#f87171" }
-    : { kind: "payment", label: "✅ Погашення боргу", color: "#22c55e" };
+    ? {
+        kind: "origin",
+        label: "📤 Виникнення боргу",
+        color: THEME_HEX.danger,
+      }
+    : {
+        kind: "payment",
+        label: "✅ Погашення боргу",
+        color: THEME_HEX.success,
+      };
 }
 
 // Я винен: погашення рахуємо тільки по витратах (amount < 0)

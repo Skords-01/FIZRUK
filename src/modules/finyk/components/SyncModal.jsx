@@ -53,8 +53,7 @@ export function SyncModal({ storage, onClose }) {
       />
 
       <div
-        className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
+        className="relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft safe-area-pb-16"
         onPointerDown={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

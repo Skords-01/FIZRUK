@@ -117,7 +117,7 @@ export function Settings({ mono, storage, showToast }) {
       {syncOpen && (
         <SyncModal storage={storage} onClose={() => setSyncOpen(false)} />
       )}
-      <div className="px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4 max-w-4xl mx-auto">
+      <div className="px-4 pt-4 page-tabbar-pad space-y-4 max-w-4xl mx-auto">
         <p className="text-xs text-subtle px-1 -mt-1">
           Місячний план, ліміти та календар оплат — у розділі{" "}
           <a

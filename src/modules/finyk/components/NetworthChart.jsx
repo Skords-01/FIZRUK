@@ -1,3 +1,5 @@
+import { THEME_HEX } from "@shared/lib/themeHex.js";
+
 export function NetworthChart({ data }) {
   if (!data || data.length < 2) return null;
 
@@ -23,7 +25,7 @@ export function NetworthChart({ data }) {
   ].join(" ");
 
   const isPositive = values[values.length - 1] >= values[0];
-  const color = isPositive ? "#16a34a" : "#dc2626";
+  const color = isPositive ? THEME_HEX.success : THEME_HEX.danger;
 
   const fmt = (v) => {
     if (Math.abs(v) >= 1000) return `${Math.round(v / 1000)}к`;

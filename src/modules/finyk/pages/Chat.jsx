@@ -286,7 +286,7 @@ export function Chat({ mono, storage }) {
       </div>
 
       {/* Input */}
-      <div className="flex gap-2 px-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] pt-2">
+      <div className="flex gap-2 px-4 page-tabbar-pad pt-2">
         <input
           className="flex-1 bg-panel border border-line rounded-2xl px-4 py-3 text-sm text-text outline-none focus:border-primary placeholder:text-subtle"
           placeholder="Запитай про фінанси..."

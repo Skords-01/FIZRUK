@@ -167,10 +167,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       {/* Header */}
-      <div
-        className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-      >
+      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative safe-area-pt">
         <div className="flex min-h-[68px] items-center px-4 py-2 sm:px-5 gap-3">
           {isAtlas || isExercise ? (
             <button
@@ -298,11 +295,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="fizruk-settings-title"
-            className="relative w-full max-w-sm h-full bg-panel border-l border-line shadow-2xl flex flex-col"
-            style={{
-              paddingTop: "env(safe-area-inset-top, 0px)",
-              paddingBottom: "env(safe-area-inset-bottom, 0px)",
-            }}
+            className="relative w-full max-w-sm h-full bg-panel border-l border-line shadow-2xl flex flex-col safe-area-pt-pb"
           >
             <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-line/60">
               <h2
@@ -353,10 +346,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
 
       {/* Bottom nav */}
       {!isAtlas && !isExercise && (
-        <nav
-          className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-        >
+        <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30 safe-area-pb">
           <div className="flex h-[58px]">
             {NAV.map((item) => {
               const active = page === item.id;

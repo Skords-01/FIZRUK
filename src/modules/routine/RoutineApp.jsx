@@ -377,10 +377,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
 
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
-      <div
-        className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-      >
+      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative safe-area-pt">
         <div className="flex min-h-[68px] items-center px-4 py-2 sm:px-5 gap-3">
           {typeof onBackToHub === "function" ? (
             <button
