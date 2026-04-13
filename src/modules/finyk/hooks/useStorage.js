@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { DEFAULT_SUBSCRIPTIONS, INTERNAL_TRANSFER_ID } from "../constants";
+import { notifyFinykRoutineCalendarSync } from "../hubRoutineSync.js";
 
 function reportSilentError(scope, error) {
   console.warn(`[finyk] ${scope}`, error);
@@ -84,6 +85,21 @@ export function useStorage() {
         ? { ...prev, [txId]: splits }
         : Object.fromEntries(Object.entries(prev).filter(([k]) => k !== txId))
     );
+  };
+
+  const updateSubscription = (subId, patch) => {
+    setSubscriptions((subs) =>
+      subs.map((s) => {
+        if (s.id !== subId) return s;
+        const next = { ...s };
+        for (const [k, v] of Object.entries(patch)) {
+          if (v === null || v === undefined) delete next[k];
+          else next[k] = v;
+        }
+        return next;
+      }),
+    );
+    notifyFinykRoutineCalendarSync();
   };
 
   const overrideCategory = (txId, catId) => {
@@ -173,7 +189,7 @@ export function useStorage() {
   return {
     hiddenAccounts, setHiddenAccounts, toggleHideAccount,
     budgets, setBudgets,
-    subscriptions, setSubscriptions,
+    subscriptions, setSubscriptions, updateSubscription,
     manualAssets, setManualAssets,
     manualDebts, setManualDebts,
     receivables, setReceivables,

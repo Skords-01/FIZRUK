@@ -4,6 +4,7 @@ import {
 } from "../../fizruk/lib/fizrukStorage.js";
 import { sortHabitsByOrder } from "./habitOrder.js";
 import { completionNoteKey } from "./completionNoteKey.js";
+import { buildFinykSubscriptionEvents } from "./finykSubscriptionCalendar.js";
 
 export const FIZRUK_GROUP_LABEL = "Фізрук";
 
@@ -116,7 +117,7 @@ function tagLabelsForHabit(state, habit) {
   return labels.length ? labels : ["Без тегу"];
 }
 
-export function buildHubCalendarEvents(state, range, { showFizruk = true } = {}) {
+export function buildHubCalendarEvents(state, range, { showFizruk = true, showFinykSubs = true } = {}) {
   const events = [];
   const { startKey, endKey } = range;
   const days = enumerateDateKeys(startKey, endKey);
@@ -171,6 +172,10 @@ export function buildHubCalendarEvents(state, range, { showFizruk = true } = {})
         sourceKind: "habit",
       });
     }
+  }
+
+  if (showFinykSubs && state.prefs?.showFinykSubscriptionsInCalendar !== false) {
+    events.push(...buildFinykSubscriptionEvents(range));
   }
 
   events.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "uk"));

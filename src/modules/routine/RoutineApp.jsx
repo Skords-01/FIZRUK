@@ -34,6 +34,8 @@ import {
   FIZRUK_GROUP_LABEL,
   parseDateKey,
 } from "./lib/hubCalendarAggregate.js";
+import { FINYK_SUB_GROUP_LABEL } from "./lib/finykSubscriptionCalendar.js";
+import { HUB_FINYK_ROUTINE_SYNC_EVENT, HUB_FINYK_TX_CACHE_EVENT } from "../finyk/hubRoutineSync.js";
 
 const FIZRUK_PLAN_SYNC = "fizruk-storage-monthly-plan";
 
@@ -152,7 +154,11 @@ function emptyHabitDraft() {
 function groupEventsForList(events) {
   const map = new Map();
   for (const e of events) {
-    const head = e.fizruk ? FIZRUK_GROUP_LABEL : e.tagLabels[0] || "Інше";
+    const head = e.fizruk
+      ? FIZRUK_GROUP_LABEL
+      : e.finykSub
+        ? FINYK_SUB_GROUP_LABEL
+        : e.tagLabels[0] || "Інше";
     if (!map.has(head)) map.set(head, []);
     map.get(head).push(e);
   }
@@ -161,6 +167,16 @@ function groupEventsForList(events) {
 
 export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   const [routine, setRoutine] = useRoutineState();
+  const [finykCalendarTick, setFinykCalendarTick] = useState(0);
+  useEffect(() => {
+    const bump = () => setFinykCalendarTick((n) => n + 1);
+    window.addEventListener(HUB_FINYK_ROUTINE_SYNC_EVENT, bump);
+    window.addEventListener(HUB_FINYK_TX_CACHE_EVENT, bump);
+    return () => {
+      window.removeEventListener(HUB_FINYK_ROUTINE_SYNC_EVENT, bump);
+      window.removeEventListener(HUB_FINYK_TX_CACHE_EVENT, bump);
+    };
+  }, []);
   useRoutineReminders(routine);
   const [mainTab, setMainTab] = useState("calendar");
   const [timeMode, setTimeMode] = useState("today");
@@ -204,14 +220,16 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
     () =>
       buildHubCalendarEvents(routine, range, {
         showFizruk: routine.prefs.showFizrukInCalendar !== false,
+        showFinykSubs: routine.prefs.showFinykSubscriptionsInCalendar !== false,
       }),
-    [routine, range],
+    [routine, range, finykCalendarTick],
   );
 
   const filtered = useMemo(() => {
     let ev = events;
     if (tagFilter) {
       if (tagFilter === "__fizruk") ev = ev.filter((e) => e.fizruk);
+      else if (tagFilter === "__finyk_sub") ev = ev.filter((e) => e.finykSub);
       else ev = ev.filter((e) => e.tagLabels.includes(tagFilter));
     }
     const q = listQuery.trim().toLowerCase();
@@ -236,7 +254,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
     for (const t of routine.tags) set.add(t.name);
     for (const e of events) {
       for (const x of e.tagLabels) {
-        if (x !== FIZRUK_GROUP_LABEL) set.add(x);
+        if (x !== FIZRUK_GROUP_LABEL && x !== FINYK_SUB_GROUP_LABEL) set.add(x);
       }
     }
     return [...set].sort((a, b) => a.localeCompare(b, "uk"));
@@ -389,7 +407,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
               <section className="routine-hero-card" aria-label="Огляд періоду">
                 <p className="text-[11px] font-bold tracking-widest uppercase text-[#b45348]/90">{rangeLabel}</p>
                 <p className="text-xs text-subtle mt-1">{headlineDate}</p>
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   <div className="rounded-2xl bg-white/70 border border-[#f5c4b8]/50 p-3 text-center shadow-sm">
                     <p className="text-[10px] uppercase tracking-wide text-subtle">Подій у зрізі</p>
                     <p className="text-2xl font-black text-text tabular-nums mt-0.5">{filtered.length}</p>
@@ -408,6 +426,12 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                     <p className="text-[10px] uppercase tracking-wide text-subtle">Фізрук у стрічці</p>
                     <p className="text-sm font-semibold text-text mt-1.5">
                       {routine.prefs.showFizrukInCalendar !== false ? "Увімкнено" : "Вимкнено"}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 border border-emerald-200/60 p-3 text-center shadow-sm">
+                    <p className="text-[10px] uppercase tracking-wide text-subtle">Підписки Фініка</p>
+                    <p className="text-sm font-semibold text-text mt-1.5">
+                      {routine.prefs.showFinykSubscriptionsInCalendar !== false ? "Увімкнено" : "Вимкнено"}
                     </p>
                   </div>
                 </div>
@@ -475,6 +499,20 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                     )}
                   >
                     {FIZRUK_GROUP_LABEL}
+                  </button>
+                )}
+                {routine.prefs.showFinykSubscriptionsInCalendar !== false && (
+                  <button
+                    type="button"
+                    onClick={() => setTagFilter((f) => (f === "__finyk_sub" ? null : "__finyk_sub"))}
+                    className={cn(
+                      "px-2.5 py-1.5 rounded-full text-[11px] font-medium border max-w-[200px] truncate",
+                      tagFilter === "__finyk_sub"
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-text"
+                        : C.chipOff,
+                    )}
+                  >
+                    Підписки Фініка
                   </button>
                 )}
                 {tagChips.map((name) => (
@@ -633,7 +671,13 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                           key={e.id}
                           className={cn(
                             "overflow-hidden rounded-2xl border border-line/60 bg-panel pl-4 pr-4 py-3 shadow-card flex flex-col gap-2 border-l-4",
-                            e.fizruk ? "border-l-sky-500" : e.habitId ? "border-l-[#e0786c]" : "border-l-transparent",
+                            e.fizruk
+                              ? "border-l-sky-500"
+                              : e.finykSub
+                                ? "border-l-emerald-500"
+                                : e.habitId
+                                  ? "border-l-[#e0786c]"
+                                  : "border-l-transparent",
                             e.completed && e.habitId && "opacity-90",
                           )}
                         >
@@ -659,6 +703,17 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                                   onClick={() => onOpenModule("fizruk", { hash: "plan" })}
                                 >
                                   План
+                                </Button>
+                              )}
+                              {e.finykSub && typeof onOpenModule === "function" && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="!h-9 !px-3 !text-xs border border-emerald-500/25 bg-emerald-500/5"
+                                  type="button"
+                                  onClick={() => onOpenModule("finyk", { hash: "assets" })}
+                                >
+                                  Фінік
                                 </Button>
                               )}
                               {e.habitId && (
@@ -817,6 +872,15 @@ function SettingsSection({
             className="w-5 h-5 accent-[#e0786c]"
             checked={routine.prefs.showFizrukInCalendar !== false}
             onChange={(ev) => setRoutine((s) => setPref(s, "showFizrukInCalendar", ev.target.checked))}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted">Показувати планові платежі підписок Фініка</span>
+          <input
+            type="checkbox"
+            className="w-5 h-5 accent-[#e0786c]"
+            checked={routine.prefs.showFinykSubscriptionsInCalendar !== false}
+            onChange={(ev) => setRoutine((s) => setPref(s, "showFinykSubscriptionsInCalendar", ev.target.checked))}
           />
         </label>
         <label className="flex items-center justify-between gap-3 text-sm">

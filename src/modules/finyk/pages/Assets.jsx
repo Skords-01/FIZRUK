@@ -19,6 +19,7 @@ import {
 } from "../utils";
 import { getDebtTxRole, getReceivableTxRole } from "../domain/debtEngine";
 import { cn } from "@shared/lib/cn";
+import { notifyFinykRoutineCalendarSync } from "../hubRoutineSync.js";
 
 function SectionBar({ title, summary, open, onToggle }) {
   return (
@@ -39,7 +40,7 @@ const formInp = "w-full h-11 rounded-2xl border border-line bg-panelHi px-4 text
 
 export function Assets({ mono, storage, showBalance = true }) {
   const { accounts, transactions } = mono;
-  const { hiddenAccounts, manualAssets, setManualAssets, manualDebts, setManualDebts, receivables, setReceivables, toggleLinkedTx, subscriptions, setSubscriptions, monoDebtLinkedTxIds, toggleMonoDebtTx } = storage;
+  const { hiddenAccounts, manualAssets, setManualAssets, manualDebts, setManualDebts, receivables, setReceivables, toggleLinkedTx, subscriptions, setSubscriptions, updateSubscription, monoDebtLinkedTxIds, toggleMonoDebtTx } = storage;
 
   const [showAssetForm, setShowAssetForm] = useState(false);
   const [showDebtForm, setShowDebtForm] = useState(false);
@@ -111,6 +112,71 @@ export function Assets({ mono, storage, showBalance = true }) {
                       hideAmount={!showBalance}
                     />
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (txPicker.type === "sub") {
+      const sub = subscriptions.find((s) => s.id === txPicker.subId);
+      if (!sub) {
+        return (
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-line bg-bg sticky top-0 z-10">
+              <button type="button" onClick={() => setTxPicker(null)} className="text-sm text-muted hover:text-text transition-colors">← Назад</button>
+            </div>
+          </div>
+        );
+      }
+      const linkedId = sub.linkedTxId;
+      const expenses = transactions.filter((t) => t.amount < 0).sort((a, b) => (b.time || 0) - (a.time || 0));
+      return (
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-line bg-bg sticky top-0 z-10">
+            <button type="button" onClick={() => setTxPicker(null)} className="text-sm text-muted hover:text-text transition-colors">← Назад</button>
+            <span className="text-sm font-bold">Транзакція для «{sub.name}»</span>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))]">
+              <div className="bg-panel border border-line rounded-xl p-4 mb-4">
+                <p className="text-xs text-subtle leading-relaxed">
+                  Обери списання (наприклад через Apple/Google). День місяця з транзакції підставиться в «день списання»; сума піде в огляд і в Рутину.
+                  {linkedId && (
+                    <button
+                      type="button"
+                      className="block mt-2 text-sm font-semibold text-danger hover:underline"
+                      onClick={() => {
+                        updateSubscription(sub.id, { linkedTxId: null });
+                        setTxPicker(null);
+                      }}
+                    >
+                      Зняти привʼязку
+                    </button>
+                  )}
+                </p>
+              </div>
+              {expenses.map((t, i) => {
+                const isLinked = linkedId === t.id;
+                return (
+                  <TxRow
+                    key={t.id || i}
+                    tx={t}
+                    highlighted={isLinked}
+                    onClick={() => {
+                      if (isLinked) {
+                        updateSubscription(sub.id, { linkedTxId: null });
+                      } else {
+                        const bd = new Date((t.time || 0) * 1000).getDate();
+                        updateSubscription(sub.id, { linkedTxId: t.id, billingDay: bd });
+                      }
+                      setTxPicker(null);
+                    }}
+                    accounts={accounts}
+                    hideAmount={!showBalance}
+                  />
                 );
               })}
             </div>
@@ -199,8 +265,15 @@ export function Assets({ mono, storage, showBalance = true }) {
                 key={sub.id}
                 sub={sub}
                 transactions={transactions}
-                onDelete={() => setSubscriptions(ss => ss.filter((_, j) => j !== i))}
-                onEdit={updated => setSubscriptions(ss => ss.map((s, j) => j === i ? { ...s, ...updated } : s))}
+                onDelete={() => {
+                  setSubscriptions((ss) => ss.filter((_, j) => j !== i));
+                  notifyFinykRoutineCalendarSync();
+                }}
+                onEdit={(updated) => {
+                  setSubscriptions((ss) => ss.map((s, j) => (j === i ? { ...s, ...updated } : s)));
+                  notifyFinykRoutineCalendarSync();
+                }}
+                onLinkTransactions={() => setTxPicker({ type: "sub", subId: sub.id })}
               />
             ))}
             {showSubForm ? (
@@ -209,7 +282,20 @@ export function Assets({ mono, storage, showBalance = true }) {
                 <input className={formInp} placeholder="Ключове слово з транзакції" value={newSub.keyword} onChange={e => setNewSub(a => ({ ...a, keyword: e.target.value }))} />
                 <input className={formInp} placeholder="День списання (1-31)" type="number" min="1" max="31" value={newSub.billingDay} onChange={e => setNewSub(a => ({ ...a, billingDay: Number(e.target.value) }))} />
                 <div className="flex gap-2">
-                  <Button className="flex-1" size="sm" onClick={() => { if (newSub.name && newSub.billingDay) { setSubscriptions(ss => [...ss, { ...newSub, id: Date.now().toString() }]); setNewSub({ name: "", emoji: "📱", keyword: "", billingDay: "", currency: "UAH" }); setShowSubForm(false); } }}>Додати</Button>
+                  <Button
+                    className="flex-1"
+                    size="sm"
+                    onClick={() => {
+                      if (newSub.name && newSub.billingDay) {
+                        setSubscriptions((ss) => [...ss, { ...newSub, id: Date.now().toString() }]);
+                        notifyFinykRoutineCalendarSync();
+                        setNewSub({ name: "", emoji: "📱", keyword: "", billingDay: "", currency: "UAH" });
+                        setShowSubForm(false);
+                      }
+                    }}
+                  >
+                    Додати
+                  </Button>
                   <Button className="flex-1" size="sm" variant="ghost" onClick={() => setShowSubForm(false)}>Скасувати</Button>
                 </div>
               </div>

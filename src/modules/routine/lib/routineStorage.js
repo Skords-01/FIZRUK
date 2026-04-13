@@ -39,6 +39,8 @@ const defaultState = () => ({
   schemaVersion: 3,
   prefs: {
     showFizrukInCalendar: true,
+    /** Планові списання підписок Фініка в календарі Hub */
+    showFinykSubscriptionsInCalendar: true,
     tagScope: "routine",
     /** Браузерні нагадування у вказаний час (якщо дозволено Notification) */
     routineRemindersEnabled: false,
