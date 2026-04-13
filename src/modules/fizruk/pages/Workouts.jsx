@@ -113,6 +113,22 @@ export function Workouts() {
   }, [form.primaryGroup, musclesByPrimaryGroup, musclesUk]);
   const list = useMemo(() => search(q), [search, q]);
   const pickList = useMemo(() => search(pickQ).slice(0, 60), [search, pickQ]);
+  const pickGrouped = useMemo(() => {
+    const m = new Map();
+    for (const ex of pickList) {
+      const gid = ex.primaryGroup || "full_body";
+      if (!m.has(gid)) m.set(gid, []);
+      m.get(gid).push(ex);
+    }
+    const order = ["chest", "back", "shoulders", "arms", "core", "legs", "glutes", "full_body", "cardio"];
+    return Array.from(m.entries())
+      .sort((a, b) => {
+        const ai = order.indexOf(a[0]);
+        const bi = order.indexOf(b[0]);
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      })
+      .map(([gid, items]) => ({ id: gid, label: primaryGroupsUk[gid] || gid, items }));
+  }, [pickList, primaryGroupsUk]);
   const activeWorkout = workouts.find(w => w.id === activeWorkoutId) || null;
   const workoutQuickStats = useMemo(() => {
     const done = (workouts || []).filter(w => w.endedAt);
@@ -487,22 +503,26 @@ export function Workouts() {
                                 <input
                                   className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
                                   type="number"
+                                  inputMode="decimal"
                                   placeholder="кг"
-                                  value={s.weightKg ?? ""}
+                                  value={s.weightKg || ""}
+                                  onFocus={e => e.target.select()}
                                   onChange={(e) => {
                                     const next = [...(it.sets || [])];
-                                    next[idx] = { ...next[idx], weightKg: Number(e.target.value) };
+                                    next[idx] = { ...next[idx], weightKg: e.target.value === "" ? 0 : Number(e.target.value) };
                                     updateItem(activeWorkout.id, it.id, { sets: next });
                                   }}
                                 />
                                 <input
                                   className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
                                   type="number"
+                                  inputMode="numeric"
                                   placeholder="повт."
-                                  value={s.reps ?? ""}
+                                  value={s.reps || ""}
+                                  onFocus={e => e.target.select()}
                                   onChange={(e) => {
                                     const next = [...(it.sets || [])];
-                                    next[idx] = { ...next[idx], reps: Number(e.target.value) };
+                                    next[idx] = { ...next[idx], reps: e.target.value === "" ? 0 : Number(e.target.value) };
                                     updateItem(activeWorkout.id, it.id, { sets: next });
                                   }}
                                 />
@@ -1083,36 +1103,63 @@ export function Workouts() {
                 )}
 
                 <div className="bg-bg border border-line rounded-2xl overflow-hidden max-h-[55vh] overflow-y-auto">
-                  {pickList.map(ex => {
-                    const pickCf = recoveryConflictsForExercise(ex, rec.by);
-                    return (
-                    <button
-                      key={ex.id}
-                      className={cn(
-                        "w-full text-left px-4 py-3 border-b border-line last:border-0 hover:bg-panelHi transition-colors",
-                        pickCf.hasWarning && "border-l-4 border-l-warning/70"
-                      )}
-                      onClick={() => {
-                        if (!activeWorkoutId) return;
-                        if (pickCf.hasWarning) {
-                          setPendingPick(ex);
-                          return;
-                        }
-                        addExerciseToActive(ex);
-                      }}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="text-sm font-semibold text-text truncate">{ex?.name?.uk || ex?.name?.en}</div>
-                        {pickCf.hasWarning ? (
-                          <span className="text-warning text-xs shrink-0">⚠</span>
-                        ) : null}
-                      </div>
-                      <div className="text-xs text-subtle mt-0.5">{ex.primaryGroupUk || ex.primaryGroup}</div>
-                    </button>
-                  );})}
                   {pickList.length === 0 && (
                     <div className="p-6 text-center text-sm text-subtle">Нічого не знайдено</div>
                   )}
+                  {pickQ
+                    ? pickList.map(ex => {
+                        const pickCf = recoveryConflictsForExercise(ex, rec.by);
+                        return (
+                          <button
+                            key={ex.id}
+                            className={cn(
+                              "w-full text-left px-4 py-3 border-b border-line last:border-0 hover:bg-panelHi transition-colors",
+                              pickCf.hasWarning && "border-l-4 border-l-warning/70"
+                            )}
+                            onClick={() => {
+                              if (!activeWorkoutId) return;
+                              if (pickCf.hasWarning) { setPendingPick(ex); return; }
+                              addExerciseToActive(ex);
+                            }}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="text-sm font-semibold text-text truncate">{ex?.name?.uk || ex?.name?.en}</div>
+                              {pickCf.hasWarning && <span className="text-warning text-xs shrink-0">⚠</span>}
+                            </div>
+                            <div className="text-xs text-subtle mt-0.5">{primaryGroupsUk[ex.primaryGroup] || ex.primaryGroup}</div>
+                          </button>
+                        );
+                      })
+                    : pickGrouped.map(g => (
+                        <div key={g.id}>
+                          <div className="px-4 py-2 bg-panelHi/80 border-b border-line sticky top-0">
+                            <span className="text-[10px] font-bold text-subtle uppercase tracking-widest">{g.label}</span>
+                          </div>
+                          {g.items.map(ex => {
+                            const pickCf = recoveryConflictsForExercise(ex, rec.by);
+                            return (
+                              <button
+                                key={ex.id}
+                                className={cn(
+                                  "w-full text-left px-4 py-3 border-b border-line last:border-0 hover:bg-panelHi transition-colors",
+                                  pickCf.hasWarning && "border-l-4 border-l-warning/70"
+                                )}
+                                onClick={() => {
+                                  if (!activeWorkoutId) return;
+                                  if (pickCf.hasWarning) { setPendingPick(ex); return; }
+                                  addExerciseToActive(ex);
+                                }}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="text-sm font-semibold text-text truncate">{ex?.name?.uk || ex?.name?.en}</div>
+                                  {pickCf.hasWarning && <span className="text-warning text-xs shrink-0">⚠</span>}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ))
+                  }
                 </div>
               </div>
             </div>
