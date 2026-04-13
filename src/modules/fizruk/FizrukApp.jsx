@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { Dashboard } from "./pages/Dashboard";
 import { Atlas } from "./pages/Atlas";
 import { Exercise } from "./pages/Exercise";
 import { Workouts } from "./pages/Workouts";
 import { Progress } from "./pages/Progress";
 import { Measurements } from "./pages/Measurements";
+import { WorkoutBackupBar } from "./components/workouts/WorkoutBackupBar";
 import { cn } from "@shared/lib/cn";
 
 const NAV = [
@@ -46,9 +48,15 @@ function setHash(next) {
 
 export default function FizrukApp({ onBackToHub } = {}) {
   const [route, setRoute] = useState(() => parseHash());
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsPanelRef = useRef(null);
   const page = route.page || "dashboard";
   const isAtlas = page === "atlas";
   const isExercise = page === "exercise";
+
+  useDialogFocusTrap(settingsOpen, settingsPanelRef, {
+    onEscape: () => setSettingsOpen(false),
+  });
 
   useEffect(() => {
     const onHash = () => setRoute(parseHash());
@@ -103,8 +111,58 @@ export default function FizrukApp({ onBackToHub } = {}) {
               <span className="text-[10px] text-subtle font-medium truncate">Тренування · прогрес</span>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line/80 bg-panel/80"
+            aria-label="Налаштування даних"
+            title="Налаштування даних"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
         </div>
       </div>
+
+      {settingsOpen && (
+        <div className="fixed inset-0 z-[80] flex justify-end" role="presentation">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+            aria-label="Закрити налаштування"
+            onClick={() => setSettingsOpen(false)}
+          />
+          <div
+            ref={settingsPanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="fizruk-settings-title"
+            className="relative w-full max-w-sm h-full bg-panel border-l border-line shadow-2xl flex flex-col"
+            style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+          >
+            <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-line/60">
+              <h2 id="fizruk-settings-title" className="text-base font-semibold text-text">
+                Дані й резервні копії
+              </h2>
+              <button
+                type="button"
+                onClick={() => setSettingsOpen(false)}
+                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                aria-label="Закрити"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 py-4">
+              <WorkoutBackupBar className="border-0 bg-transparent p-0" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Page content */}
       <div className="flex-1 overflow-hidden flex flex-col">

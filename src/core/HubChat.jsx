@@ -1,10 +1,91 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
 import { parseWorkoutsFromStorage, WORKOUTS_STORAGE_KEY } from "../modules/fizruk/lib/fizrukStorage";
 import { MCC_CATEGORIES, INTERNAL_TRANSFER_ID } from "../modules/finyk/constants";
-import { getCategory, getMonoTotals, getDebtPaid, getTxStatAmount, calcCategorySpent, isMonoDebt, getMonoDebt } from "../modules/finyk/utils";
+import {
+  getCategory,
+  getMonoTotals,
+  getTxStatAmount,
+  calcCategorySpent,
+  calcDebtRemaining,
+  calcReceivableRemaining,
+  getDebtEffectiveTotal,
+  getReceivableEffectiveTotal,
+} from "../modules/finyk/utils";
+import {
+  completedWorkoutsCount,
+  countCompletedInCurrentWeek,
+  totalCompletedVolumeKg,
+  weeklyVolumeSeriesNow,
+} from "../modules/fizruk/lib/workoutStats";
+import { ACTIVE_WORKOUT_KEY } from "../modules/fizruk/lib/workoutUi";
 import { cn } from "@shared/lib/cn";
 
 const HUB_FINYK_CACHE_EVENT = "hub-finyk-cache-updated";
+
+function friendlyApiError(status, message) {
+  const m = message || "";
+  if (status === 500 && /ANTHROPIC|not set|key/i.test(m)) {
+    return "Чат на сервері не налаштовано (немає ключа AI).";
+  }
+  if (status === 429) return "Забагато запитів. Спробуй через хвилину.";
+  if (status === 401 || status === 403) return "Доступ заборонено.";
+  return m || `Помилка ${status}`;
+}
+
+function friendlyChatError(e) {
+  const msg = e?.message || String(e);
+  if (/failed to fetch|network|load failed/i.test(msg)) {
+    return "Немає з'єднання з мережею або сервер недоступний.";
+  }
+  return `Помилка: ${msg}`;
+}
+
+/** Читає SSE з /api/chat (data: {"t":"..."} / [DONE]). Рядок за рядком — стійко до часткових чанків. */
+async function consumeHubChatSse(response, onDelta) {
+  const reader = response.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    for (;;) {
+      const nl = buf.indexOf("\n");
+      if (nl === -1) break;
+      const line = buf.slice(0, nl).replace(/\r$/, "");
+      buf = buf.slice(nl + 1);
+      if (!line.startsWith("data: ")) continue;
+      const raw = line.slice(6).trim();
+      if (raw === "[DONE]") return;
+      let j;
+      try {
+        j = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+      if (j.err) throw new Error(j.err);
+      if (j.t) onDelta(j.t);
+    }
+  }
+}
+
+function AssistantMessageBody({ text }) {
+  return (
+    <ReactMarkdown
+      className="text-sm leading-relaxed [&_strong]:font-semibold [&_em]:italic [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:my-1 [&_li]:my-0.5 [&_a]:text-primary [&_a]:underline"
+      components={{
+        a: ({ href, children }) => (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+            {children}
+          </a>
+        ),
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  );
+}
 
 function newMsgId() {
   return globalThis.crypto?.randomUUID?.() ?? `m_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
@@ -111,7 +192,7 @@ function buildContext() {
 
   if (d.accounts.length > 0) {
     const { balance, debt: monoDebt } = getMonoTotals(d.accounts, d.hiddenAccounts);
-    const manualDebtTotal = d.manualDebts.reduce((s, debt) => s + Math.max(0, debt.totalAmount - getDebtPaid(debt, d.transactions)), 0);
+    const manualDebtTotal = d.manualDebts.reduce((s, debt) => s + calcDebtRemaining(debt, d.transactions), 0);
     lines.push(`[Баланс карток] ${fmt(balance)} грн`);
     lines.push(`[Борг кредитки] ${fmt(monoDebt)} грн`);
     if (manualDebtTotal > 0) lines.push(`[Борг ручний] ${fmt(manualDebtTotal)} грн`);
@@ -150,16 +231,21 @@ function buildContext() {
     }
   }
 
-  if (d.manualDebts.filter(x => x.totalAmount > 0).length > 0) {
-    lines.push(`[Деталі боргів] ${d.manualDebts.filter(x => x.totalAmount > 0).map(x => {
-      const rem = Math.max(0, x.totalAmount - getDebtPaid(x, d.transactions));
-      return `${x.name}: залишок ${fmt(rem)} грн (id:${x.id})`;
+  if (d.manualDebts.filter(x => Number(x.totalAmount) > 0).length > 0) {
+    lines.push(`[Деталі боргів] ${d.manualDebts.filter(x => Number(x.totalAmount) > 0).map(x => {
+      const rem = calcDebtRemaining(x, d.transactions);
+      const eff = getDebtEffectiveTotal(x, d.transactions);
+      return `${x.name}: залишок ${fmt(rem)} грн (сума з виникненнями ${fmt(eff)} грн, id:${x.id})`;
     }).join(", ")}`);
   }
 
-  const recv = d.receivables.filter(r => r.amount > 0);
+  const recv = d.receivables.filter(r => Number(r.amount) > 0);
   if (recv.length > 0) {
-    lines.push(`[Мені винні] ${recv.map(r => `${r.name}: ${fmt(r.amount)} грн (id:${r.id})`).join(", ")}`);
+    lines.push(`[Мені винні] ${recv.map(r => {
+      const rem = calcReceivableRemaining(r, d.transactions);
+      const eff = getReceivableEffectiveTotal(r, d.transactions);
+      return `${r.name}: залишок ${fmt(rem)} грн (ефективна сума ${fmt(eff)} грн, id:${r.id})`;
+    }).join(", ")}`);
   }
 
   const limits = d.budgets.filter(b => b.type === "limit");
@@ -199,10 +285,24 @@ function buildContext() {
       const last = sorted[0];
       const dt = last ? new Date(last.startedAt).toLocaleDateString("uk-UA", { day: "numeric", month: "short" }) : "—";
       const totalAll = w.length;
-      lines.push(`[Тренування] всього: ${totalAll}, за тиждень: ${cnt}, останнє: ${dt}`);
+      const done = w.filter(x => x.endedAt);
+      lines.push(`[Тренування] завершених всього: ${completedWorkoutsCount(w)}, цього тижня завершено: ${countCompletedInCurrentWeek(w)}, за останні 7 днів сесій: ${cnt}, остання дата: ${dt}`);
+      const { volumeKg } = weeklyVolumeSeriesNow(w);
+      const weekVol = volumeKg.reduce((a, b) => a + b, 0);
+      lines.push(`[Фізрук тиждень] обʼєм кг×повт (Пн–Нд): ${fmt(weekVol)}`);
+      lines.push(`[Фізрук загалом] сумарний обʼєм завершених: ${fmt(totalCompletedVolumeKg(w))} кг×повт`);
+      let activeHint = "немає";
+      try {
+        const aid = localStorage.getItem(ACTIVE_WORKOUT_KEY);
+        if (aid) {
+          const aw = w.find(x => x.id === aid && !x.endedAt);
+          if (aw) activeHint = `${(aw.items || []).length} вправ у поточній сесії (id тренування ${aid})`;
+        }
+      } catch {}
+      lines.push(`[Фізрук активне тренування] ${activeHint}`);
       if (sorted.length > 0 && sorted[0].items?.length > 0) {
-        const exercises = sorted[0].items.map(i => i.name || i.exercise || "—").join(", ");
-        lines.push(`[Останнє тренування] ${exercises}`);
+        const exercises = sorted[0].items.map(i => i.nameUk || i.name || i.exercise || "—").join(", ");
+        lines.push(`[Останнє тренування вправи] ${exercises}`);
       }
     }
   } catch {}
@@ -274,6 +374,16 @@ function executeAction(action) {
         lsSet("finyk_budgets", budgets);
         const cat = MCC_CATEGORIES.find(c => c.id === category_id);
         return `Ліміт ${cat?.label || category_id} встановлено: ${limit} грн`;
+      }
+      case "set_monthly_plan": {
+        const { income, expense, savings } = action.input;
+        const cur = ls("finyk_monthly_plan", {});
+        const next = { ...cur };
+        if (income != null && income !== "") next.income = String(income);
+        if (expense != null && expense !== "") next.expense = String(expense);
+        if (savings != null && savings !== "") next.savings = String(savings);
+        lsSet("finyk_monthly_plan", next);
+        return `Фінплан місяця оновлено: дохід ${next.income ?? "—"} / витрати ${next.expense ?? "—"} / заощадження ${next.savings ?? "—"} грн/міс`;
       }
       default:
         return `Невідома дія: ${action.name}`;
@@ -538,21 +648,27 @@ function HubChat({ onClose }) {
     setInput("");
     setLoading(true);
 
+    const history = next
+      .filter(m => m.role === "user" || m.role === "assistant")
+      .slice(-10)
+      .map(m => ({ role: m.role, content: m.text }));
+
     try {
       const context = buildContext();
-
-      const history = next
-        .filter(m => m.role === "user" || m.role === "assistant")
-        .slice(-10)
-        .map(m => ({ role: m.role, content: m.text }));
 
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ context, messages: history }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      const raw = await res.text();
+      let data;
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        throw new Error(res.ok ? "Некоректна відповідь сервера" : `Помилка ${res.status}`);
+      }
+      if (!res.ok) throw new Error(friendlyApiError(res.status, data?.error));
 
       if (data.tool_calls && data.tool_calls.length > 0) {
         const toolResults = data.tool_calls.map(tc => ({
@@ -561,8 +677,11 @@ function HubChat({ onClose }) {
         }));
 
         const actionsText = toolResults.map(r => `✅ ${r.content}`).join("\n");
+        const prefix = `${actionsText}\n\n`;
+        const assistantId = newMsgId();
+        setMessages(m => [...m, { id: assistantId, role: "assistant", text: prefix }]);
 
-        let followUp = "";
+        let followUpText = "";
         try {
           const res2 = await fetch("/api/chat", {
             method: "POST",
@@ -572,15 +691,50 @@ function HubChat({ onClose }) {
               messages: history,
               tool_results: toolResults,
               tool_calls_raw: data.tool_calls_raw,
+              stream: true,
             }),
           });
-          const data2 = await res2.json();
-          if (res2.ok && data2.text) followUp = data2.text;
-        } catch {}
 
-        const fullText = followUp ? `${actionsText}\n\n${followUp}` : actionsText;
-        setMessages(m => [...m, makeAssistantMsg(fullText)]);
-        if (shouldSpeak) maybeSpeak(followUp || actionsText);
+          const ct = res2.headers.get("content-type") || "";
+          if (res2.ok && ct.includes("text/event-stream")) {
+            let acc = "";
+            await consumeHubChatSse(res2, (delta) => {
+              acc += delta;
+              setMessages(m =>
+                m.map(x => (x.id === assistantId ? { ...x, text: prefix + acc } : x)),
+              );
+            });
+            followUpText = acc;
+          } else {
+            const raw2 = await res2.text();
+            let data2 = {};
+            try {
+              data2 = raw2 ? JSON.parse(raw2) : {};
+            } catch {
+              data2 = { error: raw2 };
+            }
+            if (!res2.ok) throw new Error(friendlyApiError(res2.status, data2?.error));
+            followUpText = data2.text || "";
+            setMessages(m =>
+              m.map(x =>
+                x.id === assistantId ? { ...x, text: prefix + followUpText } : x,
+              ),
+            );
+          }
+        } catch (e2) {
+          setMessages(m =>
+            m.map(x =>
+              x.id === assistantId
+                ? { ...x, text: `${prefix}\n\n${friendlyChatError(e2)}` }
+                : x,
+            ),
+          );
+        }
+
+        if (shouldSpeak) {
+          const speakTarget = followUpText || actionsText;
+          if (speakTarget) maybeSpeak(speakTarget);
+        }
 
         window.dispatchEvent(new CustomEvent(HUB_FINYK_CACHE_EVENT));
       } else {
@@ -589,7 +743,7 @@ function HubChat({ onClose }) {
         if (shouldSpeak) maybeSpeak(reply);
       }
     } catch (e) {
-      setMessages(m => [...m, makeAssistantMsg(`Помилка: ${e.message}`)]);
+      setMessages(m => [...m, makeAssistantMsg(friendlyChatError(e))]);
     } finally {
       setLoading(false);
     }
@@ -653,17 +807,22 @@ function HubChat({ onClose }) {
         </div>
 
         {/* Messages */}
-        <div ref={chatRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
+        <div
+          ref={chatRef}
+          className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0"
+          aria-live="polite"
+          aria-relevant="additions"
+        >
           {messages.map(m => (
             <div key={m.id} className={cn("flex items-end gap-2", m.role === "user" ? "flex-row-reverse" : "flex-row")}>
               {m.role === "assistant" && <span className="text-lg shrink-0 mb-0.5 leading-none">🤖</span>}
               <div className={cn(
-                "max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+                "max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
                 m.role === "user"
-                  ? "bg-primary text-white rounded-br-sm"
-                  : "bg-panel border border-line text-text rounded-bl-sm",
+                  ? "bg-primary text-white rounded-br-sm whitespace-pre-wrap"
+                  : "bg-panel border border-line text-text rounded-bl-sm whitespace-normal",
               )}>
-                {m.text}
+                {m.role === "assistant" ? <AssistantMessageBody text={m.text} /> : m.text}
                 {m.role === "assistant" && m.text && m.text.length > 3 && (
                   <button
                     type="button"

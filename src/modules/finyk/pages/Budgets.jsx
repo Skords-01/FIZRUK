@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { Skeleton } from "@shared/components/ui/Skeleton";
-import { calcCategorySpent } from "../utils";
+import { calcCategorySpent, getTxStatAmount } from "../utils";
 import { MCC_CATEGORIES } from "../constants";
 import { cn } from "@shared/lib/cn";
 
@@ -24,6 +24,11 @@ export function Budgets({ mono, storage }) {
   const planIncome = Number(monthlyPlan?.income || 0);
   const planExpense = Number(monthlyPlan?.expense || 0);
   const planSavings = Number(monthlyPlan?.savings || 0);
+
+  const totalExpenseFact = useMemo(
+    () => Math.round(statTx.filter(t => t.amount < 0).reduce((s, t) => s + getTxStatAmount(t, txSplits), 0)),
+    [statTx, txSplits],
+  );
 
   const addBudget = () => {
     if (newB.type === "limit" && newB.categoryId && newB.limit) {
@@ -49,11 +54,11 @@ export function Budgets({ mono, storage }) {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-3">
+      <div className="max-w-4xl mx-auto px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4">
 
         {/* Monthly plan */}
-        <div className="bg-panel border border-line rounded-xl p-4">
-          <div className="text-[11px] font-bold text-subtle uppercase tracking-widest mb-3">🧭 Фінплан на місяць</div>
+        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+          <div className="text-[11px] font-bold text-subtle uppercase tracking-widest mb-3">Фінплан на місяць</div>
           <div className="space-y-2">
             <input className={formInp} type="number" placeholder="План доходу ₴"
               value={monthlyPlan?.income ?? ""} onChange={e => setMonthlyPlan(p => ({ ...(p || {}), income: e.target.value }))} />
@@ -63,24 +68,57 @@ export function Budgets({ mono, storage }) {
               value={monthlyPlan?.savings ?? ""} onChange={e => setMonthlyPlan(p => ({ ...(p || {}), savings: e.target.value }))} />
           </div>
           {(planIncome > 0 || planExpense > 0 || planSavings > 0) && (
-            <div className="text-xs text-muted mt-3 pt-3 border-t border-line">
-              +{planIncome.toLocaleString("uk-UA")} / −{planExpense.toLocaleString("uk-UA")} / 💰 {planSavings.toLocaleString("uk-UA")} ₴
+            <div className="text-xs text-muted mt-3 pt-3 border-t border-line space-y-3">
+              <div className="flex justify-between gap-2 flex-wrap">
+                <span>План: +{planIncome.toLocaleString("uk-UA")} / −{planExpense.toLocaleString("uk-UA")} / {planSavings.toLocaleString("uk-UA")} ₴</span>
+              </div>
+              {planExpense > 0 && (
+                <>
+                  <div className="flex justify-between text-[11px] text-subtle">
+                    <span>Витрати: план / факт</span>
+                    <span className="tabular-nums font-medium text-text">
+                      {planExpense.toLocaleString("uk-UA")} ₴ / {totalExpenseFact.toLocaleString("uk-UA")} ₴
+                    </span>
+                  </div>
+                  <div className="h-2 bg-bg rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        totalExpenseFact > planExpense
+                          ? "bg-danger"
+                          : totalExpenseFact / planExpense >= 0.85
+                            ? "bg-warning"
+                            : "bg-emerald-500",
+                      )}
+                      style={{ width: `${Math.min(100, planExpense > 0 ? (totalExpenseFact / planExpense) * 100 : 0)}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-subtle">
+                    {totalExpenseFact <= planExpense
+                      ? `Залишок до ліміту плану: ${(planExpense - totalExpenseFact).toLocaleString("uk-UA")} ₴`
+                      : `Перевищення плану на ${(totalExpenseFact - planExpense).toLocaleString("uk-UA")} ₴`}
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>
 
         {/* Limits */}
-        <div className="text-[11px] font-bold text-subtle uppercase tracking-widest">🔴 Ліміти · {monthStart.toLocaleDateString("uk-UA", { month: "long" })}</div>
+        <div className="text-[11px] font-bold text-subtle uppercase tracking-widest">Ліміти · {monthStart.toLocaleDateString("uk-UA", { month: "long" })}</div>
         {limitBudgets.length === 0 && <p className="text-xs text-subtle">Встанови ліміт щоб не виходити за межі</p>}
         {limitBudgets.map((b, i) => {
           const cat = MCC_CATEGORIES.find(c => c.id === b.categoryId);
           const bspent = calcSpent(b);
-          const pct = Math.min(100, b.limit > 0 ? Math.round(bspent / b.limit * 100) : 0);
-          const over = pct >= 90;
+          const pctRaw = b.limit > 0 ? (bspent / b.limit) * 100 : 0;
+          const pct = Math.min(100, Math.round(pctRaw));
+          const overLimit = pctRaw >= 100;
+          const warnLimit = pctRaw >= 80 && !overLimit;
+          const remaining = Math.max(0, b.limit - bspent);
           const globalIdx = budgets.indexOf(b);
           const isEditing = editIdx === globalIdx;
           return (
-            <div key={b.id || i} className="bg-panel border border-line rounded-xl p-4">
+            <div key={b.id || i} className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
               {isEditing ? (
                 <div className="space-y-2">
                   <input className={formInp} type="number" placeholder="Ліміт ₴" value={b.limit}
@@ -95,15 +133,25 @@ export function Budgets({ mono, storage }) {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-semibold">{cat?.label || "—"}</span>
                     <div className="flex items-center gap-2">
-                      <span className={cn("text-xs", over ? "text-danger" : "text-muted")}>{bspent} / {b.limit} ₴</span>
-                      <button onClick={() => setEditIdx(globalIdx)} className="text-subtle hover:text-text text-sm transition-colors">✏️</button>
+                      <span className={cn("text-xs tabular-nums", overLimit ? "text-danger font-semibold" : warnLimit ? "text-warning" : "text-muted")}>
+                        {bspent} / {b.limit} ₴
+                      </span>
+                      <button type="button" onClick={() => setEditIdx(globalIdx)} className="text-subtle hover:text-text text-sm transition-colors" aria-label="Редагувати ліміт">✏️</button>
                     </div>
                   </div>
-                  <div className="h-1.5 bg-line rounded-full overflow-hidden">
-                    <div className={cn("h-full rounded-full transition-all duration-500", over ? "bg-danger" : "bg-primary")} style={{ width: `${pct}%` }} />
+                  <div className="h-2 bg-bg rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        overLimit ? "bg-danger" : warnLimit ? "bg-warning" : "bg-emerald-500",
+                      )}
+                      style={{ width: `${Math.min(100, pctRaw)}%` }}
+                    />
                   </div>
-                  <div className={cn("text-xs mt-1.5", over ? "text-danger" : "text-subtle")}>
-                    {over ? `⚠️ ${pct}% — майже вичерпано` : `${pct}% використано`}
+                  <div className={cn("text-xs mt-2", overLimit ? "text-danger font-medium" : warnLimit ? "text-warning" : "text-subtle")}>
+                    {overLimit
+                      ? `Перевищено на ${(bspent - b.limit).toLocaleString("uk-UA")} ₴`
+                      : `Залишок ${remaining.toLocaleString("uk-UA")} ₴ · ${pct}% використано`}
                   </div>
                 </>
               )}
@@ -112,7 +160,7 @@ export function Budgets({ mono, storage }) {
         })}
 
         {/* Goals */}
-        <div className="text-[11px] font-bold text-subtle uppercase tracking-widest pt-1">🟢 Цілі накопичення</div>
+        <div className="text-[11px] font-bold text-subtle uppercase tracking-widest pt-1">Цілі накопичення</div>
         {goalBudgets.length === 0 && <p className="text-xs text-subtle">Постав ціль і відстежуй прогрес</p>}
         {goalBudgets.map((b, i) => {
           const saved = b.savedAmount || 0;
@@ -121,7 +169,7 @@ export function Budgets({ mono, storage }) {
           const globalIdx = budgets.indexOf(b);
           const isEditing = editIdx === globalIdx;
           return (
-            <div key={b.id || i} className="bg-panel border border-line rounded-xl p-4">
+            <div key={b.id || i} className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
               {isEditing ? (
                 <div className="space-y-2">
                   <input className={formInp} type="number" placeholder="Відкладено ₴" value={b.savedAmount || ""}
@@ -140,7 +188,7 @@ export function Budgets({ mono, storage }) {
                       <button onClick={() => setEditIdx(globalIdx)} className="text-subtle hover:text-text text-sm transition-colors">✏️</button>
                     </div>
                   </div>
-                  <div className="h-1.5 bg-line rounded-full overflow-hidden">
+                  <div className="h-2 bg-bg rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-success transition-all duration-500" style={{ width: `${pct}%` }} />
                   </div>
                   <div className="text-xs text-subtle mt-1.5">
@@ -155,7 +203,7 @@ export function Budgets({ mono, storage }) {
 
         {/* Add form */}
         {showForm ? (
-          <div className="bg-panel border border-line rounded-xl p-4 space-y-3">
+          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card space-y-3">
             <div className="flex gap-2">
               <button
                 onClick={() => { setFormType("limit"); setNewB(b => ({ ...b, type: "limit" })); }}

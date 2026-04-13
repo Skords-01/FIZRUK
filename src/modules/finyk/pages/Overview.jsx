@@ -258,14 +258,48 @@ export function Overview({ mono, storage, onNavigate, onCategoryClick, showBalan
           </button>
         </div>
 
+        {/* ── Fact vs month forecast ── */}
+        {showBalance && daysPassed > 0 && projectedSpend > 0 && (
+          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+            <div className="text-xs font-medium text-subtle mb-1">Витрати місяця: факт і прогноз</div>
+            <p className="text-[11px] text-subtle/80 leading-snug mb-3">
+              За {daysPassed} {daysPassed === 1 ? "день" : daysPassed < 5 ? "дні" : "дн."} · факт{" "}
+              <span className="font-semibold text-text tabular-nums">{spent.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴</span>
+              {" · "}прогноз до кінця місяця{" "}
+              <span className="font-semibold text-text tabular-nums">{Math.round(projectedSpend).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴</span>
+            </p>
+            <div className="h-2.5 bg-bg rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500",
+                  spent > projectedSpend
+                    ? "bg-danger"
+                    : spent / projectedSpend >= 0.85
+                      ? "bg-warning"
+                      : "bg-emerald-500",
+                )}
+                style={{ width: `${Math.min(100, (spent / projectedSpend) * 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-2 text-[11px] text-subtle/70">
+              <span>{Math.min(100, Math.round((spent / projectedSpend) * 100))}% від прогнозу</span>
+              <span>{daysInMonth - daysPassed} дн. залишилось</span>
+            </div>
+          </div>
+        )}
+
         {/* ── Networth chart ── */}
-        {networthHistory.length >= 2 && (
+        {networthHistory.length >= 2 ? (
           <div className="bg-panel border border-line/60 rounded-2xl px-5 pt-4 pb-3 shadow-card">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-medium text-subtle">Динаміка нетворсу</span>
               <span className="text-xs text-subtle/60">{networthHistory.length} міс.</span>
             </div>
             <NetworthChart data={networthHistory} />
+          </div>
+        ) : (
+          <div className="bg-panel border border-dashed border-line/60 rounded-2xl p-6 text-center shadow-card">
+            <p className="text-sm text-subtle">Ще мало знімків для графіка нетворсу — з’явиться після кількох змін балансу.</p>
           </div>
         )}
 
@@ -442,13 +476,24 @@ export function Overview({ mono, storage, onNavigate, onCategoryClick, showBalan
         )}
 
         {/* ── Category chart ── */}
-        {catSpends.length > 0 && (
+        {catSpends.length > 0 ? (
           <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
             <div className="text-xs font-medium text-subtle mb-4">Витрати за категоріями</div>
             <CategoryChart
               data={catSpends.slice(0, 6)}
               onBarClick={onCategoryClick ? (catId) => { onCategoryClick(catId); onNavigate?.("transactions"); } : undefined}
             />
+          </div>
+        ) : (
+          <div className="bg-panel border border-dashed border-line/60 rounded-2xl p-8 text-center shadow-card">
+            <p className="text-sm text-subtle">Поки немає витрат за категоріями цього місяця.</p>
+            <button
+              type="button"
+              onClick={() => onNavigate("transactions")}
+              className="mt-4 text-sm font-medium text-primary hover:underline"
+            >
+              Переглянути операції
+            </button>
           </div>
         )}
 
