@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { Button } from "@shared/components/ui/Button";
+import { cn } from "@shared/lib/cn";
 import { applyFizrukBackupPayload, buildFizrukBackupPayload } from "../../lib/fizrukStorage";
 
-export function WorkoutBackupBar() {
+export function WorkoutBackupBar({ className }) {
   const fileRef = useRef(null);
   const fileReplaceRef = useRef(null);
 
@@ -34,8 +35,9 @@ export function WorkoutBackupBar() {
   };
 
   return (
-    <div className="rounded-2xl border border-line/60 bg-panelHi/40 px-3 py-2.5 flex flex-wrap items-center gap-2 text-xs text-subtle">
-      <span className="font-semibold text-text mr-1">Резервна копія:</span>
+    <div className={cn("rounded-2xl border border-line/60 bg-panelHi/40 px-3 py-2.5 flex flex-col gap-3 text-xs text-subtle", className)}>
+      <p className="font-semibold text-text leading-snug">Резервна копія та імпорт даних Фізрука (тренування, вправи, журнал).</p>
+      <div className="flex flex-wrap items-center gap-2">
       <Button variant="ghost" size="sm" className="h-9 min-h-[44px]" type="button" onClick={exportJson}>
         Експорт JSON
       </Button>
@@ -53,6 +55,7 @@ export function WorkoutBackupBar() {
       >
         Імпорт (замінити)
       </Button>
+      </div>
       <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={e => runImport(e, false)} />
       <input ref={fileReplaceRef} type="file" accept="application/json,.json" className="hidden" onChange={e => runImport(e, true)} />
     </div>

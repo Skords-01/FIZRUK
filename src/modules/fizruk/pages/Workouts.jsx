@@ -7,7 +7,6 @@ import { WorkoutTemplatesSection } from "../components/WorkoutTemplatesSection";
 import { ActiveWorkoutPanel } from "../components/workouts/ActiveWorkoutPanel";
 import { ExercisePickerSheet } from "../components/workouts/ExercisePickerSheet";
 import { RestTimerOverlay } from "../components/workouts/RestTimerOverlay";
-import { WorkoutBackupBar } from "../components/workouts/WorkoutBackupBar";
 import { WorkoutFinishSheets } from "../components/workouts/WorkoutFinishSheets";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useRecovery } from "../hooks/useRecovery";
@@ -285,7 +284,6 @@ export function Workouts() {
 
         {mode === "log" && (
           <div className="space-y-3">
-            <WorkoutBackupBar />
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
                 <div className="text-[10px] font-semibold text-subtle uppercase tracking-widest">Завершено</div>
@@ -462,7 +460,7 @@ export function Workouts() {
             </div>
           ) : (
             grouped.map(g => {
-              const isOpen = open[g.id] ?? true;
+              const isOpen = open[g.id] ?? false;
               return (
                 <div key={g.id} className="border-b border-line last:border-0">
                   <button

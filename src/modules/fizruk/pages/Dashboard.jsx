@@ -37,6 +37,7 @@ export function Dashboard({ onOpenAtlas }) {
   const { todayCount: pushupsToday, addReps: addPushupReps, recentHistory: pushupsHistory } = usePushups();
   const [pushupInput, setPushupInput] = useState("");
   const [pushupModalOpen, setPushupModalOpen] = useState(false);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
 
   const [selectedTemplateId, setSelectedTemplateId] = useState(() => {
     try { return localStorage.getItem(SELECTED_TEMPLATE_KEY) || ""; } catch { return ""; }
@@ -336,13 +337,21 @@ export function Dashboard({ onOpenAtlas }) {
         </section>
 
         <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card" aria-label="Відновлення та фокус тренування">
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <div className="min-w-0">
-              <h2 className="text-base font-semibold text-text">Відновлення й фокус</h2>
-              <p className="text-[11px] text-subtle mt-1 leading-snug">
-                Колір на силуеті — готовність груп; чіпи — що логічно навантажити першим чергою після відпочинку.
-              </p>
-            </div>
+          <div className="flex items-start justify-between gap-2">
+            <button
+              type="button"
+              className="min-w-0 flex-1 text-left flex items-start gap-2 rounded-xl -m-1 p-1 hover:bg-panelHi/80 transition-colors"
+              onClick={() => setRecoveryOpen(o => !o)}
+              aria-expanded={recoveryOpen}
+            >
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold text-text">Відновлення й фокус</h2>
+                <p className="text-[11px] text-subtle mt-1 leading-snug">
+                  Колір на силуеті — готовність груп; чіпи — пріоритет після відпочинку.
+                </p>
+              </div>
+              <span className="text-lg leading-none text-muted shrink-0 mt-0.5" aria-hidden>{recoveryOpen ? "▾" : "▸"}</span>
+            </button>
             <Button
               variant="ghost"
               size="sm"
@@ -354,36 +363,40 @@ export function Dashboard({ onOpenAtlas }) {
             </Button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-subtle mb-3">
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-success" /> готово</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-warning" /> краще почекати</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-danger" /> рано</span>
-          </div>
+          {recoveryOpen && (
+            <>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-subtle mb-3 mt-3">
+                <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-success" /> готово</span>
+                <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-warning" /> краще почекати</span>
+                <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-danger" /> рано</span>
+              </div>
 
-          <BodyAtlas statusByMuscle={statusByMuscle} height={120} showLegend={false} />
+              <BodyAtlas statusByMuscle={statusByMuscle} height={120} showLegend={false} />
 
-          <div className="mt-4 pt-3 border-t border-line/60">
-            <p className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">Пріоритет після відпочинку</p>
-            <div className="flex flex-wrap gap-2">
-              {(plan.focus || []).map(m => (
-                <span
-                  key={m.id}
-                  className="px-2.5 py-1 bg-success/10 text-success text-xs rounded-full font-medium border border-success/15"
-                >
-                  {m.label}{m.daysSince == null ? "" : ` · ${m.daysSince}д без`}
-                </span>
-              ))}
-              {(plan.focus || []).length === 0 && (
-                <span className="text-xs text-subtle">Додай завершені тренування — зʼявиться пріоритет груп.</span>
-              )}
-            </div>
-            {(plan.avoid || []).length > 0 && (
-              <p className="text-xs text-muted mt-3 leading-relaxed">
-                <span className="font-semibold text-warning">Почекати:</span>{" "}
-                {plan.avoid.map(x => x.label).join(", ")}
-              </p>
-            )}
-          </div>
+              <div className="mt-4 pt-3 border-t border-line/60">
+                <p className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">Пріоритет після відпочинку</p>
+                <div className="flex flex-wrap gap-2">
+                  {(plan.focus || []).map(m => (
+                    <span
+                      key={m.id}
+                      className="px-2.5 py-1 bg-success/10 text-success text-xs rounded-full font-medium border border-success/15"
+                    >
+                      {m.label}{m.daysSince == null ? "" : ` · ${m.daysSince}д без`}
+                    </span>
+                  ))}
+                  {(plan.focus || []).length === 0 && (
+                    <span className="text-xs text-subtle">Додай завершені тренування — зʼявиться пріоритет груп.</span>
+                  )}
+                </div>
+                {(plan.avoid || []).length > 0 && (
+                  <p className="text-xs text-muted mt-3 leading-relaxed">
+                    <span className="font-semibold text-warning">Почекати:</span>{" "}
+                    {plan.avoid.map(x => x.label).join(", ")}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </section>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" role="list" aria-label="Ключові показники">

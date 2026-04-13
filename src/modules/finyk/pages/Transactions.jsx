@@ -6,6 +6,25 @@ import { Skeleton } from "@shared/components/ui/Skeleton";
 import { cn } from "@shared/lib/cn";
 
 const now = new Date();
+const PAGE_SIZE = 80;
+
+function dayKeyFromTx(ts) {
+  const d = new Date(ts * 1000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function formatStickyDayLabel(key) {
+  const [y, m, da] = key.split("-").map(Number);
+  const d = new Date(y, m - 1, da);
+  const t0 = new Date();
+  t0.setHours(0, 0, 0, 0);
+  const d0 = new Date(d);
+  d0.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((t0 - d0) / 86400000);
+  if (diffDays === 0) return "Сьогодні";
+  if (diffDays === 1) return "Вчора";
+  return d.toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+}
 
 export function Transactions({ mono, storage, showBalance = true, categoryFilter, onClearCategoryFilter }) {
   const { realTx, loadingTx, lastUpdated, refresh, syncState, accounts, fetchMonth, historyTx, loadingHistory } = mono;
@@ -20,7 +39,12 @@ export function Transactions({ mono, storage, showBalance = true, categoryFilter
   }, [categoryFilter]);
   const [showHidden, setShowHidden] = useState(false);
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [selMonth, setSelMonth] = useState(() => ({ year: now.getFullYear(), month: now.getMonth() }));
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [selMonth, filter, search, showHidden]);
 
   const isCurrentMonth = selMonth.year === now.getFullYear() && selMonth.month === now.getMonth();
   const activeTx = isCurrentMonth ? realTx : historyTx;
@@ -78,6 +102,22 @@ export function Transactions({ mono, storage, showBalance = true, categoryFilter
     const matchSearch = !search.trim() || (t.description || "").toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
   }), [txsToShow, filter, search, creditAccIds]);
+
+  const visibleSorted = useMemo(
+    () => [...filtered].sort((a, b) => b.time - a.time).slice(0, visibleCount),
+    [filtered, visibleCount],
+  );
+
+  const groupedByDate = useMemo(() => {
+    const groups = [];
+    for (const t of visibleSorted) {
+      const k = dayKeyFromTx(t.time);
+      const last = groups[groups.length - 1];
+      if (last && last.key === k) last.items.push(t);
+      else groups.push({ key: k, items: [t] });
+    }
+    return groups;
+  }, [visibleSorted]);
 
   const syncColor = syncState?.status === "error"
     ? "text-danger" : syncState?.status === "partial"
@@ -178,34 +218,78 @@ export function Transactions({ mono, storage, showBalance = true, categoryFilter
 
         {/* Empty */}
         {filtered.length === 0 && !activeLoading && (
-          <p className="text-center text-sm text-subtle py-12">
-            {search ? `Нічого не знайдено за «${search}»` : "Немає транзакцій"}
-          </p>
+          <div className="rounded-2xl border border-dashed border-line/60 bg-panelHi/40 px-6 py-12 text-center">
+            <p className="text-sm font-medium text-text">
+              {search.trim() ? `Нічого не знайдено за «${search}»` : "Немає транзакцій за цими умовами"}
+            </p>
+            <p className="text-xs text-subtle mt-2 max-w-sm mx-auto leading-relaxed">
+              {search.trim()
+                ? "Спробуй інший запит або очисть пошук."
+                : "Зміни місяць, фільтр або переключи «приховані», якщо вони є."}
+            </p>
+            {search.trim() && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="mt-4 text-sm font-semibold text-primary hover:underline"
+              >
+                Очистити пошук
+              </button>
+            )}
+          </div>
         )}
 
         {/* List */}
-        <div>
-          {filtered.slice(0, 150).map((t) => (
-            <TxRow
-              key={t.id}
-              tx={t}
-              onHide={hideTx}
-              hidden={hiddenTxIds.includes(t.id)}
-              overrideCatId={txCategories[t.id]}
-              onCatChange={overrideCategory}
-              accounts={accounts}
-              hideAmount={!showBalance}
-              txSplits={txSplits}
-              onSplitChange={setSplitTx}
-            />
-          ))}
-        </div>
+        {filtered.length > 0 && (
+          <div className="rounded-2xl border border-line/40 overflow-hidden -mx-px">
+            {groupedByDate.map(g => (
+              <div key={g.key}>
+                <div
+                  className="sticky top-0 z-10 px-3 py-2 bg-bg/95 backdrop-blur-sm border-b border-line/50 text-[11px] font-semibold text-subtle tracking-wide"
+                  role="presentation"
+                >
+                  {formatStickyDayLabel(g.key)}
+                </div>
+                {g.items.map((t, i) => (
+                  <div
+                    key={t.id}
+                    className={cn(
+                      "px-1 sm:px-2",
+                      i % 2 === 1 && "bg-panelHi/25",
+                    )}
+                  >
+                    <TxRow
+                      tx={t}
+                      onHide={hideTx}
+                      hidden={hiddenTxIds.includes(t.id)}
+                      overrideCatId={txCategories[t.id]}
+                      onCatChange={overrideCategory}
+                      accounts={accounts}
+                      hideAmount={!showBalance}
+                      txSplits={txSplits}
+                      onSplitChange={setSplitTx}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
 
         {activeLoading && activeTx.length > 0 && (
           <p className="text-center text-xs text-subtle py-2">⟳ оновлення...</p>
         )}
-        {filtered.length > 150 && (
-          <p className="text-center text-xs text-subtle py-4">Показано 150 з {filtered.length}</p>
+        {filtered.length > visibleCount && (
+          <div className="flex flex-col items-center gap-2 py-4">
+            <p className="text-xs text-subtle">Показано {visibleCount} з {filtered.length}</p>
+            <button
+              type="button"
+              onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+              className="text-sm font-semibold text-primary px-4 py-2 rounded-xl border border-line hover:bg-panelHi transition-colors min-h-[44px]"
+            >
+              Завантажити ще
+            </button>
+          </div>
         )}
       </div>
     </div>

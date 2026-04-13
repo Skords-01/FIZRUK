@@ -16,7 +16,7 @@ function Section({ title, children }) {
 }
 
 export function Settings({ mono, storage }) {
-  const { accounts, token, clientInfo, clearTxCache } = mono;
+  const { accounts, token, clientInfo, clearTxCache, disconnect } = mono;
   const { hiddenAccounts, toggleHideAccount, exportData, importData } = storage;
 
   const [syncOpen, setSyncOpen] = useState(false);
@@ -138,6 +138,19 @@ export function Settings({ mono, storage }) {
             }}
           >
             🧹 Очистити кеш транзакцій
+          </Button>
+        </Section>
+
+        <Section title="🚪 Вихід">
+          <p className="text-xs text-subtle -mt-1">Відключити Monobank на цьому пристрої (токен буде видалено з браузера).</p>
+          <Button
+            variant="danger"
+            className="w-full h-12"
+            onClick={() => {
+              if (confirm("Відключити Monobank і видалити токен з цього пристрою?")) disconnect?.();
+            }}
+          >
+            Вийти з Monobank
           </Button>
         </Section>
 

@@ -90,7 +90,6 @@ export default function App({ onBackToHub } = {}) {
   const mono = useMonobank();
   const storage = useStorage();
   const [page, navigate] = useHashRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [tokenInput, setTokenInput] = useState("");
   const [showToken, setShowToken] = useState(false);
   const [toast, setToast] = useState(null);
@@ -122,9 +121,7 @@ export default function App({ onBackToHub } = {}) {
     }
   }, []);
 
-  const { clientInfo, connecting, error, connect, disconnect } = mono;
-  const handleNavigate = (p) => { navigate(p); setMenuOpen(false); };
-
+  const { clientInfo, connecting, error, connect } = mono;
   const syncTone = mono?.syncState?.status === "error"
     ? { dot: "bg-danger", text: "помилка" }
     : mono?.syncState?.status === "partial"
@@ -148,7 +145,6 @@ export default function App({ onBackToHub } = {}) {
     touchStartX.current = null;
     touchStartY.current = null;
 
-    if (menuOpen) return;
     if (Math.abs(dx) < 100 || Math.abs(dy) > Math.abs(dx) * 0.85) return;
     const curIdx = NAV_IDS.indexOf(page);
     if (curIdx === -1) return;
@@ -262,85 +258,9 @@ export default function App({ onBackToHub } = {}) {
                 </svg>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() => setMenuOpen(true)}
-              className="w-11 h-11 -mr-1.5 flex items-center justify-center text-subtle hover:text-text transition-colors rounded-xl hover:bg-panelHi"
-              aria-label="Меню"
-            >
-              <svg width="18" height="13" viewBox="0 0 18 13" fill="none">
-                <rect width="18" height="1.6" rx="0.8" fill="currentColor"/>
-                <rect y="5.7" width="12" height="1.6" rx="0.8" fill="currentColor"/>
-                <rect y="11.4" width="7" height="1.6" rx="0.8" fill="currentColor"/>
-              </svg>
-            </button>
           </div>
         </div>
       </div>
-
-      {/* Slide-in menu */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)}>
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-          <div
-            className="absolute right-0 top-0 h-full w-[280px] bg-panel border-l border-line shadow-soft flex flex-col"
-            onClick={e => e.stopPropagation()}
-            style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-          >
-            <div className="px-5 py-4 border-b border-line flex items-start justify-between gap-2">
-              <div>
-                <div className="text-sm font-semibold text-text">
-                  {clientInfo?.name || "ФІНІК"}
-                </div>
-                <div className="text-xs text-subtle mt-0.5">Особисті фінанси</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMenuOpen(false)}
-                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
-                aria-label="Закрити меню"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
-              {[...PAGES, { id: "settings", label: "Налаштування" }].map(p => {
-                const icon = NAV_ICONS[p.id];
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => handleNavigate(p.id)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors min-h-[44px]",
-                      page === p.id
-                        ? "bg-emerald-500/10 text-text border border-emerald-500/20"
-                        : "text-muted hover:bg-panelHi hover:text-text"
-                    )}
-                  >
-                    {icon
-                      ? <span className="w-5 h-5 flex items-center justify-center opacity-80">{icon}</span>
-                      : <span className="w-5 h-5 flex items-center justify-center text-base leading-none">{p.label.split(" ")[0]}</span>
-                    }
-                    <span>{p.id === "settings" ? "Налаштування" : p.label.replace(/^[^\s]+\s/, "")}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="p-3 border-t border-line">
-              <button
-                onClick={disconnect}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-danger hover:bg-danger/10 transition-colors"
-              >
-                <span className="text-xl">🚪</span>
-                <span>Вийти</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toast */}
       {toast && (
@@ -359,7 +279,7 @@ export default function App({ onBackToHub } = {}) {
         onTouchEnd={handleTouchEnd}
       >
         <Suspense fallback={<PageLoader />}>
-          {page === "overview"     && <Overview      mono={mono} storage={storage} onNavigate={handleNavigate} onCategoryClick={catId => { setCategoryFilter(catId); handleNavigate("transactions"); }} showBalance={showBalance} />}
+          {page === "overview"     && <Overview      mono={mono} storage={storage} onNavigate={navigate} onCategoryClick={catId => { setCategoryFilter(catId); navigate("transactions"); }} showBalance={showBalance} />}
           {page === "transactions" && <Transactions  mono={mono} storage={storage} showBalance={showBalance} categoryFilter={categoryFilter} onClearCategoryFilter={() => setCategoryFilter(null)} />}
           {page === "budgets"      && <Budgets       mono={mono} storage={storage} />}
           {page === "assets"       && <Assets        mono={mono} storage={storage} showBalance={showBalance} />}
@@ -379,7 +299,7 @@ export default function App({ onBackToHub } = {}) {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => handleNavigate(item.id)}
+                onClick={() => navigate(item.id)}
                 className={cn(
                   "relative flex-1 flex flex-col items-center justify-center gap-1 transition-all min-h-[48px]",
                   active ? "text-text" : "text-muted",
