@@ -7,12 +7,19 @@ import { Workouts } from "./pages/Workouts";
 import { Progress } from "./pages/Progress";
 import { Measurements } from "./pages/Measurements";
 import { WorkoutBackupBar } from "./components/workouts/WorkoutBackupBar";
+import { PlanCalendar } from "./pages/PlanCalendar";
+import { useMonthlyPlan } from "./hooks/useMonthlyPlan";
+import { useFizrukWorkoutReminder } from "./hooks/useFizrukWorkoutReminder";
 import { cn } from "@shared/lib/cn";
 
 const NAV = [
   {
     id: "dashboard", label: "Сьогодні",
     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  },
+  {
+    id: "plan", label: "План",
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
   },
   {
     id: "workouts", label: "Тренування",
@@ -28,7 +35,7 @@ const NAV = [
   },
 ];
 
-const VALID_FIZRUK_PAGES = ["dashboard", "atlas", "workouts", "progress", "measurements", "exercise"];
+const VALID_FIZRUK_PAGES = ["dashboard", "plan", "atlas", "workouts", "progress", "measurements", "exercise"];
 
 function parseHash() {
   const raw = (window.location.hash || "").replace(/^#/, "").trim();
@@ -53,6 +60,14 @@ export default function FizrukApp({ onBackToHub } = {}) {
   const page = route.page || "dashboard";
   const isAtlas = page === "atlas";
   const isExercise = page === "exercise";
+  const isPlan = page === "plan";
+
+  const monthlyPlan = useMonthlyPlan();
+  useFizrukWorkoutReminder({
+    enabled: !!monthlyPlan.todayTemplateId,
+    reminderHour: monthlyPlan.reminderHour,
+    reminderMinute: monthlyPlan.reminderMinute,
+  });
 
   useDialogFocusTrap(settingsOpen, settingsPanelRef, {
     onEscape: () => setSettingsOpen(false),
@@ -105,10 +120,12 @@ export default function FizrukApp({ onBackToHub } = {}) {
               <span className="text-[9px] text-success/70 font-bold tracking-widest uppercase block leading-none mb-0.5">ОСОБИСТИЙ ЖУРНАЛ</span>
             )}
             <span className="text-[16px] font-semibold tracking-wide text-text block leading-tight">
-              {isAtlas ? "Атлас" : isExercise ? "Вправа" : "ФІЗРУК"}
+              {isAtlas ? "Атлас" : isExercise ? "Вправа" : isPlan ? "План" : "ФІЗРУК"}
             </span>
             {!isAtlas && !isExercise && (
-              <span className="text-[10px] text-subtle font-medium truncate">Тренування · прогрес</span>
+              <span className="text-[10px] text-subtle font-medium truncate">
+                {isPlan ? "Календар · нагадування · відновлення" : "Тренування · прогрес"}
+              </span>
             )}
           </div>
           <button
@@ -167,6 +184,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
       {/* Page content */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {page === "dashboard" && <Dashboard onOpenAtlas={() => setHash("atlas")} />}
+        {page === "plan" && <PlanCalendar />}
         {page === "atlas" && <Atlas />}
         {page === "workouts" && <Workouts />}
         {page === "progress" && <Progress />}

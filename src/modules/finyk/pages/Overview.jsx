@@ -42,21 +42,20 @@ function FlowRow({ flow, showAmount = true }) {
 
 export function Overview({ mono, storage, onNavigate, onCategoryClick, showBalance = true }) {
   const { realTx, loadingTx, clientInfo, accounts, transactions } = mono;
-  const { budgets, subscriptions, manualDebts, receivables, hiddenAccounts, excludedTxIds, monthlyPlan, networthHistory, saveNetworthSnapshot, txCategories, txSplits } = storage;
-
-  // Показуємо скелетон якщо дані ще не завантажились вперше
-  if (loadingTx && realTx.length === 0) {
-    return (
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4 max-w-4xl mx-auto">
-          <Skeleton className="h-[168px] rounded-3xl" />
-          <Skeleton className="h-[120px] opacity-80 rounded-2xl" />
-          <Skeleton className="h-[110px] opacity-60 rounded-2xl" />
-          <Skeleton className="h-[90px] opacity-40 rounded-2xl" />
-        </div>
-      </div>
-    );
-  }
+  const {
+    budgets,
+    subscriptions,
+    manualDebts,
+    receivables,
+    hiddenAccounts,
+    excludedTxIds,
+    monthlyPlan,
+    networthHistory,
+    saveNetworthSnapshot,
+    txCategories,
+    txSplits,
+    manualAssets,
+  } = storage;
 
   const now = new Date();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -71,33 +70,42 @@ export function Overview({ mono, storage, onNavigate, onCategoryClick, showBalan
   const manualDebtTotal = useMemo(() => manualDebts.reduce((s, d) => s + calcDebtRemaining(d, transactions), 0), [manualDebts, transactions]);
   const totalDebt = monoTotalDebt + manualDebtTotal;
   const totalReceivable = useMemo(() => receivables.reduce((s, r) => s + calcReceivableRemaining(r, transactions), 0), [receivables, transactions]);
-  const manualAssetTotal = useMemo(() => storage.manualAssets.filter(a => a.currency === "UAH").reduce((s, a) => s + Number(a.amount), 0), [storage.manualAssets]);
+  const manualAssetTotal = useMemo(
+    () => (manualAssets || []).filter(a => a.currency === "UAH").reduce((s, a) => s + Number(a.amount), 0),
+    [manualAssets],
+  );
   const networth = monoTotal + manualAssetTotal + totalReceivable - totalDebt;
 
   const limitBudgets = budgets.filter(b => b.type === "limit");
   const goalBudgets = budgets.filter(b => b.type === "goal");
   const catSpends = useMemo(() => MCC_CATEGORIES.filter(c => c.id !== "income").map(cat => ({
-    ...cat, spent: calcCategorySpent(statTx, cat.id, txCategories, txSplits)
+    ...cat, spent: calcCategorySpent(statTx, cat.id, txCategories, txSplits),
   })).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent), [statTx, txCategories, txSplits]);
 
-  const recentTx = useMemo(
-    () => [...statTx].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 5),
-    [statTx],
-  );
-
-  const budgetPreviewColors = ["bg-emerald-500", "bg-sky-500", "bg-amber-500", "bg-violet-500"];
-
-  // Зберігаємо знімок нетворсу при зміні будь-якої складової
   useEffect(() => {
+    if (loadingTx && realTx.length === 0) return;
     if (networth !== 0 && accounts.length > 0) {
       saveNetworthSnapshot(networth);
     }
-  }, [networth]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [networth, loadingTx, realTx.length, accounts.length, saveNetworthSnapshot]);
 
   const budgetAlerts = useMemo(() => limitBudgets.filter(b => {
     const s = calcCategorySpent(statTx, b.categoryId, txCategories, txSplits);
     return b.limit > 0 && s / b.limit >= 0.8;
   }), [limitBudgets, statTx, txCategories, txSplits]);
+
+  if (loadingTx && realTx.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-4 pt-4 pb-[calc(88px+env(safe-area-inset-bottom,0px))] space-y-4 max-w-4xl mx-auto">
+          <Skeleton className="h-[168px] rounded-3xl" />
+          <Skeleton className="h-[120px] opacity-80 rounded-2xl" />
+          <Skeleton className="h-[110px] opacity-60 rounded-2xl" />
+          <Skeleton className="h-[90px] opacity-40 rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
 
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 

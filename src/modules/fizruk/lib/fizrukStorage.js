@@ -7,6 +7,7 @@ export const TEMPLATES_STORAGE_KEY = "fizruk_workout_templates_v1";
 export const SELECTED_TEMPLATE_STORAGE_KEY = "fizruk_selected_template_id_v1";
 export const ACTIVE_WORKOUT_STORAGE_KEY = "fizruk_active_workout_id_v1";
 export const PLAN_TEMPLATE_STORAGE_KEY = "fizruk_plan_template_v1";
+export const MONTHLY_PLAN_STORAGE_KEY = "fizruk_monthly_plan_v1";
 
 export const WORKOUTS_SCHEMA_VERSION = 1;
 export const CUSTOM_SCHEMA_VERSION = 1;
@@ -18,6 +19,7 @@ export const FIZRUK_FULL_BACKUP_KEYS = [
   CUSTOM_EXERCISES_KEY,
   TEMPLATES_STORAGE_KEY,
   SELECTED_TEMPLATE_STORAGE_KEY,
+  MONTHLY_PLAN_STORAGE_KEY,
 ];
 
 /** Скидання разом із службовими ключами сесії тренування. */

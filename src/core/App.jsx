@@ -5,9 +5,10 @@ const HubChat = lazy(() => import("./HubChat"));
 
 const FinykApp = lazy(() => import("../modules/finyk/FinykApp"));
 const FizrukApp = lazy(() => import("../modules/fizruk/FizrukApp"));
+const RoutineApp = lazy(() => import("../modules/routine/RoutineApp"));
 
 const HUB_MODULE_KEY = "hub_last_module";
-const VALID_MODULES = new Set(["finyk", "fizruk"]);
+const VALID_MODULES = new Set(["finyk", "fizruk", "routine"]);
 
 function readInitialModule() {
   if (typeof window === "undefined") return null;
@@ -61,6 +62,22 @@ const MODULES = [
       </svg>
     ),
   },
+  {
+    id: "routine",
+    label: "РУТИНА",
+    desc: "Календар Hub, звички, план",
+    gradient: "from-orange-400/15 to-rose-400/10",
+    iconClass: "bg-[#fff0eb] text-[#c24133] border border-[#f5c4b8]/60",
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+      </svg>
+    ),
+  },
 ];
 
 function PageLoader() {
@@ -80,7 +97,11 @@ export default function App() {
     persistModuleToUrlAndStorage(null);
   }, []);
 
-  const openModule = useCallback((id) => {
+  const openModule = useCallback((id, opts = {}) => {
+    if (id === "fizruk" && opts.hash) {
+      const raw = String(opts.hash).replace(/^#/, "");
+      window.location.hash = raw ? `#${raw}` : "#dashboard";
+    }
     setActiveModule(id);
     persistModuleToUrlAndStorage(id);
   }, []);
@@ -172,7 +193,7 @@ export default function App() {
 
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
-      {activeModule !== "fizruk" && (
+      {activeModule !== "fizruk" && activeModule !== "routine" && (
         <div className="shrink-0 absolute top-0 left-0 z-50 p-2" style={{ paddingTop: "env(safe-area-inset-top, 8px)" }}>
           <button
             type="button"
@@ -192,6 +213,7 @@ export default function App() {
       <Suspense fallback={<PageLoader />}>
         {activeModule === "finyk" && <FinykApp onBackToHub={goToHub} />}
         {activeModule === "fizruk" && <FizrukApp onBackToHub={goToHub} />}
+        {activeModule === "routine" && <RoutineApp onBackToHub={goToHub} onOpenModule={openModule} />}
       </Suspense>
     </div>
   );

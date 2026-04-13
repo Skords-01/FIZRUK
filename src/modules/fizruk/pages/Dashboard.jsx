@@ -7,6 +7,7 @@ import { usePushups } from "../hooks/usePushups";
 import { useRecovery } from "../hooks/useRecovery";
 import { useWorkoutTemplates } from "../hooks/useWorkoutTemplates";
 import { useWorkouts } from "../hooks/useWorkouts";
+import { useMonthlyPlan } from "../hooks/useMonthlyPlan";
 import { BodyAtlas } from "../components/BodyAtlas";
 import { recoveryConflictsForExercise } from "../lib/recoveryConflict";
 import {
@@ -33,6 +34,7 @@ export function Dashboard({ onOpenAtlas }) {
   const { workouts, createWorkout, addItem } = useWorkouts();
   const { exercises, primaryGroupsUk, musclesUk } = useExerciseCatalog();
   const { templates } = useWorkoutTemplates();
+  const monthlyPlan = useMonthlyPlan();
 
   const { todayCount: pushupsToday, addReps: addPushupReps, recentHistory: pushupsHistory } = usePushups();
   const [pushupInput, setPushupInput] = useState("");
@@ -111,8 +113,10 @@ export function Dashboard({ onOpenAtlas }) {
     return out;
   })();
 
+  const effectiveTemplateId = monthlyPlan.todayTemplateId || selectedTemplateId;
+
   const plan = useMemo(() => {
-    const tpl = templates.find(t => t.id === selectedTemplateId);
+    const tpl = templates.find(t => t.id === effectiveTemplateId);
     const picked = tpl
       ? tpl.exerciseIds.map(id => exercises.find(e => e.id === id)).filter(Boolean)
       : [];
@@ -120,7 +124,7 @@ export function Dashboard({ onOpenAtlas }) {
     const focus = (rec.ready || []).slice(0, 4).map(m => ({ id: m.id, label: musclesUk?.[m.id] || m.label || m.id, daysSince: m.daysSince }));
     const avoid = (rec.avoid || []).slice(0, 4).map(m => ({ id: m.id, label: musclesUk?.[m.id] || m.label || m.id }));
     return { picked, focus, avoid, templateName: tpl?.name || "" };
-  }, [selectedTemplateId, templates, exercises, rec.ready, rec.avoid, musclesUk]);
+  }, [effectiveTemplateId, templates, exercises, rec.ready, rec.avoid, musclesUk]);
 
   const dashMetrics = useMemo(() => ({
     total: completedWorkoutsCount(workouts),
@@ -447,7 +451,19 @@ export function Dashboard({ onOpenAtlas }) {
         </div>
 
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
-          <div className="text-xs font-medium text-subtle mb-3">План на сьогодні</div>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="text-xs font-medium text-subtle">План на сьогодні</div>
+            <button
+              type="button"
+              className="text-[11px] font-semibold text-primary hover:underline shrink-0"
+              onClick={() => { window.location.hash = "#plan"; }}
+            >
+              Календар
+            </button>
+          </div>
+          {monthlyPlan.todayTemplateId && (
+            <p className="text-[11px] text-success/90 mb-2">Шаблон з місячного плану на сьогодні.</p>
+          )}
           <div className="rounded-2xl border border-line bg-panelHi px-3">
             <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">Мій шаблон</div>
             <select
