@@ -23,6 +23,7 @@ expo-env.d.ts
 
 # EAS local artifacts
 npx/
+npx
 
 # debug
 npm-debug.*
