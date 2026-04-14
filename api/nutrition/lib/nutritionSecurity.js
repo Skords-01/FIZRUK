@@ -9,10 +9,30 @@ function getIp(req) {
 // In-memory fixed-window rate limit.
 // Note: on serverless this is per-instance best-effort, але все одно ріже очевидні спайки.
 const buckets = new Map();
+let lastSweepMs = 0;
+
+function sweepBuckets(now, ttlMs) {
+  // Просте best-effort прибирання, щоб Map не ріс безмежно.
+  // TTL робимо довшим за window, щоб не чіпати активні ключі.
+  if (now - lastSweepMs < 30_000) return;
+  lastSweepMs = now;
+
+  if (buckets.size === 0) return;
+  const max = Math.max(60_000, Number(ttlMs) || 0);
+  for (const [k, v] of buckets.entries()) {
+    const start = v?.startMs;
+    if (typeof start !== "number") {
+      buckets.delete(k);
+      continue;
+    }
+    if (now - start > max) buckets.delete(k);
+  }
+}
 
 export function checkRateLimit(req, { key, limit, windowMs }) {
   const ip = getIp(req);
   const now = Date.now();
+  sweepBuckets(now, Math.max(5 * (Number(windowMs) || 0), 10 * 60_000));
   const k = `${key}:${ip}`;
   const cur = buckets.get(k);
   if (!cur || now - cur.startMs >= windowMs) {

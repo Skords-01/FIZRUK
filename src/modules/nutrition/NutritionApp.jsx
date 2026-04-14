@@ -141,6 +141,18 @@ export default function NutritionApp({ onBackToHub } = {}) {
   const [answers, setAnswers] = useState({});
   const [portionGrams, setPortionGrams] = useState("");
 
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) {
+        try {
+          URL.revokeObjectURL(photoPreviewUrl);
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+  }, [photoPreviewUrl]);
+
   const [recipes, setRecipes] = useState([]);
   const [recipesTried, setRecipesTried] = useState(false);
   const [recipesRaw, setRecipesRaw] = useState("");
@@ -276,6 +288,13 @@ export default function NutritionApp({ onBackToHub } = {}) {
       return;
     }
     try {
+      if (photoPreviewUrl) {
+        try {
+          URL.revokeObjectURL(photoPreviewUrl);
+        } catch {
+          /* ignore */
+        }
+      }
       const url = URL.createObjectURL(file);
       setPhotoPreviewUrl(url);
     } catch {
