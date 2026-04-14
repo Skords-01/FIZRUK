@@ -1,9 +1,18 @@
 import { friendlyApiError } from "./nutritionErrors.js";
 
 export async function postJson(url, body) {
+  const token =
+    typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_NUTRITION_API_TOKEN
+      ? String(import.meta.env.VITE_NUTRITION_API_TOKEN)
+      : "";
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "X-Token": token } : {}),
+    },
     body: JSON.stringify(body || {}),
   });
   const ct = (res.headers.get("content-type") || "").toLowerCase();

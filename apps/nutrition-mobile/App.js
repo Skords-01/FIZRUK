@@ -30,6 +30,7 @@ export default function App() {
     /\/$/,
     "",
   );
+  const apiToken = String(process.env.EXPO_PUBLIC_NUTRITION_API_TOKEN || "");
 
   const speech = useMemo(() => tryLoadSpeech(), []);
 
@@ -85,7 +86,10 @@ export default function App() {
     }
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiToken ? { "X-Token": apiToken } : {}),
+      },
       body: JSON.stringify(body || {}),
     });
     const raw = await res.text();

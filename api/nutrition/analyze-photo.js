@@ -2,6 +2,10 @@ import { setCorsHeaders } from "../lib/cors.js";
 import { extractJsonFromText } from "../lib/jsonSafe.js";
 import { anthropicMessages, extractAnthropicText } from "./lib/anthropicFetch.js";
 import { normalizePhotoResult } from "./lib/nutritionResponse.js";
+import {
+  checkRateLimit,
+  requireNutritionTokenIfConfigured,
+} from "./lib/nutritionSecurity.js";
 
 const SYSTEM = `Ти нутріціолог-помічник. Відповідай ТІЛЬКИ українською.
 Поверни ТІЛЬКИ валідний JSON без markdown і без додаткового тексту.
@@ -21,10 +25,17 @@ const SYSTEM = `Ти нутріціолог-помічник. Відповіда
 `;
 
 export default async function handler(req, res) {
-  setCorsHeaders(res, req, { allowHeaders: "Content-Type", methods: "POST, OPTIONS" });
+  setCorsHeaders(res, req, {
+    allowHeaders: "X-Token, Content-Type",
+    methods: "POST, OPTIONS",
+  });
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  if (!requireNutritionTokenIfConfigured(req, res)) return;
+  const rl = checkRateLimit(req, { key: "nutrition:analyze-photo", limit: 20, windowMs: 60_000 });
+  if (!rl.ok) return res.status(429).json({ error: "Забагато запитів. Спробуй пізніше." });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
