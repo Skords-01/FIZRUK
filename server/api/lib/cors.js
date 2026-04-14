@@ -7,6 +7,8 @@ const DEFAULT_ORIGINS = [
   "http://localhost:4173",
   "https://finto-flame.vercel.app",
   "https://fizruk.vercel.app",
+  "https://sergeant.vercel.app",
+  "https://sergeant.2dmanager.com.ua",
 ];
 
 export function getAllowedOrigins() {
