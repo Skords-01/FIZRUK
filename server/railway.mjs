@@ -27,12 +27,12 @@ app.get("/health", (_req, res) => {
   res.status(200).type("text/plain").send("ok");
 });
 
-app.post("/api/chat", wrap(chatHandler));
+app.all("/api/chat", wrap(chatHandler));
 app.all("/api/mono", wrap(monoHandler));
-app.post("/api/nutrition/analyze-photo", wrap(analyzePhoto));
-app.post("/api/nutrition/parse-pantry", wrap(parsePantry));
-app.post("/api/nutrition/refine-photo", wrap(refinePhoto));
-app.post("/api/nutrition/recommend-recipes", wrap(recommendRecipes));
+app.all("/api/nutrition/analyze-photo", wrap(analyzePhoto));
+app.all("/api/nutrition/parse-pantry", wrap(parsePantry));
+app.all("/api/nutrition/refine-photo", wrap(refinePhoto));
+app.all("/api/nutrition/recommend-recipes", wrap(recommendRecipes));
 
 app.use((err, _req, res, _next) => {
   console.error(err);
