@@ -12,14 +12,11 @@ const DEFAULT_ORIGINS = [
 ];
 
 export function getAllowedOrigins() {
-  const raw = process.env.ALLOWED_ORIGINS;
-  if (raw && String(raw).trim()) {
-    return String(raw)
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-  return DEFAULT_ORIGINS;
+  const extra = (process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return [...new Set([...DEFAULT_ORIGINS, ...extra])];
 }
 
 /**
