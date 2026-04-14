@@ -50,6 +50,10 @@ export default function NutritionApp() {
 
   const [pantryText, setPantryText] = useState("");
   const [pantryItems, setPantryItems] = useState([]);
+  const [sttSupported, setSttSupported] = useState(false);
+  const [sttListening, setSttListening] = useState(false);
+  const sttRecorderRef = useRef(null);
+  const sttChunksRef = useRef([]);
 
   const [prefs, setPrefs] = useState({
     goal: "balanced",
@@ -209,6 +213,88 @@ export default function NutritionApp() {
     if (!t) return;
     setPantryText((cur) => (cur ? `${cur}${cur.endsWith(",") ? " " : ", "}${t}` : t));
   });
+
+  useEffect(() => {
+    const ok =
+      typeof window !== "undefined" &&
+      !!window.MediaRecorder &&
+      !!navigator?.mediaDevices?.getUserMedia;
+    setSttSupported(ok);
+  }, []);
+
+  const toggleCloudStt = async () => {
+    setErr("");
+    if (!sttSupported) {
+      setErr("Запис голосу не підтримується цим браузером.");
+      return;
+    }
+
+    if (sttListening) {
+      try {
+        sttRecorderRef.current?.stop?.();
+      } catch {}
+      return;
+    }
+
+    setStatusText("Слухаю… (до 12 секунд)");
+    setSttListening(true);
+    sttChunksRef.current = [];
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      sttRecorderRef.current = rec;
+
+      rec.ondataavailable = (e) => {
+        if (e?.data && e.data.size > 0) sttChunksRef.current.push(e.data);
+      };
+
+      rec.onstop = async () => {
+        setSttListening(false);
+        setStatusText("Розпізнаю голос…");
+        try {
+          stream.getTracks().forEach((t) => t.stop());
+        } catch {}
+
+        try {
+          const blob = new Blob(sttChunksRef.current, { type: rec.mimeType });
+          if (!blob || blob.size < 500) throw new Error("Немає запису або він надто короткий.");
+          if (blob.size > 6 * 1024 * 1024)
+            throw new Error("Аудіо завелике. Записуй коротше (до ~10–12с).");
+          const b64 = await blobToBase64(blob);
+          const data = await postJson("/api/nutrition/transcribe-audio", {
+            audio_base64: b64,
+            mime_type: blob.type || rec.mimeType || "audio/webm",
+            locale: "uk-UA",
+          });
+          const t = String(data?.text || "").trim();
+          if (!t) throw new Error("Не вдалося розпізнати. Спробуй ще раз ближче до мікрофона.");
+          setPantryText((cur) =>
+            cur ? `${cur}${cur.trim().endsWith(",") ? " " : ", "}${t}` : t,
+          );
+        } catch (e) {
+          setErr(e?.message || "Помилка розпізнавання");
+        } finally {
+          setStatusText("");
+        }
+      };
+
+      rec.start();
+      setTimeout(() => {
+        try {
+          if (rec.state === "recording") rec.stop();
+        } catch {}
+      }, 12_000);
+    } catch (e) {
+      setSttListening(false);
+      setStatusText("");
+      setErr(
+        /notallowed|denied/i.test(String(e?.message || e))
+          ? "Доступ до мікрофона заборонено в браузері."
+          : e?.message || "Не вдалося запустити запис",
+      );
+    }
+  };
 
   useEffect(() => {
     if (photoResult && Array.isArray(photoResult.questions)) {
@@ -395,7 +481,7 @@ export default function NutritionApp() {
                 Продукти вдома (голос/текст)
               </div>
               <div className="text-xs text-subtle mt-0.5">
-                Впиши або надиктуй, потім натисни “Розібрати”.
+                Впиши або надиктуй, потім натисни “Розібрати”. На iPhone краще працює хмарний голос.
               </div>
             </div>
             <button
@@ -420,6 +506,38 @@ export default function NutritionApp() {
                 className="flex-1 min-h-[96px] rounded-2xl bg-panel border border-line px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors"
                 disabled={busy}
               />
+              {sttSupported && (
+                <button
+                  type="button"
+                  onClick={toggleCloudStt}
+                  disabled={busy}
+                  className={cn(
+                    "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all border",
+                    sttListening
+                      ? "bg-primary text-white border-primary animate-pulse"
+                      : "bg-panel border-line text-muted hover:text-text hover:border-muted",
+                  )}
+                  title={sttListening ? "Зупинити запис" : "Голос (хмара)"}
+                  aria-label={sttListening ? "Зупинити запис" : "Голос (хмара)"}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill={sttListening ? "currentColor" : "none"}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                  </svg>
+                </button>
+              )}
               {speech.supported && (
                 <button
                   type="button"
@@ -658,6 +776,19 @@ function fileToBase64(file) {
       resolve(idx >= 0 ? s.slice(idx + 7) : s);
     };
     reader.readAsDataURL(file);
+  });
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Не вдалося прочитати аудіо"));
+    reader.onload = () => {
+      const s = String(reader.result || "");
+      const idx = s.indexOf("base64,");
+      resolve(idx >= 0 ? s.slice(idx + 7) : s);
+    };
+    reader.readAsDataURL(blob);
   });
 }
 
