@@ -1,9 +1,5 @@
 import { StatusBar } from "expo-status-bar";
 import * as ImagePicker from "expo-image-picker";
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from "expo-speech-recognition";
 import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,11 +14,25 @@ import {
   View,
 } from "react-native";
 
+function tryLoadSpeech() {
+  try {
+    // В Expo Go нативного модуля немає → буде runtime error.
+    // У Dev Client модуль буде доступний.
+    // eslint-disable-next-line global-require
+    const m = require("expo-speech-recognition");
+    return m || null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const apiBase = String(process.env.EXPO_PUBLIC_API_BASE_URL || "").replace(
     /\/$/,
     "",
   );
+
+  const speech = useMemo(() => tryLoadSpeech(), []);
 
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
@@ -39,7 +49,7 @@ export default function App() {
   const [listening, setListening] = useState(false);
   const lastTranscriptRef = useRef("");
 
-  useSpeechRecognitionEvent("result", (e) => {
+  speech?.useSpeechRecognitionEvent?.("result", (e) => {
     const transcript = e?.results?.[0]?.[0]?.transcript;
     if (!transcript) return;
     const t = String(transcript).trim();
@@ -49,16 +59,16 @@ export default function App() {
       cur ? `${cur}${cur.trim().endsWith(",") ? " " : ", "}${t}` : t,
     );
   });
-  useSpeechRecognitionEvent("end", () => setListening(false));
-  useSpeechRecognitionEvent("error", (e) => {
+  speech?.useSpeechRecognitionEvent?.("end", () => setListening(false));
+  speech?.useSpeechRecognitionEvent?.("error", (e) => {
     setListening(false);
     const msg = e?.error?.message || e?.error?.code || "Помилка розпізнавання";
     Alert.alert("Голос", String(msg));
   });
 
   const canVoice = useMemo(
-    () => !!ExpoSpeechRecognitionModule?.isRecognitionAvailable?.(),
-    [],
+    () => !!speech?.ExpoSpeechRecognitionModule?.isRecognitionAvailable?.(),
+    [speech],
   );
 
   function apiUrl(path) {
@@ -217,13 +227,13 @@ export default function App() {
     if (!canVoice) {
       Alert.alert(
         "Голос",
-        "Голосове розпізнавання недоступне. Перевір дозволи мікрофона/мови.",
+        "Голос недоступний у Expo Go. Потрібен Dev Client (EAS build) або користуйся диктовкою клавіатури iOS.",
       );
       return;
     }
     if (listening) {
       try {
-        ExpoSpeechRecognitionModule.stop();
+        speech.ExpoSpeechRecognitionModule.stop();
       } catch {
         /* ignore */
       }
@@ -231,8 +241,8 @@ export default function App() {
       return;
     }
     try {
-      await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      ExpoSpeechRecognitionModule.start({ lang: "uk-UA" });
+      await speech.ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      speech.ExpoSpeechRecognitionModule.start({ lang: "uk-UA" });
       setListening(true);
     } catch (e) {
       setListening(false);
