@@ -50,6 +50,7 @@ export default function NutritionApp() {
 
   const [pantryText, setPantryText] = useState("");
   const [pantryItems, setPantryItems] = useState([]);
+  const [newItemName, setNewItemName] = useState("");
 
   const [prefs, setPrefs] = useState({
     goal: "balanced",
@@ -76,6 +77,50 @@ export default function NutritionApp() {
       .filter(Boolean)
       .join(", ");
   }, [pantryItems]);
+
+  const effectiveItems = useMemo(() => {
+    if (Array.isArray(pantryItems) && pantryItems.length > 0) return pantryItems;
+    const raw = pantryText.trim();
+    if (!raw) return [];
+    return parseLoosePantryText(raw);
+  }, [pantryItems, pantryText]);
+
+  const upsertItem = (name) => {
+    const n = normalizeFoodName(name);
+    if (!n) return;
+    setPantryItems((cur) => {
+      const arr = Array.isArray(cur) ? cur : [];
+      if (arr.some((x) => normalizeFoodName(x?.name) === n)) return arr;
+      return [...arr, { name: n, qty: null, unit: null, notes: null }];
+    });
+  };
+
+  const removeItem = (name) => {
+    const n = normalizeFoodName(name);
+    if (!n) return;
+    setPantryItems((cur) =>
+      (Array.isArray(cur) ? cur : []).filter(
+        (x) => normalizeFoodName(x?.name) !== n,
+      ),
+    );
+  };
+
+  const applyTemplate = (id) => {
+    const templates = {
+      quickBreakfast: [
+        "яйця",
+        "йогурт",
+        "банан",
+        "вівсянка",
+        "сир кисломолочний",
+      ],
+      quickLunch: ["курка", "рис", "огірок", "помідор", "оливкова олія"],
+      quickFitness: ["тунець", "гречка", "яйця", "творог", "овочі"],
+    };
+    const list = templates[id] || [];
+    setPantryItems(list.map((n) => ({ name: n, qty: null, unit: null, notes: null })));
+    setPantryText(list.join(", "));
+  };
 
   const onPickPhoto = async (file) => {
     setErr("");
@@ -179,15 +224,10 @@ export default function NutritionApp() {
     setRecipesTried(true);
     setStatusText("Генерую рецепти…");
     try {
-      const items =
-        pantryItems.length > 0
-          ? pantryItems
-          : pantryText.trim()
-            ? [{ name: pantryText.trim() }]
-            : [];
+      const items = effectiveItems;
       if (items.length === 0) throw new Error("Дай хоча б 2–3 продукти для рецептів.");
       const data = await postJson("/api/nutrition/recommend-recipes", {
-        items,
+        items: items.slice(0, 40),
         preferences: {
           goal: prefs.goal,
           servings: Number(prefs.servings) || 1,
@@ -387,10 +427,10 @@ export default function NutritionApp() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="text-sm font-semibold text-text">
-                Продукти вдома (голос/текст)
+                Продукти вдома
               </div>
               <div className="text-xs text-subtle mt-0.5">
-                Впиши список продуктів, потім натисни “Розібрати”.
+                Впиши список, або додай вручну чіпсами. “Розібрати” — опційно (для кількості/одиниць).
               </div>
             </div>
             <button
@@ -407,6 +447,47 @@ export default function NutritionApp() {
           </div>
 
           <div className="mt-3 grid gap-3">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              {[
+                { id: "quickBreakfast", label: "Швидкий сніданок" },
+                { id: "quickLunch", label: "Швидкий обід" },
+                { id: "quickFitness", label: "Фітнес" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => applyTemplate(t.id)}
+                  disabled={busy}
+                  className="text-xs px-3 py-1.5 bg-panel border border-line rounded-full text-subtle hover:text-text hover:border-muted whitespace-nowrap transition-colors shrink-0 disabled:opacity-40"
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <Input
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                placeholder="Додати продукт… (напр. лосось)"
+                disabled={busy}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  upsertItem(newItemName);
+                  setNewItemName("");
+                }}
+                disabled={busy || !newItemName.trim()}
+                className={cn(
+                  "px-4 h-11 rounded-2xl text-sm font-semibold shrink-0",
+                  "bg-primary text-white hover:brightness-110 disabled:opacity-50",
+                )}
+              >
+                Додати
+              </button>
+            </div>
+
             <div className="flex gap-2 items-start">
               <textarea
                 value={pantryText}
@@ -416,6 +497,30 @@ export default function NutritionApp() {
                 disabled={busy}
               />
             </div>
+
+            {effectiveItems.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {effectiveItems.slice(0, 40).map((it, idx) => (
+                  <button
+                    key={`${normalizeFoodName(it?.name)}_${idx}`}
+                    type="button"
+                    onClick={() => removeItem(it?.name)}
+                    disabled={busy}
+                    className="px-3 py-1.5 rounded-full bg-panel border border-line text-sm text-text hover:border-muted transition-colors"
+                    title="Натисни, щоб прибрати"
+                    aria-label={`Прибрати ${it?.name || "продукт"}`}
+                  >
+                    {it?.name || "—"}
+                    {it?.qty != null && it?.unit
+                      ? ` · ${it.qty} ${it.unit}`
+                      : it?.qty != null
+                        ? ` · ${it.qty}`
+                        : ""}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="text-xs text-subtle">
               Розібрано:{" "}
               <span className="text-text">
@@ -586,5 +691,53 @@ function fileToBase64(file) {
     };
     reader.readAsDataURL(file);
   });
+}
+
+function normalizeFoodName(s) {
+  const t = String(s || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[•·]/g, ",")
+    .replace(/^[,;]+|[,;]+$/g, "");
+  return t;
+}
+
+function parseLoosePantryText(raw) {
+  const parts = String(raw || "")
+    .replace(/\n+/g, ",")
+    .split(/[;,]/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return parts
+    .map((p) => {
+      // e.g. "2 яйця", "200 г курка", "0.5л молоко"
+      const m = p.match(
+        /^(\d+(?:[.,]\d+)?)\s*([a-zA-Zа-яА-ЯіїєґІЇЄҐ%]+)?\s*(.+)?$/,
+      );
+      if (!m) return { name: normalizeFoodName(p), qty: null, unit: null, notes: null };
+      const qty = m[1] ? Number(String(m[1]).replace(",", ".")) : null;
+      const unitRaw = normalizeFoodName(m[2] || "");
+      const rest = normalizeFoodName(m[3] || "");
+      const name = rest || normalizeFoodName(p.replace(m[0], "").trim()) || normalizeFoodName(p);
+      const unit = unitRaw ? normalizeUnit(unitRaw) : null;
+      return {
+        name: normalizeFoodName(name),
+        qty: Number.isFinite(qty) ? qty : null,
+        unit,
+        notes: null,
+      };
+    })
+    .filter((x) => x.name);
+}
+
+function normalizeUnit(u) {
+  const s = String(u || "").toLowerCase();
+  if (["г", "гр", "грам", "грами"].includes(s)) return "г";
+  if (["кг", "кілограм", "кілограми"].includes(s)) return "кг";
+  if (["мл", "міл", "мілілітр"].includes(s)) return "мл";
+  if (["л", "літр", "літри"].includes(s)) return "л";
+  if (["шт", "штук", "штуки"].includes(s)) return "шт";
+  return u;
 }
 
