@@ -68,6 +68,7 @@ export default function NutritionApp() {
 
   const [recipes, setRecipes] = useState([]);
   const [recipesTried, setRecipesTried] = useState(false);
+  const [recipesRaw, setRecipesRaw] = useState("");
 
   const pantrySummary = useMemo(() => {
     if (!Array.isArray(pantryItems) || pantryItems.length === 0) return "—";
@@ -221,6 +222,7 @@ export default function NutritionApp() {
     setBusy(true);
     setErr("");
     setRecipes([]);
+    setRecipesRaw("");
     setRecipesTried(true);
     setStatusText("Генерую рецепти…");
     try {
@@ -237,6 +239,7 @@ export default function NutritionApp() {
         },
       });
       setRecipes(Array.isArray(data?.recipes) ? data.recipes : []);
+      setRecipesRaw(typeof data?.raw === "string" ? data.raw : "");
     } catch (e) {
       setErr(e?.message || "Помилка рекомендацій");
     } finally {
@@ -670,7 +673,17 @@ export default function NutritionApp() {
             )}
             {recipesTried && !busy && recipes.length === 0 && !err && (
               <div className="rounded-2xl border border-line bg-panel p-4 text-sm text-subtle">
-                Рецептів не повернулося. Спробуй уточнити список продуктів або зняти обмеження.
+                Рецептів не повернулося. Спробуй натиснути “Розібрати” або додати 2–3 базові продукти (яйця/крупа/овочі).
+                {recipesRaw && (
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-xs text-muted hover:text-text">
+                      Показати діагностику (raw відповідь AI)
+                    </summary>
+                    <pre className="mt-2 whitespace-pre-wrap text-[11px] leading-snug text-subtle bg-bg border border-line rounded-xl p-3 max-h-64 overflow-auto">
+                      {recipesRaw}
+                    </pre>
+                  </details>
+                )}
               </div>
             )}
           </div>

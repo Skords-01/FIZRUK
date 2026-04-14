@@ -107,6 +107,10 @@ export default async function handler(req, res) {
 
     const parsed = extractJsonFromText(out);
     const recipes = Array.isArray(parsed?.recipes) ? parsed.recipes : [];
+    // Якщо рецепти не повернулись — віддай raw для діагностики в UI
+    if (!Array.isArray(recipes) || recipes.length === 0) {
+      return res.status(200).json({ recipes: [], raw: out || null });
+    }
     return res.status(200).json({ recipes });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Помилка AI сервера" });
