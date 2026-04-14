@@ -115,18 +115,17 @@ function readModuleStatus(id) {
       if (!raw) return null;
       const state = JSON.parse(raw);
       const habits = state?.habits ?? [];
-      const today = new Date().toISOString().slice(0, 10);
-      const scheduled = habits.filter((h) => {
-        if (h.archived) return false;
-        const dow = new Date().getDay();
-        const sch = h.schedule ?? [];
-        return sch.includes(dow === 0 ? 6 : dow - 1);
-      });
-      if (!scheduled.length) return `${habits.length} звичок`;
-      const done = scheduled.filter(
-        (h) => (state?.completions ?? {})[today]?.[h.id],
+      const active = habits.filter((h) => !h.archived);
+      if (!active.length) return null;
+      const now = new Date();
+      // dateKeyFromDate equivalent — local date
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const completions = state?.completions ?? {};
+      // completions structure: { habitId: ["2026-04-13", ...] }
+      const done = active.filter((h) =>
+        Array.isArray(completions[h.id]) && completions[h.id].includes(today),
       );
-      return `${done.length}/${scheduled.length} звичок`;
+      return `${done.length}/${active.length} звичок`;
     }
   } catch {}
   return null;
