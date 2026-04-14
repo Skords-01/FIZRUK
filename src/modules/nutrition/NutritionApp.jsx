@@ -48,9 +48,37 @@ export default function NutritionApp() {
   const [err, setErr] = useState("");
   const [statusText, setStatusText] = useState("");
 
-  const [pantryText, setPantryText] = useState("");
-  const [pantryItems, setPantryItems] = useState([]);
+  const [activePage, setActivePage] = useState("products"); // products | recipes
+
+  // ──────────────────────────────────────────────
+  // Pantries (склади) + persistence
+  // ──────────────────────────────────────────────
+  const PANTRIES_KEY = "nutrition_pantries_v1";
+  const ACTIVE_PANTRY_KEY = "nutrition_active_pantry_v1";
+
+  const [pantries, setPantries] = useState(() =>
+    loadPantries(PANTRIES_KEY, ACTIVE_PANTRY_KEY),
+  );
+  const [activePantryId, setActivePantryId] = useState(() =>
+    loadActivePantryId(ACTIVE_PANTRY_KEY),
+  );
+
+  const activePantry = useMemo(() => {
+    const arr = Array.isArray(pantries) ? pantries : [];
+    return (
+      arr.find((p) => p.id === activePantryId) ||
+      arr[0] ||
+      makeDefaultPantry()
+    );
+  }, [pantries, activePantryId]);
+
+  const pantryText = activePantry?.text || "";
+  const pantryItems = Array.isArray(activePantry?.items) ? activePantry.items : [];
   const [newItemName, setNewItemName] = useState("");
+
+  useEffect(() => {
+    persistPantries(PANTRIES_KEY, ACTIVE_PANTRY_KEY, pantries, activePantryId);
+  }, [pantries, activePantryId]);
 
   const [prefs, setPrefs] = useState({
     goal: "balanced",
@@ -89,20 +117,28 @@ export default function NutritionApp() {
   const upsertItem = (name) => {
     const n = normalizeFoodName(name);
     if (!n) return;
-    setPantryItems((cur) => {
-      const arr = Array.isArray(cur) ? cur : [];
-      if (arr.some((x) => normalizeFoodName(x?.name) === n)) return arr;
-      return [...arr, { name: n, qty: null, unit: null, notes: null }];
-    });
+    setPantries((cur) =>
+      updatePantry(cur, activePantryId, (p) => {
+        const arr = Array.isArray(p.items) ? p.items : [];
+        if (arr.some((x) => normalizeFoodName(x?.name) === n)) return p;
+        return {
+          ...p,
+          items: [...arr, { name: n, qty: null, unit: null, notes: null }],
+        };
+      }),
+    );
   };
 
   const removeItem = (name) => {
     const n = normalizeFoodName(name);
     if (!n) return;
-    setPantryItems((cur) =>
-      (Array.isArray(cur) ? cur : []).filter(
-        (x) => normalizeFoodName(x?.name) !== n,
-      ),
+    setPantries((cur) =>
+      updatePantry(cur, activePantryId, (p) => ({
+        ...p,
+        items: (Array.isArray(p.items) ? p.items : []).filter(
+          (x) => normalizeFoodName(x?.name) !== n,
+        ),
+      })),
     );
   };
 
@@ -119,8 +155,13 @@ export default function NutritionApp() {
       quickFitness: ["тунець", "гречка", "яйця", "творог", "овочі"],
     };
     const list = templates[id] || [];
-    setPantryItems(list.map((n) => ({ name: n, qty: null, unit: null, notes: null })));
-    setPantryText(list.join(", "));
+    setPantries((cur) =>
+      updatePantry(cur, activePantryId, (p) => ({
+        ...p,
+        items: list.map((n) => ({ name: n, qty: null, unit: null, notes: null })),
+        text: list.join(", "),
+      })),
+    );
   };
 
   const onPickPhoto = async (file) => {
@@ -209,7 +250,14 @@ export default function NutritionApp() {
         text: pantryText.trim(),
         locale: "uk-UA",
       });
-      setPantryItems(Array.isArray(data?.items) ? data.items : []);
+      const next = Array.isArray(data?.items) ? data.items : [];
+      // Мерджимо у склад (щоб “купив ще щось” → додалось, а не стерлось)
+      setPantries((cur) =>
+        updatePantry(cur, activePantryId, (p) => ({
+          ...p,
+          items: mergeItems(p.items, next),
+        })),
+      );
     } catch (e) {
       setErr(e?.message || "Помилка розбору списку");
     } finally {
@@ -263,12 +311,68 @@ export default function NutritionApp() {
   return (
     <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 max-w-2xl mx-auto w-full">
       <div className="mb-5">
-        <h1 className="text-xl font-semibold text-text tracking-tight">
-          Харчування
-        </h1>
+        <div className="flex items-end justify-between gap-3">
+          <h1 className="text-xl font-semibold text-text tracking-tight">
+            Харчування
+          </h1>
+          <div className="flex items-center gap-2">
+            <select
+              value={activePantry?.id || activePantryId || ""}
+              onChange={(e) => setActivePantryId(e.target.value)}
+              disabled={busy}
+              className="h-9 rounded-xl bg-panel border border-line px-3 text-sm text-text outline-none focus:border-primary/60"
+              aria-label="Обрати склад продуктів"
+            >
+              {(Array.isArray(pantries) ? pantries : []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name || "Склад"}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                const name = prompt("Назва нового складу (напр. Дім, Робота):");
+                if (!name || !String(name).trim()) return;
+                const id = `p_${Date.now()}`;
+                setPantries((cur) => [
+                  ...(Array.isArray(cur) ? cur : []),
+                  { id, name: String(name).trim(), items: [], text: "" },
+                ]);
+                setActivePantryId(id);
+              }}
+              disabled={busy}
+              className="h-9 px-3 rounded-xl bg-panel border border-line text-sm text-text hover:border-muted transition-colors disabled:opacity-50"
+            >
+              + Склад
+            </button>
+          </div>
+        </div>
         <p className="text-sm text-subtle mt-1">
           Фото → приблизне КБЖВ · голос/текст → інгредієнти · рецепти з порадами
         </p>
+
+        <div className="mt-4 flex gap-2">
+          {[
+            { id: "products", label: "Продукти" },
+            { id: "recipes", label: "Рецепти" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setActivePage(t.id)}
+              className={cn(
+                "h-10 px-4 rounded-2xl text-sm font-semibold border transition-colors",
+                activePage === t.id
+                  ? "bg-primary text-white border-primary"
+                  : "bg-panel text-text border-line hover:border-muted",
+              )}
+              disabled={busy}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {(err || statusText) && (
@@ -426,268 +530,285 @@ export default function NutritionApp() {
           </div>
         </Card>
 
-        <Card className="p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-text">
-                Продукти вдома
+        {activePage === "products" && (
+          <Card className="p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-text">
+                  Продукти ({activePantry?.name || "Склад"})
+                </div>
+                <div className="text-xs text-subtle mt-0.5">
+                  Додавай нові покупки — воно мерджиться, не стирає попереднє.
+                </div>
               </div>
-              <div className="text-xs text-subtle mt-0.5">
-                Впиши список, або додай вручну чіпсами. “Розібрати” — опційно (для кількості/одиниць).
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={parsePantry}
-              disabled={busy}
-              className={cn(
-                "shrink-0 px-4 h-10 rounded-xl text-sm font-medium",
-                "bg-panel border border-line text-text hover:border-muted disabled:opacity-50",
-              )}
-            >
-              Розібрати
-            </button>
-          </div>
-
-          <div className="mt-3 grid gap-3">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-              {[
-                { id: "quickBreakfast", label: "Швидкий сніданок" },
-                { id: "quickLunch", label: "Швидкий обід" },
-                { id: "quickFitness", label: "Фітнес" },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => applyTemplate(t.id)}
-                  disabled={busy}
-                  className="text-xs px-3 py-1.5 bg-panel border border-line rounded-full text-subtle hover:text-text hover:border-muted whitespace-nowrap transition-colors shrink-0 disabled:opacity-40"
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-2 items-center">
-              <Input
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-                placeholder="Додати продукт… (напр. лосось)"
-                disabled={busy}
-              />
               <button
                 type="button"
-                onClick={() => {
-                  upsertItem(newItemName);
-                  setNewItemName("");
-                }}
-                disabled={busy || !newItemName.trim()}
+                onClick={parsePantry}
+                disabled={busy}
                 className={cn(
-                  "px-4 h-11 rounded-2xl text-sm font-semibold shrink-0",
-                  "bg-primary text-white hover:brightness-110 disabled:opacity-50",
+                  "shrink-0 px-4 h-10 rounded-xl text-sm font-medium",
+                  "bg-panel border border-line text-text hover:border-muted disabled:opacity-50",
                 )}
               >
-                Додати
+                Розібрати
               </button>
             </div>
 
-            <div className="flex gap-2 items-start">
-              <textarea
-                value={pantryText}
-                onChange={(e) => setPantryText(e.target.value)}
-                placeholder={'Напр.: \"2 яйця, курка, рис, огірки, сир, йогурт\"'}
-                className="flex-1 min-h-[96px] rounded-2xl bg-panel border border-line px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors"
-                disabled={busy}
-              />
-            </div>
-
-            {effectiveItems.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {effectiveItems.slice(0, 40).map((it, idx) => (
+            <div className="mt-3 grid gap-3">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                {[
+                  { id: "quickBreakfast", label: "Швидкий сніданок" },
+                  { id: "quickLunch", label: "Швидкий обід" },
+                  { id: "quickFitness", label: "Фітнес" },
+                ].map((t) => (
                   <button
-                    key={`${normalizeFoodName(it?.name)}_${idx}`}
+                    key={t.id}
                     type="button"
-                    onClick={() => removeItem(it?.name)}
+                    onClick={() => applyTemplate(t.id)}
                     disabled={busy}
-                    className="px-3 py-1.5 rounded-full bg-panel border border-line text-sm text-text hover:border-muted transition-colors"
-                    title="Натисни, щоб прибрати"
-                    aria-label={`Прибрати ${it?.name || "продукт"}`}
+                    className="text-xs px-3 py-1.5 bg-panel border border-line rounded-full text-subtle hover:text-text hover:border-muted whitespace-nowrap transition-colors shrink-0 disabled:opacity-40"
                   >
-                    {it?.name || "—"}
-                    {it?.qty != null && it?.unit
-                      ? ` · ${it.qty} ${it.unit}`
-                      : it?.qty != null
-                        ? ` · ${it.qty}`
-                        : ""}
+                    {t.label}
                   </button>
                 ))}
               </div>
-            )}
 
-            <div className="text-xs text-subtle">
-              Розібрано:{" "}
-              <span className="text-text">
-                {pantryItems.length ? `${pantryItems.length} позицій` : "—"}
-              </span>
-              {pantryItems.length > 0 && (
-                <>
-                  {" "}
-                  · <span className="text-text">{pantrySummary}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="text-sm font-semibold text-text">Рецепти</div>
-          <div className="text-xs text-subtle mt-0.5">
-            Рекомендації на базі продуктів. Можна вказати час, порції та “не хочу”.
-          </div>
-
-          <div className="mt-3 grid gap-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <div className="text-[11px] text-subtle mb-1">Ціль</div>
-                <select
-                  value={prefs.goal}
-                  onChange={(e) => setPrefs((p) => ({ ...p, goal: e.target.value }))}
-                  className="w-full h-11 rounded-2xl bg-panel border border-line px-4 text-sm text-text outline-none focus:border-primary/60"
+              <div className="flex gap-2 items-center">
+                <Input
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  placeholder="Додати продукт… (напр. лосось)"
                   disabled={busy}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    upsertItem(newItemName);
+                    setNewItemName("");
+                  }}
+                  disabled={busy || !newItemName.trim()}
+                  className={cn(
+                    "px-4 h-11 rounded-2xl text-sm font-semibold shrink-0",
+                    "bg-primary text-white hover:brightness-110 disabled:opacity-50",
+                  )}
                 >
-                  <option value="balanced">Збалансовано</option>
-                  <option value="high_protein">Більше білка</option>
-                  <option value="low_cal">Менше калорій</option>
-                </select>
+                  Додати
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-[11px] text-subtle mb-1">Порції</div>
-                  <Input
-                    value={String(prefs.servings)}
-                    onChange={(e) =>
-                      setPrefs((p) => ({ ...p, servings: e.target.value }))
-                    }
-                    inputMode="numeric"
-                    disabled={busy}
-                  />
-                </div>
-                <div>
-                  <div className="text-[11px] text-subtle mb-1">Хвилин</div>
-                  <Input
-                    value={String(prefs.timeMinutes)}
-                    onChange={(e) =>
-                      setPrefs((p) => ({ ...p, timeMinutes: e.target.value }))
-                    }
-                    inputMode="numeric"
-                    disabled={busy}
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div>
-              <div className="text-[11px] text-subtle mb-1">
-                Не використовувати / алергени
+              <div className="flex gap-2 items-start">
+                <textarea
+                  value={pantryText}
+                  onChange={(e) =>
+                    setPantries((cur) =>
+                      updatePantry(cur, activePantryId, (p) => ({
+                        ...p,
+                        text: e.target.value,
+                      })),
+                    )
+                  }
+                  placeholder={'Напр.: \"2 яйця, курка, рис, огірки, сир, йогурт\"'}
+                  className="flex-1 min-h-[96px] rounded-2xl bg-panel border border-line px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors"
+                  disabled={busy}
+                />
               </div>
-              <Input
-                value={prefs.exclude}
-                onChange={(e) => setPrefs((p) => ({ ...p, exclude: e.target.value }))}
-                placeholder="напр. арахіс, гриби"
-                disabled={busy}
-              />
-            </div>
 
-            <button
-              type="button"
-              onClick={recommendRecipes}
-              disabled={busy}
-              className={cn(
-                "w-full h-11 rounded-2xl text-sm font-semibold",
-                "bg-primary text-white hover:brightness-110 disabled:opacity-50",
+              {effectiveItems.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {effectiveItems.slice(0, 60).map((it, idx) => (
+                    <button
+                      key={`${normalizeFoodName(it?.name)}_${idx}`}
+                      type="button"
+                      onClick={() => removeItem(it?.name)}
+                      disabled={busy}
+                      className="px-3 py-1.5 rounded-full bg-panel border border-line text-sm text-text hover:border-muted transition-colors"
+                      title="Натисни, щоб прибрати"
+                      aria-label={`Прибрати ${it?.name || "продукт"}`}
+                    >
+                      {it?.name || "—"}
+                      {it?.qty != null && it?.unit
+                        ? ` · ${it.qty} ${it.unit}`
+                        : it?.qty != null
+                          ? ` · ${it.qty}`
+                          : ""}
+                    </button>
+                  ))}
+                </div>
               )}
-            >
-              Запропонувати рецепти
-            </button>
 
-            {recipes.length > 0 && (
-              <div className="grid gap-3">
-                {recipes.map((r, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-2xl border border-line bg-panel p-4"
+              <div className="text-xs text-subtle">
+                Збережено:{" "}
+                <span className="text-text">
+                  {pantryItems.length ? `${pantryItems.length} позицій` : "—"}
+                </span>
+                {pantryItems.length > 0 && (
+                  <>
+                    {" "}
+                    · <span className="text-text">{pantrySummary}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {activePage === "recipes" && (
+          <Card className="p-4">
+            <div className="text-sm font-semibold text-text">
+              Рецепти ({activePantry?.name || "Склад"})
+            </div>
+            <div className="text-xs text-subtle mt-0.5">
+              Рекомендації на базі продуктів зі складу. Можна вказати час, порції та “не хочу”.
+            </div>
+
+            <div className="mt-3 grid gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="text-[11px] text-subtle mb-1">Ціль</div>
+                  <select
+                    value={prefs.goal}
+                    onChange={(e) =>
+                      setPrefs((p) => ({ ...p, goal: e.target.value }))
+                    }
+                    className="w-full h-11 rounded-2xl bg-panel border border-line px-4 text-sm text-text outline-none focus:border-primary/60"
+                    disabled={busy}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-text">
-                          {r.title || `Рецепт ${idx + 1}`}
-                        </div>
-                        <div className="text-xs text-subtle mt-1">
-                          {r.timeMinutes ? `${r.timeMinutes} хв` : "—"} ·{" "}
-                          {r.servings ? `${r.servings} порц.` : "—"}
-                        </div>
-                      </div>
-                      {r.macros?.kcal != null && (
-                        <div className="shrink-0 rounded-xl border border-line bg-bg px-3 py-2 text-xs text-subtle">
-                          <div className="text-[10px] text-subtle">≈ ккал</div>
+                    <option value="balanced">Збалансовано</option>
+                    <option value="high_protein">Більше білка</option>
+                    <option value="low_cal">Менше калорій</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-[11px] text-subtle mb-1">Порції</div>
+                    <Input
+                      value={String(prefs.servings)}
+                      onChange={(e) =>
+                        setPrefs((p) => ({ ...p, servings: e.target.value }))
+                      }
+                      inputMode="numeric"
+                      disabled={busy}
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-subtle mb-1">Хвилин</div>
+                    <Input
+                      value={String(prefs.timeMinutes)}
+                      onChange={(e) =>
+                        setPrefs((p) => ({ ...p, timeMinutes: e.target.value }))
+                      }
+                      inputMode="numeric"
+                      disabled={busy}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[11px] text-subtle mb-1">
+                  Не використовувати / алергени
+                </div>
+                <Input
+                  value={prefs.exclude}
+                  onChange={(e) =>
+                    setPrefs((p) => ({ ...p, exclude: e.target.value }))
+                  }
+                  placeholder="напр. арахіс, гриби"
+                  disabled={busy}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={recommendRecipes}
+                disabled={busy}
+                className={cn(
+                  "w-full h-11 rounded-2xl text-sm font-semibold",
+                  "bg-primary text-white hover:brightness-110 disabled:opacity-50",
+                )}
+              >
+                Запропонувати рецепти
+              </button>
+
+              {recipes.length > 0 && (
+                <div className="grid gap-3">
+                  {recipes.map((r, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-line bg-panel p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
                           <div className="text-sm font-semibold text-text">
-                            {fmtMacro(r.macros.kcal)}
+                            {r.title || `Рецепт ${idx + 1}`}
                           </div>
+                          <div className="text-xs text-subtle mt-1">
+                            {r.timeMinutes ? `${r.timeMinutes} хв` : "—"} ·{" "}
+                            {r.servings ? `${r.servings} порц.` : "—"}
+                          </div>
+                        </div>
+                        {r.macros?.kcal != null && (
+                          <div className="shrink-0 rounded-xl border border-line bg-bg px-3 py-2 text-xs text-subtle">
+                            <div className="text-[10px] text-subtle">≈ ккал</div>
+                            <div className="text-sm font-semibold text-text">
+                              {fmtMacro(r.macros.kcal)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {Array.isArray(r.ingredients) && r.ingredients.length > 0 && (
+                        <div className="mt-3 text-sm text-text">
+                          <div className="text-xs text-subtle mb-1">
+                            Інгредієнти
+                          </div>
+                          {r.ingredients.join(", ")}
+                        </div>
+                      )}
+
+                      {Array.isArray(r.steps) && r.steps.length > 0 && (
+                        <div className="mt-3 text-sm text-text">
+                          <div className="text-xs text-subtle mb-1">Кроки</div>
+                          <ol className="list-decimal pl-5 space-y-1">
+                            {r.steps.slice(0, 10).map((s, i) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+
+                      {Array.isArray(r.tips) && r.tips.length > 0 && (
+                        <div className="mt-3 text-sm text-text">
+                          <div className="text-xs text-subtle mb-1">Поради</div>
+                          <ul className="list-disc pl-5 space-y-1">
+                            {r.tips.slice(0, 6).map((t, i) => (
+                              <li key={i}>{t}</li>
+                            ))}
+                          </ul>
                         </div>
                       )}
                     </div>
-
-                    {Array.isArray(r.ingredients) && r.ingredients.length > 0 && (
-                      <div className="mt-3 text-sm text-text">
-                        <div className="text-xs text-subtle mb-1">
-                          Інгредієнти
-                        </div>
-                        {r.ingredients.join(", ")}
-                      </div>
-                    )}
-
-                    {Array.isArray(r.steps) && r.steps.length > 0 && (
-                      <div className="mt-3 text-sm text-text">
-                        <div className="text-xs text-subtle mb-1">Кроки</div>
-                        <ol className="list-decimal pl-5 space-y-1">
-                          {r.steps.slice(0, 10).map((s, i) => (
-                            <li key={i}>{s}</li>
-                          ))}
-                        </ol>
-                      </div>
-                    )}
-
-                    {Array.isArray(r.tips) && r.tips.length > 0 && (
-                      <div className="mt-3 text-sm text-text">
-                        <div className="text-xs text-subtle mb-1">Поради</div>
-                        <ul className="list-disc pl-5 space-y-1">
-                          {r.tips.slice(0, 6).map((t, i) => (
-                            <li key={i}>{t}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            {recipesTried && !busy && recipes.length === 0 && !err && (
-              <div className="rounded-2xl border border-line bg-panel p-4 text-sm text-subtle">
-                Рецептів не повернулося. Спробуй натиснути “Розібрати” або додати 2–3 базові продукти (яйця/крупа/овочі).
-                {recipesRaw && (
-                  <details className="mt-3">
-                    <summary className="cursor-pointer text-xs text-muted hover:text-text">
-                      Показати діагностику (raw відповідь AI)
-                    </summary>
-                    <pre className="mt-2 whitespace-pre-wrap text-[11px] leading-snug text-subtle bg-bg border border-line rounded-xl p-3 max-h-64 overflow-auto">
-                      {recipesRaw}
-                    </pre>
-                  </details>
-                )}
-              </div>
-            )}
-          </div>
-        </Card>
+                  ))}
+                </div>
+              )}
+              {recipesTried && !busy && recipes.length === 0 && !err && (
+                <div className="rounded-2xl border border-line bg-panel p-4 text-sm text-subtle">
+                  Рецептів не повернулося. Спробуй натиснути “Розібрати” або додати 2–3 базові продукти (яйця/крупа/овочі).
+                  {recipesRaw && (
+                    <details className="mt-3">
+                      <summary className="cursor-pointer text-xs text-muted hover:text-text">
+                        Показати діагностику (raw відповідь AI)
+                      </summary>
+                      <pre className="mt-2 whitespace-pre-wrap text-[11px] leading-snug text-subtle bg-bg border border-line rounded-xl p-3 max-h-64 overflow-auto">
+                        {recipesRaw}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
@@ -752,5 +873,77 @@ function normalizeUnit(u) {
   if (["л", "літр", "літри"].includes(s)) return "л";
   if (["шт", "штук", "штуки"].includes(s)) return "шт";
   return u;
+}
+
+function makeDefaultPantry() {
+  return { id: "home", name: "Дім", items: [], text: "" };
+}
+
+function loadActivePantryId(activeKey) {
+  try {
+    const v = localStorage.getItem(activeKey);
+    return v ? String(v) : "home";
+  } catch {
+    return "home";
+  }
+}
+
+function loadPantries(key, activeKey) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  // Міграція: якщо є старі ключі (не було складів), підтягнемо як "Дім"
+  let fallback = makeDefaultPantry();
+  try {
+    const oldItems = JSON.parse(localStorage.getItem("nutrition_pantry_items_v0") || "null");
+    const oldText = String(localStorage.getItem("nutrition_pantry_text_v0") || "");
+    if (Array.isArray(oldItems) && oldItems.length > 0) fallback.items = oldItems;
+    if (oldText) fallback.text = oldText;
+  } catch {}
+  try {
+    localStorage.setItem(activeKey, fallback.id);
+  } catch {}
+  return [fallback];
+}
+
+function persistPantries(key, activeKey, pantries, activeId) {
+  try {
+    localStorage.setItem(key, JSON.stringify(Array.isArray(pantries) ? pantries : []));
+  } catch {}
+  try {
+    if (activeId) localStorage.setItem(activeKey, String(activeId));
+  } catch {}
+}
+
+function updatePantry(pantries, activeId, fn) {
+  const arr = Array.isArray(pantries) ? pantries : [];
+  const id = String(activeId || "home");
+  const idx = arr.findIndex((p) => p.id === id);
+  if (idx === -1) {
+    const created = fn(makeDefaultPantry());
+    return [created, ...arr];
+  }
+  const next = [...arr];
+  next[idx] = fn(next[idx]);
+  return next;
+}
+
+function mergeItems(oldItems, newItems) {
+  const a = Array.isArray(oldItems) ? oldItems : [];
+  const b = Array.isArray(newItems) ? newItems : [];
+  const seen = new Set(a.map((x) => normalizeFoodName(x?.name)));
+  const merged = [...a];
+  for (const it of b) {
+    const n = normalizeFoodName(it?.name);
+    if (!n) continue;
+    if (seen.has(n)) continue;
+    seen.add(n);
+    merged.push({ name: n, qty: it?.qty ?? null, unit: it?.unit ?? null, notes: it?.notes ?? null });
+  }
+  return merged;
 }
 
