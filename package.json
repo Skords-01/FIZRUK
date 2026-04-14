@@ -10,8 +10,8 @@
     "lint:imports": "node scripts/check-imports.mjs",
     "build": "node scripts/check-imports.mjs && vite build",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "node scripts/vitest.mjs run",
+    "test:watch": "node scripts/vitest.mjs"
   },
   "dependencies": {
     "body-highlighter": "^3.0.2",

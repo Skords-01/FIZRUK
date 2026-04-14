@@ -30,7 +30,7 @@ export function RecipesCard({
             <select
               value={prefs.goal}
               onChange={(e) => setPrefs((p) => ({ ...p, goal: e.target.value }))}
-              className="w-full h-11 rounded-2xl bg-panel border border-line px-4 text-sm text-text outline-none focus:border-primary/60"
+              className="w-full h-11 rounded-2xl bg-panel border border-line px-4 text-sm text-text outline-none focus:border-nutrition/60"
               disabled={busy}
             >
               <option value="balanced">Збалансовано</option>
@@ -78,7 +78,7 @@ export function RecipesCard({
           disabled={busy}
           className={cn(
             "w-full h-11 rounded-2xl text-sm font-semibold",
-            "bg-primary text-white hover:brightness-110 disabled:opacity-50",
+            "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50",
           )}
         >
           Запропонувати рецепти

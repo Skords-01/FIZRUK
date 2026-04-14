@@ -31,7 +31,7 @@ export function PhotoAnalyzeCard({
           disabled={busy}
           className={cn(
             "shrink-0 px-4 h-10 rounded-xl text-sm font-medium",
-            "bg-primary text-white hover:brightness-110 disabled:opacity-50",
+            "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50",
           )}
         >
           Аналізувати

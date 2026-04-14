@@ -152,6 +152,11 @@ export default function App() {
   const goToHub = useCallback(() => {
     setActiveModule(null);
     persistModuleToUrlAndStorage(null);
+    try {
+      const url = new URL(window.location.href);
+      url.hash = "";
+      window.history.replaceState(null, "", url);
+    } catch {}
   }, []);
 
   const openModule = useCallback((id, opts = {}) => {

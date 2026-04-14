@@ -77,7 +77,7 @@ export function PantryCard({
             disabled={busy || !newItemName.trim()}
             className={cn(
               "px-4 h-11 rounded-2xl text-sm font-semibold shrink-0",
-              "bg-primary text-white hover:brightness-110 disabled:opacity-50",
+              "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50",
             )}
           >
             Додати
@@ -89,7 +89,7 @@ export function PantryCard({
             value={pantryText}
             onChange={(e) => setPantryText(e.target.value)}
             placeholder={'Напр.: "2 яйця, курка, рис, огірки, сир, йогурт"'}
-            className="flex-1 min-h-[96px] rounded-2xl bg-panel border border-line px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors"
+            className="flex-1 min-h-[96px] rounded-2xl bg-panel border border-line px-4 py-3 text-sm text-text outline-none focus:border-nutrition/60 placeholder:text-subtle transition-colors"
             disabled={busy}
           />
         </div>
