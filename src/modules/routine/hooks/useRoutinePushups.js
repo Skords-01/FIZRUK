@@ -46,7 +46,10 @@ export function useRoutinePushups() {
   const todayCount = data[today] ?? 0;
 
   const addReps = useCallback((reps) => {
-    setState((prev) => addPushupReps(prev, reps));
+    // Load fresh state directly from localStorage so the save is never
+    // deferred or dropped by React Concurrent Mode scheduling.
+    const next = addPushupReps(loadRoutineState(), reps);
+    setState(next);
   }, []);
 
   const history = useMemo(() => buildHistory(data, HISTORY_DAYS), [data]);
