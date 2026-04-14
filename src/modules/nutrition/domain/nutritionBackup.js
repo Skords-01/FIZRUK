@@ -2,8 +2,11 @@ import {
   NUTRITION_ACTIVE_PANTRY_KEY,
   NUTRITION_PANTRIES_KEY,
   NUTRITION_PREFS_KEY,
+  NUTRITION_LOG_KEY,
   defaultNutritionPrefs,
   loadNutritionPrefs,
+  loadNutritionLog,
+  normalizeNutritionLog,
 } from "../lib/nutritionStorage.js";
 
 export const NUTRITION_BACKUP_KIND = "hub-nutrition-backup";
@@ -27,6 +30,12 @@ function safeString(x, fallback = "") {
 function safeNumber(x, fallback = null) {
   const n = Number(x);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function optionalPositiveNumber(v) {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 function normalizePantryItem(x) {
@@ -58,6 +67,10 @@ function normalizePrefs(x) {
     servings: safeNumber(p.servings, 1) || 1,
     timeMinutes: safeNumber(p.timeMinutes, 25) || 25,
     exclude: p.exclude == null ? "" : String(p.exclude),
+    dailyTargetKcal: optionalPositiveNumber(p.dailyTargetKcal),
+    dailyTargetProtein_g: optionalPositiveNumber(p.dailyTargetProtein_g),
+    dailyTargetFat_g: optionalPositiveNumber(p.dailyTargetFat_g),
+    dailyTargetCarbs_g: optionalPositiveNumber(p.dailyTargetCarbs_g),
   };
 }
 
@@ -73,6 +86,8 @@ export function buildNutritionBackupPayload() {
   // prefs завжди читаємо через loadNutritionPrefs (в ньому дефолти + нормалізація)
   const prefs = loadNutritionPrefs(NUTRITION_PREFS_KEY);
 
+  const log = loadNutritionLog(NUTRITION_LOG_KEY);
+
   return {
     kind: NUTRITION_BACKUP_KIND,
     schemaVersion: NUTRITION_BACKUP_SCHEMA_VERSION,
@@ -82,6 +97,7 @@ export function buildNutritionBackupPayload() {
       pantries: Array.isArray(pantries) ? pantries.map(normalizePantry).filter(Boolean) : [],
       activePantryId: activePantryId || "home",
       prefs: normalizePrefs(prefs),
+      log: log && typeof log === "object" && !Array.isArray(log) ? log : {},
     },
   };
 }
@@ -114,5 +130,10 @@ export function applyNutritionBackupPayload(payload) {
   try {
     localStorage.setItem(NUTRITION_PREFS_KEY, JSON.stringify(prefs));
   } catch {}
+  if (data.log && typeof data.log === "object" && !Array.isArray(data.log)) {
+    try {
+      localStorage.setItem(NUTRITION_LOG_KEY, JSON.stringify(normalizeNutritionLog(data.log)));
+    } catch {}
+  }
 }
 

@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   NUTRITION_ACTIVE_PANTRY_KEY,
+  NUTRITION_LOG_KEY,
   NUTRITION_PANTRIES_KEY,
   loadActivePantryId,
+  loadNutritionLog,
   loadPantries,
+  normalizeNutritionLog,
   persistPantries,
 } from "./nutritionStorage.js";
 
@@ -65,6 +68,42 @@ describe("persistPantries", () => {
     const raw = globalThis.localStorage.getItem(NUTRITION_PANTRIES_KEY);
     expect(JSON.parse(raw)).toHaveLength(1);
     expect(globalThis.localStorage.getItem(NUTRITION_ACTIVE_PANTRY_KEY)).toBe("a");
+  });
+});
+
+describe("normalizeNutritionLog", () => {
+  it("infers mealType from Ukrainian label", () => {
+    const raw = {
+      "2026-01-01": {
+        meals: [{ id: "x", name: "Суп", label: "Обід", macros: { kcal: 100 } }],
+      },
+    };
+    const out = normalizeNutritionLog(raw);
+    expect(out["2026-01-01"].meals[0].mealType).toBe("lunch");
+    expect(out["2026-01-01"].meals[0].macros.kcal).toBe(100);
+  });
+
+  it("keeps mealType when valid", () => {
+    const out = normalizeNutritionLog({
+      "2026-02-02": {
+        meals: [{ id: "a", name: "x", mealType: "dinner", label: "Вечеря", macros: {} }],
+      },
+    });
+    expect(out["2026-02-02"].meals[0].mealType).toBe("dinner");
+  });
+});
+
+describe("loadNutritionLog", () => {
+  it("normalizes stored log", () => {
+    globalThis.localStorage.setItem(
+      NUTRITION_LOG_KEY,
+      JSON.stringify({
+        "2026-03-03": { meals: [{ name: "Тест", label: "Сніданок", macros: { kcal: 1 } }] },
+      }),
+    );
+    const log = loadNutritionLog(NUTRITION_LOG_KEY);
+    expect(log["2026-03-03"].meals[0].mealType).toBe("breakfast");
+    expect(log["2026-03-03"].meals[0].id).toMatch(/^meal_/);
   });
 });
 

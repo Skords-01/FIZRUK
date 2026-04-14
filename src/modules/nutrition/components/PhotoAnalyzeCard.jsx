@@ -15,6 +15,7 @@ export function PhotoAnalyzeCard({
   refinePhoto,
   answers,
   setAnswers,
+  onSaveToLog,
 }) {
   return (
     <Card className="p-4">
@@ -121,6 +122,20 @@ export function PhotoAnalyzeCard({
               </div>
             ))}
           </div>
+
+          {onSaveToLog && (
+            <button
+              type="button"
+              onClick={onSaveToLog}
+              disabled={busy}
+              className={cn(
+                "w-full h-11 rounded-2xl text-sm font-semibold border border-nutrition/40",
+                "text-nutrition hover:bg-nutrition/10 disabled:opacity-50 transition-colors",
+              )}
+            >
+              📓 Зберегти в журнал
+            </button>
+          )}
 
           {Array.isArray(photoResult.ingredients) && photoResult.ingredients.length > 0 && (
             <div className="text-xs text-subtle">

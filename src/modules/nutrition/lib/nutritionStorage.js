@@ -1,12 +1,20 @@
 import { normalizeFoodName } from "./pantryTextParser.js";
 import { mergeItems } from "./mergeItems.js";
+import { isMealTypeId, labelForMealType, mealTypeFromLabel } from "./mealTypes.js";
 
 export const NUTRITION_PANTRIES_KEY = "nutrition_pantries_v1";
 export const NUTRITION_ACTIVE_PANTRY_KEY = "nutrition_active_pantry_v1";
 export const NUTRITION_PREFS_KEY = "nutrition_prefs_v1";
+export const NUTRITION_LOG_KEY = "nutrition_log_v1";
 
 const LEGACY_ITEMS_KEY = "nutrition_pantry_items_v0";
 const LEGACY_TEXT_KEY = "nutrition_pantry_text_v0";
+
+function optionalPositiveNumber(v) {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
 
 export function defaultNutritionPrefs() {
   return {
@@ -14,6 +22,10 @@ export function defaultNutritionPrefs() {
     servings: 1,
     timeMinutes: 25,
     exclude: "",
+    dailyTargetKcal: null,
+    dailyTargetProtein_g: null,
+    dailyTargetFat_g: null,
+    dailyTargetCarbs_g: null,
   };
 }
 
@@ -30,6 +42,10 @@ export function loadNutritionPrefs(key = NUTRITION_PREFS_KEY) {
       timeMinutes: p.timeMinutes != null ? Number(p.timeMinutes) || 25 : 25,
       exclude: p.exclude == null ? "" : String(p.exclude),
       goal: p.goal ? String(p.goal) : "balanced",
+      dailyTargetKcal: optionalPositiveNumber(p.dailyTargetKcal),
+      dailyTargetProtein_g: optionalPositiveNumber(p.dailyTargetProtein_g),
+      dailyTargetFat_g: optionalPositiveNumber(p.dailyTargetFat_g),
+      dailyTargetCarbs_g: optionalPositiveNumber(p.dailyTargetCarbs_g),
     };
   } catch {
     return defaultNutritionPrefs();
@@ -39,7 +55,10 @@ export function loadNutritionPrefs(key = NUTRITION_PREFS_KEY) {
 export function persistNutritionPrefs(prefs, key = NUTRITION_PREFS_KEY) {
   try {
     localStorage.setItem(key, JSON.stringify(prefs || defaultNutritionPrefs()));
-  } catch {}
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function makeDefaultPantry() {
@@ -87,12 +106,18 @@ export function persistPantries(
   pantries,
   activeId,
 ) {
+  let ok = true;
   try {
     localStorage.setItem(key, JSON.stringify(Array.isArray(pantries) ? pantries : []));
-  } catch {}
+  } catch {
+    ok = false;
+  }
   try {
     if (activeId) localStorage.setItem(activeKey, String(activeId));
-  } catch {}
+  } catch {
+    ok = false;
+  }
+  return ok;
 }
 
 export function updatePantry(pantries, activeId, fn) {
@@ -127,3 +152,125 @@ export function mergePantryItems(pantry, incomingItems) {
   return { ...pantry, items: mergeItems(pantry?.items, incomingItems) };
 }
 
+function clampNum(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function normalizeMacros(mac) {
+  if (!mac || typeof mac !== "object") {
+    return { kcal: 0, protein_g: 0, fat_g: 0, carbs_g: 0 };
+  }
+  return {
+    kcal: clampNum(mac.kcal, 0),
+    protein_g: clampNum(mac.protein_g, 0),
+    fat_g: clampNum(mac.fat_g, 0),
+    carbs_g: clampNum(mac.carbs_g, 0),
+  };
+}
+
+export function normalizeMeal(m, idx) {
+  const raw = m && typeof m === "object" ? m : {};
+  let id = raw.id != null && String(raw.id).trim() ? String(raw.id).trim() : "";
+  if (!id) id = `meal_mig_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const name = raw.name != null ? String(raw.name).trim() : "";
+  const time = raw.time != null ? String(raw.time).trim() : "";
+
+  let mealType = raw.mealType;
+  if (!isMealTypeId(mealType)) {
+    mealType = mealTypeFromLabel(raw.label);
+  }
+
+  const label =
+    raw.label != null && String(raw.label).trim()
+      ? String(raw.label).trim()
+      : labelForMealType(mealType);
+
+  const macros = normalizeMacros(raw.macros);
+  const source = raw.source && String(raw.source) === "photo" ? "photo" : "manual";
+
+  return { id, name, time, mealType, label, macros, source };
+}
+
+export function normalizeNutritionLog(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const out = {};
+  for (const [dateKey, day] of Object.entries(raw)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) continue;
+    const mealsRaw = day?.meals;
+    if (!Array.isArray(mealsRaw)) {
+      out[dateKey] = { meals: [] };
+      continue;
+    }
+    out[dateKey] = {
+      meals: mealsRaw.map((m, i) => normalizeMeal(m, i)),
+    };
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────
+// Nutrition log (журнал прийомів їжі)
+// ─────────────────────────────────────────────
+
+export function loadNutritionLog(key = NUTRITION_LOG_KEY) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return normalizeNutritionLog(parsed);
+  } catch {
+    return {};
+  }
+}
+
+export function persistNutritionLog(log, key = NUTRITION_LOG_KEY) {
+  try {
+    localStorage.setItem(key, JSON.stringify(log || {}));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function addLogEntry(log, date, meal) {
+  const normalized = normalizeMeal(meal, 0);
+  const day = log[date] || { meals: [] };
+  return {
+    ...log,
+    [date]: {
+      ...day,
+      meals: [...(Array.isArray(day.meals) ? day.meals : []), normalized],
+    },
+  };
+}
+
+export function removeLogEntry(log, date, id) {
+  const day = log[date];
+  if (!day) return log;
+  const meals = (Array.isArray(day.meals) ? day.meals : []).filter((m) => m.id !== id);
+  if (meals.length === 0) {
+    const next = { ...log };
+    delete next[date];
+    return next;
+  }
+  return { ...log, [date]: { ...day, meals } };
+}
+
+export function getDayMacros(log, date) {
+  const day = log[date];
+  if (!day || !Array.isArray(day.meals)) return { kcal: 0, protein_g: 0, fat_g: 0, carbs_g: 0 };
+  return day.meals.reduce(
+    (acc, m) => {
+      const mac = m?.macros || {};
+      return {
+        kcal: acc.kcal + (Number(mac.kcal) || 0),
+        protein_g: acc.protein_g + (Number(mac.protein_g) || 0),
+        fat_g: acc.fat_g + (Number(mac.fat_g) || 0),
+        carbs_g: acc.carbs_g + (Number(mac.carbs_g) || 0),
+      };
+    },
+    { kcal: 0, protein_g: 0, fat_g: 0, carbs_g: 0 },
+  );
+}
