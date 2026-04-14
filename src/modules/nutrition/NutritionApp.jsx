@@ -142,6 +142,74 @@ export default function NutritionApp() {
     );
   };
 
+  const ensureStructuredItems = () => {
+    if (pantryItems.length > 0) return true;
+    if (effectiveItems.length === 0) return false;
+    setPantries((cur) =>
+      updatePantry(cur, activePantryId, (p) => ({
+        ...p,
+        items: effectiveItems.map((x) => ({
+          name: normalizeFoodName(x?.name),
+          qty: x?.qty ?? null,
+          unit: x?.unit ?? null,
+          notes: x?.notes ?? null,
+        })),
+      })),
+    );
+    return true;
+  };
+
+  const editItemAt = (idx) => {
+    if (!ensureStructuredItems()) return;
+    const cur = (Array.isArray(activePantry?.items) ? activePantry.items : [])[idx];
+    if (!cur) return;
+    const curName = normalizeFoodName(cur.name);
+    const curQty = cur.qty != null ? String(cur.qty) : "";
+    const curUnit = cur.unit != null ? String(cur.unit) : "";
+
+    const nextQtyRaw = prompt(
+      `Кількість для "${curName}" (порожньо — прибрати кількість):`,
+      curQty,
+    );
+    if (nextQtyRaw == null) return; // cancel
+    const nextUnitRaw = prompt(
+      `Одиниця для "${curName}" (г/кг/мл/л/шт або порожньо):`,
+      curUnit,
+    );
+    if (nextUnitRaw == null) return;
+
+    const qtyStr = String(nextQtyRaw).trim();
+    const unitStr = String(nextUnitRaw).trim();
+    const qty =
+      qtyStr === "" ? null : Number(qtyStr.replace(",", "."));
+    const unit = unitStr === "" ? null : normalizeUnit(unitStr);
+
+    setPantries((curPantries) =>
+      updatePantry(curPantries, activePantryId, (p) => {
+        const items = Array.isArray(p.items) ? [...p.items] : [];
+        const item = items[idx];
+        if (!item) return p;
+        items[idx] = {
+          ...item,
+          qty: Number.isFinite(qty) ? qty : null,
+          unit,
+        };
+        return { ...p, items };
+      }),
+    );
+  };
+
+  const removeItemAt = (idx) => {
+    if (!ensureStructuredItems()) return;
+    setPantries((curPantries) =>
+      updatePantry(curPantries, activePantryId, (p) => {
+        const items = Array.isArray(p.items) ? [...p.items] : [];
+        items.splice(idx, 1);
+        return { ...p, items };
+      }),
+    );
+  };
+
   const applyTemplate = (id) => {
     const templates = {
       quickBreakfast: [
@@ -660,22 +728,40 @@ export default function NutritionApp() {
               {effectiveItems.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {effectiveItems.slice(0, 60).map((it, idx) => (
-                    <button
+                    <div
                       key={`${normalizeFoodName(it?.name)}_${idx}`}
-                      type="button"
-                      onClick={() => removeItem(it?.name)}
-                      disabled={busy}
-                      className="px-3 py-1.5 rounded-full bg-panel border border-line text-sm text-text hover:border-muted transition-colors"
-                      title="Натисни, щоб прибрати"
-                      aria-label={`Прибрати ${it?.name || "продукт"}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-panel border border-line text-sm text-text hover:border-muted transition-colors"
+                      title="Натисни, щоб редагувати кількість; × — прибрати"
                     >
-                      {it?.name || "—"}
-                      {it?.qty != null && it?.unit
-                        ? ` · ${it.qty} ${it.unit}`
-                        : it?.qty != null
-                          ? ` · ${it.qty}`
-                          : ""}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => editItemAt(idx)}
+                        disabled={busy}
+                        className="text-left"
+                        aria-label={`Редагувати ${it?.name || "продукт"}`}
+                      >
+                        {it?.name || "—"}
+                        {it?.qty != null && it?.unit
+                          ? ` · ${it.qty} ${it.unit}`
+                          : it?.qty != null
+                            ? ` · ${it.qty}`
+                            : ""}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          pantryItems.length > 0
+                            ? removeItemAt(idx)
+                            : removeItem(it?.name)
+                        }
+                        disabled={busy}
+                        className="ml-1 w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                        aria-label={`Прибрати ${it?.name || "продукт"}`}
+                        title="Прибрати"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
