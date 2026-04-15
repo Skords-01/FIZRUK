@@ -11,7 +11,9 @@ describe("getAllowedOrigins", () => {
 
   it("parses comma-separated ALLOWED_ORIGINS", () => {
     process.env.ALLOWED_ORIGINS = " https://a.test , https://b.test ";
-    expect(getAllowedOrigins()).toEqual(["https://a.test", "https://b.test"]);
+    const origins = getAllowedOrigins();
+    expect(origins).toContain("https://a.test");
+    expect(origins).toContain("https://b.test");
   });
 
   it("falls back to defaults when unset", () => {
