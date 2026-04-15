@@ -49,6 +49,20 @@ async function showNotification(title, body, tag) {
   } catch {}
 }
 
+function sendRoutineStateToSW(routine) {
+  try {
+    if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) return;
+    navigator.serviceWorker.controller.postMessage({
+      type: "ROUTINE_STATE_UPDATE",
+      data: {
+        habits: routine.habits,
+        completions: routine.completions,
+        prefs: routine.prefs,
+      },
+    });
+  } catch {}
+}
+
 export function useRoutineReminders(routine) {
   const enabled = routine.prefs?.routineRemindersEnabled === true;
   const routineRef = useRef(routine);
@@ -57,6 +71,10 @@ export function useRoutineReminders(routine) {
   useEffect(() => {
     cleanupStaleRoutineNotifyKeys();
   }, []);
+
+  useEffect(() => {
+    sendRoutineStateToSW(routine);
+  }, [routine]);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -87,6 +105,14 @@ export function useRoutineReminders(routine) {
         showNotification(title, "Нагадування про звичку", storageKey);
         try {
           localStorage.setItem(storageKey, "1");
+          try {
+            if (navigator.serviceWorker?.controller) {
+              navigator.serviceWorker.controller.postMessage({
+                type: "ROUTINE_NOTIFICATION_SENT",
+                data: { storageKey },
+              });
+            }
+          } catch {}
         } catch {}
       }
     };

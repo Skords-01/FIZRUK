@@ -1,0 +1,152 @@
+import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+import { registerRoute, NavigationRoute } from "workbox-routing";
+import { NetworkFirst, CacheFirst } from "workbox-strategies";
+import { ExpirationPlugin } from "workbox-expiration";
+import { CacheableResponsePlugin } from "workbox-cacheable-response";
+import { createHandlerBoundToURL } from "workbox-precaching";
+
+cleanupOutdatedCaches();
+precacheAndRoute(self.__WB_MANIFEST);
+
+const navigationHandler = createHandlerBoundToURL("/index.html");
+const navigationRoute = new NavigationRoute(navigationHandler, {
+  denylist: [/^\/api\//],
+});
+registerRoute(navigationRoute);
+
+registerRoute(
+  ({ url }) => url.origin === "https://fonts.googleapis.com",
+  new CacheFirst({
+    cacheName: "google-fonts-css",
+    plugins: [
+      new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+    ],
+  }),
+);
+
+registerRoute(
+  ({ url }) => url.origin === "https://fonts.gstatic.com",
+  new CacheFirst({
+    cacheName: "google-fonts-woff",
+    plugins: [
+      new ExpirationPlugin({ maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+    ],
+  }),
+);
+
+const ROUTINE_STATE_KEY = "hub_routine_v1";
+const ROUTINE_NOTIFY_PREFIX = "routine_notify_";
+
+function todayKey() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+
+function currentHm() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
+}
+
+function habitScheduledOnDateSW(h, dk) {
+  if (!h || h.archived) return false;
+  if (h.startDate && dk < h.startDate) return false;
+  if (h.endDate && dk > h.endDate) return false;
+  const rec = h.recurrence || "daily";
+  if (rec === "daily") return true;
+  if (rec === "once") return dk === h.startDate;
+  if (rec === "weekly") {
+    const d = new Date(dk + "T12:00:00");
+    const wd = (d.getDay() + 6) % 7;
+    return Array.isArray(h.weekdays) && h.weekdays.includes(wd);
+  }
+  if (rec === "monthly") {
+    const startDay = h.startDate ? parseInt(h.startDate.split("-")[2], 10) : 1;
+    const dkDay = parseInt(dk.split("-")[2], 10);
+    const [y, m] = dk.split("-").map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    return startDay > lastDay ? dkDay === lastDay : dkDay === startDay;
+  }
+  return true;
+}
+
+let reminderTimerId = null;
+let routineData = null;
+
+function checkReminders() {
+  if (!routineData) return;
+  if (routineData.prefs?.routineRemindersEnabled !== true) return;
+
+  const dk = todayKey();
+  const hm = currentHm();
+  const habits = routineData.habits || [];
+  const completions = routineData.completions || {};
+
+  for (const h of habits) {
+    if (h.archived) continue;
+    const t = h.timeOfDay && String(h.timeOfDay).trim();
+    if (!t || t !== hm) continue;
+    if (!habitScheduledOnDateSW(h, dk)) continue;
+    const hCompletions = completions[h.id] || [];
+    if (hCompletions.includes(dk)) continue;
+
+    const storageKey = `${ROUTINE_NOTIFY_PREFIX}${h.id}_${dk}`;
+    if (self.__notifiedKeys && self.__notifiedKeys.has(storageKey)) continue;
+    if (!self.__notifiedKeys) self.__notifiedKeys = new Set();
+    self.__notifiedKeys.add(storageKey);
+
+    const title = `${h.emoji || "✓"} ${h.name}`;
+    self.registration.showNotification(title, {
+      body: "Нагадування про звичку",
+      tag: storageKey,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      requireInteraction: false,
+    }).catch(() => {});
+  }
+}
+
+function startReminderLoop() {
+  if (reminderTimerId) clearInterval(reminderTimerId);
+  reminderTimerId = setInterval(checkReminders, 30000);
+  checkReminders();
+}
+
+self.addEventListener("message", (event) => {
+  const { type, data } = event.data || {};
+
+  if (type === "SKIP_WAITING") {
+    self.skipWaiting();
+    return;
+  }
+
+  if (type === "ROUTINE_STATE_UPDATE") {
+    routineData = data;
+    startReminderLoop();
+    return;
+  }
+
+  if (type === "ROUTINE_NOTIFICATION_SENT") {
+    if (!self.__notifiedKeys) self.__notifiedKeys = new Set();
+    if (data?.storageKey) self.__notifiedKeys.add(data.storageKey);
+  }
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.registration.scope)) {
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow("/");
+    }),
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
