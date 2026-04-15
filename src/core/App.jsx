@@ -7,6 +7,10 @@ import { ToastProvider, useToast } from "@shared/hooks/useToast";
 import { ToastContainer } from "@shared/components/ui/Toast";
 import { AuthProvider, useAuth } from "./AuthContext.jsx";
 import { useCloudSync } from "./useCloudSync.js";
+import { HubDashboard } from "./HubDashboard.jsx";
+import { HubReports } from "./HubReports.jsx";
+
+const HubSearch = lazy(() => import("./HubSearch.jsx").then((m) => ({ default: m.HubSearch })));
 
 /** Detects online/offline state and shows a banner when offline */
 function useOnlineStatus() {
@@ -538,6 +542,8 @@ function AppInner() {
   const [activeModule, setActiveModule] = useState(readInitialModule);
   const [chatOpen, setChatOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [hubView, setHubView] = useState("dashboard");
+  const [searchOpen, setSearchOpen] = useState(false);
   const { dark, toggle: toggleDark } = useDarkMode();
   const { canInstall, install, dismiss } = usePwaInstall();
   const online = useOnlineStatus();
@@ -651,14 +657,29 @@ function AppInner() {
     return (
       <div className="min-h-dvh bg-bg flex flex-col safe-area-pt-pb page-enter">
         {!online && <OfflineBanner />}
+
         <header className="px-5 pt-10 pb-2 max-w-lg mx-auto w-full flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-text tracking-tight">
               Мій простір
             </h1>
-            <p className="text-sm text-muted mt-1">Обери модуль для початку</p>
+            <p className="text-sm text-muted mt-1">
+              {hubView === "reports" ? "Звіти та статистика" : "Дашборд та модулі"}
+            </p>
           </div>
           <div className="pt-1 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Пошук"
+              title="Пошук по всіх модулях"
+              className="w-10 h-10 flex items-center justify-center rounded-2xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
             {user ? (
               <UserMenuButton user={user} syncing={syncing} lastSync={lastSync} onSync={pushAll} onPull={pullAll} onLogout={logout} />
             ) : (
@@ -680,6 +701,46 @@ function AppInner() {
             <DarkModeToggle dark={dark} onToggle={toggleDark} />
           </div>
         </header>
+
+        <div className="px-5 max-w-lg mx-auto w-full mb-1">
+          <div className="flex rounded-2xl overflow-hidden border border-line bg-panelHi/40 p-0.5 gap-0.5">
+            <button
+              type="button"
+              onClick={() => setHubView("dashboard")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-all",
+                hubView === "dashboard"
+                  ? "bg-panel text-text shadow-card"
+                  : "text-muted hover:text-text"
+              )}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              Головна
+            </button>
+            <button
+              type="button"
+              onClick={() => setHubView("reports")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-all",
+                hubView === "reports"
+                  ? "bg-panel text-text shadow-card"
+                  : "text-muted hover:text-text"
+              )}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+              Звіти
+            </button>
+          </div>
+        </div>
 
         {updateAvailable && (
           <div className="px-5 max-w-lg mx-auto w-full mb-2">
@@ -719,78 +780,95 @@ function AppInner() {
           </div>
         )}
 
-        <main className="flex-1 px-5 pb-24 max-w-lg mx-auto w-full flex flex-col justify-center gap-3">
-          {MODULES.map((m) => {
-            const badge = readModuleStatus(m.id);
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => openModule(m.id)}
-                aria-label={`Відкрити модуль ${m.label}: ${m.desc}`}
-                className={cn(
-                  "group relative w-full p-5 rounded-3xl border border-line bg-panel text-left",
-                  "shadow-card hover:shadow-float transition-all duration-300",
-                  "active:scale-[0.98] overflow-hidden",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-                )}
-              >
-                <div
-                  className={cn(
-                    "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none",
-                    m.gradient,
-                  )}
-                />
-                <div className="relative flex items-center gap-4">
-                  <div
-                    className={cn(
-                      "flex items-center justify-center w-14 h-14 rounded-2xl shrink-0 transition-colors",
-                      m.iconClass,
-                    )}
-                    aria-hidden
-                  >
-                    {m.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-[17px] font-semibold text-text tracking-tight">
-                        {m.label}
-                      </h2>
-                      {badge && (
-                        <span
-                          className={cn(
-                            "text-[11px] font-semibold px-2 py-0.5 rounded-full",
-                            m.badgeClass,
-                          )}
-                        >
-                          {badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-subtle mt-0.5">{m.desc}</p>
-                  </div>
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    className="text-muted shrink-0 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
-                    aria-hidden
-                  >
-                    <path
-                      d="M9 18l6-6-6-6"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              </button>
-            );
-          })}
+        <main className="flex-1 px-5 pb-28 max-w-lg mx-auto w-full overflow-y-auto">
+          {hubView === "dashboard" && (
+            <div className="flex flex-col gap-5 pt-2">
+              <HubDashboard onOpenModule={openModule} />
 
-          <HubBackupPanel className="mt-2" />
+              <div className="space-y-2.5">
+                <h2 className="text-xs font-semibold text-muted uppercase tracking-wider px-0.5">Модулі</h2>
+                <div className="flex flex-col gap-2.5">
+                  {MODULES.map((m) => {
+                    const badge = readModuleStatus(m.id);
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => openModule(m.id)}
+                        aria-label={`Відкрити модуль ${m.label}: ${m.desc}`}
+                        className={cn(
+                          "group relative w-full p-4 rounded-2xl border border-line bg-panel text-left",
+                          "shadow-card hover:shadow-float transition-all duration-300",
+                          "active:scale-[0.98] overflow-hidden",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none",
+                            m.gradient,
+                          )}
+                        />
+                        <div className="relative flex items-center gap-3">
+                          <div
+                            className={cn(
+                              "flex items-center justify-center w-11 h-11 rounded-2xl shrink-0 transition-colors",
+                              m.iconClass,
+                            )}
+                            aria-hidden
+                          >
+                            {m.icon}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h2 className="text-[15px] font-semibold text-text tracking-tight">
+                                {m.label}
+                              </h2>
+                              {badge && (
+                                <span
+                                  className={cn(
+                                    "text-[11px] font-semibold px-2 py-0.5 rounded-full",
+                                    m.badgeClass,
+                                  )}
+                                >
+                                  {badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-subtle mt-0.5">{m.desc}</p>
+                          </div>
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            className="text-muted shrink-0 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+                            aria-hidden
+                          >
+                            <path
+                              d="M9 18l6-6-6-6"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <HubBackupPanel className="mt-1" />
+            </div>
+          )}
+
+          {hubView === "reports" && (
+            <div className="pt-2">
+              <HubReports />
+            </div>
+          )}
         </main>
 
         <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
@@ -820,6 +898,12 @@ function AppInner() {
         {chatOpen && (
           <Suspense fallback={null}>
             <HubChat onClose={() => setChatOpen(false)} />
+          </Suspense>
+        )}
+
+        {searchOpen && (
+          <Suspense fallback={null}>
+            <HubSearch onClose={() => setSearchOpen(false)} onOpenModule={openModule} />
           </Suspense>
         )}
       </div>
