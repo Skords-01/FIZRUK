@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { apiUrl } from "@shared/lib/apiUrl.js";
 
 const SYNC_MODULES = {
   finyk: {
@@ -32,6 +33,9 @@ const SYNC_MODULES = {
 export const SYNC_EVENT = "hub-cloud-sync-dirty";
 
 const LAST_PUSH_TS_KEY = "hub_sync_last_push_ts";
+const SYNC_VERSION_KEY = "hub_sync_versions";
+const OFFLINE_QUEUE_KEY = "hub_sync_offline_queue";
+const MIGRATION_DONE_KEY = "hub_sync_migrated_users";
 
 function getLastPushTs() {
   try {
@@ -45,6 +49,75 @@ function getLastPushTs() {
 function setLastPushTs(dt) {
   try {
     localStorage.setItem(LAST_PUSH_TS_KEY, dt.toISOString());
+  } catch {
+  }
+}
+
+function getModuleVersions() {
+  try {
+    const raw = localStorage.getItem(SYNC_VERSION_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function setModuleVersion(userId, moduleName, version) {
+  try {
+    const versions = getModuleVersions();
+    if (!versions[userId]) versions[userId] = {};
+    versions[userId][moduleName] = version;
+    localStorage.setItem(SYNC_VERSION_KEY, JSON.stringify(versions));
+  } catch {
+  }
+}
+
+function getModuleVersion(userId, moduleName) {
+  const versions = getModuleVersions();
+  return versions[userId]?.[moduleName] ?? 0;
+}
+
+function getOfflineQueue() {
+  try {
+    const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function addToOfflineQueue(entry) {
+  try {
+    const queue = getOfflineQueue();
+    queue.push({ ...entry, ts: new Date().toISOString() });
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+  } catch {
+  }
+}
+
+function clearOfflineQueue() {
+  try {
+    localStorage.removeItem(OFFLINE_QUEUE_KEY);
+  } catch {
+  }
+}
+
+function isMigrationDone(userId) {
+  try {
+    const raw = localStorage.getItem(MIGRATION_DONE_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    return !!map[userId];
+  } catch {
+    return false;
+  }
+}
+
+function markMigrationDone(userId) {
+  try {
+    const raw = localStorage.getItem(MIGRATION_DONE_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    map[userId] = new Date().toISOString();
+    localStorage.setItem(MIGRATION_DONE_KEY, JSON.stringify(map));
   } catch {
   }
 }
@@ -107,7 +180,32 @@ export function useCloudSync(user) {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(null);
   const [syncError, setSyncError] = useState(null);
+  const [migrationPending, setMigrationPending] = useState(false);
   const syncingRef = useRef(false);
+
+  const replayOfflineQueue = useCallback(async () => {
+    const queue = getOfflineQueue();
+    if (queue.length === 0) return;
+
+    const modulesToPush = {};
+    for (const entry of queue) {
+      if (entry.type === "push" && entry.modules) {
+        Object.assign(modulesToPush, entry.modules);
+      }
+    }
+
+    if (Object.keys(modulesToPush).length > 0) {
+      const res = await fetch(apiUrl("/api/sync/push-all"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ modules: modulesToPush }),
+      });
+      if (res.ok) {
+        clearOfflineQueue();
+      }
+    }
+  }, []);
 
   const pushAll = useCallback(async () => {
     if (syncingRef.current) return;
@@ -123,22 +221,51 @@ export function useCloudSync(user) {
         }
       }
       if (Object.keys(modules).length === 0) return;
-      const res = await fetch("/api/sync/push-all", {
+
+      if (!navigator.onLine) {
+        addToOfflineQueue({ type: "push", modules });
+        return;
+      }
+
+      await replayOfflineQueue();
+
+      const res = await fetch(apiUrl("/api/sync/push-all"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ modules }),
       });
       if (!res.ok) throw new Error("Push failed");
+
+      const result = await res.json();
+      if (user?.id && result?.results) {
+        for (const [mod, r] of Object.entries(result.results)) {
+          if (r?.version) setModuleVersion(user.id, mod, r.version);
+        }
+      }
+
       setLastPushTs(new Date());
       setLastSync(new Date());
     } catch (err) {
+      addToOfflineQueue({
+        type: "push",
+        modules: (() => {
+          const m = {};
+          for (const mod of Object.keys(SYNC_MODULES)) {
+            const data = collectModuleData(mod);
+            if (data && Object.keys(data).length > 0) {
+              m[mod] = { data, clientUpdatedAt: new Date().toISOString() };
+            }
+          }
+          return m;
+        })(),
+      });
       setSyncError(err.message);
     } finally {
       setSyncing(false);
       syncingRef.current = false;
     }
-  }, []);
+  }, [user, replayOfflineQueue]);
 
   const pullAll = useCallback(async () => {
     if (syncingRef.current) return;
@@ -146,7 +273,7 @@ export function useCloudSync(user) {
     setSyncing(true);
     setSyncError(null);
     try {
-      const res = await fetch("/api/sync/pull-all", {
+      const res = await fetch(apiUrl("/api/sync/pull-all"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -157,6 +284,9 @@ export function useCloudSync(user) {
         for (const [mod, payload] of Object.entries(modules)) {
           if (payload?.data) {
             applyModuleData(mod, payload.data);
+            if (user?.id && payload.version) {
+              setModuleVersion(user.id, mod, payload.version);
+            }
           }
         }
       }
@@ -169,7 +299,45 @@ export function useCloudSync(user) {
       setSyncing(false);
       syncingRef.current = false;
     }
-  }, []);
+  }, [user]);
+
+  const uploadLocalData = useCallback(async () => {
+    if (!user?.id) return;
+    syncingRef.current = true;
+    setSyncing(true);
+    try {
+      const modules = {};
+      for (const mod of Object.keys(SYNC_MODULES)) {
+        const data = collectModuleData(mod);
+        if (data && Object.keys(data).length > 0) {
+          modules[mod] = { data, clientUpdatedAt: new Date().toISOString() };
+        }
+      }
+      if (Object.keys(modules).length > 0) {
+        await fetch(apiUrl("/api/sync/push-all"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ modules }),
+        });
+      }
+      markMigrationDone(user.id);
+      setLastPushTs(new Date());
+      setLastSync(new Date());
+      setMigrationPending(false);
+    } catch (err) {
+      setSyncError(err.message);
+    } finally {
+      setSyncing(false);
+      syncingRef.current = false;
+    }
+  }, [user]);
+
+  const skipMigration = useCallback(() => {
+    if (!user?.id) return;
+    markMigrationDone(user.id);
+    setMigrationPending(false);
+  }, [user]);
 
   const initialSync = useCallback(async () => {
     if (syncingRef.current) return;
@@ -177,7 +345,9 @@ export function useCloudSync(user) {
     setSyncing(true);
     setSyncError(null);
     try {
-      const res = await fetch("/api/sync/pull-all", {
+      await replayOfflineQueue();
+
+      const res = await fetch(apiUrl("/api/sync/pull-all"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -189,27 +359,21 @@ export function useCloudSync(user) {
         (m) => cloudModules[m]?.data && Object.keys(cloudModules[m].data).length > 0,
       );
       const hasAnyLocalData = Object.keys(SYNC_MODULES).some(hasLocalData);
+      const migrated = isMigrationDone(user?.id);
 
       if (hasCloudData && !hasAnyLocalData) {
         for (const [mod, payload] of Object.entries(cloudModules)) {
-          if (payload?.data) applyModuleData(mod, payload.data);
-        }
-      } else if (hasAnyLocalData && !hasCloudData) {
-        const modules = {};
-        for (const mod of Object.keys(SYNC_MODULES)) {
-          const data = collectModuleData(mod);
-          if (data && Object.keys(data).length > 0) {
-            modules[mod] = { data, clientUpdatedAt: new Date().toISOString() };
+          if (payload?.data) {
+            applyModuleData(mod, payload.data);
+            if (user?.id && payload.version) {
+              setModuleVersion(user.id, mod, payload.version);
+            }
           }
         }
-        if (Object.keys(modules).length > 0) {
-          await fetch("/api/sync/push-all", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ modules }),
-          });
-        }
+        if (!migrated) markMigrationDone(user?.id);
+      } else if (hasAnyLocalData && !hasCloudData && !migrated) {
+        setMigrationPending(true);
+        return;
       } else if (hasCloudData && hasAnyLocalData) {
         const lastPush = getLastPushTs();
         for (const [mod, payload] of Object.entries(cloudModules)) {
@@ -217,8 +381,14 @@ export function useCloudSync(user) {
           const cloudTs = payload.serverUpdatedAt
             ? new Date(payload.serverUpdatedAt)
             : null;
-          if (cloudTs && lastPush && cloudTs > lastPush) {
+          const localVersion = user?.id ? getModuleVersion(user.id, mod) : 0;
+          const cloudVersion = payload.version ?? 0;
+
+          if (cloudVersion > localVersion || (cloudTs && lastPush && cloudTs > lastPush)) {
             applyModuleData(mod, payload.data);
+          }
+          if (user?.id && payload.version) {
+            setModuleVersion(user.id, mod, payload.version);
           }
         }
         const modules = {};
@@ -229,13 +399,16 @@ export function useCloudSync(user) {
           }
         }
         if (Object.keys(modules).length > 0) {
-          await fetch("/api/sync/push-all", {
+          await fetch(apiUrl("/api/sync/push-all"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({ modules }),
           });
         }
+        if (!migrated) markMigrationDone(user?.id);
+      } else {
+        if (!migrated) markMigrationDone(user?.id);
       }
 
       setLastPushTs(new Date());
@@ -246,7 +419,7 @@ export function useCloudSync(user) {
       setSyncing(false);
       syncingRef.current = false;
     }
-  }, []);
+  }, [user, replayOfflineQueue]);
 
   const didInitialSync = useRef(false);
   const lastUserId = useRef(null);
@@ -255,6 +428,7 @@ export function useCloudSync(user) {
     if (uid !== lastUserId.current) {
       didInitialSync.current = false;
       lastUserId.current = uid;
+      setMigrationPending(false);
     }
     if (!user || didInitialSync.current) return;
     didInitialSync.current = true;
@@ -263,6 +437,12 @@ export function useCloudSync(user) {
 
   useEffect(() => {
     if (!user) return;
+
+    const onOnline = () => {
+      replayOfflineQueue().then(() => pushAll());
+    };
+    window.addEventListener("online", onOnline);
+
     const debounceTimer = { id: null };
 
     const schedulePush = () => {
@@ -291,12 +471,22 @@ export function useCloudSync(user) {
     }, 2 * 60 * 1000);
 
     return () => {
+      window.removeEventListener("online", onOnline);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(SYNC_EVENT, onSyncDirty);
       clearTimeout(debounceTimer.id);
       clearInterval(periodicInterval);
     };
-  }, [user, pushAll]);
+  }, [user, pushAll, replayOfflineQueue]);
 
-  return { syncing, lastSync, syncError, pushAll, pullAll };
+  return {
+    syncing,
+    lastSync,
+    syncError,
+    pushAll,
+    pullAll,
+    migrationPending,
+    uploadLocalData,
+    skipMigration,
+  };
 }

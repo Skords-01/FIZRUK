@@ -53,9 +53,16 @@ npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 ## Auth & Sync System
 - **Better Auth** handles email/password registration and login at `/api/auth/*`
 - Session cookies with 30-day expiry, daily refresh, 5-minute cookie cache
-- `module_data` table stores JSON blobs per user per module (finyk, fizruk, routine, nutrition)
+- `module_data` table stores JSON blobs per user per module with version tracking
 - Sync endpoints: `POST /api/sync/push`, `POST /api/sync/pull`, `POST /api/sync/push-all`, `POST /api/sync/pull-all`
-- Client-side `useCloudSync` hook auto-pushes localStorage data to cloud on login and on storage changes (5s debounce)
+- All auth/sync client calls routed through `apiUrl()` for cross-origin Railway/Vercel deployment support
+- Client-side `useCloudSync` hook features:
+  - Auto-pushes localStorage data on storage changes (5s debounce) and 2-minute periodic interval
+  - **First-login migration UX**: prompts user to upload local data or skip when logging in for the first time with existing local data
+  - **Offline sync queue**: queues push operations in localStorage when offline, replays on reconnect (`online` event)
+  - **Per-module version tracking**: each module blob has an incrementing `version` column; client tracks per-user/per-module versions for deterministic LWW conflict resolution
+  - Migration state persisted per-user in `hub_sync_migrated_users` localStorage key
+  - Cross-account safety: resets initial sync state when user identity changes
 - Auth is optional — app works without login, but logged-in users get cloud backup and cross-device sync
 - User account menu in hub header shows sync status, manual push/pull buttons, and logout
 
@@ -64,7 +71,7 @@ npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 - `session` — Better Auth session table
 - `account` — Better Auth account/credentials table
 - `verification` — Better Auth email verification table
-- `module_data` — Per-user per-module JSON data (user_id, module, data JSONB, timestamps)
+- `module_data` — Per-user per-module JSON data (user_id, module, data JSONB, version INTEGER, timestamps)
 
 ## Shared UI System (`src/shared/`)
 - **ToastProvider + useToast** (`src/shared/hooks/useToast.jsx`) — Global toast notification context with `success`, `error`, `info`, `warning` methods

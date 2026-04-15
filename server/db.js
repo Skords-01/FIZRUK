@@ -19,6 +19,7 @@ export async function ensureSchema() {
         user_id TEXT NOT NULL,
         module TEXT NOT NULL,
         data JSONB NOT NULL DEFAULT '{}',
+        version INTEGER NOT NULL DEFAULT 1,
         client_updated_at TIMESTAMPTZ DEFAULT NOW(),
         server_updated_at TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(user_id, module)
@@ -27,6 +28,12 @@ export async function ensureSchema() {
     await client.query(
       `CREATE INDEX IF NOT EXISTS idx_module_data_user ON module_data(user_id)`,
     );
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE module_data ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$
+    `);
   } finally {
     client.release();
   }

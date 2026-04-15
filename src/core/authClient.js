@@ -1,7 +1,10 @@
 import { createAuthClient } from "better-auth/react";
+import { apiUrl } from "@shared/lib/apiUrl.js";
+
+const base = apiUrl("");
 
 export const authClient = createAuthClient({
-  baseURL: window.location.origin,
+  baseURL: base || window.location.origin,
 });
 
 export const {
