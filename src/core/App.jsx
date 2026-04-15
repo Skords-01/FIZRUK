@@ -3,6 +3,7 @@ import { cn } from "@shared/lib/cn";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
 import { HubBackupPanel } from "./HubBackupPanel.jsx";
 import { useDarkMode } from "@shared/hooks/useDarkMode";
+import { Button } from "@shared/components/ui/Button";
 
 /** Detects online/offline state and shows a banner when offline */
 function useOnlineStatus() {
@@ -334,9 +335,17 @@ export default function App() {
   }, []);
 
   const openModule = useCallback((id, opts = {}) => {
-    if (id === "fizruk" && opts.hash) {
-      const raw = String(opts.hash).replace(/^#/, "");
-      window.location.hash = raw ? `#${raw}` : "#dashboard";
+    try {
+      const raw = opts.hash != null ? String(opts.hash) : "";
+      if (raw) {
+        // normalized hash: always starts with '#'
+        window.location.hash = raw.startsWith("#") ? raw : `#${raw}`;
+      } else {
+        // prevent leaking previous module hash into the next module
+        window.location.hash = "";
+      }
+    } catch {
+      /* ignore */
     }
     setActiveModule(id);
     persistModuleToUrlAndStorage(id);
@@ -479,6 +488,46 @@ export default function App() {
               </button>
             );
           })}
+
+          <div className="mt-1">
+            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2 px-1">
+              Швидкі дії
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => openModule("nutrition", { hash: "log" })}
+                aria-label="Харчування: відкрити журнал"
+              >
+                Харчування · Журнал
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => openModule("nutrition", { hash: "recipes" })}
+                aria-label="Харчування: відкрити рецепти"
+              >
+                Харчування · Рецепти
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => openModule("fizruk", { hash: "workouts" })}
+                aria-label="Фізрук: відкрити тренування"
+              >
+                Фізрук · Тренування
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => openModule("finyk", { hash: "/transactions" })}
+                aria-label="Фінік: відкрити транзакції"
+              >
+                Фінік · Транзакції
+              </Button>
+            </div>
+          </div>
 
           <HubBackupPanel className="mt-2" />
         </main>
