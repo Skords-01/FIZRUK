@@ -232,8 +232,7 @@ function clearSyncManagedData() {
   for (const config of Object.values(SYNC_MODULES)) {
     for (const key of config.keys) {
       try {
-        _origSetItem.call(localStorage, key, "");
-        localStorage.removeItem(key);
+        _origRemoveItem(key);
       } catch {
       }
     }
@@ -255,10 +254,19 @@ export function notifySyncDirty(changedKey) {
 }
 
 const _origSetItem = localStorage.setItem.bind(localStorage);
+const _origRemoveItem = localStorage.removeItem.bind(localStorage);
 if (!window.__hubSyncPatched) {
   window.__hubSyncPatched = true;
   localStorage.setItem = function (key, value) {
     _origSetItem(key, value);
+    if (ALL_TRACKED_KEYS.has(key)) {
+      const mod = keyToModule(key);
+      if (mod) markModuleDirty(mod);
+      window.dispatchEvent(new CustomEvent(SYNC_EVENT));
+    }
+  };
+  localStorage.removeItem = function (key) {
+    _origRemoveItem(key);
     if (ALL_TRACKED_KEYS.has(key)) {
       const mod = keyToModule(key);
       if (mod) markModuleDirty(mod);
