@@ -4,8 +4,12 @@
  */
 import express from "express";
 
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./auth.js";
+import { ensureSchema } from "./db.js";
 import chatHandler from "./api/chat.js";
 import monoHandler from "./api/mono.js";
+import { syncPush, syncPull, syncPullAll, syncPushAll } from "./api/sync.js";
 import analyzePhoto from "./api/nutrition/analyze-photo.js";
 import parsePantry from "./api/nutrition/parse-pantry.js";
 import refinePhoto from "./api/nutrition/refine-photo.js";
@@ -42,6 +46,17 @@ function wrap(handler) {
 app.get("/health", (_req, res) => {
   res.status(200).type("text/plain").send("ok");
 });
+
+app.all("/api/auth/*", toNodeHandler(auth));
+
+app.use(
+  "/api/sync",
+  rateLimitExpress({ key: "api:sync", limit: 30, windowMs: 60_000 }),
+);
+app.all("/api/sync/push", wrap(syncPush));
+app.all("/api/sync/pull", wrap(syncPull));
+app.all("/api/sync/pull-all", wrap(syncPullAll));
+app.all("/api/sync/push-all", wrap(syncPushAll));
 
 app.all(
   "/api/chat",
@@ -81,6 +96,14 @@ app.use((err, _req, res, _next) => {
     res.status(status).json({ error: err?.message || "Server error", code });
   }
 });
+
+ensureSchema()
+  .then(() => {
+    console.log("[db] Schema verified");
+  })
+  .catch((err) => {
+    console.error("[db] Schema check failed:", err.message);
+  });
 
 app.listen(port, "0.0.0.0", () => {
   console.log(`[railway] API listening on ${port}`);

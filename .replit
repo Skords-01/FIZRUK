@@ -40,4 +40,3 @@ externalPort = 3001
 [userenv]
 
 [userenv.shared]
-BETTER_AUTH_SECRET = "2wHM5jrv6x1YRCEuCFEzwJ6qTCY451BVkPmn48XBySg="

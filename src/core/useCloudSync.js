@@ -249,7 +249,13 @@ export function useCloudSync(user) {
   }, []);
 
   const didInitialSync = useRef(false);
+  const lastUserId = useRef(null);
   useEffect(() => {
+    const uid = user?.id ?? null;
+    if (uid !== lastUserId.current) {
+      didInitialSync.current = false;
+      lastUserId.current = uid;
+    }
     if (!user || didInitialSync.current) return;
     didInitialSync.current = true;
     initialSync();

@@ -10,6 +10,7 @@ import { existsSync } from "fs";
 
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
+import { ensureSchema } from "./db.js";
 import chatHandler from "./api/chat.js";
 import monoHandler from "./api/mono.js";
 import analyzePhoto from "./api/nutrition/analyze-photo.js";
@@ -123,6 +124,14 @@ app.use((err, _req, res, _next) => {
     res.status(status).json({ error: err?.message || "Server error", code });
   }
 });
+
+ensureSchema()
+  .then(() => {
+    console.log("[db] Schema verified");
+  })
+  .catch((err) => {
+    console.error("[db] Schema check failed:", err.message);
+  });
 
 app.listen(port, "0.0.0.0", () => {
   console.log(`[replit] Server listening on port ${port}`);
