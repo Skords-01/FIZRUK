@@ -8,14 +8,22 @@ export async function postJson(url, body) {
     import.meta.env.VITE_NUTRITION_API_TOKEN
       ? String(import.meta.env.VITE_NUTRITION_API_TOKEN)
       : "";
-  const res = await fetch(apiUrl(url), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { "X-Token": token } : {}),
-    },
-    body: JSON.stringify(body || {}),
-  });
+  let res;
+  try {
+    res = await fetch(apiUrl(url), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "X-Token": token } : {}),
+      },
+      body: JSON.stringify(body || {}),
+    });
+  } catch (err) {
+    if (!navigator.onLine) {
+      throw new Error("Немає підключення до інтернету. Спробуй пізніше.");
+    }
+    throw new Error(err?.message || "Не вдалося зʼєднатися із сервером.");
+  }
   const ct = (res.headers.get("content-type") || "").toLowerCase();
   const raw = await res.text();
   let data = {};

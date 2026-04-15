@@ -1,9 +1,8 @@
-import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
 import { registerRoute, NavigationRoute } from "workbox-routing";
-import { NetworkFirst, CacheFirst } from "workbox-strategies";
+import { CacheFirst } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
-import { createHandlerBoundToURL } from "workbox-precaching";
 
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
@@ -36,7 +35,6 @@ registerRoute(
   }),
 );
 
-const ROUTINE_STATE_KEY = "hub_routine_v1";
 const ROUTINE_NOTIFY_PREFIX = "routine_notify_";
 
 function todayKey() {
@@ -71,8 +69,9 @@ function habitScheduledOnDateSW(h, dk) {
   return true;
 }
 
-let reminderTimerId = null;
+const notifiedKeys = new Set();
 let routineData = null;
+let reminderTimerId = null;
 
 function checkReminders() {
   if (!routineData) return;
@@ -92,9 +91,8 @@ function checkReminders() {
     if (hCompletions.includes(dk)) continue;
 
     const storageKey = `${ROUTINE_NOTIFY_PREFIX}${h.id}_${dk}`;
-    if (self.__notifiedKeys && self.__notifiedKeys.has(storageKey)) continue;
-    if (!self.__notifiedKeys) self.__notifiedKeys = new Set();
-    self.__notifiedKeys.add(storageKey);
+    if (notifiedKeys.has(storageKey)) continue;
+    notifiedKeys.add(storageKey);
 
     const title = `${h.emoji || "✓"} ${h.name}`;
     self.registration.showNotification(title, {
@@ -128,8 +126,7 @@ self.addEventListener("message", (event) => {
   }
 
   if (type === "ROUTINE_NOTIFICATION_SENT") {
-    if (!self.__notifiedKeys) self.__notifiedKeys = new Set();
-    if (data?.storageKey) self.__notifiedKeys.add(data.storageKey);
+    if (data?.storageKey) notifiedKeys.add(data.storageKey);
   }
 });
 

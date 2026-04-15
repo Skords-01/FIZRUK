@@ -151,6 +151,9 @@ function sleep(ms) {
 }
 
 async function fetchStatementWithRetry(tok, accId, from, to, maxAttempts = 3) {
+  if (!navigator.onLine) {
+    throw new Error("Немає підключення до інтернету. Спробуй пізніше.");
+  }
   let lastError = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
