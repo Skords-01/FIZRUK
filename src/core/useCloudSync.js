@@ -8,6 +8,8 @@ const SYNC_MODULES = {
       "finyk_debts", "finyk_recv", "finyk_hidden_txs", "finyk_monthly_plan",
       "finyk_tx_cats", "finyk_mono_debt_linked", "finyk_networth_history",
       "finyk_tx_splits", "finyk_custom_cats_v1",
+      "finyk_tx_cache", "finyk_info_cache", "finyk_tx_cache_last_good",
+      "finyk_show_balance_v1", "finyk_token",
     ],
   },
   fizruk: {
@@ -215,6 +217,24 @@ function applyModuleData(moduleName, data) {
       } catch {
       }
     }
+  }
+}
+
+function clearSyncManagedData() {
+  for (const config of Object.values(SYNC_MODULES)) {
+    for (const key of config.keys) {
+      try {
+        _origSetItem.call(localStorage, key, "");
+        localStorage.removeItem(key);
+      } catch {
+      }
+    }
+  }
+  try {
+    localStorage.removeItem(DIRTY_MODULES_KEY);
+    localStorage.removeItem(OFFLINE_QUEUE_KEY);
+    localStorage.removeItem(MODULE_MODIFIED_KEY);
+  } catch {
   }
 }
 
@@ -561,6 +581,9 @@ export function useCloudSync(user) {
   useEffect(() => {
     const uid = user?.id ?? null;
     if (uid !== lastUserId.current) {
+      if (lastUserId.current !== null) {
+        clearSyncManagedData();
+      }
       didInitialSync.current = false;
       lastUserId.current = uid;
       setMigrationPending(false);
