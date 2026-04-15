@@ -35,18 +35,19 @@ function fmtMacro(n) {
   return Math.round(Number(n));
 }
 
-const VALID_NUTRITION_PAGES = ["products", "log", "recipes"];
+const VALID_NUTRITION_PAGES = ["start", "pantry", "log", "recipes"];
 
 function parseHash() {
   const raw = (window.location.hash || "").replace(/^#/, "").trim();
-  if (!raw || raw.startsWith("/")) return { page: "products" };
+  if (!raw || raw.startsWith("/")) return { page: "start" };
   const [page] = raw.split("/").filter(Boolean);
-  if (!VALID_NUTRITION_PAGES.includes(page)) return { page: "products" };
+  if (page === "products") return { page: "pantry", redirectFrom: "products" };
+  if (!VALID_NUTRITION_PAGES.includes(page)) return { page: "start" };
   return { page };
 }
 
 function setHash(next) {
-  const h = next ? `#${next}` : "#products";
+  const h = next ? `#${next}` : "#start";
   if (window.location.hash === h) return;
   window.location.hash = h;
 }
@@ -63,8 +64,13 @@ export default function NutritionApp({ onBackToHub } = {}) {
   const [activePage, setActivePage] = useState(() => parseHash().page);
 
   useEffect(() => {
-    const onHash = () => setActivePage(parseHash().page);
+    const onHash = () => {
+      const p = parseHash();
+      setActivePage(p.page);
+      if (p.redirectFrom === "products") setHash("pantry");
+    };
     window.addEventListener("hashchange", onHash);
+    onHash();
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
@@ -338,23 +344,25 @@ export default function NutritionApp({ onBackToHub } = {}) {
           )}
 
           <div className="grid gap-4">
-            <PhotoAnalyzeCard
-              busy={busy}
-              analyzePhoto={photo.analyzePhoto}
-              fileRef={photo.fileRef}
-              onPickPhoto={photo.onPickPhoto}
-              photoPreviewUrl={photo.photoPreviewUrl}
-              photoResult={photo.photoResult}
-              fmtMacro={fmtMacro}
-              portionGrams={photo.portionGrams}
-              setPortionGrams={photo.setPortionGrams}
-              refinePhoto={photo.refinePhoto}
-              answers={photo.answers}
-              setAnswers={photo.setAnswers}
-              onSaveToLog={photo.photoResult ? handleSaveToLog : undefined}
-            />
+            {activePage === "start" && (
+              <PhotoAnalyzeCard
+                busy={busy}
+                analyzePhoto={photo.analyzePhoto}
+                fileRef={photo.fileRef}
+                onPickPhoto={photo.onPickPhoto}
+                photoPreviewUrl={photo.photoPreviewUrl}
+                photoResult={photo.photoResult}
+                fmtMacro={fmtMacro}
+                portionGrams={photo.portionGrams}
+                setPortionGrams={photo.setPortionGrams}
+                refinePhoto={photo.refinePhoto}
+                answers={photo.answers}
+                setAnswers={photo.setAnswers}
+                onSaveToLog={photo.photoResult ? handleSaveToLog : undefined}
+              />
+            )}
 
-            {activePage === "products" && (
+            {activePage === "pantry" && (
               <PantryCard
                 busy={busy}
                 activePantry={pantry.activePantry}
