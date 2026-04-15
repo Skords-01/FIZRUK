@@ -32,25 +32,71 @@ const SYNC_MODULES = {
 
 export const SYNC_EVENT = "hub-cloud-sync-dirty";
 
-const LAST_PUSH_TS_KEY = "hub_sync_last_push_ts";
 const SYNC_VERSION_KEY = "hub_sync_versions";
+const DIRTY_MODULES_KEY = "hub_sync_dirty_modules";
+const MODULE_MODIFIED_KEY = "hub_sync_module_modified";
 const OFFLINE_QUEUE_KEY = "hub_sync_offline_queue";
 const MIGRATION_DONE_KEY = "hub_sync_migrated_users";
 
-function getLastPushTs() {
+const ALL_TRACKED_KEYS = new Set(
+  Object.values(SYNC_MODULES).flatMap((m) => m.keys),
+);
+
+function keyToModule(key) {
+  for (const [mod, config] of Object.entries(SYNC_MODULES)) {
+    if (config.keys.includes(key)) return mod;
+  }
+  return null;
+}
+
+function getDirtyModules() {
   try {
-    const v = localStorage.getItem(LAST_PUSH_TS_KEY);
-    return v ? new Date(v) : null;
+    const raw = localStorage.getItem(DIRTY_MODULES_KEY);
+    return raw ? JSON.parse(raw) : {};
   } catch {
-    return null;
+    return {};
   }
 }
 
-function setLastPushTs(dt) {
+function markModuleDirty(moduleName) {
   try {
-    localStorage.setItem(LAST_PUSH_TS_KEY, dt.toISOString());
+    const dirty = getDirtyModules();
+    dirty[moduleName] = true;
+    localStorage.setItem(DIRTY_MODULES_KEY, JSON.stringify(dirty));
+    const modified = getModuleModifiedTimes();
+    modified[moduleName] = new Date().toISOString();
+    localStorage.setItem(MODULE_MODIFIED_KEY, JSON.stringify(modified));
   } catch {
   }
+}
+
+function clearDirtyModule(moduleName) {
+  try {
+    const dirty = getDirtyModules();
+    delete dirty[moduleName];
+    localStorage.setItem(DIRTY_MODULES_KEY, JSON.stringify(dirty));
+  } catch {
+  }
+}
+
+function clearAllDirty() {
+  try {
+    localStorage.setItem(DIRTY_MODULES_KEY, JSON.stringify({}));
+  } catch {
+  }
+}
+
+function getModuleModifiedTimes() {
+  try {
+    const raw = localStorage.getItem(MODULE_MODIFIED_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function getModuleModifiedTime(moduleName) {
+  return getModuleModifiedTimes()[moduleName] || null;
 }
 
 function getModuleVersions() {
@@ -172,8 +218,25 @@ function applyModuleData(moduleName, data) {
   }
 }
 
-export function notifySyncDirty() {
+export function notifySyncDirty(changedKey) {
+  if (changedKey && ALL_TRACKED_KEYS.has(changedKey)) {
+    const mod = keyToModule(changedKey);
+    if (mod) markModuleDirty(mod);
+  }
   window.dispatchEvent(new CustomEvent(SYNC_EVENT));
+}
+
+const _origSetItem = localStorage.setItem.bind(localStorage);
+if (!window.__hubSyncPatched) {
+  window.__hubSyncPatched = true;
+  localStorage.setItem = function (key, value) {
+    _origSetItem(key, value);
+    if (ALL_TRACKED_KEYS.has(key)) {
+      const mod = keyToModule(key);
+      if (mod) markModuleDirty(mod);
+      window.dispatchEvent(new CustomEvent(SYNC_EVENT));
+    }
+  };
 }
 
 export function useCloudSync(user) {
@@ -207,20 +270,31 @@ export function useCloudSync(user) {
     }
   }, []);
 
-  const pushAll = useCallback(async () => {
+  const pushDirty = useCallback(async () => {
     if (syncingRef.current) return;
+    const dirty = getDirtyModules();
+    const dirtyMods = Object.keys(dirty);
+    if (dirtyMods.length === 0) return;
+
     syncingRef.current = true;
     setSyncing(true);
     setSyncError(null);
     try {
+      const modifiedTimes = getModuleModifiedTimes();
       const modules = {};
-      for (const mod of Object.keys(SYNC_MODULES)) {
+      for (const mod of dirtyMods) {
         const data = collectModuleData(mod);
         if (data && Object.keys(data).length > 0) {
-          modules[mod] = { data, clientUpdatedAt: new Date().toISOString() };
+          modules[mod] = {
+            data,
+            clientUpdatedAt: modifiedTimes[mod] || new Date().toISOString(),
+          };
         }
       }
-      if (Object.keys(modules).length === 0) return;
+      if (Object.keys(modules).length === 0) {
+        clearAllDirty();
+        return;
+      }
 
       if (!navigator.onLine) {
         addToOfflineQueue({ type: "push", modules });
@@ -241,31 +315,80 @@ export function useCloudSync(user) {
       if (user?.id && result?.results) {
         for (const [mod, r] of Object.entries(result.results)) {
           if (r?.version) setModuleVersion(user.id, mod, r.version);
+          if (!r?.conflict) clearDirtyModule(mod);
         }
       }
 
-      setLastPushTs(new Date());
       setLastSync(new Date());
     } catch (err) {
-      addToOfflineQueue({
-        type: "push",
-        modules: (() => {
-          const m = {};
-          for (const mod of Object.keys(SYNC_MODULES)) {
-            const data = collectModuleData(mod);
-            if (data && Object.keys(data).length > 0) {
-              m[mod] = { data, clientUpdatedAt: new Date().toISOString() };
-            }
-          }
-          return m;
-        })(),
-      });
+      const modifiedTimes = getModuleModifiedTimes();
+      const modules = {};
+      for (const mod of dirtyMods) {
+        const data = collectModuleData(mod);
+        if (data && Object.keys(data).length > 0) {
+          modules[mod] = {
+            data,
+            clientUpdatedAt: modifiedTimes[mod] || new Date().toISOString(),
+          };
+        }
+      }
+      if (Object.keys(modules).length > 0) {
+        addToOfflineQueue({ type: "push", modules });
+      }
       setSyncError(err.message);
     } finally {
       setSyncing(false);
       syncingRef.current = false;
     }
   }, [user, replayOfflineQueue]);
+
+  const pushAll = useCallback(async () => {
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      const modifiedTimes = getModuleModifiedTimes();
+      const modules = {};
+      for (const mod of Object.keys(SYNC_MODULES)) {
+        const data = collectModuleData(mod);
+        if (data && Object.keys(data).length > 0) {
+          modules[mod] = {
+            data,
+            clientUpdatedAt: modifiedTimes[mod] || new Date().toISOString(),
+          };
+        }
+      }
+      if (Object.keys(modules).length === 0) return;
+
+      if (!navigator.onLine) {
+        addToOfflineQueue({ type: "push", modules });
+        return;
+      }
+
+      const res = await fetch(apiUrl("/api/sync/push-all"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ modules }),
+      });
+      if (!res.ok) throw new Error("Push failed");
+
+      const result = await res.json();
+      if (user?.id && result?.results) {
+        for (const [mod, r] of Object.entries(result.results)) {
+          if (r?.version) setModuleVersion(user.id, mod, r.version);
+        }
+      }
+      clearAllDirty();
+      setLastSync(new Date());
+    } catch (err) {
+      setSyncError(err.message);
+    } finally {
+      setSyncing(false);
+      syncingRef.current = false;
+    }
+  }, [user]);
 
   const pullAll = useCallback(async () => {
     if (syncingRef.current) return;
@@ -307,11 +430,15 @@ export function useCloudSync(user) {
     setSyncing(true);
     setSyncError(null);
     try {
+      const modifiedTimes = getModuleModifiedTimes();
       const modules = {};
       for (const mod of Object.keys(SYNC_MODULES)) {
         const data = collectModuleData(mod);
         if (data && Object.keys(data).length > 0) {
-          modules[mod] = { data, clientUpdatedAt: new Date().toISOString() };
+          modules[mod] = {
+            data,
+            clientUpdatedAt: modifiedTimes[mod] || new Date().toISOString(),
+          };
         }
       }
       if (Object.keys(modules).length > 0) {
@@ -324,7 +451,7 @@ export function useCloudSync(user) {
         if (!res.ok) throw new Error("Upload failed");
       }
       markMigrationDone(user.id);
-      setLastPushTs(new Date());
+      clearAllDirty();
       setLastSync(new Date());
       setMigrationPending(false);
     } catch (err) {
@@ -377,43 +504,49 @@ export function useCloudSync(user) {
         setMigrationPending(true);
         return;
       } else if (hasCloudData && hasAnyLocalData) {
-        const lastPush = getLastPushTs();
+        const modifiedTimes = getModuleModifiedTimes();
         for (const [mod, payload] of Object.entries(cloudModules)) {
           if (!payload?.data) continue;
-          const cloudTs = payload.serverUpdatedAt
-            ? new Date(payload.serverUpdatedAt)
-            : null;
           const localVersion = user?.id ? getModuleVersion(user.id, mod) : 0;
           const cloudVersion = payload.version ?? 0;
+          const localModified = modifiedTimes[mod] ? new Date(modifiedTimes[mod]) : null;
+          const cloudModified = payload.serverUpdatedAt ? new Date(payload.serverUpdatedAt) : null;
 
-          if (cloudVersion > localVersion || (cloudTs && lastPush && cloudTs > lastPush)) {
+          if (cloudVersion > localVersion || (cloudModified && localModified && cloudModified > localModified)) {
             applyModuleData(mod, payload.data);
           }
           if (user?.id && payload.version) {
             setModuleVersion(user.id, mod, payload.version);
           }
         }
-        const modules = {};
-        for (const mod of Object.keys(SYNC_MODULES)) {
-          const data = collectModuleData(mod);
-          if (data && Object.keys(data).length > 0) {
-            modules[mod] = { data, clientUpdatedAt: new Date().toISOString() };
+        const dirty = getDirtyModules();
+        const dirtyMods = Object.keys(dirty);
+        if (dirtyMods.length > 0) {
+          const modules = {};
+          for (const mod of dirtyMods) {
+            const data = collectModuleData(mod);
+            if (data && Object.keys(data).length > 0) {
+              modules[mod] = {
+                data,
+                clientUpdatedAt: modifiedTimes[mod] || new Date().toISOString(),
+              };
+            }
           }
-        }
-        if (Object.keys(modules).length > 0) {
-          await fetch(apiUrl("/api/sync/push-all"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ modules }),
-          });
+          if (Object.keys(modules).length > 0) {
+            const pushRes = await fetch(apiUrl("/api/sync/push-all"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ modules }),
+            });
+            if (pushRes.ok) clearAllDirty();
+          }
         }
         if (!migrated) markMigrationDone(user?.id);
       } else {
         if (!migrated) markMigrationDone(user?.id);
       }
 
-      setLastPushTs(new Date());
       setLastSync(new Date());
     } catch (err) {
       setSyncError(err.message);
@@ -441,7 +574,7 @@ export function useCloudSync(user) {
     if (!user) return;
 
     const onOnline = () => {
-      replayOfflineQueue().then(() => pushAll());
+      replayOfflineQueue().then(() => pushDirty());
     };
     window.addEventListener("online", onOnline);
 
@@ -450,36 +583,28 @@ export function useCloudSync(user) {
     const schedulePush = () => {
       clearTimeout(debounceTimer.id);
       debounceTimer.id = setTimeout(() => {
-        pushAll();
+        pushDirty();
       }, 5000);
-    };
-
-    const onStorage = (e) => {
-      if (!e.key) return;
-      const isTracked = Object.values(SYNC_MODULES).some((m) =>
-        m.keys.includes(e.key),
-      );
-      if (!isTracked) return;
-      schedulePush();
     };
 
     const onSyncDirty = () => schedulePush();
 
-    window.addEventListener("storage", onStorage);
     window.addEventListener(SYNC_EVENT, onSyncDirty);
 
     const periodicInterval = setInterval(() => {
-      pushAll();
+      const dirty = getDirtyModules();
+      if (Object.keys(dirty).length > 0) {
+        pushDirty();
+      }
     }, 2 * 60 * 1000);
 
     return () => {
       window.removeEventListener("online", onOnline);
-      window.removeEventListener("storage", onStorage);
       window.removeEventListener(SYNC_EVENT, onSyncDirty);
       clearTimeout(debounceTimer.id);
       clearInterval(periodicInterval);
     };
-  }, [user, pushAll, replayOfflineQueue]);
+  }, [user, pushDirty, replayOfflineQueue]);
 
   return {
     syncing,
