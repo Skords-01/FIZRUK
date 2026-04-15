@@ -10,6 +10,7 @@ import { AddMealSheet } from "./components/AddMealSheet.jsx";
 import { PantryManagerSheet } from "./components/PantryManagerSheet.jsx";
 import { ConfirmDeleteSheet } from "./components/ConfirmDeleteSheet.jsx";
 import { ItemEditSheet } from "./components/ItemEditSheet.jsx";
+import { Banner } from "@shared/components/ui/Banner.jsx";
 import { loadNutritionPrefs, persistNutritionPrefs, getDayMacros, toLocalISODate } from "./lib/nutritionStorage.js";
 import { useNutritionPantries } from "./hooks/useNutritionPantries.js";
 import { useNutritionLog } from "./hooks/useNutritionLog.js";
@@ -282,20 +283,16 @@ export default function NutritionApp({ onBackToHub } = {}) {
             </button>
           </div>
 
-          {statusText && (
-            <div className="mb-4 rounded-2xl border border-nutrition/35 bg-nutrition/10 px-4 py-3 text-sm text-text">
-              {statusText}
-            </div>
-          )}
+          {statusText && <Banner className="mb-4">{statusText}</Banner>}
           {err && (
-            <div className="mb-4 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+            <Banner variant="danger" className="mb-4">
               {err}
-            </div>
+            </Banner>
           )}
           {storageBanner && (
-            <div className="mb-4 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            <Banner variant="warning" className="mb-4">
               {storageBanner}
-            </div>
+            </Banner>
           )}
 
           <div className="grid gap-4">

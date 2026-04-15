@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
@@ -68,8 +68,6 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
     }
   }, [open, photoResult]);
 
-  if (!open) return null;
-
   function field(key) {
     return (v) => setForm((s) => ({ ...s, [key]: v, err: "" }));
   }
@@ -129,7 +127,7 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
     };
   }, [foodQuery]);
 
-  function applyPickedFood(p, gramsRaw) {
+  const applyPickedFood = useCallback((p, gramsRaw) => {
     const g = Number(String(gramsRaw || "").trim().replace(",", "."));
     const grams = Number.isFinite(g) && g > 0 ? g : p?.defaultGrams || 100;
     const mac = macrosForGrams(p?.per100, grams);
@@ -142,9 +140,9 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
       carbs_g: String(Math.round(Number(mac.carbs_g) || 0)),
       err: "",
     }));
-  }
+  }, []);
 
-  async function handleBarcodeLookup(codeRaw) {
+  const handleBarcodeLookup = useCallback(async (codeRaw) => {
     const code = String(codeRaw || "").trim();
     if (!code) return;
     setBarcodeStatus("Шукаю…");
@@ -157,7 +155,7 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
     setPickedFood(found);
     setPickedGrams(String(Math.round(found.defaultGrams || 100)));
     applyPickedFood(found, String(found.defaultGrams || 100));
-  }
+  }, [applyPickedFood]);
 
   async function handleBarcodeBind(codeRaw) {
     const code = String(codeRaw || "").trim();
@@ -196,7 +194,6 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
           setScannerOpen(false);
           return;
         }
-        // eslint-disable-next-line no-undef
         const Detector = window.BarcodeDetector;
         if (!Detector) {
           setBarcodeStatus("Сканер не підтримується (BarcodeDetector).");
@@ -253,11 +250,13 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
       if (raf) window.cancelAnimationFrame(raf);
       stop();
     };
-  }, [scannerOpen]);
+  }, [scannerOpen, handleBarcodeLookup]);
 
   const hasPhotoMacros =
     photoResult?.macros &&
     Object.values(photoResult.macros).some((v) => v != null && v !== 0);
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 flex items-end z-[120]">

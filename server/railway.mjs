@@ -12,12 +12,24 @@ import refinePhoto from "./api/nutrition/refine-photo.js";
 import recommendRecipes from "./api/nutrition/recommend-recipes.js";
 import dayHint from "./api/nutrition/day-hint.js";
 import weekPlan from "./api/nutrition/week-plan.js";
+import { setCorsHeaders } from "./api/lib/cors.js";
+import { rateLimitExpress } from "./api/lib/rateLimit.js";
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 
 app.disable("x-powered-by");
 app.use(express.json({ limit: "12mb" }));
+
+// CORS for the whole API (handlers may also set headers; safe to repeat).
+app.use("/api", (req, res, next) => {
+  setCorsHeaders(res, req, {
+    allowHeaders: "X-Token, Content-Type",
+    methods: "GET, POST, OPTIONS",
+  });
+  if (req.method === "OPTIONS") return res.status(200).end();
+  next();
+});
 
 function wrap(handler) {
   return (req, res, next) => {
@@ -29,8 +41,22 @@ app.get("/health", (_req, res) => {
   res.status(200).type("text/plain").send("ok");
 });
 
-app.all("/api/chat", wrap(chatHandler));
-app.all("/api/mono", wrap(monoHandler));
+app.all(
+  "/api/chat",
+  rateLimitExpress({ key: "api:chat", limit: 30, windowMs: 60_000 }),
+  wrap(chatHandler),
+);
+app.all(
+  "/api/mono",
+  rateLimitExpress({ key: "api:mono", limit: 60, windowMs: 60_000 }),
+  wrap(monoHandler),
+);
+
+// Broad best-effort limiter for nutrition endpoints (detailed limits exist inside handlers too).
+app.use(
+  "/api/nutrition",
+  rateLimitExpress({ key: "api:nutrition", limit: 120, windowMs: 60_000 }),
+);
 app.all("/api/nutrition/analyze-photo", wrap(analyzePhoto));
 app.all("/api/nutrition/parse-pantry", wrap(parsePantry));
 app.all("/api/nutrition/refine-photo", wrap(refinePhoto));
@@ -41,7 +67,9 @@ app.all("/api/nutrition/week-plan", wrap(weekPlan));
 app.use((err, _req, res, _next) => {
   console.error(err);
   if (!res.headersSent) {
-    res.status(500).json({ error: err?.message || "Server error" });
+    const status = Number(err?.status) || 500;
+    const code = typeof err?.code === "string" ? err.code : status === 429 ? "RATE_LIMIT" : "INTERNAL";
+    res.status(status).json({ error: err?.message || "Server error", code });
   }
 });
 

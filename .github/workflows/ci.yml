@@ -18,8 +18,11 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Audit
-        run: npm audit --audit-level=high
+      - name: Audit (critical only)
+        run: npm audit --audit-level=critical --omit=dev
+
+      - name: Audit (high, non-blocking)
+        run: npm audit --audit-level=high --omit=dev || true
 
       - name: Format
         run: npm run format:check

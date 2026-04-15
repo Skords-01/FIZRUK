@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => {
       "@shared": resolve(__dirname, "src/shared"),
       "@finyk": resolve(__dirname, "src/modules/finyk"),
       "@fizruk": resolve(__dirname, "src/modules/fizruk"),
+      "@routine": resolve(__dirname, "src/modules/routine"),
+      "@nutrition": resolve(__dirname, "src/modules/nutrition"),
     },
   },
   };

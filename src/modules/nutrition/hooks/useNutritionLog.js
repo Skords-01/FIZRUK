@@ -56,7 +56,7 @@ export function useNutritionLog() {
 
   const replaceLogFromJsonText = useCallback((text) => {
     const parsed = JSON.parse(text);
-    setNutritionLog((prev) => {
+    setNutritionLog((_prev) => {
       const next = normalizeNutritionLog(parsed);
       const keep = collectMealIds(next);
       void gcMealThumbnails(keep, { maxDeletes: 2000 });

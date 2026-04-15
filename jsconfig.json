@@ -4,7 +4,9 @@
     "paths": {
       "@shared/*": ["src/shared/*"],
       "@finyk/*": ["src/modules/finyk/*"],
-      "@fizruk/*": ["src/modules/fizruk/*"]
+      "@fizruk/*": ["src/modules/fizruk/*"],
+      "@routine/*": ["src/modules/routine/*"],
+      "@nutrition/*": ["src/modules/nutrition/*"]
     },
     "jsx": "react-jsx",
     "module": "ESNext",

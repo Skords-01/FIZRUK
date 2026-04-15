@@ -7,6 +7,7 @@ const MODULE_ROOTS = [
   path.join(repoRoot, "src", "modules", "finyk"),
   path.join(repoRoot, "src", "modules", "fizruk"),
   path.join(repoRoot, "src", "modules", "nutrition"),
+  path.join(repoRoot, "src", "modules", "routine"),
 ];
 
 const forbidden = [
