@@ -305,6 +305,7 @@ export function useCloudSync(user) {
     if (!user?.id) return;
     syncingRef.current = true;
     setSyncing(true);
+    setSyncError(null);
     try {
       const modules = {};
       for (const mod of Object.keys(SYNC_MODULES)) {
@@ -314,12 +315,13 @@ export function useCloudSync(user) {
         }
       }
       if (Object.keys(modules).length > 0) {
-        await fetch(apiUrl("/api/sync/push-all"), {
+        const res = await fetch(apiUrl("/api/sync/push-all"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ modules }),
         });
+        if (!res.ok) throw new Error("Upload failed");
       }
       markMigrationDone(user.id);
       setLastPushTs(new Date());

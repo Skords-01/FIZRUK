@@ -37,9 +37,24 @@ export async function syncPush(req, res) {
      ON CONFLICT (user_id, module) DO UPDATE
        SET data = $3, client_updated_at = $4, server_updated_at = NOW(),
            version = module_data.version + 1
+     WHERE module_data.client_updated_at <= $4
      RETURNING server_updated_at, version`,
     [user.id, module, blob, clientTs],
   );
+
+  if (result.rows.length === 0) {
+    const existing = await pool.query(
+      `SELECT server_updated_at, version FROM module_data WHERE user_id = $1 AND module = $2`,
+      [user.id, module],
+    );
+    return res.json({
+      ok: true,
+      module,
+      conflict: true,
+      serverUpdatedAt: existing.rows[0]?.server_updated_at,
+      version: existing.rows[0]?.version ?? 0,
+    });
+  }
 
   return res.json({
     ok: true,
@@ -167,14 +182,28 @@ export async function syncPushAll(req, res) {
          ON CONFLICT (user_id, module) DO UPDATE
            SET data = $3, client_updated_at = $4, server_updated_at = NOW(),
                version = module_data.version + 1
+         WHERE module_data.client_updated_at <= $4
          RETURNING server_updated_at, version`,
         [user.id, mod, blob, clientTs],
       );
-      results[mod] = {
-        ok: true,
-        serverUpdatedAt: r.rows[0].server_updated_at,
-        version: r.rows[0].version,
-      };
+      if (r.rows.length === 0) {
+        const existing = await client.query(
+          `SELECT server_updated_at, version FROM module_data WHERE user_id = $1 AND module = $2`,
+          [user.id, mod],
+        );
+        results[mod] = {
+          ok: true,
+          conflict: true,
+          serverUpdatedAt: existing.rows[0]?.server_updated_at,
+          version: existing.rows[0]?.version ?? 0,
+        };
+      } else {
+        results[mod] = {
+          ok: true,
+          serverUpdatedAt: r.rows[0].server_updated_at,
+          version: r.rows[0].version,
+        };
+      }
     }
     await client.query("COMMIT");
   } catch (err) {

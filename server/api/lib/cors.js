@@ -40,6 +40,8 @@ export function setCorsHeaders(res, req, opts = {}) {
   const allowed = getAllowedOrigins();
   if (origin && allowed.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
   }
   res.setHeader("Access-Control-Allow-Headers", allowHeaders);
   res.setHeader("Access-Control-Allow-Methods", methods);
