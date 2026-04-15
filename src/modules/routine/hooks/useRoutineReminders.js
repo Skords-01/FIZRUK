@@ -6,7 +6,6 @@ import {
 
 export const ROUTINE_NOTIFY_PREFIX = "routine_notify_";
 
-/** Видаляє старі ключі routine_notify_* (дата в кінці ключа). */
 export function cleanupStaleRoutineNotifyKeys(maxAgeDays = 45) {
   try {
     const cutoff = new Date();
@@ -19,9 +18,7 @@ export function cleanupStaleRoutineNotifyKeys(maxAgeDays = 45) {
       const d = m?.[1];
       if (d && d < cutoffKey) localStorage.removeItem(k);
     }
-  } catch {
-    /* noop */
-  }
+  } catch {}
 }
 
 function todayKey() {
@@ -33,10 +30,25 @@ function currentHm() {
   return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
 }
 
-/**
- * Локальні нагадування (поки вкладка відкрита / дозвіл на Notification).
- * Одне сповіщення на звичку на день, лише якщо ще не відмічено виконання.
- */
+async function showNotification(title, body, tag) {
+  try {
+    if ("serviceWorker" in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, {
+        body,
+        tag,
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
+        requireInteraction: false,
+      });
+      return;
+    }
+  } catch {}
+  try {
+    new Notification(title, { body, tag, requireInteraction: false });
+  } catch {}
+}
+
 export function useRoutineReminders(routine) {
   const enabled = routine.prefs?.routineRemindersEnabled === true;
   const routineRef = useRef(routine);
@@ -69,25 +81,13 @@ export function useRoutineReminders(routine) {
         const storageKey = `${ROUTINE_NOTIFY_PREFIX}${h.id}_${dk}`;
         try {
           if (localStorage.getItem(storageKey)) continue;
-        } catch {
-          /* noop */
-        }
+        } catch {}
 
+        const title = `${h.emoji || "✓"} ${h.name}`;
+        showNotification(title, "Нагадування про звичку", storageKey);
         try {
-          const title = `${h.emoji || "✓"} ${h.name}`;
-          new Notification(title, {
-            body: "Нагадування про звичку",
-            tag: storageKey,
-            requireInteraction: false,
-          });
-          try {
-            localStorage.setItem(storageKey, "1");
-          } catch {
-            /* noop */
-          }
-        } catch {
-          /* noop */
-        }
+          localStorage.setItem(storageKey, "1");
+        } catch {}
       }
     };
 

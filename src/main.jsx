@@ -38,3 +38,18 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <App />
   </ErrorBoundary>,
 );
+
+if ("serviceWorker" in navigator) {
+  import("virtual:pwa-register").then(({ registerSW }) => {
+    const updateSW = registerSW({
+      onNeedRefresh() {
+        window.__pwaUpdateReady = true;
+        window.__pwaUpdateSW = updateSW;
+        window.dispatchEvent(new CustomEvent("pwa-update-ready"));
+      },
+      onOfflineReady() {
+        window.dispatchEvent(new CustomEvent("pwa-offline-ready"));
+      },
+    });
+  });
+}

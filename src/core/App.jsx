@@ -1,9 +1,9 @@
-import { useState, useCallback, lazy, Suspense, useEffect } from "react";
+import { useState, useCallback, lazy, Suspense, useEffect, useRef } from "react";
 import { cn } from "@shared/lib/cn";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
 import { HubBackupPanel } from "./HubBackupPanel.jsx";
 import { useDarkMode } from "@shared/hooks/useDarkMode";
-import { ToastProvider } from "@shared/hooks/useToast";
+import { ToastProvider, useToast } from "@shared/hooks/useToast";
 import { ToastContainer } from "@shared/components/ui/Toast";
 
 /** Detects online/offline state and shows a banner when offline */
@@ -334,29 +334,98 @@ function DarkModeToggle({ dark, onToggle }) {
   );
 }
 
-/** PWA install banner — shows only when browser fires beforeinstallprompt */
+const PWA_SESSIONS_KEY = "pwa_session_count";
+const PWA_DISMISSED_KEY = "pwa_install_dismissed";
+const INSTALL_DELAY_MS = 30000;
+const MIN_SESSIONS = 2;
+
 function usePwaInstall() {
   const [prompt, setPrompt] = useState(null);
+  const [ready, setReady] = useState(false);
+  const deferredRef = useRef(null);
 
   useEffect(() => {
+    try {
+      const count = parseInt(localStorage.getItem(PWA_SESSIONS_KEY) || "0", 10) + 1;
+      localStorage.setItem(PWA_SESSIONS_KEY, String(count));
+    } catch {}
+
     const handler = (e) => {
       e.preventDefault();
+      deferredRef.current = e;
       setPrompt(e);
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  const install = useCallback(async () => {
+  useEffect(() => {
     if (!prompt) return;
-    prompt.prompt();
-    const { outcome } = await prompt.userChoice;
-    if (outcome === "accepted") setPrompt(null);
+    try {
+      if (localStorage.getItem(PWA_DISMISSED_KEY) === "1") return;
+    } catch {}
+
+    let sessions = 1;
+    try {
+      sessions = parseInt(localStorage.getItem(PWA_SESSIONS_KEY) || "1", 10);
+    } catch {}
+
+    if (sessions >= MIN_SESSIONS) {
+      const timer = setTimeout(() => setReady(true), INSTALL_DELAY_MS);
+      return () => clearTimeout(timer);
+    }
   }, [prompt]);
 
-  const dismiss = useCallback(() => setPrompt(null), []);
+  const install = useCallback(async () => {
+    const p = deferredRef.current;
+    if (!p) return;
+    p.prompt();
+    const { outcome } = await p.userChoice;
+    if (outcome === "accepted") {
+      deferredRef.current = null;
+      setPrompt(null);
+      setReady(false);
+    }
+  }, []);
 
-  return { canInstall: !!prompt, install, dismiss };
+  const dismiss = useCallback(() => {
+    try {
+      localStorage.setItem(PWA_DISMISSED_KEY, "1");
+    } catch {}
+    setReady(false);
+    setPrompt(null);
+  }, []);
+
+  return { canInstall: !!prompt && ready, install, dismiss };
+}
+
+function useSWUpdate() {
+  const toast = useToast();
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  useEffect(() => {
+    const onUpdate = () => setUpdateAvailable(true);
+    const onOffline = () => {
+      toast.success("Додаток готовий до роботи офлайн", 4000);
+    };
+    if (window.__pwaUpdateReady) setUpdateAvailable(true);
+    window.addEventListener("pwa-update-ready", onUpdate);
+    window.addEventListener("pwa-offline-ready", onOffline);
+    return () => {
+      window.removeEventListener("pwa-update-ready", onUpdate);
+      window.removeEventListener("pwa-offline-ready", onOffline);
+    };
+  }, [toast]);
+
+  const applyUpdate = useCallback(() => {
+    if (typeof window.__pwaUpdateSW === "function") {
+      window.__pwaUpdateSW(true);
+    } else {
+      window.location.reload();
+    }
+  }, []);
+
+  return { updateAvailable, applyUpdate };
 }
 
 export default function App() {
@@ -374,6 +443,7 @@ function AppInner() {
   const { dark, toggle: toggleDark } = useDarkMode();
   const { canInstall, install, dismiss } = usePwaInstall();
   const online = useOnlineStatus();
+  const { updateAvailable, applyUpdate } = useSWUpdate();
 
   const goToHub = useCallback(() => {
     try {
@@ -435,54 +505,41 @@ function AppInner() {
           </div>
         </header>
 
-        {/* PWA install banner */}
-        {canInstall && (
-          <div className="mx-5 max-w-lg mx-auto w-full mb-2 px-4 py-3 rounded-2xl bg-primary/8 border border-line flex items-center gap-3">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-primary shrink-0"
-              aria-hidden
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            <span className="text-sm text-text flex-1">
-              Встановити як додаток
-            </span>
-            <button
-              onClick={install}
-              className="text-sm font-semibold text-primary hover:underline shrink-0"
-            >
-              Встановити
-            </button>
-            <button
-              onClick={dismiss}
-              className="text-muted hover:text-text shrink-0"
-              aria-label="Закрити"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+        {updateAvailable && (
+          <div className="px-5 max-w-lg mx-auto w-full mb-2">
+            <div className="px-4 py-3 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0" aria-hidden>
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
               </svg>
-            </button>
+              <span className="text-sm text-text flex-1">Доступна нова версія</span>
+              <button onClick={applyUpdate} className="text-sm font-semibold text-primary hover:underline shrink-0">Оновити</button>
+            </div>
+          </div>
+        )}
+
+        {canInstall && (
+          <div className="px-5 max-w-lg mx-auto w-full mb-2">
+            <div className="px-4 py-3 rounded-2xl bg-panel border border-line shadow-card flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary" aria-hidden>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-text">Встановити додаток</p>
+                <p className="text-xs text-muted">Працює офлайн, як рідний додаток</p>
+              </div>
+              <button onClick={install} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold shrink-0 hover:bg-primary/90 transition-colors">Так</button>
+              <button onClick={dismiss} className="text-muted hover:text-text shrink-0 p-1" aria-label="Закрити">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
 
