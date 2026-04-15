@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node server/railway.mjs",
-    "dev": "vite",
+    "start:replit": "node server/replit.mjs",
+    "dev": "vite --port 5173 --host 0.0.0.0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . && node scripts/check-imports.mjs",

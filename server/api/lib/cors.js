@@ -1,21 +1,31 @@
 /**
- * CORS для Vercel serverless. Додаткові домени: змінна ALLOWED_ORIGINS (через кому).
+ * CORS origins. Додаткові домени: змінна ALLOWED_ORIGINS (через кому).
  * Приклад: https://app.example.com,https://preview-xxx.vercel.app
  */
 const DEFAULT_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:4173",
+  "http://localhost:5000",
   "https://fizruk.vercel.app",
   "https://sergeant.vercel.app",
   "https://sergeant.2dmanager.com.ua",
 ];
+
+function getReplitOrigins() {
+  const domains = process.env.REPLIT_DOMAINS || "";
+  return domains
+    .split(",")
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .flatMap((d) => [`https://${d}`, `http://${d}`]);
+}
 
 export function getAllowedOrigins() {
   const extra = (process.env.ALLOWED_ORIGINS || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  return [...new Set([...DEFAULT_ORIGINS, ...extra])];
+  return [...new Set([...DEFAULT_ORIGINS, ...getReplitOrigins(), ...extra])];
 }
 
 /**
