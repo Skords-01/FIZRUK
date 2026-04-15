@@ -73,7 +73,7 @@ export function Overview({
   onCategoryClick,
   showBalance = true,
 }) {
-  const { realTx, loadingTx, clientInfo, accounts, transactions, syncState, lastUpdated, error: monoError, refresh: monoRefresh, loadingTx: monoLoadingTx } = mono;
+  const { realTx, loadingTx, clientInfo, accounts, transactions, syncState, lastUpdated, error: monoError, refresh: monoRefresh } = mono;
   const {
     budgets,
     subscriptions,
@@ -383,7 +383,7 @@ export function Overview({
             lastUpdated={lastUpdated}
             error={monoError}
             onRetry={monoRefresh}
-            loading={monoLoadingTx}
+            loading={loadingTx}
           />
         )}
 
