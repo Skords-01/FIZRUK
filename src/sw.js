@@ -78,6 +78,15 @@ const notifiedKeys = new Set();
 let routineData = null;
 let reminderTimerId = null;
 
+function normalizeReminderTimesSW(h) {
+  if (Array.isArray(h.reminderTimes) && h.reminderTimes.length > 0) {
+    return h.reminderTimes.filter((t) => typeof t === "string" && /^\d{2}:\d{2}$/.test(t));
+  }
+  const legacy = h.timeOfDay && String(h.timeOfDay).trim();
+  if (legacy && /^\d{2}:\d{2}$/.test(legacy)) return [legacy];
+  return [];
+}
+
 function checkReminders() {
   if (!routineData) return;
   if (routineData.prefs?.routineRemindersEnabled !== true) return;
@@ -89,13 +98,14 @@ function checkReminders() {
 
   for (const h of habits) {
     if (h.archived) continue;
-    const t = h.timeOfDay && String(h.timeOfDay).trim();
-    if (!t || t !== hm) continue;
+    const times = normalizeReminderTimesSW(h);
+    if (times.length === 0) continue;
+    if (!times.includes(hm)) continue;
     if (!habitScheduledOnDateSW(h, dk)) continue;
     const hCompletions = completions[h.id] || [];
     if (hCompletions.includes(dk)) continue;
 
-    const storageKey = `${ROUTINE_NOTIFY_PREFIX}${h.id}_${dk}`;
+    const storageKey = `${ROUTINE_NOTIFY_PREFIX}${h.id}_${hm}_${dk}`;
     if (notifiedKeys.has(storageKey)) continue;
     notifiedKeys.add(storageKey);
 

@@ -36,7 +36,7 @@ export function Dashboard({ onOpenAtlas }) {
   const rec = useRecovery();
   const { workouts, createWorkout, addItem } = useWorkouts();
   const { exercises, primaryGroupsUk, musclesUk } = useExerciseCatalog();
-  const { templates } = useWorkoutTemplates();
+  const { templates, recentlyUsed, markTemplateUsed } = useWorkoutTemplates();
   const monthlyPlan = useMonthlyPlan();
 
   const [recoveryOpen, setRecoveryOpen] = useState(false);
@@ -197,7 +197,7 @@ export function Dashboard({ onOpenAtlas }) {
     return "Доброго вечора";
   }, []);
 
-  const startWorkoutFromPlan = (picks) => {
+  const startWorkoutFromPlan = (picks, templateId) => {
     const w = createWorkout();
     for (const ex of picks) {
       const isCardio = ex.primaryGroup === "cardio";
@@ -213,6 +213,7 @@ export function Dashboard({ onOpenAtlas }) {
         distanceM: isCardio ? 0 : 0,
       });
     }
+    if (templateId) markTemplateUsed(templateId);
     try {
       localStorage.setItem(ACTIVE_WORKOUT_KEY, w.id);
     } catch {}
@@ -222,18 +223,22 @@ export function Dashboard({ onOpenAtlas }) {
     window.location.hash = "#workouts";
   };
 
-  const tryStartPlan = (picks) => {
+  const [pendingTemplateId, setPendingTemplateId] = useState(null);
+
+  const tryStartPlan = (picks, templateId) => {
     if (!picks?.length) return;
     const risky = picks.some(
       (ex) => recoveryConflictsForExercise(ex, rec.by).hasWarning,
     );
     if (risky) {
       setPendingPicks(picks);
+      setPendingTemplateId(templateId || null);
       setPlanConfirmOpen(true);
       return;
     }
     setPendingPicks(null);
-    startWorkoutFromPlan(picks);
+    setPendingTemplateId(null);
+    startWorkoutFromPlan(picks, templateId);
   };
 
   const kpi = [
@@ -346,7 +351,11 @@ export function Dashboard({ onOpenAtlas }) {
           </div>
         </section>
 
-        {templates.length > 0 && (
+        {templates.length > 0 && (() => {
+          const quickTemplates = recentlyUsed.length > 0
+            ? recentlyUsed
+            : templates.slice(0, 3);
+          return (
           <section
             className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
             aria-label="Швидкий старт"
@@ -356,11 +365,11 @@ export function Dashboard({ onOpenAtlas }) {
                 Швидкий старт
               </h2>
               <span className="text-[10px] text-muted">
-                Останні шаблони
+                {recentlyUsed.length > 0 ? "Нещодавно використані" : "Останні шаблони"}
               </span>
             </div>
             <div className="flex flex-col gap-2">
-              {templates.slice(0, 3).map((tpl) => {
+              {quickTemplates.map((tpl) => {
                 const picks = (tpl.exerciseIds || [])
                   .map((id) => exercises.find((e) => e.id === id))
                   .filter(Boolean);
@@ -369,7 +378,7 @@ export function Dashboard({ onOpenAtlas }) {
                     key={tpl.id}
                     type="button"
                     className="w-full text-left flex items-center gap-3 rounded-2xl border border-line bg-bg hover:bg-panelHi p-3 min-h-[52px] transition-colors active:scale-[0.99]"
-                    onClick={() => tryStartPlan(picks)}
+                    onClick={() => tryStartPlan(picks, tpl.id)}
                     disabled={!picks.length}
                   >
                     <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center text-success shrink-0" aria-hidden>
@@ -388,7 +397,8 @@ export function Dashboard({ onOpenAtlas }) {
               })}
             </div>
           </section>
-        )}
+          );
+        })()}
 
         <section
           className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
@@ -752,7 +762,8 @@ export function Dashboard({ onOpenAtlas }) {
                     : plan.picked;
                   setPlanConfirmOpen(false);
                   setPendingPicks(null);
-                  startWorkoutFromPlan(picks);
+                  startWorkoutFromPlan(picks, pendingTemplateId);
+                  setPendingTemplateId(null);
                 }}
               >
                 Продовжити

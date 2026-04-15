@@ -70,6 +70,19 @@ export function useWorkoutTemplates() {
     [persist, templates],
   );
 
+  const markTemplateUsed = useCallback(
+    (id) => {
+      persist(
+        templates.map((t) =>
+          t.id === id
+            ? { ...t, lastUsedAt: new Date().toISOString() }
+            : t,
+        ),
+      );
+    },
+    [persist, templates],
+  );
+
   const sorted = useMemo(
     () =>
       [...templates].sort((a, b) =>
@@ -78,5 +91,14 @@ export function useWorkoutTemplates() {
     [templates],
   );
 
-  return { templates: sorted, addTemplate, updateTemplate, removeTemplate };
+  const recentlyUsed = useMemo(
+    () =>
+      [...templates]
+        .filter((t) => t.lastUsedAt)
+        .sort((a, b) => (b.lastUsedAt || "").localeCompare(a.lastUsedAt || ""))
+        .slice(0, 3),
+    [templates],
+  );
+
+  return { templates: sorted, recentlyUsed, addTemplate, updateTemplate, removeTemplate, markTemplateUsed };
 }
