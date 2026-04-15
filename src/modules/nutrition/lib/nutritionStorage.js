@@ -1,6 +1,10 @@
 import { normalizeFoodName } from "./pantryTextParser.js";
 import { mergeItems } from "./mergeItems.js";
-import { isMealTypeId, labelForMealType, mealTypeFromLabel } from "./mealTypes.js";
+import {
+  isMealTypeId,
+  labelForMealType,
+  mealTypeFromLabel,
+} from "./mealTypes.js";
 
 export const NUTRITION_PANTRIES_KEY = "nutrition_pantries_v1";
 export const NUTRITION_ACTIVE_PANTRY_KEY = "nutrition_active_pantry_v1";
@@ -46,7 +50,8 @@ export function loadNutritionPrefs(key = NUTRITION_PREFS_KEY) {
     const raw = localStorage.getItem(key);
     if (!raw) return defaultNutritionPrefs();
     const p = JSON.parse(raw);
-    if (!p || typeof p !== "object" || Array.isArray(p)) return defaultNutritionPrefs();
+    if (!p || typeof p !== "object" || Array.isArray(p))
+      return defaultNutritionPrefs();
     return {
       ...defaultNutritionPrefs(),
       ...p,
@@ -118,9 +123,12 @@ export function loadPantries(
   // Міграція: якщо є старі ключі (не було складів), підтягнемо як "Дім"
   let fallback = makeDefaultPantry();
   try {
-    const oldItems = JSON.parse(localStorage.getItem(LEGACY_ITEMS_KEY) || "null");
+    const oldItems = JSON.parse(
+      localStorage.getItem(LEGACY_ITEMS_KEY) || "null",
+    );
     const oldText = String(localStorage.getItem(LEGACY_TEXT_KEY) || "");
-    if (Array.isArray(oldItems) && oldItems.length > 0) fallback.items = oldItems;
+    if (Array.isArray(oldItems) && oldItems.length > 0)
+      fallback.items = oldItems;
     if (oldText) fallback.text = oldText;
   } catch {}
   try {
@@ -137,7 +145,10 @@ export function persistPantries(
 ) {
   let ok = true;
   try {
-    localStorage.setItem(key, JSON.stringify(Array.isArray(pantries) ? pantries : []));
+    localStorage.setItem(
+      key,
+      JSON.stringify(Array.isArray(pantries) ? pantries : []),
+    );
   } catch {
     ok = false;
   }
@@ -167,14 +178,20 @@ export function upsertPantryItem(pantry, name) {
   if (!n) return pantry;
   const arr = Array.isArray(pantry?.items) ? pantry.items : [];
   if (arr.some((x) => normalizeFoodName(x?.name) === n)) return pantry;
-  return { ...pantry, items: [...arr, { name: n, qty: null, unit: null, notes: null }] };
+  return {
+    ...pantry,
+    items: [...arr, { name: n, qty: null, unit: null, notes: null }],
+  };
 }
 
 export function removePantryItem(pantry, name) {
   const n = normalizeFoodName(name);
   if (!n) return pantry;
   const arr = Array.isArray(pantry?.items) ? pantry.items : [];
-  return { ...pantry, items: arr.filter((x) => normalizeFoodName(x?.name) !== n) };
+  return {
+    ...pantry,
+    items: arr.filter((x) => normalizeFoodName(x?.name) !== n),
+  };
 }
 
 export function mergePantryItems(pantry, incomingItems) {
@@ -201,7 +218,8 @@ function normalizeMacros(mac) {
 export function normalizeMeal(m, idx) {
   const raw = m && typeof m === "object" ? m : {};
   let id = raw.id != null && String(raw.id).trim() ? String(raw.id).trim() : "";
-  if (!id) id = `meal_mig_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 8)}`;
+  if (!id)
+    id = `meal_mig_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 8)}`;
 
   const name = raw.name != null ? String(raw.name).trim() : "";
   const time = raw.time != null ? String(raw.time).trim() : "";
@@ -217,7 +235,8 @@ export function normalizeMeal(m, idx) {
       : labelForMealType(mealType);
 
   const macros = normalizeMacros(raw.macros);
-  const source = raw.source && String(raw.source) === "photo" ? "photo" : "manual";
+  const source =
+    raw.source && String(raw.source) === "photo" ? "photo" : "manual";
 
   return { id, name, time, mealType, label, macros, source };
 }
@@ -278,7 +297,9 @@ export function addLogEntry(log, date, meal) {
 export function removeLogEntry(log, date, id) {
   const day = log[date];
   if (!day) return log;
-  const meals = (Array.isArray(day.meals) ? day.meals : []).filter((m) => m.id !== id);
+  const meals = (Array.isArray(day.meals) ? day.meals : []).filter(
+    (m) => m.id !== id,
+  );
   if (meals.length === 0) {
     const next = { ...log };
     delete next[date];
@@ -289,7 +310,8 @@ export function removeLogEntry(log, date, id) {
 
 export function getDayMacros(log, date) {
   const day = log[date];
-  if (!day || !Array.isArray(day.meals)) return { kcal: 0, protein_g: 0, fat_g: 0, carbs_g: 0 };
+  if (!day || !Array.isArray(day.meals))
+    return { kcal: 0, protein_g: 0, fat_g: 0, carbs_g: 0 };
   return day.meals.reduce(
     (acc, m) => {
       const mac = m?.macros || {};
@@ -313,8 +335,11 @@ export function addDaysISODate(iso, deltaDays) {
 export function duplicatePreviousDayMeals(log, targetDate) {
   const prev = addDaysISODate(targetDate, -1);
   const prevDay = log[prev];
-  if (!prevDay || !Array.isArray(prevDay.meals) || prevDay.meals.length === 0) return log;
-  const existing = Array.isArray(log[targetDate]?.meals) ? log[targetDate].meals : [];
+  if (!prevDay || !Array.isArray(prevDay.meals) || prevDay.meals.length === 0)
+    return log;
+  const existing = Array.isArray(log[targetDate]?.meals)
+    ? log[targetDate].meals
+    : [];
   const startIdx = existing.length;
   const clones = prevDay.meals.map((m, i) =>
     normalizeMeal({ ...m, id: undefined, source: "manual" }, startIdx + i),
@@ -344,7 +369,9 @@ export function mergeNutritionLogs(base, incoming) {
 }
 
 export function searchMealsByName(log, query) {
-  const q = String(query || "").trim().toLowerCase();
+  const q = String(query || "")
+    .trim()
+    .toLowerCase();
   if (!q) return [];
   const results = [];
   for (const [date, day] of Object.entries(log)) {

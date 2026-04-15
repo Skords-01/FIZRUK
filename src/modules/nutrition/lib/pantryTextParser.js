@@ -30,7 +30,12 @@ export function parseLoosePantryText(raw) {
         /^(\d+(?:[.,]\d+)?)\s*([a-zA-Zа-яА-ЯіїєґІЇЄҐ%]+)?\s*(.+)?$/,
       );
       if (!m)
-        return { name: normalizeFoodName(p), qty: null, unit: null, notes: null };
+        return {
+          name: normalizeFoodName(p),
+          qty: null,
+          unit: null,
+          notes: null,
+        };
       const qty = m[1] ? Number(String(m[1]).replace(",", ".")) : null;
       const unitRaw = normalizeFoodName(m[2] || "");
       const rest = normalizeFoodName(m[3] || "");
@@ -60,4 +65,3 @@ export function parseLoosePantryText(raw) {
     })
     .filter((x) => x.name);
 }
-

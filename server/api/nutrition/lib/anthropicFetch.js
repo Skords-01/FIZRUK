@@ -1,6 +1,10 @@
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
-export async function anthropicMessages(apiKey, payload, { timeoutMs = 20000 } = {}) {
+export async function anthropicMessages(
+  apiKey,
+  payload,
+  { timeoutMs = 20000 } = {},
+) {
   const maxAttempts = 3;
   const retryDelayMs = [0, 250, 750];
 
@@ -58,14 +62,21 @@ export function extractAnthropicText(data) {
 }
 
 function shouldRetryStatus(status) {
-  return status === 429 || status === 500 || status === 502 || status === 503 || status === 529;
+  return (
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 529
+  );
 }
 
 function isAbortError(e) {
-  return !!e && (e.name === "AbortError" || /abort/i.test(String(e?.message || "")));
+  return (
+    !!e && (e.name === "AbortError" || /abort/i.test(String(e?.message || "")))
+  );
 }
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
-

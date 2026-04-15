@@ -10,9 +10,20 @@ import {
   addDaysISODate,
   toLocalISODate,
 } from "../lib/nutritionStorage.js";
-import { MEAL_ORDER, MEAL_META, isMealTypeId, mealTypeFromLabel } from "../lib/mealTypes.js";
+import {
+  MEAL_ORDER,
+  MEAL_META,
+  isMealTypeId,
+  mealTypeFromLabel,
+} from "../lib/mealTypes.js";
 import { GOAL_PRESETS } from "../lib/goalPresets.js";
-import { avgFromSummary, getRowsForRange, mealTypeBreakdown, summarizeRows, topMeals } from "../lib/nutritionStats.js";
+import {
+  avgFromSummary,
+  getRowsForRange,
+  mealTypeBreakdown,
+  summarizeRows,
+  topMeals,
+} from "../lib/nutritionStats.js";
 import {
   downloadBlob,
   weekMacrosToCsv,
@@ -21,10 +32,30 @@ import {
 import { getMealThumbnailBlob } from "../lib/mealPhotoStorage.js";
 
 const MACRO_TILES = [
-  { key: "kcal", label: "Ккал", color: "text-nutrition", targetKey: "dailyTargetKcal" },
-  { key: "protein_g", label: "Білки", color: "text-blue-400", targetKey: "dailyTargetProtein_g" },
-  { key: "fat_g", label: "Жири", color: "text-yellow-400", targetKey: "dailyTargetFat_g" },
-  { key: "carbs_g", label: "Вугл.", color: "text-orange-400", targetKey: "dailyTargetCarbs_g" },
+  {
+    key: "kcal",
+    label: "Ккал",
+    color: "text-nutrition",
+    targetKey: "dailyTargetKcal",
+  },
+  {
+    key: "protein_g",
+    label: "Білки",
+    color: "text-blue-400",
+    targetKey: "dailyTargetProtein_g",
+  },
+  {
+    key: "fat_g",
+    label: "Жири",
+    color: "text-yellow-400",
+    targetKey: "dailyTargetFat_g",
+  },
+  {
+    key: "carbs_g",
+    label: "Вугл.",
+    color: "text-orange-400",
+    targetKey: "dailyTargetCarbs_g",
+  },
 ];
 
 function toISODate(d) {
@@ -74,7 +105,11 @@ function MealThumb({ mealId }) {
   }, [mealId]);
   if (!url) return null;
   return (
-    <img src={url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 border border-line/60" />
+    <img
+      src={url}
+      alt=""
+      className="w-10 h-10 rounded-lg object-cover shrink-0 border border-line/60"
+    />
   );
 }
 
@@ -110,7 +145,10 @@ export function LogCard({
     return searchMealsByName(log, q).slice(0, 40);
   }, [log, searchQuery]);
 
-  const weekRows = useMemo(() => getMacrosForDateRange(log, selectedDate, 7), [log, selectedDate]);
+  const weekRows = useMemo(
+    () => getMacrosForDateRange(log, selectedDate, 7),
+    [log, selectedDate],
+  );
 
   const statsRows = useMemo(
     () => getRowsForRange(log, selectedDate, statsRange),
@@ -118,7 +156,10 @@ export function LogCard({
   );
   const statsSummary = useMemo(() => summarizeRows(statsRows), [statsRows]);
   const statsAvg = useMemo(() => avgFromSummary(statsSummary), [statsSummary]);
-  const statsTop = useMemo(() => topMeals(log, selectedDate, statsRange, 8), [log, selectedDate, statsRange]);
+  const statsTop = useMemo(
+    () => topMeals(log, selectedDate, statsRange, 8),
+    [log, selectedDate, statsRange],
+  );
   const statsMealTypes = useMemo(
     () => mealTypeBreakdown(log, selectedDate, statsRange),
     [log, selectedDate, statsRange],
@@ -140,7 +181,9 @@ export function LogCard({
   const hasPrevDay = log[prevDate]?.meals?.length > 0;
 
   function setTarget(key, raw) {
-    const v = String(raw ?? "").trim().replace(",", ".");
+    const v = String(raw ?? "")
+      .trim()
+      .replace(",", ".");
     setPrefs((p) => {
       if (v === "") return { ...p, [key]: null };
       const n = Number(v);
@@ -168,12 +211,20 @@ export function LogCard({
   }
 
   function exportDayText() {
-    downloadBlob(`nutrition-${selectedDate}.txt`, "text/plain;charset=utf-8", formatDayAsText(log, selectedDate));
+    downloadBlob(
+      `nutrition-${selectedDate}.txt`,
+      "text/plain;charset=utf-8",
+      formatDayAsText(log, selectedDate),
+    );
   }
 
   function exportWeekCsv() {
     const csv = weekMacrosToCsv(weekRows);
-    downloadBlob(`nutrition-week-${selectedDate}.csv`, "text/csv;charset=utf-8", csv);
+    downloadBlob(
+      `nutrition-week-${selectedDate}.csv`,
+      "text/csv;charset=utf-8",
+      csv,
+    );
   }
 
   function handleImportFile(e) {
@@ -210,7 +261,9 @@ export function LogCard({
           ‹
         </button>
         <div className="flex flex-col items-center gap-0.5">
-          <span className="font-extrabold text-text text-base">{formatDate(selectedDate)}</span>
+          <span className="font-extrabold text-text text-base">
+            {formatDate(selectedDate)}
+          </span>
           <span className="text-[11px] text-subtle">{selectedDate}</span>
         </div>
         <button
@@ -219,7 +272,9 @@ export function LogCard({
           disabled={isToday}
           className={cn(
             "w-10 h-10 flex items-center justify-center rounded-full transition-colors",
-            isToday ? "text-line cursor-not-allowed" : "bg-panelHi text-muted hover:text-text",
+            isToday
+              ? "text-line cursor-not-allowed"
+              : "bg-panelHi text-muted hover:text-text",
           )}
           aria-label="Наступний день"
         >
@@ -228,7 +283,9 @@ export function LogCard({
       </div>
 
       <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
-        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Пошук по журналу</div>
+        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+          Пошук по журналу
+        </div>
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -259,7 +316,12 @@ export function LogCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="ghost" className="text-xs h-9" onClick={exportDayJson}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-xs h-9"
+          onClick={exportDayJson}
+        >
           JSON дня
         </Button>
         <Button
@@ -267,15 +329,29 @@ export function LogCard({
           variant="ghost"
           className="text-xs h-9"
           onClick={() =>
-            downloadBlob("nutrition-log-full.json", "application/json", JSON.stringify(log, null, 2))
+            downloadBlob(
+              "nutrition-log-full.json",
+              "application/json",
+              JSON.stringify(log, null, 2),
+            )
           }
         >
           Повний журнал
         </Button>
-        <Button type="button" variant="ghost" className="text-xs h-9" onClick={exportDayText}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-xs h-9"
+          onClick={exportDayText}
+        >
           Текст дня
         </Button>
-        <Button type="button" variant="ghost" className="text-xs h-9" onClick={exportWeekCsv}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-xs h-9"
+          onClick={exportWeekCsv}
+        >
           CSV тижня
         </Button>
         <Button
@@ -284,7 +360,12 @@ export function LogCard({
           className="text-xs h-9"
           disabled={!hasPrevDay}
           onClick={() => {
-            if (window.confirm("Скопіювати всі прийоми з попереднього дня в цей день?")) onDuplicateYesterday();
+            if (
+              window.confirm(
+                "Скопіювати всі прийоми з попереднього дня в цей день?",
+              )
+            )
+              onDuplicateYesterday();
           }}
         >
           Як учора
@@ -292,7 +373,9 @@ export function LogCard({
       </div>
 
       <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
-        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Імпорт журналу (JSON)</div>
+        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+          Імпорт журналу (JSON)
+        </div>
         <div className="flex flex-wrap gap-2 items-center">
           <select
             value={importMode}
@@ -302,8 +385,19 @@ export function LogCard({
             <option value="merge">Додати до поточного</option>
             <option value="replace">Замінити повністю</option>
           </select>
-          <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImportFile} />
-          <Button type="button" variant="ghost" className="text-xs h-9" onClick={() => importRef.current?.click()}>
+          <input
+            ref={importRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-xs h-9"
+            onClick={() => importRef.current?.click()}
+          >
             Обрати файл…
           </Button>
         </div>
@@ -312,14 +406,20 @@ export function LogCard({
       {logSizeWarn && (
         <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
           Журнал великий (~{Math.round(logBytes / 1024)} КБ).{" "}
-          <button type="button" className="underline font-semibold" onClick={() => onTrimLog(365)}>
+          <button
+            type="button"
+            className="underline font-semibold"
+            onClick={() => onTrimLog(365)}
+          >
             Залишити лише останні 365 днів
           </button>
         </div>
       )}
 
       <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
-        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">Тиждень (до обраної дати)</div>
+        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+          Тиждень (до обраної дати)
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[11px] text-left">
             <thead>
@@ -334,7 +434,9 @@ export function LogCard({
             <tbody>
               {weekRows.map((r) => (
                 <tr key={r.date} className="border-t border-line/40">
-                  <td className="py-1 pr-2 font-mono text-[10px]">{r.date.slice(5)}</td>
+                  <td className="py-1 pr-2 font-mono text-[10px]">
+                    {r.date.slice(5)}
+                  </td>
                   <td className="py-1 pr-2">{Math.round(r.kcal)}</td>
                   <td className="py-1 pr-2">{Math.round(r.protein_g)}</td>
                   <td className="py-1 pr-2">{Math.round(r.fat_g)}</td>
@@ -347,7 +449,9 @@ export function LogCard({
       </div>
 
       <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
-        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Підказка AI за день</div>
+        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+          Підказка AI за день
+        </div>
         <Button
           type="button"
           variant="ghost"
@@ -358,12 +462,16 @@ export function LogCard({
           {dayHintBusy ? "…" : "Отримати підказку"}
         </Button>
         {dayHintText && (
-          <p className="text-sm text-text leading-snug border border-line/30 rounded-xl p-3 bg-bg/80">{dayHintText}</p>
+          <p className="text-sm text-text leading-snug border border-line/30 rounded-xl p-3 bg-bg/80">
+            {dayHintText}
+          </p>
         )}
       </div>
 
       <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
-        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Швидкі цілі (КБЖВ)</div>
+        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+          Швидкі цілі (КБЖВ)
+        </div>
         <div className="flex flex-wrap gap-2">
           {GOAL_PRESETS.map((preset) => (
             <button
@@ -379,13 +487,17 @@ export function LogCard({
       </div>
 
       <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
-        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">Нагадування (браузер)</div>
+        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+          Нагадування (браузер)
+        </div>
         <div className="flex flex-wrap gap-2 items-center">
           <label className="flex items-center gap-2 text-xs text-text">
             <input
               type="checkbox"
               checked={Boolean(prefs.reminderEnabled)}
-              onChange={(e) => setPrefs((p) => ({ ...p, reminderEnabled: e.target.checked }))}
+              onChange={(e) =>
+                setPrefs((p) => ({ ...p, reminderEnabled: e.target.checked }))
+              }
             />
             Увімкнути
           </label>
@@ -398,16 +510,26 @@ export function LogCard({
             onChange={(e) =>
               setPrefs((p) => ({
                 ...p,
-                reminderHour: Math.min(23, Math.max(0, Number(e.target.value) || 0)),
+                reminderHour: Math.min(
+                  23,
+                  Math.max(0, Number(e.target.value) || 0),
+                ),
               }))
             }
           />
           <span className="text-xs text-subtle">година</span>
-          <Button type="button" variant="ghost" className="text-xs h-9" onClick={requestNotifyPermission}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-xs h-9"
+            onClick={requestNotifyPermission}
+          >
             Дозвіл на сповіщення
           </Button>
         </div>
-        <p className="text-[10px] text-subtle">Працює лише коли вкладка відкрита (обмеження браузера).</p>
+        <p className="text-[10px] text-subtle">
+          Працює лише коли вкладка відкрита (обмеження браузера).
+        </p>
       </div>
 
       <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
@@ -444,7 +566,9 @@ export function LogCard({
                 onClick={() => setStatsRange(d)}
                 className={cn(
                   "px-2 py-1 rounded-lg text-[11px] font-semibold border",
-                  statsRange === d ? "border-nutrition/60 text-nutrition bg-nutrition/10" : "border-line text-subtle bg-panelHi",
+                  statsRange === d
+                    ? "border-nutrition/60 text-nutrition bg-nutrition/10"
+                    : "border-line text-subtle bg-panelHi",
                 )}
               >
                 {d} днів
@@ -462,8 +586,12 @@ export function LogCard({
           ].map((x) => (
             <div key={x.key} className="bg-panelHi rounded-2xl px-2 py-3">
               <div className="text-[10px] text-subtle">{x.label}</div>
-              <div className="text-base font-extrabold text-text tabular-nums">{Math.round(Number(x.v) || 0)}</div>
-              <div className="text-[10px] text-subtle">на {statsAvg.denom} активн. днів</div>
+              <div className="text-base font-extrabold text-text tabular-nums">
+                {Math.round(Number(x.v) || 0)}
+              </div>
+              <div className="text-[10px] text-subtle">
+                на {statsAvg.denom} активн. днів
+              </div>
             </div>
           ))}
         </div>
@@ -485,7 +613,9 @@ export function LogCard({
                       key={i}
                       title={`${Math.round(k)} ккал`}
                       className="flex-1 rounded-sm bg-nutrition/60"
-                      style={{ height: `${Math.max(2, Math.round((k / max) * 48))}px` }}
+                      style={{
+                        height: `${Math.max(2, Math.round((k / max) * 48))}px`,
+                      }}
                     />
                   ))}
                 </div>
@@ -496,13 +626,18 @@ export function LogCard({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="bg-panelHi rounded-2xl px-3 py-3">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">Топ страв</div>
+            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+              Топ страв
+            </div>
             {statsTop.length === 0 ? (
               <div className="text-xs text-muted">Поки що порожньо</div>
             ) : (
               <ol className="space-y-1">
                 {statsTop.map((x) => (
-                  <li key={x.name} className="flex items-baseline justify-between gap-2">
+                  <li
+                    key={x.name}
+                    className="flex items-baseline justify-between gap-2"
+                  >
                     <span className="text-xs text-text truncate">{x.name}</span>
                     <span className="text-[11px] text-subtle shrink-0">
                       {x.count}× · {Math.round(x.kcal)} ккал
@@ -520,16 +655,22 @@ export function LogCard({
               <div className="text-xs text-muted">Поки що порожньо</div>
             ) : (
               <ul className="space-y-1">
-                {MEAL_ORDER.filter((t) => statsMealTypes[t]?.count > 0).map((t) => (
-                  <li key={t} className="flex items-baseline justify-between gap-2">
-                    <span className="text-xs text-text">
-                      {MEAL_META[t]?.emoji} {MEAL_META[t]?.label || t}
-                    </span>
-                    <span className="text-[11px] text-subtle shrink-0">
-                      {statsMealTypes[t].count}× · {Math.round(statsMealTypes[t].kcal)} ккал
-                    </span>
-                  </li>
-                ))}
+                {MEAL_ORDER.filter((t) => statsMealTypes[t]?.count > 0).map(
+                  (t) => (
+                    <li
+                      key={t}
+                      className="flex items-baseline justify-between gap-2"
+                    >
+                      <span className="text-xs text-text">
+                        {MEAL_META[t]?.emoji} {MEAL_META[t]?.label || t}
+                      </span>
+                      <span className="text-[11px] text-subtle shrink-0">
+                        {statsMealTypes[t].count}× ·{" "}
+                        {Math.round(statsMealTypes[t].kcal)} ккал
+                      </span>
+                    </li>
+                  ),
+                )}
               </ul>
             )}
           </div>
@@ -546,7 +687,12 @@ export function LogCard({
               key={key}
               className="bg-panelHi rounded-2xl px-2 py-3 flex flex-col items-center gap-1"
             >
-              <span className={cn("text-lg font-extrabold tabular-nums leading-none", color)}>
+              <span
+                className={cn(
+                  "text-lg font-extrabold tabular-nums leading-none",
+                  color,
+                )}
+              >
                 {Math.round(cur)}
               </span>
               <span className="text-[10px] font-bold text-subtle uppercase tracking-widest">
@@ -617,23 +763,35 @@ function MealRow({ meal, onRemove }) {
       <MealThumb mealId={meal.id} />
       <div className="flex flex-col flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
-          <span className="font-semibold text-text text-sm truncate">{meal.name}</span>
+          <span className="font-semibold text-text text-sm truncate">
+            {meal.name}
+          </span>
           {meal.time && (
-            <span className="text-[11px] text-subtle shrink-0">{meal.time}</span>
+            <span className="text-[11px] text-subtle shrink-0">
+              {meal.time}
+            </span>
           )}
         </div>
         <div className="flex gap-2 mt-0.5 flex-wrap">
           {mac.kcal != null && (
-            <span className="text-[11px] text-nutrition font-bold">{Math.round(mac.kcal)} ккал</span>
+            <span className="text-[11px] text-nutrition font-bold">
+              {Math.round(mac.kcal)} ккал
+            </span>
           )}
           {mac.protein_g != null && (
-            <span className="text-[11px] text-subtle">Б {Math.round(mac.protein_g)}г</span>
+            <span className="text-[11px] text-subtle">
+              Б {Math.round(mac.protein_g)}г
+            </span>
           )}
           {mac.fat_g != null && (
-            <span className="text-[11px] text-subtle">Ж {Math.round(mac.fat_g)}г</span>
+            <span className="text-[11px] text-subtle">
+              Ж {Math.round(mac.fat_g)}г
+            </span>
           )}
           {mac.carbs_g != null && (
-            <span className="text-[11px] text-subtle">В {Math.round(mac.carbs_g)}г</span>
+            <span className="text-[11px] text-subtle">
+              В {Math.round(mac.carbs_g)}г
+            </span>
           )}
         </div>
       </div>

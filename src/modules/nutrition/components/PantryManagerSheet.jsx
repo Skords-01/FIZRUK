@@ -123,7 +123,11 @@ export function PantryManagerSheet({
               <Input
                 value={pantryForm.name}
                 onChange={(e) =>
-                  setPantryForm((f) => ({ ...f, name: e.target.value, err: "" }))
+                  setPantryForm((f) => ({
+                    ...f,
+                    name: e.target.value,
+                    err: "",
+                  }))
                 }
                 placeholder="напр. Дім"
                 disabled={busy}

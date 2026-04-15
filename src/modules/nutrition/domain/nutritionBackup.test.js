@@ -39,14 +39,21 @@ describe("nutrition backup", () => {
       exportedAt: new Date().toISOString(),
       data: {
         stateSchemaVersion: 1,
-        pantries: [{ id: "home", name: "Дім", text: "яйця", items: [{ name: "яйця" }] }],
+        pantries: [
+          { id: "home", name: "Дім", text: "яйця", items: [{ name: "яйця" }] },
+        ],
         activePantryId: "home",
         prefs: { goal: "balanced", servings: 2, timeMinutes: 10, exclude: "" },
       },
     });
-    expect(globalThis.localStorage.getItem(NUTRITION_PANTRIES_KEY)).toContain("яйця");
-    expect(globalThis.localStorage.getItem(NUTRITION_ACTIVE_PANTRY_KEY)).toBe("home");
-    expect(globalThis.localStorage.getItem(NUTRITION_PREFS_KEY)).toContain("\"servings\":2");
+    expect(globalThis.localStorage.getItem(NUTRITION_PANTRIES_KEY)).toContain(
+      "яйця",
+    );
+    expect(globalThis.localStorage.getItem(NUTRITION_ACTIVE_PANTRY_KEY)).toBe(
+      "home",
+    );
+    expect(globalThis.localStorage.getItem(NUTRITION_PREFS_KEY)).toContain(
+      '"servings":2',
+    );
   });
 });
-

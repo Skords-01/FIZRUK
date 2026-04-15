@@ -52,11 +52,27 @@ export function normalizeRecipeForSave(r) {
     title,
     timeMinutes: raw.timeMinutes != null ? clamp0(raw.timeMinutes) : null,
     servings: raw.servings != null ? clamp0(raw.servings) : null,
-    ingredients: Array.isArray(raw.ingredients) ? raw.ingredients.map((x) => String(x)).filter(Boolean).slice(0, 80) : [],
-    steps: Array.isArray(raw.steps) ? raw.steps.map((x) => String(x)).filter(Boolean).slice(0, 80) : [],
-    tips: Array.isArray(raw.tips) ? raw.tips.map((x) => String(x)).filter(Boolean).slice(0, 40) : [],
+    ingredients: Array.isArray(raw.ingredients)
+      ? raw.ingredients
+          .map((x) => String(x))
+          .filter(Boolean)
+          .slice(0, 80)
+      : [],
+    steps: Array.isArray(raw.steps)
+      ? raw.steps
+          .map((x) => String(x))
+          .filter(Boolean)
+          .slice(0, 80)
+      : [],
+    tips: Array.isArray(raw.tips)
+      ? raw.tips
+          .map((x) => String(x))
+          .filter(Boolean)
+          .slice(0, 40)
+      : [],
     macros: normalizeMacros(raw.macros),
-    createdAt: raw.createdAt != null ? Number(raw.createdAt) || Date.now() : Date.now(),
+    createdAt:
+      raw.createdAt != null ? Number(raw.createdAt) || Date.now() : Date.now(),
     updatedAt: Date.now(),
   };
 }
@@ -116,6 +132,10 @@ export function scaleMacros(macros, factor) {
   const k = Number.isFinite(f) && f > 0 ? f : 1;
   const m = macros && typeof macros === "object" ? macros : {};
   const v = (x) => (x == null ? null : Math.round(clamp0(x) * k * 10) / 10);
-  return { kcal: v(m.kcal), protein_g: v(m.protein_g), fat_g: v(m.fat_g), carbs_g: v(m.carbs_g) };
+  return {
+    kcal: v(m.kcal),
+    protein_g: v(m.protein_g),
+    fat_g: v(m.fat_g),
+    carbs_g: v(m.carbs_g),
+  };
 }
-

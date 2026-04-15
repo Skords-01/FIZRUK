@@ -87,7 +87,11 @@ export async function ensureSeedFoods() {
     });
     db.close();
     if (count > 0) return true;
-    return await replaceAllFoodsFromList(SEED_FOODS_UK.map((x) => makeFoodProduct({ name: x.name, per100: x.per100 })));
+    return await replaceAllFoodsFromList(
+      SEED_FOODS_UK.map((x) =>
+        makeFoodProduct({ name: x.name, per100: x.per100 }),
+      ),
+    );
   } catch {
     return false;
   }
@@ -132,7 +136,9 @@ export async function searchFoods(query, limit = 20) {
     const score = hay.startsWith(q) ? 0 : hay.includes(q) ? 1 : 2;
     scored.push({ score, p });
   }
-  scored.sort((a, b) => a.score - b.score || (b.p.updatedAt || 0) - (a.p.updatedAt || 0));
+  scored.sort(
+    (a, b) => a.score - b.score || (b.p.updatedAt || 0) - (a.p.updatedAt || 0),
+  );
   return scored.slice(0, Math.max(1, Number(limit) || 20)).map((x) => x.p);
 }
 
@@ -274,7 +280,9 @@ export async function exportFoodDbJson() {
 
 export async function replaceAllFoodsFromList(list) {
   try {
-    const foods = Array.isArray(list) ? list.map((x) => makeFoodProduct(x)).filter((x) => x.name) : [];
+    const foods = Array.isArray(list)
+      ? list.map((x) => makeFoodProduct(x)).filter((x) => x.name)
+      : [];
     const db = await openDb();
     const tx = db.transaction([STORE_PRODUCTS, STORE_BARCODES], "readwrite");
     const s = tx.objectStore(STORE_PRODUCTS);
@@ -293,8 +301,11 @@ export async function importFoodDbJson(payload, mode = "merge") {
   const p = payload && typeof payload === "object" ? payload : null;
   if (!p) return { ok: false, error: "Некоректний файл" };
   const incomingFoodsRaw = Array.isArray(p.foods) ? p.foods : [];
-  const incomingFoods = incomingFoodsRaw.map((x) => makeFoodProduct(x)).filter((x) => x.name);
-  const incomingBarcodes = p.barcodes && typeof p.barcodes === "object" ? p.barcodes : {};
+  const incomingFoods = incomingFoodsRaw
+    .map((x) => makeFoodProduct(x))
+    .filter((x) => x.name);
+  const incomingBarcodes =
+    p.barcodes && typeof p.barcodes === "object" ? p.barcodes : {};
 
   try {
     if (mode === "replace") {
@@ -314,7 +325,9 @@ export async function importFoodDbJson(payload, mode = "merge") {
 
     // merge
     const existing = await listFoods(5000);
-    const byNorm = new Map(existing.map((x) => [normText(x.norm || x.name), x]));
+    const byNorm = new Map(
+      existing.map((x) => [normText(x.norm || x.name), x]),
+    );
     let added = 0;
     for (const f of incomingFoods) {
       const key = normText(f.norm || f.name);
@@ -335,4 +348,3 @@ export async function importFoodDbJson(payload, mode = "merge") {
     return { ok: false, error: "Помилка імпорту" };
   }
 }
-

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { normalizeFoodName, normalizeUnit, parseLoosePantryText } from "./pantryTextParser.js";
+import {
+  normalizeFoodName,
+  normalizeUnit,
+  parseLoosePantryText,
+} from "./pantryTextParser.js";
 
 describe("normalizeFoodName", () => {
   it("trims and collapses whitespace", () => {
@@ -34,4 +38,3 @@ describe("parseLoosePantryText", () => {
     expect(items.map((x) => x.name)).toEqual(["яйця", "рис", "огірок"]);
   });
 });
-

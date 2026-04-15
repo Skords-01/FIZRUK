@@ -30,7 +30,14 @@ describe("nutritionResponse normalizers", () => {
 
   it("normalizePhotoResult uses fallback grams when portion missing", () => {
     const out = normalizePhotoResult(
-      { dishName: "x", confidence: 0.2, portion: null, ingredients: [], macros: {}, questions: [] },
+      {
+        dishName: "x",
+        confidence: 0.2,
+        portion: null,
+        ingredients: [],
+        macros: {},
+        questions: [],
+      },
       { fallbackGrams: 250 },
     );
     expect(out.portion).toEqual({ label: "250 г", gramsApprox: 250 });
@@ -73,4 +80,3 @@ describe("nutritionResponse normalizers", () => {
     });
   });
 });
-

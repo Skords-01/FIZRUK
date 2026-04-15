@@ -21,7 +21,9 @@ export function PhotoAnalyzeCard({
     <Card className="p-4">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-text">Аналіз фото страви</div>
+          <div className="text-sm font-semibold text-text">
+            Аналіз фото страви
+          </div>
           <div className="text-xs text-subtle mt-0.5">
             ШІ визначить КБЖВ і запропонує уточнення
           </div>
@@ -105,9 +107,18 @@ export function PhotoAnalyzeCard({
           <div className="grid grid-cols-4 gap-2">
             {[
               { label: "Ккал", value: fmtMacro(photoResult.macros?.kcal) },
-              { label: "Білки", value: `${fmtMacro(photoResult.macros?.protein_g)} г` },
-              { label: "Жири", value: `${fmtMacro(photoResult.macros?.fat_g)} г` },
-              { label: "Вуглев.", value: `${fmtMacro(photoResult.macros?.carbs_g)} г` },
+              {
+                label: "Білки",
+                value: `${fmtMacro(photoResult.macros?.protein_g)} г`,
+              },
+              {
+                label: "Жири",
+                value: `${fmtMacro(photoResult.macros?.fat_g)} г`,
+              },
+              {
+                label: "Вуглев.",
+                value: `${fmtMacro(photoResult.macros?.carbs_g)} г`,
+              },
             ].map((m) => (
               <div
                 key={m.label}
@@ -137,58 +148,67 @@ export function PhotoAnalyzeCard({
             </button>
           )}
 
-          {Array.isArray(photoResult.ingredients) && photoResult.ingredients.length > 0 && (
-            <div className="text-xs text-subtle">
-              <span className="font-semibold text-text">Інгредієнти: </span>
-              {photoResult.ingredients.map((x) => x.name).filter(Boolean).join(", ")}
-            </div>
-          )}
-
-          {Array.isArray(photoResult.questions) && photoResult.questions.length > 0 && (
-            <div className="rounded-2xl border border-line bg-panelHi p-3 grid gap-3">
-              <div className="text-xs font-semibold text-subtle uppercase tracking-widest">
-                Уточнення порції
+          {Array.isArray(photoResult.ingredients) &&
+            photoResult.ingredients.length > 0 && (
+              <div className="text-xs text-subtle">
+                <span className="font-semibold text-text">Інгредієнти: </span>
+                {photoResult.ingredients
+                  .map((x) => x.name)
+                  .filter(Boolean)
+                  .join(", ")}
               </div>
+            )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <div className="text-[11px] text-subtle mb-1">Порція (г), якщо знаєш</div>
-                  <Input
-                    value={portionGrams}
-                    onChange={(e) => setPortionGrams(e.target.value)}
-                    inputMode="decimal"
-                    placeholder="напр. 320"
-                    disabled={busy}
-                  />
+          {Array.isArray(photoResult.questions) &&
+            photoResult.questions.length > 0 && (
+              <div className="rounded-2xl border border-line bg-panelHi p-3 grid gap-3">
+                <div className="text-xs font-semibold text-subtle uppercase tracking-widest">
+                  Уточнення порції
                 </div>
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    onClick={refinePhoto}
-                    disabled={busy}
-                    className={cn(
-                      "w-full h-11 rounded-2xl text-sm font-semibold",
-                      "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50 transition-colors",
-                    )}
-                  >
-                    Перерахувати
-                  </button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-[11px] text-subtle mb-1">
+                      Порція (г), якщо знаєш
+                    </div>
+                    <Input
+                      value={portionGrams}
+                      onChange={(e) => setPortionGrams(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="напр. 320"
+                      disabled={busy}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={refinePhoto}
+                      disabled={busy}
+                      className={cn(
+                        "w-full h-11 rounded-2xl text-sm font-semibold",
+                        "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50 transition-colors",
+                      )}
+                    >
+                      Перерахувати
+                    </button>
+                  </div>
                 </div>
+
+                {photoResult.questions.slice(0, 6).map((q) => (
+                  <div key={q}>
+                    <div className="text-[11px] text-subtle mb-1">{q}</div>
+                    <Input
+                      value={answers[q] || ""}
+                      onChange={(e) =>
+                        setAnswers((a) => ({ ...a, [q]: e.target.value }))
+                      }
+                      placeholder="твоя відповідь…"
+                      disabled={busy}
+                    />
+                  </div>
+                ))}
               </div>
-
-              {photoResult.questions.slice(0, 6).map((q) => (
-                <div key={q}>
-                  <div className="text-[11px] text-subtle mb-1">{q}</div>
-                  <Input
-                    value={answers[q] || ""}
-                    onChange={(e) => setAnswers((a) => ({ ...a, [q]: e.target.value }))}
-                    placeholder="твоя відповідь…"
-                    disabled={busy}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+            )}
         </div>
       )}
     </Card>

@@ -93,7 +93,9 @@ export function NutritionBottomNav({ activePage, setActivePage }) {
                   aria-hidden
                 />
               )}
-              <span className={cn(active && "text-nutrition")}>{item.icon}</span>
+              <span className={cn(active && "text-nutrition")}>
+                {item.icon}
+              </span>
               <span
                 className={cn(
                   "text-[11px] leading-none font-semibold",

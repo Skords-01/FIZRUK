@@ -87,4 +87,3 @@ export function mergeItems(oldItems, newItems) {
 
   return merged;
 }
-

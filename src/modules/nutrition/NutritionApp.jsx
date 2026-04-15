@@ -11,12 +11,24 @@ import { PantryManagerSheet } from "./components/PantryManagerSheet.jsx";
 import { ConfirmDeleteSheet } from "./components/ConfirmDeleteSheet.jsx";
 import { ItemEditSheet } from "./components/ItemEditSheet.jsx";
 import { Banner } from "@shared/components/ui/Banner.jsx";
-import { loadNutritionPrefs, persistNutritionPrefs, getDayMacros, toLocalISODate } from "./lib/nutritionStorage.js";
+import {
+  loadNutritionPrefs,
+  persistNutritionPrefs,
+  getDayMacros,
+  toLocalISODate,
+} from "./lib/nutritionStorage.js";
 import { useNutritionPantries } from "./hooks/useNutritionPantries.js";
 import { useNutritionLog } from "./hooks/useNutritionLog.js";
 import { usePhotoAnalysis } from "./hooks/usePhotoAnalysis.js";
-import { buildRecipeCacheKey, readRecipeCache, writeRecipeCache } from "./lib/recipeCache.js";
-import { fileToThumbnailBlob, saveMealThumbnail } from "./lib/mealPhotoStorage.js";
+import {
+  buildRecipeCacheKey,
+  readRecipeCache,
+  writeRecipeCache,
+} from "./lib/recipeCache.js";
+import {
+  fileToThumbnailBlob,
+  saveMealThumbnail,
+} from "./lib/mealPhotoStorage.js";
 
 function fmtMacro(n) {
   if (n == null || Number.isNaN(Number(n))) return "—";
@@ -69,7 +81,9 @@ export default function NutritionApp({ onBackToHub } = {}) {
   const [prefsStorageErr, setPrefsStorageErr] = useState("");
 
   useEffect(() => {
-    setPrefsStorageErr(persistNutritionPrefs(prefs) ? "" : "Не вдалося зберегти налаштування.");
+    setPrefsStorageErr(
+      persistNutritionPrefs(prefs) ? "" : "Не вдалося зберегти налаштування.",
+    );
   }, [prefs]);
 
   const [recipes, setRecipes] = useState([]);
@@ -114,7 +128,12 @@ export default function NutritionApp({ onBackToHub } = {}) {
   const lastNotifyKeyRef = useRef("");
 
   useEffect(() => {
-    if (!prefs.reminderEnabled || typeof window === "undefined" || !("Notification" in window)) return;
+    if (
+      !prefs.reminderEnabled ||
+      typeof window === "undefined" ||
+      !("Notification" in window)
+    )
+      return;
     const tick = () => {
       if (Notification.permission !== "granted") return;
       const h = new Date().getHours();
@@ -148,7 +167,8 @@ export default function NutritionApp({ onBackToHub } = {}) {
     setStatusText("Генерую рецепти…");
     try {
       const items = pantry.effectiveItems;
-      if (items.length === 0) throw new Error("Дай хоча б 2–3 продукти для рецептів.");
+      if (items.length === 0)
+        throw new Error("Дай хоча б 2–3 продукти для рецептів.");
       const data = await postJson("/api/nutrition/recommend-recipes", {
         items: items.slice(0, 40),
         preferences: {
@@ -217,7 +237,10 @@ export default function NutritionApp({ onBackToHub } = {}) {
     }
   }, [log.nutritionLog, log.selectedDate, prefs]);
 
-  const recipeCacheEntry = useMemo(() => readRecipeCache(recipeCacheKey), [recipeCacheKey]);
+  const recipeCacheEntry = useMemo(
+    () => readRecipeCache(recipeCacheKey),
+    [recipeCacheKey],
+  );
 
   const wrappedAddMeal = useCallback(
     async (meal) => {
@@ -230,7 +253,11 @@ export default function NutritionApp({ onBackToHub } = {}) {
     [log, photo.fileRef],
   );
 
-  const storageBanner = [log.storageErr, pantry.pantryStorageErr, prefsStorageErr]
+  const storageBanner = [
+    log.storageErr,
+    pantry.pantryStorageErr,
+    prefsStorageErr,
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -254,7 +281,8 @@ export default function NutritionApp({ onBackToHub } = {}) {
                   : "Склад порожній"}
               </div>
             </div>
-            {(Array.isArray(pantry.pantries) ? pantry.pantries : []).length > 1 && (
+            {(Array.isArray(pantry.pantries) ? pantry.pantries : []).length >
+              1 && (
               <select
                 value={pantry.activePantry?.id || pantry.activePantryId || ""}
                 onChange={(e) => pantry.setActivePantryId(e.target.value)}
@@ -262,11 +290,13 @@ export default function NutritionApp({ onBackToHub } = {}) {
                 className="h-9 rounded-xl bg-panel/60 border border-nutrition/30 px-3 text-sm text-text outline-none focus:border-nutrition/60 max-w-[36vw]"
                 aria-label="Обрати склад"
               >
-                {(Array.isArray(pantry.pantries) ? pantry.pantries : []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name || "Склад"}
-                  </option>
-                ))}
+                {(Array.isArray(pantry.pantries) ? pantry.pantries : []).map(
+                  (p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name || "Склад"}
+                    </option>
+                  ),
+                )}
               </select>
             )}
             <button
@@ -277,8 +307,20 @@ export default function NutritionApp({ onBackToHub } = {}) {
               aria-label="Керування складами"
               title="Склади"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <circle cx="12" cy="12" r="1.5" /><circle cx="5" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="5" cy="12" r="1.5" />
+                <circle cx="19" cy="12" r="1.5" />
               </svg>
             </button>
           </div>
@@ -326,7 +368,9 @@ export default function NutritionApp({ onBackToHub } = {}) {
                 effectiveItems={pantry.effectiveItems}
                 editItemAt={pantry.editItemAt}
                 removeItemAtOrByName={(idx, name) =>
-                  pantry.pantryItems.length > 0 ? pantry.removeItemAt(idx) : pantry.removeItem(name)
+                  pantry.pantryItems.length > 0
+                    ? pantry.removeItemAt(idx)
+                    : pantry.removeItem(name)
                 }
                 pantryItemsLength={pantry.pantryItems.length}
                 pantrySummary={pantry.pantrySummary}
@@ -379,7 +423,10 @@ export default function NutritionApp({ onBackToHub } = {}) {
         </div>
       </div>
 
-      <NutritionBottomNav activePage={activePage} setActivePage={setActivePageAndHash} />
+      <NutritionBottomNav
+        activePage={activePage}
+        setActivePage={setActivePageAndHash}
+      />
 
       <PantryManagerSheet
         open={pantry.pantryManagerOpen}

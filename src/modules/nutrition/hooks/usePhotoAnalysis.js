@@ -43,7 +43,9 @@ export function usePhotoAnalysis({ setBusy, setErr, setStatusText }) {
       return;
     }
     if (file.size > 4.5 * 1024 * 1024) {
-      setErr("Фото завелике для швидкого аналізу. Обріж або стисни (≈ до 4 МБ).");
+      setErr(
+        "Фото завелике для швидкого аналізу. Обріж або стисни (≈ до 4 МБ).",
+      );
       return;
     }
     try {
@@ -93,7 +95,8 @@ export function usePhotoAnalysis({ setBusy, setErr, setStatusText }) {
     setErr("");
     setStatusText("Уточнюю порцію та перераховую…");
     try {
-      if (!lastPhotoPayload) throw new Error("Немає вихідного фото. Спочатку зроби аналіз.");
+      if (!lastPhotoPayload)
+        throw new Error("Немає вихідного фото. Спочатку зроби аналіз.");
       const questions = Array.isArray(photoResult?.questions)
         ? photoResult.questions.slice(0, 6)
         : [];

@@ -63,7 +63,9 @@ function readModuleHashes() {
   try {
     const raw = localStorage.getItem(HUB_MODULE_HASHES_KEY);
     const parsed = raw ? JSON.parse(raw) : null;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
   } catch {
     return {};
   }
@@ -161,8 +163,9 @@ function readModuleStatus(id) {
       const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const completions = state?.completions ?? {};
       // completions structure: { habitId: ["2026-04-13", ...] }
-      const done = active.filter((h) =>
-        Array.isArray(completions[h.id]) && completions[h.id].includes(today),
+      const done = active.filter(
+        (h) =>
+          Array.isArray(completions[h.id]) && completions[h.id].includes(today),
       );
       return `${done.length}/${active.length} звичок`;
     }
@@ -378,29 +381,32 @@ export default function App() {
     } catch {}
   }, [activeModule]);
 
-  const openModule = useCallback((id, opts = {}) => {
-    const nextId = String(id || "").trim();
-    const isSame = nextId && nextId === activeModule;
+  const openModule = useCallback(
+    (id, opts = {}) => {
+      const nextId = String(id || "").trim();
+      const isSame = nextId && nextId === activeModule;
 
-    try {
-      if (!isSame && activeModule) {
-        persistLastHashForModule(activeModule, window.location.hash);
-      }
+      try {
+        if (!isSame && activeModule) {
+          persistLastHashForModule(activeModule, window.location.hash);
+        }
 
-      const raw = opts.hash != null ? String(opts.hash).trim() : "";
-      if (raw) {
-        window.location.hash = raw.startsWith("#") ? raw : `#${raw}`;
-      } else if (!isSame) {
-        const saved = readLastHashForModule(nextId);
-        if (saved) window.location.hash = saved;
-        else window.location.hash = "";
+        const raw = opts.hash != null ? String(opts.hash).trim() : "";
+        if (raw) {
+          window.location.hash = raw.startsWith("#") ? raw : `#${raw}`;
+        } else if (!isSame) {
+          const saved = readLastHashForModule(nextId);
+          if (saved) window.location.hash = saved;
+          else window.location.hash = "";
+        }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
-    }
-    setActiveModule(nextId);
-    persistModuleToUrlAndStorage(nextId);
-  }, [activeModule]);
+      setActiveModule(nextId);
+      persistModuleToUrlAndStorage(nextId);
+    },
+    [activeModule],
+  );
 
   if (!activeModule) {
     return (

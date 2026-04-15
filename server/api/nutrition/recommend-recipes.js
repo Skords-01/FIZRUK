@@ -1,6 +1,9 @@
 import { setCorsHeaders } from "../lib/cors.js";
 import { extractJsonFromText } from "../lib/jsonSafe.js";
-import { anthropicMessages, extractAnthropicText } from "./lib/anthropicFetch.js";
+import {
+  anthropicMessages,
+  extractAnthropicText,
+} from "./lib/anthropicFetch.js";
 import { normalizeRecipes } from "./lib/nutritionResponse.js";
 import {
   checkRateLimit,
@@ -38,22 +41,34 @@ export default async function handler(req, res) {
   });
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   if (!requireNutritionTokenIfConfigured(req, res)) return;
-  const rl = checkRateLimit(req, { key: "nutrition:recommend-recipes", limit: 20, windowMs: 60_000 });
-  if (!rl.ok) return res.status(429).json({ error: "Забагато запитів. Спробуй пізніше." });
+  const rl = checkRateLimit(req, {
+    key: "nutrition:recommend-recipes",
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rl.ok)
+    return res
+      .status(429)
+      .json({ error: "Забагато запитів. Спробуй пізніше." });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+  if (!apiKey)
+    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
 
   try {
     const { items, preferences } = req.body || {};
     const arr = Array.isArray(items) ? items : [];
-    if (arr.length === 0) return res.status(400).json({ error: "items is required" });
-    if (arr.length > 60) return res.status(413).json({ error: "Too many items" });
+    if (arr.length === 0)
+      return res.status(400).json({ error: "items is required" });
+    if (arr.length > 60)
+      return res.status(413).json({ error: "Too many items" });
 
-    const prefs = preferences && typeof preferences === "object" ? preferences : {};
+    const prefs =
+      preferences && typeof preferences === "object" ? preferences : {};
     const goal = String(prefs.goal || "balanced");
     const servings = Number(prefs.servings || 1);
     const timeMinutes = Number(prefs.timeMinutes || 25);
@@ -99,7 +114,9 @@ export default async function handler(req, res) {
       messages: [{ role: "user", content: prompt }],
     };
 
-    const { response, data } = await anthropicMessages(apiKey, payload, { timeoutMs: 25000 });
+    const { response, data } = await anthropicMessages(apiKey, payload, {
+      timeoutMs: 25000,
+    });
     if (!response.ok) {
       return res
         .status(response.status)
@@ -118,4 +135,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: e?.message || "Помилка AI сервера" });
   }
 }
-

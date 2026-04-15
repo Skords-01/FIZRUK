@@ -10,7 +10,10 @@ import {
   NUTRITION_PANTRIES_KEY,
   NUTRITION_ACTIVE_PANTRY_KEY,
 } from "../lib/nutritionStorage.js";
-import { normalizeFoodName, parseLoosePantryText } from "../lib/pantryTextParser.js";
+import {
+  normalizeFoodName,
+  parseLoosePantryText,
+} from "../lib/pantryTextParser.js";
 
 export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
   const [pantries, setPantries] = useState(() =>
@@ -22,7 +25,9 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
 
   const activePantry = useMemo(() => {
     const arr = Array.isArray(pantries) ? pantries : [];
-    return arr.find((p) => p.id === activePantryId) || arr[0] || makeDefaultPantry();
+    return (
+      arr.find((p) => p.id === activePantryId) || arr[0] || makeDefaultPantry()
+    );
   }, [pantries, activePantryId]);
 
   const pantryText = activePantry?.text || "";
@@ -54,7 +59,12 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
   const [pantryStorageErr, setPantryStorageErr] = useState("");
 
   useEffect(() => {
-    const ok = persistPantries(NUTRITION_PANTRIES_KEY, NUTRITION_ACTIVE_PANTRY_KEY, pantries, activePantryId);
+    const ok = persistPantries(
+      NUTRITION_PANTRIES_KEY,
+      NUTRITION_ACTIVE_PANTRY_KEY,
+      pantries,
+      activePantryId,
+    );
     setPantryStorageErr(ok ? "" : "Не вдалося зберегти дані складів.");
   }, [pantries, activePantryId]);
 
@@ -68,7 +78,8 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
   }, [pantryItems]);
 
   const effectiveItems = useMemo(() => {
-    if (Array.isArray(pantryItems) && pantryItems.length > 0) return pantryItems;
+    if (Array.isArray(pantryItems) && pantryItems.length > 0)
+      return pantryItems;
     const raw = pantryText.trim();
     if (!raw) return [];
     return parseLoosePantryText(raw);
@@ -121,7 +132,9 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
 
   const editItemAt = (idx) => {
     if (!ensureStructuredItems()) return;
-    const cur = (Array.isArray(activePantry?.items) ? activePantry.items : [])[idx];
+    const cur = (Array.isArray(activePantry?.items) ? activePantry.items : [])[
+      idx
+    ];
     if (!cur) return;
     const curName = normalizeFoodName(cur.name) || "Продукт";
     setItemEdit({
@@ -147,7 +160,13 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
 
   const applyTemplate = (id) => {
     const templates = {
-      quickBreakfast: ["яйця", "йогурт", "банан", "вівсянка", "сир кисломолочний"],
+      quickBreakfast: [
+        "яйця",
+        "йогурт",
+        "банан",
+        "вівсянка",
+        "сир кисломолочний",
+      ],
       quickLunch: ["курка", "рис", "огірок", "помідор", "оливкова олія"],
       quickFitness: ["тунець", "гречка", "яйця", "творог", "овочі"],
     };
@@ -155,7 +174,12 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
     setPantries((cur) =>
       updatePantry(cur, activePantryId, (p) => ({
         ...p,
-        items: list.map((n) => ({ name: n, qty: null, unit: null, notes: null })),
+        items: list.map((n) => ({
+          name: n,
+          qty: null,
+          unit: null,
+          notes: null,
+        })),
         text: list.join(", "),
       })),
     );
@@ -226,7 +250,8 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
     setErr("");
     setStatusText("Розбираю список…");
     try {
-      if (!pantryText.trim()) throw new Error("Надиктуй/впиши список продуктів.");
+      if (!pantryText.trim())
+        throw new Error("Надиктуй/впиши список продуктів.");
       const data = await postJson("/api/nutrition/parse-pantry", {
         text: pantryText.trim(),
         locale: "uk-UA",
@@ -281,4 +306,3 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
     pantryStorageErr,
   };
 }
-

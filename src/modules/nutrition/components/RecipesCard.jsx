@@ -3,7 +3,12 @@ import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
-import { deleteSavedRecipe, listSavedRecipes, saveRecipeToBook, scaleMacros } from "../lib/recipeBook.js";
+import {
+  deleteSavedRecipe,
+  listSavedRecipes,
+  saveRecipeToBook,
+  scaleMacros,
+} from "../lib/recipeBook.js";
 import { MEAL_TYPES } from "../lib/mealTypes.js";
 
 function guessMealTypeIdNow() {
@@ -72,10 +77,17 @@ export function RecipesCard({
     if (typeof addMealToLog !== "function") return;
     const key = String(idKey || r?.id || r?.title || "");
     const factorRaw = portionById[key];
-    const factor = factorRaw == null || factorRaw === "" ? 1 : Number(String(factorRaw).replace(",", "."));
-    const macros = scaleMacros(r?.macros, Number.isFinite(factor) && factor > 0 ? factor : 1);
+    const factor =
+      factorRaw == null || factorRaw === ""
+        ? 1
+        : Number(String(factorRaw).replace(",", "."));
+    const macros = scaleMacros(
+      r?.macros,
+      Number.isFinite(factor) && factor > 0 ? factor : 1,
+    );
     const mealType = guessMealTypeIdNow();
-    const label = MEAL_TYPES.find((x) => x.id === mealType)?.label || "Прийом їжі";
+    const label =
+      MEAL_TYPES.find((x) => x.id === mealType)?.label || "Прийом їжі";
     await addMealToLog({
       id: `meal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       time: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
@@ -98,9 +110,12 @@ export function RecipesCard({
         Рецепти ({activePantry?.name || "Склад"})
       </div>
       <div className="text-xs text-subtle mt-0.5">
-        Рекомендації на базі продуктів зі складу. Можна вказати час, порції та “не хочу”.
+        Рекомендації на базі продуктів зі складу. Можна вказати час, порції та
+        “не хочу”.
         {recipeCacheEntry?.recipes?.length > 0 && (
-          <span className="ml-1 text-nutrition">(є кеш сеансу — натисни «Запропонувати» для оновлення)</span>
+          <span className="ml-1 text-nutrition">
+            (є кеш сеансу — натисни «Запропонувати» для оновлення)
+          </span>
         )}
       </div>
 
@@ -108,11 +123,14 @@ export function RecipesCard({
         <div className="rounded-2xl border border-line bg-panel p-4 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <div className="text-sm font-semibold text-text">Мої рецепти</div>
-            <div className="text-[11px] text-subtle">{savedBusy ? "…" : `${saved.length}`}</div>
+            <div className="text-[11px] text-subtle">
+              {savedBusy ? "…" : `${saved.length}`}
+            </div>
           </div>
           {saved.length === 0 ? (
             <div className="text-xs text-subtle">
-              Тут з’являться збережені рецепти. Згенеруй рецепти нижче й натисни “Зберегти”.
+              Тут з’являться збережені рецепти. Згенеруй рецепти нижче й натисни
+              “Зберегти”.
             </div>
           ) : (
             <div className="grid gap-2">
@@ -120,12 +138,18 @@ export function RecipesCard({
                 const key = r.id;
                 const factor = portionById[key] ?? "1";
                 return (
-                  <div key={r.id} className="rounded-2xl border border-line/60 bg-bg/40 p-3">
+                  <div
+                    key={r.id}
+                    className="rounded-2xl border border-line/60 bg-bg/40 p-3"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold text-text truncate">{r.title}</div>
+                        <div className="text-sm font-semibold text-text truncate">
+                          {r.title}
+                        </div>
                         <div className="text-[11px] text-subtle mt-0.5">
-                          {r.timeMinutes ? `${r.timeMinutes} хв` : "—"} · {r.servings ? `${r.servings} порц.` : "—"}
+                          {r.timeMinutes ? `${r.timeMinutes} хв` : "—"} ·{" "}
+                          {r.servings ? `${r.servings} порц.` : "—"}
                         </div>
                       </div>
                       <div className="flex gap-2 shrink-0">
@@ -142,7 +166,8 @@ export function RecipesCard({
                           variant="ghost"
                           className="h-9 text-xs text-danger"
                           onClick={async () => {
-                            if (!window.confirm("Видалити збережений рецепт?")) return;
+                            if (!window.confirm("Видалити збережений рецепт?"))
+                              return;
                             await deleteSavedRecipe(r.id);
                             await refreshSaved();
                           }}
@@ -152,20 +177,31 @@ export function RecipesCard({
                       </div>
                     </div>
                     <div className="mt-2 flex items-center gap-2">
-                      <span className="text-[11px] text-subtle">Порції (множник):</span>
+                      <span className="text-[11px] text-subtle">
+                        Порції (множник):
+                      </span>
                       <Input
                         value={String(factor)}
-                        onChange={(e) => setPortionById((m) => ({ ...m, [key]: e.target.value }))}
+                        onChange={(e) =>
+                          setPortionById((m) => ({
+                            ...m,
+                            [key]: e.target.value,
+                          }))
+                        }
                         inputMode="decimal"
                         className="w-20"
                       />
-                      <span className="text-[11px] text-subtle">× макроси рецепту</span>
+                      <span className="text-[11px] text-subtle">
+                        × макроси рецепту
+                      </span>
                     </div>
                   </div>
                 );
               })}
               {saved.length > 8 && (
-                <div className="text-[11px] text-subtle">Показано 8 з {saved.length}.</div>
+                <div className="text-[11px] text-subtle">
+                  Показано 8 з {saved.length}.
+                </div>
               )}
             </div>
           )}
@@ -176,7 +212,9 @@ export function RecipesCard({
             <div className="text-[11px] text-subtle mb-1">Ціль</div>
             <select
               value={prefs.goal}
-              onChange={(e) => setPrefs((p) => ({ ...p, goal: e.target.value }))}
+              onChange={(e) =>
+                setPrefs((p) => ({ ...p, goal: e.target.value }))
+              }
               className="w-full h-11 rounded-2xl bg-panel border border-line px-4 text-sm text-text outline-none focus:border-nutrition/60"
               disabled={busy}
             >
@@ -190,7 +228,9 @@ export function RecipesCard({
               <div className="text-[11px] text-subtle mb-1">Порції</div>
               <Input
                 value={String(prefs.servings)}
-                onChange={(e) => setPrefs((p) => ({ ...p, servings: e.target.value }))}
+                onChange={(e) =>
+                  setPrefs((p) => ({ ...p, servings: e.target.value }))
+                }
                 inputMode="numeric"
                 disabled={busy}
               />
@@ -210,10 +250,14 @@ export function RecipesCard({
         </div>
 
         <div>
-          <div className="text-[11px] text-subtle mb-1">Не використовувати / алергени</div>
+          <div className="text-[11px] text-subtle mb-1">
+            Не використовувати / алергени
+          </div>
           <Input
             value={prefs.exclude}
-            onChange={(e) => setPrefs((p) => ({ ...p, exclude: e.target.value }))}
+            onChange={(e) =>
+              setPrefs((p) => ({ ...p, exclude: e.target.value }))
+            }
             placeholder="напр. арахіс, гриби"
             disabled={busy}
           />
@@ -248,9 +292,14 @@ export function RecipesCard({
           <div className="rounded-2xl border border-line bg-panel p-4 space-y-3">
             <div className="text-sm font-semibold text-text">Тижневий план</div>
             {weekPlan.days.map((d, i) => (
-              <div key={i} className="text-sm border-b border-line/40 pb-2 last:border-0">
+              <div
+                key={i}
+                className="text-sm border-b border-line/40 pb-2 last:border-0"
+              >
                 <div className="font-semibold text-nutrition">{d.label}</div>
-                {d.note && <div className="text-xs text-subtle mt-0.5">{d.note}</div>}
+                {d.note && (
+                  <div className="text-xs text-subtle mt-0.5">{d.note}</div>
+                )}
                 {Array.isArray(d.meals) && d.meals.length > 0 && (
                   <ul className="list-disc pl-4 mt-1 text-xs text-text space-y-0.5">
                     {d.meals.map((line, j) => (
@@ -275,15 +324,22 @@ export function RecipesCard({
 
         {weekPlanRaw && (!weekPlan?.days || weekPlan.days.length === 0) && (
           <details className="rounded-2xl border border-line bg-bg p-3">
-            <summary className="cursor-pointer text-xs text-muted">Діагностика плану (raw)</summary>
-            <pre className="mt-2 whitespace-pre-wrap text-[11px] text-subtle max-h-48 overflow-auto">{weekPlanRaw}</pre>
+            <summary className="cursor-pointer text-xs text-muted">
+              Діагностика плану (raw)
+            </summary>
+            <pre className="mt-2 whitespace-pre-wrap text-[11px] text-subtle max-h-48 overflow-auto">
+              {weekPlanRaw}
+            </pre>
           </details>
         )}
 
         {recipes.length > 0 && (
           <div className="grid gap-3">
             {recipes.map((r, idx) => (
-              <div key={idx} className="rounded-2xl border border-line bg-panel p-4">
+              <div
+                key={idx}
+                className="rounded-2xl border border-line bg-panel p-4"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-text">
@@ -308,7 +364,9 @@ export function RecipesCard({
                       type="button"
                       variant="ghost"
                       className="h-9 text-xs"
-                      onClick={() => void addRecipeAsMeal(r, r.title || String(idx))}
+                      onClick={() =>
+                        void addRecipeAsMeal(r, r.title || String(idx))
+                      }
                       disabled={busy}
                     >
                       + У журнал
@@ -359,8 +417,8 @@ export function RecipesCard({
 
         {recipesTried && !busy && recipes.length === 0 && !err && (
           <div className="rounded-2xl border border-line bg-panel p-4 text-sm text-subtle">
-            Рецептів не повернулося. Спробуй натиснути “Розібрати” або додати 2–3 базові
-            продукти (яйця/крупа/овочі).
+            Рецептів не повернулося. Спробуй натиснути “Розібрати” або додати
+            2–3 базові продукти (яйця/крупа/овочі).
             {recipesRaw && (
               <details className="mt-3">
                 <summary className="cursor-pointer text-xs text-muted hover:text-text">
@@ -377,4 +435,3 @@ export function RecipesCard({
     </Card>
   );
 }
-

@@ -33,4 +33,3 @@ export async function postJson(url, body) {
   if (!res.ok) throw new Error(friendlyApiError(res.status, data?.error));
   return data;
 }
-

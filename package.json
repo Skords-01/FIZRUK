@@ -12,7 +12,8 @@
     "build": "node scripts/check-imports.mjs && vite build",
     "preview": "vite preview",
     "test": "node scripts/vitest.mjs run",
-    "test:watch": "node scripts/vitest.mjs"
+    "test:watch": "node scripts/vitest.mjs",
+    "check": "npm run format:check && npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "body-highlighter": "^3.0.2",

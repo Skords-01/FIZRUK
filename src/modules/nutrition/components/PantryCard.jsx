@@ -31,9 +31,7 @@ export function PantryCard({
     <Card className="p-4">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-text">
-            Продукти
-          </div>
+          <div className="text-sm font-semibold text-text">Продукти</div>
           <div className="text-xs text-subtle mt-0.5">
             Додавай — нові мерджаться зі старими
           </div>
@@ -183,7 +181,9 @@ export function PantryCard({
 
         {pantryItemsLength > 0 && (
           <div className="text-xs text-subtle pt-1 border-t border-line/50">
-            <span className="font-semibold text-text">{pantryItemsLength} позицій</span>
+            <span className="font-semibold text-text">
+              {pantryItemsLength} позицій
+            </span>
             {" · "}
             <span>{pantrySummary}</span>
           </div>

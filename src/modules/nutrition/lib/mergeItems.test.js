@@ -3,7 +3,10 @@ import { mergeItems } from "./mergeItems.js";
 
 describe("mergeItems", () => {
   it("adds new distinct items", () => {
-    const out = mergeItems([{ name: "яйця", qty: null, unit: null }], [{ name: "рис" }]);
+    const out = mergeItems(
+      [{ name: "яйця", qty: null, unit: null }],
+      [{ name: "рис" }],
+    );
     expect(out.map((x) => x.name)).toEqual(["яйця", "рис"]);
   });
 
@@ -17,11 +20,13 @@ describe("mergeItems", () => {
   });
 
   it("avoids exact duplicates by fingerprint", () => {
-    const out = mergeItems([], [
-      { name: "курка", qty: 200, unit: "г" },
-      { name: "курка", qty: 200, unit: "г" },
-    ]);
+    const out = mergeItems(
+      [],
+      [
+        { name: "курка", qty: 200, unit: "г" },
+        { name: "курка", qty: 200, unit: "г" },
+      ],
+    );
     expect(out).toHaveLength(1);
   });
 });
-

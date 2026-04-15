@@ -43,8 +43,10 @@ function normalizePantryItem(x) {
   const name = safeString(x.name, "").trim();
   if (!name) return null;
   const qty = x.qty == null || x.qty === "" ? null : safeNumber(x.qty, null);
-  const unit = x.unit == null || x.unit === "" ? null : safeString(x.unit, "").trim();
-  const notes = x.notes == null || x.notes === "" ? null : safeString(x.notes, "").trim();
+  const unit =
+    x.unit == null || x.unit === "" ? null : safeString(x.unit, "").trim();
+  const notes =
+    x.notes == null || x.notes === "" ? null : safeString(x.notes, "").trim();
   return { name, qty, unit, notes };
 }
 
@@ -60,7 +62,8 @@ function normalizePantry(x) {
 }
 
 function normalizePrefs(x) {
-  if (!x || typeof x !== "object" || Array.isArray(x)) return defaultNutritionPrefs();
+  if (!x || typeof x !== "object" || Array.isArray(x))
+    return defaultNutritionPrefs();
   const p = { ...defaultNutritionPrefs(), ...x };
   return {
     goal: p.goal ? String(p.goal) : "balanced",
@@ -71,7 +74,9 @@ function normalizePrefs(x) {
     dailyTargetProtein_g: optionalPositiveNumber(p.dailyTargetProtein_g),
     dailyTargetFat_g: optionalPositiveNumber(p.dailyTargetFat_g),
     dailyTargetCarbs_g: optionalPositiveNumber(p.dailyTargetCarbs_g),
-    mealTemplates: Array.isArray(p.mealTemplates) ? p.mealTemplates.slice(0, 40) : [],
+    mealTemplates: Array.isArray(p.mealTemplates)
+      ? p.mealTemplates.slice(0, 40)
+      : [],
     reminderEnabled: Boolean(p.reminderEnabled),
     reminderHour:
       p.reminderHour != null && Number.isFinite(Number(p.reminderHour))
@@ -100,7 +105,9 @@ export function buildNutritionBackupPayload() {
     exportedAt: new Date().toISOString(),
     data: {
       stateSchemaVersion: 1,
-      pantries: Array.isArray(pantries) ? pantries.map(normalizePantry).filter(Boolean) : [],
+      pantries: Array.isArray(pantries)
+        ? pantries.map(normalizePantry).filter(Boolean)
+        : [],
       activePantryId: activePantryId || "home",
       prefs: normalizePrefs(prefs),
       log: log && typeof log === "object" && !Array.isArray(log) ? log : {},
@@ -123,7 +130,9 @@ export function applyNutritionBackupPayload(payload) {
     throw new Error("Некоректні дані бекапу харчування.");
   }
 
-  const pantries = Array.isArray(data.pantries) ? data.pantries.map(normalizePantry).filter(Boolean) : [];
+  const pantries = Array.isArray(data.pantries)
+    ? data.pantries.map(normalizePantry).filter(Boolean)
+    : [];
   const activePantryId = safeString(data.activePantryId, "home") || "home";
   const prefs = normalizePrefs(data.prefs);
 
@@ -138,8 +147,10 @@ export function applyNutritionBackupPayload(payload) {
   } catch {}
   if (data.log && typeof data.log === "object" && !Array.isArray(data.log)) {
     try {
-      localStorage.setItem(NUTRITION_LOG_KEY, JSON.stringify(normalizeNutritionLog(data.log)));
+      localStorage.setItem(
+        NUTRITION_LOG_KEY,
+        JSON.stringify(normalizeNutritionLog(data.log)),
+      );
     } catch {}
   }
 }
-

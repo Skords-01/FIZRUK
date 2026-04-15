@@ -28,14 +28,22 @@ function emptyForm(photoResult) {
     mealType: "breakfast",
     time: currentTime(),
     kcal: macros.kcal != null ? String(Math.round(macros.kcal)) : "",
-    protein_g: macros.protein_g != null ? String(Math.round(macros.protein_g)) : "",
+    protein_g:
+      macros.protein_g != null ? String(Math.round(macros.protein_g)) : "",
     fat_g: macros.fat_g != null ? String(Math.round(macros.fat_g)) : "",
     carbs_g: macros.carbs_g != null ? String(Math.round(macros.carbs_g)) : "",
     err: "",
   };
 }
 
-export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates = [], setPrefs }) {
+export function AddMealSheet({
+  open,
+  onClose,
+  onSave,
+  photoResult,
+  mealTemplates = [],
+  setPrefs,
+}) {
   const ref = useRef(null);
   const [form, setForm] = useState(() => emptyForm(null));
   const [foodQuery, setFoodQuery] = useState("");
@@ -86,7 +94,8 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
       setForm((s) => ({ ...s, err: "Некоректне значення КБЖВ." }));
       return;
     }
-    const mealLabel = MEAL_TYPES.find((m) => m.id === form.mealType)?.label || "Прийом їжі";
+    const mealLabel =
+      MEAL_TYPES.find((m) => m.id === form.mealType)?.label || "Прийом їжі";
     onSave({
       id: `meal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       time: form.time || currentTime(),
@@ -112,7 +121,8 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
       (async () => {
         const hits = await searchFoods(q, 12);
         if (!cancelled) setFoodHits(hits);
-        if (!cancelled && hits.length === 0) setFoodErr("Нічого не знайдено в базі продуктів.");
+        if (!cancelled && hits.length === 0)
+          setFoodErr("Нічого не знайдено в базі продуктів.");
       })()
         .catch(() => {
           if (!cancelled) setFoodErr("Не вдалося виконати пошук.");
@@ -128,7 +138,11 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
   }, [foodQuery]);
 
   const applyPickedFood = useCallback((p, gramsRaw) => {
-    const g = Number(String(gramsRaw || "").trim().replace(",", "."));
+    const g = Number(
+      String(gramsRaw || "")
+        .trim()
+        .replace(",", "."),
+    );
     const grams = Number.isFinite(g) && g > 0 ? g : p?.defaultGrams || 100;
     const mac = macrosForGrams(p?.per100, grams);
     setForm((s) => ({
@@ -142,20 +156,23 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
     }));
   }, []);
 
-  const handleBarcodeLookup = useCallback(async (codeRaw) => {
-    const code = String(codeRaw || "").trim();
-    if (!code) return;
-    setBarcodeStatus("Шукаю…");
-    const found = await lookupFoodByBarcode(code);
-    if (!found) {
-      setBarcodeStatus("Не знайдено. Можна прив’язати до продукту.");
-      return;
-    }
-    setBarcodeStatus("Знайдено ✔");
-    setPickedFood(found);
-    setPickedGrams(String(Math.round(found.defaultGrams || 100)));
-    applyPickedFood(found, String(found.defaultGrams || 100));
-  }, [applyPickedFood]);
+  const handleBarcodeLookup = useCallback(
+    async (codeRaw) => {
+      const code = String(codeRaw || "").trim();
+      if (!code) return;
+      setBarcodeStatus("Шукаю…");
+      const found = await lookupFoodByBarcode(code);
+      if (!found) {
+        setBarcodeStatus("Не знайдено. Можна прив’язати до продукту.");
+        return;
+      }
+      setBarcodeStatus("Знайдено ✔");
+      setPickedFood(found);
+      setPickedGrams(String(Math.round(found.defaultGrams || 100)));
+      applyPickedFood(found, String(found.defaultGrams || 100));
+    },
+    [applyPickedFood],
+  );
 
   async function handleBarcodeBind(codeRaw) {
     const code = String(codeRaw || "").trim();
@@ -164,7 +181,9 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
       return;
     }
     if (!pickedFood?.id) {
-      setBarcodeStatus("Спочатку обери продукт (або збережи поточний як продукт).");
+      setBarcodeStatus(
+        "Спочатку обери продукт (або збережи поточний як продукт).",
+      );
       return;
     }
     const ok = await bindBarcodeToFood(code, pickedFood.id);
@@ -270,7 +289,9 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
         <div className="absolute inset-0 z-[130] flex items-center justify-center px-4">
           <div className="w-full max-w-md rounded-3xl border border-line bg-panel shadow-soft overflow-hidden">
             <div className="px-4 py-3 flex items-center justify-between border-b border-line/50">
-              <div className="text-sm font-extrabold text-text">Сканер штрихкоду</div>
+              <div className="text-sm font-extrabold text-text">
+                Сканер штрихкоду
+              </div>
               <button
                 type="button"
                 onClick={() => setScannerOpen(false)}
@@ -282,10 +303,16 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
             </div>
             <div className="p-4 space-y-2">
               <div className="rounded-2xl overflow-hidden border border-line/50 bg-black">
-                <video ref={videoRef} className="w-full aspect-[3/4] object-cover" muted playsInline />
+                <video
+                  ref={videoRef}
+                  className="w-full aspect-[3/4] object-cover"
+                  muted
+                  playsInline
+                />
               </div>
               <div className="text-[11px] text-subtle">
-                Наведи камеру на штрихкод. Якщо нічого не зчитує — введи код вручну.
+                Наведи камеру на штрихкод. Якщо нічого не зчитує — введи код
+                вручну.
               </div>
             </div>
           </div>
@@ -306,7 +333,10 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
         <div className="px-5 pb-8 pt-2">
           {/* Header */}
           <div className="flex items-center justify-between gap-3 mb-4">
-            <div id="add-meal-sheet-title" className="text-lg font-extrabold text-text">
+            <div
+              id="add-meal-sheet-title"
+              className="text-lg font-extrabold text-text"
+            >
               Додати прийом їжі
             </div>
             <button
@@ -334,10 +364,22 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
                         ...s,
                         name: t.name,
                         mealType: t.mealType || "snack",
-                        kcal: t.macros?.kcal != null ? String(Math.round(t.macros.kcal)) : "",
-                        protein_g: t.macros?.protein_g != null ? String(Math.round(t.macros.protein_g)) : "",
-                        fat_g: t.macros?.fat_g != null ? String(Math.round(t.macros.fat_g)) : "",
-                        carbs_g: t.macros?.carbs_g != null ? String(Math.round(t.macros.carbs_g)) : "",
+                        kcal:
+                          t.macros?.kcal != null
+                            ? String(Math.round(t.macros.kcal))
+                            : "",
+                        protein_g:
+                          t.macros?.protein_g != null
+                            ? String(Math.round(t.macros.protein_g))
+                            : "",
+                        fat_g:
+                          t.macros?.fat_g != null
+                            ? String(Math.round(t.macros.fat_g))
+                            : "",
+                        carbs_g:
+                          t.macros?.carbs_g != null
+                            ? String(Math.round(t.macros.carbs_g))
+                            : "",
                         err: "",
                       }))
                     }
@@ -407,7 +449,9 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
               <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
                 База продуктів (локально)
               </div>
-              <span className="text-[10px] text-subtle">{foodBusy ? "пошук…" : ""}</span>
+              <span className="text-[10px] text-subtle">
+                {foodBusy ? "пошук…" : ""}
+              </span>
             </div>
             <Input
               value={foodQuery}
@@ -418,7 +462,10 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
             {pickedFood && (
               <div className="flex flex-wrap gap-2 items-center">
                 <div className="text-xs text-text font-semibold min-w-0 truncate">
-                  Обрано: {[pickedFood.name, pickedFood.brand].filter(Boolean).join(" ")}
+                  Обрано:{" "}
+                  {[pickedFood.name, pickedFood.brand]
+                    .filter(Boolean)
+                    .join(" ")}
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -452,7 +499,9 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
                         className="w-full text-left px-3 py-2 hover:bg-panelHi/60 transition-colors"
                         onClick={() => {
                           setPickedFood(p);
-                          setPickedGrams(String(Math.round(p.defaultGrams || 100)));
+                          setPickedGrams(
+                            String(Math.round(p.defaultGrams || 100)),
+                          );
                           applyPickedFood(p, String(p.defaultGrams || 100));
                         }}
                       >
@@ -465,7 +514,8 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
                           </div>
                         </div>
                         <div className="text-[11px] text-subtle mt-0.5">
-                          Б {Math.round(p.per100?.protein_g || 0)} • Ж {Math.round(p.per100?.fat_g || 0)} • В{" "}
+                          Б {Math.round(p.per100?.protein_g || 0)} • Ж{" "}
+                          {Math.round(p.per100?.fat_g || 0)} • В{" "}
                           {Math.round(p.per100?.carbs_g || 0)}
                         </div>
                       </button>
@@ -482,15 +532,27 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
                 onClick={async () => {
                   const name = String(form.name || "").trim();
                   if (!name) {
-                    setForm((s) => ({ ...s, err: "Введіть назву, щоб зберегти продукт." }));
+                    setForm((s) => ({
+                      ...s,
+                      err: "Введіть назву, щоб зберегти продукт.",
+                    }));
                     return;
                   }
                   const kcal = form.kcal === "" ? 0 : Number(form.kcal);
-                  const protein_g = form.protein_g === "" ? 0 : Number(form.protein_g);
+                  const protein_g =
+                    form.protein_g === "" ? 0 : Number(form.protein_g);
                   const fat_g = form.fat_g === "" ? 0 : Number(form.fat_g);
-                  const carbs_g = form.carbs_g === "" ? 0 : Number(form.carbs_g);
-                  if ([kcal, protein_g, fat_g, carbs_g].some((n) => !Number.isFinite(n) || n < 0)) {
-                    setForm((s) => ({ ...s, err: "КБЖВ має бути числами (без від’ємних значень)." }));
+                  const carbs_g =
+                    form.carbs_g === "" ? 0 : Number(form.carbs_g);
+                  if (
+                    [kcal, protein_g, fat_g, carbs_g].some(
+                      (n) => !Number.isFinite(n) || n < 0,
+                    )
+                  ) {
+                    setForm((s) => ({
+                      ...s,
+                      err: "КБЖВ має бути числами (без від’ємних значень).",
+                    }));
                     return;
                   }
                   const res = await upsertFood({
@@ -543,7 +605,11 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
                       const text = String(reader.result || "");
                       const parsed = JSON.parse(text);
                       const res = await importFoodDbJson(parsed, "merge");
-                      setFoodErr(res.ok ? `Імпортовано: +${res.added}` : res.error || "Помилка імпорту");
+                      setFoodErr(
+                        res.ok
+                          ? `Імпортовано: +${res.added}`
+                          : res.error || "Помилка імпорту",
+                      );
                     } catch {
                       setFoodErr("Некоректний файл імпорту.");
                     } finally {
@@ -595,21 +661,26 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
                 >
                   Прив’язати до обраного
                 </Button>
-                {"BarcodeDetector" in window && navigator?.mediaDevices?.getUserMedia && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-9 text-xs"
-                    onClick={() => {
-                      setBarcodeStatus("");
-                      setScannerOpen(true);
-                    }}
-                  >
-                    Сканувати
-                  </Button>
-                )}
+                {"BarcodeDetector" in window &&
+                  navigator?.mediaDevices?.getUserMedia && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-9 text-xs"
+                      onClick={() => {
+                        setBarcodeStatus("");
+                        setScannerOpen(true);
+                      }}
+                    >
+                      Сканувати
+                    </Button>
+                  )}
               </div>
-              {barcodeStatus && <div className="text-[11px] text-subtle mt-1">{barcodeStatus}</div>}
+              {barcodeStatus && (
+                <div className="text-[11px] text-subtle mt-1">
+                  {barcodeStatus}
+                </div>
+              )}
             </div>
           </div>
 
@@ -622,7 +693,16 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
               {hasPhotoMacros && (
                 <button
                   type="button"
-                  onClick={() => setForm((s) => ({ ...s, ...emptyForm(photoResult), mealType: s.mealType, time: s.time, name: s.name, err: "" }))}
+                  onClick={() =>
+                    setForm((s) => ({
+                      ...s,
+                      ...emptyForm(photoResult),
+                      mealType: s.mealType,
+                      time: s.time,
+                      name: s.name,
+                      err: "",
+                    }))
+                  }
                   className="text-[11px] text-nutrition font-semibold hover:underline"
                 >
                   ← З результату фото
@@ -652,7 +732,9 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
             </div>
           </div>
 
-          {form.err && <div className="text-xs text-danger mt-2">{form.err}</div>}
+          {form.err && (
+            <div className="text-xs text-danger mt-2">{form.err}</div>
+          )}
 
           {typeof setPrefs === "function" && (
             <div className="mt-3">
@@ -662,21 +744,35 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
                 onClick={() => {
                   const name = form.name.trim();
                   if (!name) {
-                    setForm((s) => ({ ...s, err: "Спочатку введіть назву для шаблону." }));
+                    setForm((s) => ({
+                      ...s,
+                      err: "Спочатку введіть назву для шаблону.",
+                    }));
                     return;
                   }
                   const kcal = form.kcal === "" ? 0 : Number(form.kcal);
-                  const protein_g = form.protein_g === "" ? 0 : Number(form.protein_g);
+                  const protein_g =
+                    form.protein_g === "" ? 0 : Number(form.protein_g);
                   const fat_g = form.fat_g === "" ? 0 : Number(form.fat_g);
-                  const carbs_g = form.carbs_g === "" ? 0 : Number(form.carbs_g);
-                  if ([kcal, protein_g, fat_g, carbs_g].some((n) => !Number.isFinite(n))) {
-                    setForm((s) => ({ ...s, err: "Некоректне КБЖВ для шаблону." }));
+                  const carbs_g =
+                    form.carbs_g === "" ? 0 : Number(form.carbs_g);
+                  if (
+                    [kcal, protein_g, fat_g, carbs_g].some(
+                      (n) => !Number.isFinite(n),
+                    )
+                  ) {
+                    setForm((s) => ({
+                      ...s,
+                      err: "Некоректне КБЖВ для шаблону.",
+                    }));
                     return;
                   }
                   setPrefs((p) => ({
                     ...p,
                     mealTemplates: [
-                      ...(Array.isArray(p.mealTemplates) ? p.mealTemplates : []),
+                      ...(Array.isArray(p.mealTemplates)
+                        ? p.mealTemplates
+                        : []),
                       {
                         id: `tpl_${Date.now()}`,
                         name,
@@ -701,7 +797,12 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
             >
               Зберегти
             </Button>
-            <Button type="button" variant="ghost" className="h-12 min-h-[44px]" onClick={onClose}>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-12 min-h-[44px]"
+              onClick={onClose}
+            >
               Скасувати
             </Button>
           </div>
@@ -710,4 +811,3 @@ export function AddMealSheet({ open, onClose, onSave, photoResult, mealTemplates
     </div>
   );
 }
-

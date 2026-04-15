@@ -17,9 +17,20 @@ export function getRowsForRange(log, endIso, dayCount) {
 }
 
 export function summarizeRows(rows) {
-  const out = { days: rows.length, kcal: 0, protein_g: 0, fat_g: 0, carbs_g: 0, nonEmptyDays: 0 };
+  const out = {
+    days: rows.length,
+    kcal: 0,
+    protein_g: 0,
+    fat_g: 0,
+    carbs_g: 0,
+    nonEmptyDays: 0,
+  };
   for (const r of rows) {
-    const has = (Number(r.kcal) || 0) > 0 || (Number(r.protein_g) || 0) > 0 || (Number(r.fat_g) || 0) > 0 || (Number(r.carbs_g) || 0) > 0;
+    const has =
+      (Number(r.kcal) || 0) > 0 ||
+      (Number(r.protein_g) || 0) > 0 ||
+      (Number(r.fat_g) || 0) > 0 ||
+      (Number(r.carbs_g) || 0) > 0;
     if (has) out.nonEmptyDays += 1;
     out.kcal += Number(r.kcal) || 0;
     out.protein_g += Number(r.protein_g) || 0;
@@ -77,4 +88,3 @@ export function mealTypeBreakdown(log, endIso, dayCount) {
   }
   return out;
 }
-

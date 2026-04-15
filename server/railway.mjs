@@ -68,7 +68,12 @@ app.use((err, _req, res, _next) => {
   console.error(err);
   if (!res.headersSent) {
     const status = Number(err?.status) || 500;
-    const code = typeof err?.code === "string" ? err.code : status === 429 ? "RATE_LIMIT" : "INTERNAL";
+    const code =
+      typeof err?.code === "string"
+        ? err.code
+        : status === 429
+          ? "RATE_LIMIT"
+          : "INTERNAL";
     res.status(status).json({ error: err?.message || "Server error", code });
   }
 });

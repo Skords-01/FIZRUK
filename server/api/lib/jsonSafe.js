@@ -81,4 +81,3 @@ function extractBalancedJsonSlice(text, open, close) {
   }
   return null;
 }
-

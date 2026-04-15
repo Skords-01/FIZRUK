@@ -66,9 +66,11 @@ export function rateLimitExpress({ key, limit, windowMs }) {
       } catch {
         /* ignore */
       }
-      return res.status(429).json({ error: "Забагато запитів. Спробуй пізніше.", code: "RATE_LIMIT" });
+      return res.status(429).json({
+        error: "Забагато запитів. Спробуй пізніше.",
+        code: "RATE_LIMIT",
+      });
     }
     next();
   };
 }
-

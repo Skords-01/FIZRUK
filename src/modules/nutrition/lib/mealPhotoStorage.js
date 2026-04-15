@@ -77,7 +77,8 @@ export async function listMealThumbnailIds() {
     const ids = await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE, "readonly");
       const req = tx.objectStore(STORE).getAllKeys();
-      req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result.map(String) : []);
+      req.onsuccess = () =>
+        resolve(Array.isArray(req.result) ? req.result.map(String) : []);
       req.onerror = () => reject(req.error);
     });
     db.close();
@@ -87,15 +88,22 @@ export async function listMealThumbnailIds() {
   }
 }
 
-export async function gcMealThumbnails(validMealIds, { maxDeletes = 500 } = {}) {
-  const keep = validMealIds instanceof Set ? validMealIds : new Set(Array.isArray(validMealIds) ? validMealIds : []);
+export async function gcMealThumbnails(
+  validMealIds,
+  { maxDeletes = 500 } = {},
+) {
+  const keep =
+    validMealIds instanceof Set
+      ? validMealIds
+      : new Set(Array.isArray(validMealIds) ? validMealIds : []);
   try {
     const db = await openDb();
     const tx = db.transaction(STORE, "readwrite");
     const store = tx.objectStore(STORE);
     const keys = await new Promise((resolve, reject) => {
       const r = store.getAllKeys();
-      r.onsuccess = () => resolve(Array.isArray(r.result) ? r.result.map(String) : []);
+      r.onsuccess = () =>
+        resolve(Array.isArray(r.result) ? r.result.map(String) : []);
       r.onerror = () => reject(r.error);
     });
     let deleted = 0;

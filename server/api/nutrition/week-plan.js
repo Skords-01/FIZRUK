@@ -1,18 +1,25 @@
 import { setCorsHeaders } from "../lib/cors.js";
 import { extractJsonFromText } from "../lib/jsonSafe.js";
-import { anthropicMessages, extractAnthropicText } from "./lib/anthropicFetch.js";
+import {
+  anthropicMessages,
+  extractAnthropicText,
+} from "./lib/anthropicFetch.js";
 import {
   checkRateLimit,
   requireNutritionTokenIfConfigured,
 } from "./lib/nutritionSecurity.js";
 
 function normalizeWeekPlan(parsed) {
-  const obj = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  const obj =
+    parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
   const days = Array.isArray(obj.days) ? obj.days : [];
   const shoppingList = Array.isArray(obj.shoppingList) ? obj.shoppingList : [];
   return {
     days: days.slice(0, 7).map((d, i) => {
-      if (!d || typeof d !== "object") return { label: `День ${i + 1}`, note: "", meals: [] };
+      if (!d || typeof d !== "object")
+        return { label: `День ${i + 1}`, note: "", meals: [] };
       const label = String(d.label || `День ${i + 1}`).slice(0, 40);
       const note = String(d.note || "").slice(0, 500);
       const meals = Array.isArray(d.meals)
@@ -49,21 +56,32 @@ export default async function handler(req, res) {
   });
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   if (!requireNutritionTokenIfConfigured(req, res)) return;
-  const rl = checkRateLimit(req, { key: "nutrition:week-plan", limit: 10, windowMs: 60_000 });
-  if (!rl.ok) return res.status(429).json({ error: "Забагато запитів. Спробуй пізніше." });
+  const rl = checkRateLimit(req, {
+    key: "nutrition:week-plan",
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (!rl.ok)
+    return res
+      .status(429)
+      .json({ error: "Забагато запитів. Спробуй пізніше." });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+  if (!apiKey)
+    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
 
   try {
     const { items, preferences, locale } = req.body || {};
     const arr = Array.isArray(items) ? items : [];
-    if (arr.length === 0) return res.status(400).json({ error: "items is required" });
+    if (arr.length === 0)
+      return res.status(400).json({ error: "items is required" });
 
-    const prefs = preferences && typeof preferences === "object" ? preferences : {};
+    const prefs =
+      preferences && typeof preferences === "object" ? preferences : {};
     const goal = String(prefs.goal || "balanced");
     const loc = String(locale || "uk-UA");
 
@@ -87,9 +105,13 @@ export default async function handler(req, res) {
       messages: [{ role: "user", content: prompt }],
     };
 
-    const { response, data } = await anthropicMessages(apiKey, payload, { timeoutMs: 35000 });
+    const { response, data } = await anthropicMessages(apiKey, payload, {
+      timeoutMs: 35000,
+    });
     if (!response.ok) {
-      return res.status(response.status).json({ error: data?.error?.message || "AI error" });
+      return res
+        .status(response.status)
+        .json({ error: data?.error?.message || "AI error" });
     }
 
     const out = extractAnthropicText(data);
@@ -100,7 +122,9 @@ export default async function handler(req, res) {
     } catch {
       plan = { days: [], shoppingList: [] };
     }
-    return res.status(200).json({ plan, rawText: plan.days.length === 0 ? out : null });
+    return res
+      .status(200)
+      .json({ plan, rawText: plan.days.length === 0 ? out : null });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Помилка AI сервера" });
   }

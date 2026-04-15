@@ -21,4 +21,3 @@ export function Banner({ variant = "info", className, children, ...props }) {
     </div>
   );
 }
-

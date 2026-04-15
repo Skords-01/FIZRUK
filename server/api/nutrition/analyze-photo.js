@@ -1,6 +1,9 @@
 import { setCorsHeaders } from "../lib/cors.js";
 import { extractJsonFromText } from "../lib/jsonSafe.js";
-import { anthropicMessages, extractAnthropicText } from "./lib/anthropicFetch.js";
+import {
+  anthropicMessages,
+  extractAnthropicText,
+} from "./lib/anthropicFetch.js";
 import { normalizePhotoResult } from "./lib/nutritionResponse.js";
 import {
   checkRateLimit,
@@ -31,23 +34,36 @@ export default async function handler(req, res) {
   });
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   if (!requireNutritionTokenIfConfigured(req, res)) return;
-  const rl = checkRateLimit(req, { key: "nutrition:analyze-photo", limit: 20, windowMs: 60_000 });
-  if (!rl.ok) return res.status(429).json({ error: "Забагато запитів. Спробуй пізніше." });
+  const rl = checkRateLimit(req, {
+    key: "nutrition:analyze-photo",
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rl.ok)
+    return res
+      .status(429)
+      .json({ error: "Забагато запитів. Спробуй пізніше." });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+  if (!apiKey)
+    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
 
   try {
     const { image_base64, mime_type, locale } = req.body || {};
     const b64 = typeof image_base64 === "string" ? image_base64.trim() : "";
-    const mediaType = typeof mime_type === "string" && mime_type ? mime_type : "image/jpeg";
+    const mediaType =
+      typeof mime_type === "string" && mime_type ? mime_type : "image/jpeg";
 
-    if (!b64) return res.status(400).json({ error: "image_base64 is required" });
+    if (!b64)
+      return res.status(400).json({ error: "image_base64 is required" });
     if (b64.length > 7_000_000) {
-      return res.status(413).json({ error: "Image too large (base64 payload)" });
+      return res
+        .status(413)
+        .json({ error: "Image too large (base64 payload)" });
     }
 
     const userText = `Мова: ${locale || "uk-UA"}.
@@ -72,7 +88,9 @@ export default async function handler(req, res) {
       ],
     };
 
-    const { response, data } = await anthropicMessages(apiKey, payload, { timeoutMs: 20000 });
+    const { response, data } = await anthropicMessages(apiKey, payload, {
+      timeoutMs: 20000,
+    });
     if (!response.ok) {
       return res
         .status(response.status)
@@ -89,4 +107,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: e?.message || "Помилка AI сервера" });
   }
 }
-

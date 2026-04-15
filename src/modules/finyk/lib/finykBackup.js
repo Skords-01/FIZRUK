@@ -24,7 +24,10 @@ export function readFinykBackupFromStorage() {
   return {
     version: FINYK_BACKUP_VERSION,
     budgets: readJsonFromLocalStorage("finyk_budgets", []),
-    subscriptions: readJsonFromLocalStorage("finyk_subs", DEFAULT_SUBSCRIPTIONS),
+    subscriptions: readJsonFromLocalStorage(
+      "finyk_subs",
+      DEFAULT_SUBSCRIPTIONS,
+    ),
     manualAssets: readJsonFromLocalStorage("finyk_assets", []),
     manualDebts: readJsonFromLocalStorage("finyk_debts", []),
     receivables: readJsonFromLocalStorage("finyk_recv", []),
@@ -63,7 +66,9 @@ const FINYK_FIELD_TO_STORAGE_KEY = {
  */
 export function persistFinykNormalizedToStorage(normalized) {
   if (typeof localStorage === "undefined") return;
-  for (const [field, storageKey] of Object.entries(FINYK_FIELD_TO_STORAGE_KEY)) {
+  for (const [field, storageKey] of Object.entries(
+    FINYK_FIELD_TO_STORAGE_KEY,
+  )) {
     if (normalized[field] !== undefined) {
       localStorage.setItem(storageKey, JSON.stringify(normalized[field]));
     }

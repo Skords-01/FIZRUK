@@ -43,7 +43,11 @@ export function checkRateLimit(req, { key, limit, windowMs }) {
     return { ok: false, remaining: 0, resetMs: windowMs - (now - cur.startMs) };
   }
   cur.count += 1;
-  return { ok: true, remaining: Math.max(0, limit - cur.count), resetMs: windowMs - (now - cur.startMs) };
+  return {
+    ok: true,
+    remaining: Math.max(0, limit - cur.count),
+    resetMs: windowMs - (now - cur.startMs),
+  };
 }
 
 export function requireNutritionTokenIfConfigured(req, res) {
@@ -56,4 +60,3 @@ export function requireNutritionTokenIfConfigured(req, res) {
   }
   return true;
 }
-

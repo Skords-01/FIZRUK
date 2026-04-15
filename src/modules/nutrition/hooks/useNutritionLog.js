@@ -11,7 +11,10 @@ import {
   trimLogOldestDays,
   toLocalISODate,
 } from "../lib/nutritionStorage.js";
-import { deleteMealThumbnail, gcMealThumbnails } from "../lib/mealPhotoStorage.js";
+import {
+  deleteMealThumbnail,
+  gcMealThumbnails,
+} from "../lib/mealPhotoStorage.js";
 
 function collectMealIds(log) {
   const out = new Set();
@@ -26,8 +29,12 @@ function collectMealIds(log) {
 }
 
 export function useNutritionLog() {
-  const [nutritionLog, setNutritionLog] = useState(() => loadNutritionLog(NUTRITION_LOG_KEY));
-  const [selectedDate, setSelectedDate] = useState(() => toLocalISODate(new Date()));
+  const [nutritionLog, setNutritionLog] = useState(() =>
+    loadNutritionLog(NUTRITION_LOG_KEY),
+  );
+  const [selectedDate, setSelectedDate] = useState(() =>
+    toLocalISODate(new Date()),
+  );
   const [addMealSheetOpen, setAddMealSheetOpen] = useState(false);
   const [addMealPhotoResult, setAddMealPhotoResult] = useState(null);
   const [storageErr, setStorageErr] = useState("");
@@ -35,7 +42,9 @@ export function useNutritionLog() {
   useEffect(() => {
     const ok = persistNutritionLog(nutritionLog, NUTRITION_LOG_KEY);
     setStorageErr(
-      ok ? "" : "Не вдалося зберегти журнал (переповнення сховища або приватний режим).",
+      ok
+        ? ""
+        : "Не вдалося зберегти журнал (переповнення сховища або приватний режим).",
     );
   }, [nutritionLog]);
 

@@ -38,7 +38,10 @@ describe("loadPantries", () => {
       NUTRITION_PANTRIES_KEY,
       JSON.stringify([{ id: "home", name: "Дім", items: [], text: "x" }]),
     );
-    const pantries = loadPantries(NUTRITION_PANTRIES_KEY, NUTRITION_ACTIVE_PANTRY_KEY);
+    const pantries = loadPantries(
+      NUTRITION_PANTRIES_KEY,
+      NUTRITION_ACTIVE_PANTRY_KEY,
+    );
     expect(pantries).toHaveLength(1);
     expect(pantries[0].text).toBe("x");
   });
@@ -49,11 +52,16 @@ describe("loadPantries", () => {
       JSON.stringify([{ name: "яйця", qty: 2, unit: "шт", notes: null }]),
     );
     globalThis.localStorage.setItem("nutrition_pantry_text_v0", "яйця");
-    const pantries = loadPantries(NUTRITION_PANTRIES_KEY, NUTRITION_ACTIVE_PANTRY_KEY);
+    const pantries = loadPantries(
+      NUTRITION_PANTRIES_KEY,
+      NUTRITION_ACTIVE_PANTRY_KEY,
+    );
     expect(pantries).toHaveLength(1);
     expect(pantries[0].items).toHaveLength(1);
     expect(pantries[0].text).toBe("яйця");
-    expect(globalThis.localStorage.getItem(NUTRITION_ACTIVE_PANTRY_KEY)).toBe("home");
+    expect(globalThis.localStorage.getItem(NUTRITION_ACTIVE_PANTRY_KEY)).toBe(
+      "home",
+    );
   });
 });
 
@@ -67,7 +75,9 @@ describe("persistPantries", () => {
     );
     const raw = globalThis.localStorage.getItem(NUTRITION_PANTRIES_KEY);
     expect(JSON.parse(raw)).toHaveLength(1);
-    expect(globalThis.localStorage.getItem(NUTRITION_ACTIVE_PANTRY_KEY)).toBe("a");
+    expect(globalThis.localStorage.getItem(NUTRITION_ACTIVE_PANTRY_KEY)).toBe(
+      "a",
+    );
   });
 });
 
@@ -86,7 +96,15 @@ describe("normalizeNutritionLog", () => {
   it("keeps mealType when valid", () => {
     const out = normalizeNutritionLog({
       "2026-02-02": {
-        meals: [{ id: "a", name: "x", mealType: "dinner", label: "Вечеря", macros: {} }],
+        meals: [
+          {
+            id: "a",
+            name: "x",
+            mealType: "dinner",
+            label: "Вечеря",
+            macros: {},
+          },
+        ],
       },
     });
     expect(out["2026-02-02"].meals[0].mealType).toBe("dinner");
@@ -98,7 +116,9 @@ describe("loadNutritionLog", () => {
     globalThis.localStorage.setItem(
       NUTRITION_LOG_KEY,
       JSON.stringify({
-        "2026-03-03": { meals: [{ name: "Тест", label: "Сніданок", macros: { kcal: 1 } }] },
+        "2026-03-03": {
+          meals: [{ name: "Тест", label: "Сніданок", macros: { kcal: 1 } }],
+        },
       }),
     );
     const log = loadNutritionLog(NUTRITION_LOG_KEY);
@@ -106,4 +126,3 @@ describe("loadNutritionLog", () => {
     expect(log["2026-03-03"].meals[0].id).toMatch(/^meal_/);
   });
 });
-
