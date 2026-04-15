@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
+import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import {
   getDayMacros,
   searchMealsByName,
@@ -133,6 +134,7 @@ export function LogCard({
   cloudBackupBusy,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [duplicateConfirm, setDuplicateConfirm] = useState(false);
   const importRef = useRef(null);
   const [importMode, setImportMode] = useState("merge");
   const [statsRange, setStatsRange] = useState(30);
@@ -253,6 +255,7 @@ export function LogCard({
   }
 
   return (
+    <>
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <button
@@ -362,14 +365,7 @@ export function LogCard({
           variant="ghost"
           className="text-xs h-9"
           disabled={!hasPrevDay}
-          onClick={() => {
-            if (
-              window.confirm(
-                "Скопіювати всі прийоми з попереднього дня в цей день?",
-              )
-            )
-              onDuplicateYesterday();
-          }}
+          onClick={() => setDuplicateConfirm(true)}
         >
           Як учора
         </Button>
@@ -778,6 +774,20 @@ export function LogCard({
         + Додати прийом їжі
       </button>
     </div>
+
+    <ConfirmDialog
+      open={duplicateConfirm}
+      title="Скопіювати прийоми?"
+      description="Скопіювати всі прийоми з попереднього дня в цей день?"
+      confirmLabel="Скопіювати"
+      danger={false}
+      onConfirm={() => {
+        setDuplicateConfirm(false);
+        onDuplicateYesterday();
+      }}
+      onCancel={() => setDuplicateConfirm(false)}
+    />
+    </>
   );
 }
 

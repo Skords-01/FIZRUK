@@ -2,6 +2,7 @@ import { useRef, useState, useMemo, useId } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
+import { useToast } from "@shared/hooks/useToast";
 import { Input } from "@shared/components/ui/Input";
 import {
   loadRoutineState,
@@ -44,11 +45,12 @@ export function RoutineSettingsSection({
   onOpenCalendar,
   hidden: panelHidden,
 }) {
+  const toast = useToast();
   const [editingId, setEditingId] = useState(null);
   const [dragId, setDragId] = useState(null);
   const [habitListQuery, setHabitListQuery] = useState("");
-  // Confirm dialog state: stores { id, name, archived } of habit to delete
   const [deleteHabitPending, setDeleteHabitPending] = useState(null);
+  const [importConfirm, setImportConfirm] = useState(null);
   const backupRef = useRef(null);
   const habitDateFieldIds = useId();
   const habitStartDateId = `${habitDateFieldIds}-start`;
@@ -96,7 +98,7 @@ export function RoutineSettingsSection({
       patch.recurrence === "weekly" &&
       (!patch.weekdays || patch.weekdays.length === 0)
     ) {
-      window.alert("Обери хоча б один день тижня.");
+      toast.warning("Обери хоча б один день тижня.");
       return;
     }
     if (editingId) {
@@ -163,7 +165,7 @@ export function RoutineSettingsSection({
               if (on) {
                 const p = await requestRoutineNotificationPermission();
                 if (p !== "granted") {
-                  window.alert(
+                  toast.warning(
                     "Без дозволу на сповіщення нагадування не надсилатимуться. Дозволь сповіщення для цього сайту в налаштуваннях браузера.",
                   );
                   return;
@@ -227,17 +229,9 @@ export function RoutineSettingsSection({
               try {
                 const text = await f.text();
                 const parsed = JSON.parse(text);
-                const ok = window.confirm(
-                  "Імпорт замінить усі поточні дані Рутини (звички, відмітки, відтискання) даними з файлу. Продовжити?",
-                );
-                if (!ok) {
-                  e.target.value = "";
-                  return;
-                }
-                applyRoutineBackupPayload(parsed);
-                setRoutine(loadRoutineState());
+                setImportConfirm({ parsed });
               } catch (err) {
-                window.alert(err?.message || "Не вдалося імпортувати файл.");
+                toast.warning(err?.message || "Не вдалося імпортувати файл.");
               }
               e.target.value = "";
             }}
@@ -775,6 +769,27 @@ export function RoutineSettingsSection({
           setDeleteHabitPending(null);
         }}
         onCancel={() => setDeleteHabitPending(null)}
+      />
+
+      <ConfirmDialog
+        open={!!importConfirm}
+        title="Імпорт резервної копії"
+        description="Імпорт замінить усі поточні дані Рутини (звички, відмітки, відтискання) даними з файлу. Продовжити?"
+        confirmLabel="Імпортувати"
+        danger={false}
+        onConfirm={() => {
+          if (importConfirm?.parsed) {
+            try {
+              applyRoutineBackupPayload(importConfirm.parsed);
+              setRoutine(loadRoutineState());
+              toast.success("Резервну копію імпортовано.");
+            } catch (err) {
+              toast.error(err?.message || "Не вдалося імпортувати файл.");
+            }
+          }
+          setImportConfirm(null);
+        }}
+        onCancel={() => setImportConfirm(null)}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@shared/lib/cn";
+import { useToast } from "@shared/hooks/useToast";
 import {
   loadRoutineState,
   toggleHabitCompletion,
@@ -87,30 +88,9 @@ function groupEventsForList(events) {
   return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "uk"));
 }
 
-function RoutineStorageToast({ message, onDismiss }) {
-  if (!message) return null;
-  return (
-    <div
-      className="fixed top-[max(4.5rem,env(safe-area-inset-top,0px)+3.5rem)] left-1/2 -translate-x-1/2 z-[80] max-w-[min(92vw,24rem)] px-4 py-3 rounded-2xl text-sm font-medium shadow-lg bg-danger/95 text-white"
-      role="alert"
-    >
-      <div className="flex gap-3 items-start">
-        <p className="min-w-0 flex-1 leading-snug">{message}</p>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="shrink-0 text-white/90 hover:text-white text-xs font-bold uppercase tracking-wide"
-        >
-          OK
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   const [routine, setRoutine] = useRoutineState();
-  const [storageErrorToast, setStorageErrorToast] = useState(null);
+  const toast = useToast();
   const [finykCalendarTick, setFinykCalendarTick] = useState(0);
   useEffect(() => {
     const bump = () => setFinykCalendarTick((n) => n + 1);
@@ -125,19 +105,14 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   useEffect(() => {
     const onErr = (ev) => {
       const msg = ev.detail?.message || "невідома помилка";
-      setStorageErrorToast(
-        `Не вдалося зберегти дані Рутини (${msg}). Можливо, браузер переповнив сховище — звільни місце або експортуй резервну копію в розділі «Рутина».`,
+      toast.error(
+        `Не вдалося зберегти дані Рутини (${msg}). Можливо, браузер переповнив сховище — звільни місце або експортуй резервну копію.`,
+        7000,
       );
     };
     window.addEventListener(ROUTINE_STORAGE_ERROR, onErr);
     return () => window.removeEventListener(ROUTINE_STORAGE_ERROR, onErr);
-  }, []);
-
-  useEffect(() => {
-    if (!storageErrorToast) return undefined;
-    const t = window.setTimeout(() => setStorageErrorToast(null), 7000);
-    return () => window.clearTimeout(t);
-  }, [storageErrorToast]);
+  }, [toast]);
 
   useRoutineReminders(routine);
 
@@ -454,11 +429,6 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
           </button>
         </div>
       </div>
-
-      <RoutineStorageToast
-        message={storageErrorToast}
-        onDismiss={() => setStorageErrorToast(null)}
-      />
 
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         <main

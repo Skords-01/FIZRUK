@@ -39,6 +39,14 @@ npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 | `VITE_API_BASE_URL` | No | Frontend API base URL (leave empty for relative paths) |
 | `VITE_NUTRITION_API_TOKEN` | No | Nutritionix token for direct frontend requests |
 
+## Shared UI System (`src/shared/`)
+- **ToastProvider + useToast** (`src/shared/hooks/useToast.jsx`) — Global toast notification context with `success`, `error`, `info`, `warning` methods
+- **ToastContainer** (`src/shared/components/ui/Toast.jsx`) — Animated toast renderer, mounted in App.jsx
+- **InputDialog** (`src/shared/components/ui/InputDialog.jsx`) — Bottom-sheet style text input dialog (replaces `window.prompt`)
+- **ConfirmDialog** (`src/shared/components/ui/ConfirmDialog.jsx`) — Bottom-sheet confirmation dialog (replaces `window.confirm`)
+- All `window.alert/prompt/confirm` calls removed across all modules (Finyk, Fizruk, Routine, Nutrition)
+- Page crossfade animation (`page-enter` CSS class) applied on module transitions in App.jsx
+
 ## Modules
 - **Finyk** — Finance tracker with Monobank integration
 - **Fizruk** — Workout / exercise tracker  

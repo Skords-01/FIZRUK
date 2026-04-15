@@ -5,6 +5,7 @@ import { PAGES } from "./constants";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
 import { cn } from "@shared/lib/cn";
+import { useToast } from "@shared/hooks/useToast";
 import { Overview } from "./pages/Overview.jsx";
 import { Transactions } from "./pages/Transactions.jsx";
 import { Budgets } from "./pages/Budgets.jsx";
@@ -103,25 +104,6 @@ const NAV_IDS = NAV_ITEMS.map((n) => n.id);
 
 const ALL_PAGE_IDS = [...PAGES.map((p) => p.id), "settings"];
 
-function FinykToast({ toast }) {
-  if (!toast) return null;
-  return (
-    <div
-      className={cn(
-        "fixed top-20 left-1/2 -translate-x-1/2 z-[110] px-4 py-3 rounded-2xl text-sm font-semibold shadow-float",
-        "animate-in fade-in slide-in-from-top-2 duration-200",
-        toast.type === "error"
-          ? "bg-danger text-white"
-          : "bg-success text-white",
-      )}
-      role="status"
-      aria-live="polite"
-    >
-      {toast.msg}
-    </div>
-  );
-}
-
 function useHashRouter(defaultPage = "overview") {
   const getPage = useCallback(() => {
     let p = window.location.hash.replace("#/", "") || defaultPage;
@@ -142,11 +124,11 @@ function useHashRouter(defaultPage = "overview") {
 
 export default function App({ onBackToHub } = {}) {
   const mono = useMonobank();
-  const [toast, setToast] = useState(null);
+  const toast = useToast();
   const showToast = useCallback((msg, type = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  }, []);
+    if (type === "error") toast.error(msg);
+    else toast.success(msg);
+  }, [toast]);
   const storage = useStorage({ onImportFeedback: showToast });
   const [page, navigate] = useHashRouter();
   const [tokenInput, setTokenInput] = useState("");
@@ -222,7 +204,6 @@ export default function App({ onBackToHub } = {}) {
   if (!clientInfo) {
     return (
       <div className="min-h-dvh flex items-center justify-center p-5 bg-bg safe-area-pt-pb">
-        <FinykToast toast={toast} />
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="w-20 h-20 mx-auto bg-emerald-500/12 rounded-3xl flex items-center justify-center mb-4 border border-emerald-500/15 shadow-card">
@@ -473,8 +454,6 @@ export default function App({ onBackToHub } = {}) {
           </div>
         </div>
       </div>
-
-      <FinykToast toast={toast} />
 
       {/* Page content */}
       <div

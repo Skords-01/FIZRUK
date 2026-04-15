@@ -39,6 +39,9 @@ import {
   decryptBlobToJson,
   encryptJsonToBlob,
 } from "./lib/nutritionCloudBackup.js";
+import { useToast } from "@shared/hooks/useToast";
+import { InputDialog } from "@shared/components/ui/InputDialog";
+import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 
 function fmtMacro(n) {
   if (n == null || Number.isNaN(Number(n))) return "—";
@@ -67,6 +70,7 @@ function todayISODate() {
 }
 
 export default function NutritionApp({ onBackToHub } = {}) {
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [statusText, setStatusText] = useState("");
@@ -113,6 +117,8 @@ export default function NutritionApp({ onBackToHub } = {}) {
   const [dayHintText, setDayHintText] = useState("");
   const [dayHintBusy, setDayHintBusy] = useState(false);
   const [cloudBackupBusy, setCloudBackupBusy] = useState(false);
+  const [backupPasswordDialog, setBackupPasswordDialog] = useState(null);
+  const [restoreConfirm, setRestoreConfirm] = useState(null);
 
   const recipeCacheKey = useMemo(
     () =>
@@ -280,47 +286,57 @@ export default function NutritionApp({ onBackToHub } = {}) {
     }
   }, [log.nutritionLog, log.selectedDate, prefs]);
 
-  const uploadCloudBackup = useCallback(async () => {
+  const uploadCloudBackup = useCallback(() => {
     if (cloudBackupBusy) return;
-    try {
-      const pass = window.prompt("Пароль для шифрування бекапу (запам’ятай його):");
-      if (!pass) return;
-      setCloudBackupBusy(true);
-      setErr("");
-      const payload = buildNutritionBackupPayload();
-      const blob = await encryptJsonToBlob(payload, pass);
-      await postJson("/api/nutrition/backup-upload", { blob });
-      setStatusText("Бекап завантажено.");
-      window.setTimeout(() => setStatusText(""), 2500);
-    } catch (e) {
-      setErr(e?.message || "Не вдалося завантажити бекап");
-    } finally {
-      setCloudBackupBusy(false);
-    }
+    setBackupPasswordDialog({
+      mode: "upload",
+      title: "Пароль для шифрування",
+      description: "Введіть пароль для шифрування бекапу (запам'ятайте його):",
+    });
   }, [cloudBackupBusy]);
 
-  const downloadCloudBackup = useCallback(async () => {
-    if (cloudBackupBusy) return;
-    try {
-      const pass = window.prompt("Пароль для розшифрування бекапу:");
+  const handleBackupPasswordConfirm = useCallback(
+    async (pass) => {
+      const mode = backupPasswordDialog?.mode;
+      setBackupPasswordDialog(null);
       if (!pass) return;
-      setCloudBackupBusy(true);
-      setErr("");
-      const data = await postJson("/api/nutrition/backup-download", {});
-      const payload = await decryptBlobToJson(data?.blob, pass);
-      if (
-        !window.confirm(
-          "Застосувати бекап? Це перезапише поточні дані харчування на цьому пристрої.",
-        )
-      )
-        return;
-      applyNutritionBackupPayload(payload);
-      window.location.reload();
-    } catch (e) {
-      setErr(e?.message || "Не вдалося відновити бекап");
-    } finally {
-      setCloudBackupBusy(false);
-    }
+      if (mode === "upload") {
+        try {
+          setCloudBackupBusy(true);
+          setErr("");
+          const payload = buildNutritionBackupPayload();
+          const blob = await encryptJsonToBlob(payload, pass);
+          await postJson("/api/nutrition/backup-upload", { blob });
+          toast.success("Бекап завантажено.");
+        } catch (e) {
+          setErr(e?.message || "Не вдалося завантажити бекап");
+        } finally {
+          setCloudBackupBusy(false);
+        }
+      } else if (mode === "download") {
+        try {
+          setCloudBackupBusy(true);
+          setErr("");
+          const data = await postJson("/api/nutrition/backup-download", {});
+          const payload = await decryptBlobToJson(data?.blob, pass);
+          setRestoreConfirm({ payload });
+        } catch (e) {
+          setErr(e?.message || "Не вдалося відновити бекап");
+        } finally {
+          setCloudBackupBusy(false);
+        }
+      }
+    },
+    [backupPasswordDialog, toast],
+  );
+
+  const downloadCloudBackup = useCallback(() => {
+    if (cloudBackupBusy) return;
+    setBackupPasswordDialog({
+      mode: "download",
+      title: "Пароль для розшифрування",
+      description: "Введіть пароль для розшифрування бекапу:",
+    });
   }, [cloudBackupBusy]);
 
   const recipeCacheEntry = useMemo(
@@ -559,6 +575,32 @@ export default function NutritionApp({ onBackToHub } = {}) {
         photoResult={log.addMealPhotoResult}
         mealTemplates={prefs.mealTemplates || []}
         setPrefs={setPrefs}
+      />
+
+      <InputDialog
+        open={!!backupPasswordDialog}
+        title={backupPasswordDialog?.title || ""}
+        description={backupPasswordDialog?.description || ""}
+        type="password"
+        placeholder="Пароль"
+        onConfirm={handleBackupPasswordConfirm}
+        onCancel={() => setBackupPasswordDialog(null)}
+      />
+
+      <ConfirmDialog
+        open={!!restoreConfirm}
+        title="Відновити бекап?"
+        description="Це перезапише поточні дані харчування на цьому пристрої."
+        confirmLabel="Відновити"
+        danger
+        onConfirm={() => {
+          if (restoreConfirm?.payload) {
+            applyNutritionBackupPayload(restoreConfirm.payload);
+            window.location.reload();
+          }
+          setRestoreConfirm(null);
+        }}
+        onCancel={() => setRestoreConfirm(null)}
       />
     </div>
   );

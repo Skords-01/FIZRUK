@@ -3,6 +3,7 @@ import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
+import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import {
   deleteSavedRecipe,
   listSavedRecipes,
@@ -40,6 +41,7 @@ export function RecipesCard({
   const [saved, setSaved] = useState([]);
   const [savedBusy, setSavedBusy] = useState(false);
   const [portionById, setPortionById] = useState({});
+  const [deleteRecipeConfirm, setDeleteRecipeConfirm] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,6 +108,7 @@ export function RecipesCard({
   }
 
   return (
+    <>
     <Card className="p-4">
       <div className="text-sm font-semibold text-text">
         Рецепти ({activePantry?.name || "Склад"})
@@ -166,12 +169,7 @@ export function RecipesCard({
                           type="button"
                           variant="ghost"
                           className="h-9 text-xs text-danger"
-                          onClick={async () => {
-                            if (!window.confirm("Видалити збережений рецепт?"))
-                              return;
-                            await deleteSavedRecipe(r.id);
-                            await refreshSaved();
-                          }}
+                          onClick={() => setDeleteRecipeConfirm(r)}
                         >
                           Видалити
                         </Button>
@@ -434,5 +432,22 @@ export function RecipesCard({
         )}
       </div>
     </Card>
+
+    <ConfirmDialog
+      open={!!deleteRecipeConfirm}
+      title="Видалити рецепт?"
+      description={`Видалити збережений рецепт «${deleteRecipeConfirm?.title || ""}»?`}
+      confirmLabel="Видалити"
+      danger
+      onConfirm={async () => {
+        if (deleteRecipeConfirm?.id) {
+          await deleteSavedRecipe(deleteRecipeConfirm.id);
+          await refreshSaved();
+        }
+        setDeleteRecipeConfirm(null);
+      }}
+      onCancel={() => setDeleteRecipeConfirm(null)}
+    />
+    </>
   );
 }

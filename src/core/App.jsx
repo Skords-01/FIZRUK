@@ -3,6 +3,8 @@ import { cn } from "@shared/lib/cn";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
 import { HubBackupPanel } from "./HubBackupPanel.jsx";
 import { useDarkMode } from "@shared/hooks/useDarkMode";
+import { ToastProvider } from "@shared/hooks/useToast";
+import { ToastContainer } from "@shared/components/ui/Toast";
 
 /** Detects online/offline state and shows a banner when offline */
 function useOnlineStatus() {
@@ -358,6 +360,15 @@ function usePwaInstall() {
 }
 
 export default function App() {
+  return (
+    <ToastProvider>
+      <ToastContainer />
+      <AppInner />
+    </ToastProvider>
+  );
+}
+
+function AppInner() {
   const [activeModule, setActiveModule] = useState(readInitialModule);
   const [chatOpen, setChatOpen] = useState(false);
   const { dark, toggle: toggleDark } = useDarkMode();
@@ -613,16 +624,18 @@ export default function App() {
       )}
 
       <Suspense fallback={<PageLoader />}>
-        <ModuleErrorBoundary key={activeModule} onBackToHub={goToHub}>
-          {activeModule === "finyk" && <FinykApp onBackToHub={goToHub} />}
-          {activeModule === "fizruk" && <FizrukApp onBackToHub={goToHub} />}
-          {activeModule === "routine" && (
-            <RoutineApp onBackToHub={goToHub} onOpenModule={openModule} />
-          )}
-          {activeModule === "nutrition" && (
-            <NutritionApp onBackToHub={goToHub} />
-          )}
-        </ModuleErrorBoundary>
+        <div key={activeModule} className="page-enter h-full flex flex-col">
+          <ModuleErrorBoundary onBackToHub={goToHub}>
+            {activeModule === "finyk" && <FinykApp onBackToHub={goToHub} />}
+            {activeModule === "fizruk" && <FizrukApp onBackToHub={goToHub} />}
+            {activeModule === "routine" && (
+              <RoutineApp onBackToHub={goToHub} onOpenModule={openModule} />
+            )}
+            {activeModule === "nutrition" && (
+              <NutritionApp onBackToHub={goToHub} />
+            )}
+          </ModuleErrorBoundary>
+        </div>
       </Suspense>
     </div>
   );

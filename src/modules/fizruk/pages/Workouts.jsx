@@ -4,6 +4,7 @@ import { Button } from "@shared/components/ui/Button";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { cn } from "@shared/lib/cn";
+import { useToast } from "@shared/hooks/useToast";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { WorkoutTemplatesSection } from "../components/WorkoutTemplatesSection";
 import { ActiveWorkoutPanel } from "../components/workouts/ActiveWorkoutPanel";
@@ -50,6 +51,7 @@ function toggleArr(arr, value) {
 }
 
 export function Workouts() {
+  const toast = useToast();
   const {
     exercises,
     search,
@@ -221,13 +223,13 @@ export function Workouts() {
         return;
       }
       if (!activeWorkoutId) {
-        window.alert(
+        toast.warning(
           "Спочатку натисни «+ Нове» у блоці нижче, щоб з’явилось активне тренування.",
         );
         return;
       }
       if (activeWorkout?.endedAt) {
-        window.alert(
+        toast.warning(
           "Це тренування вже завершено. Обери чернетку в «Останні тренування» або створи нове.",
         );
         return;
@@ -243,7 +245,7 @@ export function Workouts() {
         .map((id) => exercises.find((e) => e.id === id))
         .filter(Boolean);
       if (!picks.length) {
-        window.alert(
+        toast.warning(
           "У шаблоні немає вправ з каталогу. Відредагуй шаблон і додай вправи.",
         );
         return;
@@ -1006,11 +1008,11 @@ export function Workouts() {
                     className="w-full h-12 mt-5 bg-forest text-white border-forest hover:bg-forest/90"
                     onClick={() => {
                       if (!activeWorkoutId) {
-                        window.alert("Спочатку натисни «+ Нове» у блоці вище.");
+                        toast.warning("Спочатку натисни «+ Нове» у блоці вище.");
                         return;
                       }
                       if (activeWorkout?.endedAt) {
-                        window.alert(
+                        toast.warning(
                           "Це тренування вже завершено. Обери чернетку або створи нове.",
                         );
                         return;
