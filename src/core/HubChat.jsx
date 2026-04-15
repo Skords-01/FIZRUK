@@ -28,8 +28,11 @@ import {
 } from "../modules/fizruk/lib/workoutStats";
 import { ACTIVE_WORKOUT_KEY } from "../modules/fizruk/lib/workoutUi";
 import { cn } from "@shared/lib/cn";
+import { perfMark, perfEnd } from "@shared/lib/perf";
 
 const HUB_FINYK_CACHE_EVENT = "hub-finyk-cache-updated";
+const CONTEXT_TTL_MS = 15_000;
+const CHAT_HISTORY_WRITE_DEBOUNCE_MS = 600;
 
 function friendlyApiError(status, message) {
   const m = message || "";
@@ -451,6 +454,25 @@ function buildContext() {
     : "Даних немає. Monobank не підключено.";
 }
 
+function buildContextMeasured() {
+  const m = perfMark("hubchat:buildContext");
+  const ctx = buildContext();
+  perfEnd(m, { len: ctx?.length || 0 });
+  return ctx;
+}
+
+function requestIdle(cb) {
+  if (typeof window === "undefined") return setTimeout(cb, 0);
+  if (window.requestIdleCallback) return window.requestIdleCallback(cb, { timeout: 800 });
+  return setTimeout(cb, 0);
+}
+
+function cancelIdle(id) {
+  if (typeof window === "undefined") return clearTimeout(id);
+  if (window.cancelIdleCallback) return window.cancelIdleCallback(id);
+  return clearTimeout(id);
+}
+
 // ──────────────────────────────────────────────
 // 2. Виконання дій (tool results)
 // ──────────────────────────────────────────────
@@ -691,14 +713,41 @@ function HubChat({ onClose }) {
     return normalizeStoredMessages(null);
   });
 
+  const lastMessagesRef = useRef(messages);
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        "hub_chat_history",
-        JSON.stringify(messages.slice(-30)),
-      );
-    } catch {}
+    lastMessagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    const m = perfMark("hubchat:historyWrite(schedule)");
+    const id = setTimeout(() => {
+      const mm = perfMark("hubchat:historyWrite");
+      try {
+        localStorage.setItem(
+          "hub_chat_history",
+          JSON.stringify(lastMessagesRef.current.slice(-30)),
+        );
+      } catch {}
+      perfEnd(mm);
+    }, CHAT_HISTORY_WRITE_DEBOUNCE_MS);
+    perfEnd(m);
+    return () => clearTimeout(id);
+  }, [messages]);
+
+  useEffect(() => {
+    const flush = () => {
+      const mm = perfMark("hubchat:historyWrite(flush)");
+      try {
+        localStorage.setItem(
+          "hub_chat_history",
+          JSON.stringify(lastMessagesRef.current.slice(-30)),
+        );
+      } catch {}
+      perfEnd(mm);
+    };
+    window.addEventListener("beforeunload", flush);
+    return () => window.removeEventListener("beforeunload", flush);
+  }, []);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -709,6 +758,34 @@ function HubChat({ onClose }) {
   const lastWasVoice = useRef(false);
 
   const [hasData, setHasData] = useState(() => checkHasMonoData());
+
+  const contextRef = useRef({ text: "", ts: 0 });
+  const [contextState, setContextState] = useState(() => ({
+    status: "idle", // idle | building | ready
+    ts: 0,
+  }));
+  const idleJobRef = useRef(null);
+
+  const scheduleContextBuild = useCallback(
+    (reason = "auto", force = false) => {
+      const now = Date.now();
+      if (!force && contextRef.current.text && now - contextRef.current.ts < CONTEXT_TTL_MS) {
+        setContextState((s) => (s.status === "ready" ? s : { status: "ready", ts: contextRef.current.ts }));
+        return;
+      }
+      if (idleJobRef.current) cancelIdle(idleJobRef.current);
+      setContextState({ status: "building", ts: contextRef.current.ts || 0 });
+      idleJobRef.current = requestIdle(() => {
+        idleJobRef.current = null;
+        const m = perfMark(`hubchat:contextBuild(${reason})`);
+        const text = buildContextMeasured();
+        contextRef.current = { text, ts: Date.now() };
+        perfEnd(m, { len: text?.length || 0 });
+        setContextState({ status: "ready", ts: contextRef.current.ts });
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     const refresh = () => setHasData(checkHasMonoData());
@@ -726,6 +803,19 @@ function HubChat({ onClose }) {
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
+
+  useEffect(() => {
+    scheduleContextBuild("mount", true);
+    return () => {
+      if (idleJobRef.current) cancelIdle(idleJobRef.current);
+    };
+  }, [scheduleContextBuild]);
+
+  useEffect(() => {
+    const onUpdate = () => scheduleContextBuild("finyk-cache", true);
+    window.addEventListener(HUB_FINYK_CACHE_EVENT, onUpdate);
+    return () => window.removeEventListener(HUB_FINYK_CACHE_EVENT, onUpdate);
+  }, [scheduleContextBuild]);
 
   const quickPrompts = useMemo(
     () => (hasData ? QUICK_WITH_MONO : QUICK_NO_MONO),
@@ -828,7 +918,12 @@ function HubChat({ onClose }) {
       .map((m) => ({ role: m.role, content: m.text }));
 
     try {
-      const context = buildContext();
+      const context = contextRef.current.text || buildContextMeasured();
+      // keep context warm for subsequent sends
+      if (!contextRef.current.text) {
+        contextRef.current = { text: context, ts: Date.now() };
+        setContextState({ status: "ready", ts: contextRef.current.ts });
+      }
 
       const res = await fetch(apiUrl("/api/chat"), {
         method: "POST",
@@ -868,7 +963,7 @@ function HubChat({ onClose }) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              context: buildContext(),
+              context: contextRef.current.text || context,
               messages: history,
               tool_results: toolResults,
               tool_calls_raw: data.tool_calls_raw,
@@ -923,6 +1018,8 @@ function HubChat({ onClose }) {
         }
 
         window.dispatchEvent(new CustomEvent(HUB_FINYK_CACHE_EVENT));
+        // context is now stale; rebuild in background
+        scheduleContextBuild("after-tools", true);
       } else {
         const reply = data.text || "Немає відповіді.";
         setMessages((m) => [...m, makeAssistantMsg(reply)]);
@@ -986,6 +1083,13 @@ function HubChat({ onClose }) {
                 )}
               >
                 {hasData ? "Фінік · Фізрук" : "Mono не підключено"}
+              </div>
+              <div className="text-[10px] text-subtle mt-0.5">
+                {contextState.status === "building"
+                  ? "Готую контекст…"
+                  : contextState.status === "ready"
+                    ? "Контекст готовий"
+                    : ""}
               </div>
               <p
                 id="hub-chat-privacy"

@@ -5,9 +5,11 @@ import { mergeExpenseCategoryDefinitions } from "../constants";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { cn } from "@shared/lib/cn";
+import { perfMark, perfEnd } from "@shared/lib/perf";
 
 const now = new Date();
 const PAGE_SIZE = 80;
+const SEARCH_DEBOUNCE_MS = 200;
 
 function dayKeyFromTx(ts) {
   const d = new Date(ts * 1000);
@@ -69,11 +71,17 @@ export function Transactions({
   }, [categoryFilter, onClearCategoryFilter]);
   const [showHidden, setShowHidden] = useState(false);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   // Batch selection
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [batchCatPicker, setBatchCatPicker] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [search]);
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => {
@@ -101,7 +109,7 @@ export function Transactions({
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [selMonth, filter, search, showHidden]);
+  }, [selMonth, filter, debouncedSearch, showHidden]);
 
   const isCurrentMonth =
     selMonth.year === now.getFullYear() && selMonth.month === now.getMonth();
@@ -137,6 +145,11 @@ export function Transactions({
         (accounts || []).filter((a) => a.creditLimit > 0).map((a) => a.id),
       ),
     [accounts],
+  );
+
+  const hiddenTxIdSet = useMemo(
+    () => new Set(hiddenTxIds || []),
+    [hiddenTxIds],
   );
 
   const getEffectiveCat = useCallback(
@@ -189,12 +202,26 @@ export function Transactions({
     () =>
       showHidden
         ? activeTx
-        : activeTx.filter((t) => !hiddenTxIds.includes(t.id)),
-    [activeTx, hiddenTxIds, showHidden],
+        : activeTx.filter((t) => !hiddenTxIdSet.has(t.id)),
+    [activeTx, hiddenTxIdSet, showHidden],
   );
+
+  const sortedTxs = useMemo(() => {
+    const m = perfMark("finyk:tx:sort");
+    const next = [...txsToShow].sort((a, b) => (b.time || 0) - (a.time || 0));
+    perfEnd(m, { n: next.length });
+    return next;
+  }, [txsToShow]);
+
+  const searchLower = useMemo(() => {
+    const s = (debouncedSearch || "").trim();
+    return s ? s.toLowerCase() : "";
+  }, [debouncedSearch]);
+
   const filtered = useMemo(
-    () =>
-      txsToShow.filter((t) => {
+    () => {
+      const m = perfMark("finyk:tx:filter");
+      const res = sortedTxs.filter((t) => {
         const matchFilter =
           filter === "all"
             ? true
@@ -206,19 +233,25 @@ export function Transactions({
                   ? creditAccIds.has(t._accountId)
                   : getEffectiveCat(t).id === filter;
         const matchSearch =
-          !search.trim() ||
-          (t.description || "").toLowerCase().includes(search.toLowerCase());
+          !searchLower ||
+          (t.description || "").toLowerCase().includes(searchLower);
         return matchFilter && matchSearch;
-      }),
-    [txsToShow, filter, search, creditAccIds, getEffectiveCat],
+      });
+      perfEnd(m, { n: res.length });
+      return res;
+    },
+    [sortedTxs, filter, searchLower, creditAccIds, getEffectiveCat],
   );
 
-  const visibleSorted = useMemo(
-    () => [...filtered].sort((a, b) => b.time - a.time).slice(0, visibleCount),
-    [filtered, visibleCount],
-  );
+  const visibleSorted = useMemo(() => {
+    const m = perfMark("finyk:tx:visibleSlice");
+    const res = filtered.slice(0, visibleCount);
+    perfEnd(m, { n: res.length });
+    return res;
+  }, [filtered, visibleCount]);
 
   const groupedByDate = useMemo(() => {
+    const m = perfMark("finyk:tx:groupByDate");
     const groups = [];
     for (const t of visibleSorted) {
       const k = dayKeyFromTx(t.time);
@@ -226,6 +259,7 @@ export function Transactions({
       if (last && last.key === k) last.items.push(t);
       else groups.push({ key: k, items: [t] });
     }
+    perfEnd(m, { groups: groups.length });
     return groups;
   }, [visibleSorted]);
 
