@@ -23,6 +23,35 @@ import {
   summarizeWorkoutForFinish,
 } from "../lib/workoutUi";
 
+function playRestCompletionSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const playBeep = (freq, startTime, duration) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.18, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    const t = ctx.currentTime;
+    playBeep(880, t, 0.15);
+    playBeep(1100, t + 0.18, 0.15);
+    playBeep(1320, t + 0.36, 0.3);
+    setTimeout(() => { try { ctx.close(); } catch {} }, 1500);
+  } catch {}
+}
+
+function vibrateRestComplete() {
+  try {
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  } catch {}
+}
+
 const EQUIPMENT_OPTIONS = [
   { id: "bodyweight", label: "Власна вага" },
   { id: "barbell", label: "Штанга" },
@@ -170,14 +199,22 @@ export function Workouts() {
     } catch {}
   }, []);
 
+  const restCompletedNaturally = useRef(false);
+
+  useEffect(() => {
+    if (restTimer === null && restCompletedNaturally.current) {
+      restCompletedNaturally.current = false;
+      playRestCompletionSound();
+      vibrateRestComplete();
+    }
+  }, [restTimer]);
+
   useEffect(() => {
     if (!restTimer || restTimer.remaining <= 0) return;
     const id = setInterval(() => {
       setRestTimer((r) => {
         if (!r || r.remaining <= 1) {
-          try {
-            navigator.vibrate?.(200);
-          } catch {}
+          restCompletedNaturally.current = true;
           return null;
         }
         return { ...r, remaining: r.remaining - 1 };

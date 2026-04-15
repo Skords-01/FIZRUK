@@ -6,10 +6,16 @@ import { Exercise } from "./pages/Exercise";
 import { Workouts } from "./pages/Workouts";
 import { Progress } from "./pages/Progress";
 import { Measurements } from "./pages/Measurements";
+import { Body } from "./pages/Body";
+import { Programs } from "./pages/Programs";
 import { WorkoutBackupBar } from "./components/workouts/WorkoutBackupBar";
 import { PlanCalendar } from "./pages/PlanCalendar";
 import { useMonthlyPlan } from "./hooks/useMonthlyPlan";
 import { useFizrukWorkoutReminder } from "./hooks/useFizrukWorkoutReminder";
+import { useTrainingProgram } from "./hooks/useTrainingProgram";
+import { useWorkouts } from "./hooks/useWorkouts";
+import { useExerciseCatalog } from "./hooks/useExerciseCatalog";
+import { ACTIVE_WORKOUT_KEY } from "./lib/workoutUi";
 import { cn } from "@shared/lib/cn";
 
 const NAV = [
@@ -17,39 +23,9 @@ const NAV = [
     id: "dashboard",
     label: "Сьогодні",
     icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <polyline points="12 6 12 12 16 14" />
-      </svg>
-    ),
-  },
-  {
-    id: "plan",
-    label: "План",
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
       </svg>
     ),
   },
@@ -57,17 +33,39 @@ const NAV = [
     id: "workouts",
     label: "Тренування",
     icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3" />
+      </svg>
+    ),
+  },
+  {
+    id: "plan",
+    label: "План",
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    ),
+  },
+  {
+    id: "programs",
+    label: "Програми",
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 11l3 3L22 4" />
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>
+    ),
+  },
+  {
+    id: "body",
+    label: "Тіло",
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
       </svg>
     ),
   },
@@ -75,38 +73,8 @@ const NAV = [
     id: "progress",
     label: "Прогрес",
     icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-      </svg>
-    ),
-  },
-  {
-    id: "measurements",
-    label: "Заміри",
-    icon: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M21 16V8a2 2 0 0 0-2-2h-3" />
-        <path d="M8 6H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3" />
-        <path d="M16 3v18" />
-        <path d="M8 3v18" />
       </svg>
     ),
   },
@@ -119,12 +87,13 @@ const VALID_FIZRUK_PAGES = [
   "workouts",
   "progress",
   "measurements",
+  "programs",
+  "body",
   "exercise",
 ];
 
 function parseHash() {
   const raw = (window.location.hash || "").replace(/^#/, "").trim();
-  // Ігноруємо хеш формату Фініка (#/page)
   if (!raw || raw.startsWith("/")) return { page: "dashboard" };
   const [page, ...rest] = raw.split("/").filter(Boolean);
   if (page === "exercise" && rest[0]) return { page, exerciseId: rest[0] };
@@ -148,6 +117,10 @@ export default function FizrukApp({ onBackToHub } = {}) {
   const isPlan = page === "plan";
 
   const monthlyPlan = useMonthlyPlan();
+  const { activeProgramId, activeProgram, todaySession, activateProgram, deactivateProgram } = useTrainingProgram();
+  const { workouts, createWorkout, addItem } = useWorkouts();
+  const { exercises } = useExerciseCatalog();
+
   useFizrukWorkoutReminder({
     enabled: !!monthlyPlan.todayTemplateId,
     reminderHour: monthlyPlan.reminderHour,
@@ -164,9 +137,64 @@ export default function FizrukApp({ onBackToHub } = {}) {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  const handleStartProgramWorkout = (session, _prog) => {
+    if (!session) return;
+    const exIds = session.exerciseIds || [];
+    const picks = exIds.map((id) => exercises.find((e) => e.id === id)).filter(Boolean);
+    if (picks.length === 0) return;
+    const progressionKg = session.progressionKg ?? 0;
+    const w = createWorkout();
+    for (const ex of picks) {
+      const isCardio = ex.primaryGroup === "cardio";
+      let suggestedWeight = 0;
+      if (!isCardio && progressionKg > 0) {
+        const lastWorkoutWithEx = workouts.find(
+          (wo) => (wo.items || []).some((it) => it.exerciseId === ex.id),
+        );
+        if (lastWorkoutWithEx) {
+          const item = lastWorkoutWithEx.items.find((it) => it.exerciseId === ex.id);
+          const maxWeight = Math.max(
+            0,
+            ...(item?.sets || []).map((s) => s.weightKg || 0),
+          );
+          if (maxWeight > 0) {
+            suggestedWeight = Math.round((maxWeight + progressionKg) * 2) / 2;
+          }
+        }
+      }
+      addItem(w.id, {
+        exerciseId: ex.id,
+        nameUk: ex?.name?.uk || ex?.name?.en,
+        primaryGroup: ex.primaryGroup,
+        musclesPrimary: ex?.muscles?.primary || [],
+        musclesSecondary: ex?.muscles?.secondary || [],
+        type: isCardio ? "distance" : "strength",
+        sets: isCardio ? undefined : [{ weightKg: suggestedWeight, reps: 0 }],
+        durationSec: 0,
+        distanceM: isCardio ? 0 : 0,
+      });
+    }
+    try {
+      localStorage.setItem(ACTIVE_WORKOUT_KEY, w.id);
+      sessionStorage.setItem("fizruk_workouts_mode", "log");
+    } catch {}
+    window.location.hash = "#workouts";
+  };
+
+  const headerTitle = isAtlas
+    ? "Атлас"
+    : isExercise
+      ? "Вправа"
+      : isPlan
+        ? "План"
+        : page === "programs"
+          ? "Програми"
+          : page === "body"
+            ? "Тіло"
+            : "ФІЗРУК";
+
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
-      {/* Header */}
       <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative safe-area-pt">
         <div className="flex min-h-[68px] items-center px-4 py-2 sm:px-5 gap-3">
           {isAtlas || isExercise ? (
@@ -176,16 +204,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
               className="w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
               aria-label="Назад"
             >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
@@ -197,36 +216,14 @@ export default function FizrukApp({ onBackToHub } = {}) {
               aria-label="До вибору модуля"
               title="До хабу"
             >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </button>
           ) : (
-            <div
-              className="shrink-0 w-9 h-9 rounded-xl bg-success/10 flex items-center justify-center text-success border border-success/20"
-              aria-hidden
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+            <div className="shrink-0 w-9 h-9 rounded-xl bg-success/10 flex items-center justify-center text-success border border-success/20" aria-hidden>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3" />
               </svg>
             </div>
@@ -238,19 +235,19 @@ export default function FizrukApp({ onBackToHub } = {}) {
               </span>
             )}
             <span className="text-[16px] font-semibold tracking-wide text-text block leading-tight">
-              {isAtlas
-                ? "Атлас"
-                : isExercise
-                  ? "Вправа"
-                  : isPlan
-                    ? "План"
-                    : "ФІЗРУК"}
+              {headerTitle}
             </span>
             {!isAtlas && !isExercise && (
               <span className="text-[10px] text-subtle font-medium truncate">
                 {isPlan
                   ? "Календар · нагадування · відновлення"
-                  : "Тренування · прогрес"}
+                  : page === "programs"
+                    ? activeProgram
+                      ? `Активна: ${activeProgram.name}`
+                      : "Оберіть тренувальну програму"
+                    : page === "body"
+                      ? "Вага · сон · самопочуття"
+                      : "Тренування · прогрес"}
               </span>
             )}
           </div>
@@ -261,17 +258,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
             aria-label="Налаштування даних"
             title="Налаштування даних"
           >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.65"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -280,10 +267,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
       </div>
 
       {settingsOpen && (
-        <div
-          className="fixed inset-0 z-[80] flex justify-end"
-          role="presentation"
-        >
+        <div className="fixed inset-0 z-[80] flex justify-end" role="presentation">
           <button
             type="button"
             className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
@@ -298,10 +282,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
             className="relative w-full max-w-sm h-full bg-panel border-l border-line shadow-2xl flex flex-col safe-area-pt-pb"
           >
             <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-line/60">
-              <h2
-                id="fizruk-settings-title"
-                className="text-base font-semibold text-text"
-              >
+              <h2 id="fizruk-settings-title" className="text-base font-semibold text-text">
                 Дані й резервні копії
               </h2>
               <button
@@ -310,15 +291,7 @@ export default function FizrukApp({ onBackToHub } = {}) {
                 className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
                 aria-label="Закрити"
               >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -331,25 +304,40 @@ export default function FizrukApp({ onBackToHub } = {}) {
         </div>
       )}
 
-      {/* Page content */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {page === "dashboard" && (
-          <Dashboard onOpenAtlas={() => setHash("atlas")} />
+          <Dashboard
+            onOpenAtlas={() => setHash("atlas")}
+            onOpenPrograms={() => setHash("programs")}
+            activeProgram={activeProgram}
+            todaySession={todaySession}
+            onStartProgramWorkout={handleStartProgramWorkout}
+          />
         )}
         {page === "plan" && <PlanCalendar />}
         {page === "atlas" && <Atlas />}
         {page === "workouts" && <Workouts />}
         {page === "progress" && <Progress />}
         {page === "measurements" && <Measurements />}
+        {page === "programs" && (
+          <Programs
+            onStartWorkout={handleStartProgramWorkout}
+            activeProgramId={activeProgramId}
+            activeProgram={activeProgram}
+            activateProgram={activateProgram}
+            deactivateProgram={deactivateProgram}
+          />
+        )}
+        {page === "body" && <Body onOpenMeasurements={() => setHash("measurements")} />}
         {page === "exercise" && <Exercise exerciseId={route.exerciseId} />}
       </div>
 
-      {/* Bottom nav */}
       {!isAtlas && !isExercise && (
         <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30 safe-area-pb">
           <div className="flex h-[58px]">
             {NAV.map((item) => {
               const active = page === item.id;
+              const hasDot = item.id === "programs" && activeProgram && todaySession;
               return (
                 <button
                   key={item.id}
@@ -361,20 +349,15 @@ export default function FizrukApp({ onBackToHub } = {}) {
                   )}
                 >
                   {active && (
-                    <span
-                      className="absolute top-0 left-1/2 -translate-x-1/2 w-9 h-0.5 rounded-full bg-success"
-                      aria-hidden
-                    />
+                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-9 h-0.5 rounded-full bg-success" aria-hidden />
                   )}
-                  <span className={cn(active && "text-success")}>
+                  <span className={cn("relative", active && "text-success")}>
                     {item.icon}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[11px] leading-none font-semibold",
-                      active ? "text-text" : "text-muted",
+                    {hasDot && !active && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent border border-panel" aria-hidden />
                     )}
-                  >
+                  </span>
+                  <span className={cn("text-[10px] leading-none font-semibold", active ? "text-text" : "text-muted")}>
                     {item.label}
                   </span>
                 </button>

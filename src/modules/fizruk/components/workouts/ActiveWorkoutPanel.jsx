@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { recoveryConflictsForWorkoutItem } from "../../lib/recoveryConflict";
+import { useRestSettings, getRestCategory, REST_CATEGORY_LABELS } from "../../hooks/useRestSettings";
 
 function isoToDatetimeLocalValue(iso) {
   if (!iso) return "";
@@ -32,6 +33,7 @@ export function ActiveWorkoutPanel({
   const dtFieldsId = useId();
   const workoutStartId = `${dtFieldsId}-started`;
   const workoutEndId = `${dtFieldsId}-ended`;
+  const { getDefaultForGroup } = useRestSettings();
 
   if (!activeWorkout) return null;
   return (
@@ -312,25 +314,48 @@ export function ActiveWorkoutPanel({
                   >
                     + Підхід
                   </Button>
-                  {!activeWorkout.endedAt && (
-                    <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-line/60">
-                      <span className="text-[10px] font-bold text-subtle uppercase tracking-widest w-full">
-                        Таймер відпочинку
-                      </span>
-                      {[60, 90, 120].map((sec) => (
+                  {!activeWorkout.endedAt && (() => {
+                    const defSec = getDefaultForGroup(it.primaryGroup);
+                    const cat = getRestCategory(it.primaryGroup);
+                    const catLabel = REST_CATEGORY_LABELS[cat] || "";
+                    const quickOptions = [60, 90, 120, 180].filter(
+                      (s) => s !== defSec,
+                    );
+                    return (
+                      <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-line/60">
+                        <div className="flex items-center justify-between w-full gap-1">
+                          <span className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+                            Таймер відпочинку
+                          </span>
+                          <span className="text-[9px] text-muted">
+                            {catLabel} · реком. {defSec}с
+                          </span>
+                        </div>
                         <button
-                          key={sec}
                           type="button"
-                          className="min-h-[44px] px-4 rounded-xl border border-line bg-panelHi text-sm text-text hover:bg-panel transition-colors"
+                          className="min-h-[44px] px-4 rounded-xl border-2 border-success bg-success/10 text-sm font-semibold text-success hover:bg-success/20 transition-colors"
                           onClick={() =>
-                            setRestTimer({ remaining: sec, total: sec })
+                            setRestTimer({ remaining: defSec, total: defSec })
                           }
+                          title={`Рекомендований час для ${catLabel.toLowerCase()}`}
                         >
-                          {sec} с
+                          {defSec} с ★
                         </button>
-                      ))}
-                    </div>
-                  )}
+                        {quickOptions.map((sec) => (
+                          <button
+                            key={sec}
+                            type="button"
+                            className="min-h-[44px] px-4 rounded-xl border border-line bg-panelHi text-sm text-text hover:bg-panel transition-colors"
+                            onClick={() =>
+                              setRestTimer({ remaining: sec, total: sec })
+                            }
+                          >
+                            {sec} с
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 

@@ -27,7 +27,7 @@ function formatDurShort(sec) {
   return `${m} хв ${s} с`;
 }
 
-export function Dashboard({ onOpenAtlas }) {
+export function Dashboard({ onOpenAtlas, onOpenPrograms, activeProgram, todaySession, onStartProgramWorkout }) {
   const today = new Date().toLocaleDateString("uk-UA", {
     weekday: "long",
     day: "numeric",
@@ -399,6 +399,49 @@ export function Dashboard({ onOpenAtlas }) {
           </section>
           );
         })()}
+
+        {activeProgram && (
+          <section
+            className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+            aria-label="Програма сьогодні"
+          >
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div>
+                <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
+                  Програма: {activeProgram.name}
+                </h2>
+                {todaySession ? (
+                  <p className="text-sm font-semibold text-text mt-0.5">
+                    {todaySession.name}
+                  </p>
+                ) : (
+                  <p className="text-sm text-subtle mt-0.5">Сьогодні відпочинок 💤</p>
+                )}
+              </div>
+              <button
+                type="button"
+                className="text-[11px] font-semibold text-success hover:underline shrink-0"
+                onClick={() => onOpenPrograms?.()}
+              >
+                Програми →
+              </button>
+            </div>
+            {todaySession && (
+              <button
+                type="button"
+                className="w-full py-3 rounded-xl bg-accent text-forest font-semibold text-sm transition-all active:scale-[0.98]"
+                onClick={() => {
+                  const session = activeProgram.sessions?.[todaySession.sessionKey];
+                  if (session && onStartProgramWorkout) {
+                    onStartProgramWorkout(session, activeProgram);
+                  }
+                }}
+              >
+                Розпочати тренування за програмою
+              </button>
+            )}
+          </section>
+        )}
 
         <section
           className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
