@@ -1,17 +1,22 @@
-import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
+import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
 import { registerRoute, NavigationRoute } from "workbox-routing";
-import { CacheFirst } from "workbox-strategies";
+import { NetworkFirst, CacheFirst } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
-const navigationHandler = createHandlerBoundToURL("/index.html");
-const navigationRoute = new NavigationRoute(navigationHandler, {
-  denylist: [/^\/api\//],
-});
-registerRoute(navigationRoute);
+registerRoute(
+  new NavigationRoute(
+    new NetworkFirst({
+      cacheName: "navigations",
+      networkTimeoutSeconds: 3,
+      plugins: [new CacheableResponsePlugin({ statuses: [0, 200] })],
+    }),
+    { denylist: [/^\/api\//] },
+  ),
+);
 
 registerRoute(
   ({ url }) => url.origin === "https://fonts.googleapis.com",
