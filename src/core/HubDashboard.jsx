@@ -22,6 +22,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 const DASHBOARD_ORDER_KEY = "hub_dashboard_order_v1";
 const DEFAULT_ORDER = ["finyk", "fizruk", "routine", "nutrition"];
+const HUB_PREFS_KEY = "hub_prefs_v1";
 
 function safeParseLS(key, fallback) {
   try {
@@ -391,11 +392,22 @@ export function HubDashboard({ onOpenModule, onOpenChat }) {
     }
   }, []);
 
+  const [showCoach, setShowCoach] = useState(() => safeParseLS(HUB_PREFS_KEY, {}).showCoach !== false);
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === HUB_PREFS_KEY || e.key === null) {
+        setShowCoach(safeParseLS(HUB_PREFS_KEY, {}).showCoach !== false);
+      }
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, []);
+
   return (
     <div className="space-y-4">
       <HubRecommendations onOpenModule={onOpenModule} />
 
-      <CoachInsightCard onOpenChat={onOpenChat} />
+      {showCoach && <CoachInsightCard onOpenChat={onOpenChat} />}
 
       <WeeklyDigestCard />
 

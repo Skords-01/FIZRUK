@@ -360,13 +360,37 @@ function NotificationsSection() {
   );
 }
 
+const HUB_PREFS_KEY = "hub_prefs_v1";
+
+function loadHubPrefs() {
+  try {
+    const raw = localStorage.getItem(HUB_PREFS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveHubPref(key, value) {
+  try {
+    const prefs = loadHubPrefs();
+    localStorage.setItem(HUB_PREFS_KEY, JSON.stringify({ ...prefs, [key]: value }));
+    window.dispatchEvent(new StorageEvent("storage", { key: HUB_PREFS_KEY }));
+  } catch {}
+}
+
 function GeneralSection({ dark, onToggleDark, syncing, onSync, onPull, user }) {
   const [orderReset, setOrderReset] = useState(false);
+  const [showCoach, setShowCoach] = useState(() => loadHubPrefs().showCoach !== false);
 
   const handleResetOrder = () => {
     resetDashboardOrder();
     setOrderReset(true);
     setTimeout(() => setOrderReset(false), 2000);
+  };
+
+  const handleToggleCoach = (e) => {
+    const val = e.target.checked;
+    setShowCoach(val);
+    saveHubPref("showCoach", val);
   };
 
   return (
@@ -377,6 +401,14 @@ function GeneralSection({ dark, onToggleDark, syncing, onSync, onPull, user }) {
         onChange={onToggleDark}
       />
       <SettingsSubGroup title="Дашборд">
+        <ToggleRow
+          label="Показувати AI-коуч"
+          description="Блок з щоденною порадою коуча на головному екрані."
+          checked={showCoach}
+          onChange={handleToggleCoach}
+        />
+      </SettingsSubGroup>
+      <SettingsSubGroup title="Дашборд — порядок блоків">
         <Button
           type="button"
           variant="ghost"
