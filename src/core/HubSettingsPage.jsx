@@ -22,6 +22,7 @@ import {
 import { useStorage as useFinykStorage } from "../modules/finyk/hooks/useStorage.js";
 import { getAccountLabel } from "../modules/finyk/utils.js";
 import { useToast } from "@shared/hooks/useToast.jsx";
+import { WorkoutBackupBar } from "../modules/fizruk/components/workouts/WorkoutBackupBar.jsx";
 
 const PRIVAT_ENABLED = false;
 
@@ -490,6 +491,9 @@ function FizrukSection() {
             </div>
           ))}
         </div>
+      </SettingsSubGroup>
+      <SettingsSubGroup title="Резервні копії та дані" defaultOpen>
+        <WorkoutBackupBar className="border-0 bg-transparent p-0" />
       </SettingsSubGroup>
     </SettingsGroup>
   );
