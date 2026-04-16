@@ -17,6 +17,8 @@ import {
   upsertFood,
 } from "../lib/foodDb/foodDb.js";
 import { downloadBlob } from "../lib/nutritionLogExport.js";
+import { apiUrl } from "@shared/lib/apiUrl.js";
+import { BarcodeScanner } from "./BarcodeScanner.jsx";
 
 function currentTime() {
   const now = new Date();
@@ -57,8 +59,6 @@ export function AddMealSheet({
   const [barcode, setBarcode] = useState("");
   const [barcodeStatus, setBarcodeStatus] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
   const foodImportRef = useRef(null);
 
   useDialogFocusTrap(open, ref, { onEscape: onClose });
@@ -183,18 +183,58 @@ export function AddMealSheet({
 
   const handleBarcodeLookup = useCallback(
     async (codeRaw) => {
-      const code = String(codeRaw || "").trim();
+      const code = String(codeRaw || '').trim();
       if (!code) return;
-      setBarcodeStatus("Шукаю…");
-      const found = await lookupFoodByBarcode(code);
-      if (!found) {
-        setBarcodeStatus("Не знайдено. Можна прив’язати до продукту.");
+      setBarcodeStatus('Шукаю…');
+
+      const localFound = await lookupFoodByBarcode(code);
+      if (localFound) {
+        setBarcodeStatus('Знайдено ✔');
+        setPickedFood(localFound);
+        setPickedGrams(String(Math.round(localFound.defaultGrams || 100)));
+        applyPickedFood(localFound, String(localFound.defaultGrams || 100));
         return;
       }
-      setBarcodeStatus("Знайдено ✔");
-      setPickedFood(found);
-      setPickedGrams(String(Math.round(found.defaultGrams || 100)));
-      applyPickedFood(found, String(found.defaultGrams || 100));
+
+      if (!navigator.onLine) {
+        setBarcodeStatus('Немає підключення. Перевір інтернет і спробуй знову.');
+        return;
+      }
+
+      try {
+        const res = await fetch(apiUrl(`/api/barcode?barcode=${encodeURIComponent(code)}`));
+        if (res.status === 404) {
+          setBarcodeStatus('Продукт не знайдено. Можна ввести дані вручну.');
+          return;
+        }
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setBarcodeStatus(err?.error || 'Помилка пошуку. Спробуй пізніше.');
+          return;
+        }
+        const data = await res.json();
+        const p = data?.product;
+        if (!p?.name) {
+          setBarcodeStatus('Продукт знайдено, але дані неповні. Введи вручну.');
+          return;
+        }
+        setBarcodeStatus(`Знайдено: ${[p.name, p.brand].filter(Boolean).join(' — ')} ✔`);
+        const grams = p.servingGrams || 100;
+        const gramsStr = String(Math.round(grams));
+        const factor = grams / 100;
+        setForm((s) => ({
+          ...s,
+          name: [p.name, p.brand].filter(Boolean).join(' ').trim() || s.name,
+          kcal: p.kcal_100g != null ? String(Math.round(p.kcal_100g * factor)) : s.kcal,
+          protein_g: p.protein_100g != null ? String(Math.round(p.protein_100g * factor)) : s.protein_g,
+          fat_g: p.fat_100g != null ? String(Math.round(p.fat_100g * factor)) : s.fat_g,
+          carbs_g: p.carbs_100g != null ? String(Math.round(p.carbs_100g * factor)) : s.carbs_g,
+          err: '',
+        }));
+        setPickedGrams(gramsStr);
+      } catch {
+        setBarcodeStatus("Помилка пошуку. Перевір з'єднання і спробуй пізніше.");
+      }
     },
     [applyPickedFood],
   );
@@ -215,86 +255,6 @@ export function AddMealSheet({
     setBarcodeStatus(ok ? "Прив’язано ✔" : "Не вдалося прив’язати");
   }
 
-  useEffect(() => {
-    if (!scannerOpen) return;
-    let stopped = false;
-    let raf = 0;
-
-    const stop = () => {
-      try {
-        const s = streamRef.current;
-        if (s) for (const t of s.getTracks()) t.stop();
-      } catch {
-        /* ignore */
-      }
-      streamRef.current = null;
-      if (videoRef.current) videoRef.current.srcObject = null;
-    };
-
-    const run = async () => {
-      try {
-        if (!navigator?.mediaDevices?.getUserMedia) {
-          setBarcodeStatus("Камера недоступна в цьому браузері.");
-          setScannerOpen(false);
-          return;
-        }
-        const Detector = window.BarcodeDetector;
-        if (!Detector) {
-          setBarcodeStatus("Сканер не підтримується (BarcodeDetector).");
-          setScannerOpen(false);
-          return;
-        }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-          audio: false,
-        });
-        if (stopped) {
-          for (const t of stream.getTracks()) t.stop();
-          return;
-        }
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-        }
-        const detector = new Detector({
-          formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "qr_code"],
-        });
-
-        const tick = async () => {
-          if (stopped) return;
-          try {
-            const v = videoRef.current;
-            if (v && v.readyState >= 2) {
-              const codes = await detector.detect(v);
-              const raw = codes?.[0]?.rawValue;
-              if (raw) {
-                setBarcode(String(raw));
-                setScannerOpen(false);
-                stop();
-                await handleBarcodeLookup(raw);
-                return;
-              }
-            }
-          } catch {
-            /* ignore */
-          }
-          raf = window.requestAnimationFrame(tick);
-        };
-        raf = window.requestAnimationFrame(tick);
-      } catch {
-        setBarcodeStatus("Не вдалося відкрити камеру.");
-        setScannerOpen(false);
-      }
-    };
-
-    void run();
-    return () => {
-      stopped = true;
-      if (raf) window.cancelAnimationFrame(raf);
-      stop();
-    };
-  }, [scannerOpen, handleBarcodeLookup]);
 
   const hasPhotoMacros =
     photoResult?.macros &&
@@ -311,37 +271,14 @@ export function AddMealSheet({
         onClick={onClose}
       />
       {scannerOpen && (
-        <div className="absolute inset-0 z-[130] flex items-center justify-center px-4">
-          <div className="w-full max-w-md rounded-3xl border border-line bg-panel shadow-soft overflow-hidden">
-            <div className="px-4 py-3 flex items-center justify-between border-b border-line/50">
-              <div className="text-sm font-extrabold text-text">
-                Сканер штрихкоду
-              </div>
-              <button
-                type="button"
-                onClick={() => setScannerOpen(false)}
-                className="w-10 h-10 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text text-lg transition-colors"
-                aria-label="Закрити сканер"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-4 space-y-2">
-              <div className="rounded-2xl overflow-hidden border border-line/50 bg-black">
-                <video
-                  ref={videoRef}
-                  className="w-full aspect-[3/4] object-cover"
-                  muted
-                  playsInline
-                />
-              </div>
-              <div className="text-[11px] text-subtle">
-                Наведи камеру на штрихкод. Якщо нічого не зчитує — введи код
-                вручну.
-              </div>
-            </div>
-          </div>
-        </div>
+        <BarcodeScanner
+          onDetected={async (raw) => {
+            setScannerOpen(false);
+            setBarcode(String(raw));
+            await handleBarcodeLookup(raw);
+          }}
+          onClose={() => setScannerOpen(false)}
+        />
       )}
       <div
         ref={ref}
@@ -692,20 +629,17 @@ export function AddMealSheet({
                 >
                   Прив’язати до обраного
                 </Button>
-                {"BarcodeDetector" in window &&
-                  navigator?.mediaDevices?.getUserMedia && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-9 text-xs"
-                      onClick={() => {
-                        setBarcodeStatus("");
-                        setScannerOpen(true);
-                      }}
-                    >
-                      Сканувати
-                    </Button>
-                  )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-9 text-xs"
+                  onClick={() => {
+                    setBarcodeStatus("");
+                    setScannerOpen(true);
+                  }}
+                >
+                  📷 Сканувати штрих-код
+                </Button>
               </div>
               {barcodeStatus && (
                 <div className="text-[11px] text-subtle mt-1">

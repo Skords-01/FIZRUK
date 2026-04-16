@@ -11,6 +11,7 @@ import chatHandler from "./api/chat.js";
 import monoHandler from "./api/mono.js";
 import privatHandler from "./api/privat.js";
 import { syncPush, syncPull, syncPullAll, syncPushAll } from "./api/sync.js";
+import barcodeHandler from "./api/barcode.js";
 import analyzePhoto from "./api/nutrition/analyze-photo.js";
 import parsePantry from "./api/nutrition/parse-pantry.js";
 import refinePhoto from "./api/nutrition/refine-photo.js";
@@ -76,6 +77,8 @@ app.all(
   rateLimitExpress({ key: "api:privat", limit: 30, windowMs: 60_000 }),
   wrap(privatHandler),
 );
+
+app.get("/api/barcode", wrap(barcodeHandler));
 
 // Broad best-effort limiter for nutrition endpoints (detailed limits exist inside handlers too).
 app.use(

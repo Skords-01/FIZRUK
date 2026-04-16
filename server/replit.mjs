@@ -25,6 +25,7 @@ import backupDownload from "./api/nutrition/backup-download.js";
 import dayPlan from "./api/nutrition/day-plan.js";
 import shoppingList from "./api/nutrition/shopping-list.js";
 import { syncPush, syncPull, syncPullAll, syncPushAll } from "./api/sync.js";
+import barcodeHandler from "./api/barcode.js";
 import { setCorsHeaders } from "./api/lib/cors.js";
 import { rateLimitExpress } from "./api/lib/rateLimit.js";
 
@@ -83,6 +84,8 @@ app.all(
   rateLimitExpress({ key: "api:privat", limit: 30, windowMs: 60_000 }),
   wrap(privatHandler),
 );
+
+app.get("/api/barcode", wrap(barcodeHandler));
 
 app.use(
   "/api/nutrition",

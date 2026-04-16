@@ -46,6 +46,8 @@ import {
 import { useToast } from "@shared/hooks/useToast";
 import { InputDialog } from "@shared/components/ui/InputDialog";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
+import { BarcodeScanner } from "./components/BarcodeScanner.jsx";
+import { apiUrl } from "@shared/lib/apiUrl.js";
 
 function fmtMacro(n) {
   if (n == null || Number.isNaN(Number(n))) return "—";
@@ -137,6 +139,8 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
   const [cloudBackupBusy, setCloudBackupBusy] = useState(false);
   const [backupPasswordDialog, setBackupPasswordDialog] = useState(null);
   const [restoreConfirm, setRestoreConfirm] = useState(null);
+  const [pantryScannerOpen, setPantryScannerOpen] = useState(false);
+  const [pantryScanStatus, setPantryScanStatus] = useState("");
 
   const recipeCacheKey = useMemo(
     () =>
@@ -229,6 +233,47 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
     log.setAddMealPhotoResult(photo.photoResult);
     log.setAddMealSheetOpen(true);
   };
+
+  const handlePantryBarcodeDetected = useCallback(
+    async (raw) => {
+      setPantryScannerOpen(false);
+      setPantryScanStatus("Шукаю продукт\u2026");
+      const code = String(raw || "").trim().replace(/\D/g, "");
+      if (!code) {
+        setPantryScanStatus("Некоректний штрих-код.");
+        return;
+      }
+      if (!navigator.onLine) {
+        setPantryScanStatus("Немає підключення до інтернету.");
+        return;
+      }
+      try {
+        const res = await fetch(apiUrl(`/api/barcode?barcode=${encodeURIComponent(code)}`));
+        if (res.status === 404) {
+          setPantryScanStatus("Продукт не знайдено в базі. Додай вручну.");
+          return;
+        }
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setPantryScanStatus(err?.error || "Помилка пошуку.");
+          return;
+        }
+        const data = await res.json();
+        const p = data?.product;
+        if (!p?.name) {
+          setPantryScanStatus("Продукт знайдено, але назва відсутня. Додай вручну.");
+          return;
+        }
+        const label = [p.name, p.brand].filter(Boolean).join(" ").trim();
+        pantry.upsertItem(label);
+        setPantryScanStatus(`Додано: ${label} \u2714`);
+        setTimeout(() => setPantryScanStatus(""), 3000);
+      } catch {
+        setPantryScanStatus("Помилка пошуку. Перевір з\u2019єднання.");
+      }
+    },
+    [pantry],
+  );
 
   const recommendRecipes = async () => {
     setBusy(true);
@@ -648,24 +693,33 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
             )}
 
             {activePage === "pantry" && (
-              <PantryCard
-                busy={busy}
-                parsePantry={pantry.parsePantry}
-                newItemName={pantry.newItemName}
-                setNewItemName={pantry.setNewItemName}
-                upsertItem={pantry.upsertItem}
-                pantryText={pantry.pantryText}
-                setPantryText={pantry.setPantryText}
-                effectiveItems={pantry.effectiveItems}
-                editItemAt={pantry.editItemAt}
-                removeItemAtOrByName={(idx, name) =>
-                  pantry.pantryItems.length > 0
-                    ? pantry.removeItemAt(idx)
-                    : pantry.removeItem(name)
-                }
-                pantryItemsLength={pantry.pantryItems.length}
-                pantrySummary={pantry.pantrySummary}
-              />
+              <>
+                <PantryCard
+                  busy={busy}
+                  parsePantry={pantry.parsePantry}
+                  newItemName={pantry.newItemName}
+                  setNewItemName={pantry.setNewItemName}
+                  upsertItem={pantry.upsertItem}
+                  pantryText={pantry.pantryText}
+                  setPantryText={pantry.setPantryText}
+                  effectiveItems={pantry.effectiveItems}
+                  editItemAt={pantry.editItemAt}
+                  removeItemAtOrByName={(idx, name) =>
+                    pantry.pantryItems.length > 0
+                      ? pantry.removeItemAt(idx)
+                      : pantry.removeItem(name)
+                  }
+                  pantryItemsLength={pantry.pantryItems.length}
+                  pantrySummary={pantry.pantrySummary}
+                  onScanBarcode={() => {
+                    setPantryScanStatus("");
+                    setPantryScannerOpen(true);
+                  }}
+                />
+                {pantryScanStatus && (
+                  <div className="text-xs text-subtle px-1">{pantryScanStatus}</div>
+                )}
+              </>
             )}
 
             {activePage === "log" && (
@@ -785,6 +839,15 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
         onClose={() => pantry.setItemEdit((s) => ({ ...s, open: false }))}
         onSave={pantry.onSaveItemEdit}
       />
+
+      {pantryScannerOpen && (
+        <div className="fixed inset-0 z-[120]">
+          <BarcodeScanner
+            onDetected={handlePantryBarcodeDetected}
+            onClose={() => setPantryScannerOpen(false)}
+          />
+        </div>
+      )}
 
       <AddMealSheet
         open={log.addMealSheetOpen}

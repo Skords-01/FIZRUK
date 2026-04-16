@@ -189,6 +189,7 @@ export function PantryCard({
   editItemAt,
   removeItemAtOrByName,
   pantryItemsLength,
+  onScanBarcode,
 }) {
   const [mode, setMode] = useState("single");
 
@@ -199,22 +200,37 @@ export function PantryCard({
           <div className="min-w-0">
             <div className="text-sm font-semibold text-text">Додати продукти</div>
           </div>
-          <div className="flex rounded-xl bg-panelHi border border-line/50 p-0.5 shrink-0">
-            {INPUT_MODES.map((m) => (
+          <div className="flex items-center gap-2 shrink-0">
+            {typeof onScanBarcode === "function" && (
               <button
-                key={m.id}
                 type="button"
-                onClick={() => setMode(m.id)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                  mode === m.id
-                    ? "bg-nutrition text-white shadow-sm"
-                    : "text-subtle hover:text-text",
-                )}
+                onClick={onScanBarcode}
+                disabled={busy}
+                className="h-8 px-3 rounded-xl text-xs font-semibold bg-nutrition/10 text-nutrition border border-nutrition/30 hover:bg-nutrition/20 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                aria-label="Сканувати штрих-код"
+                title="Сканувати штрих-код"
               >
-                {m.label}
+                <span aria-hidden>📷</span>
+                Сканувати штрих-код
               </button>
-            ))}
+            )}
+            <div className="flex rounded-xl bg-panelHi border border-line/50 p-0.5">
+              {INPUT_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMode(m.id)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+                    mode === m.id
+                      ? "bg-nutrition text-white shadow-sm"
+                      : "text-subtle hover:text-text",
+                  )}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
