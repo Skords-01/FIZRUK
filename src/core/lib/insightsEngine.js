@@ -2,6 +2,10 @@
  * Cross-module insights engine.
  * Reads data from localStorage of all 4 modules and computes
  * correlations / patterns across weeks and months.
+ *
+ * Data sufficiency thresholds (per task spec):
+ *   - Each insight requires ≥ 4 weeks of relevant activity OR ≥ 20 relevant events.
+ *   - Specific per-insight gates are documented below.
  */
 
 function safeLS(key, fallback) {
@@ -55,7 +59,7 @@ const MONTHS_UK = [
 
 /**
  * Insight 1: Best day-of-week for workouts.
- * Requires ≥ 20 completed workouts.
+ * Requires ≥ 20 completed workouts (satisfies both "4 weeks" and "20+ events").
  */
 function workoutDayInsight() {
   const workouts = parseFizrukWorkouts().filter((w) => w.endedAt);
@@ -82,11 +86,19 @@ function workoutDayInsight() {
 /**
  * Insight 2: Weekly spending in active weeks (≥3 workouts) vs rest weeks.
  * Requires ≥ 4 weeks with spending data AND ≥ 2 weeks in each group.
+ * Excludes hidden transactions and internal transfers (mirrors report logic).
  */
 function activeWeeksSpendingInsight() {
   const workouts = parseFizrukWorkouts().filter((w) => w.endedAt);
   const raw = safeLS("finyk_tx_cache", []);
-  const txs = Array.isArray(raw) ? raw : raw?.txs ?? [];
+  const txs = Array.isArray(raw) ? raw : (raw?.txs ?? []);
+  const hiddenSet = new Set(safeLS("finyk_hidden_txs", []));
+  const txCategories = safeLS("finyk_tx_cats", {});
+  const transferIds = new Set(
+    Object.entries(txCategories)
+      .filter(([, v]) => v === "internal_transfer")
+      .map(([k]) => k),
+  );
 
   if (workouts.length < 6) return null;
 
@@ -109,6 +121,7 @@ function activeWeeksSpendingInsight() {
 
     const spending = txs
       .filter((tx) => {
+        if (hiddenSet.has(tx.id) || transferIds.has(tx.id)) return false;
         const ts = tx.time > 1e10 ? tx.time : tx.time * 1000;
         const d = new Date(ts);
         return d >= mon && d <= sun && (tx.amount ?? 0) < 0;
@@ -156,8 +169,9 @@ function activeWeeksSpendingInsight() {
 }
 
 /**
- * Insight 3: Best habit-completion month over the last 12 months.
- * Requires ≥ 2 months with data.
+ * Insight 3: Best habit-completion month in history.
+ * Requires ≥ 28 total completions (≈ 4 weeks × 1 habit/day minimum)
+ * AND ≥ 4 distinct ISO weeks with any completion.
  */
 function bestHabitMonthInsight() {
   const state = safeLS("hub_routine_v1", null);
@@ -168,12 +182,22 @@ function bestHabitMonthInsight() {
   if (habits.length === 0) return null;
 
   const monthDone = {};
+  const weekKeys = new Set();
+  let totalCompletions = 0;
+
   for (const h of habits) {
     for (const dk of completions[h.id] || []) {
-      const mk = dk.slice(0, 7);
-      monthDone[mk] = (monthDone[mk] || 0) + 1;
+      monthDone[dk.slice(0, 7)] = (monthDone[dk.slice(0, 7)] || 0) + 1;
+      totalCompletions++;
+      const d = new Date(dk);
+      const dow = (d.getDay() + 6) % 7;
+      const mon = new Date(d);
+      mon.setDate(d.getDate() - dow);
+      weekKeys.add(localDateKey(mon));
     }
   }
+
+  if (totalCompletions < 28 || weekKeys.size < 4) return null;
 
   const months = Object.keys(monthDone);
   if (months.length < 2) return null;
@@ -209,7 +233,8 @@ function bestHabitMonthInsight() {
 
 /**
  * Insight 4: Average kcal on workout days vs rest days.
- * Requires ≥ 3 days in each group.
+ * Requires ≥ 14 days with nutrition data total (≈ 2 weeks)
+ * AND ≥ 7 days in each group.
  */
 function workoutKcalInsight() {
   const workouts = parseFizrukWorkouts().filter((w) => w.endedAt);
@@ -233,7 +258,8 @@ function workoutKcalInsight() {
     }
   }
 
-  if (kcalWorkout.length < 3 || kcalRest.length < 3) return null;
+  if (kcalWorkout.length + kcalRest.length < 14) return null;
+  if (kcalWorkout.length < 7 || kcalRest.length < 7) return null;
 
   const avgWorkout = Math.round(
     kcalWorkout.reduce((s, k) => s + k, 0) / kcalWorkout.length,
@@ -260,7 +286,7 @@ function workoutKcalInsight() {
 
 /**
  * Returns up to 4 cross-module insights computed from localStorage data.
- * Returns an empty array when there is not enough data.
+ * Returns an empty array when there is not enough data in all insights.
  *
  * Each insight: { id, emoji, title, stat, detail }
  */
