@@ -10,6 +10,9 @@ import {
 } from "../utils";
 import { mergeExpenseCategoryDefinitions } from "../constants";
 import { cn } from "@shared/lib/cn";
+import { calcForecast } from "../lib/forecastEngine";
+import { BudgetTrendChart } from "../components/BudgetTrendChart";
+import { apiUrl } from "@shared/lib/apiUrl.js";
 
 const formInp =
   "w-full h-10 rounded-xl border border-line bg-bg px-3 text-sm text-text outline-none focus:border-primary";
@@ -42,6 +45,7 @@ export function Budgets({ mono, storage }) {
   });
 
   const now = new Date();
+  const todayKey = now.toDateString();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const expenseCategoryList = useMemo(
     () => mergeExpenseCategoryDefinitions(customCategories),
@@ -72,6 +76,46 @@ export function Budgets({ mono, storage }) {
   );
 
   const [formError, setFormError] = useState("");
+
+  const [aiExplanations, setAiExplanations] = useState({});
+  const [aiLoading, setAiLoading] = useState({});
+
+  const forecasts = useMemo(() => {
+    if (limitBudgets.length === 0) return [];
+    return calcForecast(statTx, limitBudgets, now, txCategories, txSplits, customCategories);
+  }, [statTx, limitBudgets, txCategories, txSplits, customCategories, todayKey]);
+
+  const explainCategory = async (categoryId, catLabel, spent, forecast, limit) => {
+    if (aiLoading[categoryId]) return;
+    setAiLoading((prev) => ({ ...prev, [categoryId]: true }));
+    setAiExplanations((prev) => ({ ...prev, [categoryId]: null }));
+    try {
+      const prompt = `Категорія: ${catLabel}. Витрачено за місяць: ${spent} ₴. Прогноз на кінець місяця: ${forecast} ₴. Ліміт: ${limit} ₴. Чому витрати можуть бути ${forecast > limit ? "вищими за ліміт" : "нижчими за план"} і що варто зробити? Дай коротку відповідь (2-3 речення) українською.`;
+      const res = await fetch(apiUrl("/api/chat"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          context: `[Бюджетний прогноз] Категорія: ${catLabel}, витрачено: ${spent} ₴, прогноз: ${forecast} ₴, ліміт: ${limit} ₴`,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setAiExplanations((prev) => ({
+        ...prev,
+        [categoryId]: data.text || "Не вдалося отримати пояснення.",
+      }));
+    } catch {
+      setAiExplanations((prev) => ({
+        ...prev,
+        [categoryId]: "Помилка з'єднання з AI.",
+      }));
+    } finally {
+      setAiLoading((prev) => ({ ...prev, [categoryId]: false }));
+    }
+  };
 
   const resetForm = () => {
     setNewB({
@@ -384,6 +428,97 @@ export function Budgets({ mono, storage }) {
             </div>
           );
         })}
+
+        {/* Forecast */}
+        {forecasts.length > 0 && (
+          <>
+            <div className="text-[11px] font-bold text-subtle uppercase tracking-widest pt-1">
+              Прогноз · кінець місяця
+            </div>
+            {forecasts.map((fc) => {
+              const cat = resolveExpenseCategoryMeta(fc.categoryId, customCategories);
+              const explanation = aiExplanations[fc.categoryId];
+              const loading = aiLoading[fc.categoryId];
+              return (
+                <div
+                  key={fc.categoryId}
+                  className={cn(
+                    "bg-panel border rounded-2xl p-5 shadow-card",
+                    fc.overLimit ? "border-danger/50" : "border-line/60",
+                  )}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-sm font-semibold">{cat?.label || fc.categoryId}</span>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span
+                        className={cn(
+                          "text-xs tabular-nums font-semibold",
+                          fc.overLimit ? "text-danger" : "text-muted",
+                        )}
+                      >
+                        {fc.forecast.toLocaleString("uk-UA")} ₴
+                      </span>
+                      <span className="text-[10px] text-subtle tabular-nums">
+                        ліміт {fc.limit.toLocaleString("uk-UA")} ₴
+                      </span>
+                    </div>
+                  </div>
+
+                  {fc.overLimit ? (
+                    <div className="text-xs text-danger font-medium mb-2">
+                      ⚠️ Перевищення на {fc.overPercent}% (+{(fc.forecast - fc.limit).toLocaleString("uk-UA")} ₴)
+                    </div>
+                  ) : (
+                    <div className="text-xs text-subtle mb-2">
+                      Вкладається у ліміт · залишок {(fc.limit - fc.forecast).toLocaleString("uk-UA")} ₴
+                    </div>
+                  )}
+
+                  <BudgetTrendChart
+                    dailyData={fc.dailyData}
+                    limit={fc.limit}
+                    color={fc.overLimit ? "#ef4444" : "#6366f1"}
+                    className="mb-2"
+                  />
+
+                  <div className="flex items-center justify-between text-[10px] text-subtle mt-1 mb-2">
+                    <span>Факт: {fc.spent.toLocaleString("uk-UA")} ₴</span>
+                    <span>≈{fc.avgPerDay.toLocaleString("uk-UA")} ₴/день</span>
+                    <span>Залишилось: {fc.daysRemaining} дн.</span>
+                  </div>
+
+                  {explanation && (
+                    <div className="text-xs text-text bg-bg rounded-xl px-3 py-2 mb-2 leading-relaxed">
+                      {explanation}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() =>
+                      explainCategory(
+                        fc.categoryId,
+                        cat?.label || fc.categoryId,
+                        fc.spent,
+                        fc.forecast,
+                        fc.limit,
+                      )
+                    }
+                    className={cn(
+                      "text-xs px-3 py-1.5 rounded-lg border transition-colors w-full",
+                      loading
+                        ? "border-line text-subtle cursor-wait"
+                        : "border-primary/40 text-primary hover:bg-primary/10",
+                    )}
+                  >
+                    {loading ? "AI аналізує…" : explanation ? "🔄 Пояснити знову" : "✨ Пояснити"}
+                  </button>
+                </div>
+              );
+            })}
+          </>
+        )}
 
         {/* Goals */}
         <div className="text-[11px] font-bold text-subtle uppercase tracking-widest pt-1">
