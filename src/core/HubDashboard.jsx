@@ -52,8 +52,12 @@ function useFinykMetrics() {
 
     const rawInfo = safeParseLS("finyk_info_cache", null);
     const info = rawInfo?.info ?? rawInfo;
+    const hiddenAccounts = safeParseLS("finyk_hidden", []);
+    const hiddenSet = new Set(Array.isArray(hiddenAccounts) ? hiddenAccounts : []);
     const totalBalance = Array.isArray(info?.accounts)
-      ? info.accounts.reduce((s, a) => s + (a.balance ?? 0), 0) / 100
+      ? info.accounts
+          .filter((a) => !hiddenSet.has(a.id) && a.balance > 0 && !a.creditLimit && a.currencyCode === 980)
+          .reduce((s, a) => s + (a.balance ?? 0), 0) / 100
       : null;
 
     return { todaySpent, todayIncome, totalBalance };
