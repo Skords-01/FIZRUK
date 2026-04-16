@@ -383,7 +383,7 @@ export function HubReports() {
         />
       </div>
 
-      {insights.length > 0 ? (
+      {insights.length >= 2 ? (
         <div className="space-y-3">
           <p className="text-xs font-bold text-subtle uppercase tracking-widest">
             Інсайти
