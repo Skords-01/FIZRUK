@@ -301,32 +301,7 @@ export function HubDashboard({ onOpenModule }) {
           gradientClass="bg-gradient-to-br from-sky-400/10 to-indigo-400/5"
           onClick={() => onOpenModule("fizruk")}
         >
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-base">{recoveryIcon}</span>
-            <p
-              className={cn(
-                "text-xs font-semibold leading-tight",
-                fizruk.recovery.ready === true && "text-emerald-600",
-                fizruk.recovery.ready === false && "text-orange-500",
-                fizruk.recovery.ready === null && "text-muted"
-              )}
-            >
-              {fizruk.recovery.label}
-            </p>
-          </div>
-          <p className="text-lg font-bold text-text leading-tight">
-            {fizruk.weekCount}
-            <span className="text-xs font-normal text-muted ml-1">трен./тиждень</span>
-          </p>
-          {fizruk.lastWorkout && (
-            <p className="text-[11px] text-subtle mt-1 truncate">
-              Останнє:{" "}
-              {new Date(fizruk.lastWorkout.startedAt).toLocaleDateString("uk-UA", {
-                month: "short",
-                day: "numeric",
-              })}
-            </p>
-          )}
+          <p className="text-xs text-muted">Тренування та відновлення</p>
         </DashCard>
 
         <DashCard
@@ -336,29 +311,7 @@ export function HubDashboard({ onOpenModule }) {
           gradientClass="bg-gradient-to-br from-orange-400/10 to-rose-400/5"
           onClick={() => onOpenModule("routine")}
         >
-          {routine.todayTotal > 0 ? (
-            <>
-              <p className="text-2xl font-bold text-text leading-tight">
-                {routine.todayDone}
-                <span className="text-base font-normal text-muted">
-                  /{routine.todayTotal}
-                </span>
-              </p>
-              <p className="text-xs text-muted">звичок сьогодні</p>
-              <ProgressBar
-                value={routine.todayDone}
-                max={routine.todayTotal}
-                colorClass="bg-orange-500"
-              />
-              {routine.streak > 0 && (
-                <p className="text-[11px] text-subtle mt-1.5">
-                  🔥 {routine.streak} дн. поспіль
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-xs text-muted">Немає активних звичок</p>
-          )}
+          <p className="text-xs text-muted">Звички та серії</p>
         </DashCard>
 
         <DashCard
@@ -368,26 +321,7 @@ export function HubDashboard({ onOpenModule }) {
           gradientClass="bg-gradient-to-br from-lime-400/10 to-emerald-400/5"
           onClick={() => onOpenModule("nutrition")}
         >
-          {nutrition.mealCount > 0 ? (
-            <>
-              <p className="text-2xl font-bold text-text leading-tight">
-                {nutrition.kcal}
-              </p>
-              <p className="text-xs text-muted">ккал сьогодні</p>
-              <ProgressBar
-                value={nutrition.kcal}
-                max={nutrition.target}
-                colorClass="bg-lime-500"
-              />
-              <div className="flex gap-2 mt-1.5 text-[10px] text-muted">
-                <span>Б {nutrition.protein}г</span>
-                <span>Ж {nutrition.fat}г</span>
-                <span>В {nutrition.carbs}г</span>
-              </div>
-            </>
-          ) : (
-            <p className="text-xs text-muted">Немає записів</p>
-          )}
+          <p className="text-xs text-muted">КБЖВ та прийоми їжі</p>
         </DashCard>
       </div>
       </div>
