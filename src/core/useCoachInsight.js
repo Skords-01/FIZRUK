@@ -173,7 +173,10 @@ export function useCoachInsight() {
     try {
       let memory = null;
       try {
-        const memRes = await fetch(apiUrl("/api/coach/memory"), { method: "GET" });
+        const memRes = await fetch(apiUrl("/api/coach/memory"), {
+          method: "GET",
+          credentials: "include",
+        });
         if (memRes.ok) {
           const memJson = await memRes.json();
           memory = memJson.memory;
@@ -185,6 +188,7 @@ export function useCoachInsight() {
       const insightRes = await fetch(apiUrl("/api/coach/insight"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ snapshot, memory }),
       });
 
