@@ -3,6 +3,7 @@ import { postJson } from "./lib/nutritionApi.js";
 import { NutritionHeader } from "./components/NutritionHeader.jsx";
 import { NutritionBottomNav } from "./components/NutritionBottomNav.jsx";
 import { PhotoAnalyzeCard } from "./components/PhotoAnalyzeCard.jsx";
+import { NutritionDashboard } from "./components/NutritionDashboard.jsx";
 import { PantryCard } from "./components/PantryCard.jsx";
 import { RecipesCard } from "./components/RecipesCard.jsx";
 import { DailyPlanCard } from "./components/DailyPlanCard.jsx";
@@ -568,21 +569,56 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
 
           <div className="grid gap-4">
             {activePage === "start" && (
-              <PhotoAnalyzeCard
-                busy={busy}
-                analyzePhoto={photo.analyzePhoto}
-                fileRef={photo.fileRef}
-                onPickPhoto={photo.onPickPhoto}
-                photoPreviewUrl={photo.photoPreviewUrl}
-                photoResult={photo.photoResult}
-                fmtMacro={fmtMacro}
-                portionGrams={photo.portionGrams}
-                setPortionGrams={photo.setPortionGrams}
-                refinePhoto={photo.refinePhoto}
-                answers={photo.answers}
-                setAnswers={photo.setAnswers}
-                onSaveToLog={photo.photoResult ? handleSaveToLog : undefined}
-              />
+              <>
+                <NutritionDashboard
+                  log={log.nutritionLog}
+                  prefs={prefs}
+                  onGoToLog={() => setActivePageAndHash("log")}
+                  onAddMeal={() => {
+                    log.setSelectedDate(todayISODate());
+                    setActivePageAndHash("log");
+                    setTimeout(() => {
+                      log.setAddMealPhotoResult(null);
+                      log.setAddMealSheetOpen(true);
+                    }, 80);
+                  }}
+                />
+                <details className="group">
+                  <summary className="flex items-center gap-2 cursor-pointer select-none py-2 px-1 text-sm font-semibold text-text">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="transition-transform group-open:rotate-90"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    Аналіз фото страви
+                  </summary>
+                  <div className="pt-1">
+                    <PhotoAnalyzeCard
+                      busy={busy}
+                      analyzePhoto={photo.analyzePhoto}
+                      fileRef={photo.fileRef}
+                      onPickPhoto={photo.onPickPhoto}
+                      photoPreviewUrl={photo.photoPreviewUrl}
+                      photoResult={photo.photoResult}
+                      fmtMacro={fmtMacro}
+                      portionGrams={photo.portionGrams}
+                      setPortionGrams={photo.setPortionGrams}
+                      refinePhoto={photo.refinePhoto}
+                      answers={photo.answers}
+                      setAnswers={photo.setAnswers}
+                      onSaveToLog={photo.photoResult ? handleSaveToLog : undefined}
+                    />
+                  </div>
+                </details>
+              </>
             )}
 
             {activePage === "pantry" && (
