@@ -15,14 +15,7 @@ import {
   buildFizrukFullBackupPayload,
   FIZRUK_RESET_KEYS,
 } from "../lib/fizrukStorage";
-import { weeklyVolumeSeriesNow } from "../lib/workoutStats";
-
-function epley1rm(weightKg, reps) {
-  const w = Number(weightKg) || 0;
-  const r = Number(reps) || 0;
-  if (w <= 0 || r <= 0) return 0;
-  return w * (1 + r / 30);
-}
+import { epley1rm, weeklyVolumeSeriesNow } from "../lib/workoutStats";
 
 function weekStartMs(d) {
   const x = new Date(d);
@@ -317,66 +310,23 @@ export function Progress() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-3">
-        {/* Hero */}
-        <section
-          className="rounded-3xl p-4 border border-line/20 bg-forest-grad"
-          aria-label="Огляд прогресу"
-        >
-          <div className="text-[11px] font-bold tracking-widest uppercase text-accent">
-            Прогрес
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-text">Прогрес</h1>
+            <p className="text-xs text-subtle mt-0.5">
+              {quickStats.latestWorkoutAt !== "—"
+                ? `Останнє: ${quickStats.latestWorkoutAt} · ${quickStats.prsCount} PR`
+                : "Аналітика тренувань"}
+            </p>
           </div>
-          <div className="grid grid-cols-3 gap-2 mt-3">
-            <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-              <div className="text-[10px] uppercase tracking-wide text-white/60">
-                Тренувань
-              </div>
-              <div className="text-lg font-black text-white tabular-nums">
-                {workouts.length}
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="text-center">
+              <div className="text-xs text-subtle">PR</div>
+              <div className="text-base font-extrabold text-text tabular-nums">{quickStats.prsCount}</div>
             </div>
-            <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-              <div className="text-[10px] uppercase tracking-wide text-white/60">
-                PR
-              </div>
-              <div className="text-lg font-black text-white tabular-nums">
-                {prs.length}
-              </div>
-            </div>
-            <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-              <div className="text-[10px] uppercase tracking-wide text-white/60">
-                Заміри
-              </div>
-              <div className="text-lg font-black text-white tabular-nums">
-                {entries.length}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Quick stats */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-              Завершено
-            </div>
-            <div className="text-lg font-extrabold text-text tabular-nums mt-1">
-              {quickStats.doneCount}
-            </div>
-          </div>
-          <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-              PR вправ
-            </div>
-            <div className="text-lg font-extrabold text-text tabular-nums mt-1">
-              {quickStats.prsCount}
-            </div>
-          </div>
-          <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-              Останнє
-            </div>
-            <div className="text-sm font-bold text-text mt-1">
-              {quickStats.latestWorkoutAt}
+            <div className="text-center">
+              <div className="text-xs text-subtle">Заміри</div>
+              <div className="text-base font-extrabold text-text tabular-nums">{entries.length}</div>
             </div>
           </div>
         </div>

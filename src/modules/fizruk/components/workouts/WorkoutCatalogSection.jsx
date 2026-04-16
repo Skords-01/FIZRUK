@@ -1,0 +1,150 @@
+import { Input } from "@shared/components/ui/Input";
+import { cn } from "@shared/lib/cn";
+
+export function WorkoutCatalogSection({
+  mode,
+  q,
+  setQ,
+  grouped,
+  open,
+  setOpen,
+  handleExerciseInListClick,
+  setSelected,
+  recoveryConflictsForExercise,
+  rec,
+  musclesUk,
+}) {
+  return (
+    <>
+      <div className="relative mb-3">
+        <Input
+          placeholder="Пошук (жим, підтягування, спина...)"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        {q && (
+          <button
+            onClick={() => setQ("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-text"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {mode === "log" && (
+        <p className="text-xs text-subtle mb-2 leading-relaxed">
+          Розкрий групу й тапни по вправі — додасться в активне тренування.
+          Кнопка «ⓘ» праворуч — опис і фото без додавання.
+        </p>
+      )}
+
+      <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
+        {grouped.length === 0 ? (
+          <div className="p-6 text-center text-sm text-subtle">
+            Поки немає вправ. Додай першу через кнопку &quot;+ Додати&quot;.
+          </div>
+        ) : (
+          grouped.map((g) => {
+            const isOpen = open[g.id] ?? false;
+            return (
+              <div
+                key={g.id}
+                className="border-b border-line last:border-0"
+              >
+                <button
+                  onClick={() =>
+                    setOpen((o) => ({ ...o, [g.id]: !isOpen }))
+                  }
+                  className="w-full flex items-center justify-between px-4 py-3 bg-panelHi/60 hover:bg-panelHi transition-colors"
+                >
+                  <div className="text-sm font-bold text-text">{g.label}</div>
+                  <div className="text-xs text-muted flex items-center gap-2">
+                    <span>{g.total}</span>
+                    <span className="text-lg leading-none">
+                      {isOpen ? "▾" : "▸"}
+                    </span>
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div>
+                    {g.items.map((ex) => {
+                      const catCf = recoveryConflictsForExercise(ex, rec.by);
+                      return (
+                        <div
+                          key={ex.id}
+                          className="flex border-t border-line"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleExerciseInListClick(ex)}
+                            className={cn(
+                              "flex-1 min-w-0 text-left px-4 py-3 transition-colors",
+                              mode === "log"
+                                ? "hover:bg-success/10 active:bg-success/15"
+                                : "hover:bg-panelHi",
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-text truncate flex items-center gap-2">
+                                  {ex?.name?.uk || ex?.name?.en}
+                                  {catCf.hasWarning ? (
+                                    <span
+                                      className="text-warning shrink-0"
+                                      title="Мʼязи ще відновлюються"
+                                    >
+                                      ⚠
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <div className="text-xs text-subtle mt-0.5">
+                                  Мʼязи:{" "}
+                                  <span className="font-semibold text-muted">
+                                    {(ex?.muscles?.primary || [])
+                                      .map((id) => musclesUk?.[id] || id)
+                                      .join(", ") || "—"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="shrink-0 text-xs text-muted tabular-nums">
+                                {ex.rating ? ex.rating.toFixed(1) : ""}
+                              </div>
+                            </div>
+                          </button>
+
+                          {mode === "log" && (
+                            <button
+                              type="button"
+                              className="shrink-0 w-12 min-h-[48px] flex items-center justify-center border-l border-line/80 text-muted hover:text-text hover:bg-panelHi transition-colors"
+                              aria-label="Опис і фото вправи"
+                              onClick={() => setSelected(ex)}
+                            >
+                              <span
+                                className="text-base leading-none"
+                                aria-hidden
+                              >
+                                ⓘ
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {g.total > g.items.length && (
+                      <div className="px-4 py-3 text-xs text-subtle border-t border-line">
+                        Показано {g.items.length} з {g.total} (уточни пошук
+                        щоб звузити)
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </>
+  );
+}

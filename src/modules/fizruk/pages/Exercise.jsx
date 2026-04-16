@@ -2,14 +2,7 @@ import { useMemo } from "react";
 import { cn } from "@shared/lib/cn";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useWorkouts } from "../hooks/useWorkouts";
-import { suggestNextSet } from "../lib/workoutStats";
-
-function epley1rm(weightKg, reps) {
-  const w = Number(weightKg) || 0;
-  const r = Number(reps) || 0;
-  if (w <= 0 || r <= 0) return 0;
-  return w * (1 + r / 30);
-}
+import { epley1rm, suggestNextSet } from "../lib/workoutStats";
 
 function fmt(n, digits = 0) {
   const x = Number(n);
@@ -243,25 +236,19 @@ export function Exercise({ exerciseId }) {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-3">
-        <section
-          className="rounded-3xl p-5 border border-line/20 bg-forest-grad"
-          aria-label="Профіль вправи"
-        >
-          <p className="text-[11px] font-bold tracking-widest uppercase text-accent">
-            Профіль вправи
-          </p>
-          <h1 className="text-2xl font-black text-white mt-2 leading-tight">
+        <div>
+          <h1 className="text-xl font-bold text-text leading-tight">
             {ex?.name?.uk ||
               ex?.name?.en ||
               history?.[0]?.item?.nameUk ||
               "Вправа"}
           </h1>
           {muscleLabels.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
+            <div className="flex flex-wrap gap-1.5 mt-2">
               {muscleLabels.map((m) => (
                 <span
                   key={m}
-                  className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/15 text-white/80 border border-white/20"
+                  className="text-xs font-medium px-2.5 py-1 rounded-full bg-success/10 text-success border border-success/20"
                 >
                   {m}
                 </span>
@@ -269,11 +256,11 @@ export function Exercise({ exerciseId }) {
             </div>
           )}
           {muscleLabels.length === 0 && (
-            <p className="text-xs text-white/50 mt-2">
-              Додай мʼязи в каталозі для точнішої аналітики
+            <p className="text-xs text-subtle mt-1">
+              Профіль вправи
             </p>
           )}
-        </section>
+        </div>
 
         {best.isNewPR && (
           <div className="flex items-center gap-2.5 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-3">

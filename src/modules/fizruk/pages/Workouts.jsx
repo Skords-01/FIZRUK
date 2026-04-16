@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
-import { EmptyState } from "@shared/components/ui/EmptyState";
 import { cn } from "@shared/lib/cn";
 import { useToast } from "@shared/hooks/useToast";
-import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { WorkoutTemplatesSection } from "../components/WorkoutTemplatesSection";
-import { ActiveWorkoutPanel } from "../components/workouts/ActiveWorkoutPanel";
 import { RestTimerOverlay } from "../components/workouts/RestTimerOverlay";
 import { WorkoutFinishSheets } from "../components/workouts/WorkoutFinishSheets";
+import { AddExerciseSheet } from "../components/workouts/AddExerciseSheet";
+import { ExerciseDetailSheet } from "../components/workouts/ExerciseDetailSheet";
+import { WorkoutJournalSection } from "../components/workouts/WorkoutJournalSection";
+import { WorkoutCatalogSection } from "../components/workouts/WorkoutCatalogSection";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useRecovery } from "../hooks/useRecovery";
 import { useWorkoutTemplates } from "../hooks/useWorkoutTemplates";
@@ -17,9 +17,6 @@ import { useWorkouts } from "../hooks/useWorkouts";
 import { recoveryConflictsForExercise } from "../lib/recoveryConflict";
 import {
   ACTIVE_WORKOUT_KEY,
-  FIZRUK_SHEET_PAD_CLASS,
-  SHEET_Z,
-  mondayStartMs,
   summarizeWorkoutForFinish,
 } from "../lib/workoutUi";
 
@@ -50,33 +47,6 @@ function vibrateRestComplete() {
   try {
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   } catch {}
-}
-
-const EQUIPMENT_OPTIONS = [
-  { id: "bodyweight", label: "Власна вага" },
-  { id: "barbell", label: "Штанга" },
-  { id: "dumbbell", label: "Гантелі" },
-  { id: "kettlebell", label: "Гиря" },
-  { id: "cable", label: "Блок/трос" },
-  { id: "machine", label: "Тренажер" },
-  { id: "band", label: "Еспандер/резинка" },
-  { id: "bench", label: "Лава" },
-  { id: "other", label: "Інше" },
-];
-
-function slugify(s) {
-  return (s || "")
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
-function toggleArr(arr, value) {
-  const a = Array.isArray(arr) ? arr : [];
-  return a.includes(value) ? a.filter((x) => x !== value) : [...a, value];
 }
 
 export function Workouts() {
@@ -136,36 +106,8 @@ export function Workouts() {
     equipment: ["bodyweight"],
     description: "",
   }));
-  const detailsSheetRef = useRef(null);
-  const addExerciseSheetRef = useRef(null);
-  useDialogFocusTrap(!!selected, detailsSheetRef, {
-    onEscape: () => setSelected(null),
-  });
-  useDialogFocusTrap(addOpen, addExerciseSheetRef, {
-    onEscape: () => setAddOpen(false),
-  });
-  const suggestedMuscles = useMemo(() => {
-    const g = form.primaryGroup;
-    const ids = musclesByPrimaryGroup?.[g] || [];
-    // show only known labels first
-    return ids.filter((id) => musclesUk?.[id]);
-  }, [form.primaryGroup, musclesByPrimaryGroup, musclesUk]);
   const list = useMemo(() => search(q), [search, q]);
   const activeWorkout = workouts.find((w) => w.id === activeWorkoutId) || null;
-  const workoutQuickStats = useMemo(() => {
-    const done = (workouts || []).filter((w) => w.endedAt);
-    const weekStart = mondayStartMs(Date.now());
-    const thisWeekDone = done.filter((w) => {
-      const ts = w.startedAt ? Date.parse(w.startedAt) : NaN;
-      return Number.isFinite(ts) && ts >= weekStart;
-    }).length;
-    const activeItems = (activeWorkout?.items || []).length;
-    return {
-      doneCount: done.length,
-      thisWeekDone,
-      activeItems,
-    };
-  }, [workouts, activeWorkout]);
 
   const activeDuration = useMemo(() => {
     if (!activeWorkout?.startedAt) return null;
@@ -393,37 +335,32 @@ export function Workouts() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-        <section className="fizruk-hero-card mb-3" aria-label="Огляд тренувань">
-          <div className="text-[11px] font-bold tracking-widest uppercase text-accent">
-            Тренування
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <h1 className="text-xl font-bold text-text">Тренування</h1>
+            <p className="text-xs text-subtle mt-0.5">
+              {activeWorkout && !activeWorkout.endedAt
+                ? `Активне · ${(activeWorkout.items || []).length} вправ`
+                : `Завершено: ${finishedCount}`}
+            </p>
           </div>
-          <div className="grid grid-cols-3 gap-2 mt-3">
-            <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-              <div className="text-[10px] uppercase tracking-wide text-white/60">
-                Всього
-              </div>
-              <div className="text-lg font-black text-white tabular-nums">
-                {workouts.length}
-              </div>
-            </div>
-            <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-              <div className="text-[10px] uppercase tracking-wide text-white/60">
-                Завершено
-              </div>
-              <div className="text-lg font-black text-white tabular-nums">
-                {finishedCount}
-              </div>
-            </div>
-            <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-              <div className="text-[10px] uppercase tracking-wide text-white/60">
-                Активне
-              </div>
-              <div className="text-lg font-black text-white tabular-nums">
-                {activeWorkout ? 1 : 0}
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="h-9 px-3 rounded-xl border border-line text-xs font-semibold text-subtle hover:text-text hover:bg-panelHi transition-colors"
+              onClick={() => (window.location.hash = "#progress")}
+            >
+              Прогрес →
+            </button>
+            <button
+              type="button"
+              className="h-9 px-3 rounded-xl border border-line text-xs font-semibold text-subtle hover:text-text hover:bg-panelHi transition-colors"
+              onClick={() => (window.location.hash = "#programs")}
+            >
+              Програми →
+            </button>
           </div>
-        </section>
+        </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -479,229 +416,36 @@ export function Workouts() {
           </div>
         </div>
 
-        {mode === "log" && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
-                <div className="text-[10px] font-semibold text-subtle uppercase tracking-widest">
-                  Завершено
-                </div>
-                <div className="text-lg font-extrabold text-text tabular-nums mt-1">
-                  {workoutQuickStats.doneCount}
-                </div>
-              </div>
-              <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
-                <div className="text-[10px] font-semibold text-subtle uppercase tracking-widest">
-                  Цей тиждень
-                </div>
-                <div className="text-lg font-extrabold text-text tabular-nums mt-1">
-                  {workoutQuickStats.thisWeekDone}
-                </div>
-              </div>
-              <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
-                <div className="text-[10px] font-semibold text-subtle uppercase tracking-widest">
-                  В активному
-                </div>
-                <div className="text-lg font-extrabold text-text tabular-nums mt-1">
-                  {workoutQuickStats.activeItems}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                className="w-full py-3 rounded-2xl border border-line bg-panel text-sm font-semibold text-text hover:bg-panelHi transition-colors"
-                onClick={() => setRetroOpen((o) => !o)}
-                aria-expanded={retroOpen}
-              >
-                Записати тренування заднім числом
-              </button>
-              {retroOpen && (
-                <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
-                  <p className="text-xs text-subtle leading-relaxed">
-                    Вкажи, коли було тренування. Потім додай вправи та впиши кг,
-                    повтори, час тощо — як занесення після факту.
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-1">
-                        Дата
-                      </div>
-                      <input
-                        type="date"
-                        className="w-full h-11 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
-                        value={retroDate}
-                        onChange={(e) => setRetroDate(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-1">
-                        Час початку
-                      </div>
-                      <input
-                        type="time"
-                        className="w-full h-11 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
-                        value={retroTime}
-                        onChange={(e) => setRetroTime(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    className="w-full h-11"
-                    onClick={submitRetroWorkout}
-                  >
-                    Створити й заповнити
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {!activeWorkout && (
-              <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card text-center">
-                <div className="text-sm font-semibold text-text">
-                  Немає активного тренування
-                </div>
-                <div className="text-xs text-subtle mt-1">
-                  Створи «+ Нове» або відкрий «Шаблони». Вправи з каталогу нижче
-                  додаються тапом по назві після цього.
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    className="flex-1 h-11"
-                    onClick={() => {
-                      const w = createWorkout();
-                      setActiveWorkoutId(w.id);
-                    }}
-                  >
-                    + Нове
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="flex-1 h-11"
-                    onClick={() => setMode("templates")}
-                  >
-                    Шаблони
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {activeWorkout && (
-              <ActiveWorkoutPanel
-                activeWorkout={activeWorkout}
-                activeDuration={activeDuration}
-                lastByExerciseId={lastByExerciseId}
-                musclesUk={musclesUk}
-                recBy={rec.by}
-                removeItem={removeItem}
-                updateItem={updateItem}
-                updateWorkout={updateWorkout}
-                setRestTimer={setRestTimer}
-                onFinishClick={() => {
-                  const sum = summarizeWorkoutForFinish(activeWorkout);
-                  const wid = activeWorkout.id;
-                  endWorkout(wid);
-                  if (sum) {
-                    setFinishFlash({
-                      step: "wellbeing",
-                      collapsed: false,
-                      ...sum,
-                      workoutId: wid,
-                      energy: null,
-                      mood: null,
-                    });
-                  }
-                }}
-                onDeleteWorkout={() => setDeleteWorkoutConfirm(true)}
-              />
-            )}
-
-            <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
-              <div className="px-4 py-3 bg-panelHi/60 border-b border-line">
-                <div className="text-xs font-bold text-subtle uppercase tracking-widest">
-                  Останні тренування
-                </div>
-              </div>
-              {(workouts || []).length === 0 && (
-                <EmptyState
-                  compact
-                  icon={
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3" />
-                    </svg>
-                  }
-                  title="Поки немає тренувань"
-                  description="Натисни «+ Нове тренування» щоб почати"
-                />
-              )}
-              {(workouts || []).slice(0, journalLimit).map((w) => (
-                <button
-                  key={w.id}
-                  onClick={() => setActiveWorkoutId(w.id)}
-                  className={cn(
-                    "w-full text-left px-4 py-3 border-b border-line last:border-0 hover:bg-panelHi transition-colors",
-                    activeWorkoutId === w.id && "bg-text/5",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-text">
-                      {new Date(w.startedAt).toLocaleDateString("uk-UA", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-subtle">
-                        {(w.items || []).length} вправ
-                      </span>
-                      {activeWorkoutId === w.id ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/20">
-                          Активне
-                        </span>
-                      ) : w.endedAt ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-panelHi text-subtle border border-line">
-                          Завершене
-                        </span>
-                      ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20">
-                          Чернетка
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {w.note && (
-                    <div className="text-xs text-subtle mt-1 italic line-clamp-2">
-                      {w.note}
-                    </div>
-                  )}
-                </button>
-              ))}
-              {(workouts || []).length > journalLimit && (
-                <button
-                  onClick={() => setJournalLimit((l) => l + 12)}
-                  className="w-full py-3 text-sm font-semibold text-accent hover:text-accent/80 transition-colors"
-                >
-                  Показати більше
-                </button>
-              )}
-              {(workouts || []).length === 0 && (
-                <div className="p-6 text-center text-sm text-subtle">
-                  Поки тренувань немає
-                </div>
-              )}
-            </div>
-          </div>
+        {mode === 'log' && (
+          <WorkoutJournalSection
+            activeWorkout={activeWorkout}
+            activeDuration={activeDuration}
+            workouts={workouts}
+            journalLimit={journalLimit}
+            setJournalLimit={setJournalLimit}
+            activeWorkoutId={activeWorkoutId}
+            setActiveWorkoutId={setActiveWorkoutId}
+            retroOpen={retroOpen}
+            setRetroOpen={setRetroOpen}
+            retroDate={retroDate}
+            setRetroDate={setRetroDate}
+            retroTime={retroTime}
+            setRetroTime={setRetroTime}
+            createWorkout={createWorkout}
+            setMode={setMode}
+            musclesUk={musclesUk}
+            recBy={rec.by}
+            lastByExerciseId={lastByExerciseId}
+            setRestTimer={setRestTimer}
+            updateWorkout={updateWorkout}
+            updateItem={updateItem}
+            removeItem={removeItem}
+            setFinishFlash={setFinishFlash}
+            endWorkout={endWorkout}
+            setDeleteWorkoutConfirm={setDeleteWorkoutConfirm}
+            summarizeWorkoutForFinish={summarizeWorkoutForFinish}
+            submitRetroWorkout={submitRetroWorkout}
+          />
         )}
 
         {mode === "templates" && (
@@ -716,620 +460,47 @@ export function Workouts() {
           />
         )}
 
-        {(mode === "catalog" || mode === "log") && (
-          <div className="relative mb-3">
-            <Input
-              placeholder="Пошук (жим, підтягування, спина...)"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            {q && (
-              <button
-                onClick={() => setQ("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-text"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+        {(mode === 'catalog' || mode === 'log') && (
+          <WorkoutCatalogSection
+            mode={mode}
+            q={q}
+            setQ={setQ}
+            grouped={grouped}
+            open={open}
+            setOpen={setOpen}
+            handleExerciseInListClick={handleExerciseInListClick}
+            setSelected={setSelected}
+            recoveryConflictsForExercise={recoveryConflictsForExercise}
+            rec={rec}
+            musclesUk={musclesUk}
+          />
         )}
 
-        {mode === "log" && (
-          <p className="text-xs text-subtle mb-2 leading-relaxed">
-            Розкрий групу й тапни по вправі — додасться в активне тренування.
-            Кнопка «ⓘ» праворуч — опис і фото без додавання.
-          </p>
-        )}
 
-        {mode !== "templates" && (
-          <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
-            {grouped.length === 0 ? (
-              <div className="p-6 text-center text-sm text-subtle">
-                Поки немає вправ. Додай першу через кнопку “+ Додати”.
-              </div>
-            ) : (
-              grouped.map((g) => {
-                const isOpen = open[g.id] ?? false;
-                return (
-                  <div
-                    key={g.id}
-                    className="border-b border-line last:border-0"
-                  >
-                    <button
-                      onClick={() =>
-                        setOpen((o) => ({ ...o, [g.id]: !isOpen }))
-                      }
-                      className="w-full flex items-center justify-between px-4 py-3 bg-panelHi/60 hover:bg-panelHi transition-colors"
-                    >
-                      <div className="text-sm font-bold text-text">
-                        {g.label}
-                      </div>
-                      <div className="text-xs text-muted flex items-center gap-2">
-                        <span>{g.total}</span>
-                        <span className="text-lg leading-none">
-                          {isOpen ? "▾" : "▸"}
-                        </span>
-                      </div>
-                    </button>
-                    {isOpen && (
-                      <div>
-                        {g.items.map((ex) => {
-                          const catCf = recoveryConflictsForExercise(
-                            ex,
-                            rec.by,
-                          );
-                          return (
-                            <div
-                              key={ex.id}
-                              className="flex border-t border-line"
-                            >
-                              <button
-                                type="button"
-                                onClick={() => handleExerciseInListClick(ex)}
-                                className={cn(
-                                  "flex-1 min-w-0 text-left px-4 py-3 transition-colors",
-                                  mode === "log"
-                                    ? "hover:bg-success/10 active:bg-success/15"
-                                    : "hover:bg-panelHi",
-                                )}
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <div className="text-sm font-semibold text-text truncate flex items-center gap-2">
-                                      {ex?.name?.uk || ex?.name?.en}
-                                      {catCf.hasWarning ? (
-                                        <span
-                                          className="text-warning shrink-0"
-                                          title="Мʼязи ще відновлюються"
-                                        >
-                                          ⚠
-                                        </span>
-                                      ) : null}
-                                    </div>
-                                    <div className="text-xs text-subtle mt-0.5">
-                                      Мʼязи:{" "}
-                                      <span className="font-semibold text-muted">
-                                        {(ex?.muscles?.primary || [])
-                                          .map((id) => musclesUk?.[id] || id)
-                                          .join(", ") || "—"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="shrink-0 text-xs text-muted tabular-nums">
-                                    {ex.rating ? ex.rating.toFixed(1) : ""}
-                                  </div>
-                                </div>
-                              </button>
-                              {mode === "log" && (
-                                <button
-                                  type="button"
-                                  className="shrink-0 w-12 min-h-[48px] flex items-center justify-center border-l border-line/80 text-muted hover:text-text hover:bg-panelHi transition-colors"
-                                  aria-label="Опис і фото вправи"
-                                  onClick={() => setSelected(ex)}
-                                >
-                                  <span
-                                    className="text-base leading-none"
-                                    aria-hidden
-                                  >
-                                    ⓘ
-                                  </span>
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                        {g.total > g.items.length && (
-                          <div className="px-4 py-3 text-xs text-subtle border-t border-line">
-                            Показано {g.items.length} з {g.total} (уточни пошук
-                            щоб звузити)
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
+        <ExerciseDetailSheet
+          selected={selected}
+          onClose={() => setSelected(null)}
+          mode={mode}
+          musclesUk={musclesUk}
+          rec={rec}
+          recoveryConflictsForExercise={recoveryConflictsForExercise}
+          activeWorkoutId={activeWorkoutId}
+          activeWorkout={activeWorkout}
+          addExerciseToActive={addExerciseToActive}
+          onDeleteRequest={() => setDeleteExerciseConfirm(true)}
+          toast={toast}
+        />
 
-        {/* Details sheet */}
-        {selected && (
-          <div
-            className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}
-          >
-            <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              role="button"
-              tabIndex={0}
-              aria-label="Закрити"
-              onClick={() => setSelected(null)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setSelected(null);
-                }
-              }}
-            />
-            <div
-              ref={detailsSheetRef}
-              className={cn(
-                "relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft",
-                FIZRUK_SHEET_PAD_CLASS,
-              )}
-              onPointerDown={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="fizruk-ex-details-title"
-            >
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 bg-line rounded-full" />
-              </div>
-              <div className="px-5 pb-6">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="min-w-0">
-                    <div
-                      id="fizruk-ex-details-title"
-                      className="text-lg font-extrabold text-text leading-tight"
-                    >
-                      {selected?.name?.uk || selected?.name?.en}
-                    </div>
-                    <div className="text-xs text-subtle mt-1">
-                      Основна група:{" "}
-                      <span className="font-semibold text-muted">
-                        {selected.primaryGroupUk || selected.primaryGroup}
-                      </span>
-                      {selected.level ? (
-                        <>
-                          {" "}
-                          · рівень:{" "}
-                          <span className="font-semibold text-muted">
-                            {selected.level}
-                          </span>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelected(null)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text text-lg transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                {(() => {
-                  const cf = recoveryConflictsForExercise(selected, rec.by);
-                  if (!cf.hasWarning) return null;
-                  return (
-                    <div className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs text-warning leading-snug">
-                      {cf.red.length ? (
-                        <div>
-                          <span className="font-semibold">Рано:</span>{" "}
-                          {cf.red.map((x) => x.label).join(", ")}
-                        </div>
-                      ) : null}
-                      {cf.yellow.length ? (
-                        <div className="mt-1">
-                          <span className="font-semibold">Краще почекати:</span>{" "}
-                          {cf.yellow.map((x) => x.label).join(", ")}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })()}
-
-                {(selected.images || []).filter(Boolean).length > 0 && (
-                  <div className="mb-4 -mx-5 px-5 overflow-x-auto no-scrollbar">
-                    <div className="flex gap-3">
-                      {selected.images.slice(0, 8).map((src) => (
-                        <img
-                          key={src}
-                          src={src}
-                          alt={
-                            selected?.name?.uk ||
-                            selected?.name?.en ||
-                            "exercise"
-                          }
-                          loading="lazy"
-                          className="h-40 w-40 rounded-2xl object-cover border border-line bg-bg"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selected.description && (
-                  <div className="text-sm text-text leading-relaxed mb-4">
-                    {selected.description}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-subtle uppercase tracking-widest">
-                    Мʼязи
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(selected?.muscles?.primary || []).map((m) => (
-                      <span
-                        key={m}
-                        className="text-xs px-3 py-1.5 rounded-full border border-line bg-bg text-muted font-semibold"
-                      >
-                        {musclesUk?.[m] || m} · основний
-                      </span>
-                    ))}
-                    {(selected?.muscles?.secondary || []).map((m) => (
-                      <span
-                        key={m}
-                        className="text-xs px-3 py-1.5 rounded-full border border-line bg-bg text-subtle font-semibold"
-                      >
-                        {musclesUk?.[m] || m}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  <div className="text-xs font-bold text-subtle uppercase tracking-widest">
-                    Обладнання
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(selected.equipmentUk || selected.equipment || []).map(
-                      (eq) => (
-                        <span
-                          key={eq}
-                          className="text-xs px-3 py-1.5 rounded-full border border-line bg-bg text-muted font-semibold"
-                        >
-                          {eq}
-                        </span>
-                      ),
-                    )}
-                  </div>
-                </div>
-
-                {selected.tips?.length ? (
-                  <div className="mt-4">
-                    <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-2">
-                      Підказки
-                    </div>
-                    <ul className="space-y-1.5">
-                      {selected.tips.map((t, i) => (
-                        <li
-                          key={i}
-                          className="text-sm text-text leading-relaxed"
-                        >
-                          <span className="text-muted font-bold mr-2">•</span>
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-
-                {(selected._custom ||
-                  selected.source === "manual" ||
-                  String(selected.id || "").startsWith("custom_")) && (
-                  <div className="mt-4">
-                    <Button
-                      variant="danger"
-                      className="w-full h-12"
-                      onClick={() => setDeleteExerciseConfirm(true)}
-                    >
-                      Видалити з каталогу
-                    </Button>
-                  </div>
-                )}
-
-                {mode === "log" && (
-                  <Button
-                    type="button"
-                    className="w-full h-12 mt-5 bg-forest text-white border-forest hover:bg-forest/90"
-                    onClick={() => {
-                      if (!activeWorkoutId) {
-                        toast.warning("Спочатку натисни «+ Нове» у блоці вище.");
-                        return;
-                      }
-                      if (activeWorkout?.endedAt) {
-                        toast.warning(
-                          "Це тренування вже завершено. Обери чернетку або створи нове.",
-                        );
-                        return;
-                      }
-                      addExerciseToActive(selected);
-                      setSelected(null);
-                    }}
-                  >
-                    + Додати в активне тренування
-                  </Button>
-                )}
-
-                <div className="mt-5 grid grid-cols-2 gap-2">
-                  <Button className="h-12" onClick={() => setSelected(null)}>
-                    Закрити
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className={cn("h-12")}
-                    onClick={() => {
-                      navigator.clipboard
-                        ?.writeText(
-                          selected?.name?.uk || selected?.name?.en || "",
-                        )
-                        .catch(() => {});
-                    }}
-                  >
-                    📋 Копіювати назву
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Add exercise sheet */}
-        {addOpen && (
-          <div
-            className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}
-            role="presentation"
-          >
-            <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              role="button"
-              tabIndex={0}
-              aria-label="Закрити"
-              onClick={() => setAddOpen(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setAddOpen(false);
-                }
-              }}
-            />
-            <div
-              ref={addExerciseSheetRef}
-              className={cn(
-                "relative w-full bg-panel border-t border-line rounded-t-3xl shadow-soft max-h-[92dvh] flex flex-col",
-                FIZRUK_SHEET_PAD_CLASS,
-              )}
-              onPointerDown={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="add-ex-title"
-            >
-              <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 bg-line rounded-full" aria-hidden />
-              </div>
-              <div className="px-4 sm:px-5 pb-6 overflow-y-auto flex-1 min-h-0">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="min-w-0">
-                    <div
-                      id="add-ex-title"
-                      className="text-lg font-extrabold text-text leading-tight"
-                    >
-                      Додати вправу
-                    </div>
-                    <div className="text-xs text-subtle mt-1">
-                      Збережеться локально на цьому пристрої
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setAddOpen(false)}
-                    className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text text-lg transition-colors"
-                    aria-label="Закрити форму"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  <Input
-                    placeholder="Назва (укр) *"
-                    value={form.nameUk}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, nameUk: e.target.value }))
-                    }
-                    aria-label="Назва вправи українською"
-                  />
-
-                  <div className="rounded-2xl border border-line bg-panelHi px-3">
-                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">
-                      Основна група
-                    </div>
-                    <select
-                      className="w-full min-h-[44px] bg-transparent text-sm text-text outline-none py-2"
-                      value={form.primaryGroup}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          primaryGroup: e.target.value,
-                          musclesPrimary: [],
-                          musclesSecondary: [],
-                        }))
-                      }
-                      aria-label="Основна група м’язів"
-                    >
-                      {Object.keys(primaryGroupsUk).map((id) => (
-                        <option key={id} value={id}>
-                          {primaryGroupsUk[id]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="rounded-2xl border border-line bg-panelHi px-3 py-2">
-                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-                      Обладнання
-                    </div>
-                    <div className="py-2 flex flex-wrap gap-2">
-                      {EQUIPMENT_OPTIONS.map((o) => {
-                        const active = (form.equipment || []).includes(o.id);
-                        return (
-                          <button
-                            key={o.id}
-                            type="button"
-                            onClick={() =>
-                              setForm((f) => ({
-                                ...f,
-                                equipment: toggleArr(f.equipment, o.id),
-                              }))
-                            }
-                            className={cn(
-                              "text-xs px-3 py-2.5 min-h-[44px] rounded-full border transition-colors",
-                              active
-                                ? "bg-text text-white border-text"
-                                : "border-line bg-bg text-muted hover:border-muted hover:text-text",
-                            )}
-                            aria-pressed={active}
-                          >
-                            {o.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-line bg-panelHi px-3 py-2">
-                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-                      Основні мʼязи
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {suggestedMuscles.map((id) => (
-                        <button
-                          key={id}
-                          type="button"
-                          className={cn(
-                            "text-xs px-3 py-2 min-h-[44px] rounded-full border transition-colors",
-                            (form.musclesPrimary || []).includes(id)
-                              ? "bg-primary border-primary text-white"
-                              : "border-line bg-bg text-muted hover:border-muted hover:text-text",
-                          )}
-                          onClick={() =>
-                            setForm((f) => ({
-                              ...f,
-                              musclesPrimary: toggleArr(f.musclesPrimary, id),
-                            }))
-                          }
-                        >
-                          {musclesUk[id] || id}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-line bg-panelHi px-3 py-2">
-                    <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-                      Супутні мʼязи
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {suggestedMuscles.map((id) => (
-                        <button
-                          key={id}
-                          type="button"
-                          className={cn(
-                            "text-xs px-3 py-2 min-h-[44px] rounded-full border transition-colors",
-                            (form.musclesSecondary || []).includes(id)
-                              ? "bg-text/80 border-text/80 text-white"
-                              : "border-line bg-bg text-muted hover:border-muted hover:text-text",
-                          )}
-                          onClick={() =>
-                            setForm((f) => ({
-                              ...f,
-                              musclesSecondary: toggleArr(
-                                f.musclesSecondary,
-                                id,
-                              ),
-                            }))
-                          }
-                        >
-                          {musclesUk[id] || id}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Input
-                    placeholder="Опис"
-                    value={form.description}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, description: e.target.value }))
-                    }
-                  />
-                </div>
-
-                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Button
-                    className="h-12 min-h-[44px]"
-                    onClick={() => {
-                      const nameUk = (form.nameUk || "").trim();
-                      if (!nameUk) return;
-                      const id = `custom_${slugify(nameUk) || Date.now()}`;
-                      addExercise({
-                        id,
-                        name: { uk: nameUk, en: nameUk },
-                        primaryGroup: form.primaryGroup,
-                        primaryGroupUk:
-                          primaryGroupsUk[form.primaryGroup] ||
-                          form.primaryGroup,
-                        muscles: {
-                          primary: form.musclesPrimary || [],
-                          secondary: form.musclesSecondary || [],
-                          stabilizers: [],
-                        },
-                        equipment: form.equipment || [],
-                        equipmentUk: (form.equipment || []).map(
-                          (eid) =>
-                            EQUIPMENT_OPTIONS.find((x) => x.id === eid)
-                              ?.label || eid,
-                        ),
-                        description: (form.description || "").trim(),
-                        source: "manual",
-                      });
-                      setAddOpen(false);
-                      setForm({
-                        nameUk: "",
-                        primaryGroup: "chest",
-                        musclesPrimary: [],
-                        musclesSecondary: [],
-                        equipment: ["bodyweight"],
-                        description: "",
-                      });
-                    }}
-                  >
-                    Зберегти
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="h-12 min-h-[44px]"
-                    onClick={() => setAddOpen(false)}
-                  >
-                    Скасувати
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <AddExerciseSheet
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          form={form}
+          setForm={setForm}
+          primaryGroupsUk={primaryGroupsUk}
+          musclesUk={musclesUk}
+          musclesByPrimaryGroup={musclesByPrimaryGroup}
+          addExercise={addExercise}
+        />
 
         <RestTimerOverlay
           restTimer={restTimer}

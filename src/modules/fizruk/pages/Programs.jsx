@@ -14,41 +14,23 @@ export function Programs({ onStartWorkout, activeProgramId, activeProgram, activ
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
-        <section
-          className="rounded-3xl p-5 overflow-hidden bg-forest-grad"
-          aria-label="Тренувальні програми"
-        >
-          <p className="text-[11px] font-bold tracking-widest uppercase text-accent">
-            Програми
-          </p>
-          <h1 className="text-2xl font-black text-white mt-2 leading-tight">
-            Структуровані
-            <br />
-            тренування
-          </h1>
-          <p className="text-white/60 text-xs mt-2 leading-relaxed">
-            Обери готову програму. Вона визначає тренування на кожен день
-            тижня з автоматичною прогресією навантаження.
-          </p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-text">Програми</h1>
+            <p className="text-xs text-subtle mt-0.5">
+              {activeProgram ? `Активна: ${activeProgram.name}` : "Оберіть тренувальну програму"}
+            </p>
+          </div>
           {activeProgram && (
-            <div className="mt-4 flex items-center gap-2 bg-white/10 border border-white/20 rounded-2xl px-4 py-3">
-              <div className="w-2 h-2 rounded-full bg-accent shrink-0" />
-              <div className="min-w-0 flex-1">
-                <div className="text-xs text-white/60">Активна програма</div>
-                <div className="text-sm font-bold text-white truncate">
-                  {activeProgram.name}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={deactivateProgram}
-                className="text-white/50 text-xs hover:text-white/80 transition-colors shrink-0"
-              >
-                Зупинити
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={deactivateProgram}
+              className="h-9 px-3 rounded-xl border border-line text-xs font-semibold text-subtle hover:text-text hover:bg-panelHi transition-colors"
+            >
+              Зупинити
+            </button>
           )}
-        </section>
+        </div>
 
         <div className="space-y-3">
           {BUILTIN_PROGRAMS.map((prog) => {

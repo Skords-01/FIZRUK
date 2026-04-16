@@ -1,6 +1,10 @@
 /** Pure helpers for dashboard / analytics (kg, local week Mon–Sun). */
 
-function epley1rmInternal(weightKg, reps) {
+/**
+ * Формула Еплі для оцінки 1ПМ (1 повторний максимум).
+ * Виноситься як публічна функція, щоб не дублюватись в Exercise.jsx і Progress.jsx.
+ */
+export function epley1rm(weightKg, reps) {
   const wg = Number(weightKg) || 0;
   const r = Number(reps) || 0;
   if (wg <= 0 || r <= 0) return 0;
@@ -24,7 +28,7 @@ export function getExercisePR(workouts, exerciseId) {
     for (const it of w.items || []) {
       if (it.exerciseId !== exerciseId || it.type !== "strength") continue;
       for (const s of it.sets || []) {
-        const est = epley1rmInternal(s.weightKg, s.reps);
+        const est = epley1rm(s.weightKg, s.reps);
         if (est > best1rm) {
           best1rm = est;
           bestSet = { weightKg: s.weightKg, reps: s.reps };
@@ -81,13 +85,6 @@ export function workoutDurationSec(w) {
   const end = w.endedAt ? Date.parse(w.endedAt) : Date.now();
   if (!Number.isFinite(start)) return 0;
   return Math.max(0, Math.floor((end - start) / 1000));
-}
-
-function epley1rm(weightKg, reps) {
-  const wg = Number(weightKg) || 0;
-  const r = Number(reps) || 0;
-  if (wg <= 0 || r <= 0) return 0;
-  return wg * (1 + r / 30);
 }
 
 /** Кількість вправ, де є хоча б один зафіксований «рекорд» за оцінкою Еплі. */

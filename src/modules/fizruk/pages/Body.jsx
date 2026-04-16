@@ -130,60 +130,35 @@ export function Body({ onOpenMeasurements }) {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
-        <section
-          className="rounded-3xl p-5 overflow-hidden bg-forest-grad"
-          aria-label="Тіло та здоров'я"
-        >
-          <p className="text-[11px] font-bold tracking-widest uppercase text-accent">
-            Тіло
-          </p>
-          <h1 className="text-2xl font-black text-white mt-2 leading-tight">
-            Вага, сон
-            <br />
-            та самопочуття
-          </h1>
-          {onOpenMeasurements && (
-            <button
-              type="button"
-              onClick={onOpenMeasurements}
-              className="mt-3 flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              </svg>
-              Виміри тіла (обхвати) →
-            </button>
-          )}
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-2xl bg-white/10 border border-white/15 p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wide text-white/60">
-                Вага
-              </p>
-              <p className="text-xl font-black text-white tabular-nums mt-1">
-                {stats.latestWeight != null ? `${stats.latestWeight}` : "—"}
-              </p>
-              <p className="text-[9px] text-white/50">кг</p>
-            </div>
-            <div className="rounded-2xl bg-white/10 border border-white/15 p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wide text-white/60">
-                Сон (сер)
-              </p>
-              <p className="text-xl font-black text-white tabular-nums mt-1">
-                {stats.avgSleep != null ? stats.avgSleep.toFixed(1) : "—"}
-              </p>
-              <p className="text-[9px] text-white/50">год</p>
-            </div>
-            <div className="rounded-2xl bg-white/10 border border-white/15 p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wide text-white/60">
-                Енергія
-              </p>
-              <p className="text-xl font-black text-white tabular-nums mt-1">
-                {stats.avgEnergy != null ? stats.avgEnergy.toFixed(1) : "—"}
-              </p>
-              <p className="text-[9px] text-white/50">з 5</p>
-            </div>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-text">Тіло</h1>
+            <p className="text-xs text-subtle mt-0.5">Вага · сон · самопочуття</p>
           </div>
-        </section>
+          <div className="flex items-center gap-3">
+            <div className="text-center">
+              <div className="text-xs text-subtle">Вага</div>
+              <div className="text-base font-extrabold text-text tabular-nums">
+                {stats.latestWeight != null ? `${stats.latestWeight} кг` : "—"}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-subtle">Сон</div>
+              <div className="text-base font-extrabold text-text tabular-nums">
+                {stats.avgSleep != null ? `${stats.avgSleep.toFixed(1)} г` : "—"}
+              </div>
+            </div>
+            {onOpenMeasurements && (
+              <button
+                type="button"
+                onClick={onOpenMeasurements}
+                className="h-9 px-3 rounded-xl border border-line text-xs font-semibold text-subtle hover:text-text hover:bg-panelHi transition-colors"
+              >
+                Виміри
+              </button>
+            )}
+          </div>
+        </div>
 
         <section
           className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
