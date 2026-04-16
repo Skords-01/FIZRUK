@@ -23,6 +23,8 @@ import backupDownload from "./api/nutrition/backup-download.js";
 import dayPlan from "./api/nutrition/day-plan.js";
 import shoppingList from "./api/nutrition/shopping-list.js";
 import weeklyDigest from "./api/weekly-digest.js";
+import coachHandler from "./api/coach.js";
+import foodSearchHandler from "./api/food-search.js";
 import { setCorsHeaders } from "./api/lib/cors.js";
 import { rateLimitExpress } from "./api/lib/rateLimit.js";
 
@@ -101,6 +103,19 @@ app.all(
   "/api/weekly-digest",
   rateLimitExpress({ key: "api:weekly-digest", limit: 10, windowMs: 60 * 60_000 }),
   wrap(weeklyDigest),
+);
+
+app.use(
+  "/api/coach",
+  rateLimitExpress({ key: "api:coach", limit: 20, windowMs: 60 * 60_000 }),
+);
+app.all("/api/coach/memory", wrap(coachHandler));
+app.all("/api/coach/insight", wrap(coachHandler));
+
+app.get(
+  "/api/food-search",
+  rateLimitExpress({ key: "api:food-search", limit: 40, windowMs: 60_000 }),
+  wrap(foodSearchHandler),
 );
 
 app.use((err, _req, res, _next) => {
