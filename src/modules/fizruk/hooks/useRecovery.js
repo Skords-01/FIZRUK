@@ -2,7 +2,10 @@ import { useMemo } from "react";
 import { useExerciseCatalog } from "./useExerciseCatalog";
 import { useWorkouts } from "./useWorkouts";
 import { useDailyLog } from "./useDailyLog";
-import { computeRecoveryBy } from "../lib/recoveryCompute";
+import {
+  computeRecoveryBy,
+  computeWellbeingMultiplier,
+} from "../lib/recoveryCompute";
 
 export { loadPointsForItem } from "../lib/recoveryCompute";
 
@@ -12,6 +15,7 @@ export function useRecovery() {
   const { entries: dailyLogEntries } = useDailyLog();
 
   const stats = useMemo(() => {
+    const wellbeingMult = computeWellbeingMultiplier(dailyLogEntries);
     const by = computeRecoveryBy(workouts, musclesUk, Date.now(), dailyLogEntries);
 
     const list = Object.values(by)
@@ -26,7 +30,7 @@ export function useRecovery() {
       .slice(0, 4);
     const avoid = list.filter((x) => x.status === "red").slice(0, 4);
 
-    return { by, list, ready, avoid };
+    return { by, list, ready, avoid, wellbeingMult };
   }, [workouts, musclesUk, dailyLogEntries]);
 
   return stats;

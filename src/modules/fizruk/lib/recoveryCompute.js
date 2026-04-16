@@ -38,50 +38,47 @@ export function loadPointsForItem(item) {
 
 /**
  * Compute a recovery multiplier from recent daily log entries.
- * Poor sleep (<6h) or low energy (<3) slows recovery (multiplier > 1 increases fatigue).
- * Good sleep/energy speeds recovery (multiplier < 1 decreases effective fatigue).
+ * Prioritises the most recent entry with sleep data and most recent entry with
+ * energy data independently (they may be logged on different days).
+ * Poor sleep (<6h) or low energy (≤2/5) slows recovery by 20–30%
+ * (multiplier > 1 increases effective fatigue time).
+ * Good sleep/energy speeds recovery (multiplier < 1).
+ * Falls back to 1.0 when no sleep/energy data is present.
  * Returns a value between 0.7 (well-rested) and 1.4 (exhausted).
  */
 export function computeWellbeingMultiplier(dailyLogEntries = []) {
   if (!dailyLogEntries || dailyLogEntries.length === 0) return 1.0;
 
-  const recent = [...dailyLogEntries]
-    .sort((a, b) => (b.at || "").localeCompare(a.at || ""))
-    .slice(0, 3);
+  const sorted = [...dailyLogEntries].sort((a, b) =>
+    (b.at || "").localeCompare(a.at || ""),
+  );
 
-  let sleepScore = 0;
-  let sleepCount = 0;
-  let energyScore = 0;
-  let energyCount = 0;
-
-  for (const e of recent) {
-    if (e.sleepHours != null && Number.isFinite(Number(e.sleepHours))) {
-      const hrs = Number(e.sleepHours);
-      sleepScore += hrs;
-      sleepCount++;
-    }
-    if (e.energyLevel != null && Number.isFinite(Number(e.energyLevel))) {
-      energyScore += Number(e.energyLevel);
-      energyCount++;
-    }
-  }
+  // Find the most recent entry that has sleep data
+  const latestSleepEntry = sorted.find(
+    (e) => e.sleepHours != null && Number.isFinite(Number(e.sleepHours)),
+  );
+  // Find the most recent entry that has energy data
+  const latestEnergyEntry = sorted.find(
+    (e) => e.energyLevel != null && Number.isFinite(Number(e.energyLevel)),
+  );
 
   let multiplier = 1.0;
 
-  if (sleepCount > 0) {
-    const avgSleep = sleepScore / sleepCount;
-    if (avgSleep < 5) multiplier += 0.3;
-    else if (avgSleep < 6) multiplier += 0.2;
-    else if (avgSleep < 7) multiplier += 0.1;
-    else if (avgSleep >= 8) multiplier -= 0.1;
+  if (latestSleepEntry) {
+    const hrs = Number(latestSleepEntry.sleepHours);
+    if (hrs < 5) multiplier += 0.3;
+    else if (hrs < 6) multiplier += 0.2;
+    else if (hrs < 7) multiplier += 0.1;
+    else if (hrs >= 8) multiplier -= 0.1;
   }
 
-  if (energyCount > 0) {
-    const avgEnergy = energyScore / energyCount;
-    if (avgEnergy <= 1.5) multiplier += 0.3;
-    else if (avgEnergy <= 2.5) multiplier += 0.15;
-    else if (avgEnergy >= 4.5) multiplier -= 0.15;
-    else if (avgEnergy >= 4) multiplier -= 0.1;
+  if (latestEnergyEntry) {
+    const energy = Number(latestEnergyEntry.energyLevel);
+    if (energy <= 1) multiplier += 0.3;
+    else if (energy <= 2) multiplier += 0.2;
+    else if (energy <= 2.5) multiplier += 0.15;
+    else if (energy >= 4.5) multiplier -= 0.15;
+    else if (energy >= 4) multiplier -= 0.1;
   }
 
   return clamp(multiplier, 0.7, 1.4);

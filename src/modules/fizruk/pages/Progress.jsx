@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { cn } from "@shared/lib/cn";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useMeasurements } from "../hooks/useMeasurements";
-import { ROUTINE_EVENT } from "../../routine/lib/routineStorage.js";
-import { buildPushupHistoryFromRoutine } from "../../routine/lib/routinePushupsRead.js";
+import { usePushupActivity } from "../hooks/usePushupActivity";
 import { useWorkouts } from "../hooks/useWorkouts";
 import { MiniLineChart } from "../components/MiniLineChart";
 import { WellbeingChart } from "../components/WellbeingChart";
@@ -29,20 +28,7 @@ export function Progress() {
   const { workouts } = useWorkouts();
   const { entries } = useMeasurements();
   const { exercises, musclesUk } = useExerciseCatalog();
-  const [pushupSync, setPushupSync] = useState(0);
-  useEffect(() => {
-    const sync = () => setPushupSync((n) => n + 1);
-    window.addEventListener(ROUTINE_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(ROUTINE_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-  const pushupHistory = useMemo(() => {
-    void pushupSync;
-    return buildPushupHistoryFromRoutine(30);
-  }, [pushupSync]);
+  const { stats: pushupStats, hasData: hasPushupData } = usePushupActivity();
   const fileRef = useRef(null);
 
   const meas = useMemo(() => {
@@ -186,25 +172,6 @@ export function Progress() {
       latestWorkoutAt,
     };
   }, [workouts, prs.length]);
-
-  const pushupStats = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const weekAgo = new Date(Date.now() - 7 * 86400000)
-      .toISOString()
-      .slice(0, 10);
-    const monthAgo = new Date(Date.now() - 30 * 86400000)
-      .toISOString()
-      .slice(0, 10);
-    const week = (pushupHistory || [])
-      .filter((d) => d.date >= weekAgo)
-      .reduce((s, d) => s + d.total, 0);
-    const month = (pushupHistory || [])
-      .filter((d) => d.date >= monthAgo)
-      .reduce((s, d) => s + d.total, 0);
-    const todayCount =
-      (pushupHistory || []).find((d) => d.date === today)?.total ?? 0;
-    return { todayCount, week, month };
-  }, [pushupHistory]);
 
   const weekly = useMemo(() => weeklyVolumeSeriesNow(workouts), [workouts]);
 
@@ -350,13 +317,20 @@ export function Progress() {
           </div>
         )}
 
-        {/* Pushup stats */}
-        {(pushupStats.todayCount > 0 ||
-          pushupStats.week > 0 ||
-          pushupStats.month > 0) && (
+        {/* Cross-module activity */}
+        {hasPushupData && (
           <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
-              Відтискання
+              Активність з інших модулів
+            </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 text-base">
+                💪
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-text">Відтискання</div>
+                <div className="text-[11px] text-subtle">за даними щоденних звичок</div>
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-bg border border-line rounded-xl p-2.5 text-center">
@@ -384,9 +358,6 @@ export function Progress() {
                 </div>
               </div>
             </div>
-            <p className="text-[10px] text-subtle mt-3">
-              Облік у модулі «Рутина».
-            </p>
           </div>
         )}
 

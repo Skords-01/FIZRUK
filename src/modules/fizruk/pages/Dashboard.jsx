@@ -496,6 +496,18 @@ export function Dashboard({ onOpenAtlas, onOpenPrograms, activeProgram, todaySes
                 </span>
               </div>
 
+              {rec.wellbeingMult > 1.1 && (
+                <div className="mb-3 px-3 py-2 rounded-xl bg-warning/10 border border-warning/25 flex items-start gap-2">
+                  <span className="text-base shrink-0" aria-hidden>😴</span>
+                  <p className="text-[11px] text-warning leading-snug">
+                    {rec.wellbeingMult >= 1.3
+                      ? "Поганий сон або дуже низька енергія — відновлення значно сповільнене."
+                      : "Недостатній сон або низька енергія — відновлення сповільнене."}
+                    {" "}М'язи потребують більше часу перед наступним навантаженням.
+                  </p>
+                </div>
+              )}
+
               <BodyAtlas
                 statusByMuscle={statusByMuscle}
                 height={120}
