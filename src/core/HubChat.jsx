@@ -1288,7 +1288,7 @@ function HubChat({ onClose }) {
                   hasData ? "text-subtle" : "text-warning",
                 )}
               >
-                {hasData ? "Фінік · Фізрук" : "Mono не підключено"}
+                {hasData ? "Фінік · Фізрук · Рутина · Харчування" : "Mono не підключено"}
               </div>
               <div className="text-[10px] text-subtle mt-0.5">
                 {contextState.status === "building"
@@ -1301,7 +1301,7 @@ function HubChat({ onClose }) {
                 id="hub-chat-privacy"
                 className="text-[10px] text-subtle mt-1 leading-snug max-w-[min(100%,280px)]"
               >
-                Запит і короткий контекст (фінанси/тренування) відправляються на
+                Запит і короткий контекст (фінанси, тренування, звички, харчування) відправляються на
                 сервер до AI. Не діліться чужим пристроєм без потреби.
               </p>
             </div>
