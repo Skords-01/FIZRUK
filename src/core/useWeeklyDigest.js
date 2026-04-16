@@ -1,8 +1,27 @@
 import { useState, useCallback, useEffect } from "react";
 import { apiUrl } from "@shared/lib/apiUrl.js";
 import { STORAGE_KEYS } from "@shared/lib/storageKeys.js";
+import { MCC_CATEGORIES, INCOME_CATEGORIES } from "@finyk/constants.js";
 
 const DIGEST_PREFIX = STORAGE_KEYS.WEEKLY_DIGEST_PREFIX;
+
+const ALL_CATS = [...MCC_CATEGORIES, ...INCOME_CATEGORIES];
+
+function resolveCatLabel(catIdOrMcc, customCategories = []) {
+  if (!catIdOrMcc || catIdOrMcc === "other") return "Інше";
+  // Спочатку шукаємо по id (рядок)
+  const byId = [...ALL_CATS, ...customCategories].find((c) => c.id === catIdOrMcc);
+  if (byId) return byId.label ?? byId.name ?? catIdOrMcc;
+  // Потім по MCC-коду (число або рядок)
+  const mcc = Number(catIdOrMcc);
+  if (!Number.isNaN(mcc) && mcc > 0) {
+    const byMcc = MCC_CATEGORIES.find((c) => Array.isArray(c.mccs) && c.mccs.includes(mcc));
+    if (byMcc) return byMcc.label;
+    return `MCC ${mcc}`;
+  }
+  // Якщо нічого не знайдено — повертаємо оригінальний рядок (щоб AI розумів хоч щось)
+  return String(catIdOrMcc);
+}
 
 function localDateKey(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -66,6 +85,7 @@ function aggregateFinyk(weekKey) {
   const txList = txRaw?.txs ?? txRaw ?? [];
   const txCategories = safeParseLS("finyk_tx_cats", {});
   const hiddenIds = new Set(safeParseLS("finyk_hidden_txs", []));
+  const customCategories = safeParseLS("finyk_custom_cats_v1", []);
   const transferIds = new Set(
     Object.entries(txCategories)
       .filter(([, v]) => v === "internal_transfer")
@@ -92,7 +112,8 @@ function aggregateFinyk(weekKey) {
       txCount++;
       if (amount < 0) {
         totalSpent += Math.abs(amount);
-        const cat = txCategories[tx.id] || tx.mcc || "other";
+        const rawCat = txCategories[tx.id] || tx.mcc || "other";
+        const cat = resolveCatLabel(rawCat, customCategories);
         catAmounts[cat] = (catAmounts[cat] ?? 0) + Math.abs(amount);
       } else {
         totalIncome += amount;
