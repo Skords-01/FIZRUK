@@ -179,6 +179,7 @@ export function buildHubCalendarEvents(
         completed,
         note,
         sourceKind: "habit",
+        timeOfDay: t,
       });
     }
   }

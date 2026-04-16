@@ -455,18 +455,6 @@ function AppInner() {
   const { user, isLoading: authLoading, logout } = useAuth();
   const { syncing, lastSync, pushAll, pullAll, migrationPending, uploadLocalData, skipMigration } = useCloudSync(user);
 
-  useEffect(() => {
-    const onMessage = (event) => {
-      if (event.data?.type === "OPEN_MODULE" && VALID_MODULES.has(event.data.module)) {
-        openModule(event.data.module);
-      }
-    };
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.addEventListener("message", onMessage);
-      return () => navigator.serviceWorker.removeEventListener("message", onMessage);
-    }
-  }, [openModule]);
-
   const goToHub = useCallback(() => {
     setModuleAnimClass("hub-enter");
     setActiveModule(null);
@@ -499,6 +487,18 @@ function AppInner() {
     },
     [activeModule],
   );
+
+  useEffect(() => {
+    const onMessage = (event) => {
+      if (event.data?.type === "OPEN_MODULE" && VALID_MODULES.has(event.data.module)) {
+        openModule(event.data.module);
+      }
+    };
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("message", onMessage);
+      return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+    }
+  }, [openModule]);
 
   if (migrationPending) {
     return (

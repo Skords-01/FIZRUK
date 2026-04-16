@@ -29,8 +29,8 @@ import { emptyHabitDraft } from "./lib/routineDraftUtils.js";
 import { RoutineBottomNav } from "./components/RoutineBottomNav.jsx";
 import { RoutineCalendarPanel } from "./components/RoutineCalendarPanel.jsx";
 import { RoutineSettingsSection } from "./components/RoutineSettingsSection.jsx";
-import { HabitHeatmap } from "./components/HabitHeatmap.jsx";
-import { HabitLeadersBlock } from "./components/HabitLeadersBlock.jsx";
+import { RoutineStatsPanel } from "./components/RoutineStatsPanel.jsx";
+import { STORAGE_KEYS } from "@shared/lib/storageKeys";
 
 const FIZRUK_PLAN_SYNC = "fizruk-storage-monthly-plan";
 
@@ -76,18 +76,44 @@ function useRoutineState() {
   return [state, setState];
 }
 
+const HABIT_TIME_GROUPS = ["Ранок", "День", "Вечір", "Будь-коли"];
+const GROUP_ORDER = [
+  ...HABIT_TIME_GROUPS,
+  FIZRUK_GROUP_LABEL,
+  FINYK_SUB_GROUP_LABEL,
+];
+
+function timeOfDayBucket(hhmm) {
+  const t = (hhmm || "").trim();
+  if (!t) return "Будь-коли";
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+  if (!m) return "Будь-коли";
+  const h = Number(m[1]);
+  if (!Number.isFinite(h)) return "Будь-коли";
+  if (h < 12) return "Ранок";
+  if (h < 18) return "День";
+  return "Вечір";
+}
+
 function groupEventsForList(events) {
   const map = new Map();
   for (const e of events) {
-    const head = e.fizruk
-      ? FIZRUK_GROUP_LABEL
-      : e.finykSub
-        ? FINYK_SUB_GROUP_LABEL
-        : e.tagLabels[0] || "Інше";
+    let head;
+    if (e.fizruk) head = FIZRUK_GROUP_LABEL;
+    else if (e.finykSub) head = FINYK_SUB_GROUP_LABEL;
+    else if (e.sourceKind === "habit") head = timeOfDayBucket(e.timeOfDay);
+    else head = e.tagLabels[0] || "Інше";
     if (!map.has(head)) map.set(head, []);
     map.get(head).push(e);
   }
-  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "uk"));
+  return [...map.entries()].sort((a, b) => {
+    const ai = GROUP_ORDER.indexOf(a[0]);
+    const bi = GROUP_ORDER.indexOf(b[0]);
+    if (ai === -1 && bi === -1) return a[0].localeCompare(b[0], "uk");
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
 }
 
 export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
@@ -118,7 +144,18 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
 
   useRoutineReminders(routine);
 
-  const [mainTab, setMainTab] = useState("calendar");
+  const [mainTab, setMainTab] = useState(() => {
+    try {
+      const v = localStorage.getItem(STORAGE_KEYS.ROUTINE_MAIN_TAB);
+      if (v === "calendar" || v === "stats" || v === "settings") return v;
+    } catch {}
+    return "calendar";
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.ROUTINE_MAIN_TAB, mainTab);
+    } catch {}
+  }, [mainTab]);
   const [timeMode, setTimeMode] = useState("today");
   const now = todayDate();
   const [monthCursor, setMonthCursor] = useState(() => ({
@@ -487,19 +524,11 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
             hidden={mainTab !== "calendar"}
           />
 
-          {mainTab === "calendar" && (
-            <HabitHeatmap
-              habits={routine.habits}
-              completions={routine.completions}
-            />
-          )}
-
-          {mainTab === "calendar" && (
-            <HabitLeadersBlock
-              habits={routine.habits}
-              completions={routine.completions}
-            />
-          )}
+          <RoutineStatsPanel
+            routine={routine}
+            currentStreak={streakMax}
+            hidden={mainTab !== "stats"}
+          />
 
           <RoutineSettingsSection
             routine={routine}

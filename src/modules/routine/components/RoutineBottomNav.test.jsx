@@ -11,7 +11,7 @@ describe("RoutineBottomNav", () => {
     expect(
       screen.getByRole("navigation", { name: "Розділи Рутини" }),
     ).toBeInTheDocument();
-    const settingsTab = screen.getByRole("tab", { name: /Рутина/i });
+    const settingsTab = screen.getByRole("tab", { name: /Налаштування/i });
     fireEvent.click(settingsTab);
     expect(onSelectTab).toHaveBeenCalledWith("settings");
   });

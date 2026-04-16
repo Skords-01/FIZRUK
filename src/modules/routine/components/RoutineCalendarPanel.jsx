@@ -6,7 +6,6 @@ import { WeekDayStrip } from "./WeekDayStrip.jsx";
 import { HabitDetailSheet } from "./HabitDetailSheet.jsx";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 import { completionNoteKey } from "../lib/completionNoteKey.js";
-import { PushupsWidget } from "./PushupsWidget.jsx";
 import { DayProgressRing } from "./DayProgressRing.jsx";
 import { DayReportSheet } from "./DayReportSheet.jsx";
 import {
@@ -146,8 +145,6 @@ export function RoutineCalendarPanel({
         onToggleHabit={onToggleHabit}
         dateKey={todayKey}
       />
-
-      <PushupsWidget />
 
       {canBulkMark && (
         <div className="flex justify-center">

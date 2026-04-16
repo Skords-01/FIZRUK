@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   DARK_MODE: "hub_dark_mode_v1",
   LAST_MODULE: "hub_last_module",
   ROUTINE: "hub_routine_v1",
+  ROUTINE_MAIN_TAB: "hub_routine_main_tab_v1",
   ONBOARDING_DONE: "hub_onboarding_done_v1",
   DASHBOARD_ORDER: "hub_dashboard_order_v1",
 
