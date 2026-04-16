@@ -2,6 +2,7 @@ import { useState, useCallback, lazy, Suspense, useEffect, useRef } from "react"
 import { cn } from "@shared/lib/cn";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
 import { useDarkMode } from "@shared/hooks/useDarkMode";
+import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
 import { ToastProvider, useToast } from "@shared/hooks/useToast";
 import { ToastContainer } from "@shared/components/ui/Toast";
 import { AuthProvider, useAuth } from "./AuthContext.jsx";
@@ -11,22 +12,6 @@ import { HubReports } from "./HubReports.jsx";
 import { HubSettingsPage } from "./HubSettingsPage.jsx";
 
 const HubSearch = lazy(() => import("./HubSearch.jsx").then((m) => ({ default: m.HubSearch })));
-
-/** Detects online/offline state and shows a banner when offline */
-function useOnlineStatus() {
-  const [online, setOnline] = useState(() => navigator.onLine);
-  useEffect(() => {
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
-    return () => {
-      window.removeEventListener("online", on);
-      window.removeEventListener("offline", off);
-    };
-  }, []);
-  return online;
-}
 
 function OfflineBanner() {
   return (

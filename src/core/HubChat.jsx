@@ -29,6 +29,9 @@ import {
 import { ACTIVE_WORKOUT_KEY } from "../modules/fizruk/lib/workoutUi";
 import { cn } from "@shared/lib/cn";
 import { perfMark, perfEnd } from "@shared/lib/perf";
+import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
+import { generateRecommendations } from "./lib/recommendationEngine.js";
+import { generateInsights } from "./lib/insightsEngine.js";
 
 const HUB_FINYK_CACHE_EVENT = "hub-finyk-cache-updated";
 const CONTEXT_TTL_MS = 15_000;
@@ -607,6 +610,28 @@ function buildContext() {
     }
   } catch {}
 
+  // ── Активні рекомендації від двигуна ──────────────────────────
+  try {
+    const recs = generateRecommendations().slice(0, 5);
+    if (recs.length > 0) {
+      lines.push("[Активні рекомендації]");
+      recs.forEach((r) => {
+        lines.push(`  ${r.icon} ${r.title} — ${r.body} (модуль: ${r.module})`);
+      });
+    }
+  } catch {}
+
+  // ── Кросмодульні інсайти ──────────────────────────────────────
+  try {
+    const insights = generateInsights();
+    if (insights.length > 0) {
+      lines.push("[Аналітичні інсайти]");
+      insights.forEach((i) => {
+        lines.push(`  ${i.emoji} ${i.title} (${i.stat}) — ${i.detail}`);
+      });
+    }
+  } catch {}
+
   return lines.length > 1
     ? lines.join("\n")
     : "Даних немає. Monobank не підключено.";
@@ -965,6 +990,7 @@ function HubChat({ onClose }) {
   const lastWasVoice = useRef(false);
 
   const [hasData, setHasData] = useState(() => checkHasMonoData());
+  const online = useOnlineStatus();
 
   const contextRef = useRef({ text: "", ts: 0 });
   const [contextState, setContextState] = useState(() => ({
@@ -1109,6 +1135,15 @@ function HubChat({ onClose }) {
   const send = async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
+    if (!online) {
+      setMessages((m) => [
+        ...m,
+        makeUserMsg(msg),
+        makeAssistantMsg("⚠️ Немає підключення. Асистент працює лише онлайн — спробуй ще раз, коли з'явиться інтернет."),
+      ]);
+      setInput("");
+      return;
+    }
 
     const shouldSpeak = lastWasVoice.current || VOICE_KEYWORDS.test(msg);
     lastWasVoice.current = false;
@@ -1441,7 +1476,7 @@ function HubChat({ onClose }) {
               key={q}
               type="button"
               onClick={() => send(q)}
-              disabled={loading}
+              disabled={loading || !online}
               className="text-xs px-3 py-1.5 bg-panel border border-line rounded-full text-subtle hover:text-text hover:border-muted whitespace-nowrap transition-colors shrink-0 disabled:opacity-40"
             >
               {q}
@@ -1449,15 +1484,25 @@ function HubChat({ onClose }) {
           ))}
         </div>
 
+        {!online && (
+          <div
+            role="status"
+            className="mx-4 mb-2 mt-1 px-3 py-2 bg-warning/10 border border-warning/30 rounded-xl text-[11px] text-warning text-center shrink-0"
+          >
+            Асистент недоступний без інтернету. Дані модулів видно офлайн, але AI-відповіді потребують підключення.
+          </div>
+        )}
+
         {/* Input */}
         <div className="flex gap-2 px-4 pt-2 pb-4 shrink-0">
           <input
             ref={inputRef}
-            className="flex-1 bg-panel border border-line rounded-2xl px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors"
-            placeholder="Запитай або попроси змінити щось…"
+            className="flex-1 bg-panel border border-line rounded-2xl px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors disabled:opacity-50"
+            placeholder={online ? "Запитай або попроси змінити щось…" : "Немає зʼєднання — асистент офлайн"}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && online && send()}
+            disabled={!online}
             aria-label="Повідомлення асистенту"
           />
           {speaking ? (
@@ -1514,9 +1559,10 @@ function HubChat({ onClose }) {
           <button
             type="button"
             onClick={() => send()}
-            disabled={loading || !input.trim()}
+            disabled={loading || !input.trim() || !online}
             className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center shrink-0 hover:brightness-110 transition-all disabled:opacity-40"
-            aria-label="Надіслати"
+            aria-label={online ? "Надіслати" : "Надсилання недоступне офлайн"}
+            title={online ? "Надіслати" : "Немає інтернету — асистент офлайн"}
           >
             <svg
               width="18"

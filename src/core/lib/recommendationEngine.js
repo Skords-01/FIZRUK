@@ -86,6 +86,18 @@ function buildMuscleLastTrained(workouts) {
   return last;
 }
 
+function startOfWeek(d) {
+  const x = new Date(d);
+  const dow = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - dow);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function txTimestamp(tx) {
+  return tx.time > 1e10 ? tx.time : tx.time * 1000;
+}
+
 function buildFinanceRecs() {
   const recs = [];
   const now = new Date();
@@ -106,7 +118,7 @@ function buildFinanceRecs() {
   const thisMonthTx = transactions.filter((tx) => {
     if (hiddenTxIds.has(tx.id)) return false;
     if (transferIds.has(tx.id)) return false;
-    const ts = tx.time > 1e10 ? tx.time : tx.time * 1000;
+    const ts = txTimestamp(tx);
     return new Date(ts) >= monthStart;
   });
 
@@ -157,6 +169,86 @@ function buildFinanceRecs() {
         icon: "⚠️",
         title: `Ліміт "${catLabel}" майже вичерпано`,
         body: `${Math.round(pct * 100)}% бюджету витрачено цього місяця`,
+        action: "finyk",
+      });
+    }
+  }
+
+  // Тренд витрат: цей тиждень vs минулий тиждень (тільки якщо вже минув ≥3 дні)
+  const thisWeekStart = startOfWeek(now);
+  const prevWeekStart = new Date(thisWeekStart);
+  prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+  const dowIdx = (now.getDay() + 6) % 7; // 0=Mon
+  if (dowIdx >= 2) {
+    const sumSpending = (start, end) => {
+      let s = 0;
+      for (const tx of transactions) {
+        if (hiddenTxIds.has(tx.id) || transferIds.has(tx.id)) continue;
+        if ((tx.amount ?? 0) >= 0) continue;
+        const ts = txTimestamp(tx);
+        if (ts >= start.getTime() && ts < end.getTime()) {
+          s += Math.abs(tx.amount / 100);
+        }
+      }
+      for (const me of manualExpenses) {
+        const ts = new Date(me.date).getTime();
+        if (ts >= start.getTime() && ts < end.getTime()) {
+          s += Math.abs(Number(me.amount) || 0);
+        }
+      }
+      return s;
+    };
+    // Поточний тиждень — нормалізуємо до того ж дня тижня для чесного порівняння
+    const cmpEnd = new Date(thisWeekStart);
+    cmpEnd.setDate(cmpEnd.getDate() + dowIdx + 1);
+    const prevCmpEnd = new Date(prevWeekStart);
+    prevCmpEnd.setDate(prevCmpEnd.getDate() + dowIdx + 1);
+    const thisSpend = sumSpending(thisWeekStart, cmpEnd);
+    const prevSpend = sumSpending(prevWeekStart, prevCmpEnd);
+    if (prevSpend >= 500 && thisSpend > 0) {
+      const ratio = thisSpend / prevSpend;
+      if (ratio >= 1.4) {
+        const pctMore = Math.round((ratio - 1) * 100);
+        recs.push({
+          id: "spending_velocity_high",
+          module: "finyk",
+          priority: 75,
+          icon: "📈",
+          title: `Витрати на ${pctMore}% вище ніж минулого тижня`,
+          body: `За такий же проміжок: ${Math.round(thisSpend).toLocaleString("uk-UA")} ₴ vs ${Math.round(prevSpend).toLocaleString("uk-UA")} ₴`,
+          action: "finyk",
+        });
+      } else if (ratio <= 0.6) {
+        const pctLess = Math.round((1 - ratio) * 100);
+        recs.push({
+          id: "spending_velocity_low",
+          module: "finyk",
+          priority: 45,
+          icon: "👏",
+          title: `Витрати на ${pctLess}% нижче минулого тижня`,
+          body: `Так тримати — ${Math.round(thisSpend).toLocaleString("uk-UA")} ₴ vs ${Math.round(prevSpend).toLocaleString("uk-UA")} ₴`,
+          action: "finyk",
+        });
+      }
+    }
+  }
+
+  // Прогрес фінансових цілей (>=80% — фінішна пряма)
+  const goals = budgets.filter((b) => b.type === "goal");
+  for (const g of goals) {
+    const target = Number(g.targetAmount) || 0;
+    const saved = Number(g.savedAmount) || 0;
+    if (target <= 0 || saved <= 0) continue;
+    const p = saved / target;
+    if (p >= 0.8 && p < 1) {
+      const remaining = target - saved;
+      recs.push({
+        id: `goal_almost_${g.id || g.name}`,
+        module: "finyk",
+        priority: 65,
+        icon: "🎯",
+        title: `Ціль "${g.name}" майже досягнута`,
+        body: `Залишилось ${Math.round(remaining).toLocaleString("uk-UA")} ₴ (${Math.round(p * 100)}%)`,
         action: "finyk",
       });
     }
@@ -285,6 +377,20 @@ function buildRoutineRecs() {
     });
   }
 
+  // Серія в зоні ризику: пізній вечір + є серія + сьогодні не всі виконано
+  if (hour >= 21 && streak >= 7 && todayDone < total) {
+    const remaining = total - todayDone;
+    recs.push({
+      id: "routine_streak_at_risk",
+      module: "routine",
+      priority: 95,
+      icon: "🚨",
+      title: `Серія ${streak} днів під загрозою!`,
+      body: `Залишилось ${remaining} ${remaining === 1 ? "звичка" : "звичок"} — не дай рекорду згоріти.`,
+      action: "routine",
+    });
+  }
+
   return recs;
 }
 
@@ -368,6 +474,86 @@ function buildNutritionRecs() {
   return recs;
 }
 
+function buildWeeklyDigestRecs() {
+  // Понеділок 7:00-12:00 — підсумок минулого тижня
+  const now = new Date();
+  if (now.getDay() !== 1) return [];
+  const hour = now.getHours();
+  if (hour < 7 || hour >= 12) return [];
+
+  const monThis = startOfWeek(now);
+  const monPrev = new Date(monThis);
+  monPrev.setDate(monPrev.getDate() - 7);
+  const sunPrev = new Date(monThis);
+  sunPrev.setMilliseconds(-1);
+
+  // Тренування
+  const workouts = parseFizrukWorkouts().filter((w) => w.endedAt);
+  const workoutsLastWeek = workouts.filter((w) => {
+    const t = new Date(w.startedAt);
+    return t >= monPrev && t <= sunPrev;
+  }).length;
+
+  // Звички
+  const state = safeLS("hub_routine_v1", null);
+  let habitPctText = "";
+  if (state) {
+    const habits = (state.habits || []).filter((h) => !h.archived);
+    const completions = state.completions || {};
+    if (habits.length > 0) {
+      let done = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monPrev);
+        d.setDate(monPrev.getDate() + i);
+        const dk = localDateKey(d);
+        for (const h of habits) {
+          if (Array.isArray(completions[h.id]) && completions[h.id].includes(dk)) done++;
+        }
+      }
+      const total = habits.length * 7;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      habitPctText = `звички ${pct}%`;
+    }
+  }
+
+  // Витрати минулого тижня
+  const txCache = safeLS("finyk_tx_cache", null);
+  const transactions = txCache?.txs || (Array.isArray(txCache) ? txCache : []);
+  const txCategories = safeLS("finyk_tx_cats", {});
+  const hiddenTxIds = new Set(safeLS("finyk_hidden_txs", []));
+  const transferIds = new Set(
+    Object.entries(txCategories)
+      .filter(([, v]) => v === "internal_transfer")
+      .map(([k]) => k)
+  );
+  let spendLastWeek = 0;
+  for (const tx of transactions) {
+    if (hiddenTxIds.has(tx.id) || transferIds.has(tx.id)) continue;
+    if ((tx.amount ?? 0) >= 0) continue;
+    const ts = txTimestamp(tx);
+    if (ts >= monPrev.getTime() && ts <= sunPrev.getTime()) {
+      spendLastWeek += Math.abs(tx.amount / 100);
+    }
+  }
+
+  const parts = [];
+  if (workoutsLastWeek > 0) parts.push(`${workoutsLastWeek} трен.`);
+  if (habitPctText) parts.push(habitPctText);
+  if (spendLastWeek > 0) parts.push(`витрати ${Math.round(spendLastWeek).toLocaleString("uk-UA")} ₴`);
+
+  if (parts.length === 0) return [];
+
+  return [{
+    id: `weekly_digest_${localDateKey(monPrev)}`,
+    module: "hub",
+    priority: 92,
+    icon: "📊",
+    title: "Підсумок минулого тижня",
+    body: parts.join(" · "),
+    action: "reports",
+  }];
+}
+
 /**
  * Returns sorted list of recommendations.
  * @returns {Array<{id, module, priority, icon, title, body, action}>}
@@ -378,6 +564,7 @@ export function generateRecommendations() {
     ...buildFizrukRecs(),
     ...buildRoutineRecs(),
     ...buildNutritionRecs(),
+    ...buildWeeklyDigestRecs(),
   ];
   all.sort((a, b) => b.priority - a.priority);
   const seen = new Set();
