@@ -552,7 +552,13 @@ export function useMonobank() {
   const connectRef = useRef(null);
   connectRef.current = connect;
   useEffect(() => {
-    if (token) connectRef.current(token, false);
+    if (token) {
+      let isRemembered = false;
+      try {
+        isRemembered = localStorage.getItem(REMEMBER_KEY) === token;
+      } catch {}
+      connectRef.current(token, false, isRemembered);
+    }
   }, [token]);
 
   const refreshRef = useRef(null);
