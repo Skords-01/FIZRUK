@@ -45,6 +45,58 @@ const MEAL_TYPE_ICONS = {
   snack: "🍎",
 };
 
+function MacroRatioBar({ prefs }) {
+  const prot = prefs.dailyTargetProtein_g ?? 0;
+  const fat  = prefs.dailyTargetFat_g     ?? 0;
+  const carb = prefs.dailyTargetCarbs_g   ?? 0;
+  if (!(prot > 0) && !(fat > 0) && !(carb > 0)) return null;
+
+  const protKcal = prot * 4;
+  const fatKcal  = fat  * 9;
+  const carbKcal = carb * 4;
+  const total    = protKcal + fatKcal + carbKcal || 1;
+
+  const pctP = Math.round((protKcal / total) * 100);
+  const pctF = Math.round((fatKcal  / total) * 100);
+  const pctC = 100 - pctP - pctF;
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+        Відсоткове співвідношення макро
+      </div>
+      <div className="flex rounded-lg overflow-hidden h-5">
+        {pctP > 0 && (
+          <div className="bg-blue-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${pctP}%` }}>
+            {pctP}%
+          </div>
+        )}
+        {pctF > 0 && (
+          <div className="bg-yellow-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${pctF}%` }}>
+            {pctF}%
+          </div>
+        )}
+        {pctC > 0 && (
+          <div className="bg-green-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${pctC}%` }}>
+            {pctC}%
+          </div>
+        )}
+      </div>
+      <div className="flex gap-3 flex-wrap">
+        <span className="flex items-center gap-1 text-[10px] text-subtle">
+          <span className="w-2 h-2 rounded-sm bg-blue-500" /> Б {pctP}% · {prot}г · {Math.round(protKcal)} ккал
+        </span>
+        <span className="flex items-center gap-1 text-[10px] text-subtle">
+          <span className="w-2 h-2 rounded-sm bg-yellow-500" /> Ж {pctF}% · {fat}г · {Math.round(fatKcal)} ккал
+        </span>
+        <span className="flex items-center gap-1 text-[10px] text-subtle">
+          <span className="w-2 h-2 rounded-sm bg-green-500" /> В {pctC}% · {carb}г · {Math.round(carbKcal)} ккал
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function MacroBadge({ label, value, unit = "г", color }) {
   if (value == null) return null;
   return (
@@ -230,28 +282,33 @@ export function DailyPlanCard({
           {showManual && (
             <div className="mt-3 grid grid-cols-2 gap-2">
               {[
-                { key: "dailyTargetKcal", label: "Ккал", unit: "" },
-                { key: "dailyTargetProtein_g", label: "Білки", unit: "г" },
-                { key: "dailyTargetFat_g", label: "Жири", unit: "г" },
-                { key: "dailyTargetCarbs_g", label: "Вуглеводи", unit: "г" },
-              ].map(({ key, label, unit }) => (
+                { key: "dailyTargetKcal",      label: "Ккал/день",    unit: "",  color: null },
+                { key: "dailyTargetProtein_g", label: "Білки",        unit: "г", color: "text-blue-400" },
+                { key: "dailyTargetFat_g",     label: "Жири",         unit: "г", color: "text-yellow-400" },
+                { key: "dailyTargetCarbs_g",   label: "Вуглеводи",    unit: "г", color: "text-green-400" },
+              ].map(({ key, label, unit, color }) => (
                 <div key={key}>
-                  <div className="text-[11px] text-subtle mb-1">
-                    {label}
-                    {unit && ` (${unit})`}
+                  <div className={cn("text-[11px] mb-1 font-semibold", color ?? "text-subtle")}>
+                    {label}{unit && ` (${unit})`}
                   </div>
                   <Input
                     type="number"
                     inputMode="numeric"
                     value={prefs[key] != null ? String(prefs[key]) : ""}
                     onChange={(e) => {
-                      const v =
-                        e.target.value === ""
-                          ? null
-                          : Number(e.target.value) > 0
-                          ? Number(e.target.value)
-                          : null;
-                      setPrefs((p) => ({ ...p, [key]: v }));
+                      const raw = e.target.value;
+                      const v = raw === "" ? null : Number(raw) > 0 ? Number(raw) : null;
+                      setPrefs((p) => {
+                        const next = { ...p, [key]: v };
+                        if (key !== "dailyTargetKcal") {
+                          const prot = key === "dailyTargetProtein_g" ? v : (p.dailyTargetProtein_g ?? 0);
+                          const fat  = key === "dailyTargetFat_g"     ? v : (p.dailyTargetFat_g     ?? 0);
+                          const carb = key === "dailyTargetCarbs_g"   ? v : (p.dailyTargetCarbs_g   ?? 0);
+                          const calc = Math.round((prot || 0) * 4 + (fat || 0) * 9 + (carb || 0) * 4);
+                          if (calc > 0) next.dailyTargetKcal = calc;
+                        }
+                        return next;
+                      });
                     }}
                     placeholder="—"
                     disabled={busy || dayPlanBusy}
@@ -261,8 +318,10 @@ export function DailyPlanCard({
             </div>
           )}
 
+          <MacroRatioBar prefs={prefs} />
+
           {hasTargets && (
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-2 flex flex-wrap gap-1 items-center">
               {prefs.dailyTargetKcal != null && (
                 <span className="text-[11px] bg-nutrition/10 text-nutrition border border-nutrition/20 rounded-lg px-2 py-0.5">
                   {prefs.dailyTargetKcal} ккал
@@ -285,7 +344,7 @@ export function DailyPlanCard({
               )}
               <button
                 type="button"
-                className="text-[11px] text-muted hover:text-danger transition-colors px-1"
+                className="text-[11px] text-muted hover:text-danger transition-colors px-1 ml-auto"
                 onClick={() =>
                   setPrefs((p) => ({
                     ...p,

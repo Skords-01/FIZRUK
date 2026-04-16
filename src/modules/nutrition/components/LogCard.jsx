@@ -19,7 +19,6 @@ import {
   isMealTypeId,
   mealTypeFromLabel,
 } from "../lib/mealTypes.js";
-import { GOAL_PRESETS } from "../lib/goalPresets.js";
 import {
   avgFromSummary,
   getRowsForRange,
@@ -142,7 +141,6 @@ export function LogCard({
   const [importMode, setImportMode] = useState("merge");
   const [statsRange, setStatsRange] = useState(30);
   const [weekOpen, setWeekOpen] = useState(false);
-  const [goalsOpen, setGoalsOpen] = useState(false);
 
   const macros = getDayMacros(log, selectedDate);
   const dayData = log[selectedDate];
@@ -189,42 +187,6 @@ export function LogCard({
   const isToday = selectedDate === toISODate(new Date());
   const prevDate = addDaysISODate(selectedDate, -1);
   const hasPrevDay = log[prevDate]?.meals?.length > 0;
-
-  function setTarget(key, raw) {
-    const v = String(raw ?? "")
-      .trim()
-      .replace(",", ".");
-    setPrefs((p) => {
-      if (v === "") return { ...p, [key]: null };
-      const n = Number(v);
-      return { ...p, [key]: Number.isFinite(n) && n > 0 ? n : null };
-    });
-  }
-
-  function setMacroTarget(key, raw) {
-    const v = String(raw ?? "").trim().replace(",", ".");
-    const n = v === "" ? null : Number(v);
-    const val = Number.isFinite(n) && n > 0 ? n : null;
-    setPrefs((p) => {
-      const next = { ...p, [key]: val };
-      const prot = key === "dailyTargetProtein_g" ? val : (p.dailyTargetProtein_g ?? 0);
-      const fat  = key === "dailyTargetFat_g"     ? val : (p.dailyTargetFat_g     ?? 0);
-      const carb = key === "dailyTargetCarbs_g"   ? val : (p.dailyTargetCarbs_g   ?? 0);
-      const calcKcal = Math.round((prot || 0) * 4 + (fat || 0) * 9 + (carb || 0) * 4);
-      if (calcKcal > 0) next.dailyTargetKcal = calcKcal;
-      return next;
-    });
-  }
-
-  function applyGoalPreset(preset) {
-    setPrefs((p) => ({
-      ...p,
-      dailyTargetKcal: preset.dailyTargetKcal,
-      dailyTargetProtein_g: preset.dailyTargetProtein_g,
-      dailyTargetFat_g: preset.dailyTargetFat_g,
-      dailyTargetCarbs_g: preset.dailyTargetCarbs_g,
-    }));
-  }
 
   function exportDayJson() {
     const payload = { [selectedDate]: log[selectedDate] || { meals: [] } };
@@ -429,27 +391,6 @@ export function LogCard({
         </div>
       )}
 
-      {/* ── Цілі КБЖВ ── */}
-      <button
-        type="button"
-        onClick={() => setGoalsOpen((v) => !v)}
-        className="flex items-center gap-2 text-[10px] font-bold text-subtle uppercase tracking-widest w-full text-left py-1"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform shrink-0", goalsOpen ? "rotate-90" : "")}>
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-        Цілі КБЖВ
-        {prefs.dailyTargetKcal > 0 && (
-          <span className="ml-auto font-normal normal-case text-nutrition">
-            {prefs.dailyTargetKcal} ккал/день
-          </span>
-        )}
-      </button>
-
-      {goalsOpen && (
-        <MacroGoalsPanel prefs={prefs} setPrefs={setPrefs} setMacroTarget={setMacroTarget} setTarget={setTarget} applyGoalPreset={applyGoalPreset} />
-      )}
-
       <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
@@ -609,173 +550,6 @@ export function LogCard({
       onCancel={() => setDuplicateConfirm(false)}
     />
     </>
-  );
-}
-
-const PRESET_META = {
-  cut:      { label: "Схуднення",  emoji: "🔥", accent: "text-orange-400 border-orange-400/50 bg-orange-400/10" },
-  maintain: { label: "Підтримка",  emoji: "⚖️", accent: "text-blue-400   border-blue-400/50   bg-blue-400/10"   },
-  gain:     { label: "Набір",      emoji: "💪", accent: "text-green-400  border-green-400/50  bg-green-400/10"  },
-};
-
-function MacroGoalsPanel({ prefs, setMacroTarget, setTarget, applyGoalPreset }) {
-  const prot   = prefs.dailyTargetProtein_g ?? 0;
-  const fat    = prefs.dailyTargetFat_g     ?? 0;
-  const carb   = prefs.dailyTargetCarbs_g   ?? 0;
-  const kcalMacro = Math.round(prot * 4 + fat * 9 + carb * 4);
-
-  const protKcal = prot * 4;
-  const fatKcal  = fat  * 9;
-  const carbKcal = carb * 4;
-  const totalMacroKcal = protKcal + fatKcal + carbKcal || 1;
-
-  const pctP = Math.round((protKcal / totalMacroKcal) * 100);
-  const pctF = Math.round((fatKcal  / totalMacroKcal) * 100);
-  const pctC = 100 - pctP - pctF;
-
-  const hasAnyMacro = prot > 0 || fat > 0 || carb > 0;
-
-  return (
-    <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-3">
-      {/* Preset chips */}
-      <div className="flex gap-2 flex-wrap">
-        {GOAL_PRESETS.map((preset) => {
-          const meta = PRESET_META[preset.id] || {};
-          const active =
-            prefs.dailyTargetKcal       === preset.dailyTargetKcal &&
-            prefs.dailyTargetProtein_g  === preset.dailyTargetProtein_g &&
-            prefs.dailyTargetFat_g      === preset.dailyTargetFat_g &&
-            prefs.dailyTargetCarbs_g    === preset.dailyTargetCarbs_g;
-          return (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => applyGoalPreset(preset)}
-              className={cn(
-                "px-3 h-8 rounded-xl text-xs font-semibold border transition-colors",
-                active
-                  ? meta.accent
-                  : "border-line text-subtle bg-panelHi hover:border-nutrition/40 hover:text-text",
-              )}
-            >
-              {meta.emoji} {meta.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Inputs grid */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-            Ккал/день
-          </label>
-          <Input
-            value={prefs.dailyTargetKcal != null ? String(prefs.dailyTargetKcal) : ""}
-            onChange={(e) => setTarget("dailyTargetKcal", e.target.value)}
-            inputMode="numeric"
-            placeholder="напр. 2000"
-            aria-label="Ціль ккал на день"
-          />
-          {kcalMacro > 0 && prefs.dailyTargetKcal !== kcalMacro && (
-            <div className="text-[10px] text-nutrition">
-              ≈ {kcalMacro} ккал з макро
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">
-            Білки (г)
-          </label>
-          <Input
-            value={prefs.dailyTargetProtein_g != null ? String(prefs.dailyTargetProtein_g) : ""}
-            onChange={(e) => setMacroTarget("dailyTargetProtein_g", e.target.value)}
-            inputMode="decimal"
-            placeholder="напр. 130"
-            aria-label="Ціль білків"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest">
-            Жири (г)
-          </label>
-          <Input
-            value={prefs.dailyTargetFat_g != null ? String(prefs.dailyTargetFat_g) : ""}
-            onChange={(e) => setMacroTarget("dailyTargetFat_g", e.target.value)}
-            inputMode="decimal"
-            placeholder="напр. 70"
-            aria-label="Ціль жирів"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-green-400 uppercase tracking-widest">
-            Вуглеводи (г)
-          </label>
-          <Input
-            value={prefs.dailyTargetCarbs_g != null ? String(prefs.dailyTargetCarbs_g) : ""}
-            onChange={(e) => setMacroTarget("dailyTargetCarbs_g", e.target.value)}
-            inputMode="decimal"
-            placeholder="напр. 230"
-            aria-label="Ціль вуглеводів"
-          />
-        </div>
-      </div>
-
-      {/* Macro ratio bar */}
-      {hasAnyMacro && (
-        <div className="space-y-1.5">
-          <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-            Відсоткове співвідношення
-          </div>
-          <div className="flex rounded-lg overflow-hidden h-5">
-            {pctP > 0 && (
-              <div
-                className="bg-blue-500 flex items-center justify-center text-[9px] font-bold text-white"
-                style={{ width: `${pctP}%` }}
-              >
-                {pctP}%
-              </div>
-            )}
-            {pctF > 0 && (
-              <div
-                className="bg-yellow-500 flex items-center justify-center text-[9px] font-bold text-white"
-                style={{ width: `${pctF}%` }}
-              >
-                {pctF}%
-              </div>
-            )}
-            {pctC > 0 && (
-              <div
-                className="bg-green-500 flex items-center justify-center text-[9px] font-bold text-white"
-                style={{ width: `${pctC}%` }}
-              >
-                {pctC}%
-              </div>
-            )}
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-blue-500 shrink-0" />
-              <span className="text-[10px] text-subtle">Б {pctP}% · {prot}г · {Math.round(protKcal)} ккал</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-yellow-500 shrink-0" />
-              <span className="text-[10px] text-subtle">Ж {pctF}% · {fat}г · {Math.round(fatKcal)} ккал</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-sm bg-green-500 shrink-0" />
-              <span className="text-[10px] text-subtle">В {pctC}% · {carb}г · {Math.round(carbKcal)} ккал</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!hasAnyMacro && !prefs.dailyTargetKcal && (
-        <div className="text-[11px] text-muted text-center py-1">
-          Оберіть пресет або введіть цілі вручну
-        </div>
-      )}
-    </div>
   );
 }
 
