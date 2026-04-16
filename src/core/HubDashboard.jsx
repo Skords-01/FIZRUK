@@ -291,26 +291,7 @@ export function HubDashboard({ onOpenModule }) {
           gradientClass="bg-gradient-to-br from-emerald-400/10 to-teal-400/5"
           onClick={() => onOpenModule("finyk")}
         >
-          {finyk.todaySpent > 0 || finyk.todayIncome > 0 ? (
-            <>
-              <MetricRow label="Витрати" value={fmtUah(finyk.todaySpent)} />
-              {finyk.todayIncome > 0 && (
-                <MetricRow label="Дохід" value={fmtUah(finyk.todayIncome)} />
-              )}
-              {finyk.totalBalance !== null && (
-                <MetricRow label="Баланс" value={fmtUah(finyk.totalBalance)} />
-              )}
-            </>
-          ) : finyk.totalBalance !== null ? (
-            <>
-              <p className="text-lg font-bold text-text leading-tight">
-                {fmtUah(finyk.totalBalance)}
-              </p>
-              <p className="text-xs text-muted mt-0.5">Загальний баланс</p>
-            </>
-          ) : (
-            <p className="text-xs text-muted">Немає даних</p>
-          )}
+          <p className="text-xs text-muted">Транзакції, бюджети, борги</p>
         </DashCard>
 
         <DashCard
