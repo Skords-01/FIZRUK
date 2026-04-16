@@ -171,7 +171,7 @@ export function HabitHeatmap({ habits, completions }) {
               ? "ще не настало"
               : selectedCell.total === 0
                 ? "немає звичок"
-                : `${selectedCell.cnt} з ${selectedCell.total}`}
+                : `${selectedCell.cnt} з ${selectedCell.total} звичок виконано`}
           </span>
         </div>
       ) : (
