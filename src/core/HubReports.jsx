@@ -1,6 +1,11 @@
 import { useState, useMemo } from "react";
 import { cn } from "@shared/lib/cn";
 import { generateInsights } from "./lib/insightsEngine";
+import {
+  calcFinykSpendingByDate,
+  getFinykExcludedTxIdsFromStorage,
+  getFinykTxSplitsFromStorage,
+} from "@finyk/utils";
 
 function safeParseLS(key, fallback) {
   try {
@@ -87,30 +92,14 @@ function useReportData(period, offset) {
     function collectSpending(dates) {
       const txRaw = safeParseLS("finyk_tx_cache", null);
       const txList = txRaw?.txs ?? txRaw ?? [];
-      const hiddenIds = safeParseLS("finyk_hidden_txs", []);
-      const hiddenSet = new Set(Array.isArray(hiddenIds) ? hiddenIds : []);
-      const txCategories = safeParseLS("finyk_tx_cats", {});
-      const transferIds = new Set(
-        Object.entries(txCategories)
-          .filter(([, v]) => v === "internal_transfer")
-          .map(([k]) => k)
-      );
-      const dateSet = new Set(dates);
-      const daily = {};
-      let total = 0;
-      if (Array.isArray(txList)) {
-        for (const tx of txList) {
-          if (hiddenSet.has(tx.id) || transferIds.has(tx.id)) continue;
-          const dk = tx.time > 1e10 ? localDateKey(new Date(tx.time)) : localDateKey(new Date(tx.time * 1000));
-          if (!dateSet.has(dk)) continue;
-          const amount = (tx.amount ?? 0) / 100;
-          if (amount < 0) {
-            total += Math.abs(amount);
-            daily[dk] = (daily[dk] || 0) + Math.abs(amount);
-          }
-        }
-      }
-      return { total: Math.round(total), daily };
+      const excludedTxIds = getFinykExcludedTxIdsFromStorage();
+      const txSplits = getFinykTxSplitsFromStorage();
+      return calcFinykSpendingByDate(txList, {
+        excludedTxIds,
+        txSplits,
+        dateSet: new Set(dates),
+        localDateKeyFn: localDateKey,
+      });
     }
 
     function collectHabits(dates) {

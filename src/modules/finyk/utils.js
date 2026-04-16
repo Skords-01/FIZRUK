@@ -220,6 +220,83 @@ export function calcMonthlyNeeded(targetAmount, savedAmount, targetDate) {
   return { monthlyNeeded, monthsLeft, isAchieved: false, isOverdue: false };
 }
 
+function safeParseLS(key, fallback) {
+  try {
+    if (typeof localStorage === "undefined") return fallback;
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+// Збирає Set ID транзакцій, що виключаються зі статистики ФІНІК (та сама логіка, що
+// в `useStorage` → `excludedTxIds`), читаючи безпосередньо з localStorage.
+// Це дозволяє іншим сторінкам (Звіти, AI Digest) використовувати ту саму логіку
+// без mounted-хука useStorage.
+export function getFinykExcludedTxIdsFromStorage() {
+  const hidden = safeParseLS("finyk_hidden_txs", []);
+  const txCats = safeParseLS("finyk_tx_cats", {});
+  const recv = safeParseLS("finyk_recv", []);
+  const extra = safeParseLS("finyk_excluded_stat_txs", []);
+  const transferIds = Object.entries(
+    txCats && typeof txCats === "object" ? txCats : {},
+  )
+    .filter(([, v]) => v === INTERNAL_TRANSFER_ID)
+    .map(([k]) => k);
+  const recvIds = Array.isArray(recv)
+    ? recv.flatMap((r) => (Array.isArray(r?.linkedTxIds) ? r.linkedTxIds : []))
+    : [];
+  return new Set([
+    ...(Array.isArray(hidden) ? hidden : []),
+    ...transferIds,
+    ...recvIds,
+    ...(Array.isArray(extra) ? extra : []),
+  ]);
+}
+
+export function getFinykTxSplitsFromStorage() {
+  const v = safeParseLS("finyk_tx_splits", {});
+  return v && typeof v === "object" ? v : {};
+}
+
+/**
+ * Підсумовує витрати ФІНІК у заданому діапазоні дат за тими ж правилами, що й
+ * дашборд (Overview): враховує `excludedTxIds`, `txSplits` (через
+ * `getTxStatAmount`), внутрішні перекази та доходи.
+ *
+ * @returns {{ total: number, daily: Record<string, number> }}
+ */
+export function calcFinykSpendingByDate(
+  transactions,
+  { excludedTxIds, txSplits = {}, dateSet, localDateKeyFn },
+) {
+  const daily = {};
+  let total = 0;
+  const list = Array.isArray(transactions) ? transactions : [];
+  const excluded =
+    excludedTxIds instanceof Set
+      ? excludedTxIds
+      : new Set(Array.isArray(excludedTxIds) ? excludedTxIds : []);
+
+  for (const tx of list) {
+    if (!tx || excluded.has(tx.id)) continue;
+    if (!(tx.amount < 0)) continue;
+    const ts = tx.time > 1e10 ? tx.time : tx.time * 1000;
+    const dk = localDateKeyFn(new Date(ts));
+    if (!dateSet.has(dk)) continue;
+    const amt = getTxStatAmount(tx, txSplits);
+    if (!Number.isFinite(amt) || amt <= 0) continue;
+    total += amt;
+    daily[dk] = (daily[dk] || 0) + amt;
+  }
+
+  const dailyRounded = {};
+  for (const k of Object.keys(daily)) dailyRounded[k] = Math.round(daily[k]);
+  return { total: Math.round(total), daily: dailyRounded };
+}
+
 // Підсумки по рахунках Mono
 export function getMonoTotals(accounts, hiddenAccountIds = []) {
   const visible = accounts.filter((a) => !hiddenAccountIds.includes(a.id));
