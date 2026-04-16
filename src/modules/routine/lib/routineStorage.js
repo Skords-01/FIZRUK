@@ -443,6 +443,50 @@ export function applyRoutineBackupPayload(parsed) {
   }
 }
 
+export function updateTag(state, id, newName) {
+  const n = (newName || "").trim();
+  if (!n) return state;
+  const next = {
+    ...state,
+    tags: state.tags.map((t) => (t.id === id ? { ...t, name: n } : t)),
+  };
+  saveRoutineState(next);
+  return next;
+}
+
+export function updateCategory(state, id, patch) {
+  const next = {
+    ...state,
+    categories: state.categories.map((c) =>
+      c.id === id
+        ? {
+            ...c,
+            ...(patch.name !== undefined
+              ? { name: (patch.name || "").trim() || c.name }
+              : {}),
+            ...(patch.emoji !== undefined
+              ? { emoji: patch.emoji || undefined }
+              : {}),
+          }
+        : c,
+    ),
+  };
+  saveRoutineState(next);
+  return next;
+}
+
+export function deleteCategory(state, id) {
+  const next = {
+    ...state,
+    categories: state.categories.filter((c) => c.id !== id),
+    habits: state.habits.map((h) =>
+      h.categoryId === id ? { ...h, categoryId: null } : h,
+    ),
+  };
+  saveRoutineState(next);
+  return next;
+}
+
 export function deleteTag(state, id) {
   const next = {
     ...state,

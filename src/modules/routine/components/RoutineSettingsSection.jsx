@@ -13,6 +13,9 @@ import {
   deleteTag,
   deleteHabit,
   updateHabit,
+  updateTag,
+  updateCategory,
+  deleteCategory,
   setHabitArchived,
   buildRoutineBackupPayload,
   applyRoutineBackupPayload,
@@ -55,6 +58,11 @@ export function RoutineSettingsSection({
   const [habitListQuery, setHabitListQuery] = useState("");
   const [deleteHabitPending, setDeleteHabitPending] = useState(null);
   const [importConfirm, setImportConfirm] = useState(null);
+  const [editingCatId, setEditingCatId] = useState(null);
+  const [deleteCatPending, setDeleteCatPending] = useState(null);
+  const [editingTagId, setEditingTagId] = useState(null);
+  const [editingTagName, setEditingTagName] = useState("");
+  const tagSavedRef = useRef(false);
   const backupRef = useRef(null);
   const habitDateFieldIds = useId();
   const habitStartDateId = `${habitDateFieldIds}-start`;
@@ -538,15 +546,66 @@ export function RoutineSettingsSection({
               key={t.id}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-panelHi text-xs border border-line/50 font-medium"
             >
-              {t.name}
-              <button
-                type="button"
-                className="text-subtle hover:text-danger min-w-[28px] min-h-[28px] flex items-center justify-center rounded-lg"
-                onClick={() => setRoutine((s) => deleteTag(s, t.id))}
-                aria-label={`Видалити ${t.name}`}
-              >
-                ×
-              </button>
+              {editingTagId === t.id ? (
+                <form
+                  className="inline-flex items-center gap-1"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!tagSavedRef.current && editingTagName.trim()) {
+                      tagSavedRef.current = true;
+                      setRoutine((s) => updateTag(s, t.id, editingTagName));
+                    }
+                    setEditingTagId(null);
+                    setEditingTagName("");
+                  }}
+                >
+                  <Input
+                    className="!h-7 !px-1.5 !text-xs w-24"
+                    value={editingTagName}
+                    onChange={(e) => setEditingTagName(e.target.value)}
+                    autoFocus
+                    onBlur={() => {
+                      if (!tagSavedRef.current && editingTagName.trim()) {
+                        tagSavedRef.current = true;
+                        setRoutine((s) => updateTag(s, t.id, editingTagName));
+                      }
+                      setEditingTagId(null);
+                      setEditingTagName("");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        tagSavedRef.current = true;
+                        setEditingTagId(null);
+                        setEditingTagName("");
+                      }
+                    }}
+                  />
+                </form>
+              ) : (
+                <>
+                  {t.name}
+                  <button
+                    type="button"
+                    className="text-subtle hover:text-text min-w-[28px] min-h-[28px] flex items-center justify-center rounded-lg"
+                    onClick={() => {
+                      tagSavedRef.current = false;
+                      setEditingTagId(t.id);
+                      setEditingTagName(t.name);
+                    }}
+                    aria-label={`Змінити ${t.name}`}
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    className="text-subtle hover:text-danger min-w-[28px] min-h-[28px] flex items-center justify-center rounded-lg"
+                    onClick={() => setRoutine((s) => deleteTag(s, t.id))}
+                    aria-label={`Видалити ${t.name}`}
+                  >
+                    ×
+                  </button>
+                </>
+              )}
             </li>
           ))}
         </ul>
@@ -554,7 +613,7 @@ export function RoutineSettingsSection({
 
       <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
         <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
-          Категорії
+          {editingCatId ? "Редагувати категорію" : "Категорії"}
         </h2>
         <div className="flex flex-wrap gap-2 items-stretch">
           <Input
@@ -573,20 +632,104 @@ export function RoutineSettingsSection({
               setCatDraft((d) => ({ ...d, name: e.target.value }))
             }
           />
-          <Button
-            type="button"
-            variant="ghost"
-            className="min-h-[44px] w-full min-w-0 border border-line/70 sm:w-auto sm:min-w-[7rem]"
-            onClick={() => {
-              setRoutine((s) =>
-                createCategory(s, catDraft.name, catDraft.emoji),
-              );
-              setCatDraft({ name: "", emoji: "" });
-            }}
-          >
-            Додати
-          </Button>
+          {editingCatId ? (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                className="min-h-[44px] min-w-0 border border-line/70 sm:min-w-[7rem]"
+                onClick={() => {
+                  setRoutine((s) =>
+                    updateCategory(s, editingCatId, {
+                      name: catDraft.name,
+                      emoji: catDraft.emoji,
+                    }),
+                  );
+                  setEditingCatId(null);
+                  setCatDraft({ name: "", emoji: "" });
+                }}
+              >
+                Зберегти
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="min-h-[44px] min-w-0 border border-line/70"
+                onClick={() => {
+                  setEditingCatId(null);
+                  setCatDraft({ name: "", emoji: "" });
+                }}
+              >
+                Скасувати
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-[44px] w-full min-w-0 border border-line/70 sm:w-auto sm:min-w-[7rem]"
+              onClick={() => {
+                setRoutine((s) =>
+                  createCategory(s, catDraft.name, catDraft.emoji),
+                );
+                setCatDraft({ name: "", emoji: "" });
+              }}
+            >
+              Додати
+            </Button>
+          )}
         </div>
+        {routine.categories.length > 0 && (
+          <ul className="space-y-2 mt-2">
+            {routine.categories.map((c) => {
+              const habitCount = routine.habits.filter(
+                (h) => h.categoryId === c.id,
+              ).length;
+              return (
+                <li
+                  key={c.id}
+                  className={cn(
+                    "flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-panelHi border border-line/50",
+                    editingCatId === c.id && "ring-2 ring-routine-ring/60",
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium truncate">
+                      {c.emoji ? `${c.emoji} ` : ""}
+                      {c.name}
+                    </span>
+                    <span className="shrink-0 text-[10px] text-subtle bg-panel border border-line/50 rounded-full px-2 py-0.5">
+                      {habitCount} {habitCount === 1 ? "звичка" : habitCount >= 2 && habitCount <= 4 ? "звички" : "звичок"}
+                    </span>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      type="button"
+                      className="text-subtle hover:text-text min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-xs"
+                      onClick={() => {
+                        setEditingCatId(c.id);
+                        setCatDraft({ name: c.name, emoji: c.emoji || "" });
+                      }}
+                      aria-label={`Змінити ${c.name}`}
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      className="text-subtle hover:text-danger min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-xs"
+                      onClick={() =>
+                        setDeleteCatPending({ id: c.id, name: c.name, habitCount })
+                      }
+                      aria-label={`Видалити ${c.name}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-2">
@@ -849,6 +992,28 @@ export function RoutineSettingsSection({
           setDeleteHabitPending(null);
         }}
         onCancel={() => setDeleteHabitPending(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteCatPending}
+        title={`Видалити категорію «${deleteCatPending?.name}»?`}
+        description={
+          deleteCatPending?.habitCount > 0
+            ? `${deleteCatPending.habitCount} ${deleteCatPending.habitCount === 1 ? "звичка втратить" : "звичок втратять"} прив'язку до цієї категорії.`
+            : "Категорія буде видалена."
+        }
+        confirmLabel="Видалити"
+        onConfirm={() => {
+          if (deleteCatPending) {
+            setRoutine((s) => deleteCategory(s, deleteCatPending.id));
+            if (editingCatId === deleteCatPending.id) {
+              setEditingCatId(null);
+              setCatDraft({ name: "", emoji: "" });
+            }
+          }
+          setDeleteCatPending(null);
+        }}
+        onCancel={() => setDeleteCatPending(null)}
       />
 
       <ConfirmDialog
