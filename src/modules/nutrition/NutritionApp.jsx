@@ -624,7 +624,6 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
             {activePage === "pantry" && (
               <PantryCard
                 busy={busy}
-                activePantry={pantry.activePantry}
                 parsePantry={pantry.parsePantry}
                 newItemName={pantry.newItemName}
                 setNewItemName={pantry.setNewItemName}

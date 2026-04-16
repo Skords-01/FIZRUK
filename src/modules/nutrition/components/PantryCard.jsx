@@ -90,7 +90,7 @@ function InventoryCard({
                 type="button"
                 onClick={() => removeItemAtOrByName(idx, it?.name)}
                 disabled={busy}
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-subtle/60 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-danger hover:bg-danger/10 transition-all text-sm leading-none shrink-0"
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-subtle/60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 hover:text-danger hover:bg-danger/10 transition-all text-sm leading-none shrink-0"
                 aria-label={`Прибрати ${it?.name || "продукт"}`}
                 title="Прибрати"
               >
@@ -116,7 +116,6 @@ function InventoryCard({
 
 export function PantryCard({
   busy,
-  activePantry: _activePantry,
   parsePantry,
   newItemName,
   setNewItemName,
