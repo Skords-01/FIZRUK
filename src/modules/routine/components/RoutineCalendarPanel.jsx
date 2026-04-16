@@ -4,6 +4,7 @@ import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
 import { WeekDayStrip } from "./WeekDayStrip.jsx";
 import { HabitDetailSheet } from "./HabitDetailSheet.jsx";
+import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 import { completionNoteKey } from "../lib/completionNoteKey.js";
 import { PushupsWidget } from "./PushupsWidget.jsx";
 import { DayProgressRing } from "./DayProgressRing.jsx";
@@ -433,8 +434,16 @@ export function RoutineCalendarPanel({
             </h3>
             <ul className="space-y-2">
               {rows.map((e) => (
-                <li
+                <SwipeToAction
                   key={e.id}
+                  onSwipeRight={e.habitId && !e.completed ? () => onToggleHabit(e.habitId, e.date) : undefined}
+                  onSwipeLeft={e.habitId && e.completed ? () => onToggleHabit(e.habitId, e.date) : undefined}
+                  leftLabel="✓ Виконано"
+                  leftColor="bg-success"
+                  rightLabel="↩ Скасувати"
+                  rightColor="bg-muted"
+                >
+                <li
                   className={cn(
                     "overflow-hidden rounded-2xl border border-line/60 bg-panel pl-4 pr-4 py-3 shadow-card flex flex-col gap-2 border-l-4",
                     e.fizruk
@@ -542,6 +551,7 @@ export function RoutineCalendarPanel({
                     />
                   )}
                 </li>
+                </SwipeToAction>
               ))}
             </ul>
           </div>

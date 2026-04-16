@@ -7,6 +7,7 @@ import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { cn } from "@shared/lib/cn";
 import { perfMark, perfEnd } from "@shared/lib/perf";
+import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 
 const now = new Date();
 const SEARCH_DEBOUNCE_MS = 200;
@@ -627,28 +628,30 @@ export function Transactions({
                       </span>
                     )}
                     <div className={cn(selectMode && "pl-8", "relative")}>
-                      <TxRow
-                        tx={t}
-                        onHide={t._manual ? undefined : hideTx}
-                        hidden={hiddenTxIds.includes(t.id)}
-                        overrideCatId={txCategories[t.id]}
-                        onCatChange={t._manual ? undefined : overrideCategory}
-                        accounts={accounts}
-                        hideAmount={!showBalance}
-                        txSplits={txSplits}
-                        onSplitChange={t._manual ? undefined : setSplitTx}
-                        customCategories={customCategories}
-                      />
-                      {t._manual && removeManualExpense && (
-                        <button
-                          onClick={() => removeManualExpense(t._manualId)}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-panelHi border border-line text-muted text-xs flex items-center justify-center hover:text-danger hover:border-danger transition-colors z-10"
-                          aria-label="Видалити витрату"
-                          title="Видалити ручну витрату"
-                        >
-                          ×
-                        </button>
-                      )}
+                      <SwipeToAction
+                        disabled={selectMode}
+                        onSwipeLeft={
+                          t._manual
+                            ? (removeManualExpense ? () => removeManualExpense(t._manualId) : undefined)
+                            : (!hiddenTxIds.includes(t.id) ? () => hideTx(t.id) : undefined)
+                        }
+                        onSwipeRight={undefined}
+                        rightLabel="🙈 Приховати"
+                        rightColor="bg-warning/80"
+                      >
+                        <TxRow
+                          tx={t}
+                          onHide={t._manual ? undefined : hideTx}
+                          hidden={hiddenTxIds.includes(t.id)}
+                          overrideCatId={txCategories[t.id]}
+                          onCatChange={t._manual ? undefined : overrideCategory}
+                          accounts={accounts}
+                          hideAmount={!showBalance}
+                          txSplits={txSplits}
+                          onSplitChange={t._manual ? undefined : setSplitTx}
+                          customCategories={customCategories}
+                        />
+                      </SwipeToAction>
                     </div>
                   </div>
                 );

@@ -2,6 +2,7 @@ import { Virtuoso } from "react-virtuoso";
 import { Button } from "@shared/components/ui/Button";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { ActiveWorkoutPanel } from "../workouts/ActiveWorkoutPanel";
+import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 
 function WorkoutRow({ w, activeWorkoutId, setActiveWorkoutId }) {
   return (
@@ -74,6 +75,7 @@ export function WorkoutJournalSection({
   setDeleteWorkoutConfirm,
   summarizeWorkoutForFinish,
   submitRetroWorkout,
+  deleteWorkout,
 }) {
   const workoutList = workouts || [];
   const listHeight = Math.min(
@@ -229,11 +231,22 @@ export function WorkoutJournalSection({
             style={{ height: listHeight }}
             data={workoutList}
             itemContent={(_, w) => (
-              <WorkoutRow
-                w={w}
-                activeWorkoutId={activeWorkoutId}
-                setActiveWorkoutId={setActiveWorkoutId}
-              />
+              <SwipeToAction
+                key={w.id}
+                onSwipeLeft={
+                  deleteWorkout && w.id !== activeWorkoutId
+                    ? () => deleteWorkout(w.id)
+                    : undefined
+                }
+                rightLabel="🗑 Видалити"
+                rightColor="bg-danger"
+              >
+                <WorkoutRow
+                  w={w}
+                  activeWorkoutId={activeWorkoutId}
+                  setActiveWorkoutId={setActiveWorkoutId}
+                />
+              </SwipeToAction>
             )}
           />
         )}

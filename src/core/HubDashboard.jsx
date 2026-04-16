@@ -1,6 +1,24 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { cn } from "@shared/lib/cn";
 import { HubRecommendations } from "./HubRecommendations.jsx";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+const DASHBOARD_ORDER_KEY = "hub_dashboard_order_v1";
+const DEFAULT_ORDER = ["finyk", "fizruk", "routine", "nutrition"];
 
 function safeParseLS(key, fallback) {
   try {
@@ -10,6 +28,23 @@ function safeParseLS(key, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function loadOrder() {
+  const saved = safeParseLS(DASHBOARD_ORDER_KEY, null);
+  if (Array.isArray(saved) && saved.length === DEFAULT_ORDER.length &&
+      DEFAULT_ORDER.every(id => saved.includes(id))) {
+    return saved;
+  }
+  return [...DEFAULT_ORDER];
+}
+
+function saveOrder(order) {
+  try { localStorage.setItem(DASHBOARD_ORDER_KEY, JSON.stringify(order)); } catch {}
+}
+
+export function resetDashboardOrder() {
+  try { localStorage.removeItem(DASHBOARD_ORDER_KEY); } catch {}
 }
 
 function localDateKey(d = new Date()) {
@@ -181,20 +216,6 @@ function useNutritionMetrics() {
   }, []);
 }
 
-function MetricRow({ label, value, secondary }) {
-  return (
-    <div className="flex items-baseline justify-between gap-2 min-w-0">
-      <span className="text-xs text-muted truncate shrink-0">{label}</span>
-      <span className="text-sm font-semibold text-text truncate">
-        {value}
-        {secondary && (
-          <span className="text-xs text-muted font-normal ml-1">{secondary}</span>
-        )}
-      </span>
-    </div>
-  );
-}
-
 function ProgressBar({ value, max, colorClass = "bg-accent" }) {
   const pct = Math.min(100, Math.round((value / (max || 1)) * 100));
   return (
@@ -207,7 +228,7 @@ function ProgressBar({ value, max, colorClass = "bg-accent" }) {
   );
 }
 
-function DashCard({ icon, label, colorClass, gradientClass, children, onClick }) {
+function DashCard({ icon, label, colorClass, gradientClass, children, onClick, dragProps, isDragging: dragging }) {
   return (
     <button
       type="button"
@@ -215,8 +236,10 @@ function DashCard({ icon, label, colorClass, gradientClass, children, onClick })
       className={cn(
         "group relative w-full p-4 rounded-2xl border border-line bg-panel text-left",
         "shadow-card hover:shadow-float transition-all duration-200 active:scale-[0.98]",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20"
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20",
+        dragging && "opacity-60 scale-[0.97] shadow-float z-50"
       )}
+      {...dragProps}
     >
       <div
         className={cn(
@@ -258,72 +281,116 @@ function DashCard({ icon, label, colorClass, gradientClass, children, onClick })
   );
 }
 
+const MODULE_CONFIGS = {
+  finyk: {
+    icon: "💳",
+    label: "Фінік",
+    colorClass: "bg-emerald-500/10 text-emerald-600",
+    gradientClass: "bg-gradient-to-br from-emerald-400/10 to-teal-400/5",
+    description: "Транзакції, бюджети, борги",
+  },
+  fizruk: {
+    icon: "🏋️",
+    label: "Фізрук",
+    colorClass: "bg-sky-500/10 text-sky-600",
+    gradientClass: "bg-gradient-to-br from-sky-400/10 to-indigo-400/5",
+    description: "Тренування та відновлення",
+  },
+  routine: {
+    icon: "✅",
+    label: "Рутина",
+    colorClass: "bg-orange-500/10 text-orange-600",
+    gradientClass: "bg-gradient-to-br from-orange-400/10 to-rose-400/5",
+    description: "Звички та серії",
+  },
+  nutrition: {
+    icon: "🥗",
+    label: "Харчування",
+    colorClass: "bg-lime-500/10 text-lime-700",
+    gradientClass: "bg-gradient-to-br from-lime-400/10 to-emerald-400/5",
+    description: "КБЖВ та прийоми їжі",
+  },
+};
+
+function SortableCard({ id, onOpenModule }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const cfg = MODULE_CONFIGS[id];
+  if (!cfg) return null;
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <DashCard
+        icon={cfg.icon}
+        label={cfg.label}
+        colorClass={cfg.colorClass}
+        gradientClass={cfg.gradientClass}
+        onClick={() => onOpenModule(id)}
+        isDragging={isDragging}
+        dragProps={{ ...attributes, ...listeners }}
+      >
+        <p className="text-xs text-muted">{cfg.description}</p>
+      </DashCard>
+    </div>
+  );
+}
+
 export function HubDashboard({ onOpenModule }) {
-  const finyk = useFinykMetrics();
-  const fizruk = useFizrukMetrics();
-  const routine = useRoutineMetrics();
-  const nutrition = useNutritionMetrics();
+  const [order, setOrder] = useState(loadOrder);
 
-  const fmtUah = (v) =>
-    v.toLocaleString("uk-UA", { maximumFractionDigits: 0 }) + " ₴";
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+  );
 
-  const recoveryIcon =
-    fizruk.recovery.ready === true
-      ? "💪"
-      : fizruk.recovery.ready === false
-      ? "😴"
-      : "🔄";
+  const handleDragEnd = useCallback((event) => {
+    const { active, over } = event;
+    if (active && over && active.id !== over.id) {
+      setOrder((prev) => {
+        const oldIndex = prev.indexOf(active.id);
+        const newIndex = prev.indexOf(over.id);
+        const next = arrayMove(prev, oldIndex, newIndex);
+        saveOrder(next);
+        return next;
+      });
+    }
+  }, []);
 
   return (
     <div className="space-y-4">
       <HubRecommendations onOpenModule={onOpenModule} />
 
       <div className="space-y-2.5">
-      <h2 className="text-xs font-semibold text-muted uppercase tracking-wider px-0.5">
-        Сьогодні
-      </h2>
+        <h2 className="text-xs font-semibold text-muted uppercase tracking-wider px-0.5 flex items-center gap-1.5">
+          Сьогодні
+          <span className="text-[10px] text-subtle/60 font-normal normal-case tracking-normal">· утримуй щоб переставити</span>
+        </h2>
 
-      <div className="grid grid-cols-2 gap-2.5">
-        <DashCard
-          icon="💳"
-          label="Фінік"
-          colorClass="bg-emerald-500/10 text-emerald-600"
-          gradientClass="bg-gradient-to-br from-emerald-400/10 to-teal-400/5"
-          onClick={() => onOpenModule("finyk")}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <p className="text-xs text-muted">Транзакції, бюджети, борги</p>
-        </DashCard>
-
-        <DashCard
-          icon="🏋️"
-          label="Фізрук"
-          colorClass="bg-sky-500/10 text-sky-600"
-          gradientClass="bg-gradient-to-br from-sky-400/10 to-indigo-400/5"
-          onClick={() => onOpenModule("fizruk")}
-        >
-          <p className="text-xs text-muted">Тренування та відновлення</p>
-        </DashCard>
-
-        <DashCard
-          icon="✅"
-          label="Рутина"
-          colorClass="bg-orange-500/10 text-orange-600"
-          gradientClass="bg-gradient-to-br from-orange-400/10 to-rose-400/5"
-          onClick={() => onOpenModule("routine")}
-        >
-          <p className="text-xs text-muted">Звички та серії</p>
-        </DashCard>
-
-        <DashCard
-          icon="🥗"
-          label="Харчування"
-          colorClass="bg-lime-500/10 text-lime-700"
-          gradientClass="bg-gradient-to-br from-lime-400/10 to-emerald-400/5"
-          onClick={() => onOpenModule("nutrition")}
-        >
-          <p className="text-xs text-muted">КБЖВ та прийоми їжі</p>
-        </DashCard>
-      </div>
+          <SortableContext items={order} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-2 gap-2.5">
+              {order.map((id) => (
+                <SortableCard key={id} id={id} onOpenModule={onOpenModule} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );

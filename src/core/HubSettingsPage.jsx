@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { HubBackupPanel } from "./HubBackupPanel.jsx";
+import { resetDashboardOrder } from "./HubDashboard.jsx";
 import {
   loadRoutineState,
   setPref,
@@ -173,6 +174,14 @@ function ConfirmModal({ open, title, body, confirmLabel, danger, onConfirm, onCa
 }
 
 function GeneralSection({ dark, onToggleDark, syncing, onSync, onPull, user }) {
+  const [orderReset, setOrderReset] = useState(false);
+
+  const handleResetOrder = () => {
+    resetDashboardOrder();
+    setOrderReset(true);
+    setTimeout(() => setOrderReset(false), 2000);
+  };
+
   return (
     <SettingsGroup title="Загальні" emoji="⚙️">
       <ToggleRow
@@ -180,6 +189,18 @@ function GeneralSection({ dark, onToggleDark, syncing, onSync, onPull, user }) {
         checked={dark}
         onChange={onToggleDark}
       />
+      <SettingsSubGroup title="Дашборд">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-10 w-full"
+          onClick={handleResetOrder}
+          disabled={orderReset}
+        >
+          {orderReset ? "✓ Порядок скинуто" : "🔄 Скинути порядок блоків"}
+        </Button>
+      </SettingsSubGroup>
       {user && (
         <SettingsSubGroup title="Хмарна синхронізація">
           <div className="flex gap-2">

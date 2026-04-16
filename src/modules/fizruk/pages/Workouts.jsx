@@ -465,6 +465,7 @@ export function Workouts() {
             setDeleteWorkoutConfirm={setDeleteWorkoutConfirm}
             summarizeWorkoutForFinish={summarizeWorkoutForFinish}
             submitRetroWorkout={submitRetroWorkout}
+            deleteWorkout={deleteWorkout}
           />
         )}
 

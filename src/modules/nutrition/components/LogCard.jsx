@@ -4,6 +4,7 @@ import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
+import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 import {
   getDayMacros,
   searchMealsByName,
@@ -804,10 +805,16 @@ function VirtualMealList({ groups, meals, selectedDate, onRemoveMeal }) {
         }
         return (
           <div className="mb-1.5">
-            <MealRow
-              meal={item.meal}
-              onRemove={() => onRemoveMeal(selectedDate, item.meal.id)}
-            />
+            <SwipeToAction
+              onSwipeLeft={() => onRemoveMeal(selectedDate, item.meal.id)}
+              rightLabel="🗑 Видалити"
+              rightColor="bg-danger"
+            >
+              <MealRow
+                meal={item.meal}
+                onRemove={() => onRemoveMeal(selectedDate, item.meal.id)}
+              />
+            </SwipeToAction>
           </div>
         );
       }}

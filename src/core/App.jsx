@@ -10,6 +10,7 @@ import { useCloudSync } from "./useCloudSync.js";
 import { HubDashboard } from "./HubDashboard.jsx";
 import { HubReports } from "./HubReports.jsx";
 import { HubSettingsPage } from "./HubSettingsPage.jsx";
+import { OnboardingWizard, shouldShowOnboarding } from "./OnboardingWizard.jsx";
 
 const HubSearch = lazy(() => import("./HubSearch.jsx").then((m) => ({ default: m.HubSearch })));
 
@@ -362,6 +363,8 @@ function AppInner() {
   const [chatOpen, setChatOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [hubView, setHubView] = useState("dashboard");
+  const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
+  const [moduleAnimClass, setModuleAnimClass] = useState("module-enter");
   const [searchOpen, setSearchOpen] = useState(false);
   const [pwaAction, setPwaAction] = useState(() => {
     const fromUrl = readInitialAction();
@@ -385,6 +388,7 @@ function AppInner() {
   const { syncing, lastSync, pushAll, pullAll, migrationPending, uploadLocalData, skipMigration } = useCloudSync(user);
 
   const goToHub = useCallback(() => {
+    setModuleAnimClass("hub-enter");
     setActiveModule(null);
     persistModuleToUrlAndStorage(null);
     try {
@@ -404,12 +408,12 @@ function AppInner() {
         if (raw) {
           window.location.hash = raw.startsWith("#") ? raw : `#${raw}`;
         } else if (!isSame) {
-          // Always open module at its first/main page — don't restore last hash.
           window.location.hash = "";
         }
       } catch {
         /* ignore */
       }
+      setModuleAnimClass("module-enter");
       setActiveModule(nextId);
       persistModuleToUrlAndStorage(nextId);
     },
@@ -617,6 +621,15 @@ function AppInner() {
           </div>
         )}
 
+        {showOnboarding && (
+          <OnboardingWizard
+            onDone={(startModuleId) => {
+              setShowOnboarding(false);
+              if (startModuleId) openModule(startModuleId);
+            }}
+          />
+        )}
+
         <main className="flex-1 px-5 pb-28 max-w-lg mx-auto w-full overflow-y-auto">
           {hubView === "dashboard" && (
             <div className="flex flex-col gap-5 pt-2">
@@ -712,7 +725,7 @@ function AppInner() {
       )}
 
       <Suspense fallback={<PageLoader />}>
-        <div key={activeModule} className="page-enter h-full flex flex-col">
+        <div key={activeModule} className={cn(moduleAnimClass, "h-full flex flex-col")}>
           <ModuleErrorBoundary onBackToHub={goToHub}>
             {activeModule === "finyk" && <FinykApp onBackToHub={goToHub} pwaAction={pwaAction} onPwaActionConsumed={clearPwaAction} />}
             {activeModule === "fizruk" && <FizrukApp onBackToHub={goToHub} pwaAction={pwaAction} onPwaActionConsumed={clearPwaAction} />}
