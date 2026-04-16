@@ -154,33 +154,6 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
     );
   };
 
-  const applyTemplate = (id) => {
-    const templates = {
-      quickBreakfast: [
-        "яйця",
-        "йогурт",
-        "банан",
-        "вівсянка",
-        "сир кисломолочний",
-      ],
-      quickLunch: ["курка", "рис", "огірок", "помідор", "оливкова олія"],
-      quickFitness: ["тунець", "гречка", "яйця", "творог", "овочі"],
-    };
-    const list = templates[id] || [];
-    setPantries((cur) =>
-      updatePantry(cur, activePantryId, (p) => ({
-        ...p,
-        items: list.map((n) => ({
-          name: n,
-          qty: null,
-          unit: null,
-          notes: null,
-        })),
-        text: list.join(", "),
-      })),
-    );
-  };
-
   const beginRenamePantry = () => {
     const curName = String(activePantry?.name || "").trim() || "Склад";
     setPantryForm({ mode: "rename", name: curName, err: "" });
@@ -291,7 +264,6 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
     removeItem,
     editItemAt,
     removeItemAt,
-    applyTemplate,
     beginRenamePantry,
     beginCreatePantry,
     beginDeletePantry,

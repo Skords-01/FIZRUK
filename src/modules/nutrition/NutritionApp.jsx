@@ -626,7 +626,6 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
                 busy={busy}
                 activePantry={pantry.activePantry}
                 parsePantry={pantry.parsePantry}
-                applyTemplate={pantry.applyTemplate}
                 newItemName={pantry.newItemName}
                 setNewItemName={pantry.setNewItemName}
                 upsertItem={pantry.upsertItem}
