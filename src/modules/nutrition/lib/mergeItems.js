@@ -1,4 +1,8 @@
-import { normalizeFoodName, normalizeUnit } from "./pantryTextParser.js";
+import {
+  canonicalFoodKey,
+  normalizeFoodName,
+  normalizeUnit,
+} from "./pantryTextParser.js";
 
 function toBaseUnit(qty, unit) {
   const u = String(unit || "").toLowerCase();
@@ -28,6 +32,7 @@ export function mergeItems(oldItems, newItems) {
   for (const it of b) {
     const n = normalizeFoodName(it?.name);
     if (!n) continue;
+    const key = canonicalFoodKey(n);
 
     const incomingQty =
       it?.qty != null && it.qty !== "" && Number.isFinite(Number(it.qty))
@@ -40,8 +45,8 @@ export function mergeItems(oldItems, newItems) {
       const baseIncoming = toBaseUnit(incomingQty, incomingUnit);
       if (baseIncoming) {
         const idx = merged.findIndex((x) => {
-          const nx = normalizeFoodName(x?.name);
-          if (nx !== n) return false;
+          const nx = canonicalFoodKey(x?.name);
+          if (nx !== key) return false;
           const qx =
             x?.qty != null && x.qty !== "" && Number.isFinite(Number(x.qty))
               ? Number(x.qty)

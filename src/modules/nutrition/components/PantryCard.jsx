@@ -1,31 +1,142 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
 import { cn } from "@shared/lib/cn";
+import { groupItemsByCategory } from "../lib/foodCategories.js";
 
-const COLLAPSE_THRESHOLD = 12;
 const INPUT_MODES = [
   { id: "single", label: "Продукт" },
   { id: "list", label: "Список" },
 ];
+
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("transition-transform shrink-0", open && "rotate-90")}
+      aria-hidden
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+function ItemRow({ item, idx, editItemAt, removeItemAtOrByName, busy }) {
+  return (
+    <div className="flex items-center gap-2 py-2 first:pt-1 group">
+      <button
+        type="button"
+        onClick={() => editItemAt(idx)}
+        disabled={busy}
+        className="flex-1 min-w-0 flex items-baseline gap-1.5 text-left"
+        aria-label={`Редагувати ${item?.name || "продукт"}`}
+      >
+        <span className="text-sm font-medium text-text truncate">
+          {item?.name || "—"}
+        </span>
+        {(item?.qty != null || item?.unit) && (
+          <span className="text-xs text-subtle shrink-0">
+            {item?.qty != null && item?.unit
+              ? `${item.qty} ${item.unit}`
+              : item?.qty != null
+                ? `${item.qty}`
+                : item?.unit || ""}
+          </span>
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={() => removeItemAtOrByName(idx, item?.name)}
+        disabled={busy}
+        className="w-6 h-6 rounded-lg flex items-center justify-center text-subtle/60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 hover:text-danger hover:bg-danger/10 transition-all text-sm leading-none shrink-0"
+        aria-label={`Прибрати ${item?.name || "продукт"}`}
+        title="Прибрати"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+function CategorySection({
+  cat,
+  items,
+  editItemAt,
+  removeItemAtOrByName,
+  busy,
+  defaultOpen,
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-xl border border-line/40 bg-bg/30">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center justify-between w-full gap-2 px-3 py-2"
+        aria-expanded={open}
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <ChevronIcon open={open} />
+          <span className="text-sm" aria-hidden>
+            {cat.emoji}
+          </span>
+          <span className="text-sm font-semibold text-text truncate">
+            {cat.label}
+          </span>
+        </span>
+        <span className="text-xs text-subtle font-medium shrink-0">
+          {items.length}
+        </span>
+      </button>
+      {open && (
+        <div className="px-3 pb-1 divide-y divide-line/40">
+          {items.map(({ item, idx }) => (
+            <ItemRow
+              key={`${String(item?.name || idx)}_${idx}`}
+              item={item}
+              idx={idx}
+              editItemAt={editItemAt}
+              removeItemAtOrByName={removeItemAtOrByName}
+              busy={busy}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function InventoryCard({
   effectiveItems,
   editItemAt,
   removeItemAtOrByName,
   pantryItemsLength,
-  pantrySummary,
   busy,
 }) {
   const userToggledRef = useRef(false);
-  const [expanded, setExpanded] = useState(effectiveItems.length <= COLLAPSE_THRESHOLD);
+  const [mainOpen, setMainOpen] = useState(true);
+
+  const groups = useMemo(
+    () => groupItemsByCategory(effectiveItems),
+    [effectiveItems],
+  );
 
   useEffect(() => {
     if (userToggledRef.current) return;
-    setExpanded(effectiveItems.length <= COLLAPSE_THRESHOLD);
+    setMainOpen(true);
   }, [effectiveItems.length]);
 
   if (effectiveItems.length === 0) return null;
+
+  // Якщо позицій небагато — одразу розкриваємо категорії всередині.
+  const openByDefault = effectiveItems.length <= 12;
 
   return (
     <Card className="p-4">
@@ -33,25 +144,13 @@ function InventoryCard({
         type="button"
         onClick={() => {
           userToggledRef.current = true;
-          setExpanded((v) => !v);
+          setMainOpen((v) => !v);
         }}
         className="flex items-center justify-between w-full gap-2"
+        aria-expanded={mainOpen}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={cn("transition-transform shrink-0", expanded && "rotate-90")}
-            aria-hidden
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <ChevronIcon open={mainOpen} />
           <span className="text-sm font-semibold text-text">Мій склад</span>
           <span className="text-xs text-subtle font-medium">
             ({pantryItemsLength})
@@ -59,55 +158,19 @@ function InventoryCard({
         </div>
       </button>
 
-      {expanded && (
-        <div className="mt-3 divide-y divide-line/40">
-          {effectiveItems.slice(0, 60).map((it, idx) => (
-            <div
-              key={`${String(it?.name || idx)}_${idx}`}
-              className="flex items-center gap-2 py-2 first:pt-1 group"
-            >
-              <button
-                type="button"
-                onClick={() => editItemAt(idx)}
-                disabled={busy}
-                className="flex-1 min-w-0 flex items-baseline gap-1.5 text-left"
-                aria-label={`Редагувати ${it?.name || "продукт"}`}
-              >
-                <span className="text-sm font-medium text-text truncate">
-                  {it?.name || "—"}
-                </span>
-                {(it?.qty != null || it?.unit) && (
-                  <span className="text-xs text-subtle shrink-0">
-                    {it?.qty != null && it?.unit
-                      ? `${it.qty} ${it.unit}`
-                      : it?.qty != null
-                        ? `${it.qty}`
-                        : it?.unit || ""}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => removeItemAtOrByName(idx, it?.name)}
-                disabled={busy}
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-subtle/60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 hover:text-danger hover:bg-danger/10 transition-all text-sm leading-none shrink-0"
-                aria-label={`Прибрати ${it?.name || "продукт"}`}
-                title="Прибрати"
-              >
-                ×
-              </button>
-            </div>
+      {mainOpen && (
+        <div className="mt-3 grid gap-2">
+          {groups.map((g) => (
+            <CategorySection
+              key={g.cat.id}
+              cat={g.cat}
+              items={g.items}
+              editItemAt={editItemAt}
+              removeItemAtOrByName={removeItemAtOrByName}
+              busy={busy}
+              defaultOpen={openByDefault}
+            />
           ))}
-        </div>
-      )}
-
-      {pantryItemsLength > 0 && (
-        <div className={cn("text-xs text-subtle pt-2 border-t border-line/50", expanded ? "mt-1" : "mt-2")}>
-          <span className="font-semibold text-text">
-            {pantryItemsLength} позицій
-          </span>
-          {" · "}
-          <span>{pantrySummary}</span>
         </div>
       )}
     </Card>
@@ -126,7 +189,6 @@ export function PantryCard({
   editItemAt,
   removeItemAtOrByName,
   pantryItemsLength,
-  pantrySummary,
 }) {
   const [mode, setMode] = useState("single");
 
@@ -214,7 +276,6 @@ export function PantryCard({
         editItemAt={editItemAt}
         removeItemAtOrByName={removeItemAtOrByName}
         pantryItemsLength={pantryItemsLength}
-        pantrySummary={pantrySummary}
         busy={busy}
       />
     </>
