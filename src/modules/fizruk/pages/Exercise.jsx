@@ -10,6 +10,73 @@ function fmt(n, digits = 0) {
   return x.toFixed(digits);
 }
 
+function roundTo2_5(kg) {
+  return Math.round(kg / 2.5) * 2.5;
+}
+
+const CALC_ZONES = [
+  {
+    goal: "Сила",
+    color: "text-red-500",
+    bgColor: "bg-red-500/10",
+    borderColor: "border-red-500/20",
+    percents: [95, 90, 85],
+    desc: "85–95% від 1RM",
+  },
+  {
+    goal: "Гіпертрофія",
+    color: "text-success",
+    bgColor: "bg-success/10",
+    borderColor: "border-success/20",
+    percents: [80, 75, 70, 65],
+    desc: "65–80% від 1RM",
+  },
+  {
+    goal: "Витривалість",
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+    borderColor: "border-blue-500/20",
+    percents: [65, 60, 55, 50],
+    desc: "50–65% від 1RM",
+  },
+];
+
+function LoadCalculator({ oneRM }) {
+  return (
+    <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+      <div className="flex items-baseline justify-between gap-2 mb-3">
+        <div className="text-xs font-bold text-subtle uppercase tracking-widest">Калькулятор навантаження</div>
+        <div className="text-[10px] text-subtle">1RM = {fmt(oneRM, 0)} кг</div>
+      </div>
+      <div className="space-y-3">
+        {CALC_ZONES.map((zone) => (
+          <div key={zone.goal} className={cn("rounded-xl border p-3", zone.bgColor, zone.borderColor)}>
+            <div className="flex items-center justify-between mb-2">
+              <span className={cn("text-xs font-bold", zone.color)}>{zone.goal}</span>
+              <span className="text-[10px] text-subtle">{zone.desc}</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1">
+              {zone.percents.map((pct) => {
+                const kg = roundTo2_5(oneRM * (pct / 100));
+                return (
+                  <div key={pct} className="text-center bg-panel/60 rounded-lg py-1.5 px-1">
+                    <div className="text-[10px] text-subtle leading-none mb-0.5">{pct}%</div>
+                    <div className="text-sm font-bold text-text tabular-nums leading-tight">
+                      {kg > 0 ? `${kg}` : "—"}
+                    </div>
+                    <div className="text-[9px] text-muted leading-none">кг</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[9px] text-muted mt-2 text-center">Ваги округлені до найближчих 2.5 кг</p>
+    </div>
+  );
+}
+
 
 function ProgressChart({ points, label, unit, color }) {
   if (!points || points.length < 2) {
@@ -392,6 +459,10 @@ export function Exercise({ exerciseId }) {
               color="rgb(6 182 212)"
             />
           </div>
+        )}
+
+        {best.best1rm > 0 && (
+          <LoadCalculator oneRM={best.best1rm} />
         )}
 
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">

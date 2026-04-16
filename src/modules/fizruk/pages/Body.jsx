@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { useDailyLog } from "../hooks/useDailyLog";
 import { MiniLineChart } from "../components/MiniLineChart";
+import { PhotoProgress } from "../components/PhotoProgress";
 
 const ENERGY_LABELS = ["", "Виснажений", "Втомлений", "Нормально", "Добре", "Відмінно"];
 const MOOD_LABELS = ["", "Пригнічений", "Поганий", "Нейтральний", "Гарний", "Чудовий"];
@@ -351,6 +352,8 @@ export function Body({ onOpenMeasurements }) {
             />
           </section>
         )}
+
+        <PhotoProgress />
 
         {entries.length > 0 && (
           <section
