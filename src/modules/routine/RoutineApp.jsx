@@ -91,7 +91,7 @@ function timeOfDayBucket(hhmm) {
   const h = Number(m[1]);
   if (!Number.isFinite(h)) return "Будь-коли";
   if (h < 12) return "Ранок";
-  if (h < 18) return "День";
+  if (h <= 18) return "День";
   return "Вечір";
 }
 
