@@ -182,7 +182,7 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
     }
   }, []);
 
-  const { clientInfo, connecting, error, connect } = mono;
+  const { clientInfo, connecting, error, authError, connect } = mono;
   const syncTone =
     mono?.syncState?.status === "error"
       ? { dot: "bg-danger", text: "помилка" }
@@ -351,7 +351,14 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
               <span className="text-sm text-muted">Запам'ятати токен на цьому пристрої</span>
             </label>
 
-            {error && (
+            {authError && (
+              <div className="mt-3 text-sm bg-warning/15 border border-warning/40 rounded-xl px-3 py-2.5 space-y-1">
+                <p className="font-semibold text-text">Токен потребує оновлення</p>
+                <p className="text-xs text-muted">{authError}</p>
+                <p className="text-xs text-muted">Отримайте новий токен: Monobank → Налаштування → API</p>
+              </div>
+            )}
+            {error && !authError && (
               <p className="mt-3 text-sm text-danger bg-danger/10 rounded-xl px-3 py-2">
                 {error}
               </p>
@@ -498,22 +505,13 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
           />
         )}
         {page === "transactions" && (
-          <div className="relative flex-1 flex flex-col min-h-0">
-            <Transactions
-              mono={mono}
-              storage={storage}
-              showBalance={showBalance}
-              categoryFilter={categoryFilter}
-              onClearCategoryFilter={() => setCategoryFilter(null)}
-            />
-            <button
-              onClick={() => setShowExpenseSheet(true)}
-              className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-emerald-500 text-white shadow-lg flex items-center justify-center text-2xl hover:bg-emerald-600 active:scale-95 transition-all z-10"
-              aria-label="Додати витрату"
-            >
-              +
-            </button>
-          </div>
+          <Transactions
+            mono={mono}
+            storage={storage}
+            showBalance={showBalance}
+            categoryFilter={categoryFilter}
+            onClearCategoryFilter={() => setCategoryFilter(null)}
+          />
         )}
         {page === "budgets" && <Budgets mono={mono} storage={storage} />}
         {page === "assets" && (
@@ -527,6 +525,41 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
           <Settings mono={mono} storage={storage} showToast={showToast} />
         )}
       </div>
+
+      {(page === "overview" || page === "transactions" || page === "budgets") && (
+        <button
+          onClick={() => setShowExpenseSheet(true)}
+          className="fixed bottom-[calc(58px+env(safe-area-inset-bottom,0px)+16px)] right-4 w-12 h-12 rounded-full bg-emerald-500 text-white shadow-lg flex items-center justify-center text-2xl hover:bg-emerald-600 active:scale-95 transition-all z-20"
+          aria-label="Додати витрату"
+        >
+          +
+        </button>
+      )}
+
+      {mono.authError && (
+        <div className="fixed top-[calc(56px+env(safe-area-inset-top,0px)+8px)] left-4 right-4 z-50 max-w-lg mx-auto">
+          <div className="bg-warning/15 border border-warning/40 rounded-2xl px-4 py-3 flex items-start gap-3 shadow-card">
+            <span className="text-lg shrink-0 mt-0.5">⚠️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text">Токен потребує оновлення</p>
+              <p className="text-xs text-muted mt-0.5">{mono.authError}</p>
+              <button
+                onClick={() => navigate("settings")}
+                className="text-xs font-semibold text-primary mt-2 hover:underline"
+              >
+                Перейти до налаштувань
+              </button>
+            </div>
+            <button
+              onClick={() => mono.setAuthError("")}
+              className="text-muted hover:text-text transition-colors shrink-0"
+              aria-label="Закрити"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       <ManualExpenseSheet
         open={showExpenseSheet}

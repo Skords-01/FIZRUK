@@ -151,6 +151,13 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+class AuthError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "AuthError";
+  }
+}
+
 async function fetchStatementWithRetry(tok, accId, from, to, maxAttempts = 3) {
   if (!navigator.onLine) {
     throw new Error("Немає підключення до інтернету. Спробуй пізніше.");
@@ -168,11 +175,15 @@ async function fetchStatementWithRetry(tok, accId, from, to, maxAttempts = 3) {
           const payload = await res.json();
           message = payload?.error || message;
         } catch {}
+        if (res.status === 401 || res.status === 403) {
+          throw new AuthError(message);
+        }
         throw new Error(message);
       }
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     } catch (e) {
+      if (e instanceof AuthError) throw e;
       lastError = e;
       if (attempt < maxAttempts) {
         await sleep(1000 * attempt);
@@ -221,6 +232,9 @@ export function useMonobank() {
   });
 
   const lastAutoRefreshAtRef = useRef(0);
+  const syncStateRef = useRef(syncState);
+  syncStateRef.current = syncState;
+  const [authError, setAuthError] = useState("");
 
   const fetchAllTx = async (tok, allAccounts) => {
     const targetAccounts = allAccounts.filter(
@@ -243,7 +257,7 @@ export function useMonobank() {
     setSyncState({
       status: "loading",
       source: "none",
-      lastSuccess: syncState.lastSuccess,
+      lastSuccess: syncStateRef.current.lastSuccess,
       lastError: "",
       accountsTotal: targetAccounts.length,
       accountsOk: 0,
@@ -271,6 +285,20 @@ export function useMonobank() {
           succeededIds.push(acc.id);
           accountsOk += 1;
         } catch (e) {
+          if (e instanceof AuthError) {
+            setAuthError(e.message || "Токен Monobank недійсний або закінчився. Оновіть токен.");
+            setError("");
+            setSyncState({
+              status: "error",
+              source: syncStateRef.current.lastSuccess ? "cache" : "none",
+              lastSuccess: syncStateRef.current.lastSuccess,
+              lastError: e.message,
+              accountsTotal: targetAccounts.length,
+              accountsOk,
+            });
+            setLoadingTx(false);
+            return;
+          }
           errors.push(
             `${acc.id}: ${e?.message || "Помилка отримання транзакцій"}`,
           );
@@ -364,7 +392,7 @@ export function useMonobank() {
       setSyncState({
         status: "error",
         source: "none",
-        lastSuccess: syncState.lastSuccess,
+        lastSuccess: syncStateRef.current.lastSuccess,
         lastError: e?.message || "Помилка завантаження транзакцій",
         accountsTotal: targetAccounts.length,
         accountsOk: 0,
@@ -409,6 +437,9 @@ export function useMonobank() {
             errorMessage = errorData.error || `Помилка ${res.status}`;
           } catch {
             errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+          }
+          if (res.status === 401 || res.status === 403) {
+            throw new AuthError(errorMessage);
           }
           throw new Error(errorMessage);
         }
@@ -459,7 +490,11 @@ export function useMonobank() {
         await fetchAllTx(cleanToken, info.accounts || []);
       }
     } catch (e) {
-      setError(e?.message || "Помилка авторизації");
+      if (e instanceof AuthError) {
+        setAuthError(e.message || "Токен Monobank недійсний або закінчився. Оновіть токен.");
+      } else {
+        setError(e?.message || "Помилка авторизації");
+      }
     } finally {
       setConnecting(false);
     }
@@ -522,8 +557,6 @@ export function useMonobank() {
   };
 
   const refresh = async () => {
-    // Не видаляємо кеш до запиту — інакше при частковій відповіді втрачаються старі транзакції
-    // Також оновлюємо баланси рахунків (client-info), щоб нетворс був актуальним
     try {
       const res = await fetch(
         `${apiUrl("/api/mono")}?path=${encodeURIComponent("/personal/client-info")}`,
@@ -532,6 +565,7 @@ export function useMonobank() {
         },
       );
       if (res.ok) {
+        setAuthError("");
         const info = await res.json();
         setClientInfo(info);
         setAccounts(info.accounts || []);
@@ -541,6 +575,10 @@ export function useMonobank() {
           reportSilentError("refresh info cache", e);
         }
         await fetchAllTx(token, info.accounts || []);
+        return;
+      }
+      if (res.status === 401 || res.status === 403) {
+        setAuthError("Токен Monobank недійсний або закінчився. Оновіть токен у налаштуваннях.");
         return;
       }
     } catch (e) {
@@ -647,6 +685,8 @@ export function useMonobank() {
     error,
     lastUpdated,
     syncState,
+    authError,
+    setAuthError,
     connect,
     refresh,
     fetchMonth,

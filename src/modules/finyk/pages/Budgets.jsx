@@ -71,44 +71,69 @@ export function Budgets({ mono, storage }) {
     [statTx, txSplits],
   );
 
+  const [formError, setFormError] = useState("");
+
+  const resetForm = () => {
+    setNewB({
+      type: "limit",
+      categoryId: "",
+      limit: "",
+      name: "",
+      emoji: "🎯",
+      targetAmount: "",
+      targetDate: "",
+      savedAmount: "",
+    });
+    setFormError("");
+    setShowForm(false);
+  };
+
   const addBudget = () => {
-    if (newB.type === "limit" && newB.categoryId && newB.limit) {
+    setFormError("");
+    if (newB.type === "limit") {
+      if (!newB.categoryId) {
+        setFormError("Оберіть категорію");
+        return;
+      }
+      const limitVal = Number(newB.limit);
+      if (!newB.limit || isNaN(limitVal) || limitVal <= 0) {
+        setFormError("Вкажіть ліміт більше 0");
+        return;
+      }
+      if (budgets.some((b) => b.type === "limit" && b.categoryId === newB.categoryId)) {
+        setFormError("Ліміт для цієї категорії вже існує");
+        return;
+      }
       setBudgets((b) => [
         ...b,
-        { ...newB, limit: Number(newB.limit), id: Date.now().toString() },
+        { ...newB, limit: limitVal, id: crypto.randomUUID() },
       ]);
-      setNewB({
-        type: "limit",
-        categoryId: "",
-        limit: "",
-        name: "",
-        emoji: "🎯",
-        targetAmount: "",
-        targetDate: "",
-        savedAmount: "",
-      });
-      setShowForm(false);
-    } else if (newB.type === "goal" && newB.name && newB.targetAmount) {
+      resetForm();
+    } else if (newB.type === "goal") {
+      if (!newB.name || !newB.name.trim()) {
+        setFormError("Вкажіть назву цілі");
+        return;
+      }
+      const targetVal = Number(newB.targetAmount);
+      if (!newB.targetAmount || isNaN(targetVal) || targetVal <= 0) {
+        setFormError("Вкажіть суму цілі більше 0");
+        return;
+      }
+      const savedVal = Number(newB.savedAmount || 0);
+      if (savedVal < 0) {
+        setFormError("Відкладена сума не може бути від'ємною");
+        return;
+      }
       setBudgets((b) => [
         ...b,
         {
           ...newB,
-          targetAmount: Number(newB.targetAmount),
-          savedAmount: Number(newB.savedAmount || 0),
-          id: Date.now().toString(),
+          targetAmount: targetVal,
+          savedAmount: savedVal,
+          id: crypto.randomUUID(),
         },
       ]);
-      setNewB({
-        type: "limit",
-        categoryId: "",
-        limit: "",
-        name: "",
-        emoji: "🎯",
-        targetAmount: "",
-        targetDate: "",
-        savedAmount: "",
-      });
-      setShowForm(false);
+      resetForm();
     }
   };
 
@@ -624,6 +649,9 @@ export function Budgets({ mono, storage }) {
                 />
               </>
             )}
+            {formError && (
+              <p className="text-xs text-red-500 bg-red-500/10 rounded-xl px-3 py-2">{formError}</p>
+            )}
             <div className="flex gap-2">
               <Button className="flex-1" size="sm" onClick={addBudget}>
                 Додати
@@ -632,7 +660,7 @@ export function Budgets({ mono, storage }) {
                 className="flex-1"
                 size="sm"
                 variant="ghost"
-                onClick={() => setShowForm(false)}
+                onClick={resetForm}
               >
                 Скасувати
               </Button>

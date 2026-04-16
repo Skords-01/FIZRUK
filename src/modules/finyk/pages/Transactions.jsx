@@ -55,6 +55,8 @@ export function Transactions({
     hiddenTxIds,
     hideTx,
     excludedTxIds,
+    excludedStatTxIds,
+    toggleExcludeFromStats,
     txCategories,
     customCategories,
     overrideCategory,
@@ -102,6 +104,20 @@ export function Transactions({
 
   const applyBatchCategory = (catId) => {
     for (const id of selectedIds) overrideCategory(id, catId);
+    exitSelectMode();
+  };
+
+  const applyBatchHide = () => {
+    for (const id of selectedIds) {
+      if (!hiddenTxIds.includes(id)) hideTx(id);
+    }
+    exitSelectMode();
+  };
+
+  const applyBatchExclude = () => {
+    for (const id of selectedIds) {
+      if (!(excludedStatTxIds || []).includes(id)) toggleExcludeFromStats(id);
+    }
     exitSelectMode();
   };
   const [selMonth, setSelMonth] = useState(() => ({
@@ -670,15 +686,31 @@ export function Transactions({
                   ? `${selectedIds.size} обрано`
                   : "Оберіть транзакції"}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {selectedIds.size > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setBatchCatPicker(true)}
-                    className="text-sm font-semibold px-4 py-2 rounded-xl bg-primary text-bg min-h-[40px] transition-colors"
-                  >
-                    Змінити категорію
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setBatchCatPicker(true)}
+                      className="text-sm font-semibold px-4 py-2 rounded-xl bg-primary text-bg min-h-[40px] transition-colors"
+                    >
+                      Категорія
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyBatchHide}
+                      className="text-sm font-semibold px-4 py-2 rounded-xl border border-line bg-panelHi text-text min-h-[40px] transition-colors hover:border-muted"
+                    >
+                      Приховати
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyBatchExclude}
+                      className="text-sm font-semibold px-4 py-2 rounded-xl border border-line bg-panelHi text-text min-h-[40px] transition-colors hover:border-muted"
+                    >
+                      Зі статистики
+                    </button>
+                  </>
                 )}
               </div>
             </div>

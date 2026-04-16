@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { DEFAULT_SUBSCRIPTIONS, INTERNAL_TRANSFER_ID } from "../constants";
 import { notifyFinykRoutineCalendarSync } from "../hubRoutineSync.js";
 import {
@@ -84,6 +84,15 @@ export function useStorage({ onImportFeedback } = {}) {
     [],
   );
   const [manualExpenses, setManualExpenses] = usePersist("finyk_manual_expenses_v1", []);
+  const [excludedStatTxIds, setExcludedStatTxIds] = usePersist("finyk_excluded_stat_txs", []);
+  const networthSnapshotRef = useRef((() => {
+    try {
+      const saved = localStorage.getItem("finyk_networth_last_snap");
+      return saved ? JSON.parse(saved) : { date: null, value: null };
+    } catch {
+      return { date: null, value: null };
+    }
+  })());
 
   const addManualExpense = (expense) => {
     const entry = {
@@ -136,6 +145,11 @@ export function useStorage({ onImportFeedback } = {}) {
 
   const hideTx = (id) =>
     setHiddenTxIds((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
+    );
+
+  const toggleExcludeFromStats = (id) =>
+    setExcludedStatTxIds((ids) =>
       ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
     );
 
@@ -336,6 +350,7 @@ export function useStorage({ onImportFeedback } = {}) {
     ...hiddenTxIds,
     ...transferTxIds,
     ...receivables.flatMap((r) => r.linkedTxIds || []),
+    ...excludedStatTxIds,
   ]);
 
   return {
@@ -376,14 +391,27 @@ export function useStorage({ onImportFeedback } = {}) {
     debtLinkedTxIds,
     networthHistory,
     saveNetworthSnapshot: (networth) => {
+      const today = new Date().toISOString().slice(0, 10);
+      const rounded = Math.round(networth);
+      const snap = networthSnapshotRef.current;
+      if (snap.date === today && snap.value !== null) {
+        const changePct = snap.value !== 0
+          ? Math.abs((rounded - snap.value) / snap.value)
+          : 1;
+        if (changePct < 0.01) return;
+      }
+      networthSnapshotRef.current = { date: today, value: rounded };
+      try { localStorage.setItem("finyk_networth_last_snap", JSON.stringify({ date: today, value: rounded })); } catch {}
       const key = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
       setNetworthHistory((prev) => {
         const filtered = prev.filter((s) => s.month !== key);
-        return [...filtered, { month: key, networth: Math.round(networth) }]
+        return [...filtered, { month: key, networth: rounded }]
           .sort((a, b) => a.month.localeCompare(b.month))
           .slice(-12);
       });
     },
+    excludedStatTxIds,
+    toggleExcludeFromStats,
     manualExpenses,
     setManualExpenses,
     addManualExpense,
