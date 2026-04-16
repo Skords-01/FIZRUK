@@ -59,7 +59,7 @@ function MiniBar({ rows, targetKcal }) {
   const dayLabels = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
   return (
     <div className="flex items-end gap-1 h-16">
-      {rows.map((r, i) => {
+      {rows.map((r) => {
         const h = max > 0 ? Math.max(2, (r.kcal / max) * 100) : 2;
         const isToday = r.date === todayISO();
         const dayOfWeek = new Date(r.date + "T00:00:00").getDay();
