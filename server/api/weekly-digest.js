@@ -1,5 +1,52 @@
 import { setCorsHeaders } from "./lib/cors.js";
 
+function extractJsonObject(raw) {
+  if (typeof raw !== "string") return null;
+  let text = raw.trim();
+  // Прибираємо markdown-обгортку ```json ... ``` або ``` ... ```
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) text = fence[1].trim();
+
+  const start = text.indexOf("{");
+  if (start < 0) return null;
+
+  // Знаходимо відповідну закриваючу дужку з урахуванням рядків та екранування.
+  let depth = 0;
+  let inStr = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inStr) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') {
+      inStr = true;
+      continue;
+    }
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        const candidate = text.slice(start, i + 1);
+        try {
+          return JSON.parse(candidate);
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  // Жорсткий fallback: спробувати розпарсити «as is»
+  try {
+    return JSON.parse(text.slice(start));
+  } catch {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   setCorsHeaders(res, req, {
     allowHeaders: "Content-Type",
@@ -126,11 +173,8 @@ ${habitsInfo}`);
 
     const text = chatData?.text || "";
 
-    let report;
-    try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      report = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-    } catch {
+    const report = extractJsonObject(text);
+    if (!report) {
       return res
         .status(500)
         .json({ error: "Не вдалося розпарсити відповідь AI", raw: text });
