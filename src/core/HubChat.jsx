@@ -764,7 +764,7 @@ function executeAction(action) {
         return `Звичку "${habit?.name || habit_id}" відмічено як виконану (${targetDate})`;
       }
       case "plan_workout": {
-        const { date, note, exercises } = action.input || {};
+        const { date, time, note, exercises } = action.input || {};
         const now4 = new Date();
         const today = [
           now4.getFullYear(),
@@ -772,25 +772,31 @@ function executeAction(action) {
           String(now4.getDate()).padStart(2, "0"),
         ].join("-");
         const targetDate = (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) ? date : today;
-        const startedAt = new Date(`${targetDate}T09:00:00`).toISOString();
+        const timeStr = (time && /^\d{1,2}:\d{2}$/.test(String(time).trim()))
+          ? String(time).trim().padStart(5, "0")
+          : "09:00";
+        const startedAt = new Date(`${targetDate}T${timeStr}:00`).toISOString();
         const wid = `w_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
         const items = Array.isArray(exercises)
           ? exercises
               .filter((ex) => ex && ex.name)
               .map((ex, i) => {
                 const setsN = Math.max(1, Math.min(20, Number(ex.sets) || 3));
-                const reps = ex.reps != null ? Number(ex.reps) : null;
-                const weight = ex.weight != null ? Number(ex.weight) : null;
-                const sets = Array.from({ length: setsN }, (_, k) => ({
-                  id: `s_${Date.now().toString(36)}_${i}_${k}`,
-                  reps: reps != null && Number.isFinite(reps) ? reps : null,
-                  weight: weight != null && Number.isFinite(weight) ? weight : null,
-                  done: false,
+                const reps = ex.reps != null && Number.isFinite(Number(ex.reps)) ? Number(ex.reps) : 0;
+                const weightKg = ex.weight != null && Number.isFinite(Number(ex.weight)) ? Number(ex.weight) : 0;
+                const sets = Array.from({ length: setsN }, () => ({
+                  weightKg,
+                  reps,
                 }));
                 return {
                   id: `i_${Date.now().toString(36)}_${i}_${Math.random().toString(36).slice(2, 6)}`,
-                  name: String(ex.name).trim(),
+                  nameUk: String(ex.name).trim(),
+                  type: "strength",
+                  musclesPrimary: [],
+                  musclesSecondary: [],
                   sets,
+                  durationSec: 0,
+                  distanceM: 0,
                 };
               })
           : [];
@@ -818,7 +824,7 @@ function executeAction(action) {
           { schemaVersion: 1, workouts: next },
         );
         const exCount = items.length;
-        return `Тренування заплановано на ${targetDate}${note ? ` ("${note}")` : ""}: ${exCount} вправ${exCount === 1 ? "а" : exCount >= 2 && exCount <= 4 ? "и" : ""} (id:${wid})`;
+        return `Тренування заплановано на ${targetDate} о ${timeStr}${note ? ` ("${note}")` : ""}: ${exCount} вправ${exCount === 1 ? "а" : exCount >= 2 && exCount <= 4 ? "и" : ""} (id:${wid})`;
       }
       case "log_meal": {
         const { name, kcal, protein_g, fat_g, carbs_g } = action.input;

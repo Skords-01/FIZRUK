@@ -46,6 +46,17 @@ export function PlanCalendar() {
   const sheetRef = useRef(null);
   useDialogFocusTrap(!!sheet, sheetRef, { onEscape: () => setSheet(null) });
 
+  const plannedByDate = useMemo(() => {
+    const map = {};
+    for (const w of workouts) {
+      if (!w.planned || !w.startedAt) continue;
+      const d = w.startedAt.slice(0, 10);
+      if (!map[d]) map[d] = [];
+      map[d].push(w);
+    }
+    return map;
+  }, [workouts]);
+
   const forecast = useMemo(
     () => forecastFullRecoveryByDate(workouts, musclesUk),
     [workouts, musclesUk],
@@ -94,7 +105,7 @@ export function PlanCalendar() {
   const openDay = (day) => {
     if (!day) return;
     const key = dateKey(cursor.y, cursor.m, day);
-    setSheet({ key, day, templateId: getTemplateForDate(key) });
+    setSheet({ key, day, templateId: getTemplateForDate(key), planned: plannedByDate[key] || [] });
   };
 
   const applySheet = (templateId) => {
@@ -147,6 +158,7 @@ export function PlanCalendar() {
               const key = dateKey(cursor.y, cursor.m, day);
               const tid = days[key]?.templateId;
               const tpl = tid ? templates.find((t) => t.id === tid) : null;
+              const planned = plannedByDate[key] || [];
               const isToday =
                 key ===
                 `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -160,13 +172,20 @@ export function PlanCalendar() {
                     "min-h-[52px] rounded-xl border p-1 flex flex-col items-center justify-start transition-colors",
                     isToday
                       ? "border-success bg-success/10"
-                      : "border-line bg-panelHi/50 hover:bg-panelHi",
+                      : planned.length > 0
+                        ? "border-success/50 bg-success/8 hover:bg-success/15"
+                        : "border-line bg-panelHi/50 hover:bg-panelHi",
                   )}
                 >
                   <span className="text-xs font-bold text-text">{day}</span>
                   {tpl && (
-                    <span className="text-[9px] text-subtle leading-tight line-clamp-2 mt-0.5 px-0.5">
+                    <span className="text-[9px] text-subtle leading-tight line-clamp-1 mt-0.5 px-0.5">
                       {tpl.name}
+                    </span>
+                  )}
+                  {planned.length > 0 && (
+                    <span className="text-[8px] text-success font-bold leading-tight mt-0.5">
+                      🏋️ {planned.length > 1 ? `×${planned.length}` : planned[0].note || `${planned[0].items?.length ?? 0}впр`}
                     </span>
                   )}
                 </button>
@@ -237,8 +256,35 @@ export function PlanCalendar() {
                 month: "long",
               })}
             </div>
+            {sheet.planned?.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-bold text-success mb-2">🏋️ Заплановані тренування</p>
+                <div className="space-y-2">
+                  {sheet.planned.map((w) => {
+                    const t = w.startedAt
+                      ? new Date(w.startedAt).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })
+                      : null;
+                    return (
+                      <div key={w.id} className="rounded-xl border border-success/30 bg-success/8 px-3 py-2 text-sm">
+                        <div className="font-semibold text-text">
+                          {t && <span className="text-success mr-1.5">{t}</span>}
+                          {w.note || "Тренування"}
+                        </div>
+                        {w.items?.length > 0 && (
+                          <div className="text-[11px] text-subtle mt-0.5">
+                            {w.items.map((it) => it.nameUk || it.name).filter(Boolean).join(" · ")}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-line/40 my-3" />
+              </div>
+            )}
+
             <p className="text-xs text-subtle mb-3">Шаблон тренування</p>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <div className="space-y-2 max-h-48 overflow-y-auto">
               <button
                 type="button"
                 className={cn(
