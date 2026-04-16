@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { cn } from "@shared/lib/cn";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useWorkouts } from "../hooks/useWorkouts";
+import { suggestNextSet } from "../lib/workoutStats";
 
 function epley1rm(weightKg, reps) {
   const w = Number(weightKg) || 0;
@@ -16,11 +17,6 @@ function fmt(n, digits = 0) {
   return x.toFixed(digits);
 }
 
-function roundToStep(x, step) {
-  const s = Number(step) || 1;
-  if (s <= 0) return x;
-  return Math.round(x / s) * s;
-}
 
 function ProgressChart({ points, label, unit, color }) {
   if (!points || points.length < 2) {
@@ -148,7 +144,8 @@ export function Exercise({ exerciseId }) {
   const best = useMemo(() => {
     let best1rm = 0;
     let bestSet = null;
-    let lastTop = null;
+    let lastTopSet = null;
+    let lastTopEst = 0;
     let lastWorkoutId = null;
     let lastWorkoutBest1rm = 0;
     let priorBest1rm = 0;
@@ -167,7 +164,10 @@ export function Exercise({ exerciseId }) {
         }
         if (isLatest) {
           if (est > lastWorkoutBest1rm) lastWorkoutBest1rm = est;
-          if (!lastTop) lastTop = { ...s, _at: workout?.startedAt };
+          if (est > lastTopEst) {
+            lastTopEst = est;
+            lastTopSet = { ...s, _at: workout?.startedAt };
+          }
         } else {
           if (est > priorBest1rm) priorBest1rm = est;
         }
@@ -175,19 +175,13 @@ export function Exercise({ exerciseId }) {
     }
 
     const isNewPR = lastWorkoutBest1rm > 0 && lastWorkoutBest1rm > priorBest1rm;
-    return { best1rm, bestSet, lastTop, isNewPR };
+    return { best1rm, bestSet, lastTop: lastTopSet, isNewPR };
   }, [history]);
 
-  const suggestedNext = useMemo(() => {
-    if (!best.lastTop) return null;
-    const w = Number(best.lastTop.weightKg) || 0;
-    const r = Number(best.lastTop.reps) || 0;
-    if (w <= 0 || r <= 0) return null;
-    const nextW = r <= 10
-      ? roundToStep(w + 2.5, 2.5)
-      : roundToStep(w * 1.05, 2.5);
-    return { weightKg: nextW, reps: r };
-  }, [best.lastTop]);
+  const suggestedNext = useMemo(
+    () => suggestNextSet(best.lastTop),
+    [best.lastTop],
+  );
 
   const muscleLabels = useMemo(() => {
     const ids = ex?.muscles?.primary || [];
@@ -322,6 +316,11 @@ export function Exercise({ exerciseId }) {
                 ? `× ${suggestedNext.reps} повт.`
                 : "Заповни сети, щоб зʼявилась рекомендація"}
             </div>
+            {suggestedNext?.altWeightKg != null && (
+              <div className="text-[10px] text-accent mt-1">
+                {`або ${fmt(suggestedNext.altWeightKg, 1)} × ${suggestedNext.altReps} повт.`}
+              </div>
+            )}
             {suggestedNext && best.lastTop && (
               <div className="text-[10px] text-subtle/70 mt-1">
                 {`зараз: ${best.lastTop.weightKg ?? 0} × ${best.lastTop.reps ?? 0}`}

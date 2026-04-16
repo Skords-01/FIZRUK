@@ -37,19 +37,30 @@ export function getExercisePR(workouts, exerciseId) {
 }
 
 /**
- * Рекомендує наступний сет на основі останнього кращого:
- *   reps ≤ 10 → +2.5 кг (та ж кількість повт.)
- *   reps > 10 → +5% від ваги (округлити до 2.5 кг)
- * Повертає { weightKg, reps } або null.
+ * Рекомендує наступний сет на основі останнього кращого сету (за 3 зонами):
+ *   reps ≤ 5  → +2.5 кг, ті самі повт.
+ *   reps 6-10 → primary: +2.5 кг / ті самі повт.
+ *               alt: та сама вага / +1 повт.
+ *   reps > 10 → +5% ваги (округл. до 2.5 кг), ті самі повт.
+ * Повертає { weightKg, reps, altWeightKg?, altReps? } або null.
  */
 export function suggestNextSet(lastBestSet) {
   const w = Number(lastBestSet?.weightKg) || 0;
   const r = Number(lastBestSet?.reps) || 0;
   if (w <= 0 || r <= 0) return null;
-  const nextW = r <= 10
-    ? roundToStep(w + 2.5, 2.5)
-    : roundToStep(w * 1.05, 2.5);
-  return { weightKg: nextW, reps: r };
+
+  if (r <= 5) {
+    return { weightKg: roundToStep(w + 2.5, 2.5), reps: r };
+  }
+  if (r <= 10) {
+    return {
+      weightKg: roundToStep(w + 2.5, 2.5),
+      reps: r,
+      altWeightKg: w,
+      altReps: r + 1,
+    };
+  }
+  return { weightKg: roundToStep(w * 1.05, 2.5), reps: r };
 }
 
 export function workoutTonnageKg(w) {
