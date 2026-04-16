@@ -66,11 +66,18 @@ function SettingsGroup({ title, emoji, children, defaultOpen = false }) {
         </div>
         <ChevronIcon expanded={open} />
       </button>
-      {open && (
-        <div className="border-t border-line/60 p-4 space-y-5">
-          {children}
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows] duration-200 ease-in-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-line/60 p-4 space-y-5">
+            {children}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -89,7 +96,16 @@ function SettingsSubGroup({ title, children, defaultOpen = false }) {
           {title}
         </span>
       </button>
-      {open && <div className="pt-2 space-y-3">{children}</div>}
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows] duration-200 ease-in-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="pt-2 space-y-3">{children}</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -158,7 +174,7 @@ function ConfirmModal({ open, title, body, confirmLabel, danger, onConfirm, onCa
 
 function GeneralSection({ dark, onToggleDark, syncing, onSync, onPull, user }) {
   return (
-    <SettingsGroup title="Загальні" emoji="⚙️" defaultOpen>
+    <SettingsGroup title="Загальні" emoji="⚙️">
       <ToggleRow
         label="Темна тема"
         checked={dark}
