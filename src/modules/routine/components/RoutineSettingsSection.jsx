@@ -690,7 +690,7 @@ export function RoutineSettingsSection({
                   key={c.id}
                   className={cn(
                     "flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-panelHi border border-line/50",
-                    editingCatId === c.id && "ring-2 ring-routine-ring/60",
+                    editingCatId === c.id && "ring-2 ring-routine-ring/60 dark:ring-routine/40",
                   )}
                 >
                   <div className="flex items-center gap-2 min-w-0">
@@ -782,7 +782,7 @@ export function RoutineSettingsSection({
                 className={cn(
                   "flex flex-col gap-2 border-b border-line/40 pb-3 last:border-0 last:pb-0 cursor-grab active:cursor-grabbing",
                   editingId === h.id &&
-                    "ring-2 ring-routine-ring/60 rounded-xl p-2 -mx-1",
+                    "ring-2 ring-routine-ring/60 dark:ring-routine/40 rounded-xl p-2 -mx-1",
                   dragId === h.id && "opacity-70",
                 )}
                 onDragStart={(e) => {
@@ -862,7 +862,7 @@ export function RoutineSettingsSection({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="!h-9 !px-3 !text-xs border border-routine-line/60 bg-routine-surface/40"
+                      className="!h-9 !px-3 !text-xs border border-routine-line/60 dark:border-routine/25 bg-routine-surface/40 dark:bg-routine/10"
                       onClick={() => setDetailHabitId(h.id)}
                     >
                       Деталі

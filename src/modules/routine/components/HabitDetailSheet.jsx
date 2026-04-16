@@ -159,7 +159,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               {tag.map((t) => (
                 <span
                   key={t}
-                  className="text-[10px] px-2 py-0.5 rounded-full bg-routine-surface border border-routine-line/50 text-routine-kicker font-medium"
+                  className="text-[10px] px-2 py-0.5 rounded-full bg-routine-surface dark:bg-routine/12 border border-routine-line/50 dark:border-routine/25 text-routine-kicker dark:text-routine font-medium"
                 >
                   {t}
                 </span>
@@ -275,11 +275,11 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
                   className={cn(
                     "aspect-square flex items-center justify-center rounded-lg text-[11px] font-medium transition-colors",
                     done
-                      ? "bg-routine-surface2 text-routine-done border border-routine-ring/40 font-bold"
+                      ? "bg-routine-surface2 dark:bg-routine/15 text-routine-done dark:text-routine border border-routine-ring/40 dark:border-routine/30 font-bold"
                       : scheduled
                         ? "bg-panelHi/60 text-muted border border-line/30"
                         : "text-subtle/50",
-                    isToday && "ring-1 ring-routine-ring/60",
+                    isToday && "ring-1 ring-routine-ring/60 dark:ring-routine/50",
                   )}
                   title={
                     done
@@ -296,7 +296,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
           </div>
           <div className="flex items-center gap-3 mt-2 text-[9px] text-subtle">
             <span className="flex items-center gap-1">
-              <span className="inline-block w-3 h-3 rounded bg-routine-surface2 border border-routine-ring/40" />
+              <span className="inline-block w-3 h-3 rounded bg-routine-surface2 dark:bg-routine/15 border border-routine-ring/40 dark:border-routine/30" />
               Виконано
             </span>
             <span className="flex items-center gap-1">

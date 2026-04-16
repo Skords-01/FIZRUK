@@ -133,6 +133,10 @@
   .routine-hero-card {
     @apply rounded-3xl p-5 border border-routine-ring/55 bg-routine-hero shadow-card;
   }
+  .dark .routine-hero-card {
+    @apply bg-panel border-routine/25;
+    background-image: none;
+  }
 
   /* Bottom sheet над навігацією */
   .fizruk-sheet-pad {

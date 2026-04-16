@@ -75,7 +75,7 @@ export function DayReportSheet({
             </p>
             <ul className="space-y-1.5">
               {done.map((h) => (
-                <li key={h.id} className="flex items-center gap-3 rounded-xl bg-routine-surface/40 border border-routine-line/30 px-3 py-2.5">
+                <li key={h.id} className="flex items-center gap-3 rounded-xl bg-routine-surface/40 dark:bg-routine/10 border border-routine-line/30 dark:border-routine/20 px-3 py-2.5">
                   <button
                     type="button"
                     onClick={() => onToggleHabit(h.id, dateKey)}
