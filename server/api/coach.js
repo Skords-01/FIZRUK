@@ -146,9 +146,6 @@ export default async function coachHandler(req, res) {
   if (path.endsWith("/insight")) {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-    const user = await getSessionUser(req);
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
-
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
 
