@@ -34,11 +34,16 @@ export function mergeItems(oldItems, newItems) {
     if (!n) continue;
     const key = canonicalFoodKey(n);
 
-    const incomingQty =
+    const rawQty =
       it?.qty != null && it.qty !== "" && Number.isFinite(Number(it.qty))
         ? Number(it.qty)
         : null;
-    const incomingUnit = it?.unit ? normalizeUnit(it.unit) : null;
+    const rawUnit = it?.unit ? normalizeUnit(it.unit) : null;
+
+    // Гола назва без кількості/одиниці трактується як "1 шт" — це дозволяє
+    // сумувати "огірок" з існуючим "огірки 4 шт" так само, як "огірок 1".
+    const incomingQty = rawQty == null && !rawUnit ? 1 : rawQty;
+    const incomingUnit = rawQty == null && !rawUnit ? "шт" : rawUnit;
 
     // Гібрид: сумуємо лише якщо є qty+unit і одиниці сумісні (або однакові)
     if (incomingQty != null && incomingUnit) {
@@ -72,9 +77,9 @@ export function mergeItems(oldItems, newItems) {
       }
     }
 
-    // Якщо не сумуємо — перевіряємо чи є запис з тим самим ім'ям
+    // Якщо не сумуємо — перевіряємо чи є запис з тим самим (канонічним) ім'ям
     const sameNameIdx = merged.findIndex(
-      (x) => normalizeFoodName(x?.name) === n,
+      (x) => canonicalFoodKey(x?.name) === key,
     );
 
     if (sameNameIdx >= 0) {
