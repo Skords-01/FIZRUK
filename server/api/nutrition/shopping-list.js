@@ -25,11 +25,17 @@ const SYSTEM = `Ти помічник з планування покупок і 
 }
 
 Категорії (використовуй лише доречні):
-"М'ясо та риба", "Молочні продукти", "Овочі", "Фрукти", "Крупи та злаки",
+"М'ясо та риба", "Молочні продукти", "Овочі та гриби", "Фрукти", "Крупи та злаки",
 "Хлібобулочні вироби", "Яйця", "Олії та жири", "Приправи та соуси", "Напої", "Інше"
 
+Правила класифікації:
+- Гриби (печериці, шампіньйони, лисички, гливи тощо) → "Овочі та гриби"
+- Молоко, сир, йогурт, вершки, масло, кефір → "Молочні продукти"
+- М'ясо, птиця, риба, морепродукти → "М'ясо та риба"
+- Яйця → "Яйця"
+
 Правила:
-- Об'єднуй однакові інгредієнти з різних рецептів у один пункт
+- КОЖЕН продукт має з'явитися в списку ЛИШЕ ОДИН РАЗ — якщо той самий продукт є в кількох рецептах, об'єднай у один пункт і підсумуй кількість
 - ВИКЛЮЧАЙ продукти, що вже є в коморі (pantry)
 - quantity: вказуй кількість (напр. "500 г", "1 шт", "2 пачки")
 - note: якщо потрібна порада або уточнення — додай стисло, інакше ""
@@ -137,6 +143,10 @@ ${ingredientsList}
       parsed && typeof parsed === "object" && !Array.isArray(parsed)
         ? parsed
         : {};
+
+    const seenNames = new Set();
+    const normalize = (s) => s.toLowerCase().replace(/\s+/g, " ").trim();
+
     const categories = Array.isArray(obj.categories)
       ? obj.categories
           .map((cat) => {
@@ -148,6 +158,9 @@ ${ingredientsList}
                     if (!item || typeof item !== "object") return null;
                     const itemName = String(item.name || "").trim();
                     if (!itemName) return null;
+                    const key = normalize(itemName);
+                    if (seenNames.has(key)) return null;
+                    seenNames.add(key);
                     return {
                       id: `si_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
                       name: itemName,
