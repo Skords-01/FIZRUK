@@ -18,7 +18,10 @@ import {
   ROUTINE_TIME_MODES as TIME_MODES,
 } from "../lib/routineConstants.js";
 import { setCompletionNote } from "../lib/routineStorage.js";
-import { useRoutineCalendar } from "../context/RoutineCalendarContext.jsx";
+import {
+  useRoutineCalendarActions,
+  useRoutineCalendarData,
+} from "../context/RoutineCalendarContext.jsx";
 
 export function RoutineCalendarPanel({ hidden: panelHidden }) {
   const {
@@ -30,7 +33,6 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
     completionRate,
     dayProgress,
     timeMode,
-    applyTimeMode,
     selectedDay,
     todayKey,
     shiftWeekStrip,
@@ -51,13 +53,11 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
     hasListFilter,
     hasNoHabits,
     grouped,
-    onToggleHabit,
-    setRoutine,
-    setMainTab,
-    onOpenModule,
     canBulkMark,
-    onBulkMarkDay,
-  } = useRoutineCalendar();
+  } = useRoutineCalendarData();
+
+  const { applyTimeMode, onToggleHabit, setRoutine, setMainTab, onOpenModule, onBulkMarkDay } =
+    useRoutineCalendarActions();
   const [dayReportOpen, setDayReportOpen] = useState(false);
   const [detailHabitId, setDetailHabitId] = useState(null);
 

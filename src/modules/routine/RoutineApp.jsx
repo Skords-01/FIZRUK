@@ -487,7 +487,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
           tabIndex={-1}
         >
           <RoutineCalendarProvider
-            value={useMemo(
+            data={useMemo(
               () => ({
                 rangeLabel,
                 headlineDate,
@@ -497,7 +497,6 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                 completionRate: completionRateVal,
                 dayProgress,
                 timeMode,
-                applyTimeMode,
                 selectedDay,
                 todayKey,
                 shiftWeekStrip,
@@ -518,12 +517,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                 hasListFilter,
                 hasNoHabits,
                 grouped,
-                onToggleHabit,
-                setRoutine,
-                setMainTab,
-                onOpenModule,
                 canBulkMark,
-                onBulkMarkDay,
               }),
               [
                 rangeLabel,
@@ -534,7 +528,6 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                 completionRateVal,
                 dayProgress,
                 timeMode,
-                applyTimeMode,
                 selectedDay,
                 todayKey,
                 shiftWeekStrip,
@@ -555,11 +548,24 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
                 hasListFilter,
                 hasNoHabits,
                 grouped,
+                canBulkMark,
+              ],
+            )}
+            actions={useMemo(
+              () => ({
+                applyTimeMode,
                 onToggleHabit,
                 setRoutine,
                 setMainTab,
                 onOpenModule,
-                canBulkMark,
+                onBulkMarkDay,
+              }),
+              [
+                applyTimeMode,
+                onToggleHabit,
+                setRoutine,
+                setMainTab,
+                onOpenModule,
                 onBulkMarkDay,
               ],
             )}

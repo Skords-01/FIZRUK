@@ -1,18 +1,33 @@
 import { createContext, useContext } from "react";
 
-const RoutineCalendarContext = createContext(null);
+const RoutineCalendarDataContext = createContext(null);
+const RoutineCalendarActionsContext = createContext(null);
 
-export function RoutineCalendarProvider({ value, children }) {
+export function RoutineCalendarProvider({ data, actions, children }) {
   return (
-    <RoutineCalendarContext.Provider value={value}>
-      {children}
-    </RoutineCalendarContext.Provider>
+    <RoutineCalendarDataContext.Provider value={data}>
+      <RoutineCalendarActionsContext.Provider value={actions}>
+        {children}
+      </RoutineCalendarActionsContext.Provider>
+    </RoutineCalendarDataContext.Provider>
   );
 }
 
-export function useRoutineCalendar() {
-  const ctx = useContext(RoutineCalendarContext);
-  if (!ctx) throw new Error("useRoutineCalendar must be used within RoutineCalendarProvider");
+export function useRoutineCalendarData() {
+  const ctx = useContext(RoutineCalendarDataContext);
+  if (!ctx)
+    throw new Error(
+      "useRoutineCalendarData must be used within RoutineCalendarProvider",
+    );
+  return ctx;
+}
+
+export function useRoutineCalendarActions() {
+  const ctx = useContext(RoutineCalendarActionsContext);
+  if (!ctx)
+    throw new Error(
+      "useRoutineCalendarActions must be used within RoutineCalendarProvider",
+    );
   return ctx;
 }
 
