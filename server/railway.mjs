@@ -24,6 +24,7 @@ import dayPlan from "./api/nutrition/day-plan.js";
 import shoppingList from "./api/nutrition/shopping-list.js";
 import weeklyDigest from "./api/weekly-digest.js";
 import coachHandler from "./api/coach.js";
+import { vapidPublic, subscribe as pushSubscribe, unsubscribe as pushUnsubscribe, sendPush } from "./api/push.js";
 import foodSearchHandler from "./api/food-search.js";
 import { setCorsHeaders } from "./api/lib/cors.js";
 import { rateLimitExpress } from "./api/lib/rateLimit.js";
@@ -117,6 +118,12 @@ app.get(
   rateLimitExpress({ key: "api:food-search", limit: 40, windowMs: 60_000 }),
   wrap(foodSearchHandler),
 );
+
+app.get("/api/push/vapid-public", wrap(vapidPublic));
+app.use("/api/push", rateLimitExpress({ key: "api:push", limit: 30, windowMs: 60_000 }));
+app.post("/api/push/subscribe", wrap(pushSubscribe));
+app.delete("/api/push/subscribe", wrap(pushUnsubscribe));
+app.post("/api/push/send", wrap(sendPush));
 
 app.use((err, _req, res, _next) => {
   console.error(err);

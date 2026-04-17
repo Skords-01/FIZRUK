@@ -88,6 +88,19 @@ export async function ensureSchema() {
       EXCEPTION WHEN duplicate_column THEN NULL;
       END $$
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        endpoint TEXT NOT NULL UNIQUE,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(
+      `CREATE INDEX IF NOT EXISTS idx_push_subs_user ON push_subscriptions(user_id)`,
+    );
   } finally {
     client.release();
   }

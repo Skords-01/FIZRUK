@@ -256,3 +256,26 @@ self.addEventListener("notificationclose", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
+
+// ── Web Push ─────────────────────────────────────────────────────
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: event.data.text() };
+  }
+
+  const title = payload.title || "Мій простір";
+  const options = {
+    body: payload.body || "",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: payload.tag || `push_${Date.now()}`,
+    requireInteraction: false,
+    data: { module: payload.module || null },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});

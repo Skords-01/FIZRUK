@@ -4,6 +4,7 @@ import { Button } from "@shared/components/ui/Button";
 import { HubBackupPanel } from "./HubBackupPanel.jsx";
 import { resetDashboardOrder } from "./HubDashboard.jsx";
 import { useWeeklyDigest } from "./useWeeklyDigest.js";
+import { PushNotificationToggle } from "./components/PushNotificationToggle.jsx";
 import {
   loadRoutineState,
   setPref,
@@ -294,6 +295,8 @@ function NotificationsSection() {
           <p className="text-[11px] text-subtle">Відкрий налаштування браузера, щоб дозволити</p>
         )}
       </div>
+
+      <PushNotificationToggle className="p-3 rounded-xl bg-bg border border-line" />
 
       <SettingsSubGroup title="Звички (Рутина)" defaultOpen>
         <ToggleRow

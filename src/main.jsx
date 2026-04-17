@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import App from "./core/App";
 import "./index.css";
 import { storageManager } from "@shared/lib/storageManager.js";
@@ -38,7 +39,9 @@ class ErrorBoundary extends React.Component {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ErrorBoundary>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </ErrorBoundary>,
 );
 

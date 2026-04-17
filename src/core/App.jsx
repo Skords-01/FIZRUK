@@ -1,4 +1,5 @@
 import { useState, useCallback, lazy, Suspense, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { cn } from "@shared/lib/cn";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
 import { useDarkMode } from "@shared/hooks/useDarkMode";
@@ -48,45 +49,8 @@ const FinykApp = lazy(() => import("../modules/finyk/FinykApp"));
 const FizrukApp = lazy(() => import("../modules/fizruk/FizrukApp"));
 const NutritionApp = lazy(() => import("../modules/nutrition/NutritionApp"));
 
-const HUB_MODULE_KEY = "hub_last_module";
 const VALID_MODULES = new Set(["finyk", "fizruk", "routine", "nutrition"]);
-
 const VALID_ACTIONS = new Set(["add_expense", "start_workout", "add_meal"]);
-
-function readInitialAction() {
-  if (typeof window === "undefined") return null;
-  try {
-    const q = new URLSearchParams(window.location.search).get("action");
-    if (VALID_ACTIONS.has(q)) return q;
-  } catch {}
-  return null;
-}
-
-function readInitialModule() {
-  if (typeof window === "undefined") return null;
-  try {
-    const q = new URLSearchParams(window.location.search).get("module");
-    if (VALID_MODULES.has(q)) return q;
-  } catch {}
-  try {
-    const s = localStorage.getItem(HUB_MODULE_KEY);
-    if (VALID_MODULES.has(s)) return s;
-  } catch {}
-  return null;
-}
-
-function persistModuleToUrlAndStorage(moduleId) {
-  try {
-    if (moduleId) localStorage.setItem(HUB_MODULE_KEY, moduleId);
-    else localStorage.removeItem(HUB_MODULE_KEY);
-  } catch {}
-  try {
-    const url = new URL(window.location.href);
-    if (moduleId) url.searchParams.set("module", moduleId);
-    else url.searchParams.delete("module");
-    window.history.replaceState(null, "", url);
-  } catch {}
-}
 
 
 function PageLoader() {
@@ -426,7 +390,16 @@ function consumePwaAction() {
 }
 
 function AppInner() {
-  const [activeModule, setActiveModule] = useState(readInitialModule);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const initialModule = (() => {
+    const q = searchParams.get("module");
+    if (VALID_MODULES.has(q)) return q;
+    return null;
+  })();
+
+  const [activeModule, setActiveModule] = useState(initialModule);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInitialMessage, setChatInitialMessage] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
@@ -435,14 +408,9 @@ function AppInner() {
   const [moduleAnimClass, setModuleAnimClass] = useState("module-enter");
   const [searchOpen, setSearchOpen] = useState(false);
   const [pwaAction, setPwaAction] = useState(() => {
-    const fromUrl = readInitialAction();
-    if (fromUrl) {
+    const fromUrl = searchParams.get("action");
+    if (VALID_ACTIONS.has(fromUrl)) {
       try { localStorage.setItem(PWA_ACTION_KEY, fromUrl); } catch {}
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("action");
-        window.history.replaceState(null, "", url);
-      } catch {}
       return fromUrl;
     }
     return consumePwaAction();
@@ -459,18 +427,14 @@ function AppInner() {
   const goToHub = useCallback(() => {
     setModuleAnimClass("hub-enter");
     setActiveModule(null);
-    persistModuleToUrlAndStorage(null);
-    try {
-      const url = new URL(window.location.href);
-      url.hash = "";
-      window.history.replaceState(null, "", url);
-    } catch {}
-  }, []);
+    navigate("/", { replace: false });
+  }, [navigate]);
 
   const openModule = useCallback(
     (id, opts = {}) => {
       const nextId = String(id || "").trim();
-      const isSame = nextId && nextId === activeModule;
+      if (!VALID_MODULES.has(nextId)) return;
+      const isSame = nextId === activeModule;
 
       try {
         const raw = opts.hash != null ? String(opts.hash).trim() : "";
@@ -484,10 +448,20 @@ function AppInner() {
       }
       setModuleAnimClass("module-enter");
       setActiveModule(nextId);
-      persistModuleToUrlAndStorage(nextId);
+      navigate(`/?module=${nextId}`, { replace: false });
     },
-    [activeModule],
+    [activeModule, navigate],
   );
+
+  // Sync activeModule from browser navigation (back/forward)
+  useEffect(() => {
+    const q = searchParams.get("module");
+    const mod = VALID_MODULES.has(q) ? q : null;
+    if (mod !== activeModule) {
+      setModuleAnimClass(mod ? "module-enter" : "hub-enter");
+      setActiveModule(mod);
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onMessage = (event) => {
