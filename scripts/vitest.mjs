@@ -31,18 +31,11 @@ function stripLocalstorageFlag(nodeOptionsRaw) {
   return out.join(" ");
 }
 
-const localStorageFile = resolve(__dirname, "../.vitest-localstorage.json");
-
 const child = spawn(process.execPath, [vitestEntry, ...args], {
   stdio: "inherit",
   env: {
     ...process.env,
-    NODE_OPTIONS: [
-      stripLocalstorageFlag(process.env.NODE_OPTIONS),
-      `--localstorage-file=${localStorageFile}`,
-    ]
-      .filter(Boolean)
-      .join(" "),
+    NODE_OPTIONS: stripLocalstorageFlag(process.env.NODE_OPTIONS),
   },
 });
 

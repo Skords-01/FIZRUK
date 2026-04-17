@@ -258,7 +258,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
 
   const dayCounts = useMemo(() => countEventsByDate(events), [events]);
 
-  const goMonth = (delta) => {
+  const goMonth = useCallback((delta) => {
     setMonthCursor((c) => {
       let m = c.m + delta;
       let y = c.y;
@@ -272,7 +272,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
       }
       return { y, m };
     });
-  };
+  }, []);
 
   const goToToday = useCallback(() => {
     const t = todayDate();

@@ -407,7 +407,7 @@ export function usePrivatbank(enabled = true) {
       setConnected(true);
       connectRef.current(storedId, storedToken, false);
     }
-  }, [enabled]);
+  }, [enabled, storedId, storedToken]);
 
   return {
     merchantId: storedId,

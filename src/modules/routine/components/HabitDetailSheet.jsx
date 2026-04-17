@@ -53,7 +53,10 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
   useDialogFocusTrap(true, ref, { onEscape: onClose });
 
   const habit = routine.habits.find((h) => h.id === habitId);
-  const completions = routine.completions[habitId] || [];
+  const completions = useMemo(
+    () => routine.completions[habitId] || [],
+    [routine.completions, habitId],
+  );
   const tk = todayKey();
 
   const now = new Date();

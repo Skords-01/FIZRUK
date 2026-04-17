@@ -196,7 +196,7 @@ export default function App({
     const tasks = [mono.refresh()];
     if (privat.connected) tasks.push(privat.refresh());
     await Promise.allSettled(tasks);
-  }, [mono.refresh, privat.connected, privat.refresh]);
+  }, [mono, privat]);
 
   const mergedMono = useMemo(() => {
     const privatTxs = privat.transactions || [];

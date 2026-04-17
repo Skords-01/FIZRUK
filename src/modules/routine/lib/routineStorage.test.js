@@ -5,6 +5,22 @@ import {
   ROUTINE_STORAGE_KEY,
 } from "./routineStorage.js";
 
+if (!globalThis.localStorage) {
+  let store = {};
+  globalThis.localStorage = {
+    getItem: (key) => (key in store ? store[key] : null),
+    setItem: (key, value) => {
+      store[key] = String(value);
+    },
+    removeItem: (key) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+}
+
 describe("routine/routineStorage", () => {
   it("loadRoutineState returns default when empty", () => {
     localStorage.removeItem(ROUTINE_STORAGE_KEY);
@@ -15,7 +31,7 @@ describe("routine/routineStorage", () => {
 
   it("saveRoutineState returns false on storage failure", () => {
     const spy = vi
-      .spyOn(globalThis.localStorage.__proto__, "setItem")
+      .spyOn(globalThis.localStorage, "setItem")
       .mockImplementation(() => {
         throw new Error("quota");
       });
