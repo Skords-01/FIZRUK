@@ -1,34 +1,82 @@
-/** Спільні константи UI модуля «Рутина» (без JSX) */
+/**
+ * Sergeant Design System — Routine Module Theme Constants
+ *
+ * Soft & Organic aesthetic with coral accent.
+ * Inspired by: Duolingo gamification, warm friendly feel
+ */
 
 export const ROUTINE_THEME = {
-  eyebrow: "text-routine-eyebrow",
-  /** Заголовок картки-огляду (hero) */
-  heroKicker: "text-routine-kicker/90 dark:text-routine",
-  /** Картки метрик у hero */
+  // Text accents
+  eyebrow: "text-routine",
+  heroKicker: "text-routine/90 dark:text-routine",
+
+  // Cards & surfaces
   statCard:
-    "rounded-2xl bg-panel/70 border border-routine-line/50 dark:border-routine/20 p-3 text-center shadow-sm",
-  statCardEmerald:
-    "rounded-2xl bg-panel/70 border border-emerald-200/60 dark:border-emerald-700/40 p-3 text-center shadow-sm",
+    "rounded-2xl bg-panel/80 border border-coral-100/60 dark:border-coral-800/30 p-3 text-center shadow-card backdrop-blur-sm",
+  statCardHighlight:
+    "rounded-2xl bg-routine-surface/80 border border-routine-ring/50 dark:border-routine/30 p-3 text-center shadow-card",
+
+  // Empty state
   emptyStateWarm:
-    "rounded-2xl border border-routine-line/60 dark:border-routine/25 bg-routine-surface3 dark:bg-routine/8 p-6 text-center shadow-card",
+    "rounded-2xl border border-coral-100/60 dark:border-routine/25 bg-coral-50/50 dark:bg-routine/8 p-6 text-center shadow-card",
+
+  // Links & accents
   linkAccent:
-    "font-semibold text-routine-strong dark:text-routine underline decoration-routine-ring/80 dark:decoration-routine/50",
+    "font-semibold text-routine hover:text-routine-hover underline decoration-routine-ring/60 dark:decoration-routine/50 transition-colors",
+
+  // Habit list items
   habitRowAccent: "border-l-routine",
+  habitRowDone:
+    "border-l-routine bg-coral-50/50 dark:bg-routine/10",
+
+  // Icon containers
   iconBox:
-    "bg-routine-surface dark:bg-routine/12 border-routine-line/80 dark:border-routine/30 text-routine-strong dark:text-routine",
-  navActive: "text-routine-strong dark:text-routine",
-  navBar: "bg-routine-nav",
+    "bg-routine-surface dark:bg-routine/12 border-coral-100 dark:border-routine/30 text-routine dark:text-routine",
+
+  // Navigation
+  navActive: "text-routine dark:text-routine",
+  navBar: "bg-routine",
+
+  // Chips/pills
   chipOn:
-    "border-routine-ring dark:border-routine/40 bg-routine-surface2 dark:bg-routine/15 text-text shadow-sm",
+    "border-routine-ring dark:border-routine/40 bg-routine-surface dark:bg-routine/15 text-routine shadow-sm",
   chipOff:
-    "border-line/60 bg-panel text-muted hover:text-text hover:bg-panelHi",
-  dot: "bg-routine-nav",
+    "border-line/60 bg-panel text-muted hover:text-text hover:bg-panelHi transition-colors",
+
+  // Calendar dots
+  dot: "bg-routine",
+  dotComplete: "bg-routine/80",
+
+  // Month selector
   monthSel:
-    "bg-routine-surface2 dark:bg-routine/15 border-routine-ring dark:border-routine/40 ring-1 ring-routine-line/50 dark:ring-routine/30",
-  done: "border-routine/45 bg-routine-surface dark:bg-routine/12 text-routine-done dark:text-routine",
-  primary: "!bg-routine hover:!bg-routine-hover !text-white border-0 shadow-md",
+    "bg-routine-surface dark:bg-routine/15 border-routine-ring dark:border-routine/40 ring-1 ring-coral-100/50 dark:ring-routine/30",
+
+  // Completion states
+  done: "border-routine/45 bg-routine-surface dark:bg-routine/12 text-routine dark:text-routine",
+  doneCheck: "text-routine",
+
+  // Primary button
+  primary:
+    "bg-routine hover:bg-routine-hover text-white border-0 shadow-sm transition-all duration-200 active:scale-[0.98]",
+  primarySoft:
+    "bg-routine-surface hover:bg-coral-100 text-routine border border-routine-ring/50 transition-all duration-200",
+
+  // Secondary/ghost
+  secondary:
+    "bg-panel hover:bg-panelHi text-text border border-line transition-all duration-200",
+
+  // Progress ring colors
+  progressTrack: "text-coral-100 dark:text-coral-900/30",
+  progressFill: "text-routine",
+
+  // Hero card gradient
+  heroGradient: "bg-hero-coral",
+
+  // Success animation colors
+  successPulse: "rgba(249, 112, 102, 0.4)",
 };
 
+// Time mode options
 export const ROUTINE_TIME_MODES = [
   { id: "today", label: "Сьогодні" },
   { id: "tomorrow", label: "Завтра" },
@@ -36,12 +84,31 @@ export const ROUTINE_TIME_MODES = [
   { id: "month", label: "Місяць" },
 ];
 
+// Recurrence patterns
 export const RECURRENCE_OPTIONS = [
   { value: "daily", label: "Щодня" },
-  { value: "weekdays", label: "Будні (пн–пт)" },
+  { value: "weekdays", label: "Будні (пн-пт)" },
   { value: "weekly", label: "Обрані дні тижня" },
-  { value: "monthly", label: "Щомісяця (число; лютий — останній день)" },
+  { value: "monthly", label: "Щомісяця (число; лютий - останній день)" },
   { value: "once", label: "Одноразово (одна дата)" },
 ];
 
+// Weekday labels (Ukrainian, Monday first)
 export const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+
+// Gamification streak thresholds
+export const STREAK_MILESTONES = [3, 7, 14, 21, 30, 60, 90, 180, 365];
+
+// Get milestone message based on streak count
+export function getStreakMessage(streak) {
+  if (streak >= 365) return "Неймовірно! Рік послідовності!";
+  if (streak >= 180) return "Півроку! Ти - легенда!";
+  if (streak >= 90) return "3 місяці! Це вже стиль життя!";
+  if (streak >= 60) return "2 місяці! Звичка закріплена!";
+  if (streak >= 30) return "Місяць! Чудовий результат!";
+  if (streak >= 21) return "21 день! Звичка формується!";
+  if (streak >= 14) return "2 тижні! Так тримати!";
+  if (streak >= 7) return "Тиждень! Гарний старт!";
+  if (streak >= 3) return "3 дні поспіль!";
+  return null;
+}
