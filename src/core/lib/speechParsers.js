@@ -7,15 +7,48 @@
 // e.g. "кава 45 гривень", "продукти 320 грн", "таксі двісті п'ятдесят"
 
 const UA_NUMBER_WORDS = {
-  нуль: 0, один: 1, одна: 1, два: 2, дві: 2, три: 3, чотири: 4,
-  "п'ять": 5, шість: 6, сім: 7, вісім: 8, "дев'ять": 9,
-  десять: 10, одинадцять: 11, дванадцять: 12, тринадцять: 13, чотирнадцять: 14,
-  "п'ятнадцять": 15, шістнадцять: 16, сімнадцять: 17, вісімнадцять: 18, "дев'ятнадцять": 19,
-  двадцять: 20, тридцять: 30, сорок: 40, "п'ятдесят": 50, шістдесят: 60,
-  сімдесят: 70, вісімдесят: 80, "дев'яносто": 90,
-  сто: 100, двісті: 200, триста: 300, чотириста: 400, "п'ятсот": 500,
-  шістсот: 600, сімсот: 700, вісімсот: 800, "дев'ятсот": 900,
-  тисяча: 1000, тисячі: 1000, тисяч: 1000,
+  нуль: 0,
+  один: 1,
+  одна: 1,
+  два: 2,
+  дві: 2,
+  три: 3,
+  чотири: 4,
+  "п'ять": 5,
+  шість: 6,
+  сім: 7,
+  вісім: 8,
+  "дев'ять": 9,
+  десять: 10,
+  одинадцять: 11,
+  дванадцять: 12,
+  тринадцять: 13,
+  чотирнадцять: 14,
+  "п'ятнадцять": 15,
+  шістнадцять: 16,
+  сімнадцять: 17,
+  вісімнадцять: 18,
+  "дев'ятнадцять": 19,
+  двадцять: 20,
+  тридцять: 30,
+  сорок: 40,
+  "п'ятдесят": 50,
+  шістдесят: 60,
+  сімдесят: 70,
+  вісімдесят: 80,
+  "дев'яносто": 90,
+  сто: 100,
+  двісті: 200,
+  триста: 300,
+  чотириста: 400,
+  "п'ятсот": 500,
+  шістсот: 600,
+  сімсот: 700,
+  вісімсот: 800,
+  "дев'ятсот": 900,
+  тисяча: 1000,
+  тисячі: 1000,
+  тисяч: 1000,
 };
 
 function parseUaNumber(text) {
@@ -57,10 +90,12 @@ export function parseExpenseSpeech(text) {
     amount = parseUaNumber(text);
   }
 
-  const currencyRe =
-    /\b(?:грн?|гривень|гривні|гривня|₴|uah)\b/i;
+  const currencyRe = /\b(?:грн?|гривень|гривні|гривня|₴|uah)\b/i;
   let name = text
-    .replace(/(\d+(?:[.,]\d+)?)\s*(?:грн?|гривень|гривні|гривня|₴|uah)?\b/gi, " ")
+    .replace(
+      /(\d+(?:[.,]\d+)?)\s*(?:грн?|гривень|гривні|гривня|₴|uah)?\b/gi,
+      " ",
+    )
     .replace(currencyRe, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -98,7 +133,8 @@ export function parseWorkoutSetSpeech(text) {
   let weight = null;
   if (weightMatch) {
     weight = parseFloat(weightMatch[1].replace(",", "."));
-    if (/lb|lbs|фунт/i.test(weightMatch[0])) weight = Math.round(weight * 0.453592);
+    if (/lb|lbs|фунт/i.test(weightMatch[0]))
+      weight = Math.round(weight * 0.453592);
   }
 
   let reps = null;
@@ -109,12 +145,16 @@ export function parseWorkoutSetSpeech(text) {
 
   let exerciseName = text
     .replace(/(\d+(?:[.,]\d+)?)\s*(?:кг|kg|кілограм|lb|lbs|фунт)?\b/gi, " ")
-    .replace(/(\d+)\s*(?:повт|повторень|повторів|reps?|раз|разів|підходів|підхід|sets?)\b/gi, " ")
+    .replace(
+      /(\d+)\s*(?:повт|повторень|повторів|reps?|раз|разів|підходів|підхід|sets?)\b/gi,
+      " ",
+    )
     .replace(/\s+/g, " ")
     .trim();
 
   if (!exerciseName) exerciseName = null;
-  else exerciseName = exerciseName.charAt(0).toUpperCase() + exerciseName.slice(1);
+  else
+    exerciseName = exerciseName.charAt(0).toUpperCase() + exerciseName.slice(1);
 
   return {
     exerciseName,
@@ -141,11 +181,13 @@ export function parseMealSpeech(text) {
     lower.match(/(\d+(?:[.,]\d+)?)\s*(?:грам|гр|г\b|g\b|ml|мл)/i) ||
     lower.match(/(?:грам|гр)\s*(\d+(?:[.,]\d+)?)/i);
 
-  const proteinMatch =
-    lower.match(/(\d+(?:[.,]\d+)?)\s*(?:г\s*білка|г\s*протеїну|g\s*protein|protein)/i);
+  const proteinMatch = lower.match(
+    /(\d+(?:[.,]\d+)?)\s*(?:г\s*білка|г\s*протеїну|g\s*protein|protein)/i,
+  );
 
   let kcal = null;
-  if (kcalMatch) kcal = parseFloat((kcalMatch[1] || kcalMatch[2]).replace(",", "."));
+  if (kcalMatch)
+    kcal = parseFloat((kcalMatch[1] || kcalMatch[2]).replace(",", "."));
 
   let grams = null;
   if (gramsMatch) grams = parseFloat(gramsMatch[1].replace(",", "."));

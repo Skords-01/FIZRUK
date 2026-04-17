@@ -26,7 +26,7 @@ function getCategoryIcon(name) {
 export function ShoppingListCard({
   recipes,
   weekPlan,
-  pantryItems,
+  pantryItems: _pantryItems,
   shoppingList,
   shoppingBusy,
   onGenerate,
@@ -40,10 +40,8 @@ export function ShoppingListCard({
   const { total, checked } = getTotalCount(shoppingList);
   const hasItems = total > 0;
 
-  const hasRecipes =
-    Array.isArray(recipes) && recipes.length > 0;
-  const hasWeekPlan =
-    weekPlan?.days?.length > 0;
+  const hasRecipes = Array.isArray(recipes) && recipes.length > 0;
+  const hasWeekPlan = weekPlan?.days?.length > 0;
 
   const canGenerate =
     (source === "recipes" && hasRecipes) ||
@@ -69,14 +67,12 @@ export function ShoppingListCard({
                 "flex-1 py-2 px-3 rounded-xl text-xs font-semibold border transition-all",
                 source === "recipes"
                   ? "bg-nutrition text-white border-nutrition"
-                  : "border-line text-text hover:border-nutrition/50"
+                  : "border-line text-text hover:border-nutrition/50",
               )}
             >
               <div>Рецепти</div>
               <div className="text-[10px] opacity-70 mt-0.5">
-                {hasRecipes
-                  ? `${recipes.length} рецептів`
-                  : "немає рецептів"}
+                {hasRecipes ? `${recipes.length} рецептів` : "немає рецептів"}
               </div>
             </button>
             <button
@@ -87,14 +83,12 @@ export function ShoppingListCard({
                 "flex-1 py-2 px-3 rounded-xl text-xs font-semibold border transition-all",
                 source === "weekplan"
                   ? "bg-nutrition text-white border-nutrition"
-                  : "border-line text-text hover:border-nutrition/50"
+                  : "border-line text-text hover:border-nutrition/50",
               )}
             >
               <div>Тижневий план</div>
               <div className="text-[10px] opacity-70 mt-0.5">
-                {hasWeekPlan
-                  ? `${weekPlan.days.length} днів`
-                  : "немає плану"}
+                {hasWeekPlan ? `${weekPlan.days.length} днів` : "немає плану"}
               </div>
             </button>
           </div>
@@ -114,7 +108,7 @@ export function ShoppingListCard({
           disabled={shoppingBusy || !canGenerate}
           className={cn(
             "w-full h-11 rounded-2xl text-sm font-semibold",
-            "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50 transition-colors"
+            "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50 transition-colors",
           )}
         >
           {shoppingBusy ? "Генерую список…" : "Згенерувати список покупок"}
@@ -196,7 +190,7 @@ export function ShoppingListCard({
                         className={cn(
                           "w-full px-3 py-2.5 flex items-start gap-3 text-left transition-colors",
                           "hover:bg-nutrition/5 active:bg-nutrition/10",
-                          item.checked && "opacity-50"
+                          item.checked && "opacity-50",
                         )}
                       >
                         <span
@@ -204,7 +198,7 @@ export function ShoppingListCard({
                             "shrink-0 w-5 h-5 mt-0.5 rounded-full border-2 flex items-center justify-center transition-colors",
                             item.checked
                               ? "bg-nutrition border-nutrition"
-                              : "border-line"
+                              : "border-line",
                           )}
                           aria-hidden
                         >
@@ -229,7 +223,7 @@ export function ShoppingListCard({
                           <span
                             className={cn(
                               "text-sm text-text",
-                              item.checked && "line-through"
+                              item.checked && "line-through",
                             )}
                           >
                             {item.name}

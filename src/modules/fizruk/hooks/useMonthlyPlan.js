@@ -12,7 +12,13 @@ function todayKey() {
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { reminderEnabled: true, reminderHour: 18, reminderMinute: 0, days: {} };
+    if (!raw)
+      return {
+        reminderEnabled: true,
+        reminderHour: 18,
+        reminderMinute: 0,
+        days: {},
+      };
     const p = JSON.parse(raw);
     return {
       reminderEnabled: p.reminderEnabled !== false,
@@ -21,7 +27,12 @@ function loadState() {
       days: typeof p.days === "object" && p.days ? p.days : {},
     };
   } catch {
-    return { reminderEnabled: true, reminderHour: 18, reminderMinute: 0, days: {} };
+    return {
+      reminderEnabled: true,
+      reminderHour: 18,
+      reminderMinute: 0,
+      days: {},
+    };
   }
 }
 

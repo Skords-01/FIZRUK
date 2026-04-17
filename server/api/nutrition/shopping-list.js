@@ -1,3 +1,4 @@
+import { assertAiQuota } from "../../aiQuota.js";
 import { setCorsHeaders } from "../lib/cors.js";
 import { extractJsonFromText } from "../lib/jsonSafe.js";
 import {
@@ -52,6 +53,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
 
   if (!requireNutritionTokenIfConfigured(req, res)) return;
+  if (!(await assertAiQuota(req, res))) return;
   const rl = checkRateLimit(req, {
     key: "nutrition:shopping-list",
     limit: 12,
@@ -75,7 +77,7 @@ export default async function handler(req, res) {
       pantryArr.length > 0
         ? pantryArr
             .map((x) =>
-              typeof x === "string" ? x : x?.name ? String(x.name) : ""
+              typeof x === "string" ? x : x?.name ? String(x.name) : "",
             )
             .filter(Boolean)
             .join(", ")

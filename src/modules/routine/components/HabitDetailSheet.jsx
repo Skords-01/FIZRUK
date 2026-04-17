@@ -57,7 +57,10 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
   const tk = todayKey();
 
   const now = new Date();
-  const [calMonth, setCalMonth] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const [calMonth, setCalMonth] = useState({
+    y: now.getFullYear(),
+    m: now.getMonth(),
+  });
 
   const tag = useMemo(() => {
     if (!habit) return [];
@@ -69,11 +72,14 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
 
   const category = useMemo(() => {
     if (!habit?.categoryId) return null;
-    return routine.categories.find((c) => c.id === habit.categoryId)?.name || null;
+    return (
+      routine.categories.find((c) => c.id === habit.categoryId)?.name || null
+    );
   }, [habit, routine.categories]);
 
   const recLabel = habit
-    ? RECURRENCE_OPTIONS.find((o) => o.value === (habit.recurrence || "daily"))?.label || ""
+    ? RECURRENCE_OPTIONS.find((o) => o.value === (habit.recurrence || "daily"))
+        ?.label || ""
     : "";
 
   const currentStreak = useMemo(
@@ -86,24 +92,45 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
   );
   const totalDone = completions.length;
 
-  const pct7 = useMemo(() => (habit ? completionPct(habit, completions, 7) : null), [habit, completions]);
-  const pct30 = useMemo(() => (habit ? completionPct(habit, completions, 30) : null), [habit, completions]);
-  const pct90 = useMemo(() => (habit ? completionPct(habit, completions, 90) : null), [habit, completions]);
+  const pct7 = useMemo(
+    () => (habit ? completionPct(habit, completions, 7) : null),
+    [habit, completions],
+  );
+  const pct30 = useMemo(
+    () => (habit ? completionPct(habit, completions, 30) : null),
+    [habit, completions],
+  );
+  const pct90 = useMemo(
+    () => (habit ? completionPct(habit, completions, 90) : null),
+    [habit, completions],
+  );
 
-  const cells = useMemo(() => monthGrid(calMonth.y, calMonth.m), [calMonth.y, calMonth.m]);
+  const cells = useMemo(
+    () => monthGrid(calMonth.y, calMonth.m),
+    [calMonth.y, calMonth.m],
+  );
   const completionSet = useMemo(() => new Set(completions), [completions]);
 
-  const calMonthTitle = new Date(calMonth.y, calMonth.m, 1).toLocaleDateString("uk-UA", {
-    month: "long",
-    year: "numeric",
-  });
+  const calMonthTitle = new Date(calMonth.y, calMonth.m, 1).toLocaleDateString(
+    "uk-UA",
+    {
+      month: "long",
+      year: "numeric",
+    },
+  );
 
   const goCalMonth = (delta) => {
     setCalMonth((c) => {
       let m = c.m + delta;
       let y = c.y;
-      if (m > 11) { m = 0; y++; }
-      if (m < 0) { m = 11; y--; }
+      if (m > 11) {
+        m = 0;
+        y++;
+      }
+      if (m < 0) {
+        m = 11;
+        y--;
+      }
       return { y, m };
     });
   };
@@ -182,7 +209,10 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
         </div>
 
         <div className="text-[11px] text-subtle space-y-0.5 mb-5">
-          <p>{recLabel}{habit.timeOfDay ? ` · ${habit.timeOfDay}` : ""}</p>
+          <p>
+            {recLabel}
+            {habit.timeOfDay ? ` · ${habit.timeOfDay}` : ""}
+          </p>
           <p>
             {habit.startDate ? `з ${habit.startDate}` : ""}
             {habit.endDate ? ` до ${habit.endDate}` : ""}
@@ -199,33 +229,47 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
           </h3>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className={C.statCard}>
-              <p className="text-2xl font-black text-text tabular-nums">{currentStreak}</p>
+              <p className="text-2xl font-black text-text tabular-nums">
+                {currentStreak}
+              </p>
               <p className="text-[10px] text-subtle mt-0.5">Поточна серія</p>
             </div>
             <div className={C.statCard}>
-              <p className="text-2xl font-black text-text tabular-nums">{bestStreak}</p>
+              <p className="text-2xl font-black text-text tabular-nums">
+                {bestStreak}
+              </p>
               <p className="text-[10px] text-subtle mt-0.5">Макс серія</p>
             </div>
             <div className={C.statCard}>
-              <p className="text-2xl font-black text-text tabular-nums">{totalDone}</p>
+              <p className="text-2xl font-black text-text tabular-nums">
+                {totalDone}
+              </p>
               <p className="text-[10px] text-subtle mt-0.5">Разів виконано</p>
             </div>
             <div className={C.statCard}>
               <div className="flex items-baseline justify-center gap-1.5">
                 {pct7 !== null && (
-                  <span className="text-sm font-bold text-text tabular-nums">{pct7}%</span>
+                  <span className="text-sm font-bold text-text tabular-nums">
+                    {pct7}%
+                  </span>
                 )}
                 {pct30 !== null && (
-                  <span className="text-[11px] text-muted tabular-nums">{pct30}%</span>
+                  <span className="text-[11px] text-muted tabular-nums">
+                    {pct30}%
+                  </span>
                 )}
                 {pct90 !== null && (
-                  <span className="text-[10px] text-subtle tabular-nums">{pct90}%</span>
+                  <span className="text-[10px] text-subtle tabular-nums">
+                    {pct90}%
+                  </span>
                 )}
                 {pct7 === null && pct30 === null && pct90 === null && (
                   <span className="text-sm text-muted">—</span>
                 )}
               </div>
-              <p className="text-[10px] text-subtle mt-0.5">% за 7 / 30 / 90 д</p>
+              <p className="text-[10px] text-subtle mt-0.5">
+                % за 7 / 30 / 90 д
+              </p>
             </div>
           </div>
         </section>
@@ -259,7 +303,10 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
           </div>
           <div className="grid grid-cols-7 gap-1">
             {WEEKDAY_LABELS.map((wd) => (
-              <div key={wd} className="text-center text-[9px] text-subtle font-medium pb-1">
+              <div
+                key={wd}
+                className="text-center text-[9px] text-subtle font-medium pb-1"
+              >
                 {wd}
               </div>
             ))}
@@ -279,7 +326,8 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
                       : scheduled
                         ? "bg-panelHi/60 text-muted border border-line/30"
                         : "text-subtle/50",
-                    isToday && "ring-1 ring-routine-ring/60 dark:ring-routine/50",
+                    isToday &&
+                      "ring-1 ring-routine-ring/60 dark:ring-routine/50",
                   )}
                   title={
                     done

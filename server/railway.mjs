@@ -6,7 +6,14 @@ import express from "express";
 
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
-import { ensureSchema } from "./db.js";
+import { ensureSchema, pool } from "./db.js";
+import {
+  apiHelmetMiddleware,
+  authSensitiveRateLimit,
+  createHealthHandler,
+  requestIdMiddleware,
+  requestLogMiddleware,
+} from "./httpCommon.mjs";
 import chatHandler from "./api/chat.js";
 import monoHandler from "./api/mono.js";
 import privatHandler from "./api/privat.js";
@@ -24,7 +31,12 @@ import dayPlan from "./api/nutrition/day-plan.js";
 import shoppingList from "./api/nutrition/shopping-list.js";
 import weeklyDigest from "./api/weekly-digest.js";
 import coachHandler from "./api/coach.js";
-import { vapidPublic, subscribe as pushSubscribe, unsubscribe as pushUnsubscribe, sendPush } from "./api/push.js";
+import {
+  vapidPublic,
+  subscribe as pushSubscribe,
+  unsubscribe as pushUnsubscribe,
+  sendPush,
+} from "./api/push.js";
 import foodSearchHandler from "./api/food-search.js";
 import { setCorsHeaders } from "./api/lib/cors.js";
 import { rateLimitExpress } from "./api/lib/rateLimit.js";
@@ -33,6 +45,9 @@ const app = express();
 const port = Number(process.env.PORT) || 3000;
 
 app.disable("x-powered-by");
+app.use(requestIdMiddleware);
+app.use(requestLogMiddleware);
+app.use(apiHelmetMiddleware());
 app.use(express.json({ limit: "12mb" }));
 
 // CORS for the whole API (handlers may also set headers; safe to repeat).
@@ -51,10 +66,9 @@ function wrap(handler) {
   };
 }
 
-app.get("/health", (_req, res) => {
-  res.status(200).type("text/plain").send("ok");
-});
+app.get("/health", createHealthHandler(pool));
 
+app.use("/api/auth", authSensitiveRateLimit);
 app.all("/api/auth/*", toNodeHandler(auth));
 
 app.use(
@@ -102,7 +116,11 @@ app.all("/api/nutrition/shopping-list", wrap(shoppingList));
 
 app.all(
   "/api/weekly-digest",
-  rateLimitExpress({ key: "api:weekly-digest", limit: 10, windowMs: 60 * 60_000 }),
+  rateLimitExpress({
+    key: "api:weekly-digest",
+    limit: 10,
+    windowMs: 60 * 60_000,
+  }),
   wrap(weeklyDigest),
 );
 
@@ -120,13 +138,25 @@ app.get(
 );
 
 app.get("/api/push/vapid-public", wrap(vapidPublic));
-app.use("/api/push", rateLimitExpress({ key: "api:push", limit: 30, windowMs: 60_000 }));
+app.use(
+  "/api/push",
+  rateLimitExpress({ key: "api:push", limit: 30, windowMs: 60_000 }),
+);
 app.post("/api/push/subscribe", wrap(pushSubscribe));
 app.delete("/api/push/subscribe", wrap(pushUnsubscribe));
 app.post("/api/push/send", wrap(sendPush));
 
-app.use((err, _req, res, _next) => {
-  console.error(err);
+app.use((err, req, res, _next) => {
+  const rid = req?.requestId;
+  console.error(
+    JSON.stringify({
+      level: "error",
+      msg: "express_error",
+      requestId: rid,
+      error: err?.message || String(err),
+    }),
+  );
+  if (err?.stack) console.error(err.stack);
   if (!res.headersSent) {
     const status = Number(err?.status) || 500;
     const code =
@@ -135,7 +165,11 @@ app.use((err, _req, res, _next) => {
         : status === 429
           ? "RATE_LIMIT"
           : "INTERNAL";
-    res.status(status).json({ error: err?.message || "Server error", code });
+    res.status(status).json({
+      error: err?.message || "Server error",
+      code,
+      requestId: rid,
+    });
   }
 });
 

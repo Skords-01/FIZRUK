@@ -159,6 +159,7 @@ export function Chat({ mono, storage }) {
     try {
       const res = await fetch(apiUrl("/api/chat"), {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           context,
@@ -189,6 +190,7 @@ export function Chat({ mono, storage }) {
         // Send results back to get final AI response
         const res2 = await fetch(apiUrl("/api/chat"), {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             context,

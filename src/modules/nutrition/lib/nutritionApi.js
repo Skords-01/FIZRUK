@@ -12,6 +12,7 @@ export async function postJson(url, body) {
   try {
     res = await fetch(apiUrl(url), {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...(token ? { "X-Token": token } : {}),

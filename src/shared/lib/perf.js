@@ -23,4 +23,3 @@ export function perfEnd(mark, extra = null) {
   }
   return dt;
 }
-

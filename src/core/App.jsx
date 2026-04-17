@@ -1,4 +1,11 @@
-import { useState, useCallback, lazy, Suspense, useEffect, useRef } from "react";
+import {
+  useState,
+  useCallback,
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { cn } from "@shared/lib/cn";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
@@ -13,7 +20,9 @@ import { HubReports } from "./HubReports.jsx";
 import { HubSettingsPage } from "./HubSettingsPage.jsx";
 import { OnboardingWizard, shouldShowOnboarding } from "./OnboardingWizard.jsx";
 
-const HubSearch = lazy(() => import("./HubSearch.jsx").then((m) => ({ default: m.HubSearch })));
+const HubSearch = lazy(() =>
+  import("./HubSearch.jsx").then((m) => ({ default: m.HubSearch })),
+);
 
 function OfflineBanner() {
   return (
@@ -51,7 +60,6 @@ const NutritionApp = lazy(() => import("../modules/nutrition/NutritionApp"));
 
 const VALID_MODULES = new Set(["finyk", "fizruk", "routine", "nutrition"]);
 const VALID_ACTIONS = new Set(["add_expense", "start_workout", "add_meal"]);
-
 
 function PageLoader() {
   return (
@@ -124,7 +132,8 @@ function usePwaInstall() {
 
   useEffect(() => {
     try {
-      const count = parseInt(localStorage.getItem(PWA_SESSIONS_KEY) || "0", 10) + 1;
+      const count =
+        parseInt(localStorage.getItem(PWA_SESSIONS_KEY) || "0", 10) + 1;
       localStorage.setItem(PWA_SESSIONS_KEY, String(count));
     } catch {}
 
@@ -213,14 +222,27 @@ function IOSInstallBanner({ onDismiss }) {
     <div className="px-5 max-w-lg mx-auto w-full mb-2">
       <div className="px-4 py-3 rounded-2xl bg-panel border border-line shadow-card flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary" aria-hidden>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-primary"
+            aria-hidden
+          >
             <path d="M12 2v13M7 7l5-5 5 5" />
             <path d="M20 21H4a2 2 0 0 1-2-2v-1" />
             <path d="M22 21v-1a2 2 0 0 0-2-2" />
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text">Додай на головний екран</p>
+          <p className="text-sm font-semibold text-text">
+            Додай на головний екран
+          </p>
           <p className="text-xs text-muted mt-0.5 leading-snug">
             Щоб отримувати push-сповіщення на iOS, відкрий меню{" "}
             <span className="font-semibold">Поділитися</span>{" "}
@@ -234,7 +256,17 @@ function IOSInstallBanner({ onDismiss }) {
           className="text-muted hover:text-text shrink-0 p-1 -mt-1 -mr-1"
           aria-label="Закрити"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -310,17 +342,32 @@ function UserMenuButton({ user, syncing, lastSync, onSync, onPull, onLogout }) {
       {open && (
         <div className="absolute right-0 top-12 z-50 w-64 bg-panel border border-line rounded-2xl shadow-float p-3 space-y-2">
           <div className="px-2 py-1">
-            <p className="text-sm font-semibold text-text truncate">{user.name || "Користувач"}</p>
+            <p className="text-sm font-semibold text-text truncate">
+              {user.name || "Користувач"}
+            </p>
             <p className="text-xs text-muted truncate">{user.email}</p>
           </div>
           <div className="border-t border-line/60 pt-2 space-y-1">
             <button
               type="button"
-              onClick={() => { onSync(); setOpen(false); }}
+              onClick={() => {
+                onSync();
+                setOpen(false);
+              }}
               disabled={syncing}
               className="w-full text-left px-3 py-2 rounded-xl text-sm text-text hover:bg-panelHi transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <polyline points="16 16 12 12 8 16" />
                 <line x1="12" y1="12" x2="12" y2="21" />
                 <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
@@ -329,11 +376,24 @@ function UserMenuButton({ user, syncing, lastSync, onSync, onPull, onLogout }) {
             </button>
             <button
               type="button"
-              onClick={() => { onPull(); setOpen(false); }}
+              onClick={() => {
+                onPull();
+                setOpen(false);
+              }}
               disabled={syncing}
               className="w-full text-left px-3 py-2 rounded-xl text-sm text-text hover:bg-panelHi transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <polyline points="8 8 12 12 16 8" />
                 <line x1="12" y1="3" x2="12" y2="12" />
                 <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
@@ -349,10 +409,23 @@ function UserMenuButton({ user, syncing, lastSync, onSync, onPull, onLogout }) {
           <div className="border-t border-line/60 pt-2">
             <button
               type="button"
-              onClick={() => { onLogout(); setOpen(false); }}
+              onClick={() => {
+                onLogout();
+                setOpen(false);
+              }}
               className="w-full text-left px-3 py-2 rounded-xl text-sm text-error hover:bg-error/10 transition-colors flex items-center gap-2"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
@@ -404,13 +477,17 @@ function AppInner() {
   const [chatInitialMessage, setChatInitialMessage] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [hubView, setHubView] = useState("dashboard");
-  const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
+  const [showOnboarding, setShowOnboarding] = useState(() =>
+    shouldShowOnboarding(),
+  );
   const [moduleAnimClass, setModuleAnimClass] = useState("module-enter");
   const [searchOpen, setSearchOpen] = useState(false);
   const [pwaAction, setPwaAction] = useState(() => {
     const fromUrl = searchParams.get("action");
     if (VALID_ACTIONS.has(fromUrl)) {
-      try { localStorage.setItem(PWA_ACTION_KEY, fromUrl); } catch {}
+      try {
+        localStorage.setItem(PWA_ACTION_KEY, fromUrl);
+      } catch {}
       return fromUrl;
     }
     return consumePwaAction();
@@ -422,7 +499,15 @@ function AppInner() {
   const online = useOnlineStatus();
   const { updateAvailable, applyUpdate } = useSWUpdate();
   const { user, isLoading: authLoading, logout } = useAuth();
-  const { syncing, lastSync, pushAll, pullAll, migrationPending, uploadLocalData, skipMigration } = useCloudSync(user);
+  const {
+    syncing,
+    lastSync,
+    pushAll,
+    pullAll,
+    migrationPending,
+    uploadLocalData,
+    skipMigration,
+  } = useCloudSync(user);
 
   const goToHub = useCallback(() => {
     setModuleAnimClass("hub-enter");
@@ -465,13 +550,17 @@ function AppInner() {
 
   useEffect(() => {
     const onMessage = (event) => {
-      if (event.data?.type === "OPEN_MODULE" && VALID_MODULES.has(event.data.module)) {
+      if (
+        event.data?.type === "OPEN_MODULE" &&
+        VALID_MODULES.has(event.data.module)
+      ) {
         openModule(event.data.module);
       }
     };
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.addEventListener("message", onMessage);
-      return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+      return () =>
+        navigator.serviceWorker.removeEventListener("message", onMessage);
     }
   }, [openModule]);
 
@@ -481,15 +570,29 @@ function AppInner() {
         <div className="max-w-sm w-full bg-panel border border-line rounded-3xl p-6 shadow-float space-y-5">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 mx-auto bg-accent/10 rounded-2xl flex items-center justify-center">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent" aria-hidden>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-accent"
+                aria-hidden
+              >
                 <polyline points="16 16 12 12 8 16" />
                 <line x1="12" y1="12" x2="12" y2="21" />
                 <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-text">Локальні дані знайдено</h2>
+            <h2 className="text-xl font-bold text-text">
+              Локальні дані знайдено
+            </h2>
             <p className="text-sm text-muted leading-relaxed">
-              У вас є дані на цьому пристрої, які ще не збережено в хмарі. Бажаєте завантажити їх у свій акаунт?
+              У вас є дані на цьому пристрої, які ще не збережено в хмарі.
+              Бажаєте завантажити їх у свій акаунт?
             </p>
           </div>
           <div className="space-y-2">
@@ -544,7 +647,11 @@ function AppInner() {
               Мій простір
             </h1>
             <p className="text-sm text-muted mt-1">
-              {hubView === "reports" ? "Звіти та статистика" : hubView === "settings" ? "Налаштування" : "Дашборд та модулі"}
+              {hubView === "reports"
+                ? "Звіти та статистика"
+                : hubView === "settings"
+                  ? "Налаштування"
+                  : "Дашборд та модулі"}
             </p>
           </div>
           <div className="pt-1 flex items-center gap-1">
@@ -555,13 +662,30 @@ function AppInner() {
               title="Пошук по всіх модулях"
               className="w-10 h-10 flex items-center justify-center rounded-2xl text-muted hover:text-text hover:bg-panelHi transition-colors"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
             </button>
             {user ? (
-              <UserMenuButton user={user} syncing={syncing} lastSync={lastSync} onSync={pushAll} onPull={pullAll} onLogout={logout} />
+              <UserMenuButton
+                user={user}
+                syncing={syncing}
+                lastSync={lastSync}
+                onSync={pushAll}
+                onPull={pullAll}
+                onLogout={logout}
+              />
             ) : (
               !authLoading && (
                 <button
@@ -571,7 +695,17 @@ function AppInner() {
                   title="Увійти"
                   className="w-10 h-10 flex items-center justify-center rounded-2xl text-muted hover:text-text hover:bg-panelHi transition-colors"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
@@ -591,10 +725,20 @@ function AppInner() {
                 "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-all",
                 hubView === "dashboard"
                   ? "bg-panel text-text shadow-card"
-                  : "text-muted hover:text-text"
+                  : "text-muted hover:text-text",
               )}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <rect x="3" y="3" width="7" height="7" rx="1" />
                 <rect x="14" y="3" width="7" height="7" rx="1" />
                 <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -609,10 +753,20 @@ function AppInner() {
                 "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-all",
                 hubView === "reports"
                   ? "bg-panel text-text shadow-card"
-                  : "text-muted hover:text-text"
+                  : "text-muted hover:text-text",
               )}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <line x1="18" y1="20" x2="18" y2="10" />
                 <line x1="12" y1="20" x2="12" y2="4" />
                 <line x1="6" y1="20" x2="6" y2="14" />
@@ -626,10 +780,20 @@ function AppInner() {
                 "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-all",
                 hubView === "settings"
                   ? "bg-panel text-text shadow-card"
-                  : "text-muted hover:text-text"
+                  : "text-muted hover:text-text",
               )}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <circle cx="12" cy="12" r="3" />
                 <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
               </svg>
@@ -641,12 +805,30 @@ function AppInner() {
         {updateAvailable && (
           <div className="px-5 max-w-lg mx-auto w-full mb-2">
             <div className="px-4 py-3 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0" aria-hidden>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-primary shrink-0"
+                aria-hidden
+              >
                 <polyline points="23 4 23 10 17 10" />
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
               </svg>
-              <span className="text-sm text-text flex-1">Доступна нова версія</span>
-              <button onClick={applyUpdate} className="text-sm font-semibold text-primary hover:underline shrink-0">Оновити</button>
+              <span className="text-sm text-text flex-1">
+                Доступна нова версія
+              </span>
+              <button
+                onClick={applyUpdate}
+                className="text-sm font-semibold text-primary hover:underline shrink-0"
+              >
+                Оновити
+              </button>
             </div>
           </div>
         )}
@@ -655,19 +837,53 @@ function AppInner() {
           <div className="px-5 max-w-lg mx-auto w-full mb-2">
             <div className="px-4 py-3 rounded-2xl bg-panel border border-line shadow-card flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary" aria-hidden>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-primary"
+                  aria-hidden
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-text">Встановити додаток</p>
-                <p className="text-xs text-muted">Працює офлайн, як рідний додаток</p>
+                <p className="text-sm font-semibold text-text">
+                  Встановити додаток
+                </p>
+                <p className="text-xs text-muted">
+                  Працює офлайн, як рідний додаток
+                </p>
               </div>
-              <button onClick={install} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold shrink-0 hover:bg-primary/90 transition-colors">Так</button>
-              <button onClick={dismiss} className="text-muted hover:text-text shrink-0 p-1" aria-label="Закрити">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <button
+                onClick={install}
+                className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold shrink-0 hover:bg-primary/90 transition-colors"
+              >
+                Так
+              </button>
+              <button
+                onClick={dismiss}
+                className="text-muted hover:text-text shrink-0 p-1"
+                aria-label="Закрити"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -692,7 +908,10 @@ function AppInner() {
             <div className="flex flex-col gap-5 pt-2">
               <HubDashboard
                 onOpenModule={openModule}
-                onOpenChat={(message) => { setChatInitialMessage(message || null); setChatOpen(true); }}
+                onOpenChat={(message) => {
+                  setChatInitialMessage(message || null);
+                  setChatOpen(true);
+                }}
               />
             </div>
           )}
@@ -742,7 +961,10 @@ function AppInner() {
         {chatOpen && (
           <Suspense fallback={null}>
             <HubChat
-              onClose={() => { setChatOpen(false); setChatInitialMessage(null); }}
+              onClose={() => {
+                setChatOpen(false);
+                setChatInitialMessage(null);
+              }}
               initialMessage={chatInitialMessage}
             />
           </Suspense>
@@ -750,7 +972,10 @@ function AppInner() {
 
         {searchOpen && (
           <Suspense fallback={null}>
-            <HubSearch onClose={() => setSearchOpen(false)} onOpenModule={openModule} />
+            <HubSearch
+              onClose={() => setSearchOpen(false)}
+              onOpenModule={openModule}
+            />
           </Suspense>
         )}
       </div>
@@ -788,15 +1013,34 @@ function AppInner() {
       )}
 
       <Suspense fallback={<PageLoader />}>
-        <div key={activeModule} className={cn(moduleAnimClass, "h-full flex flex-col")}>
+        <div
+          key={activeModule}
+          className={cn(moduleAnimClass, "h-full flex flex-col")}
+        >
           <ModuleErrorBoundary onBackToHub={goToHub}>
-            {activeModule === "finyk" && <FinykApp onBackToHub={goToHub} pwaAction={pwaAction} onPwaActionConsumed={clearPwaAction} />}
-            {activeModule === "fizruk" && <FizrukApp onBackToHub={goToHub} pwaAction={pwaAction} onPwaActionConsumed={clearPwaAction} />}
+            {activeModule === "finyk" && (
+              <FinykApp
+                onBackToHub={goToHub}
+                pwaAction={pwaAction}
+                onPwaActionConsumed={clearPwaAction}
+              />
+            )}
+            {activeModule === "fizruk" && (
+              <FizrukApp
+                onBackToHub={goToHub}
+                pwaAction={pwaAction}
+                onPwaActionConsumed={clearPwaAction}
+              />
+            )}
             {activeModule === "routine" && (
               <RoutineApp onBackToHub={goToHub} onOpenModule={openModule} />
             )}
             {activeModule === "nutrition" && (
-              <NutritionApp onBackToHub={goToHub} pwaAction={pwaAction} onPwaActionConsumed={clearPwaAction} />
+              <NutritionApp
+                onBackToHub={goToHub}
+                pwaAction={pwaAction}
+                onPwaActionConsumed={clearPwaAction}
+              />
             )}
           </ModuleErrorBoundary>
         </div>

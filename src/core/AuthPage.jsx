@@ -45,7 +45,7 @@ export function AuthPage() {
                 htmlFor="auth-name"
                 className="block text-xs font-medium text-muted mb-1.5"
               >
-                Ім'я
+                Ім{"'"}я
               </label>
               <input
                 id="auth-name"
@@ -53,7 +53,7 @@ export function AuthPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-panel border border-line text-text text-sm placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors"
-                placeholder="Ваше ім'я"
+                placeholder={"Ваше ім'я"}
                 autoComplete="name"
               />
             </div>
@@ -94,7 +94,9 @@ export function AuthPage() {
               minLength={6}
               className="w-full px-4 py-3 rounded-xl bg-panel border border-line text-text text-sm placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors"
               placeholder="Мінімум 6 символів"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete={
+                mode === "login" ? "current-password" : "new-password"
+              }
             />
           </div>
 

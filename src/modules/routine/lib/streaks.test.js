@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { streakForHabit, maxStreakAllTime, completionRateForRange } from "./streaks.js";
+import {
+  streakForHabit,
+  maxStreakAllTime,
+  completionRateForRange,
+} from "./streaks.js";
 
 function dailyHabit(id = "h1") {
   return {
@@ -36,11 +40,18 @@ describe("routine/streaks", () => {
   it("completionRateForRange returns scheduled/completed/rate", () => {
     const h1 = dailyHabit("h1");
     const h2 = dailyHabit("h2");
-    const completions = { h1: ["2026-01-02"], h2: ["2026-01-01", "2026-01-02"] };
-    const r = completionRateForRange([h1, h2], completions, "2026-01-01", "2026-01-02");
+    const completions = {
+      h1: ["2026-01-02"],
+      h2: ["2026-01-01", "2026-01-02"],
+    };
+    const r = completionRateForRange(
+      [h1, h2],
+      completions,
+      "2026-01-01",
+      "2026-01-02",
+    );
     expect(r.scheduled).toBe(4);
     expect(r.completed).toBe(3);
     expect(r.rate).toBeCloseTo(0.75);
   });
 });
-

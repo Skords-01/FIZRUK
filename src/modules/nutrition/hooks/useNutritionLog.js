@@ -130,7 +130,8 @@ export function useNutritionLog() {
    * @param {string} id   - Meal ID.
    */
   const handleRemoveMeal = (date, idOrMeal) => {
-    const id = typeof idOrMeal === "string" ? idOrMeal : String(idOrMeal?.id || "");
+    const id =
+      typeof idOrMeal === "string" ? idOrMeal : String(idOrMeal?.id || "");
     if (!id) return;
     const existingTimer = pendingThumbDeletesRef.current.get(id);
     if (existingTimer) clearTimeout(existingTimer);

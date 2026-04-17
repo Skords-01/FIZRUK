@@ -9,7 +9,6 @@ import {
   createHabit,
   createTag,
   createCategory,
-  setPref,
   deleteTag,
   deleteHabit,
   updateHabit,
@@ -65,7 +64,6 @@ export function RoutineSettingsSection({
   const habitDateFieldIds = useId();
   const habitStartDateId = `${habitDateFieldIds}-start`;
   const habitEndDateId = `${habitDateFieldIds}-end`;
-  const habitTimeId = `${habitDateFieldIds}-time`;
 
   const q = habitListQuery.trim().toLowerCase();
   const filteredActiveHabits = useMemo(() => {
@@ -218,13 +216,18 @@ export function RoutineSettingsSection({
                 type="button"
                 className={cn(
                   "text-[11px] px-2.5 py-1.5 rounded-lg border font-medium transition-colors min-h-[32px]",
-                  JSON.stringify((habitDraft.reminderTimes || []).slice().sort()) ===
-                    JSON.stringify(preset.times.slice().sort())
+                  JSON.stringify(
+                    (habitDraft.reminderTimes || []).slice().sort(),
+                  ) === JSON.stringify(preset.times.slice().sort())
                     ? C.chipOn
                     : C.chipOff,
                 )}
                 onClick={() =>
-                  setHabitDraft((d) => ({ ...d, reminderTimes: [...preset.times], timeOfDay: preset.times[0] || "" }))
+                  setHabitDraft((d) => ({
+                    ...d,
+                    reminderTimes: [...preset.times],
+                    timeOfDay: preset.times[0] || "",
+                  }))
                 }
               >
                 {preset.label}
@@ -234,10 +237,16 @@ export function RoutineSettingsSection({
               type="button"
               className={cn(
                 "text-[11px] px-2.5 py-1.5 rounded-lg border font-medium transition-colors min-h-[32px]",
-                (habitDraft.reminderTimes || []).length === 0 ? C.chipOn : C.chipOff,
+                (habitDraft.reminderTimes || []).length === 0
+                  ? C.chipOn
+                  : C.chipOff,
               )}
               onClick={() =>
-                setHabitDraft((d) => ({ ...d, reminderTimes: [], timeOfDay: "" }))
+                setHabitDraft((d) => ({
+                  ...d,
+                  reminderTimes: [],
+                  timeOfDay: "",
+                }))
               }
             >
               Без
@@ -253,7 +262,11 @@ export function RoutineSettingsSection({
                   setHabitDraft((d) => {
                     const arr = [...(d.reminderTimes || [])];
                     arr[i] = e.target.value;
-                    return { ...d, reminderTimes: arr, timeOfDay: arr[0] || "" };
+                    return {
+                      ...d,
+                      reminderTimes: arr,
+                      timeOfDay: arr[0] || "",
+                    };
                   })
                 }
               />
@@ -262,8 +275,14 @@ export function RoutineSettingsSection({
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-subtle hover:text-danger hover:bg-danger/10 transition-colors"
                 onClick={() =>
                   setHabitDraft((d) => {
-                    const arr = (d.reminderTimes || []).filter((_, j) => j !== i);
-                    return { ...d, reminderTimes: arr, timeOfDay: arr[0] || "" };
+                    const arr = (d.reminderTimes || []).filter(
+                      (_, j) => j !== i,
+                    );
+                    return {
+                      ...d,
+                      reminderTimes: arr,
+                      timeOfDay: arr[0] || "",
+                    };
                   })
                 }
                 aria-label="Видалити час"
@@ -272,20 +291,21 @@ export function RoutineSettingsSection({
               </button>
             </div>
           ))}
-          {(habitDraft.reminderTimes || []).length < 5 && (habitDraft.reminderTimes || []).length > 0 && (
-            <button
-              type="button"
-              className="text-[11px] text-routine font-semibold hover:underline"
-              onClick={() =>
-                setHabitDraft((d) => ({
-                  ...d,
-                  reminderTimes: [...(d.reminderTimes || []), "12:00"],
-                }))
-              }
-            >
-              + Додати час
-            </button>
-          )}
+          {(habitDraft.reminderTimes || []).length < 5 &&
+            (habitDraft.reminderTimes || []).length > 0 && (
+              <button
+                type="button"
+                className="text-[11px] text-routine font-semibold hover:underline"
+                onClick={() =>
+                  setHabitDraft((d) => ({
+                    ...d,
+                    reminderTimes: [...(d.reminderTimes || []), "12:00"],
+                  }))
+                }
+              >
+                + Додати час
+              </button>
+            )}
         </div>
 
         {habitDraft.recurrence === "weekly" && (
@@ -447,7 +467,6 @@ export function RoutineSettingsSection({
                     className="!h-7 !px-1.5 !text-xs w-24"
                     value={editingTagName}
                     onChange={(e) => setEditingTagName(e.target.value)}
-                    autoFocus
                     onBlur={() => {
                       if (!tagSavedRef.current && editingTagName.trim()) {
                         tagSavedRef.current = true;
@@ -574,7 +593,8 @@ export function RoutineSettingsSection({
                   key={c.id}
                   className={cn(
                     "flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-panelHi border border-line/50",
-                    editingCatId === c.id && "ring-2 ring-routine-ring/60 dark:ring-routine/40",
+                    editingCatId === c.id &&
+                      "ring-2 ring-routine-ring/60 dark:ring-routine/40",
                   )}
                 >
                   <div className="flex items-center gap-2 min-w-0">
@@ -583,7 +603,12 @@ export function RoutineSettingsSection({
                       {c.name}
                     </span>
                     <span className="shrink-0 text-[10px] text-subtle bg-panel border border-line/50 rounded-full px-2 py-0.5">
-                      {habitCount} {habitCount === 1 ? "звичка" : habitCount >= 2 && habitCount <= 4 ? "звички" : "звичок"}
+                      {habitCount}{" "}
+                      {habitCount === 1
+                        ? "звичка"
+                        : habitCount >= 2 && habitCount <= 4
+                          ? "звички"
+                          : "звичок"}
                     </span>
                   </div>
                   <div className="flex gap-1 shrink-0">
@@ -602,7 +627,11 @@ export function RoutineSettingsSection({
                       type="button"
                       className="text-subtle hover:text-danger min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-xs"
                       onClick={() =>
-                        setDeleteCatPending({ id: c.id, name: c.name, habitCount })
+                        setDeleteCatPending({
+                          id: c.id,
+                          name: c.name,
+                          habitCount,
+                        })
                       }
                       aria-label={`Видалити ${c.name}`}
                     >

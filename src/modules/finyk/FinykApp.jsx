@@ -124,14 +124,21 @@ function useHashRouter(defaultPage = "overview") {
 
 const PRIVAT_ENABLED = false;
 
-export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}) {
+export default function App({
+  onBackToHub,
+  pwaAction,
+  onPwaActionConsumed,
+} = {}) {
   const mono = useMonobank();
   const privat = usePrivatbank(PRIVAT_ENABLED);
   const toast = useToast();
-  const showToast = useCallback((msg, type = "success") => {
-    if (type === "error") toast.error(msg);
-    else toast.success(msg);
-  }, [toast]);
+  const showToast = useCallback(
+    (msg, type = "success") => {
+      if (type === "error") toast.error(msg);
+      else toast.success(msg);
+    },
+    [toast],
+  );
   const storage = useStorage({ onImportFeedback: showToast });
   const [page, navigate] = useHashRouter();
   const [tokenInput, setTokenInput] = useState("");
@@ -213,7 +220,8 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
 
     const hasPrivatError = !!privat.error;
     const privatSyncBad =
-      privat.syncState?.status === "error" || privat.syncState?.status === "partial";
+      privat.syncState?.status === "error" ||
+      privat.syncState?.status === "partial";
     const combinedError =
       mono.error && hasPrivatError
         ? `${mono.error}; ПриватБанк: ${privat.error}`
@@ -329,7 +337,8 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
                 onKeyDown={(e) =>
-                  e.key === "Enter" && connect(tokenInput.trim(), false, rememberToken)
+                  e.key === "Enter" &&
+                  connect(tokenInput.trim(), false, rememberToken)
                 }
                 autoComplete="off"
               />
@@ -414,14 +423,20 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
                 checked={rememberToken}
                 onChange={(e) => setRememberToken(e.target.checked)}
               />
-              <span className="text-sm text-muted">Запам'ятати токен на цьому пристрої</span>
+              <span className="text-sm text-muted">
+                Запам{"'"}ятати токен на цьому пристрої
+              </span>
             </label>
 
             {authError && (
               <div className="mt-3 text-sm bg-warning/15 border border-warning/40 rounded-xl px-3 py-2.5 space-y-1">
-                <p className="font-semibold text-text">Токен потребує оновлення</p>
+                <p className="font-semibold text-text">
+                  Токен потребує оновлення
+                </p>
                 <p className="text-xs text-muted">{authError}</p>
-                <p className="text-xs text-muted">Отримайте новий токен: Monobank → Налаштування → API</p>
+                <p className="text-xs text-muted">
+                  Отримайте новий токен: Monobank → Налаштування → API
+                </p>
               </div>
             )}
             {error && !authError && (
@@ -593,7 +608,9 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
         )}
       </div>
 
-      {(page === "overview" || page === "transactions" || page === "budgets") && (
+      {(page === "overview" ||
+        page === "transactions" ||
+        page === "budgets") && (
         <button
           onClick={() => {
             setEditingManualExpenseId(null);
@@ -611,7 +628,9 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
           <div className="bg-warning/15 border border-warning/40 rounded-2xl px-4 py-3 flex items-start gap-3 shadow-card">
             <span className="text-lg shrink-0 mt-0.5">⚠️</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-text">Токен потребує оновлення</p>
+              <p className="text-sm font-semibold text-text">
+                Токен потребує оновлення
+              </p>
               <p className="text-xs text-muted mt-0.5">{mono.authError}</p>
               {onBackToHub && (
                 <button
@@ -641,7 +660,9 @@ export default function App({ onBackToHub, pwaAction, onPwaActionConsumed } = {}
         }}
         initialExpense={
           editingManualExpenseId
-            ? (storage.manualExpenses || []).find((e) => String(e.id) === String(editingManualExpenseId)) || null
+            ? (storage.manualExpenses || []).find(
+                (e) => String(e.id) === String(editingManualExpenseId),
+              ) || null
             : null
         }
         onSave={(expense) => {

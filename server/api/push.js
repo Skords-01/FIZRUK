@@ -32,7 +32,8 @@ export async function vapidPublic(req, res) {
 
 /** POST /api/push/subscribe — зберегти підписку */
 export async function subscribe(req, res) {
-  if (!VAPID_PUBLIC) return res.status(503).json({ error: "Push not configured" });
+  if (!VAPID_PUBLIC)
+    return res.status(503).json({ error: "Push not configured" });
   const user = await getSession(req);
   if (!user) return res.status(401).json({ error: "Unauthorized" });
 
@@ -85,10 +86,12 @@ export async function sendPush(req, res) {
   if (!secret || secret !== process.env.API_SECRET) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  if (!VAPID_PUBLIC) return res.status(503).json({ error: "Push not configured" });
+  if (!VAPID_PUBLIC)
+    return res.status(503).json({ error: "Push not configured" });
 
   const { userId, title, body, module: mod, tag } = req.body || {};
-  if (!userId || !title) return res.status(400).json({ error: "Missing fields" });
+  if (!userId || !title)
+    return res.status(400).json({ error: "Missing fields" });
 
   try {
     const { rows } = await pool.query(
@@ -97,13 +100,21 @@ export async function sendPush(req, res) {
     );
     if (rows.length === 0) return res.json({ sent: 0 });
 
-    const payload = JSON.stringify({ title, body: body || "", module: mod || null, tag: tag || null });
+    const payload = JSON.stringify({
+      title,
+      body: body || "",
+      module: mod || null,
+      tag: tag || null,
+    });
     let sent = 0;
     const stale = [];
 
     await Promise.all(
       rows.map(async (row) => {
-        const sub = { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } };
+        const sub = {
+          endpoint: row.endpoint,
+          keys: { p256dh: row.p256dh, auth: row.auth },
+        };
         try {
           await webpush.sendNotification(sub, payload);
           sent++;

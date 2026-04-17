@@ -52,7 +52,8 @@ async function showNotification(title, body, tag) {
 
 function sendRoutineStateToSW(routine) {
   try {
-    if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) return;
+    if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller)
+      return;
     navigator.serviceWorker.controller.postMessage({
       type: "ROUTINE_STATE_UPDATE",
       data: {

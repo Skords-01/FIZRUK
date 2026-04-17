@@ -67,7 +67,9 @@ export function useBodyPhotos() {
         setDbRef(db);
         const all = await dbGetAll(db);
         if (!cancelled) {
-          setPhotos(all.sort((a, b) => (b.date || "").localeCompare(a.date || "")));
+          setPhotos(
+            all.sort((a, b) => (b.date || "").localeCompare(a.date || "")),
+          );
           setReady(true);
         }
       })
@@ -75,7 +77,9 @@ export function useBodyPhotos() {
         console.error("useBodyPhotos: IndexedDB error", err);
         if (!cancelled) setReady(true);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const addPhoto = useCallback(
@@ -90,7 +94,9 @@ export function useBodyPhotos() {
       };
       await dbPut(dbRef, record);
       setPhotos((prev) =>
-        [record, ...prev].sort((a, b) => (b.date || "").localeCompare(a.date || "")),
+        [record, ...prev].sort((a, b) =>
+          (b.date || "").localeCompare(a.date || ""),
+        ),
       );
       return record;
     },

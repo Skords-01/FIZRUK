@@ -25,4 +25,3 @@ export function stableRecipeId(r) {
   ].join("\n");
   return `rcp_ai_${shortHash(raw)}`;
 }
-

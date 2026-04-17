@@ -173,7 +173,9 @@ export const FOOD_CATEGORIES = [
 const OTHER = { id: "other", label: "Інше", emoji: "📦" };
 
 export function categorizeFood(name) {
-  const n = String(name || "").toLowerCase().trim();
+  const n = String(name || "")
+    .toLowerCase()
+    .trim();
   if (!n) return OTHER;
   for (const cat of FOOD_CATEGORIES) {
     for (const kw of cat.keywords) {

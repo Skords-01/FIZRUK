@@ -52,7 +52,10 @@ describe("generateInsights", () => {
 
   it("повертає не більше 4 інсайтів", () => {
     // Заповнюємо достатньо даних для всіх інсайтів
-    setLS("fizruk_workouts_v1", { schemaVersion: 1, workouts: makeWorkouts(25, 1) });
+    setLS("fizruk_workouts_v1", {
+      schemaVersion: 1,
+      workouts: makeWorkouts(25, 1),
+    });
     const result = generateInsights();
     expect(result.length).toBeLessThanOrEqual(4);
   });
@@ -69,7 +72,10 @@ describe("generateInsights", () => {
   });
 
   it("workoutDayInsight: не генерується при < 20 тренуваннях", () => {
-    setLS("fizruk_workouts_v1", { schemaVersion: 1, workouts: makeWorkouts(15, 1) });
+    setLS("fizruk_workouts_v1", {
+      schemaVersion: 1,
+      workouts: makeWorkouts(15, 1),
+    });
     const result = generateInsights();
     expect(result.find((r) => r.id === "best_workout_day")).toBeUndefined();
   });
@@ -86,7 +92,10 @@ describe("generateInsights", () => {
   });
 
   it("не дублює id інсайтів", () => {
-    setLS("fizruk_workouts_v1", { schemaVersion: 1, workouts: makeWorkouts(25, 1) });
+    setLS("fizruk_workouts_v1", {
+      schemaVersion: 1,
+      workouts: makeWorkouts(25, 1),
+    });
     const result = generateInsights();
     const ids = result.map((r) => r.id);
     expect(new Set(ids).size).toBe(ids.length);

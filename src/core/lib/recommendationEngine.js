@@ -58,7 +58,8 @@ function getExerciseMuscles(exercise) {
   if (/присід|squat/.test(name)) muscles.push("legs");
   if (/жим|press|bench/.test(name)) muscles.push("chest");
   if (/тяга|row|pull|deadlift/.test(name)) muscles.push("back");
-  if (/плечей|lateral|shoulder|press overhead/.test(name)) muscles.push("shoulders");
+  if (/плечей|lateral|shoulder|press overhead/.test(name))
+    muscles.push("shoulders");
   if (/біцепс|curl|bicep/.test(name)) muscles.push("biceps");
   if (/триципс|tricep|dip/.test(name)) muscles.push("triceps");
   if (/прес|plank|crunch|abs/.test(name)) muscles.push("core");
@@ -111,7 +112,7 @@ function buildFinanceRecs() {
   const transferIds = new Set(
     Object.entries(txCategories)
       .filter(([, v]) => v === "internal_transfer")
-      .map(([k]) => k)
+      .map(([k]) => k),
   );
   const manualExpenses = safeLS("finyk_manual_expenses_v1", []);
 
@@ -126,7 +127,8 @@ function buildFinanceRecs() {
   for (const tx of thisMonthTx) {
     if ((tx.amount ?? 0) >= 0) continue;
     const catId = txCategories[tx.id] || "other";
-    categorySpend[catId] = (categorySpend[catId] || 0) + Math.abs(tx.amount / 100);
+    categorySpend[catId] =
+      (categorySpend[catId] || 0) + Math.abs(tx.amount / 100);
   }
   for (const me of manualExpenses) {
     const ts = new Date(me.date).getTime();
@@ -145,9 +147,14 @@ function buildFinanceRecs() {
     if (found) catLabel = found.label;
     else {
       const BUILTIN = {
-        food: "Продукти", cafe: "Кафе та ресторани", transport: "Транспорт",
-        entertainment: "Розваги", health: "Здоров'я", shopping: "Покупки",
-        utilities: "Комунальні", other: "Інше",
+        food: "Продукти",
+        cafe: "Кафе та ресторани",
+        transport: "Транспорт",
+        entertainment: "Розваги",
+        health: "Здоров'я",
+        shopping: "Покупки",
+        utilities: "Комунальні",
+        other: "Інше",
       };
       catLabel = BUILTIN[limit.categoryId] || catLabel;
     }
@@ -264,7 +271,7 @@ function buildFizrukRecs() {
   if (!completed.length) return recs;
 
   const sorted = [...completed].sort(
-    (a, b) => new Date(b.startedAt) - new Date(a.startedAt)
+    (a, b) => new Date(b.startedAt) - new Date(a.startedAt),
   );
 
   const now = new Date();
@@ -305,7 +312,9 @@ function buildFizrukRecs() {
   const monAgo = new Date(now);
   monAgo.setDate(now.getDate() - ((now.getDay() + 6) % 7));
   monAgo.setHours(0, 0, 0, 0);
-  const weekCount = completed.filter((w) => new Date(w.startedAt) >= monAgo).length;
+  const weekCount = completed.filter(
+    (w) => new Date(w.startedAt) >= monAgo,
+  ).length;
   if (weekCount === 0 && now.getDay() >= 3) {
     recs.push({
       id: "fizruk_no_week_workout",
@@ -331,7 +340,8 @@ function buildRoutineRecs() {
   const today = localDateKey();
 
   const todayDone = habits.filter(
-    (h) => Array.isArray(completions[h.id]) && completions[h.id].includes(today)
+    (h) =>
+      Array.isArray(completions[h.id]) && completions[h.id].includes(today),
   ).length;
   const total = habits.length;
 
@@ -343,7 +353,7 @@ function buildRoutineRecs() {
   for (let i = 0; i < 365; i++) {
     const dk = localDateKey(d);
     const allDone = habits.every(
-      (h) => Array.isArray(completions[h.id]) && completions[h.id].includes(dk)
+      (h) => Array.isArray(completions[h.id]) && completions[h.id].includes(dk),
     );
     if (!allDone) break;
     streak++;
@@ -402,14 +412,16 @@ function buildNutritionRecs() {
   const dayData = log?.[today];
   const meals = Array.isArray(dayData?.meals) ? dayData.meals : [];
 
-  let kcal = 0, protein = 0;
+  let kcal = 0,
+    protein = 0;
   for (const m of meals) {
     kcal += m?.macros?.kcal ?? 0;
     protein += m?.macros?.protein_g ?? 0;
   }
 
   const targetKcal = prefs?.dailyTargetKcal ?? 2000;
-  const targetProtein = prefs?.dailyTargetProtein_g ?? prefs?.dailyTargetProtein ?? 120;
+  const targetProtein =
+    prefs?.dailyTargetProtein_g ?? prefs?.dailyTargetProtein ?? 120;
 
   const hour = new Date().getHours();
 
@@ -454,9 +466,10 @@ function buildNutritionRecs() {
     const completed = workouts.filter((w) => w.endedAt);
     if (completed.length > 0) {
       const sorted = [...completed].sort(
-        (a, b) => new Date(b.startedAt) - new Date(a.startedAt)
+        (a, b) => new Date(b.startedAt) - new Date(a.startedAt),
       );
-      const lastHours = (Date.now() - new Date(sorted[0].startedAt)) / 3_600_000;
+      const lastHours =
+        (Date.now() - new Date(sorted[0].startedAt)) / 3_600_000;
       if (lastHours < 2 && pctProtein < 0.4) {
         recs.push({
           id: "nutrition_post_workout_protein",
@@ -507,7 +520,11 @@ function buildWeeklyDigestRecs() {
         d.setDate(monPrev.getDate() + i);
         const dk = localDateKey(d);
         for (const h of habits) {
-          if (Array.isArray(completions[h.id]) && completions[h.id].includes(dk)) done++;
+          if (
+            Array.isArray(completions[h.id]) &&
+            completions[h.id].includes(dk)
+          )
+            done++;
         }
       }
       const total = habits.length * 7;
@@ -524,7 +541,7 @@ function buildWeeklyDigestRecs() {
   const transferIds = new Set(
     Object.entries(txCategories)
       .filter(([, v]) => v === "internal_transfer")
-      .map(([k]) => k)
+      .map(([k]) => k),
   );
   let spendLastWeek = 0;
   for (const tx of transactions) {
@@ -539,19 +556,24 @@ function buildWeeklyDigestRecs() {
   const parts = [];
   if (workoutsLastWeek > 0) parts.push(`${workoutsLastWeek} трен.`);
   if (habitPctText) parts.push(habitPctText);
-  if (spendLastWeek > 0) parts.push(`витрати ${Math.round(spendLastWeek).toLocaleString("uk-UA")} ₴`);
+  if (spendLastWeek > 0)
+    parts.push(
+      `витрати ${Math.round(spendLastWeek).toLocaleString("uk-UA")} ₴`,
+    );
 
   if (parts.length === 0) return [];
 
-  return [{
-    id: `weekly_digest_${localDateKey(monPrev)}`,
-    module: "hub",
-    priority: 92,
-    icon: "📊",
-    title: "Підсумок минулого тижня",
-    body: parts.join(" · "),
-    action: "reports",
-  }];
+  return [
+    {
+      id: `weekly_digest_${localDateKey(monPrev)}`,
+      module: "hub",
+      priority: 92,
+      icon: "📊",
+      title: "Підсумок минулого тижня",
+      body: parts.join(" · "),
+      action: "reports",
+    },
+  ];
 }
 
 /**

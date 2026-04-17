@@ -29,7 +29,9 @@ function FoodHitRow({ p, badge, onPick }) {
         <div className="flex items-center justify-between gap-2">
           <div className="text-sm text-text font-semibold truncate">
             {[p.name, p.brand].filter(Boolean).join(" · ")}
-            {badge && <span className="ml-1 text-[10px] text-subtle">{badge}</span>}
+            {badge && (
+              <span className="ml-1 text-[10px] text-subtle">{badge}</span>
+            )}
           </div>
           <div className="text-xs font-semibold text-nutrition shrink-0">
             {Math.round(p.per100?.kcal || 0)} ккал
@@ -49,7 +51,9 @@ function FoodHitRow({ p, badge, onPick }) {
 function MacroChip({ label, value, unit = "г", color }) {
   return (
     <div className={cn("flex flex-col items-center px-3 py-2 min-w-0", color)}>
-      <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">{label}</span>
+      <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">
+        {label}
+      </span>
       <span className="text-base font-extrabold leading-tight">
         {value != null ? Math.round(value) : "—"}
       </span>
@@ -70,7 +74,8 @@ function emptyForm(photoResult) {
     mealType: "breakfast",
     time: currentTime(),
     kcal: macros.kcal != null ? String(Math.round(macros.kcal)) : "",
-    protein_g: macros.protein_g != null ? String(Math.round(macros.protein_g)) : "",
+    protein_g:
+      macros.protein_g != null ? String(Math.round(macros.protein_g)) : "",
     fat_g: macros.fat_g != null ? String(Math.round(macros.fat_g)) : "",
     carbs_g: macros.carbs_g != null ? String(Math.round(macros.carbs_g)) : "",
     err: "",
@@ -115,7 +120,8 @@ export function AddMealSheet({
           mealType: initialMeal.mealType || "breakfast",
           time: initialMeal.time || currentTime(),
           kcal: mac.kcal != null ? String(Math.round(mac.kcal)) : "",
-          protein_g: mac.protein_g != null ? String(Math.round(mac.protein_g)) : "",
+          protein_g:
+            mac.protein_g != null ? String(Math.round(mac.protein_g)) : "",
           fat_g: mac.fat_g != null ? String(Math.round(mac.fat_g)) : "",
           carbs_g: mac.carbs_g != null ? String(Math.round(mac.carbs_g)) : "",
           err: "",
@@ -128,7 +134,9 @@ export function AddMealSheet({
       setOffHits([]);
       setPickedFood(null);
       setPickedGrams(
-        initialMeal?.amount_g != null ? String(Math.round(Number(initialMeal.amount_g) || 100)) : "100",
+        initialMeal?.amount_g != null
+          ? String(Math.round(Number(initialMeal.amount_g) || 100))
+          : "100",
       );
       setFoodErr("");
       setBarcode("");
@@ -150,7 +158,10 @@ export function AddMealSheet({
       ...s,
       name: parsed.name || s.name,
       kcal: parsed.kcal != null ? String(Math.round(parsed.kcal)) : s.kcal,
-      protein_g: parsed.protein != null ? String(Math.round(parsed.protein)) : s.protein_g,
+      protein_g:
+        parsed.protein != null
+          ? String(Math.round(parsed.protein))
+          : s.protein_g,
       err: "",
     }));
   }, []);
@@ -186,7 +197,9 @@ export function AddMealSheet({
         ? "productDb"
         : "manual";
     onSave({
-      id: initialMeal?.id || `meal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      id:
+        initialMeal?.id ||
+        `meal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       time: form.time || currentTime(),
       mealType: form.mealType,
       label: mealLabel,
@@ -214,9 +227,13 @@ export function AddMealSheet({
 
     const localTimer = window.setTimeout(() => {
       searchFoods(q, 8)
-        .then((hits) => { if (!cancelled) setFoodHits(hits); })
+        .then((hits) => {
+          if (!cancelled) setFoodHits(hits);
+        })
         .catch(() => {})
-        .finally(() => { if (!cancelled) setFoodBusy(false); });
+        .finally(() => {
+          if (!cancelled) setFoodBusy(false);
+        });
     }, 180);
 
     if (q.length >= 2) {
@@ -224,10 +241,14 @@ export function AddMealSheet({
       setOffHits([]);
       const offTimer = window.setTimeout(() => {
         fetch(apiUrl(`/api/food-search?q=${encodeURIComponent(q)}`))
-          .then((r) => r.ok ? r.json() : Promise.reject())
-          .then((data) => { if (!cancelled) setOffHits(data?.products || []); })
+          .then((r) => (r.ok ? r.json() : Promise.reject()))
+          .then((data) => {
+            if (!cancelled) setOffHits(data?.products || []);
+          })
           .catch(() => {})
-          .finally(() => { if (!cancelled) setOffBusy(false); });
+          .finally(() => {
+            if (!cancelled) setOffBusy(false);
+          });
       }, 600);
       return () => {
         cancelled = true;
@@ -243,7 +264,11 @@ export function AddMealSheet({
   }, [foodQuery]);
 
   const applyPickedFood = useCallback((p, gramsRaw) => {
-    const g = Number(String(gramsRaw || "").trim().replace(",", "."));
+    const g = Number(
+      String(gramsRaw || "")
+        .trim()
+        .replace(",", "."),
+    );
     const grams = Number.isFinite(g) && g > 0 ? g : p?.defaultGrams || 100;
     const mac = macrosForGrams(p?.per100, grams);
     setForm((s) => ({
@@ -263,81 +288,96 @@ export function AddMealSheet({
     applyPickedFood(pickedFood, pickedGrams);
   }, [pickedGrams, pickedFood, applyPickedFood]);
 
-  const handleBarcodeLookup = useCallback(
-    async (codeRaw) => {
-      const code = String(codeRaw || "").trim();
-      if (!code) return;
-      setBarcodeStatus("Шукаю…");
+  const handleBarcodeLookup = useCallback(async (codeRaw) => {
+    const code = String(codeRaw || "").trim();
+    if (!code) return;
+    setBarcodeStatus("Шукаю…");
 
-      const localFound = await lookupFoodByBarcode(code);
-      if (localFound) {
-        setBarcodeStatus("Знайдено ✔");
-        setPickedFood(localFound);
-        setPickedGrams(String(Math.round(localFound.defaultGrams || 100)));
+    const localFound = await lookupFoodByBarcode(code);
+    if (localFound) {
+      setBarcodeStatus("Знайдено ✔");
+      setPickedFood(localFound);
+      setPickedGrams(String(Math.round(localFound.defaultGrams || 100)));
+      return;
+    }
+
+    if (!navigator.onLine) {
+      setBarcodeStatus("Немає підключення. Перевір інтернет і спробуй знову.");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        apiUrl(`/api/barcode?barcode=${encodeURIComponent(code)}`),
+      );
+      if (res.status === 404) {
+        setBarcodeStatus("Продукт не знайдено. Можна ввести дані вручну.");
         return;
       }
-
-      if (!navigator.onLine) {
-        setBarcodeStatus("Немає підключення. Перевір інтернет і спробуй знову.");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setBarcodeStatus(err?.error || "Помилка пошуку. Спробуй пізніше.");
         return;
       }
-
-      try {
-        const res = await fetch(apiUrl(`/api/barcode?barcode=${encodeURIComponent(code)}`));
-        if (res.status === 404) {
-          setBarcodeStatus("Продукт не знайдено. Можна ввести дані вручну.");
-          return;
-        }
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          setBarcodeStatus(err?.error || "Помилка пошуку. Спробуй пізніше.");
-          return;
-        }
-        const data = await res.json();
-        const p = data?.product;
-        if (!p?.name) {
-          setBarcodeStatus("Продукт знайдено, але дані неповні. Введи вручну.");
-          return;
-        }
-        const grams = p.servingGrams || 100;
-        const gramsStr = String(Math.round(grams));
-        const factor = grams / 100;
-        const fakeFood = {
-          id: `barcode_${code}`,
-          name: p.name,
-          brand: p.brand || "",
-          defaultGrams: grams,
-          per100: {
-            kcal: p.kcal_100g || 0,
-            protein_g: p.protein_100g || 0,
-            fat_g: p.fat_100g || 0,
-            carbs_g: p.carbs_100g || 0,
-          },
-          source: "barcode",
-        };
-        setPickedFood(fakeFood);
-        setPickedGrams(gramsStr);
-        setForm((s) => ({
-          ...s,
-          name: [p.name, p.brand].filter(Boolean).join(" ").trim() || s.name,
-          kcal: p.kcal_100g != null ? String(Math.round(p.kcal_100g * factor)) : s.kcal,
-          protein_g: p.protein_100g != null ? String(Math.round(p.protein_100g * factor)) : s.protein_g,
-          fat_g: p.fat_100g != null ? String(Math.round(p.fat_100g * factor)) : s.fat_g,
-          carbs_g: p.carbs_100g != null ? String(Math.round(p.carbs_100g * factor)) : s.carbs_g,
-          err: "",
-        }));
-        // partial = UPCitemdb found name/brand but has no nutrition data
-        if (p.partial) {
-          setBarcodeStatus(`Знайдено: ${[p.name, p.brand].filter(Boolean).join(" — ")} — введи КБЖВ вручну.`);
-        } else {
-          setBarcodeStatus(`Знайдено: ${[p.name, p.brand].filter(Boolean).join(" — ")} ✔`);
-        }
-      } catch {
-        setBarcodeStatus("Помилка пошуку. Перевір з'єднання і спробуй пізніше.");
+      const data = await res.json();
+      const p = data?.product;
+      if (!p?.name) {
+        setBarcodeStatus("Продукт знайдено, але дані неповні. Введи вручну.");
+        return;
       }
-    },
-    [],
-  );
+      const grams = p.servingGrams || 100;
+      const gramsStr = String(Math.round(grams));
+      const factor = grams / 100;
+      const fakeFood = {
+        id: `barcode_${code}`,
+        name: p.name,
+        brand: p.brand || "",
+        defaultGrams: grams,
+        per100: {
+          kcal: p.kcal_100g || 0,
+          protein_g: p.protein_100g || 0,
+          fat_g: p.fat_100g || 0,
+          carbs_g: p.carbs_100g || 0,
+        },
+        source: "barcode",
+      };
+      setPickedFood(fakeFood);
+      setPickedGrams(gramsStr);
+      setForm((s) => ({
+        ...s,
+        name: [p.name, p.brand].filter(Boolean).join(" ").trim() || s.name,
+        kcal:
+          p.kcal_100g != null
+            ? String(Math.round(p.kcal_100g * factor))
+            : s.kcal,
+        protein_g:
+          p.protein_100g != null
+            ? String(Math.round(p.protein_100g * factor))
+            : s.protein_g,
+        fat_g:
+          p.fat_100g != null
+            ? String(Math.round(p.fat_100g * factor))
+            : s.fat_g,
+        carbs_g:
+          p.carbs_100g != null
+            ? String(Math.round(p.carbs_100g * factor))
+            : s.carbs_g,
+        err: "",
+      }));
+      // partial = UPCitemdb found name/brand but has no nutrition data
+      if (p.partial) {
+        setBarcodeStatus(
+          `Знайдено: ${[p.name, p.brand].filter(Boolean).join(" — ")} — введи КБЖВ вручну.`,
+        );
+      } else {
+        setBarcodeStatus(
+          `Знайдено: ${[p.name, p.brand].filter(Boolean).join(" — ")} ✔`,
+        );
+      }
+    } catch {
+      setBarcodeStatus("Помилка пошуку. Перевір з'єднання і спробуй пізніше.");
+    }
+  }, []);
 
   async function handleBarcodeBind(codeRaw) {
     const code = String(codeRaw || "").trim();
@@ -346,7 +386,9 @@ export function AddMealSheet({
       return;
     }
     if (!pickedFood?.id) {
-      setBarcodeStatus("Спочатку обери продукт (або збережи поточний як продукт).");
+      setBarcodeStatus(
+        "Спочатку обери продукт (або збережи поточний як продукт).",
+      );
       return;
     }
     const ok = await bindBarcodeToFood(code, pickedFood.id);
@@ -393,7 +435,10 @@ export function AddMealSheet({
         <div className="px-5 pb-8 pt-2">
           {/* Header */}
           <div className="flex items-center justify-between gap-3 mb-4">
-            <div id="add-meal-sheet-title" className="text-lg font-extrabold text-text">
+            <div
+              id="add-meal-sheet-title"
+              className="text-lg font-extrabold text-text"
+            >
               Додати прийом їжі
             </div>
             <button
@@ -422,10 +467,22 @@ export function AddMealSheet({
                         ...s,
                         name: t.name,
                         mealType: t.mealType || "snack",
-                        kcal: t.macros?.kcal != null ? String(Math.round(t.macros.kcal)) : "",
-                        protein_g: t.macros?.protein_g != null ? String(Math.round(t.macros.protein_g)) : "",
-                        fat_g: t.macros?.fat_g != null ? String(Math.round(t.macros.fat_g)) : "",
-                        carbs_g: t.macros?.carbs_g != null ? String(Math.round(t.macros.carbs_g)) : "",
+                        kcal:
+                          t.macros?.kcal != null
+                            ? String(Math.round(t.macros.kcal))
+                            : "",
+                        protein_g:
+                          t.macros?.protein_g != null
+                            ? String(Math.round(t.macros.protein_g))
+                            : "",
+                        fat_g:
+                          t.macros?.fat_g != null
+                            ? String(Math.round(t.macros.fat_g))
+                            : "",
+                        carbs_g:
+                          t.macros?.carbs_g != null
+                            ? String(Math.round(t.macros.carbs_g))
+                            : "",
                         err: "",
                       }))
                     }
@@ -516,7 +573,10 @@ export function AddMealSheet({
                       onClick={() => {
                         if (isActive) {
                           setFromPantryItem(null);
-                          setForm((s) => ({ ...s, name: s.name === item.name ? "" : s.name }));
+                          setForm((s) => ({
+                            ...s,
+                            name: s.name === item.name ? "" : s.name,
+                          }));
                         } else {
                           setFromPantryItem(item.name);
                           setForm((s) => ({ ...s, name: item.name, err: "" }));
@@ -533,7 +593,8 @@ export function AddMealSheet({
                       {item.name}
                       {item.qty != null && (
                         <span className="ml-1 text-[10px] opacity-70">
-                          {item.qty}{item.unit || "г"}
+                          {item.qty}
+                          {item.unit || "г"}
                         </span>
                       )}
                     </button>
@@ -566,7 +627,9 @@ export function AddMealSheet({
                   placeholder="Курка, Activia, вівсянка, Lays…"
                   aria-label="Пошук продукту"
                 />
-                {foodErr && <div className="text-[11px] text-muted">{foodErr}</div>}
+                {foodErr && (
+                  <div className="text-[11px] text-muted">{foodErr}</div>
+                )}
                 {(foodHits.length > 0 || offHits.length > 0) && (
                   <div className="max-h-56 overflow-y-auto rounded-2xl border border-line/60 bg-bg shadow-sm">
                     <ul className="divide-y divide-line/20">
@@ -576,7 +639,9 @@ export function AddMealSheet({
                           p={p}
                           onPick={() => {
                             setPickedFood(p);
-                            setPickedGrams(String(Math.round(p.defaultGrams || 100)));
+                            setPickedGrams(
+                              String(Math.round(p.defaultGrams || 100)),
+                            );
                             setFoodQuery("");
                           }}
                         />
@@ -595,7 +660,9 @@ export function AddMealSheet({
                               badge="🌍"
                               onPick={() => {
                                 setPickedFood(p);
-                                setPickedGrams(String(Math.round(p.defaultGrams || 100)));
+                                setPickedGrams(
+                                  String(Math.round(p.defaultGrams || 100)),
+                                );
                                 setFoodQuery("");
                               }}
                             />
@@ -613,22 +680,28 @@ export function AddMealSheet({
                 <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2">
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-text truncate">
-                      {[pickedFood.name, pickedFood.brand].filter(Boolean).join(" · ")}
+                      {[pickedFood.name, pickedFood.brand]
+                        .filter(Boolean)
+                        .join(" · ")}
                       {pickedFood.source === "off" && (
                         <span className="ml-1 text-[10px] text-subtle">🌍</span>
                       )}
                     </div>
                     <div className="text-[11px] text-subtle mt-0.5">
-                      {Math.round(pickedFood.per100?.kcal || 0)} ккал ·{" "}
-                      Б {Math.round(pickedFood.per100?.protein_g || 0)}г ·{" "}
-                      Ж {Math.round(pickedFood.per100?.fat_g || 0)}г ·{" "}
-                      В {Math.round(pickedFood.per100?.carbs_g || 0)}г{" "}
+                      {Math.round(pickedFood.per100?.kcal || 0)} ккал · Б{" "}
+                      {Math.round(pickedFood.per100?.protein_g || 0)}г · Ж{" "}
+                      {Math.round(pickedFood.per100?.fat_g || 0)}г · В{" "}
+                      {Math.round(pickedFood.per100?.carbs_g || 0)}г{" "}
                       <span className="opacity-60">/ 100г</span>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => { setPickedFood(null); setPickedGrams("100"); setFoodQuery(""); }}
+                    onClick={() => {
+                      setPickedFood(null);
+                      setPickedGrams("100");
+                      setFoodQuery("");
+                    }}
                     className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-line/50 text-muted hover:text-text hover:bg-line transition-colors text-sm"
                     aria-label="Скинути продукт"
                   >
@@ -638,17 +711,23 @@ export function AddMealSheet({
 
                 {/* Порція з кроками */}
                 <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
-                  <div className="text-xs text-subtle font-semibold shrink-0">Порція</div>
+                  <div className="text-xs text-subtle font-semibold shrink-0">
+                    Порція
+                  </div>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       aria-label="Зменшити"
                       onClick={() => {
                         const cur = Number(pickedGrams) || 100;
-                        setPickedGrams(String(Math.max(1, cur - (cur > 50 ? 10 : 5))));
+                        setPickedGrams(
+                          String(Math.max(1, cur - (cur > 50 ? 10 : 5))),
+                        );
                       }}
                       className="w-8 h-8 rounded-full bg-panelHi text-text font-bold text-lg hover:bg-line transition-colors flex items-center justify-center"
-                    >−</button>
+                    >
+                      −
+                    </button>
                     <div className="relative">
                       <input
                         type="number"
@@ -659,7 +738,9 @@ export function AddMealSheet({
                         aria-label="Грами"
                         className="w-[76px] text-center bg-panel border border-line rounded-xl px-2 py-2 text-sm font-bold text-text outline-none focus:border-nutrition/60 transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-subtle pointer-events-none">г</span>
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-subtle pointer-events-none">
+                        г
+                      </span>
                     </div>
                     <button
                       type="button"
@@ -669,7 +750,9 @@ export function AddMealSheet({
                         setPickedGrams(String(cur + (cur >= 50 ? 10 : 5)));
                       }}
                       className="w-8 h-8 rounded-full bg-panelHi text-text font-bold text-lg hover:bg-line transition-colors flex items-center justify-center"
-                    >+</button>
+                    >
+                      +
+                    </button>
                   </div>
                   {/* Швидкі порції */}
                   <div className="flex gap-1 flex-wrap">
@@ -701,7 +784,9 @@ export function AddMealSheet({
                   />
                   <MacroChip
                     label="Білки"
-                    value={form.protein_g !== "" ? Number(form.protein_g) : null}
+                    value={
+                      form.protein_g !== "" ? Number(form.protein_g) : null
+                    }
                     color="bg-panel text-text"
                   />
                   <MacroChip
@@ -727,28 +812,48 @@ export function AddMealSheet({
             <div className="flex flex-wrap gap-2 items-center">
               <Input
                 value={barcode}
-                onChange={(e) => { setBarcode(e.target.value.replace(/\s+/g, "")); setBarcodeStatus(""); }}
+                onChange={(e) => {
+                  setBarcode(e.target.value.replace(/\s+/g, ""));
+                  setBarcodeStatus("");
+                }}
                 inputMode="numeric"
                 placeholder="EAN/UPC…"
                 aria-label="Штрихкод"
                 className="w-[160px]"
               />
-              <Button type="button" variant="ghost" className="h-9 text-xs" onClick={() => handleBarcodeLookup(barcode)}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 text-xs"
+                onClick={() => handleBarcodeLookup(barcode)}
+              >
                 Знайти
-              </Button>
-              <Button type="button" variant="ghost" className="h-9 text-xs" onClick={() => handleBarcodeBind(barcode)}>
-                Прив'язати
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 className="h-9 text-xs"
-                onClick={() => { setBarcodeStatus(""); setScannerOpen(true); }}
+                onClick={() => handleBarcodeBind(barcode)}
+              >
+                Прив{"'"}язати
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 text-xs"
+                onClick={() => {
+                  setBarcodeStatus("");
+                  setScannerOpen(true);
+                }}
               >
                 📷 Сканувати
               </Button>
             </div>
-            {barcodeStatus && <div className="text-[11px] text-subtle mt-1">{barcodeStatus}</div>}
+            {barcodeStatus && (
+              <div className="text-[11px] text-subtle mt-1">
+                {barcodeStatus}
+              </div>
+            )}
           </div>
 
           {/* КБЖВ — ручне редагування */}
@@ -817,15 +922,27 @@ export function AddMealSheet({
                 onClick={async () => {
                   const name = String(form.name || "").trim();
                   if (!name) {
-                    setForm((s) => ({ ...s, err: "Введіть назву, щоб зберегти продукт." }));
+                    setForm((s) => ({
+                      ...s,
+                      err: "Введіть назву, щоб зберегти продукт.",
+                    }));
                     return;
                   }
                   const kcal = form.kcal === "" ? 0 : Number(form.kcal);
-                  const protein_g = form.protein_g === "" ? 0 : Number(form.protein_g);
+                  const protein_g =
+                    form.protein_g === "" ? 0 : Number(form.protein_g);
                   const fat_g = form.fat_g === "" ? 0 : Number(form.fat_g);
-                  const carbs_g = form.carbs_g === "" ? 0 : Number(form.carbs_g);
-                  if ([kcal, protein_g, fat_g, carbs_g].some((n) => !Number.isFinite(n) || n < 0)) {
-                    setForm((s) => ({ ...s, err: "КБЖВ має бути числами (без від'ємних значень)." }));
+                  const carbs_g =
+                    form.carbs_g === "" ? 0 : Number(form.carbs_g);
+                  if (
+                    [kcal, protein_g, fat_g, carbs_g].some(
+                      (n) => !Number.isFinite(n) || n < 0,
+                    )
+                  ) {
+                    setForm((s) => ({
+                      ...s,
+                      err: "КБЖВ має бути числами (без від'ємних значень).",
+                    }));
                     return;
                   }
                   const res = await upsertFood({
@@ -833,7 +950,10 @@ export function AddMealSheet({
                     per100: { kcal, protein_g, fat_g, carbs_g },
                     defaultGrams: 100,
                   });
-                  if (!res.ok) { setFoodErr(res.error || "Не вдалося зберегти продукт."); return; }
+                  if (!res.ok) {
+                    setFoodErr(res.error || "Не вдалося зберегти продукт.");
+                    return;
+                  }
                   setPickedFood(res.product);
                   setPickedGrams("100");
                   setFoodQuery(name);
@@ -857,21 +977,35 @@ export function AddMealSheet({
                 onClick={() => {
                   const name = form.name.trim();
                   if (!name) {
-                    setForm((s) => ({ ...s, err: "Спочатку введіть назву для шаблону." }));
+                    setForm((s) => ({
+                      ...s,
+                      err: "Спочатку введіть назву для шаблону.",
+                    }));
                     return;
                   }
                   const kcal = form.kcal === "" ? 0 : Number(form.kcal);
-                  const protein_g = form.protein_g === "" ? 0 : Number(form.protein_g);
+                  const protein_g =
+                    form.protein_g === "" ? 0 : Number(form.protein_g);
                   const fat_g = form.fat_g === "" ? 0 : Number(form.fat_g);
-                  const carbs_g = form.carbs_g === "" ? 0 : Number(form.carbs_g);
-                  if ([kcal, protein_g, fat_g, carbs_g].some((n) => !Number.isFinite(n))) {
-                    setForm((s) => ({ ...s, err: "Некоректне КБЖВ для шаблону." }));
+                  const carbs_g =
+                    form.carbs_g === "" ? 0 : Number(form.carbs_g);
+                  if (
+                    [kcal, protein_g, fat_g, carbs_g].some(
+                      (n) => !Number.isFinite(n),
+                    )
+                  ) {
+                    setForm((s) => ({
+                      ...s,
+                      err: "Некоректне КБЖВ для шаблону.",
+                    }));
                     return;
                   }
                   setPrefs((p) => ({
                     ...p,
                     mealTemplates: [
-                      ...(Array.isArray(p.mealTemplates) ? p.mealTemplates : []),
+                      ...(Array.isArray(p.mealTemplates)
+                        ? p.mealTemplates
+                        : []),
                       {
                         id: `tpl_${Date.now()}`,
                         name,

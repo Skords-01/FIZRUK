@@ -48,14 +48,9 @@ export function WorkoutCatalogSection({
           grouped.map((g) => {
             const isOpen = open[g.id] ?? false;
             return (
-              <div
-                key={g.id}
-                className="border-b border-line last:border-0"
-              >
+              <div key={g.id} className="border-b border-line last:border-0">
                 <button
-                  onClick={() =>
-                    setOpen((o) => ({ ...o, [g.id]: !isOpen }))
-                  }
+                  onClick={() => setOpen((o) => ({ ...o, [g.id]: !isOpen }))}
                   className="w-full flex items-center justify-between px-4 py-3 bg-panelHi/60 hover:bg-panelHi transition-colors"
                 >
                   <div className="text-sm font-bold text-text">{g.label}</div>
@@ -72,10 +67,7 @@ export function WorkoutCatalogSection({
                     {g.items.map((ex) => {
                       const catCf = recoveryConflictsForExercise(ex, rec.by);
                       return (
-                        <div
-                          key={ex.id}
-                          className="flex border-t border-line"
-                        >
+                        <div key={ex.id} className="flex border-t border-line">
                           <button
                             type="button"
                             onClick={() => handleExerciseInListClick(ex)}
@@ -134,8 +126,8 @@ export function WorkoutCatalogSection({
                     })}
                     {g.total > g.items.length && (
                       <div className="px-4 py-3 text-xs text-subtle border-t border-line">
-                        Показано {g.items.length} з {g.total} (уточни пошук
-                        щоб звузити)
+                        Показано {g.items.length} з {g.total} (уточни пошук щоб
+                        звузити)
                       </div>
                     )}
                   </div>

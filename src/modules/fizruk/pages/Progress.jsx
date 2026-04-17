@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useCallback } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { cn } from "@shared/lib/cn";
@@ -298,11 +298,15 @@ export function Progress() {
           <div className="flex items-center gap-3">
             <div className="text-center">
               <div className="text-xs text-subtle">PR</div>
-              <div className="text-base font-extrabold text-text tabular-nums">{quickStats.prsCount}</div>
+              <div className="text-base font-extrabold text-text tabular-nums">
+                {quickStats.prsCount}
+              </div>
             </div>
             <div className="text-center">
               <div className="text-xs text-subtle">Заміри</div>
-              <div className="text-base font-extrabold text-text tabular-nums">{entries.length}</div>
+              <div className="text-base font-extrabold text-text tabular-nums">
+                {entries.length}
+              </div>
             </div>
           </div>
         </div>
@@ -337,8 +341,12 @@ export function Progress() {
                 💪
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-text">Відтискання</div>
-                <div className="text-[11px] text-subtle">за даними щоденних звичок</div>
+                <div className="text-sm font-semibold text-text">
+                  Відтискання
+                </div>
+                <div className="text-[11px] text-subtle">
+                  за даними щоденних звичок
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -503,8 +511,13 @@ export function Progress() {
 
         {/* PR Board */}
         {(() => {
-          const muscleGroups = [...new Set(prs.map((p) => p.muscleGroup).filter(Boolean))].sort();
-          const filtered = prFilter === "all" ? prs : prs.filter((p) => p.muscleGroup === prFilter);
+          const muscleGroups = [
+            ...new Set(prs.map((p) => p.muscleGroup).filter(Boolean)),
+          ].sort();
+          const filtered =
+            prFilter === "all"
+              ? prs
+              : prs.filter((p) => p.muscleGroup === prFilter);
           const MEDALS = ["🥇", "🥈", "🥉"];
           return (
             <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
@@ -513,7 +526,9 @@ export function Progress() {
                   Рекорди (PR) · {prs.length}
                 </div>
                 {filtered.length !== prs.length && (
-                  <div className="text-[11px] text-subtle">{filtered.length} показано</div>
+                  <div className="text-[11px] text-subtle">
+                    {filtered.length} показано
+                  </div>
                 )}
               </div>
 
@@ -552,24 +567,37 @@ export function Progress() {
 
               {filtered.length === 0 ? (
                 <div className="text-sm text-subtle text-center py-6">
-                  {prs.length === 0 ? "Поки немає силових PR" : "Немає PR для цієї групи м'язів"}
+                  {prs.length === 0
+                    ? "Поки немає силових PR"
+                    : "Немає PR для цієї групи м'язів"}
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filtered.map((p, idx) => {
+                  {filtered.map((p) => {
                     const globalRank = prs.findIndex((x) => x.id === p.id);
-                    const medal = globalRank >= 0 && globalRank < 3 ? MEDALS[globalRank] : null;
+                    const medal =
+                      globalRank >= 0 && globalRank < 3
+                        ? MEDALS[globalRank]
+                        : null;
                     return (
                       <button
                         key={p.id}
                         type="button"
                         className="w-full text-left border border-line rounded-2xl p-3 bg-bg hover:bg-panelHi transition-colors"
-                        onClick={() => { window.location.hash = `#exercise/${p.id}`; }}
+                        onClick={() => {
+                          window.location.hash = `#exercise/${p.id}`;
+                        }}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            {medal && <span className="shrink-0 text-base leading-none">{medal}</span>}
-                            <div className="text-sm font-semibold text-text truncate">{p.name}</div>
+                            {medal && (
+                              <span className="shrink-0 text-base leading-none">
+                                {medal}
+                              </span>
+                            )}
+                            <div className="text-sm font-semibold text-text truncate">
+                              {p.name}
+                            </div>
                           </div>
                           <div className="shrink-0 text-sm font-bold text-text tabular-nums">
                             {p.best1rm.toFixed(0)} кг
@@ -581,7 +609,11 @@ export function Progress() {
                           </span>
                           {p.at && (
                             <span className="text-[11px] text-muted">
-                              · {new Date(p.at).toLocaleDateString("uk-UA", { month: "short", day: "numeric" })}
+                              ·{" "}
+                              {new Date(p.at).toLocaleDateString("uk-UA", {
+                                month: "short",
+                                day: "numeric",
+                              })}
                             </span>
                           )}
                           {p.muscleGroupLabel && (

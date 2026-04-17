@@ -1,11 +1,5 @@
 import { betterAuth } from "better-auth";
-import pg from "pg";
-
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 5,
-  idleTimeoutMillis: 30_000,
-});
+import pool from "./db.js";
 
 function getBaseURL() {
   if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
@@ -17,6 +11,30 @@ function getBaseURL() {
   }
   return `http://localhost:${process.env.PORT || 5000}`;
 }
+
+/**
+ * Фронт (Vercel) і API (Railway) — різні сайти: кукі сесії потребують SameSite=None + Secure.
+ * Увімкнено, коли base URL API — HTTPS (типово Railway), якщо не BETTER_AUTH_CROSS_SITE_COOKIES=0.
+ * Локально http://localhost — без змін (Lax за замовчуванням у better-auth).
+ */
+function getAdvancedCookieOptions() {
+  if (process.env.BETTER_AUTH_CROSS_SITE_COOKIES === "0") {
+    return null;
+  }
+  const base = getBaseURL();
+  if (!base.startsWith("https://")) {
+    return null;
+  }
+  return {
+    useSecureCookies: true,
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+    },
+  };
+}
+
+const advancedCookies = getAdvancedCookieOptions();
 
 export const auth = betterAuth({
   database: pool,
@@ -35,6 +53,7 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins: getTrustedOrigins(),
+  ...(advancedCookies ? { advanced: advancedCookies } : {}),
 });
 
 function getTrustedOrigins() {

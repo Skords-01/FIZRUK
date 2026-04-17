@@ -54,7 +54,15 @@ export function DayReportSheet({
             className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-panelHi transition-colors"
             aria-label="Закрити"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
               <path d="M4 4l8 8M12 4l-8 8" />
             </svg>
           </button>
@@ -75,7 +83,10 @@ export function DayReportSheet({
             </p>
             <ul className="space-y-1.5">
               {done.map((h) => (
-                <li key={h.id} className="flex items-center gap-3 rounded-xl bg-routine-surface/40 dark:bg-routine/10 border border-routine-line/30 dark:border-routine/20 px-3 py-2.5">
+                <li
+                  key={h.id}
+                  className="flex items-center gap-3 rounded-xl bg-routine-surface/40 dark:bg-routine/10 border border-routine-line/30 dark:border-routine/20 px-3 py-2.5"
+                >
                   <button
                     type="button"
                     onClick={() => onToggleHabit(h.id, dateKey)}
@@ -103,7 +114,10 @@ export function DayReportSheet({
             </p>
             <ul className="space-y-1.5">
               {missed.map((h) => (
-                <li key={h.id} className="flex items-center gap-3 rounded-xl bg-panel border border-line/50 px-3 py-2.5">
+                <li
+                  key={h.id}
+                  className="flex items-center gap-3 rounded-xl bg-panel border border-line/50 px-3 py-2.5"
+                >
                   <button
                     type="button"
                     onClick={() => onToggleHabit(h.id, dateKey)}

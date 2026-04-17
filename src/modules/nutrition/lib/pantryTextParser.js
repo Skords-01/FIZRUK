@@ -161,13 +161,7 @@ export function canonicalFoodKey(name) {
   // Легкий стемінг для окремих слів: відрізаємо типові укр. закінчення
   // множини/родового відмінка, якщо після них залишається ≥4 літер.
   if (!n.includes(" ")) {
-    const stems = [
-      /ів$/,
-      /ами$/,
-      /ями$/,
-      /ах$/,
-      /ям$/,
-    ];
+    const stems = [/ів$/, /ами$/, /ями$/, /ах$/, /ям$/];
     for (const re of stems) {
       if (re.test(n)) {
         const stem = n.replace(re, "");

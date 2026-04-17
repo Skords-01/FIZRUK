@@ -1,5 +1,6 @@
 import pool from "../db.js";
 import { getSessionUser } from "../auth.js";
+import { assertAiQuota } from "../aiQuota.js";
 import { setCorsHeaders } from "./lib/cors.js";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
@@ -30,20 +31,28 @@ async function saveMemory(userId, memory) {
 }
 
 function mergeMemory(existing, incoming) {
-  const base = existing || { weeklyDigests: [], lastInsightDate: null, lastInsightText: null };
+  const base = existing || {
+    weeklyDigests: [],
+    lastInsightDate: null,
+    lastInsightText: null,
+  };
 
-  const digests = Array.isArray(base.weeklyDigests) ? [...base.weeklyDigests] : [];
+  const digests = Array.isArray(base.weeklyDigests)
+    ? [...base.weeklyDigests]
+    : [];
 
   if (incoming.weeklyDigest) {
     const entry = {
       weekKey: incoming.weeklyDigest.weekKey,
       weekRange: incoming.weeklyDigest.weekRange,
-      generatedAt: incoming.weeklyDigest.generatedAt || new Date().toISOString(),
+      generatedAt:
+        incoming.weeklyDigest.generatedAt || new Date().toISOString(),
       finyk: incoming.weeklyDigest.finyk ?? null,
       fizruk: incoming.weeklyDigest.fizruk ?? null,
       nutrition: incoming.weeklyDigest.nutrition ?? null,
       routine: incoming.weeklyDigest.routine ?? null,
-      overallRecommendations: incoming.weeklyDigest.overallRecommendations ?? [],
+      overallRecommendations:
+        incoming.weeklyDigest.overallRecommendations ?? [],
     };
     const existingIdx = digests.findIndex((d) => d.weekKey === entry.weekKey);
     if (existingIdx >= 0) {
@@ -63,7 +72,11 @@ function mergeMemory(existing, incoming) {
 }
 
 function buildMemorySummary(memory) {
-  if (!memory || !Array.isArray(memory.weeklyDigests) || memory.weeklyDigests.length === 0) {
+  if (
+    !memory ||
+    !Array.isArray(memory.weeklyDigests) ||
+    memory.weeklyDigests.length === 0
+  ) {
     return "Пам'яті ще немає — це перший сеанс.";
   }
 
@@ -103,7 +116,9 @@ function buildMemorySummary(memory) {
     lines.push(...routineSummaries.slice(0, 4));
   }
 
-  const allRecs = digests.flatMap((d) => d.overallRecommendations || []).slice(0, 6);
+  const allRecs = digests
+    .flatMap((d) => d.overallRecommendations || [])
+    .slice(0, 6);
   if (allRecs.length) {
     lines.push("Попередні рекомендації:");
     allRecs.forEach((r) => lines.push(`  • ${r}`));
@@ -144,10 +159,14 @@ export default async function coachHandler(req, res) {
   }
 
   if (path.endsWith("/insight")) {
-    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+    if (req.method !== "POST")
+      return res.status(405).json({ error: "Method not allowed" });
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+    if (!apiKey)
+      return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+
+    if (!(await assertAiQuota(req, res))) return;
 
     const { snapshot, memory } = req.body || {};
 
@@ -161,7 +180,9 @@ export default async function coachHandler(req, res) {
       if (snapshot.finyk.topCategories?.length) {
         snapshotLines.push(
           "Топ витрат: " +
-            snapshot.finyk.topCategories.map((c) => `${c.name} ${c.amount} грн`).join(", "),
+            snapshot.finyk.topCategories
+              .map((c) => `${c.name} ${c.amount} грн`)
+              .join(", "),
         );
       }
     }
@@ -216,7 +237,9 @@ ${snapshotText}
 
     const aiData = await aiRes.json();
     if (!aiRes.ok) {
-      return res.status(aiRes.status).json({ error: aiData?.error?.message || "AI error" });
+      return res
+        .status(aiRes.status)
+        .json({ error: aiData?.error?.message || "AI error" });
     }
 
     const text = (aiData?.content || [])

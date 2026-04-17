@@ -41,7 +41,9 @@ export function shouldShowOnboarding() {
 }
 
 function markOnboardingDone() {
-  try { localStorage.setItem(ONBOARDING_DONE_KEY, "1"); } catch {}
+  try {
+    localStorage.setItem(ONBOARDING_DONE_KEY, "1");
+  } catch {}
 }
 
 function StepDots({ total, current }) {
@@ -56,7 +58,7 @@ function StepDots({ total, current }) {
               ? "w-5 h-2 bg-accent"
               : i < current
                 ? "w-2 h-2 bg-accent/40"
-                : "w-2 h-2 bg-line"
+                : "w-2 h-2 bg-line",
           )}
         />
       ))}
@@ -73,18 +75,23 @@ function WelcomeStep({ name, setName, onNext }) {
       <div>
         <h2 className="text-2xl font-bold text-text">Вітаємо в Hub!</h2>
         <p className="text-sm text-muted mt-2 leading-relaxed">
-          Ваш особистий простір для фінансів, тренувань, звичок та харчування. Давайте налаштуємо все під вас.
+          Ваш особистий простір для фінансів, тренувань, звичок та харчування.
+          Давайте налаштуємо все під вас.
         </p>
       </div>
       <div className="w-full space-y-1.5 text-left">
-        <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+        <label
+          htmlFor="onboarding-display-name"
+          className="text-xs font-semibold text-muted uppercase tracking-wider"
+        >
           Як вас звати?
         </label>
         <input
+          id="onboarding-display-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Ваше ім'я (необов'язково)"
+          placeholder={"Ваше ім'я (необов'язково)"}
           className="w-full bg-panelHi border border-line rounded-2xl px-4 py-3 text-sm text-text placeholder:text-subtle outline-none focus:border-accent/50 transition-colors"
         />
       </div>
@@ -101,11 +108,31 @@ function WelcomeStep({ name, setName, onNext }) {
 
 function FizrukStep({ goal, setGoal, onNext, onBack }) {
   const goals = [
-    { id: "strength", label: "💪 Набір сили", desc: "Важкі ваги, мала кількість повторень" },
-    { id: "endurance", label: "🏃 Витривалість", desc: "Кардіо, тривалі тренування" },
-    { id: "weight_loss", label: "🔥 Схуднення", desc: "Кардіо + силові, дефіцит калорій" },
-    { id: "flexibility", label: "🧘 Гнучкість", desc: "Розтяжка, йога, мобільність" },
-    { id: "general", label: "🎯 Загальна форма", desc: "Збалансовані тренування для здоров'я" },
+    {
+      id: "strength",
+      label: "💪 Набір сили",
+      desc: "Важкі ваги, мала кількість повторень",
+    },
+    {
+      id: "endurance",
+      label: "🏃 Витривалість",
+      desc: "Кардіо, тривалі тренування",
+    },
+    {
+      id: "weight_loss",
+      label: "🔥 Схуднення",
+      desc: "Кардіо + силові, дефіцит калорій",
+    },
+    {
+      id: "flexibility",
+      label: "🧘 Гнучкість",
+      desc: "Розтяжка, йога, мобільність",
+    },
+    {
+      id: "general",
+      label: "🎯 Загальна форма",
+      desc: "Збалансовані тренування для здоров'я",
+    },
   ];
 
   return (
@@ -113,7 +140,9 @@ function FizrukStep({ goal, setGoal, onNext, onBack }) {
       <div className="text-center">
         <div className="text-3xl mb-2">🏋️</div>
         <h2 className="text-xl font-bold text-text">Ціль тренувань</h2>
-        <p className="text-sm text-muted mt-1">Що хочете досягти у фізичній формі?</p>
+        <p className="text-sm text-muted mt-1">
+          Що хочете досягти у фізичній формі?
+        </p>
       </div>
       <div className="space-y-2">
         {goals.map((g) => (
@@ -125,7 +154,7 @@ function FizrukStep({ goal, setGoal, onNext, onBack }) {
               "w-full text-left px-4 py-3 rounded-2xl border transition-all",
               goal === g.id
                 ? "border-accent bg-accent/10"
-                : "border-line bg-panelHi hover:border-muted"
+                : "border-line bg-panelHi hover:border-muted",
             )}
           >
             <div className="text-sm font-semibold text-text">{g.label}</div>
@@ -134,10 +163,18 @@ function FizrukStep({ goal, setGoal, onNext, onBack }) {
         ))}
       </div>
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={onBack} className="flex-1 py-3 rounded-2xl border border-line text-sm text-muted hover:text-text hover:bg-panelHi transition">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex-1 py-3 rounded-2xl border border-line text-sm text-muted hover:text-text hover:bg-panelHi transition"
+        >
           Назад
         </button>
-        <button type="button" onClick={onNext} className="flex-1 py-3 rounded-2xl bg-accent text-forest font-bold text-sm hover:brightness-110 transition">
+        <button
+          type="button"
+          onClick={onNext}
+          className="flex-1 py-3 rounded-2xl bg-accent text-forest font-bold text-sm hover:brightness-110 transition"
+        >
           Далі →
         </button>
       </div>
@@ -158,7 +195,9 @@ function NutritionStep({ kcal, setKcal, onNext, onBack }) {
       <div className="text-center">
         <div className="text-3xl mb-2">🥗</div>
         <h2 className="text-xl font-bold text-text">Ціль з калорій</h2>
-        <p className="text-sm text-muted mt-1">Скільки калорій на день ви плануєте?</p>
+        <p className="text-sm text-muted mt-1">
+          Скільки калорій на день ви плануєте?
+        </p>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {presets.map((p) => (
@@ -170,7 +209,7 @@ function NutritionStep({ kcal, setKcal, onNext, onBack }) {
               "px-4 py-3 rounded-2xl border transition-all text-center",
               kcal === p.id
                 ? "border-accent bg-accent/10"
-                : "border-line bg-panelHi hover:border-muted"
+                : "border-line bg-panelHi hover:border-muted",
             )}
           >
             <div className="text-sm font-semibold text-text">{p.label}</div>
@@ -179,10 +218,14 @@ function NutritionStep({ kcal, setKcal, onNext, onBack }) {
         ))}
       </div>
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+        <label
+          htmlFor="onboarding-kcal-custom"
+          className="text-xs font-semibold text-muted uppercase tracking-wider"
+        >
           Або вкажіть своє значення
         </label>
         <input
+          id="onboarding-kcal-custom"
           type="number"
           min={800}
           max={6000}
@@ -193,10 +236,18 @@ function NutritionStep({ kcal, setKcal, onNext, onBack }) {
         />
       </div>
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={onBack} className="flex-1 py-3 rounded-2xl border border-line text-sm text-muted hover:text-text hover:bg-panelHi transition">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex-1 py-3 rounded-2xl border border-line text-sm text-muted hover:text-text hover:bg-panelHi transition"
+        >
           Назад
         </button>
-        <button type="button" onClick={onNext} className="flex-1 py-3 rounded-2xl bg-accent text-forest font-bold text-sm hover:brightness-110 transition">
+        <button
+          type="button"
+          onClick={onNext}
+          className="flex-1 py-3 rounded-2xl bg-accent text-forest font-bold text-sm hover:brightness-110 transition"
+        >
           Далі →
         </button>
       </div>
@@ -209,7 +260,11 @@ function FinanceStep({ startModule, setStartModule, onDone, onBack }) {
     { id: "finyk", label: "💳 Фінік", desc: "Почати з фінансів і транзакцій" },
     { id: "fizruk", label: "🏋️ Фізрук", desc: "Почати з тренувань" },
     { id: "routine", label: "✅ Рутина", desc: "Почати з звичок і календаря" },
-    { id: "nutrition", label: "🥗 Харчування", desc: "Почати з відстеження їжі" },
+    {
+      id: "nutrition",
+      label: "🥗 Харчування",
+      desc: "Почати з відстеження їжі",
+    },
     { id: null, label: "🏠 Головна", desc: "Залишитися на дашборді" },
   ];
 
@@ -218,7 +273,9 @@ function FinanceStep({ startModule, setStartModule, onDone, onBack }) {
       <div className="text-center">
         <div className="text-3xl mb-2">🚀</div>
         <h2 className="text-xl font-bold text-text">З чого почнемо?</h2>
-        <p className="text-sm text-muted mt-1">Оберіть перший модуль, який хочете відкрити</p>
+        <p className="text-sm text-muted mt-1">
+          Оберіть перший модуль, який хочете відкрити
+        </p>
       </div>
       <div className="space-y-2">
         {modules.map((m) => (
@@ -230,7 +287,7 @@ function FinanceStep({ startModule, setStartModule, onDone, onBack }) {
               "w-full text-left px-4 py-3 rounded-2xl border transition-all",
               startModule === m.id
                 ? "border-accent bg-accent/10"
-                : "border-line bg-panelHi hover:border-muted"
+                : "border-line bg-panelHi hover:border-muted",
             )}
           >
             <div className="text-sm font-semibold text-text">{m.label}</div>
@@ -239,10 +296,18 @@ function FinanceStep({ startModule, setStartModule, onDone, onBack }) {
         ))}
       </div>
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={onBack} className="flex-1 py-3 rounded-2xl border border-line text-sm text-muted hover:text-text hover:bg-panelHi transition">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex-1 py-3 rounded-2xl border border-line text-sm text-muted hover:text-text hover:bg-panelHi transition"
+        >
           Назад
         </button>
-        <button type="button" onClick={onDone} className="flex-1 py-3 rounded-2xl bg-accent text-forest font-bold text-sm hover:brightness-110 transition">
+        <button
+          type="button"
+          onClick={onDone}
+          className="flex-1 py-3 rounded-2xl bg-accent text-forest font-bold text-sm hover:brightness-110 transition"
+        >
           Почати! 🎉
         </button>
       </div>
@@ -261,14 +326,20 @@ export function OnboardingWizard({ onDone }) {
 
   const handleDone = () => {
     if (name.trim()) {
-      try { localStorage.setItem("hub_user_name", name.trim()); } catch {}
+      try {
+        localStorage.setItem("hub_user_name", name.trim());
+      } catch {}
     }
     if (goal) {
-      try { localStorage.setItem("fizruk_onboarding_goal", goal); } catch {}
+      try {
+        localStorage.setItem("fizruk_onboarding_goal", goal);
+      } catch {}
     }
     if (kcal > 0) {
       try {
-        const prefs = JSON.parse(localStorage.getItem("nutrition_prefs_v1") || "{}");
+        const prefs = JSON.parse(
+          localStorage.getItem("nutrition_prefs_v1") || "{}",
+        );
         prefs.dailyTargetKcal = kcal;
         localStorage.setItem("nutrition_prefs_v1", JSON.stringify(prefs));
       } catch {}
@@ -290,17 +361,47 @@ export function OnboardingWizard({ onDone }) {
           <StepDots total={TOTAL} current={step} />
           <button
             type="button"
-            onClick={() => { markOnboardingDone(); onDone(null); }}
+            onClick={() => {
+              markOnboardingDone();
+              onDone(null);
+            }}
             className="text-xs text-muted hover:text-text transition-colors"
           >
             Пропустити
           </button>
         </div>
 
-        {step === 0 && <WelcomeStep name={name} setName={setName} onNext={() => setStep(1)} />}
-        {step === 1 && <FizrukStep goal={goal} setGoal={setGoal} onNext={() => setStep(2)} onBack={() => setStep(0)} />}
-        {step === 2 && <NutritionStep kcal={kcal} setKcal={setKcal} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
-        {step === 3 && <FinanceStep startModule={startModule} setStartModule={setStartModule} onDone={handleDone} onBack={() => setStep(2)} />}
+        {step === 0 && (
+          <WelcomeStep
+            name={name}
+            setName={setName}
+            onNext={() => setStep(1)}
+          />
+        )}
+        {step === 1 && (
+          <FizrukStep
+            goal={goal}
+            setGoal={setGoal}
+            onNext={() => setStep(2)}
+            onBack={() => setStep(0)}
+          />
+        )}
+        {step === 2 && (
+          <NutritionStep
+            kcal={kcal}
+            setKcal={setKcal}
+            onNext={() => setStep(3)}
+            onBack={() => setStep(1)}
+          />
+        )}
+        {step === 3 && (
+          <FinanceStep
+            startModule={startModule}
+            setStartModule={setStartModule}
+            onDone={handleDone}
+            onBack={() => setStep(2)}
+          />
+        )}
       </div>
     </div>
   );

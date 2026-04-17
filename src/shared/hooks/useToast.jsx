@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 
 const ToastContext = createContext(null);
 
@@ -25,7 +33,9 @@ export function ToastProvider({ children }) {
     (msg, type = "success", duration = 3500, action) => {
       const id = ++idCounter;
       const a =
-        action && typeof action === "object" && typeof action.onClick === "function"
+        action &&
+        typeof action === "object" &&
+        typeof action.onClick === "function"
           ? { label: String(action.label || "Дія"), onClick: action.onClick }
           : null;
       setToasts((prev) => [...prev.slice(-4), { id, msg, type, action: a }]);
@@ -35,10 +45,22 @@ export function ToastProvider({ children }) {
     [dismiss],
   );
 
-  const success = useCallback((msg, duration, action) => show(msg, "success", duration, action), [show]);
-  const error = useCallback((msg, duration, action) => show(msg, "error", duration ?? 5000, action), [show]);
-  const info = useCallback((msg, duration, action) => show(msg, "info", duration, action), [show]);
-  const warning = useCallback((msg, duration, action) => show(msg, "warning", duration ?? 5000, action), [show]);
+  const success = useCallback(
+    (msg, duration, action) => show(msg, "success", duration, action),
+    [show],
+  );
+  const error = useCallback(
+    (msg, duration, action) => show(msg, "error", duration ?? 5000, action),
+    [show],
+  );
+  const info = useCallback(
+    (msg, duration, action) => show(msg, "info", duration, action),
+    [show],
+  );
+  const warning = useCallback(
+    (msg, duration, action) => show(msg, "warning", duration ?? 5000, action),
+    [show],
+  );
 
   const api = useMemo(
     () => ({ show, success, error, info, warning, dismiss }),
@@ -48,9 +70,7 @@ export function ToastProvider({ children }) {
   const value = useMemo(() => ({ ...api, toasts }), [api, toasts]);
 
   return (
-    <ToastContext.Provider value={value}>
-      {children}
-    </ToastContext.Provider>
+    <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
   );
 }
 

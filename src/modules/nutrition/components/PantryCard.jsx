@@ -198,7 +198,9 @@ export function PantryCard({
       <Card className="p-4">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-text">Додати продукти</div>
+            <div className="text-sm font-semibold text-text">
+              Додати продукти
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {typeof onScanBarcode === "function" && (

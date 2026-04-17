@@ -1,16 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Input } from "@shared/components/ui/Input";
-import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 import {
-  getDayMacros,
   searchMealsByName,
   getMacrosForDateRange,
   estimateLogBytes,
-  addDaysISODate,
   toLocalISODate,
 } from "../lib/nutritionStorage.js";
 import {
@@ -26,39 +23,7 @@ import {
   summarizeRows,
   topMeals,
 } from "../lib/nutritionStats.js";
-import {
-  downloadBlob,
-  weekMacrosToCsv,
-  formatDayAsText,
-} from "../lib/nutritionLogExport.js";
 import { getMealThumbnailBlob } from "../lib/mealPhotoStorage.js";
-
-const MACRO_TILES = [
-  {
-    key: "kcal",
-    label: "Ккал",
-    color: "text-nutrition",
-    targetKey: "dailyTargetKcal",
-  },
-  {
-    key: "protein_g",
-    label: "Білки",
-    color: "text-blue-400",
-    targetKey: "dailyTargetProtein_g",
-  },
-  {
-    key: "fat_g",
-    label: "Жири",
-    color: "text-yellow-400",
-    targetKey: "dailyTargetFat_g",
-  },
-  {
-    key: "carbs_g",
-    label: "Вугл.",
-    color: "text-orange-400",
-    targetKey: "dailyTargetCarbs_g",
-  },
-];
 
 function toISODate(d) {
   return toLocalISODate(d);
@@ -83,11 +48,6 @@ function groupByMealType(meals) {
     groups[mealType].push(meal);
   }
   return groups;
-}
-
-function pct(current, target) {
-  if (!(target > 0)) return 0;
-  return Math.min(100, (current / target) * 100);
 }
 
 function MealThumb({ mealId }) {
@@ -123,24 +83,22 @@ export function LogCard({
   onAddMealFromSearch,
   onRemoveMeal,
   onEditMeal,
-  prefs,
-  setPrefs,
+  prefs: _prefs,
+  setPrefs: _setPrefs,
   onDuplicateYesterday,
-  onImportMerge,
-  onImportReplace,
+  onImportMerge: _onImportMerge,
+  onImportReplace: _onImportReplace,
   onTrimLog,
-  onFetchDayHint,
-  dayHintText,
-  dayHintBusy,
-  onCloudBackupUpload,
-  onCloudBackupDownload,
-  cloudBackupBusy,
+  onFetchDayHint: _onFetchDayHint,
+  dayHintText: _dayHintText,
+  dayHintBusy: _dayHintBusy,
+  onCloudBackupUpload: _onCloudBackupUpload,
+  onCloudBackupDownload: _onCloudBackupDownload,
+  cloudBackupBusy: _cloudBackupBusy,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [duplicateConfirm, setDuplicateConfirm] = useState(false);
-  const importRef = useRef(null);
-  const [importMode, setImportMode] = useState("merge");
   const [statsRange, setStatsRange] = useState(30);
   const [weekOpen, setWeekOpen] = useState(false);
 
@@ -149,7 +107,6 @@ export function LogCard({
     return () => clearTimeout(id);
   }, [searchQuery]);
 
-  const macros = getDayMacros(log, selectedDate);
   const dayData = log[selectedDate];
   const meals = dayData?.meals || [];
   const groups = groupByMealType(meals);
@@ -192,371 +149,343 @@ export function LogCard({
   }
 
   const isToday = selectedDate === toISODate(new Date());
-  const prevDate = addDaysISODate(selectedDate, -1);
-  const hasPrevDay = log[prevDate]?.meals?.length > 0;
-
-  function exportDayJson() {
-    const payload = { [selectedDate]: log[selectedDate] || { meals: [] } };
-    downloadBlob(
-      `nutrition-${selectedDate}.json`,
-      "application/json",
-      JSON.stringify(payload, null, 2),
-    );
-  }
-
-  function exportDayText() {
-    downloadBlob(
-      `nutrition-${selectedDate}.txt`,
-      "text/plain;charset=utf-8",
-      formatDayAsText(log, selectedDate),
-    );
-  }
-
-  function exportWeekCsv() {
-    const csv = weekMacrosToCsv(weekRows);
-    downloadBlob(
-      `nutrition-week-${selectedDate}.csv`,
-      "text/csv;charset=utf-8",
-      csv,
-    );
-  }
-
-  function handleImportFile(e) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const text = String(reader.result || "");
-        if (importMode === "replace") onImportReplace(text);
-        else onImportMerge(text);
-      } catch {
-        /* ignore */
-      }
-      e.target.value = "";
-    };
-    reader.readAsText(f);
-  }
 
   return (
     <>
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => shiftDate(-1)}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text transition-colors"
-          aria-label="Попередній день"
-        >
-          ‹
-        </button>
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="font-extrabold text-text text-base">
-            {formatDate(selectedDate)}
-          </span>
-          <span className="text-[11px] text-subtle">{selectedDate}</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => shiftDate(1)}
-          disabled={isToday}
-          className={cn(
-            "w-10 h-10 flex items-center justify-center rounded-full transition-colors",
-            isToday
-              ? "text-line cursor-not-allowed"
-              : "bg-panelHi text-muted hover:text-text",
-          )}
-          aria-label="Наступний день"
-        >
-          ›
-        </button>
-      </div>
-
-      <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
-        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-          Пошук по журналу
-        </div>
-        <Input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Назва страви…"
-          aria-label="Пошук по журналу"
-        />
-        {searchQuery.trim() && (
-          <ul className="max-h-48 overflow-y-auto text-sm space-y-1">
-            {searchHits.length === 0 && (
-              <li className="text-muted text-xs">Нічого не знайдено</li>
-            )}
-            {searchHits.map(({ date, meal }) => {
-              const mac = meal.macros || {};
-              return (
-                <li
-                  key={`${date}-${meal.id}`}
-                  className="flex items-center gap-2 bg-panelHi rounded-xl px-2.5 py-2"
-                >
-                  <button
-                    type="button"
-                    className="text-left min-w-0 flex-1"
-                    onClick={() => {
-                      setSelectedDate(date);
-                      setSearchQuery("");
-                    }}
-                  >
-                    <div className="text-xs font-semibold text-text truncate">
-                      {meal.name}
-                    </div>
-                    <div className="flex gap-1.5 mt-0.5 flex-wrap">
-                      <span className="text-[10px] text-subtle">{date}</span>
-                      {mac.kcal != null && (
-                        <span className="text-[10px] text-nutrition font-bold">
-                          {Math.round(mac.kcal)} ккал
-                        </span>
-                      )}
-                      {mac.protein_g != null && (
-                        <span className="text-[10px] text-subtle">
-                          Б{Math.round(mac.protein_g)}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-nutrition/10 text-nutrition hover:bg-nutrition/20 transition-colors"
-                    onClick={() => {
-                      onAddMealFromSearch?.({
-                        name: meal.name,
-                        mealType: meal.mealType,
-                        label: meal.label,
-                        macros: meal.macros ? { ...meal.macros } : {},
-                        source: "manual",
-                        macroSource: "manual",
-                      });
-                      setSearchQuery("");
-                    }}
-                    title="Додати до поточного дня"
-                    aria-label={`Додати ${meal.name} до поточного дня`}
-                  >
-                    +
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
-      {logSizeWarn && (
-        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-          Журнал великий (~{Math.round(logBytes / 1024)} КБ).{" "}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            className="underline font-semibold"
-            onClick={() => onTrimLog(365)}
+            onClick={() => shiftDate(-1)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text transition-colors"
+            aria-label="Попередній день"
           >
-            Залишити лише останні 365 днів
+            ‹
+          </button>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="font-extrabold text-text text-base">
+              {formatDate(selectedDate)}
+            </span>
+            <span className="text-[11px] text-subtle">{selectedDate}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => shiftDate(1)}
+            disabled={isToday}
+            className={cn(
+              "w-10 h-10 flex items-center justify-center rounded-full transition-colors",
+              isToday
+                ? "text-line cursor-not-allowed"
+                : "bg-panelHi text-muted hover:text-text",
+            )}
+            aria-label="Наступний день"
+          >
+            ›
           </button>
         </div>
-      )}
 
-      <button
-        type="button"
-        onClick={() => setWeekOpen((v) => !v)}
-        className="flex items-center gap-2 text-[10px] font-bold text-subtle uppercase tracking-widest w-full text-left py-1"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform shrink-0", weekOpen ? "rotate-90" : "")}>
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-        Журнал за тиждень
-      </button>
-
-      {weekOpen && (
-        <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
-          <div className="overflow-x-auto">
-            <table className="w-full text-[11px] text-left">
-              <thead>
-                <tr className="text-subtle">
-                  <th className="py-1 pr-2">Дата</th>
-                  <th className="py-1 pr-2">Ккал</th>
-                  <th className="py-1 pr-2">Б</th>
-                  <th className="py-1 pr-2">Ж</th>
-                  <th className="py-1">В</th>
-                </tr>
-              </thead>
-              <tbody>
-                {weekRows.map((r) => (
-                  <tr key={r.date} className="border-t border-line/40">
-                    <td className="py-1 pr-2 font-mono text-[10px]">{r.date.slice(5)}</td>
-                    <td className="py-1 pr-2">{Math.round(r.kcal)}</td>
-                    <td className="py-1 pr-2">{Math.round(r.protein_g)}</td>
-                    <td className="py-1 pr-2">{Math.round(r.fat_g)}</td>
-                    <td className="py-1">{Math.round(r.carbs_g)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-3">
-        <div className="flex items-center justify-between gap-2">
+        <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
           <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-            Аналітика (тренди)
+            Пошук по журналу
           </div>
-          <div className="flex gap-2">
-            {[30, 90].map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setStatsRange(d)}
-                className={cn(
-                  "px-2 py-1 rounded-lg text-[11px] font-semibold border",
-                  statsRange === d
-                    ? "border-nutrition/60 text-nutrition bg-nutrition/10"
-                    : "border-line text-subtle bg-panelHi",
-                )}
-              >
-                {d} днів
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {[
-            { key: "kcal", label: "Сер. ккал/день", v: statsAvg.kcal },
-            { key: "protein_g", label: "Сер. Б/день", v: statsAvg.protein_g },
-            { key: "fat_g", label: "Сер. Ж/день", v: statsAvg.fat_g },
-            { key: "carbs_g", label: "Сер. В/день", v: statsAvg.carbs_g },
-          ].map((x) => (
-            <div key={x.key} className="bg-panelHi rounded-2xl px-2 py-3">
-              <div className="text-[10px] text-subtle">{x.label}</div>
-              <div className="text-base font-extrabold text-text tabular-nums">
-                {Math.round(Number(x.v) || 0)}
-              </div>
-              <div className="text-[10px] text-subtle">
-                на {statsAvg.denom} активн. днів
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-panelHi rounded-2xl px-3 py-3">
-          <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
-            Калорії по днях (останні {Math.min(statsRange, statsRows.length)})
-          </div>
-          {statsRows.length === 0 ? (
-            <div className="text-xs text-muted">Немає даних</div>
-          ) : (
-            (() => {
-              const kcals = statsRows.map((r) => Number(r.kcal) || 0);
-              const max = Math.max(1, ...kcals);
-              return (
-                <div className="flex items-end gap-0.5 h-12">
-                  {kcals.slice(-statsRange).map((k, i) => (
-                    <div
-                      key={i}
-                      title={`${Math.round(k)} ккал`}
-                      className="flex-1 rounded-sm bg-nutrition/60"
-                      style={{
-                        height: `${Math.max(2, Math.round((k / max) * 48))}px`,
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Назва страви…"
+            aria-label="Пошук по журналу"
+          />
+          {searchQuery.trim() && (
+            <ul className="max-h-48 overflow-y-auto text-sm space-y-1">
+              {searchHits.length === 0 && (
+                <li className="text-muted text-xs">Нічого не знайдено</li>
+              )}
+              {searchHits.map(({ date, meal }) => {
+                const mac = meal.macros || {};
+                return (
+                  <li
+                    key={`${date}-${meal.id}`}
+                    className="flex items-center gap-2 bg-panelHi rounded-xl px-2.5 py-2"
+                  >
+                    <button
+                      type="button"
+                      className="text-left min-w-0 flex-1"
+                      onClick={() => {
+                        setSelectedDate(date);
+                        setSearchQuery("");
                       }}
-                    />
-                  ))}
-                </div>
-              );
-            })()
+                    >
+                      <div className="text-xs font-semibold text-text truncate">
+                        {meal.name}
+                      </div>
+                      <div className="flex gap-1.5 mt-0.5 flex-wrap">
+                        <span className="text-[10px] text-subtle">{date}</span>
+                        {mac.kcal != null && (
+                          <span className="text-[10px] text-nutrition font-bold">
+                            {Math.round(mac.kcal)} ккал
+                          </span>
+                        )}
+                        {mac.protein_g != null && (
+                          <span className="text-[10px] text-subtle">
+                            Б{Math.round(mac.protein_g)}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-nutrition/10 text-nutrition hover:bg-nutrition/20 transition-colors"
+                      onClick={() => {
+                        onAddMealFromSearch?.({
+                          name: meal.name,
+                          mealType: meal.mealType,
+                          label: meal.label,
+                          macros: meal.macros ? { ...meal.macros } : {},
+                          source: "manual",
+                          macroSource: "manual",
+                        });
+                        setSearchQuery("");
+                      }}
+                      title="Додати до поточного дня"
+                      aria-label={`Додати ${meal.name} до поточного дня`}
+                    >
+                      +
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {logSizeWarn && (
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+            Журнал великий (~{Math.round(logBytes / 1024)} КБ).{" "}
+            <button
+              type="button"
+              className="underline font-semibold"
+              onClick={() => onTrimLog(365)}
+            >
+              Залишити лише останні 365 днів
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setWeekOpen((v) => !v)}
+          className="flex items-center gap-2 text-[10px] font-bold text-subtle uppercase tracking-widest w-full text-left py-1"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={cn(
+              "transition-transform shrink-0",
+              weekOpen ? "rotate-90" : "",
+            )}
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          Журнал за тиждень
+        </button>
+
+        {weekOpen && (
+          <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px] text-left">
+                <thead>
+                  <tr className="text-subtle">
+                    <th className="py-1 pr-2">Дата</th>
+                    <th className="py-1 pr-2">Ккал</th>
+                    <th className="py-1 pr-2">Б</th>
+                    <th className="py-1 pr-2">Ж</th>
+                    <th className="py-1">В</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {weekRows.map((r) => (
+                    <tr key={r.date} className="border-t border-line/40">
+                      <td className="py-1 pr-2 font-mono text-[10px]">
+                        {r.date.slice(5)}
+                      </td>
+                      <td className="py-1 pr-2">{Math.round(r.kcal)}</td>
+                      <td className="py-1 pr-2">{Math.round(r.protein_g)}</td>
+                      <td className="py-1 pr-2">{Math.round(r.fat_g)}</td>
+                      <td className="py-1">{Math.round(r.carbs_g)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+              Аналітика (тренди)
+            </div>
+            <div className="flex gap-2">
+              {[30, 90].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setStatsRange(d)}
+                  className={cn(
+                    "px-2 py-1 rounded-lg text-[11px] font-semibold border",
+                    statsRange === d
+                      ? "border-nutrition/60 text-nutrition bg-nutrition/10"
+                      : "border-line text-subtle bg-panelHi",
+                  )}
+                >
+                  {d} днів
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { key: "kcal", label: "Сер. ккал/день", v: statsAvg.kcal },
+              { key: "protein_g", label: "Сер. Б/день", v: statsAvg.protein_g },
+              { key: "fat_g", label: "Сер. Ж/день", v: statsAvg.fat_g },
+              { key: "carbs_g", label: "Сер. В/день", v: statsAvg.carbs_g },
+            ].map((x) => (
+              <div key={x.key} className="bg-panelHi rounded-2xl px-2 py-3">
+                <div className="text-[10px] text-subtle">{x.label}</div>
+                <div className="text-base font-extrabold text-text tabular-nums">
+                  {Math.round(Number(x.v) || 0)}
+                </div>
+                <div className="text-[10px] text-subtle">
+                  на {statsAvg.denom} активн. днів
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="bg-panelHi rounded-2xl px-3 py-3">
             <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
-              Топ страв
+              Калорії по днях (останні {Math.min(statsRange, statsRows.length)})
             </div>
-            {statsTop.length === 0 ? (
-              <div className="text-xs text-muted">Поки що порожньо</div>
+            {statsRows.length === 0 ? (
+              <div className="text-xs text-muted">Немає даних</div>
             ) : (
-              <ol className="space-y-1">
-                {statsTop.map((x) => (
-                  <li
-                    key={x.name}
-                    className="flex items-baseline justify-between gap-2"
-                  >
-                    <span className="text-xs text-text truncate">{x.name}</span>
-                    <span className="text-[11px] text-subtle shrink-0">
-                      {x.count}× · {Math.round(x.kcal)} ккал
-                    </span>
-                  </li>
-                ))}
-              </ol>
+              (() => {
+                const kcals = statsRows.map((r) => Number(r.kcal) || 0);
+                const max = Math.max(1, ...kcals);
+                return (
+                  <div className="flex items-end gap-0.5 h-12">
+                    {kcals.slice(-statsRange).map((k, i) => (
+                      <div
+                        key={i}
+                        title={`${Math.round(k)} ккал`}
+                        className="flex-1 rounded-sm bg-nutrition/60"
+                        style={{
+                          height: `${Math.max(2, Math.round((k / max) * 48))}px`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                );
+              })()
             )}
           </div>
-          <div className="bg-panelHi rounded-2xl px-3 py-3">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
-              Розподіл прийомів
-            </div>
-            {Object.keys(statsMealTypes).length === 0 ? (
-              <div className="text-xs text-muted">Поки що порожньо</div>
-            ) : (
-              <ul className="space-y-1">
-                {MEAL_ORDER.filter((t) => statsMealTypes[t]?.count > 0).map(
-                  (t) => (
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="bg-panelHi rounded-2xl px-3 py-3">
+              <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+                Топ страв
+              </div>
+              {statsTop.length === 0 ? (
+                <div className="text-xs text-muted">Поки що порожньо</div>
+              ) : (
+                <ol className="space-y-1">
+                  {statsTop.map((x) => (
                     <li
-                      key={t}
+                      key={x.name}
                       className="flex items-baseline justify-between gap-2"
                     >
-                      <span className="text-xs text-text">
-                        {MEAL_META[t]?.emoji} {MEAL_META[t]?.label || t}
+                      <span className="text-xs text-text truncate">
+                        {x.name}
                       </span>
                       <span className="text-[11px] text-subtle shrink-0">
-                        {statsMealTypes[t].count}× ·{" "}
-                        {Math.round(statsMealTypes[t].kcal)} ккал
+                        {x.count}× · {Math.round(x.kcal)} ккал
                       </span>
                     </li>
-                  ),
-                )}
-              </ul>
-            )}
+                  ))}
+                </ol>
+              )}
+            </div>
+            <div className="bg-panelHi rounded-2xl px-3 py-3">
+              <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+                Розподіл прийомів
+              </div>
+              {Object.keys(statsMealTypes).length === 0 ? (
+                <div className="text-xs text-muted">Поки що порожньо</div>
+              ) : (
+                <ul className="space-y-1">
+                  {MEAL_ORDER.filter((t) => statsMealTypes[t]?.count > 0).map(
+                    (t) => (
+                      <li
+                        key={t}
+                        className="flex items-baseline justify-between gap-2"
+                      >
+                        <span className="text-xs text-text">
+                          {MEAL_META[t]?.emoji} {MEAL_META[t]?.label || t}
+                        </span>
+                        <span className="text-[11px] text-subtle shrink-0">
+                          {statsMealTypes[t].count}× ·{" "}
+                          {Math.round(statsMealTypes[t].kcal)} ккал
+                        </span>
+                      </li>
+                    ),
+                  )}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
+
+        {meals.length === 0 ? (
+          <div className="text-center text-muted text-sm py-8">
+            Поки немає записів. Додайте перший прийом їжі.
+          </div>
+        ) : (
+          <VirtualMealList
+            groups={groups}
+            meals={meals}
+            selectedDate={selectedDate}
+            onRemoveMeal={onRemoveMeal}
+            onEditMeal={onEditMeal}
+          />
+        )}
+
+        <button
+          type="button"
+          onClick={onAddMeal}
+          className="w-full h-12 min-h-[44px] rounded-2xl border-2 border-dashed border-line text-muted hover:border-nutrition/60 hover:text-nutrition font-semibold text-sm transition-all"
+        >
+          + Додати прийом їжі
+        </button>
       </div>
 
-      {meals.length === 0 ? (
-        <div className="text-center text-muted text-sm py-8">
-          Поки немає записів. Додайте перший прийом їжі.
-        </div>
-      ) : (
-        <VirtualMealList
-          groups={groups}
-          meals={meals}
-          selectedDate={selectedDate}
-          onRemoveMeal={onRemoveMeal}
-          onEditMeal={onEditMeal}
-        />
-      )}
-
-      <button
-        type="button"
-        onClick={onAddMeal}
-        className="w-full h-12 min-h-[44px] rounded-2xl border-2 border-dashed border-line text-muted hover:border-nutrition/60 hover:text-nutrition font-semibold text-sm transition-all"
-      >
-        + Додати прийом їжі
-      </button>
-    </div>
-
-    <ConfirmDialog
-      open={duplicateConfirm}
-      title="Скопіювати прийоми?"
-      description="Скопіювати всі прийоми з попереднього дня в цей день?"
-      confirmLabel="Скопіювати"
-      danger={false}
-      onConfirm={() => {
-        setDuplicateConfirm(false);
-        onDuplicateYesterday();
-      }}
-      onCancel={() => setDuplicateConfirm(false)}
-    />
+      <ConfirmDialog
+        open={duplicateConfirm}
+        title="Скопіювати прийоми?"
+        description="Скопіювати всі прийоми з попереднього дня в цей день?"
+        confirmLabel="Скопіювати"
+        danger={false}
+        onConfirm={() => {
+          setDuplicateConfirm(false);
+          onDuplicateYesterday();
+        }}
+        onCancel={() => setDuplicateConfirm(false)}
+      />
     </>
   );
 }
@@ -565,7 +494,13 @@ const MEAL_ROW_HEIGHT = 68;
 const MEAL_HEADER_HEIGHT = 32;
 const MAX_MEAL_LIST_HEIGHT = MEAL_ROW_HEIGHT * 8;
 
-function VirtualMealList({ groups, meals, selectedDate, onRemoveMeal, onEditMeal }) {
+function VirtualMealList({
+  groups,
+  meals,
+  selectedDate,
+  onRemoveMeal,
+  onEditMeal,
+}) {
   const activeTypes = MEAL_ORDER.filter((t) => groups[t]?.length);
   const flatItems = useMemo(() => {
     const items = [];
@@ -608,7 +543,11 @@ function VirtualMealList({ groups, meals, selectedDate, onRemoveMeal, onEditMeal
             >
               <MealRow
                 meal={item.meal}
-                onEdit={onEditMeal ? () => onEditMeal(selectedDate, item.meal) : undefined}
+                onEdit={
+                  onEditMeal
+                    ? () => onEditMeal(selectedDate, item.meal)
+                    : undefined
+                }
                 onRemove={() => onRemoveMeal(selectedDate, item.meal)}
               />
             </SwipeToAction>

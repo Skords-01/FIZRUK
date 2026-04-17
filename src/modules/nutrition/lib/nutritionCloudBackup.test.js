@@ -21,4 +21,3 @@ describe("nutritionCloudBackup", () => {
     await expect(decryptBlobToJson(blob, "wrong")).rejects.toBeTruthy();
   });
 });
-

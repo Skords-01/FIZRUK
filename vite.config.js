@@ -39,21 +39,27 @@ export default defineConfig(({ mode }) => {
               short_name: "Витрата",
               description: "Швидко додати нову витрату у Фінік",
               url: "/?module=finyk&action=add_expense",
-              icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+              icons: [
+                { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+              ],
             },
             {
               name: "Розпочати тренування",
               short_name: "Тренування",
               description: "Розпочати нове тренування у Фізрук",
               url: "/?module=fizruk&action=start_workout",
-              icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+              icons: [
+                { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+              ],
             },
             {
               name: "Додати прийом їжі",
               short_name: "Їжа",
               description: "Записати прийом їжі у Харчування",
               url: "/?module=nutrition&action=add_meal",
-              icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+              icons: [
+                { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+              ],
             },
           ],
           icons: [
@@ -88,11 +94,16 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id) return;
             if (id.includes("node_modules")) {
-              if (id.includes("/node_modules/react/") || id.includes("/node_modules/react-dom/"))
+              if (
+                id.includes("/node_modules/react/") ||
+                id.includes("/node_modules/react-dom/")
+              )
                 return "vendor-react";
-              if (id.includes("/node_modules/scheduler/")) return "vendor-react";
+              if (id.includes("/node_modules/scheduler/"))
+                return "vendor-react";
               if (id.includes("/node_modules/react-is/")) return "vendor-react";
-              if (id.includes("/node_modules/use-sync-external-store/")) return "vendor-react";
+              if (id.includes("/node_modules/use-sync-external-store/"))
+                return "vendor-react";
               if (id.includes("react-router")) return "vendor-router";
               if (id.includes("react-virtuoso")) return "vendor-virtuoso";
               if (id.includes("@zxing")) return "vendor-zxing";

@@ -5,10 +5,19 @@ import { STORAGE_KEYS } from "@shared/lib/storageKeys.js";
 const SYNC_MODULES = {
   finyk: {
     keys: [
-      "finyk_hidden", "finyk_budgets", "finyk_subs", "finyk_assets",
-      "finyk_debts", "finyk_recv", "finyk_hidden_txs", "finyk_monthly_plan",
-      "finyk_tx_cats", "finyk_mono_debt_linked", "finyk_networth_history",
-      "finyk_tx_splits", "finyk_custom_cats_v1",
+      "finyk_hidden",
+      "finyk_budgets",
+      "finyk_subs",
+      "finyk_assets",
+      "finyk_debts",
+      "finyk_recv",
+      "finyk_hidden_txs",
+      "finyk_monthly_plan",
+      "finyk_tx_cats",
+      "finyk_mono_debt_linked",
+      "finyk_networth_history",
+      "finyk_tx_splits",
+      "finyk_custom_cats_v1",
       STORAGE_KEYS.FINYK_TX_CACHE,
       STORAGE_KEYS.FINYK_INFO_CACHE,
       "finyk_tx_cache_last_good",
@@ -34,8 +43,10 @@ const SYNC_MODULES = {
   },
   nutrition: {
     keys: [
-      "nutrition_log_v1", "nutrition_pantries_v1",
-      "nutrition_active_pantry_v1", "nutrition_prefs_v1",
+      "nutrition_log_v1",
+      "nutrition_pantries_v1",
+      "nutrition_active_pantry_v1",
+      "nutrition_prefs_v1",
     ],
   },
 };
@@ -76,8 +87,7 @@ function markModuleDirty(moduleName) {
     const modified = getModuleModifiedTimes();
     modified[moduleName] = new Date().toISOString();
     localStorage.setItem(MODULE_MODIFIED_KEY, JSON.stringify(modified));
-  } catch {
-  }
+  } catch {}
 }
 
 function clearDirtyModule(moduleName) {
@@ -85,15 +95,13 @@ function clearDirtyModule(moduleName) {
     const dirty = getDirtyModules();
     delete dirty[moduleName];
     localStorage.setItem(DIRTY_MODULES_KEY, JSON.stringify(dirty));
-  } catch {
-  }
+  } catch {}
 }
 
 function clearAllDirty() {
   try {
     localStorage.setItem(DIRTY_MODULES_KEY, JSON.stringify({}));
-  } catch {
-  }
+  } catch {}
 }
 
 function getModuleModifiedTimes() {
@@ -103,10 +111,6 @@ function getModuleModifiedTimes() {
   } catch {
     return {};
   }
-}
-
-function getModuleModifiedTime(moduleName) {
-  return getModuleModifiedTimes()[moduleName] || null;
 }
 
 function getModuleVersions() {
@@ -124,8 +128,7 @@ function setModuleVersion(userId, moduleName, version) {
     if (!versions[userId]) versions[userId] = {};
     versions[userId][moduleName] = version;
     localStorage.setItem(SYNC_VERSION_KEY, JSON.stringify(versions));
-  } catch {
-  }
+  } catch {}
 }
 
 function getModuleVersion(userId, moduleName) {
@@ -147,15 +150,13 @@ function addToOfflineQueue(entry) {
     const queue = getOfflineQueue();
     queue.push({ ...entry, ts: new Date().toISOString() });
     localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
-  } catch {
-  }
+  } catch {}
 }
 
 function clearOfflineQueue() {
   try {
     localStorage.removeItem(OFFLINE_QUEUE_KEY);
-  } catch {
-  }
+  } catch {}
 }
 
 function isMigrationDone(userId) {
@@ -174,8 +175,7 @@ function markMigrationDone(userId) {
     const map = raw ? JSON.parse(raw) : {};
     map[userId] = new Date().toISOString();
     localStorage.setItem(MIGRATION_DONE_KEY, JSON.stringify(map));
-  } catch {
-  }
+  } catch {}
 }
 
 function collectModuleData(moduleName) {
@@ -192,8 +192,7 @@ function collectModuleData(moduleName) {
           data[key] = raw;
         }
       }
-    } catch {
-    }
+    } catch {}
   }
   return data;
 }
@@ -204,8 +203,7 @@ function hasLocalData(moduleName) {
   for (const key of config.keys) {
     try {
       if (localStorage.getItem(key) !== null) return true;
-    } catch {
-    }
+    } catch {}
   }
   return false;
 }
@@ -222,8 +220,7 @@ function applyModuleData(moduleName, data) {
           key,
           typeof val === "string" ? val : JSON.stringify(val),
         );
-      } catch {
-      }
+      } catch {}
     }
   }
 }
@@ -233,16 +230,14 @@ function clearSyncManagedData() {
     for (const key of config.keys) {
       try {
         _origRemoveItem(key);
-      } catch {
-      }
+      } catch {}
     }
   }
   try {
     localStorage.removeItem(DIRTY_MODULES_KEY);
     localStorage.removeItem(OFFLINE_QUEUE_KEY);
     localStorage.removeItem(MODULE_MODIFIED_KEY);
-  } catch {
-  }
+  } catch {}
 }
 
 export function notifySyncDirty(changedKey) {
@@ -520,9 +515,13 @@ export function useCloudSync(user) {
       if (!res.ok) throw new Error("Initial sync failed");
       const { modules: cloudModules } = await res.json();
 
-      const hasCloudData = cloudModules && Object.keys(cloudModules).some(
-        (m) => cloudModules[m]?.data && Object.keys(cloudModules[m].data).length > 0,
-      );
+      const hasCloudData =
+        cloudModules &&
+        Object.keys(cloudModules).some(
+          (m) =>
+            cloudModules[m]?.data &&
+            Object.keys(cloudModules[m].data).length > 0,
+        );
       const hasAnyLocalData = Object.keys(SYNC_MODULES).some(hasLocalData);
       const migrated = isMigrationDone(user?.id);
 
@@ -545,10 +544,17 @@ export function useCloudSync(user) {
           if (!payload?.data) continue;
           const localVersion = user?.id ? getModuleVersion(user.id, mod) : 0;
           const cloudVersion = payload.version ?? 0;
-          const localModified = modifiedTimes[mod] ? new Date(modifiedTimes[mod]) : null;
-          const cloudModified = payload.serverUpdatedAt ? new Date(payload.serverUpdatedAt) : null;
+          const localModified = modifiedTimes[mod]
+            ? new Date(modifiedTimes[mod])
+            : null;
+          const cloudModified = payload.serverUpdatedAt
+            ? new Date(payload.serverUpdatedAt)
+            : null;
 
-          if (cloudVersion > localVersion || (cloudModified && localModified && cloudModified > localModified)) {
+          if (
+            cloudVersion > localVersion ||
+            (cloudModified && localModified && cloudModified > localModified)
+          ) {
             applyModuleData(mod, payload.data);
           }
           if (user?.id && payload.version) {
@@ -630,12 +636,15 @@ export function useCloudSync(user) {
 
     window.addEventListener(SYNC_EVENT, onSyncDirty);
 
-    const periodicInterval = setInterval(() => {
-      const dirty = getDirtyModules();
-      if (Object.keys(dirty).length > 0) {
-        pushDirty();
-      }
-    }, 2 * 60 * 1000);
+    const periodicInterval = setInterval(
+      () => {
+        const dirty = getDirtyModules();
+        if (Object.keys(dirty).length > 0) {
+          pushDirty();
+        }
+      },
+      2 * 60 * 1000,
+    );
 
     return () => {
       window.removeEventListener("online", onOnline);

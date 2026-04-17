@@ -4,7 +4,9 @@ import { EmptyState } from "@shared/components/ui/EmptyState";
 export function WellbeingChart({ data }) {
   if (!data || data.length === 0) {
     return (
-      <EmptyState compact className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
+      <EmptyState
+        compact
+        className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
         title="Немає даних для графіка"
         description="Після кількох тренувань з оцінкою енергії та настрою тут зʼявиться діаграма."
       />
@@ -12,7 +14,9 @@ export function WellbeingChart({ data }) {
   }
   if (data.length < 2) {
     return (
-      <EmptyState compact className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
+      <EmptyState
+        compact
+        className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
         title="Замало точок"
         description="Потрібно щонайменше два тренування з оцінкою самопочуття, щоб порівняти динаміку."
       />

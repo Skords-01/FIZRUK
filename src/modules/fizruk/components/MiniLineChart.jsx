@@ -7,7 +7,9 @@ export function MiniLineChart({ data, unit, color, metricLabel = "показни
   );
   if (valid.length === 0) {
     return (
-      <EmptyState compact className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
+      <EmptyState
+        compact
+        className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
         title="Немає числових даних"
         description={`Додай записи в розділі «Заміри», щоб відстежувати ${metricLabel}.`}
       />
@@ -15,7 +17,9 @@ export function MiniLineChart({ data, unit, color, metricLabel = "показни
   }
   if (valid.length < 2) {
     return (
-      <EmptyState compact className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
+      <EmptyState
+        compact
+        className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
         title="Замало точок для лінії"
         description={`Потрібні щонайменше два заміри з ${metricLabel}, щоб побудувати тренд.`}
       />

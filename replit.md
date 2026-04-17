@@ -1,9 +1,11 @@
 # Hub — Replit Setup
 
 ## Overview
+
 A personal hub app with React + Vite frontend and an Express API backend, running as a single unified process on Replit. Includes email/password authentication (Better Auth) and cloud sync via PostgreSQL.
 
 ## Architecture
+
 - **Frontend**: React 18 + Vite, built to `dist/`
 - **Backend**: Express.js serving API routes under `/api/*`
 - **Database**: PostgreSQL (Replit built-in) — stores users, sessions, and per-module JSON data blobs
@@ -11,21 +13,25 @@ A personal hub app with React + Vite frontend and an Express API backend, runnin
 - **Unified server**: `server/replit.mjs` serves both the built frontend and the API on port 5000
 
 ## Running the App
+
 The workflow `Start application` runs `npm run start:replit` which executes `server/replit.mjs`.
 
 For production build the frontend first:
+
 ```
 npm run build
 npm run start:replit
 ```
 
 For local Vite dev server (with proxy to Express):
+
 ```
 npm run start         # Express API on port 3000 (railway.mjs)
 npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 ```
 
 ## Key Files
+
 - `server/replit.mjs` — Unified server for Replit (frontend + API, port 5000)
 - `server/railway.mjs` — API-only server for Railway deployment (port 3000)
 - `server/auth.js` — Better Auth configuration (email/password, PostgreSQL adapter, session settings)
@@ -42,18 +48,20 @@ npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 - `src/core/AuthPage.jsx` — Login/Register UI
 
 ## Environment Variables / Secrets
-| Key | Required | Description |
-|-----|----------|-------------|
-| `DATABASE_URL` | Yes (auto) | PostgreSQL connection string (auto-set by Replit) |
-| `BETTER_AUTH_SECRET` | Yes | Auth encryption secret (32+ chars) |
-| `ANTHROPIC_API_KEY` | Yes | Claude AI API key for chat features |
-| `NUTRITION_API_TOKEN` | No | Nutritionix API token |
-| `USDA_FDC_API_KEY` | No | USDA FoodData Central key (barcode fallback, free at api.data.gov; без ключа — DEMO_KEY з 40 req/hr) |
-| `ALLOWED_ORIGINS` | No | Extra CORS origins (comma-separated) |
-| `VITE_API_BASE_URL` | No | Frontend API base URL (leave empty for relative paths) |
-| `VITE_NUTRITION_API_TOKEN` | No | Nutritionix token for direct frontend requests |
+
+| Key                        | Required   | Description                                                                                          |
+| -------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`             | Yes (auto) | PostgreSQL connection string (auto-set by Replit)                                                    |
+| `BETTER_AUTH_SECRET`       | Yes        | Auth encryption secret (32+ chars)                                                                   |
+| `ANTHROPIC_API_KEY`        | Yes        | Claude AI API key for chat features                                                                  |
+| `NUTRITION_API_TOKEN`      | No         | Nutritionix API token                                                                                |
+| `USDA_FDC_API_KEY`         | No         | USDA FoodData Central key (barcode fallback, free at api.data.gov; без ключа — DEMO_KEY з 40 req/hr) |
+| `ALLOWED_ORIGINS`          | No         | Extra CORS origins (comma-separated)                                                                 |
+| `VITE_API_BASE_URL`        | No         | Frontend API base URL (leave empty for relative paths)                                               |
+| `VITE_NUTRITION_API_TOKEN` | No         | Nutritionix token for direct frontend requests                                                       |
 
 ## Auth & Sync System
+
 - **Better Auth** handles email/password registration and login at `/api/auth/*`
 - Session cookies with 30-day expiry, daily refresh, 5-minute cookie cache
 - `module_data` table stores JSON blobs per user per module with version tracking
@@ -70,13 +78,29 @@ npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 - User account menu in hub header shows sync status, manual push/pull buttons, and logout
 
 ## Database Schema
+
 - `user` — Better Auth user table (id, email, name, etc.)
 - `session` — Better Auth session table
 - `account` — Better Auth account/credentials table
 - `verification` — Better Auth email verification table
 - `module_data` — Per-user per-module JSON data (user_id, module, data JSONB, version INTEGER, timestamps)
+- `push_subscriptions` — Web Push subscription rows (endpoint, keys) per user
+- `schema_migrations` — Applied SQL migration filenames from `server/migrations/*.sql` (incremental DDL history)
+
+### Schema management & connection pooling
+
+- **Single `pg.Pool`** in [`server/db.js`](server/db.js): shared by API routes, [`server/auth.js`](server/auth.js) (Better Auth), and startup `ensureSchema()`.
+- **Baseline DDL**: `ensureSchema()` runs `CREATE TABLE IF NOT EXISTS` and idempotent `ALTER` where needed on each server start ([`server/railway.mjs`](server/railway.mjs), [`server/replit.mjs`](server/replit.mjs)).
+- **Incremental migrations**: sorted `server/migrations/*.sql` files run once per environment, recorded in `schema_migrations` (see `runPendingSqlMigrations` in `db.js`).
+
+### PostgreSQL backups (production)
+
+- **Railway**: enable automated backups / snapshot schedule in the Postgres add-on (or export dumps on a schedule).
+- **Replit**: use Database tooling / manual `pg_dump` before major migrations; rely on provider backup if available.
+- App-level data in `module_data` is still recoverable from client localStorage + sync; auth users need DB backups for account recovery.
 
 ## Shared UI System (`src/shared/`)
+
 - **ToastProvider + useToast** (`src/shared/hooks/useToast.jsx`) — Global toast notification context with `success`, `error`, `info`, `warning` methods
 - **ToastContainer** (`src/shared/components/ui/Toast.jsx`) — Animated toast renderer, mounted in App.jsx
 - **InputDialog** (`src/shared/components/ui/InputDialog.jsx`) — Bottom-sheet style text input dialog (replaces `window.prompt`)
@@ -85,6 +109,7 @@ npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 - Page crossfade animation (`page-enter` CSS class) applied on module transitions in App.jsx
 
 ## PWA & Service Worker
+
 - **vite-plugin-pwa** with `injectManifest` strategy and custom SW source (`src/sw.js`)
 - All build assets are precached; `NavigationRoute` with network-first fallback to `/index.html`; `/api/*` denied
 - Google Fonts cached with `CacheFirst` strategy for offline use
@@ -98,6 +123,7 @@ npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 - **PWA Shortcuts deep-link routing**: `?module=X&action=Y` URL params route to the correct module and trigger the relevant entry action (add_expense → Finyk Assets, start_workout → Fizruk workouts, add_meal → Nutrition add meal sheet)
 
 ## Smart Features
+
 - **Recommendation Engine** (`src/core/lib/recommendationEngine.js`) — Rule-based cross-module recommendations: budget overruns, muscle group rest gaps, habit streaks, post-workout protein reminders, etc. No AI API required.
 - **HubRecommendations** (`src/core/HubRecommendations.jsx`) — Dismissable recommendation feed shown on the hub dashboard above the module cards. Shows top 3 initially, expandable.
 - **Voice Input** (`src/shared/components/ui/VoiceMicButton.jsx`) — Shared microphone button using Web Speech API. Gracefully hidden when unsupported. Integrated in:
@@ -107,7 +133,9 @@ npm run dev           # Vite dev server on port 5173 (proxies /api to 3000)
 - **Speech parsers** (`src/core/lib/speechParsers.js`) — Dedicated parsers for expense, workout set, and meal speech input in Ukrainian and English.
 
 ## Hub Settings Page (`src/core/HubSettingsPage.jsx`)
+
 A centralized "Налаштування" tab on the hub page (third tab alongside "Головна" and "Звіти") consolidating all module settings:
+
 - **Загальні**: dark mode toggle, cloud sync push/pull (when logged in), hub backup (export/import JSON)
 - **Рутина**: browser reminders toggle, show Fizruk workouts in calendar toggle, show Finyk subscriptions in calendar toggle
 - **Фізрук**: workout reminder time picker + notification permission, rest timer defaults per exercise category (Compound, Isolation, Cardio)
@@ -118,6 +146,7 @@ A centralized "Налаштування" tab on the hub page (third tab alongsid
 - Finyk Settings page removed from Finyk module nav (all settings now in Hub)
 
 ## Modules
+
 - **Finyk** — Finance tracker with Monobank integration; SyncStatusBadge on Overview shows sync state (loading/success/partial/error), last-sync timestamp, and manual retry button; Settings page moved to centralized Hub settings. PrivatBank business-API integration (`usePrivatbank` hook, `server/api/privat.js`, settings UI) is implemented but gated behind `PRIVAT_ENABLED = false` and not visible in the UI; flip the flag in `FinykApp.jsx` and `HubSettingsPage.jsx` to re-enable.
 - **Fizruk** — Workout / exercise tracker; features: Rest Timer with Web Audio API beep + vibration on completion and circular progress ring; Training Programs (4 built-in: PPL, Upper/Lower, Full Body, Linear Progression) with activate/deactivate, today's session on Dashboard; per-exercise 1RM and volume progress charts in Exercise detail view; Body page (Тіло tab) for logging weight/sleep/energy/mood with trend line charts; recovery compute uses daily wellbeing (sleep hours + energy level) as multipliers — poor sleep/energy increases fatigue, good metrics speed recovery
 - **Routine** — Routine/habit tracker; habits support multiple `reminderTimes` (array) with morning/afternoon/evening presets; backward-compatible with legacy `timeOfDay` field via `normalizeReminderTimes()`; hero section shows SVG progress ring (day completed/scheduled), completion rate %, current streak; "Leaders & Outsiders" block shows best/worst habits by 30-day rate; Day Report bottom-sheet shows full habit list (done/missed) with toggle; streaks.js exports `completionRateForRange`, `habitCompletionRate`, `currentMaxStreak`; **HabitDetailSheet** bottom-sheet for viewing habit details (stats, mini-calendar, notes) — opened from calendar card tap or "Деталі" button in settings

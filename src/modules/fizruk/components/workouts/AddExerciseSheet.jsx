@@ -60,10 +60,7 @@ export function AddExerciseSheet({
       className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}
       role="presentation"
     >
-      <div
-        className="absolute inset-0"
-        role="presentation"
-      />
+      <div className="absolute inset-0" role="presentation" />
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"

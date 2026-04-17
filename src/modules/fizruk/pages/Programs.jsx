@@ -5,7 +5,13 @@ import { BUILTIN_PROGRAMS } from "../lib/trainingPrograms";
 
 const DAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 
-export function Programs({ onStartWorkout, activeProgramId, activeProgram, activateProgram, deactivateProgram }) {
+export function Programs({
+  onStartWorkout,
+  activeProgramId,
+  activeProgram,
+  activateProgram,
+  deactivateProgram,
+}) {
   const { exercises } = useExerciseCatalog();
   const [expandedProgram, setExpandedProgram] = useState(null);
 
@@ -18,7 +24,9 @@ export function Programs({ onStartWorkout, activeProgramId, activeProgram, activ
           <div>
             <h1 className="text-xl font-bold text-text">Програми</h1>
             <p className="text-xs text-subtle mt-0.5">
-              {activeProgram ? `Активна: ${activeProgram.name}` : "Оберіть тренувальну програму"}
+              {activeProgram
+                ? `Активна: ${activeProgram.name}`
+                : "Оберіть тренувальну програму"}
             </p>
           </div>
           {activeProgram && (
@@ -152,7 +160,6 @@ export function Programs({ onStartWorkout, activeProgramId, activeProgram, activ
             );
           })}
         </div>
-
       </div>
     </div>
   );
@@ -171,7 +178,10 @@ function ProgramDetails({ prog, exercises }) {
           .map((id) => exercises.find((e) => e.id === id))
           .filter(Boolean);
         return (
-          <div key={`${schedEntry.day}_${schedEntry.sessionKey}`} className="rounded-xl bg-panel border border-line/40 p-3">
+          <div
+            key={`${schedEntry.day}_${schedEntry.sessionKey}`}
+            className="rounded-xl bg-panel border border-line/40 p-3"
+          >
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-forest/10 text-success border border-success/20">
                 День {schedEntry.day}

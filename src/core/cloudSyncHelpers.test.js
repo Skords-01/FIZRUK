@@ -10,8 +10,14 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 const SYNC_MODULES = {
   finyk: {
     keys: [
-      "finyk_hidden", "finyk_budgets", "finyk_subs", "finyk_debts",
-      "finyk_recv", "finyk_hidden_txs", "finyk_monthly_plan", "finyk_tx_cats",
+      "finyk_hidden",
+      "finyk_budgets",
+      "finyk_subs",
+      "finyk_debts",
+      "finyk_recv",
+      "finyk_hidden_txs",
+      "finyk_monthly_plan",
+      "finyk_tx_cats",
     ],
   },
   fizruk: { keys: ["fizruk_workouts_v1", "fizruk_custom_exercises_v1"] },
@@ -26,7 +32,9 @@ function keyToModule(key) {
   return null;
 }
 
-const ALL_TRACKED_KEYS = new Set(Object.values(SYNC_MODULES).flatMap((m) => m.keys));
+const ALL_TRACKED_KEYS = new Set(
+  Object.values(SYNC_MODULES).flatMap((m) => m.keys),
+);
 
 const DIRTY_KEY = "hub_sync_dirty_modules";
 const VERSION_KEY = "hub_sync_versions";
@@ -36,7 +44,9 @@ function getDirtyModules() {
   try {
     const raw = localStorage.getItem(DIRTY_KEY);
     return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
+  } catch {
+    return {};
+  }
 }
 
 function markModuleDirty(moduleName) {
@@ -55,7 +65,9 @@ function getModuleVersions() {
   try {
     const raw = localStorage.getItem(VERSION_KEY);
     return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
+  } catch {
+    return {};
+  }
 }
 
 function setModuleVersion(userId, moduleName, version) {
@@ -73,7 +85,9 @@ function getOfflineQueue() {
   try {
     const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
     return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 function addToOfflineQueue(entry) {

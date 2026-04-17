@@ -18,8 +18,6 @@ function safeParseLS(key, fallback) {
 }
 
 function aggregateCurrentSnapshot() {
-  const today = localDateKey();
-
   const txRaw = safeParseLS("finyk_tx_cache", null);
   const txList = txRaw?.txs ?? txRaw ?? [];
   const txCategories = safeParseLS("finyk_tx_cats", {});
@@ -53,7 +51,8 @@ function aggregateCurrentSnapshot() {
       if (amount < 0) {
         totalSpent += Math.abs(amount);
         const cat = txCategories[tx.id] || tx.mcc || "other";
-        catAmounts[String(cat)] = (catAmounts[String(cat)] ?? 0) + Math.abs(amount);
+        catAmounts[String(cat)] =
+          (catAmounts[String(cat)] ?? 0) + Math.abs(amount);
       } else {
         totalIncome += amount;
       }
@@ -65,7 +64,12 @@ function aggregateCurrentSnapshot() {
     .slice(0, 5)
     .map(([name, amount]) => ({ name, amount: Math.round(amount) }));
 
-  const finyk = { totalSpent: Math.round(totalSpent), totalIncome: Math.round(totalIncome), txCount, topCategories };
+  const finyk = {
+    totalSpent: Math.round(totalSpent),
+    totalIncome: Math.round(totalIncome),
+    txCount,
+    topCategories,
+  };
 
   let fizruk = null;
   try {
@@ -82,21 +86,31 @@ function aggregateCurrentSnapshot() {
         if (Array.isArray(w.exercises)) {
           for (const ex of w.exercises) {
             totalVolume += Array.isArray(ex.sets)
-              ? ex.sets.reduce((s, set) => s + (set.weight ?? 0) * (set.reps ?? 0), 0)
+              ? ex.sets.reduce(
+                  (s, set) => s + (set.weight ?? 0) * (set.reps ?? 0),
+                  0,
+                )
               : 0;
           }
         }
       }
       const completed = allWorkouts.filter((w) => w.endedAt);
-      const last = [...completed].sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))[0];
+      const last = [...completed].sort(
+        (a, b) => new Date(b.startedAt) - new Date(a.startedAt),
+      )[0];
       let recoveryLabel = "Немає даних";
       if (last) {
-        const hoursAgo = (Date.now() - new Date(last.startedAt).getTime()) / 3_600_000;
+        const hoursAgo =
+          (Date.now() - new Date(last.startedAt).getTime()) / 3_600_000;
         if (hoursAgo < 20) recoveryLabel = "Відновлення";
         else if (hoursAgo < 44) recoveryLabel = "Часткове відновлення";
         else recoveryLabel = "Готовий до тренування";
       }
-      fizruk = { workoutsCount: weekWorkouts.length, totalVolume: Math.round(totalVolume), recoveryLabel };
+      fizruk = {
+        workoutsCount: weekWorkouts.length,
+        totalVolume: Math.round(totalVolume),
+        recoveryLabel,
+      };
     }
   } catch {}
 
@@ -104,7 +118,9 @@ function aggregateCurrentSnapshot() {
   try {
     const log = safeParseLS("nutrition_log_v1", {});
     const prefs = safeParseLS("nutrition_prefs_v1", null);
-    let totalKcal = 0, totalProtein = 0, daysLogged = 0;
+    let totalKcal = 0,
+      totalProtein = 0,
+      daysLogged = 0;
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(weekStart.getDate() + i);
@@ -141,7 +157,11 @@ function aggregateCurrentSnapshot() {
           d.setDate(weekStart.getDate() + i);
           const dk = localDateKey(d);
           for (const h of habits) {
-            if (Array.isArray(completions[h.id]) && completions[h.id].includes(dk)) totalDone++;
+            if (
+              Array.isArray(completions[h.id]) &&
+              completions[h.id].includes(dk)
+            )
+              totalDone++;
           }
         }
         const overallRate = Math.round((totalDone / (habits.length * 7)) * 100);
@@ -201,7 +221,10 @@ export function useCoachInsight() {
       const text = insightJson.insight;
       if (text) {
         try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ date: todayKey, text }));
+          localStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({ date: todayKey, text }),
+          );
         } catch {}
         setInsight(text);
         return text;

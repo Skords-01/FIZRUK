@@ -1,0 +1,26 @@
+# Локальний PostgreSQL для розробки (npm run start + npm run dev).
+# Запуск: docker compose up -d
+# Зупинка: docker compose down
+# DATABASE_URL у .env: postgresql://hub:hub@localhost:5432/hub
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: hub
+      POSTGRES_DB: hub
+    ports:
+      - "5432:5432"
+    volumes:
+      - hub_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d hub"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  hub_pgdata:

@@ -23,7 +23,16 @@ const NAV = [
     id: "dashboard",
     label: "Сьогодні",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <circle cx="12" cy="12" r="10" />
         <polyline points="12 6 12 12 16 14" />
       </svg>
@@ -33,7 +42,16 @@ const NAV = [
     id: "workouts",
     label: "Тренування",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3" />
       </svg>
     ),
@@ -42,7 +60,16 @@ const NAV = [
     id: "plan",
     label: "План",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
         <line x1="16" y1="2" x2="16" y2="6" />
         <line x1="8" y1="2" x2="8" y2="6" />
@@ -54,7 +81,16 @@ const NAV = [
     id: "body",
     label: "Тіло",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
       </svg>
     ),
@@ -88,7 +124,11 @@ function setHash(next) {
   window.location.hash = h;
 }
 
-export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed } = {}) {
+export default function FizrukApp({
+  onBackToHub,
+  pwaAction,
+  onPwaActionConsumed,
+} = {}) {
   const [route, setRoute] = useState(() => parseHash());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsPanelRef = useRef(null);
@@ -98,7 +138,13 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
   const isPlan = page === "plan";
 
   const monthlyPlan = useMonthlyPlan();
-  const { activeProgramId, activeProgram, todaySession, activateProgram, deactivateProgram } = useTrainingProgram();
+  const {
+    activeProgramId,
+    activeProgram,
+    todaySession,
+    activateProgram,
+    deactivateProgram,
+  } = useTrainingProgram();
   const { workouts, createWorkout, addItem } = useWorkouts();
   const { exercises } = useExerciseCatalog();
 
@@ -130,7 +176,9 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
   const handleStartProgramWorkout = (session, _prog) => {
     if (!session) return;
     const exIds = session.exerciseIds || [];
-    const picks = exIds.map((id) => exercises.find((e) => e.id === id)).filter(Boolean);
+    const picks = exIds
+      .map((id) => exercises.find((e) => e.id === id))
+      .filter(Boolean);
     if (picks.length === 0) return;
     const progressionKg = session.progressionKg ?? 0;
     const w = createWorkout();
@@ -138,11 +186,13 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
       const isCardio = ex.primaryGroup === "cardio";
       let suggestedWeight = 0;
       if (!isCardio && progressionKg > 0) {
-        const lastWorkoutWithEx = workouts.find(
-          (wo) => (wo.items || []).some((it) => it.exerciseId === ex.id),
+        const lastWorkoutWithEx = workouts.find((wo) =>
+          (wo.items || []).some((it) => it.exerciseId === ex.id),
         );
         if (lastWorkoutWithEx) {
-          const item = lastWorkoutWithEx.items.find((it) => it.exerciseId === ex.id);
+          const item = lastWorkoutWithEx.items.find(
+            (it) => it.exerciseId === ex.id,
+          );
           const maxWeight = Math.max(
             0,
             ...(item?.sets || []).map((s) => s.weightKg || 0),
@@ -194,7 +244,16 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
               className="w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
               aria-label="Назад"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
@@ -206,14 +265,36 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
               aria-label="До вибору модуля"
               title="До хабу"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </button>
           ) : (
-            <div className="shrink-0 w-9 h-9 rounded-xl bg-success/10 flex items-center justify-center text-success border border-success/20" aria-hidden>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <div
+              className="shrink-0 w-9 h-9 rounded-xl bg-success/10 flex items-center justify-center text-success border border-success/20"
+              aria-hidden
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3" />
               </svg>
             </div>
@@ -248,7 +329,17 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
             aria-label="Налаштування даних"
             title="Налаштування даних"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.65"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -257,7 +348,10 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
       </div>
 
       {settingsOpen && (
-        <div className="fixed inset-0 z-[80] flex justify-end" role="presentation">
+        <div
+          className="fixed inset-0 z-[80] flex justify-end"
+          role="presentation"
+        >
           <button
             type="button"
             className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
@@ -272,7 +366,10 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
             className="relative w-full max-w-sm h-full bg-panel border-l border-line shadow-2xl flex flex-col safe-area-pt-pb"
           >
             <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-line/60">
-              <h2 id="fizruk-settings-title" className="text-base font-semibold text-text">
+              <h2
+                id="fizruk-settings-title"
+                className="text-base font-semibold text-text"
+              >
                 Дані й резервні копії
               </h2>
               <button
@@ -281,7 +378,15 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
                 className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
                 aria-label="Закрити"
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -318,7 +423,9 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
             deactivateProgram={deactivateProgram}
           />
         )}
-        {page === "body" && <Body onOpenMeasurements={() => setHash("measurements")} />}
+        {page === "body" && (
+          <Body onOpenMeasurements={() => setHash("measurements")} />
+        )}
         {page === "exercise" && <Exercise exerciseId={route.exerciseId} />}
       </div>
 
@@ -327,7 +434,8 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
           <div className="flex h-[58px]">
             {NAV.map((item) => {
               const active = page === item.id;
-              const hasDot = item.id === "programs" && activeProgram && todaySession;
+              const hasDot =
+                item.id === "programs" && activeProgram && todaySession;
               return (
                 <button
                   key={item.id}
@@ -339,15 +447,26 @@ export default function FizrukApp({ onBackToHub, pwaAction, onPwaActionConsumed 
                   )}
                 >
                   {active && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-9 h-0.5 rounded-full bg-success" aria-hidden />
+                    <span
+                      className="absolute top-0 left-1/2 -translate-x-1/2 w-9 h-0.5 rounded-full bg-success"
+                      aria-hidden
+                    />
                   )}
                   <span className={cn("relative", active && "text-success")}>
                     {item.icon}
                     {hasDot && !active && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent border border-panel" aria-hidden />
+                      <span
+                        className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent border border-panel"
+                        aria-hidden
+                      />
                     )}
                   </span>
-                  <span className={cn("text-[10px] leading-none font-semibold", active ? "text-text" : "text-muted")}>
+                  <span
+                    className={cn(
+                      "text-[10px] leading-none font-semibold",
+                      active ? "text-text" : "text-muted",
+                    )}
+                  >
                     {item.label}
                   </span>
                 </button>

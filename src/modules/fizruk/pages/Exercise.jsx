@@ -45,22 +45,38 @@ function LoadCalculator({ oneRM }) {
   return (
     <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
       <div className="flex items-baseline justify-between gap-2 mb-3">
-        <div className="text-xs font-bold text-subtle uppercase tracking-widest">Калькулятор навантаження</div>
+        <div className="text-xs font-bold text-subtle uppercase tracking-widest">
+          Калькулятор навантаження
+        </div>
         <div className="text-[10px] text-subtle">1RM = {fmt(oneRM, 0)} кг</div>
       </div>
       <div className="space-y-3">
         {CALC_ZONES.map((zone) => (
-          <div key={zone.goal} className={cn("rounded-xl border p-3", zone.bgColor, zone.borderColor)}>
+          <div
+            key={zone.goal}
+            className={cn(
+              "rounded-xl border p-3",
+              zone.bgColor,
+              zone.borderColor,
+            )}
+          >
             <div className="flex items-center justify-between mb-2">
-              <span className={cn("text-xs font-bold", zone.color)}>{zone.goal}</span>
+              <span className={cn("text-xs font-bold", zone.color)}>
+                {zone.goal}
+              </span>
               <span className="text-[10px] text-subtle">{zone.desc}</span>
             </div>
             <div className="grid grid-cols-4 gap-1">
               {zone.percents.map((pct) => {
                 const kg = roundTo2_5(oneRM * (pct / 100));
                 return (
-                  <div key={pct} className="text-center bg-panel/60 rounded-lg py-1.5 px-1">
-                    <div className="text-[10px] text-subtle leading-none mb-0.5">{pct}%</div>
+                  <div
+                    key={pct}
+                    className="text-center bg-panel/60 rounded-lg py-1.5 px-1"
+                  >
+                    <div className="text-[10px] text-subtle leading-none mb-0.5">
+                      {pct}%
+                    </div>
                     <div className="text-sm font-bold text-text tabular-nums leading-tight">
                       {kg > 0 ? `${kg}` : "—"}
                     </div>
@@ -72,11 +88,12 @@ function LoadCalculator({ oneRM }) {
           </div>
         ))}
       </div>
-      <p className="text-[9px] text-muted mt-2 text-center">Ваги округлені до найближчих 2.5 кг</p>
+      <p className="text-[9px] text-muted mt-2 text-center">
+        Ваги округлені до найближчих 2.5 кг
+      </p>
     </div>
   );
 }
-
 
 function ProgressChart({ points, label, unit, color }) {
   if (!points || points.length < 2) {
@@ -114,8 +131,7 @@ function ProgressChart({ points, label, unit, color }) {
     .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
     .join(" ");
 
-  const areaD =
-    `${lineD} L ${mapped[mapped.length - 1].x.toFixed(1)} ${(padT + innerH).toFixed(1)} L ${mapped[0].x.toFixed(1)} ${(padT + innerH).toFixed(1)} Z`;
+  const areaD = `${lineD} L ${mapped[mapped.length - 1].x.toFixed(1)} ${(padT + innerH).toFixed(1)} L ${mapped[0].x.toFixed(1)} ${(padT + innerH).toFixed(1)} Z`;
 
   const gradId = `prog_${label.replace(/\s/g, "_")}`;
 
@@ -147,19 +163,58 @@ function ProgressChart({ points, label, unit, color }) {
         </defs>
         {yTicks.map((t, i) => (
           <g key={i}>
-            <line x1={padL} x2={w - padR} y1={t.y} y2={t.y} stroke="currentColor" className="text-line/60" strokeWidth="1" strokeDasharray="3 4" />
-            <text x={padL - 4} y={t.y + 4} textAnchor="end" fontSize="9" className="fill-subtle">{t.lab}</text>
+            <line
+              x1={padL}
+              x2={w - padR}
+              y1={t.y}
+              y2={t.y}
+              stroke="currentColor"
+              className="text-line/60"
+              strokeWidth="1"
+              strokeDasharray="3 4"
+            />
+            <text
+              x={padL - 4}
+              y={t.y + 4}
+              textAnchor="end"
+              fontSize="9"
+              className="fill-subtle"
+            >
+              {t.lab}
+            </text>
           </g>
         ))}
         <path d={areaD} fill={`url(#${gradId})`} />
-        <path d={lineD} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d={lineD}
+          fill="none"
+          stroke={color}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
         {mapped.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="3" fill={color} stroke="white" strokeWidth="1.5" />
+          <circle
+            key={i}
+            cx={p.x}
+            cy={p.y}
+            r="3"
+            fill={color}
+            stroke="white"
+            strokeWidth="1.5"
+          />
         ))}
         {mapped.map((p, i) => {
           if (!labelSet.has(i)) return null;
           return (
-            <text key={i} x={p.x} y={h - 4} textAnchor="middle" fontSize="8" className="fill-muted">
+            <text
+              key={i}
+              x={p.x}
+              y={h - 4}
+              textAnchor="middle"
+              fontSize="8"
+              className="fill-muted"
+            >
               {p.dateLabel}
             </text>
           );
@@ -170,8 +225,14 @@ function ProgressChart({ points, label, unit, color }) {
           {fmt(lastVal, 1)} {unit}
         </span>
         {delta !== 0 && Number.isFinite(delta) && (
-          <span className={cn("text-xs font-semibold", delta > 0 ? "text-success" : "text-warning")}>
-            {delta > 0 ? "+" : ""}{delta.toFixed(1)} {unit}
+          <span
+            className={cn(
+              "text-xs font-semibold",
+              delta > 0 ? "text-success" : "text-warning",
+            )}
+          >
+            {delta > 0 ? "+" : ""}
+            {delta.toFixed(1)} {unit}
           </span>
         )}
       </div>
@@ -279,11 +340,17 @@ export function Exercise({ exerciseId }) {
 
     const rmPoints = sorted.map(([, v]) => ({
       value: Math.round(v.maxRm),
-      dateLabel: v.date.toLocaleDateString("uk-UA", { day: "numeric", month: "short" }),
+      dateLabel: v.date.toLocaleDateString("uk-UA", {
+        day: "numeric",
+        month: "short",
+      }),
     }));
     const volPoints = sorted.map(([, v]) => ({
       value: Math.round(v.vol),
-      dateLabel: v.date.toLocaleDateString("uk-UA", { day: "numeric", month: "short" }),
+      dateLabel: v.date.toLocaleDateString("uk-UA", {
+        day: "numeric",
+        month: "short",
+      }),
     }));
     return { rmPoints, volPoints };
   }, [history]);
@@ -299,15 +366,23 @@ export function Exercise({ exerciseId }) {
       const distKm = dist / 1000;
       const durMin = dur / 60;
       const paceMinKm = durMin / distKm;
-      const dateLabel = new Date(workout.startedAt).toLocaleDateString("uk-UA", { day: "numeric", month: "short" });
+      const dateLabel = new Date(workout.startedAt).toLocaleDateString(
+        "uk-UA",
+        { day: "numeric", month: "short" },
+      );
       pacePoints.push({ value: Math.round(paceMinKm * 10) / 10, dateLabel });
       distPoints.push({ value: Math.round(distKm * 100) / 100, dateLabel });
     }
-    return { pacePoints: pacePoints.slice(-12), distPoints: distPoints.slice(-12) };
+    return {
+      pacePoints: pacePoints.slice(-12),
+      distPoints: distPoints.slice(-12),
+    };
   }, [history]);
 
   const hasCardio = cardioData.pacePoints.length > 0;
-  const hasStrength = progressData.rmPoints.length > 0 || history.some((h) => h.item?.type === "strength");
+  const hasStrength =
+    progressData.rmPoints.length > 0 ||
+    history.some((h) => h.item?.type === "strength");
 
   if (!exerciseId) {
     return (
@@ -344,9 +419,7 @@ export function Exercise({ exerciseId }) {
             </div>
           )}
           {muscleLabels.length === 0 && (
-            <p className="text-xs text-subtle mt-1">
-              Профіль вправи
-            </p>
+            <p className="text-xs text-subtle mt-1">Профіль вправи</p>
           )}
         </div>
 
@@ -354,8 +427,12 @@ export function Exercise({ exerciseId }) {
           <div className="flex items-center gap-2.5 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-3">
             <span className="text-xl leading-none">🏆</span>
             <div>
-              <p className="text-sm font-bold text-yellow-700 dark:text-yellow-300">Новий особистий рекорд!</p>
-              <p className="text-xs text-yellow-600/80 dark:text-yellow-400/70">Найкращий результат за всю історію</p>
+              <p className="text-sm font-bold text-yellow-700 dark:text-yellow-300">
+                Новий особистий рекорд!
+              </p>
+              <p className="text-xs text-yellow-600/80 dark:text-yellow-400/70">
+                Найкращий результат за всю історію
+              </p>
             </div>
           </div>
         )}
@@ -375,7 +452,11 @@ export function Exercise({ exerciseId }) {
             </div>
             {best.bestSet?._at && (
               <div className="text-[10px] text-subtle/70 mt-1">
-                {new Date(best.bestSet._at).toLocaleDateString("uk-UA", { day: "numeric", month: "short", year: "2-digit" })}
+                {new Date(best.bestSet._at).toLocaleDateString("uk-UA", {
+                  day: "numeric",
+                  month: "short",
+                  year: "2-digit",
+                })}
               </div>
             )}
           </div>
@@ -443,7 +524,9 @@ export function Exercise({ exerciseId }) {
               unit="хв/км"
               color="rgb(234 88 12)"
             />
-            <div className="text-[10px] text-subtle mt-1">Менше — краще (швидший темп)</div>
+            <div className="text-[10px] text-subtle mt-1">
+              Менше — краще (швидший темп)
+            </div>
           </div>
         )}
 
@@ -461,9 +544,7 @@ export function Exercise({ exerciseId }) {
           </div>
         )}
 
-        {best.best1rm > 0 && (
-          <LoadCalculator oneRM={best.best1rm} />
-        )}
+        {best.best1rm > 0 && <LoadCalculator oneRM={best.best1rm} />}
 
         <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
           <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
@@ -516,10 +597,13 @@ export function Exercise({ exerciseId }) {
                             const base = `${dist} м за ${dur} с`;
                             if (dist > 0 && dur > 0) {
                               const distKm = dist / 1000;
-                              const paceMinKm = (dur / 60) / distKm;
+                              const paceMinKm = dur / 60 / distKm;
                               let pm = Math.floor(paceMinKm);
                               let ps = Math.round((paceMinKm - pm) * 60);
-                              if (ps >= 60) { pm += 1; ps = 0; }
+                              if (ps >= 60) {
+                                pm += 1;
+                                ps = 0;
+                              }
                               const speed = (distKm / (dur / 3600)).toFixed(1);
                               return `${base} · ${pm}:${String(ps).padStart(2, "0")} хв/км · ${speed} км/год`;
                             }

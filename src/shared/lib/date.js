@@ -6,4 +6,3 @@ export function toLocalISODate(d = new Date()) {
   const day = String(dt.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-

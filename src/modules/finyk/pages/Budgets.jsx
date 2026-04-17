@@ -61,8 +61,14 @@ export function Budgets({ mono, storage }) {
       txSplits,
       customCategories,
     );
-  const limitBudgets = useMemo(() => budgets.filter((b) => b.type === "limit"), [budgets]);
-  const goalBudgets = useMemo(() => budgets.filter((b) => b.type === "goal"), [budgets]);
+  const limitBudgets = useMemo(
+    () => budgets.filter((b) => b.type === "limit"),
+    [budgets],
+  );
+  const goalBudgets = useMemo(
+    () => budgets.filter((b) => b.type === "goal"),
+    [budgets],
+  );
   const planIncome = Number(monthlyPlan?.income || 0);
   const planExpense = Number(monthlyPlan?.expense || 0);
   const planSavings = Number(monthlyPlan?.savings || 0);
@@ -91,7 +97,9 @@ export function Budgets({ mono, storage }) {
 
   const getAdviceCache = useCallback((categoryId, monthKey) => {
     try {
-      const raw = localStorage.getItem(PROACTIVE_CACHE_PREFIX + categoryId + "_" + monthKey);
+      const raw = localStorage.getItem(
+        PROACTIVE_CACHE_PREFIX + categoryId + "_" + monthKey,
+      );
       if (!raw) return null;
       const { text, ts } = JSON.parse(raw);
       if (Date.now() - ts > PROACTIVE_CACHE_TTL) return null;
@@ -112,14 +120,30 @@ export function Budgets({ mono, storage }) {
 
   const forecasts = useMemo(() => {
     if (limitBudgets.length === 0) return [];
-    return calcForecast(statTx, limitBudgets, now, txCategories, txSplits, customCategories);
-  }, [statTx, limitBudgets, txCategories, txSplits, customCategories, todayKey]);
+    return calcForecast(
+      statTx,
+      limitBudgets,
+      now,
+      txCategories,
+      txSplits,
+      customCategories,
+    );
+  }, [
+    statTx,
+    limitBudgets,
+    txCategories,
+    txSplits,
+    customCategories,
+    todayKey,
+  ]);
 
   const atRiskKey = useMemo(() => {
     if (forecasts.length === 0) return "";
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const ids = forecasts
-      .filter((fc) => fc.overLimit || (fc.limit > 0 && fc.spent / fc.limit >= 0.8))
+      .filter(
+        (fc) => fc.overLimit || (fc.limit > 0 && fc.spent / fc.limit >= 0.8),
+      )
       .map((fc) => fc.categoryId)
       .sort();
     return ids.length > 0 ? `${monthKey}|${ids.join(",")}` : "";
@@ -134,7 +158,11 @@ export function Budgets({ mono, storage }) {
     const forecastByCategory = {};
     for (const fc of forecasts) forecastByCategory[fc.categoryId] = fc;
 
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysInMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+    ).getDate();
     const daysRemaining = daysInMonth - now.getDate();
 
     const toFetch = [];
@@ -181,6 +209,7 @@ export function Budgets({ mono, storage }) {
         try {
           const res = await fetch(apiUrl("/api/chat"), {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               context: `[Проактивна AI-порада] Категорія: ${catLabel}, витрачено: ${spent} ₴, ліміт: ${b.limit} ₴, залишок: ${remaining} ₴, прогноз: ${fc?.forecast ?? "—"} ₴, днів до кінця місяця: ${daysRemaining}`,
@@ -203,7 +232,13 @@ export function Budgets({ mono, storage }) {
     );
   }, [atRiskKey]);
 
-  const explainCategory = async (categoryId, catLabel, spent, forecast, limit) => {
+  const explainCategory = async (
+    categoryId,
+    catLabel,
+    spent,
+    forecast,
+    limit,
+  ) => {
     if (aiLoading[categoryId]) return;
     setAiLoading((prev) => ({ ...prev, [categoryId]: true }));
     setAiExplanations((prev) => ({ ...prev, [categoryId]: null }));
@@ -211,6 +246,7 @@ export function Budgets({ mono, storage }) {
       const prompt = `Категорія: ${catLabel}. Витрачено за місяць: ${spent} ₴. Прогноз на кінець місяця: ${forecast} ₴. Ліміт: ${limit} ₴. Чому витрати можуть бути ${forecast > limit ? "вищими за ліміт" : "нижчими за план"} і що варто зробити? Дай коротку відповідь (2-3 речення) українською.`;
       const res = await fetch(apiUrl("/api/chat"), {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           context: `[Бюджетний прогноз] Категорія: ${catLabel}, витрачено: ${spent} ₴, прогноз: ${forecast} ₴, ліміт: ${limit} ₴`,
@@ -262,7 +298,11 @@ export function Budgets({ mono, storage }) {
         setFormError("Вкажіть ліміт більше 0");
         return;
       }
-      if (budgets.some((b) => b.type === "limit" && b.categoryId === newB.categoryId)) {
+      if (
+        budgets.some(
+          (b) => b.type === "limit" && b.categoryId === newB.categoryId,
+        )
+      ) {
         setFormError("Ліміт для цієї категорії вже існує");
         return;
       }
@@ -435,12 +475,13 @@ export function Budgets({ mono, storage }) {
           const bspent = calcSpent(b);
           const pctRaw = b.limit > 0 ? (bspent / b.limit) * 100 : 0;
           const pct = Math.min(100, Math.round(pctRaw));
-          const overLimit = pctRaw >= 100;
-          const warnLimit = pctRaw >= 80 && !overLimit;
           const remaining = Math.max(0, b.limit - bspent);
           const globalIdx = budgets.indexOf(b);
-          const forecastForCat = forecasts.find((fc) => fc.categoryId === b.categoryId);
-          const showProactiveAdvice = pctRaw >= 80 || (forecastForCat && forecastForCat.overLimit);
+          const forecastForCat = forecasts.find(
+            (fc) => fc.categoryId === b.categoryId,
+          );
+          const showProactiveAdvice =
+            pctRaw >= 80 || (forecastForCat && forecastForCat.overLimit);
           const isEditing = editIdx === globalIdx;
           return (
             <LimitBudgetCard
@@ -479,7 +520,10 @@ export function Budgets({ mono, storage }) {
               Прогноз · кінець місяця
             </div>
             {forecasts.map((fc) => {
-              const cat = resolveExpenseCategoryMeta(fc.categoryId, customCategories);
+              const cat = resolveExpenseCategoryMeta(
+                fc.categoryId,
+                customCategories,
+              );
               const explanation = aiExplanations[fc.categoryId];
               const loading = aiLoading[fc.categoryId];
               return (
@@ -491,7 +535,9 @@ export function Budgets({ mono, storage }) {
                   )}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className="text-sm font-semibold">{cat?.label || fc.categoryId}</span>
+                    <span className="text-sm font-semibold">
+                      {cat?.label || fc.categoryId}
+                    </span>
                     <div className="flex flex-col items-end gap-0.5">
                       <span
                         className={cn(
@@ -509,11 +555,13 @@ export function Budgets({ mono, storage }) {
 
                   {fc.overLimit ? (
                     <div className="text-xs text-danger font-medium mb-2">
-                      ⚠️ Перевищення на {fc.overPercent}% (+{(fc.forecast - fc.limit).toLocaleString("uk-UA")} ₴)
+                      ⚠️ Перевищення на {fc.overPercent}% (+
+                      {(fc.forecast - fc.limit).toLocaleString("uk-UA")} ₴)
                     </div>
                   ) : (
                     <div className="text-xs text-subtle mb-2">
-                      Вкладається у ліміт · залишок {(fc.limit - fc.forecast).toLocaleString("uk-UA")} ₴
+                      Вкладається у ліміт · залишок{" "}
+                      {(fc.limit - fc.forecast).toLocaleString("uk-UA")} ₴
                     </div>
                   )}
 
@@ -555,7 +603,11 @@ export function Budgets({ mono, storage }) {
                         : "border-primary/40 text-primary hover:bg-primary/10",
                     )}
                   >
-                    {loading ? "AI аналізує…" : explanation ? "🔄 Пояснити знову" : "✨ Пояснити"}
+                    {loading
+                      ? "AI аналізує…"
+                      : explanation
+                        ? "🔄 Пояснити знову"
+                        : "✨ Пояснити"}
                   </button>
                 </div>
               );
@@ -598,7 +650,11 @@ export function Budgets({ mono, storage }) {
           const daysLeft = b.targetDate
             ? Math.ceil((new Date(b.targetDate) - now) / 86400000)
             : null;
-          const monthly = calcMonthlyNeeded(b.targetAmount, saved, b.targetDate);
+          const monthly = calcMonthlyNeeded(
+            b.targetAmount,
+            saved,
+            b.targetDate,
+          );
           const globalIdx = budgets.indexOf(b);
           const isEditing = editIdx === globalIdx;
           return (
@@ -622,7 +678,9 @@ export function Budgets({ mono, storage }) {
               onChangeSaved={(nextSaved) =>
                 setBudgets((bs) =>
                   bs.map((x, j) =>
-                    j === globalIdx ? { ...x, savedAmount: Number(nextSaved) } : x,
+                    j === globalIdx
+                      ? { ...x, savedAmount: Number(nextSaved) }
+                      : x,
                   ),
                 )
               }
@@ -762,7 +820,9 @@ export function Budgets({ mono, storage }) {
               </>
             )}
             {formError && (
-              <p className="text-xs text-red-500 bg-red-500/10 rounded-xl px-3 py-2">{formError}</p>
+              <p className="text-xs text-red-500 bg-red-500/10 rounded-xl px-3 py-2">
+                {formError}
+              </p>
             )}
             <div className="flex gap-2">
               <Button className="flex-1" size="sm" onClick={addBudget}>

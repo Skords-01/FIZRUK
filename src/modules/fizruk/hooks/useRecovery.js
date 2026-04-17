@@ -16,7 +16,12 @@ export function useRecovery() {
 
   const stats = useMemo(() => {
     const wellbeingMult = computeWellbeingMultiplier(dailyLogEntries);
-    const by = computeRecoveryBy(workouts, musclesUk, Date.now(), dailyLogEntries);
+    const by = computeRecoveryBy(
+      workouts,
+      musclesUk,
+      Date.now(),
+      dailyLogEntries,
+    );
 
     const list = Object.values(by)
       .filter((x) => x.id && x.label)

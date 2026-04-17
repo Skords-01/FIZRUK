@@ -35,4 +35,3 @@ export function safeJsonSet(key, obj, { maxBytes = DEFAULT_MAX_BYTES } = {}) {
     return { ok: false, reason: "exception", error: e };
   }
 }
-

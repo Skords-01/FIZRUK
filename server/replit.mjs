@@ -3,14 +3,20 @@
  * Serves the built frontend static files AND all API routes on port 5000.
  */
 import express from "express";
-import { createRequire } from "module";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { existsSync } from "fs";
 
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
-import { ensureSchema } from "./db.js";
+import { ensureSchema, pool } from "./db.js";
+import {
+  apiHelmetMiddleware,
+  authSensitiveRateLimit,
+  createHealthHandler,
+  requestIdMiddleware,
+  requestLogMiddleware,
+} from "./httpCommon.mjs";
 import chatHandler from "./api/chat.js";
 import monoHandler from "./api/mono.js";
 import privatHandler from "./api/privat.js";
@@ -40,6 +46,9 @@ const app = express();
 const port = Number(process.env.PORT) || 5000;
 
 app.disable("x-powered-by");
+app.use(requestIdMiddleware);
+app.use(requestLogMiddleware);
+app.use(apiHelmetMiddleware());
 app.use(express.json({ limit: "12mb" }));
 
 app.use("/api", (req, res, next) => {
@@ -57,10 +66,9 @@ function wrap(handler) {
   };
 }
 
-app.get("/health", (_req, res) => {
-  res.status(200).type("text/plain").send("ok");
-});
+app.get("/health", createHealthHandler(pool));
 
+app.use("/api/auth", authSensitiveRateLimit);
 app.all("/api/auth/*", toNodeHandler(auth));
 
 app.use(
@@ -89,7 +97,11 @@ app.all(
 );
 
 app.get("/api/barcode", wrap(barcodeHandler));
-app.get("/api/food-search", wrap(foodSearchHandler));
+app.get(
+  "/api/food-search",
+  rateLimitExpress({ key: "api:food-search", limit: 40, windowMs: 60_000 }),
+  wrap(foodSearchHandler),
+);
 
 app.use(
   "/api/nutrition",
@@ -108,7 +120,11 @@ app.all("/api/nutrition/shopping-list", wrap(shoppingList));
 
 app.all(
   "/api/weekly-digest",
-  rateLimitExpress({ key: "api:weekly-digest", limit: 10, windowMs: 60 * 60_000 }),
+  rateLimitExpress({
+    key: "api:weekly-digest",
+    limit: 10,
+    windowMs: 60 * 60_000,
+  }),
   wrap(weeklyDigest),
 );
 
@@ -135,14 +151,21 @@ if (existsSync(DIST)) {
   app.get("*", (_req, res) => {
     res
       .status(503)
-      .send(
-        "Frontend not built. Run <code>npm run build</code> first.",
-      );
+      .send("Frontend not built. Run <code>npm run build</code> first.");
   });
 }
 
-app.use((err, _req, res, _next) => {
-  console.error(err);
+app.use((err, req, res, _next) => {
+  const rid = req?.requestId;
+  console.error(
+    JSON.stringify({
+      level: "error",
+      msg: "express_error",
+      requestId: rid,
+      error: err?.message || String(err),
+    }),
+  );
+  if (err?.stack) console.error(err.stack);
   if (!res.headersSent) {
     const status = Number(err?.status) || 500;
     const code =
@@ -151,7 +174,11 @@ app.use((err, _req, res, _next) => {
         : status === 429
           ? "RATE_LIMIT"
           : "INTERNAL";
-    res.status(status).json({ error: err?.message || "Server error", code });
+    res.status(status).json({
+      error: err?.message || "Server error",
+      code,
+      requestId: rid,
+    });
   }
 });
 

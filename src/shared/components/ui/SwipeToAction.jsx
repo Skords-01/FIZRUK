@@ -4,7 +4,16 @@ import { cn } from "@shared/lib/cn";
 const SWIPE_THRESHOLD = 60;
 const MAX_SWIPE = 100;
 
-export function SwipeToAction({ children, onSwipeLeft, onSwipeRight, leftLabel = "✓", rightLabel = "🗑", leftColor = "bg-success", rightColor = "bg-danger", disabled = false }) {
+export function SwipeToAction({
+  children,
+  onSwipeLeft,
+  onSwipeRight,
+  leftLabel = "✓",
+  rightLabel = "🗑",
+  leftColor = "bg-success",
+  rightColor = "bg-danger",
+  disabled = false,
+}) {
   const [offset, setOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [committed, setCommitted] = useState(false);
@@ -20,36 +29,42 @@ export function SwipeToAction({ children, onSwipeLeft, onSwipeRight, leftLabel =
     startY.current = null;
   }, []);
 
-  const onTouchStart = useCallback((e) => {
-    if (disabled) return;
-    setCommitted(false);
-    startX.current = e.touches[0].clientX;
-    startY.current = e.touches[0].clientY;
-    isHorizontal.current = null;
-    setIsDragging(true);
-  }, [disabled]);
+  const onTouchStart = useCallback(
+    (e) => {
+      if (disabled) return;
+      setCommitted(false);
+      startX.current = e.touches[0].clientX;
+      startY.current = e.touches[0].clientY;
+      isHorizontal.current = null;
+      setIsDragging(true);
+    },
+    [disabled],
+  );
 
-  const onTouchMove = useCallback((e) => {
-    if (!isDragging || startX.current === null) return;
-    const dx = e.touches[0].clientX - startX.current;
-    const dy = e.touches[0].clientY - startY.current;
+  const onTouchMove = useCallback(
+    (e) => {
+      if (!isDragging || startX.current === null) return;
+      const dx = e.touches[0].clientX - startX.current;
+      const dy = e.touches[0].clientY - startY.current;
 
-    if (isHorizontal.current === null) {
-      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-      isHorizontal.current = Math.abs(dx) > Math.abs(dy);
-    }
+      if (isHorizontal.current === null) {
+        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+        isHorizontal.current = Math.abs(dx) > Math.abs(dy);
+      }
 
-    if (!isHorizontal.current) {
-      setIsDragging(false);
-      return;
-    }
+      if (!isHorizontal.current) {
+        setIsDragging(false);
+        return;
+      }
 
-    e.preventDefault();
-    const clamped = Math.max(-MAX_SWIPE, Math.min(MAX_SWIPE, dx));
-    if (clamped < 0 && !onSwipeLeft) return;
-    if (clamped > 0 && !onSwipeRight) return;
-    setOffset(clamped);
-  }, [isDragging, onSwipeLeft, onSwipeRight]);
+      e.preventDefault();
+      const clamped = Math.max(-MAX_SWIPE, Math.min(MAX_SWIPE, dx));
+      if (clamped < 0 && !onSwipeLeft) return;
+      if (clamped > 0 && !onSwipeRight) return;
+      setOffset(clamped);
+    },
+    [isDragging, onSwipeLeft, onSwipeRight],
+  );
 
   const onTouchEnd = useCallback(() => {
     if (!isDragging) return;
@@ -82,12 +97,17 @@ export function SwipeToAction({ children, onSwipeLeft, onSwipeRight, leftLabel =
         <div
           className={cn(
             "absolute inset-y-0 right-0 flex items-center justify-center px-5 text-white font-semibold text-sm",
-            rightColor
+            rightColor,
           )}
           style={{ width: Math.abs(offset) }}
           aria-hidden
         >
-          <span className={cn("transition-opacity", Math.abs(offset) > SWIPE_THRESHOLD ? "opacity-100" : "opacity-60")}>
+          <span
+            className={cn(
+              "transition-opacity",
+              Math.abs(offset) > SWIPE_THRESHOLD ? "opacity-100" : "opacity-60",
+            )}
+          >
             {rightLabel}
           </span>
         </div>
@@ -96,12 +116,17 @@ export function SwipeToAction({ children, onSwipeLeft, onSwipeRight, leftLabel =
         <div
           className={cn(
             "absolute inset-y-0 left-0 flex items-center justify-center px-5 text-white font-semibold text-sm",
-            leftColor
+            leftColor,
           )}
           style={{ width: Math.abs(offset) }}
           aria-hidden
         >
-          <span className={cn("transition-opacity", Math.abs(offset) > SWIPE_THRESHOLD ? "opacity-100" : "opacity-60")}>
+          <span
+            className={cn(
+              "transition-opacity",
+              Math.abs(offset) > SWIPE_THRESHOLD ? "opacity-100" : "opacity-60",
+            )}
+          >
             {leftLabel}
           </span>
         </div>
@@ -109,7 +134,8 @@ export function SwipeToAction({ children, onSwipeLeft, onSwipeRight, leftLabel =
       <div
         style={{
           transform: `translateX(${committed ? (offset < 0 ? -MAX_SWIPE * 2 : MAX_SWIPE * 2) : offset}px)`,
-          transition: isDragging && !committed ? "none" : "transform 0.2s ease-out",
+          transition:
+            isDragging && !committed ? "none" : "transform 0.2s ease-out",
           willChange: "transform",
         }}
         onTouchStart={onTouchStart}

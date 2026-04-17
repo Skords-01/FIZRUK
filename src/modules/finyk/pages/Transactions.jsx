@@ -130,7 +130,6 @@ export function Transactions({
     month: now.getMonth(),
   }));
 
-
   const isCurrentMonth =
     selMonth.year === now.getFullYear() && selMonth.month === now.getMonth();
 
@@ -244,9 +243,7 @@ export function Transactions({
 
   const txsToShow = useMemo(
     () =>
-      showHidden
-        ? activeTx
-        : activeTx.filter((t) => !hiddenTxIdSet.has(t.id)),
+      showHidden ? activeTx : activeTx.filter((t) => !hiddenTxIdSet.has(t.id)),
     [activeTx, hiddenTxIdSet, showHidden],
   );
 
@@ -262,30 +259,27 @@ export function Transactions({
     return s ? s.toLowerCase() : "";
   }, [debouncedSearch]);
 
-  const filtered = useMemo(
-    () => {
-      const m = perfMark("finyk:tx:filter");
-      const res = sortedTxs.filter((t) => {
-        const matchFilter =
-          filter === "all"
-            ? true
-            : filter === "income"
-              ? t.amount > 0
-              : filter === "expense"
-                ? t.amount < 0
-                : filter === "credit"
-                  ? creditAccIds.has(t._accountId)
-                  : getEffectiveCat(t).id === filter;
-        const matchSearch =
-          !searchLower ||
-          (t.description || "").toLowerCase().includes(searchLower);
-        return matchFilter && matchSearch;
-      });
-      perfEnd(m, { n: res.length });
-      return res;
-    },
-    [sortedTxs, filter, searchLower, creditAccIds, getEffectiveCat],
-  );
+  const filtered = useMemo(() => {
+    const m = perfMark("finyk:tx:filter");
+    const res = sortedTxs.filter((t) => {
+      const matchFilter =
+        filter === "all"
+          ? true
+          : filter === "income"
+            ? t.amount > 0
+            : filter === "expense"
+              ? t.amount < 0
+              : filter === "credit"
+                ? creditAccIds.has(t._accountId)
+                : getEffectiveCat(t).id === filter;
+      const matchSearch =
+        !searchLower ||
+        (t.description || "").toLowerCase().includes(searchLower);
+      return matchFilter && matchSearch;
+    });
+    perfEnd(m, { n: res.length });
+    return res;
+  }, [sortedTxs, filter, searchLower, creditAccIds, getEffectiveCat]);
 
   const groupedByDate = useMemo(() => {
     const m = perfMark("finyk:tx:groupByDate");
@@ -643,25 +637,29 @@ export function Transactions({
                         disabled={selectMode}
                         onSwipeLeft={
                           t._manual
-                            ? (removeManualExpense && addManualExpense
-                                ? () => {
-                                    const snapshot = {
-                                      id: String(t._manualId),
-                                      date: t.time
-                                        ? new Date(t.time * 1000).toISOString()
-                                        : new Date().toISOString(),
-                                      description: String(t.description || ""),
-                                      amount: Math.abs(Number(t.amount || 0) / 100),
-                                      category: String(t._category || "інше"),
-                                    };
-                                    removeManualExpense(t._manualId);
-                                    toast.info("Витрату видалено", 5000, {
-                                      label: "Undo",
-                                      onClick: () => addManualExpense(snapshot),
-                                    });
-                                  }
-                                : undefined)
-                            : (!hiddenTxIds.includes(t.id) ? () => hideTx(t.id) : undefined)
+                            ? removeManualExpense && addManualExpense
+                              ? () => {
+                                  const snapshot = {
+                                    id: String(t._manualId),
+                                    date: t.time
+                                      ? new Date(t.time * 1000).toISOString()
+                                      : new Date().toISOString(),
+                                    description: String(t.description || ""),
+                                    amount: Math.abs(
+                                      Number(t.amount || 0) / 100,
+                                    ),
+                                    category: String(t._category || "інше"),
+                                  };
+                                  removeManualExpense(t._manualId);
+                                  toast.info("Витрату видалено", 5000, {
+                                    label: "Undo",
+                                    onClick: () => addManualExpense(snapshot),
+                                  });
+                                }
+                              : undefined
+                            : !hiddenTxIds.includes(t.id)
+                              ? () => hideTx(t.id)
+                              : undefined
                         }
                         onSwipeRight={undefined}
                         rightLabel="🙈 Приховати"
@@ -670,7 +668,8 @@ export function Transactions({
                         <TxRow
                           tx={t}
                           onClick={
-                            t._manual && typeof onEditManualExpense === "function"
+                            t._manual &&
+                            typeof onEditManualExpense === "function"
                               ? () => onEditManualExpense(t._manualId)
                               : undefined
                           }

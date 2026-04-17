@@ -27,7 +27,9 @@ export function useShoppingList() {
   }, []);
 
   const setGeneratedList = useCallback((categories) => {
-    setShoppingList({ categories: Array.isArray(categories) ? categories : [] });
+    setShoppingList({
+      categories: Array.isArray(categories) ? categories : [],
+    });
   }, []);
 
   const checkedItems = getCheckedItems(shoppingList);

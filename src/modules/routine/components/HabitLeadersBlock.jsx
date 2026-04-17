@@ -6,10 +6,12 @@ export function HabitLeadersBlock({ habits, completions }) {
     const active = habits.filter((h) => !h.archived);
     if (active.length === 0) return { best: null, worst: null };
 
-    const rates = active.map((h) => {
-      const r = habitCompletionRate(h, completions[h.id] || [], 30);
-      return { habit: h, ...r };
-    }).filter((r) => r.scheduled > 0);
+    const rates = active
+      .map((h) => {
+        const r = habitCompletionRate(h, completions[h.id] || [], 30);
+        return { habit: h, ...r };
+      })
+      .filter((r) => r.scheduled > 0);
 
     if (rates.length === 0) return { best: null, worst: null };
 
@@ -50,7 +52,8 @@ export function HabitLeadersBlock({ habits, completions }) {
               {worst.habit.emoji} {worst.habit.name}
             </p>
             <p className="text-xs text-subtle mt-0.5 tabular-nums">
-              {Math.round(worst.rate * 100)}% · {worst.completed}/{worst.scheduled}
+              {Math.round(worst.rate * 100)}% · {worst.completed}/
+              {worst.scheduled}
             </p>
           </div>
         )}

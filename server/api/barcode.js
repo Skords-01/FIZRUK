@@ -11,36 +11,54 @@ const OFF_FIELDS =
 function normalizeOFF(product) {
   const n = product?.nutriments || {};
   const name = product?.product_name_uk || product?.product_name || null;
-  const brand = product?.brands ? String(product.brands).split(",")[0].trim() : null;
+  const brand = product?.brands
+    ? String(product.brands).split(",")[0].trim()
+    : null;
 
   const round1 = (v) =>
-    v != null && Number.isFinite(Number(v)) ? Math.round(Number(v) * 10) / 10 : null;
+    v != null && Number.isFinite(Number(v))
+      ? Math.round(Number(v) * 10) / 10
+      : null;
 
   const kcal = round1(n["energy-kcal_100g"] ?? n["energy-kcal"] ?? null);
   const protein = round1(n["proteins_100g"] ?? null);
   const fat = round1(n["fat_100g"] ?? null);
   const carbs = round1(n["carbohydrates_100g"] ?? null);
 
-  const servingSize = product?.serving_size ? String(product.serving_size) : null;
+  const servingSize = product?.serving_size
+    ? String(product.serving_size)
+    : null;
   const servingGrams =
-    product?.serving_quantity != null && Number.isFinite(Number(product.serving_quantity))
+    product?.serving_quantity != null &&
+    Number.isFinite(Number(product.serving_quantity))
       ? Number(product.serving_quantity)
       : null;
 
   if (!name) return null;
   // require at least one macro to avoid returning empty shells
-  if (kcal == null && protein == null && fat == null && carbs == null) return null;
+  if (kcal == null && protein == null && fat == null && carbs == null)
+    return null;
 
   return {
-    name, brand, kcal_100g: kcal, protein_100g: protein, fat_100g: fat, carbs_100g: carbs,
-    servingSize, servingGrams, source: "off",
+    name,
+    brand,
+    kcal_100g: kcal,
+    protein_100g: protein,
+    fat_100g: fat,
+    carbs_100g: carbs,
+    servingSize,
+    servingGrams,
+    source: "off",
   };
 }
 
 async function lookupOFF(barcode) {
   const url = `${OFF_BASE}/${barcode}.json?fields=${OFF_FIELDS}`;
   const r = await fetch(url, {
-    headers: { "User-Agent": "Sergeant-NutritionApp/1.0 (https://sergeant.2dmanager.com.ua)" },
+    headers: {
+      "User-Agent":
+        "Sergeant-NutritionApp/1.0 (https://sergeant.2dmanager.com.ua)",
+    },
     signal: AbortSignal.timeout(7000),
   });
   if (!r.ok) return null;
@@ -91,13 +109,22 @@ function normalizeUSDA(food) {
       ? Number(food.servingSize)
       : null;
   const servingUnit = food.servingSizeUnit || null;
-  const servingSize = servingGrams && servingUnit ? `${servingGrams} ${servingUnit}` : null;
+  const servingSize =
+    servingGrams && servingUnit ? `${servingGrams} ${servingUnit}` : null;
 
-  if (kcal == null && protein == null && fat == null && carbs == null) return null;
+  if (kcal == null && protein == null && fat == null && carbs == null)
+    return null;
 
   return {
-    name, brand, kcal_100g: kcal, protein_100g: protein, fat_100g: fat, carbs_100g: carbs,
-    servingSize, servingGrams, source: "usda",
+    name,
+    brand,
+    kcal_100g: kcal,
+    protein_100g: protein,
+    fat_100g: fat,
+    carbs_100g: carbs,
+    servingSize,
+    servingGrams,
+    source: "usda",
   };
 }
 
@@ -115,7 +142,10 @@ async function lookupUSDA(barcode) {
   if (!Array.isArray(foods) || foods.length === 0) return null;
 
   // Prefer exact gtinUpc match, fallback to first result
-  const exact = foods.find((f) => String(f.gtinUpc || "").replace(/^0+/, "") === barcode.replace(/^0+/, ""));
+  const exact = foods.find(
+    (f) =>
+      String(f.gtinUpc || "").replace(/^0+/, "") === barcode.replace(/^0+/, ""),
+  );
   const food = exact || foods[0];
   return normalizeUSDA(food);
 }
@@ -142,9 +172,14 @@ async function lookupUPCitemdb(barcode) {
   const brand = item.brand || null;
 
   return {
-    name, brand,
-    kcal_100g: null, protein_100g: null, fat_100g: null, carbs_100g: null,
-    servingSize: null, servingGrams: null,
+    name,
+    brand,
+    kcal_100g: null,
+    protein_100g: null,
+    fat_100g: null,
+    carbs_100g: null,
+    servingSize: null,
+    servingGrams: null,
     source: "upcitemdb",
     partial: true, // no nutrition data — frontend should prompt user to fill in macros
   };
@@ -168,7 +203,9 @@ export default async function handler(req, res) {
     windowMs: 60_000,
   });
   if (!rl.ok)
-    return res.status(429).json({ error: "Забагато запитів. Спробуй пізніше." });
+    return res
+      .status(429)
+      .json({ error: "Забагато запитів. Спробуй пізніше." });
 
   const barcode = String(req.query.barcode || "")
     .trim()
@@ -180,14 +217,25 @@ export default async function handler(req, res) {
   try {
     // Cascade: OFF → USDA → UPCitemdb
     let product = null;
-    let lookupError = null;
 
-    try { product = await lookupOFF(barcode); } catch { /* continue to next source */ }
-    if (!product) {
-      try { product = await lookupUSDA(barcode); } catch { /* continue to next source */ }
+    try {
+      product = await lookupOFF(barcode);
+    } catch {
+      /* continue to next source */
     }
     if (!product) {
-      try { product = await lookupUPCitemdb(barcode); } catch (e) { lookupError = e; }
+      try {
+        product = await lookupUSDA(barcode);
+      } catch {
+        /* continue to next source */
+      }
+    }
+    if (!product) {
+      try {
+        product = await lookupUPCitemdb(barcode);
+      } catch {
+        /* continue to next source */
+      }
     }
 
     if (!product) {
@@ -197,7 +245,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ product });
   } catch (e) {
     if (e?.name === "TimeoutError" || e?.name === "AbortError") {
-      return res.status(504).json({ error: "Сервіс недоступний (таймаут). Спробуй пізніше." });
+      return res
+        .status(504)
+        .json({ error: "Сервіс недоступний (таймаут). Спробуй пізніше." });
     }
     return res.status(500).json({ error: e?.message || "Server error" });
   }

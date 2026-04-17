@@ -23,7 +23,15 @@ export function RestTimerOverlay({ restTimer, onCancel }) {
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative w-10 h-10 shrink-0">
             <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-              <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" className="text-line/40" strokeWidth="3" />
+              <circle
+                cx="18"
+                cy="18"
+                r="15"
+                fill="none"
+                stroke="currentColor"
+                className="text-line/40"
+                strokeWidth="3"
+              />
               <circle
                 cx="18"
                 cy="18"
@@ -42,10 +50,12 @@ export function RestTimerOverlay({ restTimer, onCancel }) {
             <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
               Відпочинок
             </div>
-            <div className={
-              "text-3xl font-extrabold tabular-nums leading-tight " +
-              (urgent ? "text-warning" : "text-text")
-            }>
+            <div
+              className={
+                "text-3xl font-extrabold tabular-nums leading-tight " +
+                (urgent ? "text-warning" : "text-text")
+              }
+            >
               {formatRestClock(restTimer.remaining)}
             </div>
           </div>

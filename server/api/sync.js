@@ -88,7 +88,13 @@ export async function syncPull(req, res) {
   );
 
   if (result.rows.length === 0) {
-    return res.json({ ok: true, module, data: null, serverUpdatedAt: null, version: 0 });
+    return res.json({
+      ok: true,
+      module,
+      data: null,
+      serverUpdatedAt: null,
+      version: 0,
+    });
   }
 
   const row = result.rows[0];
@@ -173,9 +179,7 @@ export async function syncPushAll(req, res) {
         results[mod] = { ok: false, error: "Too large" };
         continue;
       }
-      const clientTs = clientUpdatedAt
-        ? new Date(clientUpdatedAt)
-        : new Date();
+      const clientTs = clientUpdatedAt ? new Date(clientUpdatedAt) : new Date();
       const r = await client.query(
         `INSERT INTO module_data (user_id, module, data, client_updated_at, version)
          VALUES ($1, $2, $3, $4, 1)

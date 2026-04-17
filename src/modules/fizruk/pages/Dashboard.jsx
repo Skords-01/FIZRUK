@@ -27,7 +27,13 @@ function formatDurShort(sec) {
   return `${m} хв ${s} с`;
 }
 
-export function Dashboard({ onOpenAtlas, onOpenPrograms, activeProgram, todaySession, onStartProgramWorkout }) {
+export function Dashboard({
+  onOpenAtlas,
+  onOpenPrograms,
+  activeProgram,
+  todaySession,
+  onStartProgramWorkout,
+}) {
   const today = new Date().toLocaleDateString("uk-UA", {
     weekday: "long",
     day: "numeric",
@@ -351,54 +357,68 @@ export function Dashboard({ onOpenAtlas, onOpenPrograms, activeProgram, todaySes
           </div>
         </section>
 
-        {templates.length > 0 && (() => {
-          const quickTemplates = recentlyUsed.length > 0
-            ? recentlyUsed
-            : templates.slice(0, 3);
-          return (
-          <section
-            className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
-            aria-label="Швидкий старт"
-          >
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
-                Швидкий старт
-              </h2>
-              <span className="text-[10px] text-muted">
-                {recentlyUsed.length > 0 ? "Нещодавно використані" : "Останні шаблони"}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {quickTemplates.map((tpl) => {
-                const picks = (tpl.exerciseIds || [])
-                  .map((id) => exercises.find((e) => e.id === id))
-                  .filter(Boolean);
-                return (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    className="w-full text-left flex items-center gap-3 rounded-2xl border border-line bg-bg hover:bg-panelHi p-3 min-h-[52px] transition-colors active:scale-[0.99]"
-                    onClick={() => tryStartPlan(picks, tpl.id)}
-                    disabled={!picks.length}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center text-success shrink-0" aria-hidden>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-text truncate">{tpl.name}</div>
-                      <div className="text-[11px] text-subtle mt-0.5">
-                        {picks.length > 0
-                          ? `${picks.length} вправ`
-                          : "Немає вправ у каталозі"}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-          );
-        })()}
+        {templates.length > 0 &&
+          (() => {
+            const quickTemplates =
+              recentlyUsed.length > 0 ? recentlyUsed : templates.slice(0, 3);
+            return (
+              <section
+                className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+                aria-label="Швидкий старт"
+              >
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
+                    Швидкий старт
+                  </h2>
+                  <span className="text-[10px] text-muted">
+                    {recentlyUsed.length > 0
+                      ? "Нещодавно використані"
+                      : "Останні шаблони"}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {quickTemplates.map((tpl) => {
+                    const picks = (tpl.exerciseIds || [])
+                      .map((id) => exercises.find((e) => e.id === id))
+                      .filter(Boolean);
+                    return (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        className="w-full text-left flex items-center gap-3 rounded-2xl border border-line bg-bg hover:bg-panelHi p-3 min-h-[52px] transition-colors active:scale-[0.99]"
+                        onClick={() => tryStartPlan(picks, tpl.id)}
+                        disabled={!picks.length}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center text-success shrink-0"
+                          aria-hidden
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-text truncate">
+                            {tpl.name}
+                          </div>
+                          <div className="text-[11px] text-subtle mt-0.5">
+                            {picks.length > 0
+                              ? `${picks.length} вправ`
+                              : "Немає вправ у каталозі"}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })()}
 
         {activeProgram && (
           <section
@@ -415,7 +435,9 @@ export function Dashboard({ onOpenAtlas, onOpenPrograms, activeProgram, todaySes
                     {todaySession.name}
                   </p>
                 ) : (
-                  <p className="text-sm text-subtle mt-0.5">Сьогодні відпочинок 💤</p>
+                  <p className="text-sm text-subtle mt-0.5">
+                    Сьогодні відпочинок 💤
+                  </p>
                 )}
               </div>
               <button
@@ -431,7 +453,8 @@ export function Dashboard({ onOpenAtlas, onOpenPrograms, activeProgram, todaySes
                 type="button"
                 className="w-full py-3 rounded-xl bg-accent text-forest font-semibold text-sm transition-all active:scale-[0.98]"
                 onClick={() => {
-                  const session = activeProgram.sessions?.[todaySession.sessionKey];
+                  const session =
+                    activeProgram.sessions?.[todaySession.sessionKey];
                   if (session && onStartProgramWorkout) {
                     onStartProgramWorkout(session, activeProgram);
                   }
@@ -498,12 +521,15 @@ export function Dashboard({ onOpenAtlas, onOpenPrograms, activeProgram, todaySes
 
               {rec.wellbeingMult > 1.1 && (
                 <div className="mb-3 px-3 py-2 rounded-xl bg-warning/10 border border-warning/25 flex items-start gap-2">
-                  <span className="text-base shrink-0" aria-hidden>😴</span>
+                  <span className="text-base shrink-0" aria-hidden>
+                    😴
+                  </span>
                   <p className="text-[11px] text-warning leading-snug">
                     {rec.wellbeingMult >= 1.3
                       ? "Поганий сон або дуже низька енергія — відновлення значно сповільнене."
-                      : "Недостатній сон або низька енергія — відновлення сповільнене."}
-                    {" "}М'язи потребують більше часу перед наступним навантаженням.
+                      : "Недостатній сон або низька енергія — відновлення сповільнене."}{" "}
+                    М{"'"}язи потребують більше часу перед наступним
+                    навантаженням.
                   </p>
                 </div>
               )}

@@ -6,7 +6,12 @@ import { cn } from "@shared/lib/cn";
  * - Dashed line: projected spending (future days)
  * - Horizontal limit line (if provided)
  */
-export function BudgetTrendChart({ dailyData, limit, color = "#6366f1", className }) {
+export function BudgetTrendChart({
+  dailyData,
+  limit,
+  color = "#6366f1",
+  className,
+}) {
   if (!dailyData || dailyData.length === 0) return null;
 
   const w = 320;
@@ -19,7 +24,9 @@ export function BudgetTrendChart({ dailyData, limit, color = "#6366f1", classNam
   const innerH = h - padT - padB;
   const n = dailyData.length;
 
-  const allValues = dailyData.flatMap((d) => [d.actual, d.forecast]).filter((v) => v != null);
+  const allValues = dailyData
+    .flatMap((d) => [d.actual, d.forecast])
+    .filter((v) => v != null);
   if (limit) allValues.push(limit);
   const maxVal = Math.max(...allValues, 1);
   const minVal = 0;
@@ -39,7 +46,9 @@ export function BudgetTrendChart({ dailyData, limit, color = "#6366f1", classNam
 
   // Build forecast path (dashed) - starts from the bridge point (last actual day)
   const forecastPoints = dailyData
-    .map((d, i) => (d.forecast != null ? { x: toX(i), y: toY(d.forecast) } : null))
+    .map((d, i) =>
+      d.forecast != null ? { x: toX(i), y: toY(d.forecast) } : null,
+    )
     .filter(Boolean);
 
   const forecastD = forecastPoints

@@ -4,8 +4,22 @@ import { useDailyLog } from "../hooks/useDailyLog";
 import { MiniLineChart } from "../components/MiniLineChart";
 import { PhotoProgress } from "../components/PhotoProgress";
 
-const ENERGY_LABELS = ["", "Виснажений", "Втомлений", "Нормально", "Добре", "Відмінно"];
-const MOOD_LABELS = ["", "Пригнічений", "Поганий", "Нейтральний", "Гарний", "Чудовий"];
+const ENERGY_LABELS = [
+  "",
+  "Виснажений",
+  "Втомлений",
+  "Нормально",
+  "Добре",
+  "Відмінно",
+];
+const MOOD_LABELS = [
+  "",
+  "Пригнічений",
+  "Поганий",
+  "Нейтральний",
+  "Гарний",
+  "Чудовий",
+];
 
 function ScoreButton({ value, selected, onClick, label }) {
   return (
@@ -22,7 +36,12 @@ function ScoreButton({ value, selected, onClick, label }) {
       title={label}
     >
       <span className="text-base leading-none">{value}</span>
-      <span className={cn("text-[9px] leading-none truncate max-w-full px-1", selected ? "text-white/80" : "text-muted")}>
+      <span
+        className={cn(
+          "text-[9px] leading-none truncate max-w-full px-1",
+          selected ? "text-white/80" : "text-muted",
+        )}
+      >
         {label}
       </span>
     </button>
@@ -51,7 +70,13 @@ export function Body({ onOpenMeasurements }) {
       note: form.note.trim(),
     };
     addEntry(entry);
-    setForm({ weightKg: "", sleepHours: "", energyLevel: null, moodScore: null, note: "" });
+    setForm({
+      weightKg: "",
+      sleepHours: "",
+      energyLevel: null,
+      moodScore: null,
+      note: "",
+    });
     setSubmitSuccess(true);
     setTimeout(() => setSubmitSuccess(false), 2000);
   };
@@ -118,11 +143,13 @@ export function Body({ onOpenMeasurements }) {
     const eEntries = recentWith("energyLevel", 7);
     const avgSleep =
       sEntries.length > 0
-        ? sEntries.reduce((s, e) => s + (e.sleepHours || 0), 0) / sEntries.length
+        ? sEntries.reduce((s, e) => s + (e.sleepHours || 0), 0) /
+          sEntries.length
         : null;
     const avgEnergy =
       eEntries.length > 0
-        ? eEntries.reduce((s, e) => s + (e.energyLevel || 0), 0) / eEntries.length
+        ? eEntries.reduce((s, e) => s + (e.energyLevel || 0), 0) /
+          eEntries.length
         : null;
     const latestWeight = wEntries[0]?.weightKg ?? null;
     return { latestWeight, avgSleep, avgEnergy };
@@ -134,7 +161,9 @@ export function Body({ onOpenMeasurements }) {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-text">Тіло</h1>
-            <p className="text-xs text-subtle mt-0.5">Вага · сон · самопочуття</p>
+            <p className="text-xs text-subtle mt-0.5">
+              Вага · сон · самопочуття
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-center">
@@ -146,7 +175,9 @@ export function Body({ onOpenMeasurements }) {
             <div className="text-center">
               <div className="text-xs text-subtle">Сон</div>
               <div className="text-base font-extrabold text-text tabular-nums">
-                {stats.avgSleep != null ? `${stats.avgSleep.toFixed(1)} г` : "—"}
+                {stats.avgSleep != null
+                  ? `${stats.avgSleep.toFixed(1)} г`
+                  : "—"}
               </div>
             </div>
             {onOpenMeasurements && (
@@ -171,7 +202,10 @@ export function Body({ onOpenMeasurements }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="body-weight" className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1">
+                <label
+                  htmlFor="body-weight"
+                  className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+                >
                   Вага (кг)
                 </label>
                 <input
@@ -190,7 +224,10 @@ export function Body({ onOpenMeasurements }) {
                 />
               </div>
               <div>
-                <label htmlFor="body-sleep" className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1">
+                <label
+                  htmlFor="body-sleep"
+                  className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+                >
                   Сон (год)
                 </label>
                 <input
@@ -214,7 +251,11 @@ export function Body({ onOpenMeasurements }) {
               <p className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
                 Рівень енергії
               </p>
-              <div className="flex gap-1.5" role="group" aria-label="Рівень енергії">
+              <div
+                className="flex gap-1.5"
+                role="group"
+                aria-label="Рівень енергії"
+              >
                 {[1, 2, 3, 4, 5].map((v) => (
                   <ScoreButton
                     key={v}
@@ -255,7 +296,10 @@ export function Body({ onOpenMeasurements }) {
             </div>
 
             <div>
-              <label htmlFor="body-note" className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1">
+              <label
+                htmlFor="body-note"
+                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+              >
                 Нотатка (необов&apos;язково)
               </label>
               <input
@@ -382,25 +426,33 @@ export function Body({ onOpenMeasurements }) {
                       {entry.weightKg != null && (
                         <span className="text-xs text-text">
                           <span className="text-subtle">Вага:</span>{" "}
-                          <span className="font-semibold">{entry.weightKg} кг</span>
+                          <span className="font-semibold">
+                            {entry.weightKg} кг
+                          </span>
                         </span>
                       )}
                       {entry.sleepHours != null && (
                         <span className="text-xs text-text">
                           <span className="text-subtle">Сон:</span>{" "}
-                          <span className="font-semibold">{entry.sleepHours} год</span>
+                          <span className="font-semibold">
+                            {entry.sleepHours} год
+                          </span>
                         </span>
                       )}
                       {entry.energyLevel != null && (
                         <span className="text-xs text-text">
                           <span className="text-subtle">Енергія:</span>{" "}
-                          <span className="font-semibold">{entry.energyLevel}/5</span>
+                          <span className="font-semibold">
+                            {entry.energyLevel}/5
+                          </span>
                         </span>
                       )}
                       {entry.moodScore != null && (
                         <span className="text-xs text-text">
                           <span className="text-subtle">Настрій:</span>{" "}
-                          <span className="font-semibold">{entry.moodScore}/5</span>
+                          <span className="font-semibold">
+                            {entry.moodScore}/5
+                          </span>
                         </span>
                       )}
                     </div>
@@ -416,7 +468,15 @@ export function Body({ onOpenMeasurements }) {
                     className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-danger hover:bg-danger/10 transition-colors"
                     aria-label="Видалити запис"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
                       <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
                     </svg>
                   </button>

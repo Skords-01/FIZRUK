@@ -83,7 +83,10 @@ export function executeAction(action) {
       }
       case "mark_habit_done": {
         const { habit_id, date: habitDate } = action.input;
-        const routineState = ls("hub_routine_v1", { habits: [], completions: {} });
+        const routineState = ls("hub_routine_v1", {
+          habits: [],
+          completions: {},
+        });
         const completions = { ...(routineState.completions || {}) };
         const now = new Date();
         const targetDate =
@@ -93,11 +96,15 @@ export function executeAction(action) {
             String(now.getMonth() + 1).padStart(2, "0"),
             String(now.getDate()).padStart(2, "0"),
           ].join("-");
-        const arr = Array.isArray(completions[habit_id]) ? completions[habit_id].slice() : [];
+        const arr = Array.isArray(completions[habit_id])
+          ? completions[habit_id].slice()
+          : [];
         if (!arr.includes(targetDate)) arr.push(targetDate);
         completions[habit_id] = arr;
         lsSet("hub_routine_v1", { ...routineState, completions });
-        const habit = (routineState.habits || []).find((h) => h.id === habit_id);
+        const habit = (routineState.habits || []).find(
+          (h) => h.id === habit_id,
+        );
         return `Звичку "${habit?.name || habit_id}" відмічено як виконану (${targetDate})`;
       }
       case "plan_workout": {
@@ -108,7 +115,8 @@ export function executeAction(action) {
           String(now.getMonth() + 1).padStart(2, "0"),
           String(now.getDate()).padStart(2, "0"),
         ].join("-");
-        const targetDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : today;
+        const targetDate =
+          date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : today;
         const timeStr =
           time && /^\d{1,2}:\d{2}$/.test(String(time).trim())
             ? String(time).trim().padStart(5, "0")
@@ -121,12 +129,17 @@ export function executeAction(action) {
               .map((ex, i) => {
                 const setsN = Math.max(1, Math.min(20, Number(ex.sets) || 3));
                 const reps =
-                  ex.reps != null && Number.isFinite(Number(ex.reps)) ? Number(ex.reps) : 0;
+                  ex.reps != null && Number.isFinite(Number(ex.reps))
+                    ? Number(ex.reps)
+                    : 0;
                 const weightKg =
                   ex.weight != null && Number.isFinite(Number(ex.weight))
                     ? Number(ex.weight)
                     : 0;
-                const sets = Array.from({ length: setsN }, () => ({ weightKg, reps }));
+                const sets = Array.from({ length: setsN }, () => ({
+                  weightKg,
+                  reps,
+                }));
                 return {
                   id: `i_${Date.now().toString(36)}_${i}_${Math.random().toString(36).slice(2, 6)}`,
                   nameUk: String(ex.name).trim(),
@@ -155,9 +168,13 @@ export function executeAction(action) {
         try {
           const parsed = wRaw ? JSON.parse(wRaw) : null;
           if (Array.isArray(parsed)) existing = parsed;
-          else if (parsed && Array.isArray(parsed.workouts)) existing = parsed.workouts;
+          else if (parsed && Array.isArray(parsed.workouts))
+            existing = parsed.workouts;
         } catch {}
-        lsSet("fizruk_workouts_v1", { schemaVersion: 1, workouts: [newW, ...existing] });
+        lsSet("fizruk_workouts_v1", {
+          schemaVersion: 1,
+          workouts: [newW, ...existing],
+        });
         const exCount = items.length;
         return `Тренування заплановано на ${targetDate} о ${timeStr}${note ? ` ("${note}")` : ""}: ${exCount} вправ${exCount === 1 ? "а" : exCount >= 2 && exCount <= 4 ? "и" : ""} (id:${wid})`;
       }

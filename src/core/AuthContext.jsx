@@ -43,13 +43,20 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await signOut();
-    } catch {
-    }
+    } catch {}
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, authError, setAuthError, login, register, logout }}
+      value={{
+        user,
+        isLoading,
+        authError,
+        setAuthError,
+        login,
+        register,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

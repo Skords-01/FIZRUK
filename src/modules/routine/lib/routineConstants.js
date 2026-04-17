@@ -14,10 +14,12 @@ export const ROUTINE_THEME = {
   linkAccent:
     "font-semibold text-routine-strong dark:text-routine underline decoration-routine-ring/80 dark:decoration-routine/50",
   habitRowAccent: "border-l-routine",
-  iconBox: "bg-routine-surface dark:bg-routine/12 border-routine-line/80 dark:border-routine/30 text-routine-strong dark:text-routine",
+  iconBox:
+    "bg-routine-surface dark:bg-routine/12 border-routine-line/80 dark:border-routine/30 text-routine-strong dark:text-routine",
   navActive: "text-routine-strong dark:text-routine",
   navBar: "bg-routine-nav",
-  chipOn: "border-routine-ring dark:border-routine/40 bg-routine-surface2 dark:bg-routine/15 text-text shadow-sm",
+  chipOn:
+    "border-routine-ring dark:border-routine/40 bg-routine-surface2 dark:bg-routine/15 text-text shadow-sm",
   chipOff:
     "border-line/60 bg-panel text-muted hover:text-text hover:bg-panelHi",
   dot: "bg-routine-nav",

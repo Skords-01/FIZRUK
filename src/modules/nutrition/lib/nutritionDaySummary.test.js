@@ -28,4 +28,3 @@ describe("getDaySummary", () => {
     expect(s.kcal).toBe(100);
   });
 });
-

@@ -39,7 +39,12 @@ export function LimitBudgetCard({
             <Button className="flex-1" size="sm" onClick={onSave}>
               Зберегти
             </Button>
-            <Button className="flex-1" size="sm" variant="danger" onClick={onDelete}>
+            <Button
+              className="flex-1"
+              size="sm"
+              variant="danger"
+              onClick={onDelete}
+            >
               Видалити
             </Button>
           </div>
@@ -47,7 +52,9 @@ export function LimitBudgetCard({
       ) : (
         <>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-semibold">{categoryLabel || "—"}</span>
+            <span className="text-sm font-semibold">
+              {categoryLabel || "—"}
+            </span>
             <div className="flex items-center gap-2">
               <span
                 className={cn(
@@ -75,7 +82,11 @@ export function LimitBudgetCard({
             <div
               className={cn(
                 "h-full rounded-full transition-all duration-500",
-                overLimit ? "bg-danger" : warnLimit ? "bg-warning" : "bg-emerald-500",
+                overLimit
+                  ? "bg-danger"
+                  : warnLimit
+                    ? "bg-warning"
+                    : "bg-emerald-500",
               )}
               style={{ width: `${Math.min(100, pctRaw)}%` }}
             />
@@ -95,22 +106,24 @@ export function LimitBudgetCard({
               : `Залишок ${remaining.toLocaleString("uk-UA")} ₴ · ${pctRounded}% використано`}
           </div>
 
-          {showProactiveAdvice && (
-            proactiveLoading ? (
+          {showProactiveAdvice &&
+            (proactiveLoading ? (
               <div className="mt-3 space-y-1.5">
                 <Skeleton className="h-3 w-full rounded" />
                 <Skeleton className="h-3 w-4/5 rounded" />
               </div>
             ) : proactiveText ? (
               <div className="mt-3 flex gap-2 items-start bg-bg rounded-xl px-3 py-2.5">
-                <span className="text-base leading-none mt-0.5 shrink-0">✨</span>
-                <p className="text-xs text-text leading-relaxed">{proactiveText}</p>
+                <span className="text-base leading-none mt-0.5 shrink-0">
+                  ✨
+                </span>
+                <p className="text-xs text-text leading-relaxed">
+                  {proactiveText}
+                </p>
               </div>
-            ) : null
-          )}
+            ) : null)}
         </>
       )}
     </div>
   );
 }
-

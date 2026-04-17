@@ -307,7 +307,10 @@ export function useMonobank() {
           accountsOk += 1;
         } catch (e) {
           if (e instanceof AuthError) {
-            setAuthError(e.message || "Токен Monobank недійсний або закінчився. Оновіть токен.");
+            setAuthError(
+              e.message ||
+                "Токен Monobank недійсний або закінчився. Оновіть токен.",
+            );
             setError("");
             setSyncState({
               status: "error",
@@ -512,7 +515,10 @@ export function useMonobank() {
       }
     } catch (e) {
       if (e instanceof AuthError) {
-        setAuthError(e.message || "Токен Monobank недійсний або закінчився. Оновіть токен.");
+        setAuthError(
+          e.message ||
+            "Токен Monobank недійсний або закінчився. Оновіть токен.",
+        );
       } else {
         setError(e?.message || "Помилка авторизації");
       }
@@ -599,7 +605,9 @@ export function useMonobank() {
         return;
       }
       if (res.status === 401 || res.status === 403) {
-        setAuthError("Токен Monobank недійсний або закінчився. Оновіть токен у налаштуваннях.");
+        setAuthError(
+          "Токен Monobank недійсний або закінчився. Оновіть токен у налаштуваннях.",
+        );
         return;
       }
     } catch (e) {

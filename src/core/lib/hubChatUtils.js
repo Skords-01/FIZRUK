@@ -9,7 +9,12 @@ export function friendlyApiError(status, message) {
   if (status === 500 && /ANTHROPIC|not set|key/i.test(m)) {
     return "Чат на сервері не налаштовано (немає ключа AI).";
   }
-  if (status === 429) return "Забагато запитів. Спробуй через хвилину.";
+  if (status === 429) {
+    if (/ліміт AI|AI_QUOTA|квот/i.test(m)) {
+      return "Денний ліміт AI вичерпано. Спробуй завтра або зменш навантаження.";
+    }
+    return "Забагато запитів. Спробуй через хвилину.";
+  }
   if (status === 401 || status === 403) return "Доступ заборонено.";
   return m || `Помилка ${status}`;
 }
@@ -103,7 +108,8 @@ export function fmt(n) {
 
 export function requestIdle(cb) {
   if (typeof window === "undefined") return setTimeout(cb, 0);
-  if (window.requestIdleCallback) return window.requestIdleCallback(cb, { timeout: 800 });
+  if (window.requestIdleCallback)
+    return window.requestIdleCallback(cb, { timeout: 800 });
   return setTimeout(cb, 0);
 }
 

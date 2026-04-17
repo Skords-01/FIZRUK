@@ -30,7 +30,9 @@ export function PushNotificationToggle({ className }) {
           subscribed ? "bg-primary" : "bg-line",
           (loading || blocked) && "opacity-50 cursor-not-allowed",
         )}
-        aria-label={subscribed ? "Вимкнути push-сповіщення" : "Увімкнути push-сповіщення"}
+        aria-label={
+          subscribed ? "Вимкнути push-сповіщення" : "Увімкнути push-сповіщення"
+        }
         aria-pressed={subscribed}
       >
         <span

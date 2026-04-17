@@ -29,7 +29,10 @@ export function HabitHeatmap({ habits, completions }) {
       }
     }
     document.addEventListener("pointerdown", onPointerDown, { capture: true });
-    return () => document.removeEventListener("pointerdown", onPointerDown, { capture: true });
+    return () =>
+      document.removeEventListener("pointerdown", onPointerDown, {
+        capture: true,
+      });
   }, [selected]);
 
   const activeHabits = useMemo(
@@ -104,7 +107,10 @@ export function HabitHeatmap({ habits, completions }) {
   }, [selected, weeks]);
 
   return (
-    <div ref={rootRef} className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+    <div
+      ref={rootRef}
+      className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+    >
       <p className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
         Активність за рік
       </p>
@@ -112,7 +118,13 @@ export function HabitHeatmap({ habits, completions }) {
       <div className="overflow-x-auto -mx-1 px-1 pb-1">
         <div style={{ display: "flex", gap: 0, alignItems: "flex-start" }}>
           <div
-            style={{ display: "flex", flexDirection: "column", gap: 2, marginRight: 4, paddingTop: 16 }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              marginRight: 4,
+              paddingTop: 16,
+            }}
           >
             {DAY_LABELS.map((lbl, i) => (
               <div
@@ -127,9 +139,17 @@ export function HabitHeatmap({ habits, completions }) {
 
           <div style={{ display: "flex", gap: 2 }}>
             {weeks.map((week, w) => (
-              <div key={w} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div
+                key={w}
+                style={{ display: "flex", flexDirection: "column", gap: 2 }}
+              >
                 <div
-                  style={{ height: 14, fontSize: 8, lineHeight: "14px", whiteSpace: "nowrap" }}
+                  style={{
+                    height: 14,
+                    fontSize: 8,
+                    lineHeight: "14px",
+                    whiteSpace: "nowrap",
+                  }}
                   className="text-subtle/80 select-none"
                 >
                   {monthMarkers.find((m) => m.weekIdx === w)?.label ?? ""}
@@ -144,7 +164,8 @@ export function HabitHeatmap({ habits, completions }) {
                     className={cn(
                       "rounded-sm transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400",
                       cellBg(cell.ratio, cell.isFuture),
-                      cell.isToday && "ring-1 ring-orange-400/80 dark:ring-orange-300/70",
+                      cell.isToday &&
+                        "ring-1 ring-orange-400/80 dark:ring-orange-300/70",
                       cell.key === selected && "opacity-60",
                     )}
                     style={{ width: 12, height: 12, flexShrink: 0 }}

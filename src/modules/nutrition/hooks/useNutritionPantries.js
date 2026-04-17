@@ -219,7 +219,9 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
         const item = items[idx];
         const qty = Number(item.qty);
         if (!Number.isFinite(qty) || qty <= 0) return p;
-        const unit = String(item.unit || "г").toLowerCase().trim();
+        const unit = String(item.unit || "г")
+          .toLowerCase()
+          .trim();
         let remaining = qty;
         if (unit === "кг") remaining = qty - gramsConsumed / 1000;
         else remaining = qty - gramsConsumed;

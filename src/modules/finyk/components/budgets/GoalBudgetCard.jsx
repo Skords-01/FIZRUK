@@ -30,7 +30,12 @@ export function GoalBudgetCard({
             <Button className="flex-1" size="sm" onClick={onSave}>
               Зберегти
             </Button>
-            <Button className="flex-1" size="sm" variant="danger" onClick={onDelete}>
+            <Button
+              className="flex-1"
+              size="sm"
+              variant="danger"
+              onClick={onDelete}
+            >
               Видалити
             </Button>
           </div>
@@ -43,7 +48,8 @@ export function GoalBudgetCard({
             </span>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted">
-                {saved.toLocaleString("uk-UA")} / {budget.targetAmount.toLocaleString("uk-UA")} ₴
+                {saved.toLocaleString("uk-UA")} /{" "}
+                {budget.targetAmount.toLocaleString("uk-UA")} ₴
               </span>
               <button
                 type="button"
@@ -77,4 +83,3 @@ export function GoalBudgetCard({
     </div>
   );
 }
-

@@ -198,13 +198,18 @@ export function usePrivatbank(enabled = true) {
       const allTxs = [];
       for (const acc of accs) {
         try {
-          const data = await apiFetch(merchantId, merchantToken, "/statements/transactions", {
-            acc: acc.id,
-            startDate,
-            endDate,
-            country: "UA",
-            limit: "500",
-          });
+          const data = await apiFetch(
+            merchantId,
+            merchantToken,
+            "/statements/transactions",
+            {
+              acc: acc.id,
+              startDate,
+              endDate,
+              country: "UA",
+              limit: "500",
+            },
+          );
 
           const rows =
             data?.StatementsResponse?.data ||
@@ -235,7 +240,9 @@ export function usePrivatbank(enabled = true) {
       });
     } catch (e) {
       if (e.name === "AuthError") {
-        setError("Невірні credentials PrivatBank. Перевірте Merchant ID та токен.");
+        setError(
+          "Невірні credentials PrivatBank. Перевірте Merchant ID та токен.",
+        );
         setSyncState((s) => ({
           ...s,
           status: "error",
@@ -287,10 +294,15 @@ export function usePrivatbank(enabled = true) {
       if (cachedAccounts) {
         accs = cachedAccounts;
       } else {
-        const data = await apiFetch(cleanId, cleanToken, "/statements/balance/final", {
-          country: "UA",
-          showRest: "true",
-        });
+        const data = await apiFetch(
+          cleanId,
+          cleanToken,
+          "/statements/balance/final",
+          {
+            country: "UA",
+            showRest: "true",
+          },
+        );
 
         const rawAccs =
           data?.StatementsResponse?.data ||
@@ -321,7 +333,9 @@ export function usePrivatbank(enabled = true) {
       }
     } catch (e) {
       if (e.name === "AuthError") {
-        setError("Невірні credentials PrivatBank. Перевірте Merchant ID та токен.");
+        setError(
+          "Невірні credentials PrivatBank. Перевірте Merchant ID та токен.",
+        );
       } else {
         setError(e.message || "Помилка підключення до PrivatBank");
       }
@@ -333,10 +347,15 @@ export function usePrivatbank(enabled = true) {
   const refresh = async () => {
     if (!storedId || !storedToken) return;
     try {
-      const data = await apiFetch(storedId, storedToken, "/statements/balance/final", {
-        country: "UA",
-        showRest: "true",
-      });
+      const data = await apiFetch(
+        storedId,
+        storedToken,
+        "/statements/balance/final",
+        {
+          country: "UA",
+          showRest: "true",
+        },
+      );
       const rawAccs =
         data?.StatementsResponse?.data ||
         data?.data ||
@@ -357,7 +376,12 @@ export function usePrivatbank(enabled = true) {
     setTransactions([]);
     setConnected(false);
     setError("");
-    setSyncState({ status: "idle", source: "none", lastSuccess: null, lastError: "" });
+    setSyncState({
+      status: "idle",
+      source: "none",
+      lastSuccess: null,
+      lastError: "",
+    });
     try {
       localStorage.removeItem(PRIVAT_CACHE_KEY);
       localStorage.removeItem(PRIVAT_BALANCE_KEY);

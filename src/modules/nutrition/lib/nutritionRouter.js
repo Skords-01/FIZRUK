@@ -21,4 +21,3 @@ export function setNutritionHash(next) {
   if (window.location.hash === h) return;
   window.location.hash = h;
 }
-

@@ -146,8 +146,7 @@ storageManager.register({
       ) {
         localStorage.setItem("finyk_tx_cache_last_good", oldLast);
       }
-      if (oldLast !== null)
-        localStorage.removeItem("finto_tx_cache_last_good");
+      if (oldLast !== null) localStorage.removeItem("finto_tx_cache_last_good");
     } catch {
       /* ignore */
     }
@@ -203,8 +202,16 @@ storageManager.register({
     // Let write errors throw so runAll() does not mark this migration as done
     localStorage.setItem(PANTRIES_KEY, JSON.stringify([pantry]));
     localStorage.setItem(ACTIVE_KEY, "home");
-    try { localStorage.removeItem(LEGACY_ITEMS); } catch { /* best-effort */ }
-    try { localStorage.removeItem(LEGACY_TEXT); } catch { /* best-effort */ }
+    try {
+      localStorage.removeItem(LEGACY_ITEMS);
+    } catch {
+      /* best-effort */
+    }
+    try {
+      localStorage.removeItem(LEGACY_TEXT);
+    } catch {
+      /* best-effort */
+    }
   },
 });
 
@@ -245,13 +252,25 @@ storageManager.register({
     }
     // Only migrate if pushupsByDate is empty
     const existing = state.pushupsByDate;
-    if (existing && typeof existing === "object" && Object.keys(existing).length > 0) {
-      try { localStorage.removeItem(PUSHUPS_LEGACY); } catch { /* best-effort */ }
+    if (
+      existing &&
+      typeof existing === "object" &&
+      Object.keys(existing).length > 0
+    ) {
+      try {
+        localStorage.removeItem(PUSHUPS_LEGACY);
+      } catch {
+        /* best-effort */
+      }
       return;
     }
     state = { ...state, pushupsByDate: { ...legacy } };
     // Let write errors throw so runAll() does not mark this migration as done
     localStorage.setItem(ROUTINE_KEY, JSON.stringify(state));
-    try { localStorage.removeItem(PUSHUPS_LEGACY); } catch { /* best-effort */ }
+    try {
+      localStorage.removeItem(PUSHUPS_LEGACY);
+    } catch {
+      /* best-effort */
+    }
   },
 });

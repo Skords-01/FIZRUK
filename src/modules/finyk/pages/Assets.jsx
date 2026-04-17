@@ -41,7 +41,12 @@ function SectionBar({ title, summary, open, onToggle }) {
 const formInp =
   "w-full h-11 rounded-2xl border border-line bg-panelHi px-4 text-text outline-none focus:border-muted transition-colors";
 
-export function Assets({ mono, storage, showBalance = true, initialOpenDebt = false }) {
+export function Assets({
+  mono,
+  storage,
+  showBalance = true,
+  initialOpenDebt = false,
+}) {
   const { accounts, transactions } = mono;
   const {
     hiddenAccounts,
@@ -829,7 +834,10 @@ export function Assets({ mono, storage, showBalance = true, initialOpenDebt = fa
                       setNewDebt((a) => ({
                         ...a,
                         name: parsed.name || a.name,
-                        totalAmount: parsed.amount != null ? String(Math.round(parsed.amount)) : a.totalAmount,
+                        totalAmount:
+                          parsed.amount != null
+                            ? String(Math.round(parsed.amount))
+                            : a.totalAmount,
                       }));
                     }}
                   />

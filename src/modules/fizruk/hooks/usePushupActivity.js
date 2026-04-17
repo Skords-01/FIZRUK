@@ -32,11 +32,19 @@ export function usePushupActivity(days = 30) {
 
   const stats = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
-    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-    const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const weekAgo = new Date(Date.now() - 7 * 86400000)
+      .toISOString()
+      .slice(0, 10);
+    const monthAgo = new Date(Date.now() - 30 * 86400000)
+      .toISOString()
+      .slice(0, 10);
     const todayCount = history.find((d) => d.date === today)?.total ?? 0;
-    const week = history.filter((d) => d.date >= weekAgo).reduce((s, d) => s + d.total, 0);
-    const month = history.filter((d) => d.date >= monthAgo).reduce((s, d) => s + d.total, 0);
+    const week = history
+      .filter((d) => d.date >= weekAgo)
+      .reduce((s, d) => s + d.total, 0);
+    const month = history
+      .filter((d) => d.date >= monthAgo)
+      .reduce((s, d) => s + d.total, 0);
     return { todayCount, week, month };
   }, [history]);
 

@@ -26,7 +26,9 @@ export function WeeklyVolumeChart({ volumeKg, className }) {
             кг×повт
           </span>
         </div>
-        <EmptyState compact className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
+        <EmptyState
+          compact
+          className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
           title="Поки без обʼєму за тиждень"
           description="Заверши тренування з силовими підходами — тут зʼявиться сумарний обʼєм (кг×повторення) по днях."
         />

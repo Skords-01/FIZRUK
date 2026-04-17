@@ -2,6 +2,11 @@
 
 Ціль: тримати короткий, практичний список пріоритетів по модулях і спільному ядру Hub. Кожен розділ має дві секції: що **реалізовано** і що **далі**.
 
+### Поточний фокус (наступний спринт)
+
+1. **Web Push з підпискою** — довести до кінця UX підписки в PWA й узгодити з уже наявними VAPID / API (див. «Наступні кроки» в Hub нижче).
+2. **Уніфікований експорт даних** — один архів по всіх модулях для резервного копіювання та міграції.
+
 ---
 
 ## Hub (ядро)
@@ -183,10 +188,11 @@
 - [x] storageQuota.js (`safeJsonSet` / `safeSetItem`) — захист від QuotaExceededError у всіх модулях
 - [x] date.js (`toLocalISODate`) — уніфікований UTC-незалежний форматер дат
 - [x] Barcode multi-DB cascade (`lookupOFF` / `lookupUSDA` / `lookupUPCitemdb`)
+- [x] Єдиний `pg.Pool` у [server/db.js](server/db.js) для API та Better Auth; інкрементальні SQL-файли в `server/migrations/` + `schema_migrations`
 
 ### Наступні кроки
 
-1. Резервне копіювання PostgreSQL (scheduled snapshots)
+1. Резервне копіювання PostgreSQL (scheduled snapshots) — інфраструктура провайдера (див. replit.md)
 2. Тести інтеграції для sync endpoints
 3. Rate-limiting per-user для auth endpoints
 4. CI/CD pipeline (GitHub Actions або Vercel checks)

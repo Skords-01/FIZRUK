@@ -60,7 +60,11 @@ function todayISODate() {
   return toLocalISODate(new Date());
 }
 
-export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsumed } = {}) {
+export default function NutritionApp({
+  onBackToHub,
+  pwaAction,
+  onPwaActionConsumed,
+} = {}) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -96,7 +100,7 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
       log.setAddMealSheetOpen(true);
       onPwaActionConsumed?.();
     }
-  }, []);  
+  }, []);
 
   const [prefs, setPrefs] = useState(() => loadNutritionPrefs());
   const [prefsStorageErr, setPrefsStorageErr] = useState("");
@@ -184,7 +188,10 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
       if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
           type: "NUTRITION_STATE_UPDATE",
-          data: { reminderEnabled: prefs.reminderEnabled, reminderHour: prefs.reminderHour ?? 12 },
+          data: {
+            reminderEnabled: prefs.reminderEnabled,
+            reminderHour: prefs.reminderHour ?? 12,
+          },
         });
       }
     } catch {}
@@ -207,20 +214,26 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
       lastNotifyKeyRef.current = key;
       try {
         if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.ready.then((reg) => {
-            reg.showNotification("🥗 Харчування", {
-              body: "Час записати прийоми їжі.",
-              tag: `nutrition-reminder-${key}`,
-              icon: "/icon-192.png",
-              badge: "/icon-192.png",
-              requireInteraction: false,
-              data: { action: "open", module: "nutrition" },
+          navigator.serviceWorker.ready
+            .then((reg) => {
+              reg.showNotification("🥗 Харчування", {
+                body: "Час записати прийоми їжі.",
+                tag: `nutrition-reminder-${key}`,
+                icon: "/icon-192.png",
+                badge: "/icon-192.png",
+                requireInteraction: false,
+                data: { action: "open", module: "nutrition" },
+              });
+            })
+            .catch(() => {
+              new Notification("🥗 Харчування", {
+                body: "Час записати прийоми їжі.",
+              });
             });
-          }).catch(() => {
-            new Notification("🥗 Харчування", { body: "Час записати прийоми їжі." });
-          });
         } else {
-          new Notification("🥗 Харчування", { body: "Час записати прийоми їжі." });
+          new Notification("🥗 Харчування", {
+            body: "Час записати прийоми їжі.",
+          });
         }
       } catch {
         /* ignore */
@@ -240,7 +253,9 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
     async (raw) => {
       setPantryScannerOpen(false);
       setPantryScanStatus("Шукаю продукт\u2026");
-      const code = String(raw || "").trim().replace(/\D/g, "");
+      const code = String(raw || "")
+        .trim()
+        .replace(/\D/g, "");
       if (!code) {
         setPantryScanStatus("Некоректний штрих-код.");
         return;
@@ -250,7 +265,9 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
         return;
       }
       try {
-        const res = await fetch(apiUrl(`/api/barcode?barcode=${encodeURIComponent(code)}`));
+        const res = await fetch(
+          apiUrl(`/api/barcode?barcode=${encodeURIComponent(code)}`),
+        );
         if (res.status === 404) {
           setPantryScanStatus("Продукт не знайдено в базі. Додай вручну.");
           return;
@@ -263,13 +280,17 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
         const data = await res.json();
         const p = data?.product;
         if (!p?.name) {
-          setPantryScanStatus("Продукт знайдено, але назва відсутня. Додай вручну.");
+          setPantryScanStatus(
+            "Продукт знайдено, але назва відсутня. Додай вручну.",
+          );
           return;
         }
         const label = [p.name, p.brand].filter(Boolean).join(" ").trim();
         pantry.upsertItem(label);
         if (p.partial) {
-          setPantryScanStatus(`Знайдено: ${label}. КБЖВ відсутнє в базі — за потреби додай вручну. \u2714`);
+          setPantryScanStatus(
+            `Знайдено: ${label}. КБЖВ відсутнє в базі — за потреби додай вручну. \u2714`,
+          );
         } else {
           setPantryScanStatus(`Додано: ${label} \u2714`);
         }
@@ -348,12 +369,16 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
     try {
       const summary = getDaySummary(log.nutritionLog, log.selectedDate);
       if (!summary.hasMeals) {
-        setDayHintText("День порожній. Додай прийом їжі — і я зможу дати підказку.");
+        setDayHintText(
+          "День порожній. Додай прийом їжі — і я зможу дати підказку.",
+        );
         return;
       }
       const meals = log.nutritionLog?.[log.selectedDate]?.meals || [];
       const macroSources = meals.reduce((acc, m) => {
-        const k = String(m?.macroSource || (m?.source === "photo" ? "photoAI" : "manual"));
+        const k = String(
+          m?.macroSource || (m?.source === "photo" ? "photoAI" : "manual"),
+        );
         acc[k] = (acc[k] || 0) + 1;
         return acc;
       }, {});
@@ -412,7 +437,7 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
               totalFat_g: (acc.totalFat_g ?? 0) + (m.fat_g ?? 0),
               totalCarbs_g: (acc.totalCarbs_g ?? 0) + (m.carbs_g ?? 0),
             }),
-            {}
+            {},
           );
           setDayPlan({ ...dayPlan, meals: merged, ...totals });
         } else {
@@ -424,7 +449,7 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
         setDayPlanBusy(false);
       }
     },
-    [pantry.effectiveItems, prefs, dayPlan]
+    [pantry.effectiveItems, prefs, dayPlan],
   );
 
   const addMealFromPlan = useCallback(
@@ -452,7 +477,7 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
         macroSource: "recipeAI",
       });
     },
-    [log]
+    [log],
   );
 
   const generateShoppingList = useCallback(
@@ -481,7 +506,7 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
         setShoppingBusy(false);
       }
     },
-    [pantry.effectiveItems, recipes, weekPlan, shopping]
+    [pantry.effectiveItems, recipes, weekPlan, shopping],
   );
 
   const addCheckedItemsToPantry = useCallback(() => {
@@ -699,7 +724,9 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
                       refinePhoto={photo.refinePhoto}
                       answers={photo.answers}
                       setAnswers={photo.setAnswers}
-                      onSaveToLog={photo.photoResult ? handleSaveToLog : undefined}
+                      onSaveToLog={
+                        photo.photoResult ? handleSaveToLog : undefined
+                      }
                     />
                   </div>
                 </details>
@@ -731,7 +758,9 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
                   }}
                 />
                 {pantryScanStatus && (
-                  <div className="text-xs text-subtle px-1">{pantryScanStatus}</div>
+                  <div className="text-xs text-subtle px-1">
+                    {pantryScanStatus}
+                  </div>
                 )}
               </>
             )}

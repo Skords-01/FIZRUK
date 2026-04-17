@@ -23,7 +23,10 @@ registerRoute(
   new CacheFirst({
     cacheName: "google-fonts-css",
     plugins: [
-      new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }),
+      new ExpirationPlugin({
+        maxEntries: 10,
+        maxAgeSeconds: 60 * 60 * 24 * 365,
+      }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),
     ],
   }),
@@ -34,7 +37,10 @@ registerRoute(
   new CacheFirst({
     cacheName: "google-fonts-woff",
     plugins: [
-      new ExpirationPlugin({ maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }),
+      new ExpirationPlugin({
+        maxEntries: 30,
+        maxAgeSeconds: 60 * 60 * 24 * 365,
+      }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),
     ],
   }),
@@ -82,7 +88,9 @@ let scheduledTimerId = null;
 
 function normalizeReminderTimesSW(h) {
   if (Array.isArray(h.reminderTimes) && h.reminderTimes.length > 0) {
-    return h.reminderTimes.filter((t) => typeof t === "string" && /^\d{2}:\d{2}$/.test(t));
+    return h.reminderTimes.filter(
+      (t) => typeof t === "string" && /^\d{2}:\d{2}$/.test(t),
+    );
   }
   const legacy = h.timeOfDay && String(h.timeOfDay).trim();
   if (legacy && /^\d{2}:\d{2}$/.test(legacy)) return [legacy];
@@ -112,14 +120,16 @@ function checkRoutineReminders() {
     notifiedKeys.add(storageKey);
 
     const title = `${h.emoji || "✓"} ${h.name}`;
-    self.registration.showNotification(title, {
-      body: "Нагадування про звичку",
-      tag: storageKey,
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
-      requireInteraction: false,
-      data: { action: "open", module: "routine" },
-    }).catch(() => {});
+    self.registration
+      .showNotification(title, {
+        body: "Нагадування про звичку",
+        tag: storageKey,
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
+        requireInteraction: false,
+        data: { action: "open", module: "routine" },
+      })
+      .catch(() => {});
   }
 }
 
@@ -132,8 +142,12 @@ function checkFizrukReminders() {
   const todayEntry = fizrukData.days?.[dk];
   if (!todayEntry?.templateId) return;
 
-  const rh = Number.isFinite(fizrukData.reminderHour) ? fizrukData.reminderHour : 18;
-  const rm = Number.isFinite(fizrukData.reminderMinute) ? fizrukData.reminderMinute : 0;
+  const rh = Number.isFinite(fizrukData.reminderHour)
+    ? fizrukData.reminderHour
+    : 18;
+  const rm = Number.isFinite(fizrukData.reminderMinute)
+    ? fizrukData.reminderMinute
+    : 0;
   const targetHm = `${String(rh).padStart(2, "0")}:${String(rm).padStart(2, "0")}`;
   if (hm !== targetHm) return;
 
@@ -141,14 +155,16 @@ function checkFizrukReminders() {
   if (notifiedKeys.has(storageKey)) return;
   notifiedKeys.add(storageKey);
 
-  self.registration.showNotification("🏋️ Фізрук — тренування", {
-    body: "Заплановане тренування на сьогодні. Відкрий застосунок, щоб стартувати.",
-    tag: storageKey,
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
-    requireInteraction: false,
-    data: { action: "open", module: "fizruk" },
-  }).catch(() => {});
+  self.registration
+    .showNotification("🏋️ Фізрук — тренування", {
+      body: "Заплановане тренування на сьогодні. Відкрий застосунок, щоб стартувати.",
+      tag: storageKey,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      requireInteraction: false,
+      data: { action: "open", module: "fizruk" },
+    })
+    .catch(() => {});
 }
 
 function checkNutritionReminders() {
@@ -157,7 +173,9 @@ function checkNutritionReminders() {
 
   const dk = todayKey();
   const hm = currentHm();
-  const rh = Number.isFinite(nutritionData.reminderHour) ? nutritionData.reminderHour : 12;
+  const rh = Number.isFinite(nutritionData.reminderHour)
+    ? nutritionData.reminderHour
+    : 12;
   const targetHm = `${String(rh).padStart(2, "0")}:00`;
   if (hm !== targetHm) return;
 
@@ -165,14 +183,16 @@ function checkNutritionReminders() {
   if (notifiedKeys.has(storageKey)) return;
   notifiedKeys.add(storageKey);
 
-  self.registration.showNotification("🥗 Харчування", {
-    body: "Час відмітити прийом їжі! Відкрий застосунок.",
-    tag: storageKey,
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
-    requireInteraction: false,
-    data: { action: "open", module: "nutrition" },
-  }).catch(() => {});
+  self.registration
+    .showNotification("🥗 Харчування", {
+      body: "Час відмітити прийом їжі! Відкрий застосунок.",
+      tag: storageKey,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      requireInteraction: false,
+      data: { action: "open", module: "nutrition" },
+    })
+    .catch(() => {});
 }
 
 function checkReminders() {
@@ -233,18 +253,20 @@ self.addEventListener("notificationclick", (event) => {
   const module = event.notification.data?.module;
   const url = module ? `/?module=${module}` : "/";
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes(self.registration.scope)) {
-          client.focus();
-          if (module) {
-            client.postMessage({ type: "OPEN_MODULE", module });
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.includes(self.registration.scope)) {
+            client.focus();
+            if (module) {
+              client.postMessage({ type: "OPEN_MODULE", module });
+            }
+            return;
           }
-          return;
         }
-      }
-      return self.clients.openWindow(url);
-    }),
+        return self.clients.openWindow(url);
+      }),
   );
 });
 

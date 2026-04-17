@@ -97,10 +97,14 @@ export async function ensureSeedFoods() {
 
     // Merge: додати тільки ті seeds, яких ще немає в базі
     const existing = await listFoods(5000);
-    const byNorm = new Map(existing.map((x) => [normText(x.norm || x.name), x]));
+    const byNorm = new Map(
+      existing.map((x) => [normText(x.norm || x.name), x]),
+    );
     for (const seed of SEED_FOODS_UK) {
       if (byNorm.has(normText(seed.name))) continue;
-      await upsertFood(makeFoodProduct({ name: seed.name, per100: seed.per100 }));
+      await upsertFood(
+        makeFoodProduct({ name: seed.name, per100: seed.per100 }),
+      );
     }
     return true;
   } catch {

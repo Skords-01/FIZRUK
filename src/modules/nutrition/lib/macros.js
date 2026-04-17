@@ -71,6 +71,9 @@ export function macrosToTotals(mac) {
 export function macrosHasAnyValue(mac) {
   const m = normalizeMacrosNullable(mac);
   return (
-    m.kcal != null || m.protein_g != null || m.fat_g != null || m.carbs_g != null
+    m.kcal != null ||
+    m.protein_g != null ||
+    m.fat_g != null ||
+    m.carbs_g != null
   );
 }

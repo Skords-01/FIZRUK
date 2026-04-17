@@ -1,22 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-async function startZxingScanner(videoEl, stream, onDetected, cancelRef, zxingStopRef) {
+async function startZxingScanner(
+  videoEl,
+  stream,
+  onDetected,
+  cancelRef,
+  zxingStopRef,
+) {
   const { BrowserMultiFormatReader } = await import("@zxing/browser");
   if (cancelRef.current) return;
 
   const reader = new BrowserMultiFormatReader();
 
-  const controls = await reader.decodeFromStream(
-    stream,
-    videoEl,
-    (result) => {
-      if (cancelRef.current) return;
-      if (result) {
-        const raw = result.getText();
-        if (raw) onDetected(raw);
-      }
-    },
-  );
+  const controls = await reader.decodeFromStream(stream, videoEl, (result) => {
+    if (cancelRef.current) return;
+    if (result) {
+      const raw = result.getText();
+      if (raw) onDetected(raw);
+    }
+  });
 
   zxingStopRef.current = () => {
     try {
@@ -150,8 +152,14 @@ export function BarcodeScanner({ onDetected, onClose }) {
               consecutiveErrors++;
               if (consecutiveErrors >= 5) {
                 if (!cancelRef.current) {
-                  startZxingScanner(videoRef.current, streamRef.current, handleDetected, cancelRef, zxingStopRef).catch(
-                    () => setStatus("Сканер не підтримується. Введи код вручну."),
+                  startZxingScanner(
+                    videoRef.current,
+                    streamRef.current,
+                    handleDetected,
+                    cancelRef,
+                    zxingStopRef,
+                  ).catch(() =>
+                    setStatus("Сканер не підтримується. Введи код вручну."),
                   );
                 }
                 return;
@@ -167,9 +175,17 @@ export function BarcodeScanner({ onDetected, onClose }) {
       }
 
       try {
-        await startZxingScanner(videoRef.current, streamRef.current, handleDetected, cancelRef, zxingStopRef);
+        await startZxingScanner(
+          videoRef.current,
+          streamRef.current,
+          handleDetected,
+          cancelRef,
+          zxingStopRef,
+        );
       } catch {
-        setStatus("Сканер не підтримується в цьому браузері. Введи код вручну.");
+        setStatus(
+          "Сканер не підтримується в цьому браузері. Введи код вручну.",
+        );
       }
     };
 

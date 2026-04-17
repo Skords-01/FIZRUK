@@ -73,7 +73,18 @@ export function Overview({
   onCategoryClick,
   showBalance = true,
 }) {
-  const { realTx, loadingTx, clientInfo, accounts, transactions, syncState, lastUpdated, error: monoError, refresh: monoRefresh, privatTotal = 0 } = mono;
+  const {
+    realTx,
+    loadingTx,
+    clientInfo,
+    accounts,
+    transactions,
+    syncState,
+    lastUpdated,
+    error: monoError,
+    refresh: monoRefresh,
+    privatTotal = 0,
+  } = mono;
   const {
     budgets,
     subscriptions,
@@ -375,7 +386,10 @@ export function Overview({
   return (
     <div className="flex-1 overflow-y-auto overscroll-contain">
       <div className="px-4 pt-4 page-tabbar-pad space-y-4 max-w-4xl mx-auto">
-        {(clientInfo || syncState?.status === "error" || syncState?.status === "loading" || monoError) && (
+        {(clientInfo ||
+          syncState?.status === "error" ||
+          syncState?.status === "loading" ||
+          monoError) && (
           <SyncStatusBadge
             syncState={syncState}
             lastUpdated={lastUpdated}

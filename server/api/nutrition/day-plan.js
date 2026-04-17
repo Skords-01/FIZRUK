@@ -1,3 +1,4 @@
+import { assertAiQuota } from "../../aiQuota.js";
 import { setCorsHeaders } from "../lib/cors.js";
 import { extractJsonFromText } from "../lib/jsonSafe.js";
 import {
@@ -68,18 +69,42 @@ function normalizeDayPlan(parsed) {
           ingredients: Array.isArray(m.ingredients)
             ? m.ingredients.map((x) => String(x).trim()).filter(Boolean)
             : [],
-          kcal: m.kcal != null && Number.isFinite(Number(m.kcal)) ? Number(m.kcal) : null,
-          protein_g: m.protein_g != null && Number.isFinite(Number(m.protein_g)) ? Number(m.protein_g) : null,
-          fat_g: m.fat_g != null && Number.isFinite(Number(m.fat_g)) ? Number(m.fat_g) : null,
-          carbs_g: m.carbs_g != null && Number.isFinite(Number(m.carbs_g)) ? Number(m.carbs_g) : null,
+          kcal:
+            m.kcal != null && Number.isFinite(Number(m.kcal))
+              ? Number(m.kcal)
+              : null,
+          protein_g:
+            m.protein_g != null && Number.isFinite(Number(m.protein_g))
+              ? Number(m.protein_g)
+              : null,
+          fat_g:
+            m.fat_g != null && Number.isFinite(Number(m.fat_g))
+              ? Number(m.fat_g)
+              : null,
+          carbs_g:
+            m.carbs_g != null && Number.isFinite(Number(m.carbs_g))
+              ? Number(m.carbs_g)
+              : null,
         };
       })
       .filter(Boolean)
       .slice(0, 6),
-    totalKcal: obj.totalKcal != null && Number.isFinite(Number(obj.totalKcal)) ? Number(obj.totalKcal) : null,
-    totalProtein_g: obj.totalProtein_g != null && Number.isFinite(Number(obj.totalProtein_g)) ? Number(obj.totalProtein_g) : null,
-    totalFat_g: obj.totalFat_g != null && Number.isFinite(Number(obj.totalFat_g)) ? Number(obj.totalFat_g) : null,
-    totalCarbs_g: obj.totalCarbs_g != null && Number.isFinite(Number(obj.totalCarbs_g)) ? Number(obj.totalCarbs_g) : null,
+    totalKcal:
+      obj.totalKcal != null && Number.isFinite(Number(obj.totalKcal))
+        ? Number(obj.totalKcal)
+        : null,
+    totalProtein_g:
+      obj.totalProtein_g != null && Number.isFinite(Number(obj.totalProtein_g))
+        ? Number(obj.totalProtein_g)
+        : null,
+    totalFat_g:
+      obj.totalFat_g != null && Number.isFinite(Number(obj.totalFat_g))
+        ? Number(obj.totalFat_g)
+        : null,
+    totalCarbs_g:
+      obj.totalCarbs_g != null && Number.isFinite(Number(obj.totalCarbs_g))
+        ? Number(obj.totalCarbs_g)
+        : null,
     note: String(obj.note || "").trim(),
   };
 }
@@ -95,6 +120,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
 
   if (!requireNutritionTokenIfConfigured(req, res)) return;
+  if (!(await assertAiQuota(req, res))) return;
   const rl = checkRateLimit(req, {
     key: "nutrition:day-plan",
     limit: 15,

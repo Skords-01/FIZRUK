@@ -3,14 +3,27 @@ import { stopSpeaking, unlockTTS } from "../lib/hubChatSpeech.js";
 import { useSpeech } from "../hooks/useSpeech.js";
 import { useRef, useCallback, useEffect } from "react";
 
-export function ChatInput({ input, setInput, loading, online, speaking, setSpeaking, onSend, sendRef }) {
+export function ChatInput({
+  input,
+  setInput,
+  loading,
+  online,
+  speaking,
+  setSpeaking,
+  onSend,
+  sendRef,
+}) {
   const inputRef = useRef(null);
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
-  const { listening, toggle: rawToggleMic, supported: speechSupported } = useSpeech((text) => {
+  const {
+    listening,
+    toggle: rawToggleMic,
+    supported: speechSupported,
+  } = useSpeech((text) => {
     if (text.trim()) {
       sendRef.current?.(text.trim(), true);
     }
@@ -26,10 +39,16 @@ export function ChatInput({ input, setInput, loading, online, speaking, setSpeak
       <input
         ref={inputRef}
         className="flex-1 bg-panel border border-line rounded-2xl px-4 py-3 text-sm text-text outline-none focus:border-primary/60 placeholder:text-subtle transition-colors disabled:opacity-50"
-        placeholder={online ? "Запитай або попроси змінити щось…" : "Немає зʼєднання — асистент офлайн"}
+        placeholder={
+          online
+            ? "Запитай або попроси змінити щось…"
+            : "Немає зʼєднання — асистент офлайн"
+        }
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && online && onSend()}
+        onKeyDown={(e) =>
+          e.key === "Enter" && !e.shiftKey && online && onSend()
+        }
         disabled={!online}
         aria-label="Повідомлення асистенту"
       />
@@ -44,7 +63,13 @@ export function ChatInput({ input, setInput, loading, online, speaking, setSpeak
           title="Зупинити озвучення"
           aria-label="Зупинити озвучення"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            stroke="none"
+          >
             <rect x="6" y="6" width="12" height="12" rx="2" />
           </svg>
         </button>

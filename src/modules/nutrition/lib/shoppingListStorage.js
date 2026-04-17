@@ -61,7 +61,7 @@ export function toggleShoppingItem(list, categoryName, itemId) {
     return {
       ...cat,
       items: cat.items.map((item) =>
-        item.id === itemId ? { ...item, checked: !item.checked } : item
+        item.id === itemId ? { ...item, checked: !item.checked } : item,
       ),
     };
   });

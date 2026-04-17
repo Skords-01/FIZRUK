@@ -110,8 +110,16 @@ function HubChat({ onClose, initialMessage }) {
 
   const scheduleContextBuild = useCallback((reason = "auto", force = false) => {
     const now = Date.now();
-    if (!force && contextRef.current.text && now - contextRef.current.ts < CONTEXT_TTL_MS) {
-      setContextState((s) => (s.status === "ready" ? s : { status: "ready", ts: contextRef.current.ts }));
+    if (
+      !force &&
+      contextRef.current.text &&
+      now - contextRef.current.ts < CONTEXT_TTL_MS
+    ) {
+      setContextState((s) =>
+        s.status === "ready"
+          ? s
+          : { status: "ready", ts: contextRef.current.ts },
+      );
       return;
     }
     if (idleJobRef.current) cancelIdle(idleJobRef.current);
@@ -131,7 +139,9 @@ function HubChat({ onClose, initialMessage }) {
     window.addEventListener("storage", refresh);
     window.addEventListener(HUB_FINYK_CACHE_EVENT, refresh);
     window.addEventListener("focus", refresh);
-    const onVis = () => { if (document.visibilityState === "visible") refresh(); };
+    const onVis = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
     document.addEventListener("visibilitychange", onVis);
     return () => {
       window.removeEventListener("storage", refresh);
@@ -143,7 +153,9 @@ function HubChat({ onClose, initialMessage }) {
 
   useEffect(() => {
     scheduleContextBuild("mount", true);
-    return () => { if (idleJobRef.current) cancelIdle(idleJobRef.current); };
+    return () => {
+      if (idleJobRef.current) cancelIdle(idleJobRef.current);
+    };
   }, [scheduleContextBuild]);
 
   useEffect(() => {
@@ -152,10 +164,14 @@ function HubChat({ onClose, initialMessage }) {
     return () => window.removeEventListener(HUB_FINYK_CACHE_EVENT, onUpdate);
   }, [scheduleContextBuild]);
 
-  const quickPrompts = useMemo(() => (hasData ? QUICK_WITH_MONO : QUICK_NO_MONO), [hasData]);
+  const quickPrompts = useMemo(
+    () => (hasData ? QUICK_WITH_MONO : QUICK_NO_MONO),
+    [hasData],
+  );
 
   useEffect(() => {
-    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    if (chatRef.current)
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [messages, loading]);
 
   // Focus trap
@@ -170,14 +186,21 @@ function HubChat({ onClose, initialMessage }) {
       ).filter((el) => !el.hasAttribute("disabled"));
 
     const onKeyDown = (e) => {
-      if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
       if (e.key !== "Tab") return;
       const nodes = getFocusable();
       if (nodes.length === 0) return;
       const first = nodes[0];
       const last = nodes[nodes.length - 1];
       if (e.shiftKey) {
-        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
       } else if (document.activeElement === last) {
         e.preventDefault();
         first.focus();
@@ -210,13 +233,16 @@ function HubChat({ onClose, initialMessage }) {
       setMessages((m) => [
         ...m,
         makeUserMsg(msg),
-        makeAssistantMsg("⚠️ Немає підключення. Асистент працює лише онлайн — спробуй ще раз, коли з'явиться інтернет."),
+        makeAssistantMsg(
+          "⚠️ Немає підключення. Асистент працює лише онлайн — спробуй ще раз, коли з'явиться інтернет.",
+        ),
       ]);
       setInput("");
       return;
     }
 
-    const shouldSpeak = fromVoice || lastWasVoice.current || VOICE_KEYWORDS.test(msg);
+    const shouldSpeak =
+      fromVoice || lastWasVoice.current || VOICE_KEYWORDS.test(msg);
     lastWasVoice.current = false;
 
     const userMsg = makeUserMsg(msg);
@@ -239,6 +265,7 @@ function HubChat({ onClose, initialMessage }) {
 
       const res = await fetch(apiUrl("/api/chat"), {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ context, messages: history }),
       });
@@ -247,7 +274,9 @@ function HubChat({ onClose, initialMessage }) {
       try {
         data = raw ? JSON.parse(raw) : {};
       } catch {
-        throw new Error(res.ok ? "Некоректна відповідь сервера" : `Помилка ${res.status}`);
+        throw new Error(
+          res.ok ? "Некоректна відповідь сервера" : `Помилка ${res.status}`,
+        );
       }
       if (!res.ok) throw new Error(friendlyApiError(res.status, data?.error));
 
@@ -257,15 +286,21 @@ function HubChat({ onClose, initialMessage }) {
           content: executeAction(tc),
         }));
 
-        const actionsText = toolResults.map((r) => `✅ ${r.content}`).join("\n");
+        const actionsText = toolResults
+          .map((r) => `✅ ${r.content}`)
+          .join("\n");
         const prefix = `${actionsText}\n\n`;
         const assistantId = newMsgId();
-        setMessages((m) => [...m, { id: assistantId, role: "assistant", text: prefix }]);
+        setMessages((m) => [
+          ...m,
+          { id: assistantId, role: "assistant", text: prefix },
+        ]);
 
         let followUpText = "";
         try {
           const res2 = await fetch(apiUrl("/api/chat"), {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               context: contextRef.current.text || context,
@@ -282,24 +317,37 @@ function HubChat({ onClose, initialMessage }) {
             await consumeHubChatSse(res2, (delta) => {
               acc += delta;
               setMessages((m) =>
-                m.map((x) => (x.id === assistantId ? { ...x, text: prefix + acc } : x)),
+                m.map((x) =>
+                  x.id === assistantId ? { ...x, text: prefix + acc } : x,
+                ),
               );
             });
             followUpText = acc;
           } else {
             const raw2 = await res2.text();
             let data2 = {};
-            try { data2 = raw2 ? JSON.parse(raw2) : {}; } catch { data2 = { error: raw2 }; }
-            if (!res2.ok) throw new Error(friendlyApiError(res2.status, data2?.error));
+            try {
+              data2 = raw2 ? JSON.parse(raw2) : {};
+            } catch {
+              data2 = { error: raw2 };
+            }
+            if (!res2.ok)
+              throw new Error(friendlyApiError(res2.status, data2?.error));
             followUpText = data2.text || "";
             setMessages((m) =>
-              m.map((x) => (x.id === assistantId ? { ...x, text: prefix + followUpText } : x)),
+              m.map((x) =>
+                x.id === assistantId
+                  ? { ...x, text: prefix + followUpText }
+                  : x,
+              ),
             );
           }
         } catch (e2) {
           setMessages((m) =>
             m.map((x) =>
-              x.id === assistantId ? { ...x, text: `${prefix}\n\n${friendlyChatError(e2)}` } : x,
+              x.id === assistantId
+                ? { ...x, text: `${prefix}\n\n${friendlyChatError(e2)}` }
+                : x,
             ),
           );
         }
@@ -328,7 +376,9 @@ function HubChat({ onClose, initialMessage }) {
     stopSpeaking();
     setSpeaking(false);
     setMessages([makeAssistantMsg("Чат очищено.")]);
-    try { localStorage.removeItem("hub_chat_history"); } catch {}
+    try {
+      localStorage.removeItem("hub_chat_history");
+    } catch {}
   };
 
   const sessionInfo = useMemo(() => {
@@ -336,7 +386,10 @@ function HubChat({ onClose, initialMessage }) {
     const history = uiMsgs
       .filter((x) => x?.role === "user" || x?.role === "assistant")
       .slice(-10);
-    const chars = history.reduce((acc, x) => acc + String(x?.text || "").length, 0);
+    const chars = history.reduce(
+      (acc, x) => acc + String(x?.text || "").length,
+      0,
+    );
     return { historyCount: history.length, chars };
   }, [messages]);
 
@@ -364,13 +417,25 @@ function HubChat({ onClose, initialMessage }) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 pb-3 shrink-0 border-b border-line/60">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="text-2xl leading-none shrink-0" aria-hidden>🤖</span>
+            <span className="text-2xl leading-none shrink-0" aria-hidden>
+              🤖
+            </span>
             <div className="min-w-0">
-              <div id="hub-chat-title" className="text-sm font-semibold text-text">
+              <div
+                id="hub-chat-title"
+                className="text-sm font-semibold text-text"
+              >
                 Асистент
               </div>
-              <div className={cn("text-[10px]", hasData ? "text-subtle" : "text-warning")}>
-                {hasData ? "Фінік · Фізрук · Рутина · Харчування" : "Mono не підключено"}
+              <div
+                className={cn(
+                  "text-[10px]",
+                  hasData ? "text-subtle" : "text-warning",
+                )}
+              >
+                {hasData
+                  ? "Фінік · Фізрук · Рутина · Харчування"
+                  : "Mono не підключено"}
               </div>
               <div className="text-[10px] text-subtle mt-0.5">
                 {contextState.status === "building"
@@ -380,14 +445,16 @@ function HubChat({ onClose, initialMessage }) {
                     : ""}
               </div>
               <div className="text-[10px] text-subtle mt-0.5">
-                Сесія: {sessionInfo.historyCount}/10 · ~{Math.round(sessionInfo.chars / 100) / 10}k символів
+                Сесія: {sessionInfo.historyCount}/10 · ~
+                {Math.round(sessionInfo.chars / 100) / 10}k символів
               </div>
               <p
                 id="hub-chat-privacy"
                 className="text-[10px] text-subtle mt-1 leading-snug max-w-[min(100%,280px)]"
               >
-                Запит і короткий контекст (фінанси, тренування, звички, харчування) відправляються на
-                сервер до AI. Не діліться чужим пристроєм без потреби.
+                Запит і короткий контекст (фінанси, тренування, звички,
+                харчування) відправляються на сервер до AI. Не діліться чужим
+                пристроєм без потреби.
               </p>
             </div>
           </div>
@@ -408,7 +475,16 @@ function HubChat({ onClose, initialMessage }) {
               title="Очистити чат"
               aria-label="Очистити історію чату"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
                 <path d="M10 11v6M14 11v6" />
@@ -420,7 +496,15 @@ function HubChat({ onClose, initialMessage }) {
               className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
               aria-label="Закрити асистента"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -469,7 +553,8 @@ function HubChat({ onClose, initialMessage }) {
             role="status"
             className="mx-4 mb-2 mt-1 px-3 py-2 bg-warning/10 border border-warning/30 rounded-xl text-[11px] text-warning text-center shrink-0"
           >
-            Асистент недоступний без інтернету. Дані модулів видно офлайн, але AI-відповіді потребують підключення.
+            Асистент недоступний без інтернету. Дані модулів видно офлайн, але
+            AI-відповіді потребують підключення.
           </div>
         )}
 

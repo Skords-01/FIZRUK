@@ -47,17 +47,17 @@ const MEAL_TYPE_ICONS = {
 
 function MacroRatioBar({ prefs }) {
   const prot = prefs.dailyTargetProtein_g ?? 0;
-  const fat  = prefs.dailyTargetFat_g     ?? 0;
-  const carb = prefs.dailyTargetCarbs_g   ?? 0;
+  const fat = prefs.dailyTargetFat_g ?? 0;
+  const carb = prefs.dailyTargetCarbs_g ?? 0;
   if (!(prot > 0) && !(fat > 0) && !(carb > 0)) return null;
 
   const protKcal = prot * 4;
-  const fatKcal  = fat  * 9;
+  const fatKcal = fat * 9;
   const carbKcal = carb * 4;
-  const total    = protKcal + fatKcal + carbKcal || 1;
+  const total = protKcal + fatKcal + carbKcal || 1;
 
   const pctP = Math.round((protKcal / total) * 100);
-  const pctF = Math.round((fatKcal  / total) * 100);
+  const pctF = Math.round((fatKcal / total) * 100);
   const pctC = 100 - pctP - pctF;
 
   return (
@@ -67,30 +67,42 @@ function MacroRatioBar({ prefs }) {
       </div>
       <div className="flex rounded-lg overflow-hidden h-5">
         {pctP > 0 && (
-          <div className="bg-blue-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${pctP}%` }}>
+          <div
+            className="bg-blue-500 flex items-center justify-center text-[9px] font-bold text-white"
+            style={{ width: `${pctP}%` }}
+          >
             {pctP}%
           </div>
         )}
         {pctF > 0 && (
-          <div className="bg-yellow-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${pctF}%` }}>
+          <div
+            className="bg-yellow-500 flex items-center justify-center text-[9px] font-bold text-white"
+            style={{ width: `${pctF}%` }}
+          >
             {pctF}%
           </div>
         )}
         {pctC > 0 && (
-          <div className="bg-green-500 flex items-center justify-center text-[9px] font-bold text-white" style={{ width: `${pctC}%` }}>
+          <div
+            className="bg-green-500 flex items-center justify-center text-[9px] font-bold text-white"
+            style={{ width: `${pctC}%` }}
+          >
             {pctC}%
           </div>
         )}
       </div>
       <div className="flex gap-3 flex-wrap">
         <span className="flex items-center gap-1 text-[10px] text-subtle">
-          <span className="w-2 h-2 rounded-sm bg-blue-500" /> Б {pctP}% · {prot}г · {Math.round(protKcal)} ккал
+          <span className="w-2 h-2 rounded-sm bg-blue-500" /> Б {pctP}% · {prot}
+          г · {Math.round(protKcal)} ккал
         </span>
         <span className="flex items-center gap-1 text-[10px] text-subtle">
-          <span className="w-2 h-2 rounded-sm bg-yellow-500" /> Ж {pctF}% · {fat}г · {Math.round(fatKcal)} ккал
+          <span className="w-2 h-2 rounded-sm bg-yellow-500" /> Ж {pctF}% ·{" "}
+          {fat}г · {Math.round(fatKcal)} ккал
         </span>
         <span className="flex items-center gap-1 text-[10px] text-subtle">
-          <span className="w-2 h-2 rounded-sm bg-green-500" /> В {pctC}% · {carb}г · {Math.round(carbKcal)} ккал
+          <span className="w-2 h-2 rounded-sm bg-green-500" /> В {pctC}% ·{" "}
+          {carb}г · {Math.round(carbKcal)} ккал
         </span>
       </div>
     </div>
@@ -103,7 +115,7 @@ function MacroBadge({ label, value, unit = "г", color }) {
     <span
       className={cn(
         "inline-flex items-center gap-1 text-[11px] rounded-lg px-2 py-0.5",
-        color || "bg-bg border border-line text-subtle"
+        color || "bg-bg border border-line text-subtle",
       )}
     >
       <span className="font-semibold text-text">{Math.round(value)}</span>
@@ -209,7 +221,7 @@ export function DailyPlanCard({
       p.kcal === prefs.dailyTargetKcal &&
       p.protein_g === prefs.dailyTargetProtein_g &&
       p.fat_g === prefs.dailyTargetFat_g &&
-      p.carbs_g === prefs.dailyTargetCarbs_g
+      p.carbs_g === prefs.dailyTargetCarbs_g,
   );
 
   const applyPreset = (preset) => {
@@ -227,7 +239,7 @@ export function DailyPlanCard({
   const sortedMeals = dayPlan?.meals
     ? [...dayPlan.meals].sort(
         (a, b) =>
-          MEAL_TYPE_ORDER.indexOf(a.type) - MEAL_TYPE_ORDER.indexOf(b.type)
+          MEAL_TYPE_ORDER.indexOf(a.type) - MEAL_TYPE_ORDER.indexOf(b.type),
       )
     : [];
 
@@ -255,7 +267,7 @@ export function DailyPlanCard({
                   "flex-1 min-w-[90px] py-2 px-3 rounded-xl text-xs font-semibold border transition-all",
                   activePreset?.id === preset.id
                     ? "bg-nutrition text-white border-nutrition"
-                    : "border-line text-text hover:border-nutrition/50 hover:bg-nutrition/5"
+                    : "border-line text-text hover:border-nutrition/50 hover:bg-nutrition/5",
                 )}
               >
                 <div>{preset.label}</div>
@@ -272,7 +284,7 @@ export function DailyPlanCard({
                 "flex-1 min-w-[90px] py-2 px-3 rounded-xl text-xs font-semibold border transition-all",
                 showManual && !activePreset
                   ? "bg-panel border-nutrition text-text"
-                  : "border-line text-subtle hover:border-nutrition/50 hover:text-text"
+                  : "border-line text-subtle hover:border-nutrition/50 hover:text-text",
               )}
             >
               Свої цілі
@@ -282,14 +294,40 @@ export function DailyPlanCard({
           {showManual && (
             <div className="mt-3 grid grid-cols-2 gap-2">
               {[
-                { key: "dailyTargetKcal",      label: "Ккал/день",    unit: "",  color: null },
-                { key: "dailyTargetProtein_g", label: "Білки",        unit: "г", color: "text-blue-400" },
-                { key: "dailyTargetFat_g",     label: "Жири",         unit: "г", color: "text-yellow-400" },
-                { key: "dailyTargetCarbs_g",   label: "Вуглеводи",    unit: "г", color: "text-green-400" },
+                {
+                  key: "dailyTargetKcal",
+                  label: "Ккал/день",
+                  unit: "",
+                  color: null,
+                },
+                {
+                  key: "dailyTargetProtein_g",
+                  label: "Білки",
+                  unit: "г",
+                  color: "text-blue-400",
+                },
+                {
+                  key: "dailyTargetFat_g",
+                  label: "Жири",
+                  unit: "г",
+                  color: "text-yellow-400",
+                },
+                {
+                  key: "dailyTargetCarbs_g",
+                  label: "Вуглеводи",
+                  unit: "г",
+                  color: "text-green-400",
+                },
               ].map(({ key, label, unit, color }) => (
                 <div key={key}>
-                  <div className={cn("text-[11px] mb-1 font-semibold", color ?? "text-subtle")}>
-                    {label}{unit && ` (${unit})`}
+                  <div
+                    className={cn(
+                      "text-[11px] mb-1 font-semibold",
+                      color ?? "text-subtle",
+                    )}
+                  >
+                    {label}
+                    {unit && ` (${unit})`}
                   </div>
                   <Input
                     type="number"
@@ -297,14 +335,30 @@ export function DailyPlanCard({
                     value={prefs[key] != null ? String(prefs[key]) : ""}
                     onChange={(e) => {
                       const raw = e.target.value;
-                      const v = raw === "" ? null : Number(raw) > 0 ? Number(raw) : null;
+                      const v =
+                        raw === ""
+                          ? null
+                          : Number(raw) > 0
+                            ? Number(raw)
+                            : null;
                       setPrefs((p) => {
                         const next = { ...p, [key]: v };
                         if (key !== "dailyTargetKcal") {
-                          const prot = key === "dailyTargetProtein_g" ? v : (p.dailyTargetProtein_g ?? 0);
-                          const fat  = key === "dailyTargetFat_g"     ? v : (p.dailyTargetFat_g     ?? 0);
-                          const carb = key === "dailyTargetCarbs_g"   ? v : (p.dailyTargetCarbs_g   ?? 0);
-                          const calc = Math.round((prot || 0) * 4 + (fat || 0) * 9 + (carb || 0) * 4);
+                          const prot =
+                            key === "dailyTargetProtein_g"
+                              ? v
+                              : (p.dailyTargetProtein_g ?? 0);
+                          const fat =
+                            key === "dailyTargetFat_g"
+                              ? v
+                              : (p.dailyTargetFat_g ?? 0);
+                          const carb =
+                            key === "dailyTargetCarbs_g"
+                              ? v
+                              : (p.dailyTargetCarbs_g ?? 0);
+                          const calc = Math.round(
+                            (prot || 0) * 4 + (fat || 0) * 9 + (carb || 0) * 4,
+                          );
                           if (calc > 0) next.dailyTargetKcal = calc;
                         }
                         return next;
@@ -367,7 +421,7 @@ export function DailyPlanCard({
           disabled={busy || dayPlanBusy}
           className={cn(
             "w-full h-11 rounded-2xl text-sm font-semibold",
-            "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50 transition-colors"
+            "bg-nutrition text-white hover:bg-nutrition-hover disabled:opacity-50 transition-colors",
           )}
         >
           {dayPlanBusy ? "Генерую план…" : "Згенерувати денний план"}
@@ -382,7 +436,9 @@ export function DailyPlanCard({
         {sortedMeals.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <div className="text-sm font-semibold text-text">Ваш план на сьогодні</div>
+              <div className="text-sm font-semibold text-text">
+                Ваш план на сьогодні
+              </div>
               {dayPlan?.totalKcal != null && (
                 <span className="text-xs text-subtle">
                   ~{Math.round(dayPlan.totalKcal)} ккал разом
@@ -395,8 +451,8 @@ export function DailyPlanCard({
                 <div className="flex justify-between text-[11px] text-subtle mb-1">
                   <span>Прогрес до цілі</span>
                   <span>
-                    {Math.round(dayPlan.totalKcal)} /{" "}
-                    {prefs.dailyTargetKcal} ккал
+                    {Math.round(dayPlan.totalKcal)} / {prefs.dailyTargetKcal}{" "}
+                    ккал
                   </span>
                 </div>
                 <div className="h-1.5 rounded-full bg-line overflow-hidden">
@@ -405,14 +461,14 @@ export function DailyPlanCard({
                       "h-full rounded-full transition-all",
                       dayPlan.totalKcal > prefs.dailyTargetKcal * 1.1
                         ? "bg-danger"
-                        : "bg-nutrition"
+                        : "bg-nutrition",
                     )}
                     style={{
                       width: `${Math.min(
                         100,
                         Math.round(
-                          (dayPlan.totalKcal / prefs.dailyTargetKcal) * 100
-                        )
+                          (dayPlan.totalKcal / prefs.dailyTargetKcal) * 100,
+                        ),
                       )}%`,
                     }}
                   />

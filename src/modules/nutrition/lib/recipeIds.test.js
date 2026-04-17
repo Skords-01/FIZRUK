@@ -19,4 +19,3 @@ describe("stableRecipeId", () => {
     expect(stableRecipeId(a)).not.toBe(stableRecipeId(b));
   });
 });
-

@@ -50,7 +50,9 @@ function uid(prefix = "id") {
 
 const DEFAULT_WARMUP_ITEMS = [
   { label: "Загальна розминка (5-10 хв легкого кардіо)" },
-  { label: "Суглобова розминка (шия, плечі, лікті, зап'ястки, стегна, коліна)" },
+  {
+    label: "Суглобова розминка (шия, плечі, лікті, зап'ястки, стегна, коліна)",
+  },
   { label: "Специфічна розминка до тренування (легкі підходи)" },
 ];
 
@@ -65,7 +67,11 @@ const DEFAULT_COOLDOWN_ITEMS = [
  * @returns {ChecklistItem[]}
  */
 export function makeDefaultWarmup() {
-  return DEFAULT_WARMUP_ITEMS.map((x) => ({ id: uid("wm"), ...x, done: false }));
+  return DEFAULT_WARMUP_ITEMS.map((x) => ({
+    id: uid("wm"),
+    ...x,
+    done: false,
+  }));
 }
 
 /**
@@ -73,7 +79,11 @@ export function makeDefaultWarmup() {
  * @returns {ChecklistItem[]}
  */
 export function makeDefaultCooldown() {
-  return DEFAULT_COOLDOWN_ITEMS.map((x) => ({ id: uid("cd"), ...x, done: false }));
+  return DEFAULT_COOLDOWN_ITEMS.map((x) => ({
+    id: uid("cd"),
+    ...x,
+    done: false,
+  }));
 }
 
 /**
@@ -275,7 +285,10 @@ export function useWorkouts() {
         prev.map((w) => {
           if (w.id !== workoutId) return w;
           const newGroups = (w.groups || [])
-            .map((g) => ({ ...g, itemIds: (g.itemIds || []).filter((id) => id !== itemId) }))
+            .map((g) => ({
+              ...g,
+              itemIds: (g.itemIds || []).filter((id) => id !== itemId),
+            }))
             .filter((g) => (g.itemIds || []).length >= 2);
           return {
             ...w,

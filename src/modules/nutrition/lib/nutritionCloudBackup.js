@@ -65,4 +65,3 @@ export async function decryptBlobToJson(blob, passphrase) {
   const dec = new TextDecoder();
   return JSON.parse(dec.decode(pt));
 }
-

@@ -20,7 +20,9 @@ export function useVoiceInput({ lang = "uk-UA", onResult, onError } = {}) {
       return;
     }
     if (recRef.current) {
-      try { recRef.current.abort(); } catch {}
+      try {
+        recRef.current.abort();
+      } catch {}
       recRef.current = null;
     }
     const rec = new SpeechRecognition();
@@ -61,7 +63,9 @@ export function useVoiceInput({ lang = "uk-UA", onResult, onError } = {}) {
 
   const stop = useCallback(() => {
     if (recRef.current) {
-      try { recRef.current.stop(); } catch {}
+      try {
+        recRef.current.stop();
+      } catch {}
     }
   }, []);
 
@@ -73,7 +77,9 @@ export function useVoiceInput({ lang = "uk-UA", onResult, onError } = {}) {
   useEffect(() => {
     return () => {
       if (recRef.current) {
-        try { recRef.current.abort(); } catch {}
+        try {
+          recRef.current.abort();
+        } catch {}
       }
     };
   }, []);
@@ -110,8 +116,8 @@ export function VoiceMicButton({
       type="button"
       onClick={toggle}
       disabled={disabled}
-      aria-label={listening ? "Зупинити запис" : (label || "Голосовий ввід")}
-      title={listening ? "Зупинити запис" : (label || "Голосовий ввід")}
+      aria-label={listening ? "Зупинити запис" : label || "Голосовий ввід"}
+      title={listening ? "Зупинити запис" : label || "Голосовий ввід"}
       className={cn(
         "relative flex items-center justify-center rounded-2xl shrink-0 transition-all",
         sizeMap[size] || sizeMap.md,
@@ -119,7 +125,7 @@ export function VoiceMicButton({
           ? "bg-error/15 text-error border border-error/30 animate-pulse"
           : "bg-panelHi text-muted hover:text-text hover:bg-line/40 border border-line/60",
         disabled && "opacity-40 pointer-events-none",
-        className
+        className,
       )}
     >
       {listening ? (

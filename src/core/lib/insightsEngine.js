@@ -318,7 +318,10 @@ function habitWeeksKcalInsight() {
     const habitTotal = habits.length * 7;
     for (const dk of dates) {
       for (const h of habits) {
-        if (Array.isArray(completions[h.id]) && completions[h.id].includes(dk)) {
+        if (
+          Array.isArray(completions[h.id]) &&
+          completions[h.id].includes(dk)
+        ) {
           habitDone++;
         }
       }
@@ -345,10 +348,12 @@ function habitWeeksKcalInsight() {
 
   if (highHabitWeeks.length < 2 || lowHabitWeeks.length < 2) return null;
 
-  const avgKcalHigh =
-    Math.round(highHabitWeeks.reduce((s, w) => s + w.avgKcal, 0) / highHabitWeeks.length);
-  const avgKcalLow =
-    Math.round(lowHabitWeeks.reduce((s, w) => s + w.avgKcal, 0) / lowHabitWeeks.length);
+  const avgKcalHigh = Math.round(
+    highHabitWeeks.reduce((s, w) => s + w.avgKcal, 0) / highHabitWeeks.length,
+  );
+  const avgKcalLow = Math.round(
+    lowHabitWeeks.reduce((s, w) => s + w.avgKcal, 0) / lowHabitWeeks.length,
+  );
 
   const diff = avgKcalHigh - avgKcalLow;
   if (Math.abs(diff) < 50) return null;

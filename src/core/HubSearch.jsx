@@ -83,22 +83,32 @@ function searchFizruk(query) {
   const q = query.toLowerCase();
   const results = [];
 
-  const workouts = parseFizrukWorkouts(localStorage.getItem("fizruk_workouts_v1"));
+  const workouts = parseFizrukWorkouts(
+    localStorage.getItem("fizruk_workouts_v1"),
+  );
   if (workouts.length > 0) {
     for (const w of workouts) {
       const note = (w.note || "").toLowerCase();
-      const exercises = (w.items || []).map((i) => (i.exerciseName || i.name || "").toLowerCase());
+      const exercises = (w.items || []).map((i) =>
+        (i.exerciseName || i.name || "").toLowerCase(),
+      );
       const matchNote = note.includes(q);
       const matchExercise = exercises.some((e) => e.includes(q));
       if (matchNote || matchExercise) {
-        const dateLabel = w.startedAt ? localDateKey(new Date(w.startedAt)) : "";
-        const exNames = (w.items || []).slice(0, 2).map((i) => i.exerciseName || i.name || "").filter(Boolean);
+        const dateLabel = w.startedAt
+          ? localDateKey(new Date(w.startedAt))
+          : "";
+        const exNames = (w.items || [])
+          .slice(0, 2)
+          .map((i) => i.exerciseName || i.name || "")
+          .filter(Boolean);
         results.push({
           id: `fizruk_w_${w.id}`,
           module: "fizruk",
           moduleLabel: "Фізрук",
-          title: w.note || (exNames.join(", ") || "Тренування"),
-          subtitle: dateLabel + (w.items?.length ? ` · ${w.items.length} вправ` : ""),
+          title: w.note || exNames.join(", ") || "Тренування",
+          subtitle:
+            dateLabel + (w.items?.length ? ` · ${w.items.length} вправ` : ""),
           icon: "🏋️",
         });
       }
@@ -106,18 +116,25 @@ function searchFizruk(query) {
     }
   }
 
-  const exercises = parseFizrukCustomExercises(localStorage.getItem("fizruk_custom_exercises_v1"));
+  const exercises = parseFizrukCustomExercises(
+    localStorage.getItem("fizruk_custom_exercises_v1"),
+  );
   for (const e of exercises) {
     if (
       (e.name || "").toLowerCase().includes(q) ||
-      (Array.isArray(e.muscles) ? e.muscles : []).join(" ").toLowerCase().includes(q)
+      (Array.isArray(e.muscles) ? e.muscles : [])
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
     ) {
       results.push({
         id: `fizruk_ex_${e.id}`,
         module: "fizruk",
         moduleLabel: "Фізрук",
         title: e.name || "Вправа",
-        subtitle: (Array.isArray(e.muscles) ? e.muscles : []).join(", ") || "Власна вправа",
+        subtitle:
+          (Array.isArray(e.muscles) ? e.muscles : []).join(", ") ||
+          "Власна вправа",
         icon: "💪",
       });
       if (results.length >= 15) break;
@@ -146,7 +163,7 @@ function searchRoutine(query) {
         module: "routine",
         moduleLabel: "Рутина",
         title: `${h.emoji || ""} ${h.name || "Звичка"}`.trim(),
-        subtitle: h.archived ? "Архівовано" : (h.recurrence || "daily"),
+        subtitle: h.archived ? "Архівовано" : h.recurrence || "daily",
         icon: "✅",
       });
     }
@@ -248,9 +265,7 @@ export function HubSearch({ onClose, onOpenModule }) {
   }, {});
 
   return (
-    <div
-      className="fixed inset-0 z-[200] flex flex-col bg-bg safe-area-pt-pb page-enter"
-    >
+    <div className="fixed inset-0 z-[200] flex flex-col bg-bg safe-area-pt-pb page-enter">
       <div className="px-4 pt-4 pb-2 flex items-center gap-3 border-b border-line">
         <div className="flex-1 relative">
           <svg
@@ -318,14 +333,32 @@ export function HubSearch({ onClose, onOpenModule }) {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-panelHi active:bg-panelHi transition-colors text-left"
                 >
-                  <span className={cn("w-8 h-8 rounded-xl flex items-center justify-center text-sm shrink-0", MODULE_COLORS[moduleId])}>
+                  <span
+                    className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center text-sm shrink-0",
+                      MODULE_COLORS[moduleId],
+                    )}
+                  >
                     {item.icon}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-text truncate">{item.title}</p>
-                    <p className="text-xs text-muted truncate">{item.subtitle}</p>
+                    <p className="text-xs text-muted truncate">
+                      {item.subtitle}
+                    </p>
                   </div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted/40 shrink-0" aria-hidden>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-muted/40 shrink-0"
+                    aria-hidden
+                  >
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </button>

@@ -29,9 +29,7 @@ export function ExerciseDetailSheet({
     String(selected.id || "").startsWith("custom_");
 
   return (
-    <div
-      className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}
-    >
+    <div className={cn("fixed inset-0 flex items-end fizruk-sheet", SHEET_Z)}>
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"

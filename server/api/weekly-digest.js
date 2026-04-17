@@ -1,3 +1,4 @@
+import { assertAiQuota } from "../aiQuota.js";
 import { setCorsHeaders } from "./lib/cors.js";
 
 function extractJsonObject(raw) {
@@ -61,6 +62,8 @@ export default async function handler(req, res) {
   if (!apiKey)
     return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
 
+  if (!(await assertAiQuota(req, res))) return;
+
   try {
     const { weekRange, finyk, fizruk, nutrition, routine } = req.body || {};
 
@@ -72,7 +75,9 @@ export default async function handler(req, res) {
         : "Місячний бюджет: не встановлено";
       const topCats =
         Array.isArray(finyk.topCategories) && finyk.topCategories.length
-          ? finyk.topCategories.map((c) => `  - ${c.name}: ${c.amount} грн`).join("\n")
+          ? finyk.topCategories
+              .map((c) => `  - ${c.name}: ${c.amount} грн`)
+              .join("\n")
           : "  Немає даних";
       sections.push(`[ФІНАНСИ (${weekRange || "тиждень"})]
 Витрати: ${finyk.totalSpent ?? 0} грн | Надходження: ${finyk.totalIncome ?? 0} грн
@@ -85,7 +90,9 @@ ${topCats}
     if (fizruk) {
       const exercises =
         Array.isArray(fizruk.topExercises) && fizruk.topExercises.length
-          ? fizruk.topExercises.map((e) => `  - ${e.name}: ${e.totalVolume} кг`).join("\n")
+          ? fizruk.topExercises
+              .map((e) => `  - ${e.name}: ${e.totalVolume} кг`)
+              .join("\n")
           : "  Немає даних";
       sections.push(`[ТРЕНУВАННЯ (${weekRange || "тиждень"})]
 Тренувань завершено: ${fizruk.workoutsCount ?? 0}
@@ -113,7 +120,10 @@ ${exercises}`);
       const habitsInfo =
         Array.isArray(routine.habits) && routine.habits.length
           ? routine.habits
-              .map((h) => `  - ${h.name}: ${h.completionRate}% (${h.done}/${h.total} днів)`)
+              .map(
+                (h) =>
+                  `  - ${h.name}: ${h.completionRate}% (${h.done}/${h.total} днів)`,
+              )
               .join("\n")
           : "  Немає активних звичок";
       sections.push(`[ЗВИЧКИ (${weekRange || "тиждень"})]

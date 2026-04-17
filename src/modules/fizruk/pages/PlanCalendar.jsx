@@ -36,11 +36,7 @@ export function PlanCalendar() {
   const { musclesUk } = useExerciseCatalog();
   const { workouts } = useWorkouts();
   const rec = useRecovery();
-  const {
-    setDayTemplate,
-    getTemplateForDate,
-    days,
-  } = useMonthlyPlan();
+  const { setDayTemplate, getTemplateForDate, days } = useMonthlyPlan();
 
   const [sheet, setSheet] = useState(null);
   const sheetRef = useRef(null);
@@ -105,7 +101,12 @@ export function PlanCalendar() {
   const openDay = (day) => {
     if (!day) return;
     const key = dateKey(cursor.y, cursor.m, day);
-    setSheet({ key, day, templateId: getTemplateForDate(key), planned: plannedByDate[key] || [] });
+    setSheet({
+      key,
+      day,
+      templateId: getTemplateForDate(key),
+      planned: plannedByDate[key] || [],
+    });
   };
 
   const applySheet = (templateId) => {
@@ -185,7 +186,11 @@ export function PlanCalendar() {
                   )}
                   {planned.length > 0 && (
                     <span className="text-[8px] text-success font-bold leading-tight mt-0.5">
-                      🏋️ {planned.length > 1 ? `×${planned.length}` : planned[0].note || `${planned[0].items?.length ?? 0}впр`}
+                      🏋️{" "}
+                      {planned.length > 1
+                        ? `×${planned.length}`
+                        : planned[0].note ||
+                          `${planned[0].items?.length ?? 0}впр`}
                     </span>
                   )}
                 </button>
@@ -258,21 +263,34 @@ export function PlanCalendar() {
             </div>
             {sheet.planned?.length > 0 && (
               <div className="mb-4">
-                <p className="text-xs font-bold text-success mb-2">🏋️ Заплановані тренування</p>
+                <p className="text-xs font-bold text-success mb-2">
+                  🏋️ Заплановані тренування
+                </p>
                 <div className="space-y-2">
                   {sheet.planned.map((w) => {
                     const t = w.startedAt
-                      ? new Date(w.startedAt).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })
+                      ? new Date(w.startedAt).toLocaleTimeString("uk-UA", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                       : null;
                     return (
-                      <div key={w.id} className="rounded-xl border border-success/30 bg-success/8 px-3 py-2 text-sm">
+                      <div
+                        key={w.id}
+                        className="rounded-xl border border-success/30 bg-success/8 px-3 py-2 text-sm"
+                      >
                         <div className="font-semibold text-text">
-                          {t && <span className="text-success mr-1.5">{t}</span>}
+                          {t && (
+                            <span className="text-success mr-1.5">{t}</span>
+                          )}
                           {w.note || "Тренування"}
                         </div>
                         {w.items?.length > 0 && (
                           <div className="text-[11px] text-subtle mt-0.5">
-                            {w.items.map((it) => it.nameUk || it.name).filter(Boolean).join(" · ")}
+                            {w.items
+                              .map((it) => it.nameUk || it.name)
+                              .filter(Boolean)
+                              .join(" · ")}
                           </div>
                         )}
                       </div>

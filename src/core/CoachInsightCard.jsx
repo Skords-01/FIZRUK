@@ -9,7 +9,14 @@ function SpinnerIcon() {
       viewBox="0 0 24 24"
       aria-hidden
     >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
       <path
         className="opacity-75"
         fill="currentColor"
@@ -21,7 +28,17 @@ function SpinnerIcon() {
 
 function RefreshIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M21 2v6h-6" />
       <path d="M3 12a9 9 0 0115-6.7L21 8" />
       <path d="M3 22v-6h6" />
@@ -32,7 +49,17 @@ function RefreshIcon() {
 
 function ChatIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
     </svg>
   );
@@ -51,10 +78,12 @@ export function CoachInsightCard({ onOpenChat }) {
   };
 
   return (
-    <div className={cn(
-      "rounded-2xl border border-violet-200/60 bg-gradient-to-br from-violet-50/80 to-purple-50/60 p-4",
-      "dark:border-violet-800/40 dark:from-violet-950/40 dark:to-purple-950/30",
-    )}>
+    <div
+      className={cn(
+        "rounded-2xl border border-violet-200/60 bg-gradient-to-br from-violet-50/80 to-purple-50/60 p-4",
+        "dark:border-violet-800/40 dark:from-violet-950/40 dark:to-purple-950/30",
+      )}
+    >
       <div className="flex items-start gap-3">
         <div className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-base shadow-sm">
           🤖
@@ -81,13 +110,13 @@ export function CoachInsightCard({ onOpenChat }) {
           </div>
 
           {loading && !insight && (
-            <p className="text-sm text-muted animate-pulse">Коуч готує повідомлення…</p>
+            <p className="text-sm text-muted animate-pulse">
+              Коуч готує повідомлення…
+            </p>
           )}
 
           {error && !insight && (
-            <p className="text-sm text-rose-500 dark:text-rose-400">
-              {error}
-            </p>
+            <p className="text-sm text-rose-500 dark:text-rose-400">{error}</p>
           )}
 
           {insight && (
@@ -97,9 +126,7 @@ export function CoachInsightCard({ onOpenChat }) {
           )}
 
           {!loading && !error && !insight && (
-            <p className="text-sm text-muted">
-              Коуч аналізує твої дані…
-            </p>
+            <p className="text-sm text-muted">Коуч аналізує твої дані…</p>
           )}
 
           <div className="mt-3">

@@ -17,9 +17,6 @@ export const NUTRITION_ACTIVE_PANTRY_KEY = "nutrition_active_pantry_v1";
 export const NUTRITION_PREFS_KEY = "nutrition_prefs_v1";
 export const NUTRITION_LOG_KEY = "nutrition_log_v1";
 
-const LEGACY_ITEMS_KEY = "nutrition_pantry_items_v0";
-const LEGACY_TEXT_KEY = "nutrition_pantry_text_v0";
-
 export function toLocalISODate(d = new Date()) {
   const dt = d instanceof Date ? d : new Date(d);
   if (Number.isNaN(dt.getTime())) return "1970-01-01";
@@ -220,7 +217,9 @@ export function normalizeMeal(m, idx) {
         : "manual";
 
   const amount_g =
-    raw.amount_g != null && Number.isFinite(Number(raw.amount_g)) && Number(raw.amount_g) > 0
+    raw.amount_g != null &&
+    Number.isFinite(Number(raw.amount_g)) &&
+    Number(raw.amount_g) > 0
       ? Number(raw.amount_g)
       : null;
   const foodId =
@@ -228,7 +227,18 @@ export function normalizeMeal(m, idx) {
       ? String(raw.foodId).trim()
       : null;
 
-  return { id, name, time, mealType, label, macros, source, macroSource, amount_g, foodId };
+  return {
+    id,
+    name,
+    time,
+    mealType,
+    label,
+    macros,
+    source,
+    macroSource,
+    amount_g,
+    foodId,
+  };
 }
 
 export function normalizeNutritionLog(raw) {

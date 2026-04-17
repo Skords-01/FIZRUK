@@ -386,12 +386,24 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   );
 
   const completionRateVal = useMemo(
-    () => completionRateForRange(routine.habits, routine.completions, range.startKey, range.endKey),
+    () =>
+      completionRateForRange(
+        routine.habits,
+        routine.completions,
+        range.startKey,
+        range.endKey,
+      ),
     [routine.habits, routine.completions, range.startKey, range.endKey],
   );
 
   const dayProgress = useMemo(
-    () => completionRateForRange(routine.habits, routine.completions, todayKey, todayKey),
+    () =>
+      completionRateForRange(
+        routine.habits,
+        routine.completions,
+        todayKey,
+        todayKey,
+      ),
     [routine.habits, routine.completions, todayKey],
   );
 

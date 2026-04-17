@@ -9,7 +9,13 @@ function formatTs(ts) {
   return `${hh}:${mm}`;
 }
 
-export function SyncStatusBadge({ syncState, lastUpdated, error, onRetry, loading }) {
+export function SyncStatusBadge({
+  syncState,
+  lastUpdated,
+  error,
+  onRetry,
+  loading,
+}) {
   const status = syncState?.status || "idle";
   const isError = status === "error";
   const isPartial = status === "partial";
@@ -51,9 +57,7 @@ export function SyncStatusBadge({ syncState, lastUpdated, error, onRetry, loadin
     >
       <span className={cn("w-2 h-2 rounded-full shrink-0", dotClass)} />
       <span className="text-text font-medium">{label}</span>
-      {ts && (
-        <span className="text-subtle ml-auto tabular-nums">{ts}</span>
-      )}
+      {ts && <span className="text-subtle ml-auto tabular-nums">{ts}</span>}
       {(isError || isPartial) && typeof onRetry === "function" && (
         <button
           type="button"
@@ -65,7 +69,10 @@ export function SyncStatusBadge({ syncState, lastUpdated, error, onRetry, loadin
         </button>
       )}
       {error && !isLoading && (
-        <span className="text-danger/80 text-[10px] truncate max-w-[160px]" title={error}>
+        <span
+          className="text-danger/80 text-[10px] truncate max-w-[160px]"
+          title={error}
+        >
           {error}
         </span>
       )}

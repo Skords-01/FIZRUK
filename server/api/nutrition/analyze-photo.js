@@ -1,3 +1,4 @@
+import { assertAiQuota } from "../../aiQuota.js";
 import { setCorsHeaders } from "../lib/cors.js";
 import { extractJsonFromText } from "../lib/jsonSafe.js";
 import {
@@ -38,6 +39,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
 
   if (!requireNutritionTokenIfConfigured(req, res)) return;
+  if (!(await assertAiQuota(req, res))) return;
   const rl = checkRateLimit(req, {
     key: "nutrition:analyze-photo",
     limit: 20,

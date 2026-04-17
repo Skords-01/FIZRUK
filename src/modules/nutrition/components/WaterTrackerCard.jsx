@@ -21,7 +21,9 @@ export function WaterTrackerCard({ goalMl = 2000 }) {
         <div className="flex items-center gap-2">
           <span className="text-lg leading-none">💧</span>
           <div>
-            <div className="text-sm font-semibold text-text leading-none">Вода</div>
+            <div className="text-sm font-semibold text-text leading-none">
+              Вода
+            </div>
             <div className="text-[11px] text-subtle mt-0.5">
               {fmt(todayMl)}
               {goalMl > 0 && ` / ${fmt(goalMl)}`}

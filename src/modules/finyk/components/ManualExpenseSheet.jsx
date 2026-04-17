@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { VoiceMicButton } from "@shared/components/ui/VoiceMicButton.jsx";
 import { parseExpenseSpeech } from "../../../core/lib/speechParsers.js";
@@ -20,6 +20,11 @@ const formInp =
   "w-full h-11 rounded-2xl border border-line bg-panelHi px-4 text-text outline-none focus:border-muted transition-colors";
 
 export function ManualExpenseSheet({ open, onClose, onSave, initialExpense }) {
+  const formId = useId();
+  const descId = `${formId}-desc`;
+  const amountId = `${formId}-amount`;
+  const dateId = `${formId}-date`;
+  const catLabelId = `${formId}-cat-label`;
   const kbInsetPx = useVisualKeyboardInset(open);
   const isEditing = !!initialExpense?.id;
   const [form, setForm] = useState({
@@ -33,10 +38,13 @@ export function ManualExpenseSheet({ open, onClose, onSave, initialExpense }) {
   useEffect(() => {
     if (open) {
       if (initialExpense?.id) {
-        const d = initialExpense.date ? new Date(initialExpense.date) : new Date();
+        const d = initialExpense.date
+          ? new Date(initialExpense.date)
+          : new Date();
         setForm({
           description: String(initialExpense.description || ""),
-          amount: initialExpense.amount != null ? String(initialExpense.amount) : "",
+          amount:
+            initialExpense.amount != null ? String(initialExpense.amount) : "",
           category: initialExpense.category || "інше",
           date: toLocalISODate(d),
         });
@@ -100,15 +108,20 @@ export function ManualExpenseSheet({ open, onClose, onSave, initialExpense }) {
         <div className="space-y-3">
           <div className="flex gap-2 items-center">
             <div className="flex-1">
-              <label className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block">
+              <label
+                htmlFor={descId}
+                className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block"
+              >
                 Назва
               </label>
               <input
+                id={descId}
                 className={formInp}
                 placeholder="Кава, продукти, таксі..."
                 value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                autoFocus
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, description: e.target.value }))
+                }
               />
             </div>
             <div className="mt-5">
@@ -121,7 +134,10 @@ export function ManualExpenseSheet({ open, onClose, onSave, initialExpense }) {
                   setForm((f) => ({
                     ...f,
                     description: parsed.name || f.description,
-                    amount: parsed.amount != null ? String(Math.round(parsed.amount)) : f.amount,
+                    amount:
+                      parsed.amount != null
+                        ? String(Math.round(parsed.amount))
+                        : f.amount,
                   }));
                 }}
               />
@@ -129,10 +145,14 @@ export function ManualExpenseSheet({ open, onClose, onSave, initialExpense }) {
           </div>
 
           <div>
-            <label className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block">
+            <label
+              htmlFor={amountId}
+              className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block"
+            >
               Сума ₴
             </label>
             <input
+              id={amountId}
               className={formInp}
               type="number"
               inputMode="decimal"
@@ -140,15 +160,24 @@ export function ManualExpenseSheet({ open, onClose, onSave, initialExpense }) {
               min="0"
               step="0.01"
               value={form.amount}
-              onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, amount: e.target.value }))
+              }
             />
           </div>
 
           <div>
-            <label className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block">
+            <div
+              id={catLabelId}
+              className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block"
+            >
               Категорія
-            </label>
-            <div className="flex flex-wrap gap-2">
+            </div>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-labelledby={catLabelId}
+            >
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
@@ -166,10 +195,14 @@ export function ManualExpenseSheet({ open, onClose, onSave, initialExpense }) {
           </div>
 
           <div>
-            <label className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block">
+            <label
+              htmlFor={dateId}
+              className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block"
+            >
               Дата
             </label>
             <input
+              id={dateId}
               className={formInp}
               type="date"
               value={form.date}
@@ -177,9 +210,7 @@ export function ManualExpenseSheet({ open, onClose, onSave, initialExpense }) {
             />
           </div>
 
-          {error && (
-            <p className="text-xs text-red-500">{error}</p>
-          )}
+          {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
 
         <div className="flex gap-3 pt-1">

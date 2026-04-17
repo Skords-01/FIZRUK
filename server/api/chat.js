@@ -1,3 +1,4 @@
+import { assertAiQuota } from "../aiQuota.js";
 import { setCorsHeaders } from "./lib/cors.js";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
@@ -220,6 +221,8 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey)
     return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+
+  if (!(await assertAiQuota(req, res))) return;
 
   try {
     const {

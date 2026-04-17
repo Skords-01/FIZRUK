@@ -3,15 +3,8 @@ import { cn } from "@shared/lib/cn";
 import { PushupsWidget } from "./PushupsWidget.jsx";
 import { HabitHeatmap } from "./HabitHeatmap.jsx";
 import { HabitLeadersBlock } from "./HabitLeadersBlock.jsx";
-import {
-  completionRateForRange,
-  maxActiveStreak,
-  maxStreakAllTime,
-} from "../lib/streaks.js";
-import {
-  dateKeyFromDate,
-  parseDateKey,
-} from "../lib/hubCalendarAggregate.js";
+import { completionRateForRange, maxStreakAllTime } from "../lib/streaks.js";
+import { dateKeyFromDate, parseDateKey } from "../lib/hubCalendarAggregate.js";
 import { ROUTINE_THEME as C } from "../lib/routineConstants.js";
 
 function dateKeyMinusDays(baseKey, daysBack) {
@@ -123,10 +116,7 @@ export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
 
       <PushupsWidget />
 
-      <HabitHeatmap
-        habits={routine.habits}
-        completions={routine.completions}
-      />
+      <HabitHeatmap habits={routine.habits} completions={routine.completions} />
 
       <HabitLeadersBlock
         habits={routine.habits}

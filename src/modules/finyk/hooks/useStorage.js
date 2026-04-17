@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DEFAULT_SUBSCRIPTIONS, INTERNAL_TRANSFER_ID } from "../constants";
 import { notifyFinykRoutineCalendarSync } from "../hubRoutineSync.js";
 import {
@@ -51,7 +51,10 @@ function usePersist(key, defaultVal) {
     const res = safeJsonSet(key, val);
     if (!res.ok) {
       // Не ламаємо UX, але і не мовчимо повністю.
-      console.warn(`[finyk] localStorage write failed for "${key}"`, res.reason);
+      console.warn(
+        `[finyk] localStorage write failed for "${key}"`,
+        res.reason,
+      );
     }
   }, [key, val]);
   return [val, setVal];
@@ -87,16 +90,24 @@ export function useStorage({ onImportFeedback } = {}) {
     "finyk_custom_cats_v1",
     [],
   );
-  const [manualExpenses, setManualExpenses] = usePersist("finyk_manual_expenses_v1", []);
-  const [excludedStatTxIds, setExcludedStatTxIds] = usePersist("finyk_excluded_stat_txs", []);
-  const networthSnapshotRef = useRef((() => {
-    try {
-      const saved = localStorage.getItem("finyk_networth_last_snap");
-      return saved ? JSON.parse(saved) : { date: null, value: null };
-    } catch {
-      return { date: null, value: null };
-    }
-  })());
+  const [manualExpenses, setManualExpenses] = usePersist(
+    "finyk_manual_expenses_v1",
+    [],
+  );
+  const [excludedStatTxIds, setExcludedStatTxIds] = usePersist(
+    "finyk_excluded_stat_txs",
+    [],
+  );
+  const networthSnapshotRef = useRef(
+    (() => {
+      try {
+        const saved = localStorage.getItem("finyk_networth_last_snap");
+        return saved ? JSON.parse(saved) : { date: null, value: null };
+      } catch {
+        return { date: null, value: null };
+      }
+    })(),
+  );
 
   const addManualExpense = (expense) => {
     const entry = {
@@ -121,8 +132,10 @@ export function useStorage({ onImportFeedback } = {}) {
         if (String(e.id) !== pid) return e;
         const next = { ...e };
         if (patch?.date) next.date = String(patch.date);
-        if (patch?.description != null) next.description = String(patch.description || "");
-        if (patch?.category != null) next.category = String(patch.category || "інше");
+        if (patch?.description != null)
+          next.description = String(patch.description || "");
+        if (patch?.category != null)
+          next.category = String(patch.category || "інше");
         if (patch?.amount != null) next.amount = Number(patch.amount) || 0;
         return next;
       }),
@@ -414,13 +427,17 @@ export function useStorage({ onImportFeedback } = {}) {
       const rounded = Math.round(networth);
       const snap = networthSnapshotRef.current;
       if (snap.date === today && snap.value !== null) {
-        const changePct = snap.value !== 0
-          ? Math.abs((rounded - snap.value) / snap.value)
-          : 1;
+        const changePct =
+          snap.value !== 0 ? Math.abs((rounded - snap.value) / snap.value) : 1;
         if (changePct < 0.01) return;
       }
       networthSnapshotRef.current = { date: today, value: rounded };
-      try { localStorage.setItem("finyk_networth_last_snap", JSON.stringify({ date: today, value: rounded })); } catch {}
+      try {
+        localStorage.setItem(
+          "finyk_networth_last_snap",
+          JSON.stringify({ date: today, value: rounded }),
+        );
+      } catch {}
       const key = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
       setNetworthHistory((prev) => {
         const filtered = prev.filter((s) => s.month !== key);

@@ -49,10 +49,34 @@ function ring(percent, color, size = 56, stroke = 5) {
 }
 
 const MACRO_DEFS = [
-  { key: "kcal", label: "Ккал", color: "#f97316", prefKey: "dailyTargetKcal", unit: "" },
-  { key: "protein_g", label: "Білки", color: "#3b82f6", prefKey: "dailyTargetProtein_g", unit: "г" },
-  { key: "fat_g", label: "Жири", color: "#eab308", prefKey: "dailyTargetFat_g", unit: "г" },
-  { key: "carbs_g", label: "Вуглев.", color: "#22c55e", prefKey: "dailyTargetCarbs_g", unit: "г" },
+  {
+    key: "kcal",
+    label: "Ккал",
+    color: "#f97316",
+    prefKey: "dailyTargetKcal",
+    unit: "",
+  },
+  {
+    key: "protein_g",
+    label: "Білки",
+    color: "#3b82f6",
+    prefKey: "dailyTargetProtein_g",
+    unit: "г",
+  },
+  {
+    key: "fat_g",
+    label: "Жири",
+    color: "#eab308",
+    prefKey: "dailyTargetFat_g",
+    unit: "г",
+  },
+  {
+    key: "carbs_g",
+    label: "Вуглев.",
+    color: "#22c55e",
+    prefKey: "dailyTargetCarbs_g",
+    unit: "г",
+  },
 ];
 
 function MiniBar({ rows, targetKcal }) {
@@ -66,8 +90,14 @@ function MiniBar({ rows, targetKcal }) {
         const dayOfWeek = new Date(r.date + "T00:00:00").getDay();
         const label = dayLabels[(dayOfWeek + 6) % 7];
         return (
-          <div key={r.date} className="flex-1 flex flex-col items-center gap-0.5">
-            <div className="w-full flex justify-center" style={{ height: "48px", alignItems: "flex-end" }}>
+          <div
+            key={r.date}
+            className="flex-1 flex flex-col items-center gap-0.5"
+          >
+            <div
+              className="w-full flex justify-center"
+              style={{ height: "48px", alignItems: "flex-end" }}
+            >
               <div
                 className={cn(
                   "w-full max-w-[18px] rounded-t-md transition-all duration-300",
@@ -76,7 +106,12 @@ function MiniBar({ rows, targetKcal }) {
                 style={{ height: `${h}%`, minHeight: "3px" }}
               />
             </div>
-            <span className={cn("text-[9px] leading-none", isToday ? "text-text font-bold" : "text-muted")}>
+            <span
+              className={cn(
+                "text-[9px] leading-none",
+                isToday ? "text-text font-bold" : "text-muted",
+              )}
+            >
               {label}
             </span>
           </div>
@@ -86,12 +121,23 @@ function MiniBar({ rows, targetKcal }) {
   );
 }
 
-export function NutritionDashboard({ log, prefs, onGoToLog, onAddMeal, onFetchDayHint, dayHintText, dayHintBusy, onSetPrefs }) {
+export function NutritionDashboard({
+  log,
+  prefs,
+  onGoToLog,
+  onAddMeal,
+  onFetchDayHint,
+  dayHintText,
+  dayHintBusy,
+}) {
   const today = todayISO();
 
   const macros = useMemo(() => getDayMacros(log, today), [log, today]);
   const summary = useMemo(() => getDaySummary(log, today), [log, today]);
-  const weekRows = useMemo(() => getMacrosForDateRange(log, today, 7), [log, today]);
+  const weekRows = useMemo(
+    () => getMacrosForDateRange(log, today, 7),
+    [log, today],
+  );
 
   const hasTargets =
     (prefs.dailyTargetKcal || 0) > 0 ||
@@ -148,7 +194,8 @@ export function NutritionDashboard({ log, prefs, onGoToLog, onAddMeal, onFetchDa
                   </div>
                   {target > 0 && (
                     <div className="text-[9px] text-muted leading-none">
-                      / {target}{m.unit}
+                      / {target}
+                      {m.unit}
                     </div>
                   )}
                 </div>
@@ -168,7 +215,8 @@ export function NutritionDashboard({ log, prefs, onGoToLog, onAddMeal, onFetchDa
                     {m.label}
                   </div>
                   <div className="text-sm font-extrabold text-text leading-none">
-                    {cur}{m.unit ? ` ${m.unit}` : ""}
+                    {cur}
+                    {m.unit ? ` ${m.unit}` : ""}
                   </div>
                 </div>
               );
@@ -219,7 +267,9 @@ export function NutritionDashboard({ log, prefs, onGoToLog, onAddMeal, onFetchDa
           {dayHintText ? (
             <p className="text-sm text-text leading-snug">{dayHintText}</p>
           ) : (
-            <p className="text-xs text-subtle">Аналіз харчування за сьогодні від AI</p>
+            <p className="text-xs text-subtle">
+              Аналіз харчування за сьогодні від AI
+            </p>
           )}
         </Card>
       )}

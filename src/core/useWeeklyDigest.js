@@ -10,12 +10,16 @@ const ALL_CATS = [...MCC_CATEGORIES, ...INCOME_CATEGORIES];
 function resolveCatLabel(catIdOrMcc, customCategories = []) {
   if (!catIdOrMcc || catIdOrMcc === "other") return "Інше";
   // Спочатку шукаємо по id (рядок)
-  const byId = [...ALL_CATS, ...customCategories].find((c) => c.id === catIdOrMcc);
+  const byId = [...ALL_CATS, ...customCategories].find(
+    (c) => c.id === catIdOrMcc,
+  );
   if (byId) return byId.label ?? byId.name ?? catIdOrMcc;
   // Потім по MCC-коду (число або рядок)
   const mcc = Number(catIdOrMcc);
   if (!Number.isNaN(mcc) && mcc > 0) {
-    const byMcc = MCC_CATEGORIES.find((c) => Array.isArray(c.mccs) && c.mccs.includes(mcc));
+    const byMcc = MCC_CATEGORIES.find(
+      (c) => Array.isArray(c.mccs) && c.mccs.includes(mcc),
+    );
     if (byMcc) return byMcc.label;
     return `MCC ${mcc}`;
   }
@@ -65,7 +69,10 @@ export function listDigestHistory() {
       if (key && key.startsWith(DIGEST_PREFIX)) {
         const wk = key.slice(DIGEST_PREFIX.length);
         if (/^\d{4}-\d{2}-\d{2}$/.test(wk)) {
-          results.push({ weekKey: wk, weekRange: getWeekRange(new Date(wk + "T12:00:00")) });
+          results.push({
+            weekKey: wk,
+            weekRange: getWeekRange(new Date(wk + "T12:00:00")),
+          });
         }
       }
     }
@@ -76,7 +83,9 @@ export function listDigestHistory() {
 function saveDigest(weekKey, data) {
   try {
     localStorage.setItem(`${DIGEST_PREFIX}${weekKey}`, JSON.stringify(data));
-    window.dispatchEvent(new CustomEvent("hub-weekly-digest-updated", { detail: { weekKey } }));
+    window.dispatchEvent(
+      new CustomEvent("hub-weekly-digest-updated", { detail: { weekKey } }),
+    );
   } catch {}
 }
 
@@ -167,7 +176,10 @@ function aggregateFizruk(weekKey) {
     if (Array.isArray(w.exercises)) {
       for (const ex of w.exercises) {
         const vol = Array.isArray(ex.sets)
-          ? ex.sets.reduce((s, set) => s + (set.weight ?? 0) * (set.reps ?? 0), 0)
+          ? ex.sets.reduce(
+              (s, set) => s + (set.weight ?? 0) * (set.reps ?? 0),
+              0,
+            )
           : 0;
         totalVolume += vol;
         if (ex.name) {
@@ -180,7 +192,10 @@ function aggregateFizruk(weekKey) {
   const topExercises = Object.entries(exerciseVolumes)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3)
-    .map(([name, totalVolume]) => ({ name, totalVolume: Math.round(totalVolume) }));
+    .map(([name, totalVolume]) => ({
+      name,
+      totalVolume: Math.round(totalVolume),
+    }));
 
   const allCompleted = workouts.filter((w) => w.endedAt);
   const sorted = [...allCompleted].sort(
@@ -189,7 +204,8 @@ function aggregateFizruk(weekKey) {
   const last = sorted[0];
   let recoveryLabel = "Немає даних";
   if (last) {
-    const hoursAgo = (Date.now() - new Date(last.startedAt).getTime()) / 3_600_000;
+    const hoursAgo =
+      (Date.now() - new Date(last.startedAt).getTime()) / 3_600_000;
     if (hoursAgo < 20) recoveryLabel = "Відновлення";
     else if (hoursAgo < 44) recoveryLabel = "Часткове відновлення";
     else recoveryLabel = "Готовий до тренування";
@@ -266,12 +282,18 @@ function aggregateRoutine(weekKey) {
         done++;
       }
     }
-    return { name: h.name || h.title || "Звичка", done, total: 7, completionRate: Math.round((done / 7) * 100) };
+    return {
+      name: h.name || h.title || "Звичка",
+      done,
+      total: 7,
+      completionRate: Math.round((done / 7) * 100),
+    };
   });
 
   const totalDone = habitStats.reduce((s, h) => s + h.done, 0);
   const totalPossible = habits.length * 7;
-  const overallRate = totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0;
+  const overallRate =
+    totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0;
 
   return {
     habitCount: habits.length,
@@ -302,7 +324,8 @@ export function useWeeklyDigest(selectedWeekKey) {
       }
     };
     window.addEventListener("hub-weekly-digest-updated", handler);
-    return () => window.removeEventListener("hub-weekly-digest-updated", handler);
+    return () =>
+      window.removeEventListener("hub-weekly-digest-updated", handler);
   }, [weekKey]);
 
   const generate = useCallback(async () => {
@@ -318,8 +341,15 @@ export function useWeeklyDigest(selectedWeekKey) {
 
       const res = await fetch(apiUrl("/api/weekly-digest"), {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ weekRange: currentWeekRange, finyk, fizruk, nutrition, routine }),
+        body: JSON.stringify({
+          weekRange: currentWeekRange,
+          finyk,
+          fizruk,
+          nutrition,
+          routine,
+        }),
       });
 
       const json = await res.json();
@@ -340,6 +370,7 @@ export function useWeeklyDigest(selectedWeekKey) {
       try {
         fetch(apiUrl("/api/coach/memory"), {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             weeklyDigest: {

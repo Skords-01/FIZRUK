@@ -4,7 +4,8 @@ const LAST_KEY = "fizruk_last_reminder_notif_day";
 
 export function sendFizrukStateToSW(state) {
   try {
-    if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) return;
+    if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller)
+      return;
     navigator.serviceWorker.controller.postMessage({
       type: "FIZRUK_STATE_UPDATE",
       data: state,
@@ -26,7 +27,12 @@ export function useFizrukWorkoutReminder({
   const firedRef = useRef(null);
 
   useEffect(() => {
-    sendFizrukStateToSW({ reminderEnabled, reminderHour, reminderMinute, days });
+    sendFizrukStateToSW({
+      reminderEnabled,
+      reminderHour,
+      reminderMinute,
+      days,
+    });
   }, [reminderEnabled, reminderHour, reminderMinute, days]);
 
   useEffect(() => {
@@ -56,21 +62,23 @@ export function useFizrukWorkoutReminder({
 
       try {
         if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.ready.then((reg) => {
-            reg.showNotification("🏋️ Фізрук — тренування", {
-              body: "Заплановане тренування на сьогодні. Відкрий застосунок, щоб стартувати.",
-              tag: `fizruk-plan-${dayStr}`,
-              icon: "/icon-192.png",
-              badge: "/icon-192.png",
-              requireInteraction: false,
-              data: { action: "open", module: "fizruk" },
+          navigator.serviceWorker.ready
+            .then((reg) => {
+              reg.showNotification("🏋️ Фізрук — тренування", {
+                body: "Заплановане тренування на сьогодні. Відкрий застосунок, щоб стартувати.",
+                tag: `fizruk-plan-${dayStr}`,
+                icon: "/icon-192.png",
+                badge: "/icon-192.png",
+                requireInteraction: false,
+                data: { action: "open", module: "fizruk" },
+              });
+            })
+            .catch(() => {
+              new Notification("🏋️ Фізрук — тренування", {
+                body: "Заплановане тренування на сьогодні. Відкрий застосунок, щоб стартувати.",
+                tag: "fizruk-plan",
+              });
             });
-          }).catch(() => {
-            new Notification("🏋️ Фізрук — тренування", {
-              body: "Заплановане тренування на сьогодні. Відкрий застосунок, щоб стартувати.",
-              tag: "fizruk-plan",
-            });
-          });
         } else {
           new Notification("🏋️ Фізрук — тренування", {
             body: "Заплановане тренування на сьогодні. Відкрий застосунок, щоб стартувати.",

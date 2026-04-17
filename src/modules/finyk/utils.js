@@ -194,11 +194,21 @@ export function calcMonthlyNeeded(targetAmount, savedAmount, targetDate) {
   const saved = Number(savedAmount) || 0;
 
   if (saved >= tgt && tgt > 0) {
-    return { monthlyNeeded: null, monthsLeft: 0, isAchieved: true, isOverdue: false };
+    return {
+      monthlyNeeded: null,
+      monthsLeft: 0,
+      isAchieved: true,
+      isOverdue: false,
+    };
   }
 
   if (!targetDate) {
-    return { monthlyNeeded: null, monthsLeft: null, isAchieved: false, isOverdue: false };
+    return {
+      monthlyNeeded: null,
+      monthsLeft: null,
+      isAchieved: false,
+      isOverdue: false,
+    };
   }
 
   const now = new Date();
@@ -213,17 +223,35 @@ export function calcMonthlyNeeded(targetAmount, savedAmount, targetDate) {
       return new Date(Date.UTC(y, (m || 1) - 1, d || 1, 12, 0, 0, 0));
     }
     const dt = new Date(targetDate);
-    return new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate(), 12, 0, 0, 0));
+    return new Date(
+      Date.UTC(
+        dt.getUTCFullYear(),
+        dt.getUTCMonth(),
+        dt.getUTCDate(),
+        12,
+        0,
+        0,
+        0,
+      ),
+    );
   })();
 
   const nowMiddayUtc = new Date(Date.UTC(y1, m1, d1, 12, 0, 0, 0));
   if (target <= nowMiddayUtc) {
-    return { monthlyNeeded: null, monthsLeft: 0, isAchieved: false, isOverdue: true };
+    return {
+      monthlyNeeded: null,
+      monthsLeft: 0,
+      isAchieved: false,
+      isOverdue: true,
+    };
   }
 
-  const y2 = target.getUTCFullYear(), m2 = target.getUTCMonth();
+  const y2 = target.getUTCFullYear(),
+    m2 = target.getUTCMonth();
   let monthsLeft = (y2 - y1) * 12 + (m2 - m1);
-  const sameMonthsLater = new Date(Date.UTC(y1, m1 + monthsLeft, d1, 12, 0, 0, 0));
+  const sameMonthsLater = new Date(
+    Date.UTC(y1, m1 + monthsLeft, d1, 12, 0, 0, 0),
+  );
   if (target > sameMonthsLater) monthsLeft += 1;
   monthsLeft = Math.max(1, monthsLeft);
   const remaining = Math.max(0, tgt - saved);

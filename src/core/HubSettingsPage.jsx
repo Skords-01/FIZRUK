@@ -49,7 +49,10 @@ function ChevronIcon({ expanded }) {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn("transition-transform duration-200 shrink-0", expanded && "rotate-90")}
+      className={cn(
+        "transition-transform duration-200 shrink-0",
+        expanded && "rotate-90",
+      )}
       aria-hidden
     >
       <polyline points="9 18 15 12 9 6" />
@@ -122,7 +125,9 @@ function ToggleRow({ label, description, checked, onChange }) {
       <div className="flex-1 min-w-0">
         <span className="text-sm text-text">{label}</span>
         {description && (
-          <p className="text-[11px] text-subtle mt-0.5 leading-snug">{description}</p>
+          <p className="text-[11px] text-subtle mt-0.5 leading-snug">
+            {description}
+          </p>
         )}
       </div>
       <div className="shrink-0 pt-0.5">
@@ -137,7 +142,15 @@ function ToggleRow({ label, description, checked, onChange }) {
   );
 }
 
-function ConfirmModal({ open, title, body, confirmLabel, danger, onConfirm, onCancel }) {
+function ConfirmModal({
+  open,
+  title,
+  body,
+  confirmLabel,
+  danger,
+  onConfirm,
+  onCancel,
+}) {
   if (!open) return null;
   return (
     <div
@@ -166,7 +179,9 @@ function ConfirmModal({ open, title, body, confirmLabel, danger, onConfirm, onCa
             type="button"
             className={cn(
               "flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-colors",
-              danger ? "bg-danger hover:bg-danger/90" : "bg-emerald-600 hover:bg-emerald-700",
+              danger
+                ? "bg-danger hover:bg-danger/90"
+                : "bg-emerald-600 hover:bg-emerald-700",
             )}
             onClick={onConfirm}
           >
@@ -180,7 +195,9 @@ function ConfirmModal({ open, title, body, confirmLabel, danger, onConfirm, onCa
 
 function NotificationsSection() {
   const [permStatus, setPermStatus] = useState(() =>
-    typeof Notification !== "undefined" ? Notification.permission : "unsupported",
+    typeof Notification !== "undefined"
+      ? Notification.permission
+      : "unsupported",
   );
   const { warning: toastWarning } = useToast();
 
@@ -200,7 +217,9 @@ function NotificationsSection() {
 
   const monthlyPlan = useMonthlyPlan();
 
-  const [nutritionPrefs, setNutritionPrefs] = useState(() => loadNutritionPrefs());
+  const [nutritionPrefs, setNutritionPrefs] = useState(() =>
+    loadNutritionPrefs(),
+  );
   useEffect(() => {
     const handler = (e) => {
       if (e.key === NUTRITION_PREFS_KEY || e.key === null) {
@@ -217,7 +236,9 @@ function NotificationsSection() {
       const r = await Notification.requestPermission();
       setPermStatus(r);
       if (r !== "granted") {
-        toastWarning("Дозволь сповіщення в налаштуваннях браузера, щоб отримувати нагадування.");
+        toastWarning(
+          "Дозволь сповіщення в налаштуваннях браузера, щоб отримувати нагадування.",
+        );
       }
     } catch {
       setPermStatus("denied");
@@ -233,7 +254,9 @@ function NotificationsSection() {
       const perm = await requestRoutineNotificationPermission();
       setPermStatus(perm);
       if (perm !== "granted") {
-        toastWarning("Без дозволу на сповіщення нагадування не надсилатимуться. Дозволь сповіщення у налаштуваннях браузера.");
+        toastWarning(
+          "Без дозволу на сповіщення нагадування не надсилатимуться. Дозволь сповіщення у налаштуваннях браузера.",
+        );
         return;
       }
     }
@@ -245,7 +268,9 @@ function NotificationsSection() {
       const perm = await requestRoutineNotificationPermission();
       setPermStatus(perm);
       if (perm !== "granted") {
-        toastWarning("Без дозволу на сповіщення нагадування не надсилатимуться.");
+        toastWarning(
+          "Без дозволу на сповіщення нагадування не надсилатимуться.",
+        );
         return;
       }
     }
@@ -257,7 +282,9 @@ function NotificationsSection() {
       const perm = await requestRoutineNotificationPermission();
       setPermStatus(perm);
       if (perm !== "granted") {
-        toastWarning("Без дозволу на сповіщення нагадування не надсилатимуться.");
+        toastWarning(
+          "Без дозволу на сповіщення нагадування не надсилатимуться.",
+        );
         return;
       }
     }
@@ -266,34 +293,45 @@ function NotificationsSection() {
     setNutritionPrefs(next);
   };
 
-  const permLabel = {
-    granted: "Дозволено",
-    denied: "Заблоковано",
-    default: "Не встановлено",
-    unsupported: "Не підтримується",
-  }[permStatus] ?? "Невідомо";
+  const permLabel =
+    {
+      granted: "Дозволено",
+      denied: "Заблоковано",
+      default: "Не встановлено",
+      unsupported: "Не підтримується",
+    }[permStatus] ?? "Невідомо";
 
-  const permColor = {
-    granted: "text-success",
-    denied: "text-danger",
-    default: "text-warning",
-    unsupported: "text-muted",
-  }[permStatus] ?? "text-muted";
+  const permColor =
+    {
+      granted: "text-success",
+      denied: "text-danger",
+      default: "text-warning",
+      unsupported: "text-muted",
+    }[permStatus] ?? "text-muted";
 
   return (
     <SettingsGroup title="Сповіщення" emoji="🔔" defaultOpen>
       <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-bg border border-line">
         <div>
           <p className="text-sm font-semibold text-text">Push-сповіщення</p>
-          <p className={cn("text-xs mt-0.5 font-medium", permColor)}>{permLabel}</p>
+          <p className={cn("text-xs mt-0.5 font-medium", permColor)}>
+            {permLabel}
+          </p>
         </div>
         {permStatus !== "granted" && permStatus !== "unsupported" && (
-          <Button type="button" size="sm" className="h-9 shrink-0" onClick={requestPermission}>
+          <Button
+            type="button"
+            size="sm"
+            className="h-9 shrink-0"
+            onClick={requestPermission}
+          >
             Дозволити
           </Button>
         )}
         {permStatus === "denied" && (
-          <p className="text-[11px] text-subtle">Відкрий налаштування браузера, щоб дозволити</p>
+          <p className="text-[11px] text-subtle">
+            Відкрий налаштування браузера, щоб дозволити
+          </p>
         )}
       </div>
 
@@ -350,7 +388,10 @@ function NotificationsSection() {
               onChange={(e) => {
                 const next = {
                   ...nutritionPrefs,
-                  reminderHour: Math.min(23, Math.max(0, Number(e.target.value) || 0)),
+                  reminderHour: Math.min(
+                    23,
+                    Math.max(0, Number(e.target.value) || 0),
+                  ),
                 };
                 persistNutritionPrefs(next, NUTRITION_PREFS_KEY);
                 setNutritionPrefs(next);
@@ -370,20 +411,27 @@ function loadHubPrefs() {
   try {
     const raw = localStorage.getItem(HUB_PREFS_KEY);
     return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
+  } catch {
+    return {};
+  }
 }
 
 function saveHubPref(key, value) {
   try {
     const prefs = loadHubPrefs();
-    localStorage.setItem(HUB_PREFS_KEY, JSON.stringify({ ...prefs, [key]: value }));
+    localStorage.setItem(
+      HUB_PREFS_KEY,
+      JSON.stringify({ ...prefs, [key]: value }),
+    );
     window.dispatchEvent(new StorageEvent("storage", { key: HUB_PREFS_KEY }));
   } catch {}
 }
 
 function GeneralSection({ dark, onToggleDark, syncing, onSync, onPull, user }) {
   const [orderReset, setOrderReset] = useState(false);
-  const [showCoach, setShowCoach] = useState(() => loadHubPrefs().showCoach !== false);
+  const [showCoach, setShowCoach] = useState(
+    () => loadHubPrefs().showCoach !== false,
+  );
 
   const handleResetOrder = () => {
     resetDashboardOrder();
@@ -399,11 +447,7 @@ function GeneralSection({ dark, onToggleDark, syncing, onSync, onPull, user }) {
 
   return (
     <SettingsGroup title="Загальні" emoji="⚙️">
-      <ToggleRow
-        label="Темна тема"
-        checked={dark}
-        onChange={onToggleDark}
-      />
+      <ToggleRow label="Темна тема" checked={dark} onChange={onToggleDark} />
       <SettingsSubGroup title="Дашборд">
         <ToggleRow
           label="Показувати AI-коуч"
@@ -487,7 +531,9 @@ function RoutineSection() {
       <ToggleRow
         label="Показувати планові платежі підписок Фініка в календарі"
         checked={routine.prefs?.showFinykSubscriptionsInCalendar !== false}
-        onChange={(e) => updatePref("showFinykSubscriptionsInCalendar", e.target.checked)}
+        onChange={(e) =>
+          updatePref("showFinykSubscriptionsInCalendar", e.target.checked)
+        }
       />
     </SettingsGroup>
   );
@@ -500,8 +546,9 @@ function FizrukSection() {
     <SettingsGroup title="Фізрук" emoji="🏋️">
       <SettingsSubGroup title="Таймер відпочинку">
         <p className="text-[11px] text-subtle leading-snug">
-          Рекомендований час відпочинку підбирається автоматично за типом вправи.
-          Ці значення з&apos;являться як кнопка за замовчуванням у кожній вправі.
+          Рекомендований час відпочинку підбирається автоматично за типом
+          вправи. Ці значення з&apos;являться як кнопка за замовчуванням у
+          кожній вправі.
         </p>
         <div className="space-y-3">
           {Object.entries(REST_CATEGORY_LABELS).map(([cat, label]) => (
@@ -535,7 +582,6 @@ function FizrukSection() {
   );
 }
 
-
 function FinykSection() {
   const {
     hiddenAccounts,
@@ -550,26 +596,45 @@ function FinykSection() {
 
   const [privatIdInput, setPrivatIdInput] = useState(() => {
     try {
-      return localStorage.getItem("finyk_privat_id") || sessionStorage.getItem("finyk_privat_id") || "";
-    } catch { return ""; }
+      return (
+        localStorage.getItem("finyk_privat_id") ||
+        sessionStorage.getItem("finyk_privat_id") ||
+        ""
+      );
+    } catch {
+      return "";
+    }
   });
   const [privatTokenInput, setPrivatTokenInput] = useState(() => {
     try {
-      return localStorage.getItem("finyk_privat_token") || sessionStorage.getItem("finyk_privat_token") || "";
-    } catch { return ""; }
+      return (
+        localStorage.getItem("finyk_privat_token") ||
+        sessionStorage.getItem("finyk_privat_token") ||
+        ""
+      );
+    } catch {
+      return "";
+    }
   });
   const [showPrivatToken, setShowPrivatToken] = useState(false);
   const [rememberPrivat, setRememberPrivat] = useState(() => {
     try {
       return !!localStorage.getItem("finyk_privat_id");
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   });
   const [privatError, setPrivatError] = useState("");
   const [privatConnecting, setPrivatConnecting] = useState(false);
   const [privatConnected, setPrivatConnected] = useState(() => {
     try {
-      return !!(localStorage.getItem("finyk_privat_id") || sessionStorage.getItem("finyk_privat_id"));
-    } catch { return false; }
+      return !!(
+        localStorage.getItem("finyk_privat_id") ||
+        sessionStorage.getItem("finyk_privat_id")
+      );
+    } catch {
+      return false;
+    }
   });
   const [confirmDisconnectPrivat, setConfirmDisconnectPrivat] = useState(false);
 
@@ -641,7 +706,9 @@ function FinykSection() {
         sessionStorage.getItem("finyk_token") ||
         null
       );
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   })();
   const clientName = infoData?.name ?? null;
   const uahAccounts = Array.isArray(infoData?.accounts)
@@ -693,7 +760,8 @@ function FinykSection() {
 
       <SettingsSubGroup title="Власні категорії витрат">
         <p className="text-[11px] text-subtle leading-snug">
-          Додаються до списку категорій у транзакціях, сплітах і лімітах (можна вказати емодзі на початку назви).
+          Додаються до списку категорій у транзакціях, сплітах і лімітах (можна
+          вказати емодзі на початку назви).
         </p>
         <div className="flex gap-2">
           <input
@@ -758,9 +826,14 @@ function FinykSection() {
                   className="flex items-center justify-between px-4 py-3 border-b border-line/60 last:border-0"
                 >
                   <div>
-                    <div className="text-sm font-medium">{getAccountLabel(acc)}</div>
+                    <div className="text-sm font-medium">
+                      {getAccountLabel(acc)}
+                    </div>
                     <div className="text-xs text-subtle mt-0.5 tabular-nums">
-                      {(acc.balance / 100).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+                      {(acc.balance / 100).toLocaleString("uk-UA", {
+                        maximumFractionDigits: 0,
+                      })}{" "}
+                      ₴
                       {acc.creditLimit > 0 &&
                         ` · ліміт ${(acc.creditLimit / 100).toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴`}
                     </div>
@@ -791,7 +864,9 @@ function FinykSection() {
             </div>
             <div>
               <div className="text-sm font-semibold">{clientName}</div>
-              <div className="text-xs text-subtle mt-0.5">{uahAccounts.length} UAH рахунків</div>
+              <div className="text-xs text-subtle mt-0.5">
+                {uahAccounts.length} UAH рахунків
+              </div>
             </div>
           </div>
           {token && (
@@ -800,7 +875,9 @@ function FinykSection() {
                 {token.slice(0, 8) + "••••••••••••••••••" + token.slice(-4)}
               </span>
               <button
-                onClick={() => navigator.clipboard?.writeText(token).catch(() => {})}
+                onClick={() =>
+                  navigator.clipboard?.writeText(token).catch(() => {})
+                }
                 className="text-xs text-muted hover:text-text transition-colors shrink-0"
               >
                 📋 Копіювати
@@ -812,114 +889,140 @@ function FinykSection() {
 
       <SettingsSubGroup title="Сервіс">
         <p className="text-[11px] text-subtle leading-snug">
-          Якщо список операцій виглядає некоректно — очисти кеш і синхронізуй знову.
+          Якщо список операцій виглядає некоректно — очисти кеш і синхронізуй
+          знову.
         </p>
-        <Button variant="ghost" className="w-full h-11" onClick={() => setConfirmKind("cache")}>
+        <Button
+          variant="ghost"
+          className="w-full h-11"
+          onClick={() => setConfirmKind("cache")}
+        >
           🧹 Очистити кеш транзакцій
         </Button>
         {token && (
-          <Button variant="danger" className="w-full h-11" onClick={() => setConfirmKind("disconnect")}>
+          <Button
+            variant="danger"
+            className="w-full h-11"
+            onClick={() => setConfirmKind("disconnect")}
+          >
             Вийти з Monobank
           </Button>
         )}
       </SettingsSubGroup>
 
       {PRIVAT_ENABLED && (
-      <SettingsSubGroup title="ПриватБанк (Приват24 для підприємців)">
-        {confirmDisconnectPrivat && (
-          <ConfirmModal
-            open
-            title="Від'єднати ПриватБанк?"
-            body="Credentials та кеш транзакцій ПриватБанку буде видалено з цього браузера."
-            confirmLabel="Від'єднати"
-            danger
-            onCancel={() => setConfirmDisconnectPrivat(false)}
-            onConfirm={disconnectPrivat}
-          />
-        )}
-        {privatConnected ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-bg border border-green-500/30 rounded-xl">
-              <div className="w-9 h-9 rounded-xl bg-green-500/12 border border-green-500/20 flex items-center justify-center text-base shrink-0">
-                🏦
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-text">ПриватБанк підключено</div>
-                <div className="text-xs text-subtle mt-0.5 font-mono truncate">
-                  ID: {(privatIdInput || "").slice(0, 6)}••••
+        <SettingsSubGroup title="ПриватБанк (Приват24 для підприємців)">
+          {confirmDisconnectPrivat && (
+            <ConfirmModal
+              open
+              title="Від'єднати ПриватБанк?"
+              body="Credentials та кеш транзакцій ПриватБанку буде видалено з цього браузера."
+              confirmLabel="Від'єднати"
+              danger
+              onCancel={() => setConfirmDisconnectPrivat(false)}
+              onConfirm={disconnectPrivat}
+            />
+          )}
+          {privatConnected ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-bg border border-green-500/30 rounded-xl">
+                <div className="w-9 h-9 rounded-xl bg-green-500/12 border border-green-500/20 flex items-center justify-center text-base shrink-0">
+                  🏦
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-text">
+                    ПриватБанк підключено
+                  </div>
+                  <div className="text-xs text-subtle mt-0.5 font-mono truncate">
+                    ID: {(privatIdInput || "").slice(0, 6)}••••
+                  </div>
                 </div>
               </div>
+              <Button
+                variant="danger"
+                className="w-full h-11"
+                onClick={() => setConfirmDisconnectPrivat(true)}
+              >
+                Від{"'"}єднати ПриватБанк
+              </Button>
             </div>
-            <Button
-              variant="danger"
-              className="w-full h-11"
-              onClick={() => setConfirmDisconnectPrivat(true)}
-            >
-              Від'єднати ПриватБанк
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-[11px] text-subtle leading-snug">
-              API Приват24 для підприємців. Merchant ID та токен знаходяться у Приват24 Бізнес → Налаштування → API.
-            </p>
-            <div>
-              <label className="text-xs text-muted mb-1 block">Merchant ID</label>
-              <input
-                type="text"
-                value={privatIdInput}
-                onChange={(e) => setPrivatIdInput(e.target.value)}
-                placeholder="Ваш Merchant ID"
-                autoComplete="off"
-                className="w-full h-11 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none focus:border-primary/50 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted mb-1 block">Токен / пароль</label>
-              <div className="relative">
-                <input
-                  type={showPrivatToken ? "text" : "password"}
-                  value={privatTokenInput}
-                  onChange={(e) => setPrivatTokenInput(e.target.value)}
-                  placeholder="Merchant token"
-                  autoComplete="off"
-                  className="w-full h-11 rounded-xl border border-line bg-panelHi px-3 pr-10 text-sm text-text outline-none focus:border-primary/50 transition-colors"
-                  onKeyDown={(e) => e.key === "Enter" && connectPrivat()}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPrivatToken((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-text"
-                  aria-label={showPrivatToken ? "Приховати" : "Показати"}
-                >
-                  {showPrivatToken ? "🙈" : "👁"}
-                </button>
-              </div>
-            </div>
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
-                checked={rememberPrivat}
-                onChange={(e) => setRememberPrivat(e.target.checked)}
-              />
-              <span className="text-sm text-muted">Запам'ятати на цьому пристрої</span>
-            </label>
-            {privatError && (
-              <p className="text-sm text-danger bg-danger/10 rounded-xl px-3 py-2">
-                {privatError}
+          ) : (
+            <div className="space-y-3">
+              <p className="text-[11px] text-subtle leading-snug">
+                API Приват24 для підприємців. Merchant ID та токен знаходяться у
+                Приват24 Бізнес → Налаштування → API.
               </p>
-            )}
-            <Button
-              className="w-full h-11"
-              onClick={connectPrivat}
-              disabled={privatConnecting}
-            >
-              {privatConnecting ? "Підключення..." : "Підключити ПриватБанк"}
-            </Button>
-          </div>
-        )}
-      </SettingsSubGroup>
+              <div>
+                <label
+                  htmlFor="hub-privat-merchant-id"
+                  className="text-xs text-muted mb-1 block"
+                >
+                  Merchant ID
+                </label>
+                <input
+                  id="hub-privat-merchant-id"
+                  type="text"
+                  value={privatIdInput}
+                  onChange={(e) => setPrivatIdInput(e.target.value)}
+                  placeholder="Ваш Merchant ID"
+                  autoComplete="off"
+                  className="w-full h-11 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none focus:border-primary/50 transition-colors"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="hub-privat-token"
+                  className="text-xs text-muted mb-1 block"
+                >
+                  Токен / пароль
+                </label>
+                <div className="relative">
+                  <input
+                    id="hub-privat-token"
+                    type={showPrivatToken ? "text" : "password"}
+                    value={privatTokenInput}
+                    onChange={(e) => setPrivatTokenInput(e.target.value)}
+                    placeholder="Merchant token"
+                    autoComplete="off"
+                    className="w-full h-11 rounded-xl border border-line bg-panelHi px-3 pr-10 text-sm text-text outline-none focus:border-primary/50 transition-colors"
+                    onKeyDown={(e) => e.key === "Enter" && connectPrivat()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivatToken((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-text"
+                    aria-label={showPrivatToken ? "Приховати" : "Показати"}
+                  >
+                    {showPrivatToken ? "🙈" : "👁"}
+                  </button>
+                </div>
+              </div>
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                  checked={rememberPrivat}
+                  onChange={(e) => setRememberPrivat(e.target.checked)}
+                />
+                <span className="text-sm text-muted">
+                  Запам{"'"}ятати на цьому пристрої
+                </span>
+              </label>
+              {privatError && (
+                <p className="text-sm text-danger bg-danger/10 rounded-xl px-3 py-2">
+                  {privatError}
+                </p>
+              )}
+              <Button
+                className="w-full h-11"
+                onClick={connectPrivat}
+                disabled={privatConnecting}
+              >
+                {privatConnecting ? "Підключення..." : "Підключити ПриватБанк"}
+              </Button>
+            </div>
+          )}
+        </SettingsSubGroup>
       )}
     </SettingsGroup>
   );
@@ -940,25 +1043,35 @@ function AIDigestSection() {
   };
 
   const generatedAt = digest?.generatedAt
-    ? new Date(digest.generatedAt).toLocaleDateString("uk-UA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+    ? new Date(digest.generatedAt).toLocaleDateString("uk-UA", {
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null;
 
   return (
     <SettingsGroup title="AI Звіт тижня" emoji="📋">
       <div className="space-y-3">
         <p className="text-[11px] text-subtle leading-snug">
-          Тижневий AI-аналіз прогресу по всіх модулях: фінанси, тренування, харчування та звички.
-          Звіт доступний на дашборді щопонеділка або за запитом.
+          Тижневий AI-аналіз прогресу по всіх модулях: фінанси, тренування,
+          харчування та звички. Звіт доступний на дашборді щопонеділка або за
+          запитом.
         </p>
         <div className="p-3 rounded-xl bg-bg border border-line">
           <p className="text-xs font-semibold text-text">Поточний тиждень</p>
           <p className="text-[11px] text-muted mt-0.5">{weekRange}</p>
           {generatedAt && (
-            <p className="text-[10px] text-subtle mt-1">Згенеровано: {generatedAt}</p>
+            <p className="text-[10px] text-subtle mt-1">
+              Згенеровано: {generatedAt}
+            </p>
           )}
         </div>
         {error && (
-          <p className="text-xs text-danger bg-danger/10 rounded-xl px-3 py-2">{error}</p>
+          <p className="text-xs text-danger bg-danger/10 rounded-xl px-3 py-2">
+            {error}
+          </p>
         )}
         <Button
           type="button"
@@ -966,14 +1079,27 @@ function AIDigestSection() {
           disabled={loading}
           onClick={handleGenerate}
         >
-          {loading ? "Генерую…" : done ? "✓ Звіт готовий" : digest ? "Оновити звіт тижня" : "Згенерувати звіт зараз"}
+          {loading
+            ? "Генерую…"
+            : done
+              ? "✓ Звіт готовий"
+              : digest
+                ? "Оновити звіт тижня"
+                : "Згенерувати звіт зараз"}
         </Button>
       </div>
     </SettingsGroup>
   );
 }
 
-export function HubSettingsPage({ dark, onToggleDark, syncing, onSync, onPull, user }) {
+export function HubSettingsPage({
+  dark,
+  onToggleDark,
+  syncing,
+  onSync,
+  onPull,
+  user,
+}) {
   return (
     <div className="flex flex-col gap-3 pt-2 pb-4">
       <GeneralSection

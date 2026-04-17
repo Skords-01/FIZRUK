@@ -1,10 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { useBodyPhotos } from "../hooks/useBodyPhotos";
 
 function CameraIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
       <circle cx="12" cy="13" r="4" />
     </svg>
@@ -13,7 +22,16 @@ function CameraIcon() {
 
 function GalleryIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <circle cx="8.5" cy="8.5" r="1.5" />
       <polyline points="21 15 16 10 5 21" />
@@ -23,7 +41,15 @@ function GalleryIcon() {
 
 function TrashIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
       <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
     </svg>
   );
@@ -59,7 +85,10 @@ function CompareSlider({ beforeSrc, afterSrc }) {
     const el = containerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const pct = Math.max(
+      0,
+      Math.min(100, ((clientX - rect.left) / rect.width) * 100),
+    );
     setSliderPct(pct);
   }, []);
 
@@ -71,7 +100,9 @@ function CompareSlider({ beforeSrc, afterSrc }) {
     if (!dragging.current) return;
     updateFromClientX(e.clientX);
   };
-  const onMouseUp = () => { dragging.current = false; };
+  const onMouseUp = () => {
+    dragging.current = false;
+  };
 
   const onTouchStart = (e) => {
     dragging.current = true;
@@ -82,11 +113,29 @@ function CompareSlider({ beforeSrc, afterSrc }) {
     e.preventDefault();
     updateFromClientX(e.touches[0].clientX);
   };
-  const onTouchEnd = () => { dragging.current = false; };
+  const onTouchEnd = () => {
+    dragging.current = false;
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      setSliderPct((p) => Math.max(0, p - 5));
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setSliderPct((p) => Math.min(100, p + 5));
+    }
+  };
 
   return (
     <div
       ref={containerRef}
+      role="slider"
+      tabIndex={0}
+      aria-label="Порівняння до і після"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(sliderPct)}
       className="relative w-full overflow-hidden rounded-xl select-none touch-none"
       style={{ aspectRatio: "3/4" }}
       onMouseDown={onMouseDown}
@@ -96,6 +145,7 @@ function CompareSlider({ beforeSrc, afterSrc }) {
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      onKeyDown={onKeyDown}
     >
       <img
         src={afterSrc}
@@ -120,24 +170,46 @@ function CompareSlider({ beforeSrc, afterSrc }) {
         style={{ left: `${sliderPct}%`, transform: "translateX(-50%)" }}
       >
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          >
             <polyline points="15 18 9 12 15 6" />
-            <polyline points="9 18 3 12 9 6" transform="translate(12 0) scale(-1 1)" />
+            <polyline
+              points="9 18 3 12 9 6"
+              transform="translate(12 0) scale(-1 1)"
+            />
           </svg>
         </div>
       </div>
-      <div className="absolute top-2 left-2 text-[10px] font-bold text-white bg-black/50 rounded px-1.5 py-0.5">ДО</div>
-      <div className="absolute top-2 right-2 text-[10px] font-bold text-white bg-black/50 rounded px-1.5 py-0.5">ПІСЛЯ</div>
+      <div className="absolute top-2 left-2 text-[10px] font-bold text-white bg-black/50 rounded px-1.5 py-0.5">
+        ДО
+      </div>
+      <div className="absolute top-2 right-2 text-[10px] font-bold text-white bg-black/50 rounded px-1.5 py-0.5">
+        ПІСЛЯ
+      </div>
     </div>
   );
 }
 
 export function PhotoProgress() {
+  const formId = useId();
+  const compareBeforeId = `${formId}-compare-before`;
+  const compareAfterId = `${formId}-compare-after`;
+  const addDateId = `${formId}-add-date`;
+  const addNoteId = `${formId}-add-note`;
   const { photos, ready, addPhoto, deletePhoto } = useBodyPhotos();
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const [addMode, setAddMode] = useState(false);
-  const [dateStr, setDateStr] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dateStr, setDateStr] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
   const [note, setNote] = useState("");
   const [preview, setPreview] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -178,15 +250,22 @@ export function PhotoProgress() {
   if (!ready) {
     return (
       <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
-        <div className="text-xs text-subtle text-center py-4">Завантаження…</div>
+        <div className="text-xs text-subtle text-center py-4">
+          Завантаження…
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card" aria-label="Фото-прогрес">
+    <section
+      className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+      aria-label="Фото-прогрес"
+    >
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">Фото-прогрес</h2>
+        <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
+          Фото-прогрес
+        </h2>
         {photos.length >= 2 && (
           <button
             type="button"
@@ -207,8 +286,14 @@ export function PhotoProgress() {
         <div className="mb-4 space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1">До</label>
+              <label
+                htmlFor={compareBeforeId}
+                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+              >
+                До
+              </label>
               <select
+                id={compareBeforeId}
                 value={beforeId}
                 onChange={(e) => setBeforeId(e.target.value)}
                 className="w-full h-9 rounded-lg border border-line bg-panelHi px-2 text-xs text-text outline-none focus:border-success/60"
@@ -223,8 +308,14 @@ export function PhotoProgress() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1">Після</label>
+              <label
+                htmlFor={compareAfterId}
+                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+              >
+                Після
+              </label>
               <select
+                id={compareAfterId}
                 value={afterId}
                 onChange={(e) => setAfterId(e.target.value)}
                 className="w-full h-9 rounded-lg border border-line bg-panelHi px-2 text-xs text-text outline-none focus:border-success/60"
@@ -240,9 +331,14 @@ export function PhotoProgress() {
             </div>
           </div>
           {beforePhoto && afterPhoto && beforePhoto.id !== afterPhoto.id && (
-            <CompareSlider beforeSrc={beforePhoto.dataUrl} afterSrc={afterPhoto.dataUrl} />
+            <CompareSlider
+              beforeSrc={beforePhoto.dataUrl}
+              afterSrc={afterPhoto.dataUrl}
+            />
           )}
-          {(!beforePhoto || !afterPhoto || beforePhoto.id === afterPhoto.id) && (
+          {(!beforePhoto ||
+            !afterPhoto ||
+            beforePhoto.id === afterPhoto.id) && (
             <div className="rounded-xl border border-dashed border-line/60 bg-panelHi/50 py-6 text-center text-xs text-subtle">
               Обери два різні фото для порівняння
             </div>
@@ -259,8 +355,14 @@ export function PhotoProgress() {
           />
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1">Дата</label>
+              <label
+                htmlFor={addDateId}
+                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+              >
+                Дата
+              </label>
               <input
+                id={addDateId}
                 type="date"
                 value={dateStr}
                 onChange={(e) => setDateStr(e.target.value)}
@@ -268,13 +370,19 @@ export function PhotoProgress() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1">Нотатка</label>
+              <label
+                htmlFor={addNoteId}
+                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+              >
+                Нотатка
+              </label>
               <input
+                id={addNoteId}
                 type="text"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 maxLength={60}
-                placeholder="Необов'язково"
+                placeholder={"Необов'язково"}
                 className="w-full h-9 rounded-lg border border-line bg-panelHi px-2 text-xs text-text outline-none focus:border-success/60"
               />
             </div>
@@ -340,7 +448,10 @@ export function PhotoProgress() {
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {sortedPhotos.slice(0, 12).map((p) => (
-                <div key={p.id} className="relative group rounded-xl overflow-hidden aspect-[3/4] bg-panelHi">
+                <div
+                  key={p.id}
+                  className="relative group rounded-xl overflow-hidden aspect-[3/4] bg-panelHi"
+                >
                   <img
                     src={p.dataUrl}
                     alt={p.date}
@@ -348,9 +459,13 @@ export function PhotoProgress() {
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
                   <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-1 pt-3 bg-gradient-to-t from-black/60 to-transparent">
-                    <p className="text-[9px] text-white font-semibold leading-tight">{p.date}</p>
+                    <p className="text-[9px] text-white font-semibold leading-tight">
+                      {p.date}
+                    </p>
                     {p.note && (
-                      <p className="text-[8px] text-white/70 leading-tight truncate">{p.note}</p>
+                      <p className="text-[8px] text-white/70 leading-tight truncate">
+                        {p.note}
+                      </p>
                     )}
                   </div>
                   <button

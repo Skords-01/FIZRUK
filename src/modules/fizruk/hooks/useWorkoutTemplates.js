@@ -75,9 +75,7 @@ export function useWorkoutTemplates() {
     (id) => {
       persist(
         templates.map((t) =>
-          t.id === id
-            ? { ...t, lastUsedAt: new Date().toISOString() }
-            : t,
+          t.id === id ? { ...t, lastUsedAt: new Date().toISOString() } : t,
         ),
       );
     },
@@ -101,5 +99,12 @@ export function useWorkoutTemplates() {
     [templates],
   );
 
-  return { templates: sorted, recentlyUsed, addTemplate, updateTemplate, removeTemplate, markTemplateUsed };
+  return {
+    templates: sorted,
+    recentlyUsed,
+    addTemplate,
+    updateTemplate,
+    removeTemplate,
+    markTemplateUsed,
+  };
 }

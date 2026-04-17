@@ -57,8 +57,14 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
     canBulkMark,
   } = useRoutineCalendarData();
 
-  const { applyTimeMode, onToggleHabit, setRoutine, setMainTab, onOpenModule, onBulkMarkDay } =
-    useRoutineCalendarActions();
+  const {
+    applyTimeMode,
+    onToggleHabit,
+    setRoutine,
+    setMainTab,
+    onOpenModule,
+    onBulkMarkDay,
+  } = useRoutineCalendarActions();
   const [listQueryDraft, setListQueryDraft] = useState(listQuery || "");
   useEffect(() => {
     setListQueryDraft(listQuery || "");
@@ -497,7 +503,9 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                           )}
                           role={e.habitId ? "button" : undefined}
                           tabIndex={e.habitId ? 0 : undefined}
-                          onClick={() => e.habitId && setDetailHabitId(e.habitId)}
+                          onClick={() =>
+                            e.habitId && setDetailHabitId(e.habitId)
+                          }
                           onKeyDown={(ev) => {
                             if (
                               e.habitId &&
@@ -507,7 +515,9 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                               setDetailHabitId(e.habitId);
                             }
                           }}
-                          aria-label={e.habitId ? `Деталі: ${e.title}` : undefined}
+                          aria-label={
+                            e.habitId ? `Деталі: ${e.title}` : undefined
+                          }
                         >
                           <p className="font-semibold text-text text-[15px] leading-snug">
                             {e.title}
@@ -528,7 +538,9 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                               variant="ghost"
                               className="!h-9 !px-3 !text-xs border border-line/70 bg-panelHi/80"
                               type="button"
-                              onClick={() => onOpenModule("fizruk", { hash: "plan" })}
+                              onClick={() =>
+                                onOpenModule("fizruk", { hash: "plan" })
+                              }
                             >
                               План
                             </Button>
@@ -539,7 +551,9 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                               variant="ghost"
                               className="!h-9 !px-3 !text-xs border border-emerald-500/25 bg-emerald-500/5"
                               type="button"
-                              onClick={() => onOpenModule("finyk", { hash: "assets" })}
+                              onClick={() =>
+                                onOpenModule("finyk", { hash: "assets" })
+                              }
                             >
                               Фінік
                             </Button>
@@ -554,7 +568,9 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                                   ? C.done
                                   : "border-line hover:bg-panelHi text-muted",
                               )}
-                              aria-label={e.completed ? "Скасувати виконання" : "Виконано"}
+                              aria-label={
+                                e.completed ? "Скасувати виконання" : "Виконано"
+                              }
                               title={e.completed ? "Скасувати" : "Виконано"}
                             >
                               {e.completed ? "✓" : "○"}
@@ -573,7 +589,12 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                           }
                           onChange={(ev) =>
                             setRoutine((s) =>
-                              setCompletionNote(s, e.habitId, e.date, ev.target.value),
+                              setCompletionNote(
+                                s,
+                                e.habitId,
+                                e.date,
+                                ev.target.value,
+                              ),
                             )
                           }
                         />

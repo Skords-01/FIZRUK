@@ -1,4 +1,4 @@
-function getIp(req) {
+export function getIp(req) {
   const xf = req?.headers?.["x-forwarded-for"];
   if (typeof xf === "string" && xf.trim()) return xf.split(",")[0].trim();
   const real = req?.headers?.["x-real-ip"];
@@ -69,6 +69,7 @@ export function rateLimitExpress({ key, limit, windowMs }) {
       return res.status(429).json({
         error: "Забагато запитів. Спробуй пізніше.",
         code: "RATE_LIMIT",
+        ...(req?.requestId ? { requestId: req.requestId } : {}),
       });
     }
     next();

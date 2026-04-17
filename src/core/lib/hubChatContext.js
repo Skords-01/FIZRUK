@@ -89,13 +89,19 @@ export function buildContext() {
 
   const now = new Date();
   const dayOfMonth = now.getDate();
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysInMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+  ).getDate();
   const daysLeft = daysInMonth - dayOfMonth;
 
   lines.push(
     `[Сьогодні] ${now.toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`,
   );
-  lines.push(`[День місяця] ${dayOfMonth} з ${daysInMonth} (залишилось ${daysLeft} днів)`);
+  lines.push(
+    `[День місяця] ${dayOfMonth} з ${daysInMonth} (залишилось ${daysLeft} днів)`,
+  );
 
   if (d.cacheTime) {
     const ts = new Intl.DateTimeFormat("uk-UA", {
@@ -109,14 +115,18 @@ export function buildContext() {
   if (d.clientName) lines.push(`[Користувач] ${d.clientName}`);
 
   if (d.accounts.length > 0) {
-    const { balance, debt: monoDebt } = getMonoTotals(d.accounts, d.hiddenAccounts);
+    const { balance, debt: monoDebt } = getMonoTotals(
+      d.accounts,
+      d.hiddenAccounts,
+    );
     const manualDebtTotal = d.manualDebts.reduce(
       (s, debt) => s + calcDebtRemaining(debt, d.transactions),
       0,
     );
     lines.push(`[Баланс карток] ${fmt(balance)} грн`);
     lines.push(`[Борг кредитки] ${fmt(monoDebt)} грн`);
-    if (manualDebtTotal > 0) lines.push(`[Борг ручний] ${fmt(manualDebtTotal)} грн`);
+    if (manualDebtTotal > 0)
+      lines.push(`[Борг ручний] ${fmt(manualDebtTotal)} грн`);
     lines.push(`[Борг загальний] ${fmt(monoDebt + manualDebtTotal)} грн`);
   }
 
@@ -141,7 +151,13 @@ export function buildContext() {
       .map((c) => ({
         id: c.id,
         label: c.label,
-        spent: calcCategorySpent(d.statTx, c.id, d.txCategories, d.txSplits, d.customCategories),
+        spent: calcCategorySpent(
+          d.statTx,
+          c.id,
+          d.txCategories,
+          d.txSplits,
+          d.customCategories,
+        ),
       }))
       .filter((c) => c.spent > 0)
       .sort((a, b) => b.spent - a.spent);
@@ -151,11 +167,18 @@ export function buildContext() {
       );
     }
 
-    const recent = [...d.statTx].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 10);
+    const recent = [...d.statTx]
+      .sort((a, b) => (b.time || 0) - (a.time || 0))
+      .slice(0, 10);
     if (recent.length > 0) {
       lines.push("[Останні операції]");
       recent.forEach((t) => {
-        const cat = getCategory(t.description, t.mcc, d.txCategories[t.id], d.customCategories);
+        const cat = getCategory(
+          t.description,
+          t.mcc,
+          d.txCategories[t.id],
+          d.customCategories,
+        );
         const date = t.time
           ? new Date(t.time * 1000).toLocaleDateString("uk-UA", {
               day: "numeric",
@@ -202,7 +225,10 @@ export function buildContext() {
     lines.push(
       `[Ліміти] ${limits
         .map((b) => {
-          const cat = resolveExpenseCategoryMeta(b.categoryId, d.customCategories);
+          const cat = resolveExpenseCategoryMeta(
+            b.categoryId,
+            d.customCategories,
+          );
           const spent = calcCategorySpent(
             d.statTx,
             b.categoryId,
@@ -245,7 +271,10 @@ export function buildContext() {
     const w = parseWorkoutsFromStorage(raw);
     if (Array.isArray(w) && w.length > 0) {
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const withTs = w.map((x) => ({ ...x, _ts: new Date(x.startedAt).getTime() }));
+      const withTs = w.map((x) => ({
+        ...x,
+        _ts: new Date(x.startedAt).getTime(),
+      }));
       const cnt = withTs.filter((x) => x._ts > weekAgo).length;
       const sorted = [...withTs].sort((a, b) => b._ts - a._ts);
       const last = sorted[0];
@@ -297,7 +326,9 @@ export function buildContext() {
 
       if (habits.length > 0) {
         const todayDone = habits.filter(
-          (h) => Array.isArray(completions[h.id]) && completions[h.id].includes(todayKey),
+          (h) =>
+            Array.isArray(completions[h.id]) &&
+            completions[h.id].includes(todayKey),
         );
         lines.push(
           `[Рутина] ${habits.length} активних звичок, виконано сьогодні: ${todayDone.length} з ${habits.length}`,
@@ -306,7 +337,8 @@ export function buildContext() {
         const habitDetails = habits
           .map((h) => {
             const done =
-              Array.isArray(completions[h.id]) && completions[h.id].includes(todayKey);
+              Array.isArray(completions[h.id]) &&
+              completions[h.id].includes(todayKey);
             return `${h.emoji || ""} ${h.name} (id:${h.id}): ${done ? "✓" : "✗"}`;
           })
           .join(", ");
@@ -325,11 +357,18 @@ export function buildContext() {
           ].join("-");
           weekTotal += habits.length;
           for (const h of habits) {
-            if (Array.isArray(completions[h.id]) && completions[h.id].includes(dk)) weekDone++;
+            if (
+              Array.isArray(completions[h.id]) &&
+              completions[h.id].includes(dk)
+            )
+              weekDone++;
           }
         }
-        const weekPct = weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : 0;
-        lines.push(`[Рутина тиждень] ${weekPct}% виконання (${weekDone} з ${weekTotal})`);
+        const weekPct =
+          weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : 0;
+        lines.push(
+          `[Рутина тиждень] ${weekPct}% виконання (${weekDone} з ${weekTotal})`,
+        );
 
         let streak = 0;
         const sd = new Date(now);
@@ -342,7 +381,9 @@ export function buildContext() {
           ].join("-");
           if (
             habits.every(
-              (h) => Array.isArray(completions[h.id]) && completions[h.id].includes(dk),
+              (h) =>
+                Array.isArray(completions[h.id]) &&
+                completions[h.id].includes(dk),
             )
           ) {
             streak++;
@@ -351,7 +392,8 @@ export function buildContext() {
           }
           sd.setDate(sd.getDate() - 1);
         }
-        if (streak > 0) lines.push(`[Рутина серія] ${streak} днів поспіль (всі звички)`);
+        if (streak > 0)
+          lines.push(`[Рутина серія] ${streak} днів поспіль (всі звички)`);
       }
     }
   } catch {}
@@ -370,7 +412,10 @@ export function buildContext() {
     if (todayData) {
       const meals = Array.isArray(todayData.meals) ? todayData.meals : [];
       const kcal = meals.reduce((s, m) => s + (m?.macros?.kcal ?? 0), 0);
-      const protein = meals.reduce((s, m) => s + (m?.macros?.protein_g ?? 0), 0);
+      const protein = meals.reduce(
+        (s, m) => s + (m?.macros?.protein_g ?? 0),
+        0,
+      );
       const fat = meals.reduce((s, m) => s + (m?.macros?.fat_g ?? 0), 0);
       const carbs = meals.reduce((s, m) => s + (m?.macros?.carbs_g ?? 0), 0);
       lines.push(
@@ -379,7 +424,10 @@ export function buildContext() {
       if (meals.length > 0) {
         const mealList = meals
           .slice(0, 6)
-          .map((m) => `${m.name || "?"} (${Math.round(m?.macros?.kcal ?? 0)} ккал)`)
+          .map(
+            (m) =>
+              `${m.name || "?"} (${Math.round(m?.macros?.kcal ?? 0)} ккал)`,
+          )
           .join(", ");
         lines.push(`[Харчування прийоми] ${mealList}`);
       }
@@ -387,7 +435,9 @@ export function buildContext() {
 
     if (nutritionPrefs) {
       const tKcal = nutritionPrefs.dailyTargetKcal;
-      const tProt = nutritionPrefs.dailyTargetProtein_g || nutritionPrefs.dailyTargetProtein;
+      const tProt =
+        nutritionPrefs.dailyTargetProtein_g ||
+        nutritionPrefs.dailyTargetProtein;
       if (tKcal || tProt) {
         lines.push(
           `[Харчування ціль] ${tKcal ? `${tKcal} ккал/день` : ""}${tKcal && tProt ? ", " : ""}${tProt ? `білок: ${tProt}г/день` : ""}`,
@@ -404,13 +454,19 @@ export function buildContext() {
         String(d.getMonth() + 1).padStart(2, "0"),
         String(d.getDate()).padStart(2, "0"),
       ].join("-");
-      const dayMeals = Array.isArray(nutritionLog[dk]?.meals) ? nutritionLog[dk].meals : [];
+      const dayMeals = Array.isArray(nutritionLog[dk]?.meals)
+        ? nutritionLog[dk].meals
+        : [];
       const k = dayMeals.reduce((s, m) => s + (m?.macros?.kcal ?? 0), 0);
       if (k > 0) weekKcalArr.push(k);
     }
     if (weekKcalArr.length > 0) {
-      const avg = Math.round(weekKcalArr.reduce((a, b) => a + b, 0) / weekKcalArr.length);
-      lines.push(`[Харчування тиждень] середньо ${avg} ккал/день (за ${weekKcalArr.length} днів)`);
+      const avg = Math.round(
+        weekKcalArr.reduce((a, b) => a + b, 0) / weekKcalArr.length,
+      );
+      lines.push(
+        `[Харчування тиждень] середньо ${avg} ккал/день (за ${weekKcalArr.length} днів)`,
+      );
     }
   } catch {}
 
@@ -436,7 +492,9 @@ export function buildContext() {
     }
   } catch {}
 
-  return lines.length > 1 ? lines.join("\n") : "Даних немає. Monobank не підключено.";
+  return lines.length > 1
+    ? lines.join("\n")
+    : "Даних немає. Monobank не підключено.";
 }
 
 export function buildContextMeasured() {

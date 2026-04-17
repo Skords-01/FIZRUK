@@ -74,8 +74,11 @@ function useReportData(period, offset) {
     const prevDates = datesInRange(prev.start, prev.end);
 
     function collectWorkouts(dates) {
-      const workouts = parseFizrukWorkouts(localStorage.getItem("fizruk_workouts_v1"));
-      if (!workouts.length && !localStorage.getItem("fizruk_workouts_v1")) return { count: 0, daily: {} };
+      const workouts = parseFizrukWorkouts(
+        localStorage.getItem("fizruk_workouts_v1"),
+      );
+      if (!workouts.length && !localStorage.getItem("fizruk_workouts_v1"))
+        return { count: 0, daily: {} };
       const dateSet = new Set(dates);
       const daily = {};
       let count = 0;
@@ -105,22 +108,30 @@ function useReportData(period, offset) {
     function collectHabits(dates) {
       const state = safeParseLS("hub_routine_v1", null);
       if (!state) return { pct: 0, daily: {} };
-      const habits = Array.isArray(state.habits) ? state.habits.filter((h) => !h.archived) : [];
+      const habits = Array.isArray(state.habits)
+        ? state.habits.filter((h) => !h.archived)
+        : [];
       const completions = state.completions ?? {};
       if (!habits.length) return { pct: 0, daily: {} };
 
       const daily = {};
-      let totalPossible = 0, totalDone = 0;
+      let totalPossible = 0,
+        totalDone = 0;
       for (const dk of dates) {
         const possible = habits.length;
         const done = habits.filter(
-          (h) => Array.isArray(completions[h.id]) && completions[h.id].includes(dk)
+          (h) =>
+            Array.isArray(completions[h.id]) && completions[h.id].includes(dk),
         ).length;
         totalPossible += possible;
         totalDone += done;
         daily[dk] = possible > 0 ? Math.round((done / possible) * 100) : 0;
       }
-      return { pct: totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0, daily };
+      return {
+        pct:
+          totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0,
+        daily,
+      };
     }
 
     function collectKcal(dates) {
@@ -136,13 +147,23 @@ function useReportData(period, offset) {
         daily[dk] = Math.round(kcal);
       }
       const daysWithData = Object.keys(daily).length;
-      return { total: Math.round(total), avg: daysWithData > 0 ? Math.round(total / daysWithData) : 0, daily };
+      return {
+        total: Math.round(total),
+        avg: daysWithData > 0 ? Math.round(total / daysWithData) : 0,
+        daily,
+      };
     }
 
     return {
       period: { start: cur.start, end: cur.end, dates: curDates },
-      workouts: { cur: collectWorkouts(curDates), prev: collectWorkouts(prevDates) },
-      spending: { cur: collectSpending(curDates), prev: collectSpending(prevDates) },
+      workouts: {
+        cur: collectWorkouts(curDates),
+        prev: collectWorkouts(prevDates),
+      },
+      spending: {
+        cur: collectSpending(curDates),
+        prev: collectSpending(prevDates),
+      },
       habits: { cur: collectHabits(curDates), prev: collectHabits(prevDates) },
       kcal: { cur: collectKcal(curDates), prev: collectKcal(prevDates) },
     };
@@ -155,7 +176,10 @@ function formatPeriodLabel(period, offset) {
     const opts = { month: "short", day: "numeric" };
     return `${start.toLocaleDateString("uk-UA", opts)} – ${end.toLocaleDateString("uk-UA", opts)}`;
   } else {
-    return start.toLocaleDateString("uk-UA", { month: "long", year: "numeric" });
+    return start.toLocaleDateString("uk-UA", {
+      month: "long",
+      year: "numeric",
+    });
   }
 }
 
@@ -184,7 +208,12 @@ function BarChart({ data, dates, colorClass, maxValue, unit = "" }) {
             title={`${dates[i]}: ${v}${unit}`}
           >
             <div
-              className={cn("w-full rounded-t-sm transition-all", colorClass, isToday && "opacity-100", !isToday && "opacity-60")}
+              className={cn(
+                "w-full rounded-t-sm transition-all",
+                colorClass,
+                isToday && "opacity-100",
+                !isToday && "opacity-60",
+              )}
               style={{ height: `${pct}%`, minHeight: v > 0 ? "2px" : "0" }}
             />
           </div>
@@ -202,8 +231,14 @@ function Delta({ cur, prev, higherIsBetter = true }) {
   const positive = higherIsBetter ? diff >= 0 : diff <= 0;
   const sign = diff >= 0 ? "+" : "";
   return (
-    <span className={cn("text-xs font-medium", positive ? "text-emerald-600 dark:text-emerald-400" : "text-red-500")}>
-      {sign}{pct}%
+    <span
+      className={cn(
+        "text-xs font-medium",
+        positive ? "text-emerald-600 dark:text-emerald-400" : "text-red-500",
+      )}
+    >
+      {sign}
+      {pct}%
     </span>
   );
 }
@@ -213,14 +248,25 @@ function StatCard({ title, icon, current, prev, unit, higherIsBetter, chart }) {
     <div className="bg-panel border border-line rounded-2xl p-4 space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-lg">{icon}</span>
-        <span className="text-xs font-semibold text-muted uppercase tracking-wider">{title}</span>
+        <span className="text-xs font-semibold text-muted uppercase tracking-wider">
+          {title}
+        </span>
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-text">{typeof current === "number" ? current.toLocaleString("uk-UA") : current}{unit}</span>
+        <span className="text-2xl font-bold text-text">
+          {typeof current === "number"
+            ? current.toLocaleString("uk-UA")
+            : current}
+          {unit}
+        </span>
         <Delta cur={current} prev={prev} higherIsBetter={higherIsBetter} />
       </div>
       {prev !== undefined && (
-        <p className="text-xs text-muted">Минулий: {typeof prev === "number" ? prev.toLocaleString("uk-UA") : prev}{unit}</p>
+        <p className="text-xs text-muted">
+          Минулий:{" "}
+          {typeof prev === "number" ? prev.toLocaleString("uk-UA") : prev}
+          {unit}
+        </p>
       )}
       {chart}
     </div>
@@ -263,12 +309,15 @@ export function HubReports() {
             <button
               key={p}
               type="button"
-              onClick={() => { setPeriod(p); setOffset(0); }}
+              onClick={() => {
+                setPeriod(p);
+                setOffset(0);
+              }}
               className={cn(
                 "px-3 py-1.5 text-xs font-medium transition-colors",
                 period === p
                   ? "bg-accent text-white"
-                  : "text-muted hover:text-text hover:bg-panelHi"
+                  : "text-muted hover:text-text hover:bg-panelHi",
               )}
             >
               {p === "week" ? "Тиждень" : "Місяць"}
@@ -283,11 +332,23 @@ export function HubReports() {
             className="w-8 h-8 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
             aria-label="Попередній"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <span className="text-xs text-muted min-w-[90px] text-center">{label}</span>
+          <span className="text-xs text-muted min-w-[90px] text-center">
+            {label}
+          </span>
           <button
             type="button"
             onClick={() => setOffset((o) => Math.min(0, o + 1))}
@@ -295,7 +356,17 @@ export function HubReports() {
             className="w-8 h-8 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors disabled:opacity-30"
             aria-label="Наступний"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
               <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
@@ -389,23 +460,49 @@ export function HubReports() {
       )}
 
       <div className="bg-panel border border-line rounded-2xl p-4">
-        <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Підсумок</p>
+        <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+          Підсумок
+        </p>
         <div className="space-y-2 text-sm text-text">
           {data.workouts.cur.count > 0 && (
-            <p>🏋️ Ви тренувались <strong>{data.workouts.cur.count}</strong> {data.workouts.cur.count === 1 ? "раз" : data.workouts.cur.count < 5 ? "рази" : "разів"}</p>
+            <p>
+              🏋️ Ви тренувались <strong>{data.workouts.cur.count}</strong>{" "}
+              {data.workouts.cur.count === 1
+                ? "раз"
+                : data.workouts.cur.count < 5
+                  ? "рази"
+                  : "разів"}
+            </p>
           )}
           {data.spending.cur.total > 0 && (
-            <p>💳 Витрачено <strong>{data.spending.cur.total.toLocaleString("uk-UA")} ₴</strong></p>
+            <p>
+              💳 Витрачено{" "}
+              <strong>
+                {data.spending.cur.total.toLocaleString("uk-UA")} ₴
+              </strong>
+            </p>
           )}
           {data.habits.cur.pct > 0 && (
-            <p>✅ Звички виконано на <strong>{data.habits.cur.pct}%</strong></p>
+            <p>
+              ✅ Звички виконано на <strong>{data.habits.cur.pct}%</strong>
+            </p>
           )}
           {data.kcal.cur.avg > 0 && (
-            <p>🥗 Середньо <strong>{data.kcal.cur.avg.toLocaleString("uk-UA")} ккал/день</strong></p>
+            <p>
+              🥗 Середньо{" "}
+              <strong>
+                {data.kcal.cur.avg.toLocaleString("uk-UA")} ккал/день
+              </strong>
+            </p>
           )}
-          {data.workouts.cur.count === 0 && data.spending.cur.total === 0 && data.habits.cur.pct === 0 && data.kcal.cur.avg === 0 && (
-            <p className="text-muted text-center py-2">Немає даних за цей період</p>
-          )}
+          {data.workouts.cur.count === 0 &&
+            data.spending.cur.total === 0 &&
+            data.habits.cur.pct === 0 &&
+            data.kcal.cur.avg === 0 && (
+              <p className="text-muted text-center py-2">
+                Немає даних за цей період
+              </p>
+            )}
         </div>
       </div>
     </div>

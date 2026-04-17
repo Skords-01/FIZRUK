@@ -1,9 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { normalizeReminderTimes, habitDraftToPatch } from "./routineDraftUtils.js";
+import {
+  normalizeReminderTimes,
+  habitDraftToPatch,
+} from "./routineDraftUtils.js";
 
 describe("routine/routineDraftUtils", () => {
   it("normalizeReminderTimes uses reminderTimes if valid", () => {
-    expect(normalizeReminderTimes({ reminderTimes: ["08:00", "xx"] })).toEqual(["08:00"]);
+    expect(normalizeReminderTimes({ reminderTimes: ["08:00", "xx"] })).toEqual([
+      "08:00",
+    ]);
   });
 
   it("normalizeReminderTimes falls back to legacy timeOfDay", () => {
@@ -33,4 +38,3 @@ describe("routine/routineDraftUtils", () => {
     expect(p.weekdays).toEqual([1, 2, 3]);
   });
 });
-

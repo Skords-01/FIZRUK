@@ -46,7 +46,9 @@ describe("generateRecommendations", () => {
     });
     setLS("finyk_tx_cats", { tx1: "food" });
     // Ліміт 500 грн (50% від фактичних витрат → 200% → перевищення)
-    setLS("finyk_budgets", [{ id: "b1", type: "limit", categoryId: "food", limit: 500 }]);
+    setLS("finyk_budgets", [
+      { id: "b1", type: "limit", categoryId: "food", limit: 500 },
+    ]);
 
     const recs = generateRecommendations();
     const budgetRec = recs.find((r) => r.id === "budget_over_food");
@@ -62,7 +64,9 @@ describe("generateRecommendations", () => {
       txs: [{ id: "tx2", amount: -95000, time: ts, description: "Кафе" }],
     });
     setLS("finyk_tx_cats", { tx2: "cafe" });
-    setLS("finyk_budgets", [{ id: "b2", type: "limit", categoryId: "cafe", limit: 100 }]);
+    setLS("finyk_budgets", [
+      { id: "b2", type: "limit", categoryId: "cafe", limit: 100 },
+    ]);
 
     const recs = generateRecommendations();
     const warnRec = recs.find(

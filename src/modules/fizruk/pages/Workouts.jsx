@@ -39,7 +39,11 @@ function playRestCompletionSound() {
     playBeep(880, t, 0.15);
     playBeep(1100, t + 0.18, 0.15);
     playBeep(1320, t + 0.36, 0.3);
-    setTimeout(() => { try { ctx.close(); } catch {} }, 1500);
+    setTimeout(() => {
+      try {
+        ctx.close();
+      } catch {}
+    }, 1500);
   } catch {}
 }
 
@@ -243,7 +247,9 @@ export function Workouts() {
         const workoutGroups = (tpl.groups || [])
           .map((g) => ({
             ...g,
-            itemIds: (g.exerciseIds || []).map((exId) => exIdToItemId[exId]).filter(Boolean),
+            itemIds: (g.exerciseIds || [])
+              .map((exId) => exIdToItemId[exId])
+              .filter(Boolean),
           }))
           .filter((g) => (g.itemIds || []).length >= 2);
         if (workoutGroups.length > 0) {
@@ -438,7 +444,7 @@ export function Workouts() {
           </div>
         </div>
 
-        {mode === 'log' && (
+        {mode === "log" && (
           <WorkoutJournalSection
             activeWorkout={activeWorkout}
             activeDuration={activeDuration}
@@ -481,7 +487,7 @@ export function Workouts() {
           />
         )}
 
-        {(mode === 'catalog' || mode === 'log') && (
+        {(mode === "catalog" || mode === "log") && (
           <WorkoutCatalogSection
             mode={mode}
             q={q}
@@ -496,7 +502,6 @@ export function Workouts() {
             musclesUk={musclesUk}
           />
         )}
-
 
         <ExerciseDetailSheet
           selected={selected}

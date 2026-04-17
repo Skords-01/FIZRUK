@@ -1,4 +1,9 @@
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 import pg from "pg";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -63,6 +68,54 @@ async function ensureAuthTables(client) {
   `);
 }
 
+/**
+ * Incremental SQL migrations from server/migrations/*.sql (lexicographic order).
+ * Tracked in schema_migrations. Baseline DDL stays in ensureSchema (idempotent CREATE IF NOT EXISTS).
+ */
+async function runPendingSqlMigrations(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      name TEXT PRIMARY KEY,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  const migrationsDir = path.join(__dirname, "migrations");
+  let files;
+  try {
+    files = await fs.readdir(migrationsDir);
+  } catch (e) {
+    if (e?.code === "ENOENT") return;
+    throw e;
+  }
+
+  const sqlFiles = files.filter((f) => f.endsWith(".sql")).sort();
+  for (const file of sqlFiles) {
+    const { rows } = await client.query(
+      "SELECT 1 AS ok FROM schema_migrations WHERE name = $1",
+      [file],
+    );
+    if (rows.length > 0) continue;
+
+    const fullPath = path.join(migrationsDir, file);
+    const sql = (await fs.readFile(fullPath, "utf8")).trim();
+    if (!sql) continue;
+
+    await client.query("BEGIN");
+    try {
+      await client.query(sql);
+      await client.query("INSERT INTO schema_migrations (name) VALUES ($1)", [
+        file,
+      ]);
+      await client.query("COMMIT");
+      console.log(`[db] Migration applied: ${file}`);
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    }
+  }
+}
+
 export async function ensureSchema() {
   const client = await pool.connect();
   try {
@@ -101,9 +154,12 @@ export async function ensureSchema() {
     await client.query(
       `CREATE INDEX IF NOT EXISTS idx_push_subs_user ON push_subscriptions(user_id)`,
     );
+
+    await runPendingSqlMigrations(client);
   } finally {
     client.release();
   }
 }
 
+export { pool };
 export default pool;

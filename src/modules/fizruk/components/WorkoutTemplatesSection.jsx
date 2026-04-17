@@ -98,7 +98,10 @@ export function WorkoutTemplatesSection({
     setOrderIds((o) => o.filter((_, i) => i !== idx));
     setGroups((gs) =>
       gs
-        .map((g) => ({ ...g, exerciseIds: (g.exerciseIds || []).filter((id) => id !== removedId) }))
+        .map((g) => ({
+          ...g,
+          exerciseIds: (g.exerciseIds || []).filter((id) => id !== removedId),
+        }))
         .filter((g) => (g.exerciseIds || []).length >= 2),
     );
   };
@@ -189,7 +192,10 @@ export function WorkoutTemplatesSection({
                 <button
                   type="button"
                   className="text-[11px] px-2 py-1 rounded-lg border border-line text-subtle hover:text-text hover:bg-panelHi transition-colors"
-                  onClick={() => { setGroupSelectMode(true); setGroupSelected(new Set()); }}
+                  onClick={() => {
+                    setGroupSelectMode(true);
+                    setGroupSelected(new Set());
+                  }}
                 >
                   ⊕ Суперсет
                 </button>
@@ -217,7 +223,10 @@ export function WorkoutTemplatesSection({
                   <button
                     type="button"
                     className="text-[11px] px-2 py-1 rounded-lg border border-line text-subtle"
-                    onClick={() => { setGroupSelectMode(false); setGroupSelected(new Set()); }}
+                    onClick={() => {
+                      setGroupSelectMode(false);
+                      setGroupSelected(new Set());
+                    }}
                   >
                     ✕
                   </button>
@@ -246,18 +255,33 @@ export function WorkoutTemplatesSection({
                           onClick={() => handleToggleGroupSelect(id)}
                         >
                           {isSelected && (
-                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                              <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            <svg
+                              width="10"
+                              height="10"
+                              viewBox="0 0 10 10"
+                              fill="none"
+                            >
+                              <path
+                                d="M2 5l2.5 2.5L8 3"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
                             </svg>
                           )}
                         </button>
                       )}
-                      <span className="text-xs text-subtle w-5 text-center">{idx + 1}</span>
+                      <span className="text-xs text-subtle w-5 text-center">
+                        {idx + 1}
+                      </span>
                       <span className="flex-1 text-sm truncate min-w-0">
                         {ex?.name?.uk || ex?.name?.en || id}
                       </span>
                       {group && (
-                        <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${group.type === "circuit" ? "bg-accent/15 text-accent border border-accent/30" : "bg-success/15 text-success border border-success/30"}`}>
+                        <span
+                          className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${group.type === "circuit" ? "bg-accent/15 text-accent border border-accent/30" : "bg-success/15 text-success border border-success/30"}`}
+                        >
                           {group.type === "circuit" ? "Коло" : "СС"}
                         </span>
                       )}
@@ -353,7 +377,10 @@ export function WorkoutTemplatesSection({
                 <div className="text-xs text-subtle">
                   {(t.exerciseIds || []).length} вправ
                   {(t.groups || []).length > 0 && (
-                    <span className="ml-2 text-success">· {(t.groups || []).length} суперсет{(t.groups || []).length > 1 ? "и" : ""}</span>
+                    <span className="ml-2 text-success">
+                      · {(t.groups || []).length} суперсет
+                      {(t.groups || []).length > 1 ? "и" : ""}
+                    </span>
                   )}
                 </div>
               </div>
