@@ -1,11 +1,10 @@
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext } from "react";
 
 const RoutineCalendarContext = createContext(null);
 
 export function RoutineCalendarProvider({ value, children }) {
-  const memoValue = useMemo(() => value, [value]);
   return (
-    <RoutineCalendarContext.Provider value={memoValue}>
+    <RoutineCalendarContext.Provider value={value}>
       {children}
     </RoutineCalendarContext.Provider>
   );
