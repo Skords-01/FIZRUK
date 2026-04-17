@@ -1545,7 +1545,7 @@ export const SEED_FOODS_UK = [
     per100: { kcal: 466, protein_g: 5, fat_g: 26, carbs_g: 55 },
   },
   {
-    name: "Млеко згущене",
+    name: "Молоко згущене",
     per100: { kcal: 321, protein_g: 7.2, fat_g: 8.5, carbs_g: 56 },
   },
   {
