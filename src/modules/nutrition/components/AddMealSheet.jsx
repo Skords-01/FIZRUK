@@ -9,14 +9,11 @@ import { parseMealSpeech } from "../../../core/lib/speechParsers.js";
 import {
   ensureSeedFoods,
   macrosForGrams,
-  exportFoodDbJson,
-  importFoodDbJson,
   lookupFoodByBarcode,
   bindBarcodeToFood,
   searchFoods,
   upsertFood,
 } from "../lib/foodDb/foodDb.js";
-import { downloadBlob } from "../lib/nutritionLogExport.js";
 import { apiUrl } from "@shared/lib/apiUrl.js";
 import { BarcodeScanner } from "./BarcodeScanner.jsx";
 
@@ -74,6 +71,8 @@ export function AddMealSheet({
   photoResult,
   mealTemplates = [],
   setPrefs,
+  pantryItems = [],
+  onConsumePantryItem,
 }) {
   const ref = useRef(null);
   const [form, setForm] = useState(() => emptyForm(null));
@@ -88,7 +87,7 @@ export function AddMealSheet({
   const [barcode, setBarcode] = useState("");
   const [barcodeStatus, setBarcodeStatus] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
-  const foodImportRef = useRef(null);
+  const [fromPantryItem, setFromPantryItem] = useState(null);
 
   useDialogFocusTrap(open, ref, { onEscape: onClose });
 
@@ -104,6 +103,7 @@ export function AddMealSheet({
       setBarcode("");
       setBarcodeStatus("");
       setScannerOpen(false);
+      setFromPantryItem(null);
       void ensureSeedFoods();
     }
   }, [open, photoResult]);
@@ -141,6 +141,10 @@ export function AddMealSheet({
     ) {
       setForm((s) => ({ ...s, err: "Некоректне значення КБЖВ." }));
       return;
+    }
+    if (fromPantryItem && onConsumePantryItem) {
+      const grams = Number(pickedGrams) || 100;
+      onConsumePantryItem(fromPantryItem, grams);
     }
     const mealLabel =
       MEAL_TYPES.find((m) => m.id === form.mealType)?.label || "Прийом їжі";
@@ -454,6 +458,54 @@ export function AddMealSheet({
             </div>
           </div>
 
+          {/* Зі складу */}
+          {pantryItems.length > 0 && (
+            <div className="mb-4 rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
+              <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+                Зі складу
+                {fromPantryItem && (
+                  <span className="ml-2 text-nutrition font-semibold normal-case tracking-normal">
+                    · {fromPantryItem}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {pantryItems.slice(0, 20).map((item) => {
+                  const isActive = fromPantryItem === item.name;
+                  return (
+                    <button
+                      key={item.name}
+                      type="button"
+                      onClick={() => {
+                        if (isActive) {
+                          setFromPantryItem(null);
+                          setForm((s) => ({ ...s, name: s.name === item.name ? "" : s.name }));
+                        } else {
+                          setFromPantryItem(item.name);
+                          setForm((s) => ({ ...s, name: item.name, err: "" }));
+                          setFoodQuery(item.name);
+                        }
+                      }}
+                      className={cn(
+                        "px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all",
+                        isActive
+                          ? "bg-nutrition text-white border-nutrition"
+                          : "bg-panelHi text-text border-line hover:border-nutrition/50",
+                      )}
+                    >
+                      {item.name}
+                      {item.qty != null && (
+                        <span className="ml-1 text-[10px] opacity-70">
+                          {item.qty}{item.unit || "г"}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* База продуктів */}
           <div className="mb-4 rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -590,61 +642,6 @@ export function AddMealSheet({
                 }}
               >
                 + Зберегти як продукт (на 100г)
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-9 text-xs"
-                onClick={async () => {
-                  const payload = await exportFoodDbJson();
-                  if (!payload) {
-                    setFoodErr("Не вдалося експортувати базу продуктів.");
-                    return;
-                  }
-                  downloadBlob(
-                    `nutrition-fooddb-${new Date().toISOString().slice(0, 10)}.json`,
-                    "application/json",
-                    JSON.stringify(payload, null, 2),
-                  );
-                }}
-              >
-                Експорт JSON
-              </Button>
-              <input
-                ref={foodImportRef}
-                type="file"
-                accept="application/json,.json"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  const reader = new FileReader();
-                  reader.onload = async () => {
-                    try {
-                      const text = String(reader.result || "");
-                      const parsed = JSON.parse(text);
-                      const res = await importFoodDbJson(parsed, "merge");
-                      setFoodErr(
-                        res.ok
-                          ? `Імпортовано: +${res.added}`
-                          : res.error || "Помилка імпорту",
-                      );
-                    } catch {
-                      setFoodErr("Некоректний файл імпорту.");
-                    } finally {
-                      e.target.value = "";
-                    }
-                  };
-                  reader.readAsText(f);
-                }}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-9 text-xs"
-                onClick={() => foodImportRef.current?.click()}
-              >
-                Імпорт (merge)
               </Button>
             </div>
 

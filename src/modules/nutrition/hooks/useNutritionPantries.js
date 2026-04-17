@@ -208,6 +208,31 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
     setItemEdit((s) => ({ ...s, open: false }));
   };
 
+  const consumePantryItem = (name, gramsConsumed) => {
+    const norm = normalizeFoodName(name);
+    if (!norm) return;
+    setPantries((cur) =>
+      updatePantry(cur, activePantryId, (p) => {
+        const items = Array.isArray(p.items) ? [...p.items] : [];
+        const idx = items.findIndex((x) => normalizeFoodName(x?.name) === norm);
+        if (idx < 0) return p;
+        const item = items[idx];
+        const qty = Number(item.qty);
+        if (!Number.isFinite(qty) || qty <= 0) return p;
+        const unit = String(item.unit || "г").toLowerCase().trim();
+        let remaining = qty;
+        if (unit === "кг") remaining = qty - gramsConsumed / 1000;
+        else remaining = qty - gramsConsumed;
+        if (remaining <= 0) {
+          items.splice(idx, 1);
+        } else {
+          items[idx] = { ...item, qty: Math.round(remaining * 10) / 10 };
+        }
+        return { ...p, items };
+      }),
+    );
+  };
+
   const setPantryText = (text) => {
     setPantries((cur) =>
       updatePantry(cur, activePantryId, (p) => ({ ...p, text })),
@@ -275,5 +300,6 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
     pantrySummary,
     parsePantry,
     pantryStorageErr,
+    consumePantryItem,
   };
 }

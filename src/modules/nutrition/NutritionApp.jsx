@@ -862,6 +862,8 @@ export default function NutritionApp({ onBackToHub, pwaAction, onPwaActionConsum
         photoResult={log.addMealPhotoResult}
         mealTemplates={prefs.mealTemplates || []}
         setPrefs={setPrefs}
+        pantryItems={pantry.effectiveItems}
+        onConsumePantryItem={pantry.consumePantryItem}
       />
 
       <InputDialog

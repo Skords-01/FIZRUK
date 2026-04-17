@@ -15,7 +15,9 @@ function normalizeProduct(product, idx) {
 
   const name =
     product?.product_name_uk ||
-    product?.product_name ||
+    (product?.product_name && /^[\u0000-\u024F\u0400-\u04FF\s\d.,()\-/]+$/.test(product.product_name)
+      ? product.product_name
+      : null) ||
     null;
   if (!name) return null;
 
@@ -74,9 +76,11 @@ export default async function handler(req, res) {
   try {
     const url = new URL(OFF_SEARCH);
     url.searchParams.set("search_terms", query);
-    url.searchParams.set("page_size", "10");
+    url.searchParams.set("page_size", "20");
     url.searchParams.set("fields", OFF_FIELDS);
     url.searchParams.set("sort_by", "unique_scans_n");
+    url.searchParams.set("lc", "uk");
+    url.searchParams.set("cc", "ua");
 
     const r = await fetch(url.toString(), {
       headers: {
