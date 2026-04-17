@@ -3,59 +3,88 @@
 @tailwind utilities;
 
 @layer base {
-  /* ── Light theme (default) ─────────────────────────────────────────────── */
+  /* ═══════════════════════════════════════════════════════════════════════
+     LIGHT THEME — Warm, Organic, Friendly
+     Inspired by: Duolingo, Yazio, Monobank
+     ═══════════════════════════════════════════════════════════════════════ */
   :root {
     color-scheme: light;
 
     /* Semantic UI colors as space-separated RGB triplets.
        Format required for Tailwind opacity modifiers (bg-panel/95 etc.). */
-    --c-bg: 240 243 248; /* #f0f3f8 — light blue-gray page */
-    --c-panel: 255 255 255; /* #ffffff — white cards */
-    --c-panel-hi: 245 247 252; /* #f5f7fc — hover/input bg */
-    --c-line: 226 232 244; /* #e2e8f4 — subtle border */
-    --c-text: 13 23 38; /* #0d1726 — near-black */
-    --c-muted: 96 117 144; /* #607590 — medium slate */
-    --c-subtle: 150 168 188; /* #96a8bc — light slate (labels) */
-    --c-primary: 13 23 38; /* #0d1726 — ink (same as text) */
 
-    /* Shadows — two-layer card + float */
-    --shadow-card:
-      0 1px 2px rgba(13, 23, 38, 0.05), 0 6px 24px rgba(13, 23, 38, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    --shadow-float:
-      0 2px 6px rgba(13, 23, 38, 0.07), 0 16px 48px rgba(13, 23, 38, 0.14),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    --shadow-soft: 0 8px 48px rgba(13, 23, 38, 0.16);
+    /* Page background — warm cream instead of cold blue-gray */
+    --c-bg: 253 249 243; /* #fdf9f3 — warm ivory */
+
+    /* Cards/panels — pure white for contrast */
+    --c-panel: 255 255 255; /* #ffffff — white cards */
+    --c-panel-hi: 250 247 241; /* #faf7f1 — warm hover/input bg */
+
+    /* Borders — warm gray with cream undertone */
+    --c-line: 235 228 218; /* #ebe4da — warm border */
+
+    /* Text hierarchy */
+    --c-text: 28 25 23; /* #1c1917 — warm near-black (stone-900) */
+    --c-muted: 87 83 78; /* #57534e — warm medium gray (stone-600) */
+    --c-subtle: 168 162 158; /* #a8a29e — warm light gray (stone-400) */
+    --c-primary: 28 25 23; /* #1c1917 — ink (same as text) */
+
+    /* Shadows — softer, warmer, more organic */
+    --shadow-card: 0 1px 3px rgba(28, 25, 23, 0.04),
+      0 4px 16px rgba(28, 25, 23, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+    --shadow-float: 0 2px 8px rgba(28, 25, 23, 0.06),
+      0 12px 40px rgba(28, 25, 23, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+    --shadow-soft: 0 8px 32px rgba(28, 25, 23, 0.12);
+
+    /* Brand accent for focus states */
+    --c-accent: 16 185 129; /* emerald-500 */
   }
 
-  /* ── Dark theme ────────────────────────────────────────────────────────── */
+  /* ═══════════════════════════════════════════════════════════════════════
+     DARK THEME — Rich, Cozy, Premium
+     ═══════════════════════════════════════════════════════════════════════ */
   .dark {
     color-scheme: dark;
 
-    --c-bg: 11 17 30; /* #0b111e — deep navy */
-    --c-panel: 20 28 48; /* #141c30 — elevated surface */
-    --c-panel-hi: 28 38 62; /* #1c263e — input / hover bg */
-    --c-line: 44 58 88; /* #2c3a58 — subtle border */
-    --c-text: 224 232 248; /* #e0e8f8 — near-white */
-    --c-muted: 126 148 182; /* #7e94b6 — medium slate */
-    --c-subtle: 74 92 122; /* #4a5c7a — dimmed labels */
-    --c-primary: 224 232 248; /* #e0e8f8 — reversed (light on dark) */
+    /* Page background — deep warm charcoal */
+    --c-bg: 23 20 18; /* #171412 — warm dark */
 
-    --shadow-card:
-      0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 24px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    --shadow-float:
-      0 2px 6px rgba(0, 0, 0, 0.35), 0 16px 48px rgba(0, 0, 0, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    --shadow-soft: 0 8px 48px rgba(0, 0, 0, 0.55);
+    /* Cards/panels — elevated warm surface */
+    --c-panel: 32 28 25; /* #201c19 — warm elevated */
+    --c-panel-hi: 41 36 32; /* #292420 — warm input/hover */
+
+    /* Borders — warm muted */
+    --c-line: 58 52 46; /* #3a342e — warm border */
+
+    /* Text hierarchy */
+    --c-text: 250 247 241; /* #faf7f1 — warm white */
+    --c-muted: 168 162 158; /* #a8a29e — medium warm gray */
+    --c-subtle: 87 83 78; /* #57534e — dimmed labels */
+    --c-primary: 250 247 241; /* reversed */
+
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.25),
+      0 4px 16px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+    --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.3),
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.5);
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     BASE STYLES
+     ═══════════════════════════════════════════════════════════════════════ */
   html,
   body,
   #root {
     width: 100%;
     height: 100%;
-    /* dvh adjusts when mobile keyboard appears */
     height: 100dvh;
     overscroll-behavior: none;
   }
@@ -65,7 +94,6 @@
     margin: 0;
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
-    /* smooth momentum scrolling on iOS */
     -webkit-overflow-scrolling: touch;
   }
 
@@ -73,7 +101,7 @@
     box-sizing: border-box;
   }
 
-  /* Prevent double-tap zoom delay on tappable elements */
+  /* Touch optimization */
   button,
   a,
   label,
@@ -84,84 +112,236 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Selection color with brand accent */
+  ::selection {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: inherit;
+  }
 }
 
 @layer components {
+  /* ═══════════════════════════════════════════════════════════════════════
+     PANELS & CARDS — Core UI surfaces
+     ═══════════════════════════════════════════════════════════════════════ */
   .panel {
     @apply bg-panel border border-line rounded-3xl shadow-card;
   }
 
-  /* Фізрук: узгоджені hero / CTA без inline-стилів */
+  .panel-interactive {
+    @apply bg-panel border border-line rounded-3xl shadow-card
+           transition-all duration-200 ease-smooth
+           hover:shadow-float hover:-translate-y-0.5
+           active:scale-[0.98] active:shadow-card;
+  }
+
+  .panel-soft {
+    @apply bg-panel/80 backdrop-blur-sm border border-line/50 rounded-3xl shadow-soft;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     MODULE HERO CARDS — Branded surfaces for each module
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Фінік — Emerald finance hero */
+  .finyk-hero-card {
+    @apply rounded-3xl p-5 border bg-hero-emerald shadow-card;
+    border-color: rgba(167, 243, 208, 0.5); /* brand-200/50 */
+  }
+  .dark .finyk-hero-card {
+    @apply bg-panel;
+    border-color: rgba(6, 95, 70, 0.3); /* brand-800/30 */
+    background-image: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.1) 0%,
+      transparent 100%
+    );
+  }
+
+  /* Фізрук — Teal fitness hero */
   .fizruk-hero-card {
-    @apply rounded-3xl p-4 border border-line/20 bg-forest-grad;
+    @apply rounded-3xl p-5 border bg-hero-teal shadow-card;
+    border-color: rgba(153, 246, 228, 0.5); /* teal-200/50 */
+  }
+  .dark .fizruk-hero-card {
+    @apply bg-panel;
+    border-color: rgba(15, 118, 110, 0.3); /* teal-800/30 */
+    background-image: linear-gradient(
+      135deg,
+      rgba(20, 184, 166, 0.1) 0%,
+      transparent 100%
+    );
   }
 
   .fizruk-cta-accent {
-    @apply bg-accent text-forest font-bold transition-all active:scale-[0.98];
+    @apply bg-teal-500 text-white font-semibold rounded-2xl
+           transition-all duration-200 ease-smooth
+           hover:bg-teal-600 hover:shadow-glow-teal
+           active:scale-[0.98];
   }
 
   .fizruk-summary-header {
-    @apply p-4 bg-forest-grad;
+    @apply p-4 bg-hero-teal;
+  }
+  .dark .fizruk-summary-header {
+    @apply bg-panel;
+    background-image: linear-gradient(
+      135deg,
+      rgba(20, 184, 166, 0.15) 0%,
+      transparent 100%
+    );
   }
 
-  /* Нижній відступ над таб-баром (58px nav + safe-area): Фінік, Фізрук, Рутина */
+  /* Рутина — Coral habit hero */
+  .routine-hero-card {
+    @apply rounded-3xl p-5 border bg-hero-coral shadow-card;
+    border-color: rgba(255, 212, 203, 0.5); /* coral-200/50 */
+  }
+  .dark .routine-hero-card {
+    @apply bg-panel;
+    border-color: rgba(162, 51, 51, 0.3); /* coral-800/30 */
+    background-image: linear-gradient(
+      135deg,
+      rgba(249, 112, 102, 0.1) 0%,
+      transparent 100%
+    );
+  }
+
+  /* Харчування — Lime nutrition hero */
+  .nutrition-hero-card {
+    @apply rounded-3xl p-5 border bg-hero-lime shadow-card;
+    border-color: rgba(223, 249, 157, 0.5); /* lime-200/50 */
+  }
+  .dark .nutrition-hero-card {
+    @apply bg-panel;
+    border-color: rgba(70, 98, 18, 0.3); /* lime-800/30 */
+    background-image: linear-gradient(
+      135deg,
+      rgba(146, 204, 23, 0.1) 0%,
+      transparent 100%
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     SAFE AREA PADDING — iOS notch & home indicator
+     ═══════════════════════════════════════════════════════════════════════ */
   .page-tabbar-pad {
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Горизонтальні safe-area (вирізи) */
   .routine-main-pad {
     padding-left: max(1rem, env(safe-area-inset-left, 0px));
     padding-right: max(1rem, env(safe-area-inset-right, 0px));
   }
 
-  /* Bottom sheet Рутини — контент не під таб-баром */
   .routine-sheet-pad {
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Поля: без стрибка масштабу на iOS (≥16px) + мінімальна зона дотику */
+  .fizruk-sheet-pad {
+    padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 72px);
+  }
+
+  .fizruk-above-tabbar {
+    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     TOUCH INPUTS — iOS zoom prevention (min 16px)
+     ═══════════════════════════════════════════════════════════════════════ */
   .routine-touch-field {
     @apply min-h-[44px] text-[16px] leading-normal md:text-sm;
   }
 
   .routine-touch-select {
-    @apply min-h-[44px] w-full rounded-2xl border border-line bg-panelHi px-3 outline-none text-[16px] leading-normal md:text-sm focus:border-routine/80;
+    @apply min-h-[44px] w-full rounded-2xl border border-line bg-panelHi px-3 outline-none
+           text-[16px] leading-normal md:text-sm
+           transition-colors duration-150
+           focus:border-routine/60 focus:ring-2 focus:ring-routine/20;
   }
 
-  /* Коралово-персиковий hero — кольори з tailwind theme (routine-hero) */
-  .routine-hero-card {
-    @apply rounded-3xl p-5 border border-routine-ring/55 bg-routine-hero shadow-card;
-  }
-  .dark .routine-hero-card {
-    @apply bg-panel border-routine/25;
-    background-image: none;
-  }
-
-  /* Bottom sheet над навігацією */
-  .fizruk-sheet-pad {
-    padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 72px);
-  }
-
-  /* Фіксовані панелі (таймер, підсумок) — над таб-баром */
-  .fizruk-above-tabbar {
-    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
-  }
-
-  /* Видимий фокус у модальних шитах Фізрука */
+  /* ═══════════════════════════════════════════════════════════════════════
+     FOCUS STATES — Accessible, branded
+     ═══════════════════════════════════════════════════════════════════════ */
   .fizruk-sheet button:focus-visible,
   .fizruk-sheet a:focus-visible {
-    @apply outline-none ring-2 ring-forest/45 ring-offset-2 ring-offset-panel rounded-lg;
+    @apply outline-none ring-2 ring-teal-500/45 ring-offset-2 ring-offset-panel rounded-xl;
   }
 
   .routine-sheet button:focus-visible,
   .routine-sheet a:focus-visible {
-    @apply outline-none ring-2 ring-routine/50 ring-offset-2 ring-offset-panel rounded-xl;
+    @apply outline-none ring-2 ring-coral-500/45 ring-offset-2 ring-offset-panel rounded-xl;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     PROGRESS RING — Duolingo-style circular progress
+     ═══════════════════════════════════════════════════════════════════════ */
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-circle {
+    transition: stroke-dashoffset 0.5s ease-out;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     METRIC CARDS — Data display with status colors
+     ═══════════════════════════════════════════════════════════════════════ */
+  .metric-card {
+    @apply bg-panel border border-line rounded-2xl p-4 shadow-card
+           transition-all duration-200
+           hover:shadow-float hover:-translate-y-0.5;
+  }
+
+  .metric-card-compact {
+    @apply bg-panel border border-line rounded-xl p-3 shadow-card;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     BADGES — Status indicators, tags
+     ═══════════════════════════════════════════════════════════════════════ */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-brand-100 text-brand-700;
+  }
+  .dark .badge-success {
+    @apply bg-brand-900/30 text-brand-400;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-100 text-amber-700;
+  }
+  .dark .badge-warning {
+    @apply bg-amber-900/30 text-amber-400;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-700;
+  }
+  .dark .badge-danger {
+    @apply bg-red-900/30 text-red-400;
+  }
+
+  .badge-neutral {
+    @apply badge bg-stone-100 text-stone-600;
+  }
+  .dark .badge-neutral {
+    @apply bg-stone-800 text-stone-400;
+  }
+
+  /* Legacy compatibility */
+  .fizruk-hero-card-legacy {
+    @apply rounded-3xl p-4 border border-line/20 bg-forest-grad;
   }
 }
 
 @layer utilities {
-  /* Вирізи екрана (iPhone тощо); замість інлайн style у шапках/таббарах */
+  /* ═══════════════════════════════════════════════════════════════════════
+     SAFE AREA UTILITIES
+     ═══════════════════════════════════════════════════════════════════════ */
   .safe-area-pt {
     padding-top: env(safe-area-inset-top, 0px);
   }
@@ -184,6 +364,10 @@
   .safe-bottom-h {
     height: calc(60px + env(safe-area-inset-bottom, 0px));
   }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     SCROLLBAR UTILITIES
+     ═══════════════════════════════════════════════════════════════════════ */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -191,8 +375,46 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Custom scrollbar for desktop */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--c-line));
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--c-muted));
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     TEXT UTILITIES
+     ═══════════════════════════════════════════════════════════════════════ */
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Gradient text for hero sections */
+  .text-gradient-emerald {
+    @apply bg-gradient-to-r from-brand-600 to-teal-600 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-coral {
+    @apply bg-gradient-to-r from-coral-500 to-coral-600 bg-clip-text text-transparent;
+  }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   ANIMATIONS — Page transitions, micro-interactions
+   ═══════════════════════════════════════════════════════════════════════ */
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -217,6 +439,7 @@
     transform: translateX(0);
   }
 }
+
 @keyframes hub-slide-in {
   from {
     opacity: 0;
@@ -227,6 +450,7 @@
     transform: translateX(0);
   }
 }
+
 @keyframes onboarding-enter {
   from {
     opacity: 0;
@@ -248,10 +472,94 @@
   animation: onboarding-enter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* iOS: поля <16px при фокусі викликають авто-зум — тримуємо 16px навіть якщо в класах text-sm.
-   Правило після @tailwind utilities, щоб перебити text-sm на інпутах. */
+/* Staggered entry for lists */
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-enter > * {
+  animation: stagger-in 0.3s ease-out both;
+}
+.stagger-enter > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-enter > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+.stagger-enter > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+.stagger-enter > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+.stagger-enter > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+.stagger-enter > *:nth-child(6) {
+  animation-delay: 250ms;
+}
+
+/* Success checkmark animation (Duolingo-style) */
+@keyframes check-draw {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-check-draw {
+  stroke-dasharray: 24;
+  animation: check-draw 0.3s ease-out 0.1s forwards;
+}
+
+/* Celebration confetti burst */
+@keyframes confetti-burst {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti-burst 0.6s ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   iOS INPUT ZOOM FIX — Keep 16px minimum
+   ═══════════════════════════════════════════════════════════════════════ */
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 select,
 textarea {
   font-size: 16px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LOADING SKELETON
+   ═══════════════════════════════════════════════════════════════════════ */
+.skeleton {
+  @apply bg-line/50 rounded-lg animate-pulse;
+}
+
+.skeleton-text {
+  @apply skeleton h-4 w-full;
+}
+
+.skeleton-circle {
+  @apply skeleton rounded-full;
 }
