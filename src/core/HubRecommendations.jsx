@@ -29,14 +29,14 @@ const MODULE_COLORS = {
 export function HubRecommendations({ onOpenModule }) {
   const [dismissed, setDismissed] = useState(loadDismissed);
   const [expanded, setExpanded] = useState(false);
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 2 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
-  const recs = useMemo(() => generateRecommendations(), [tick]);
+  const recs = generateRecommendations();
 
   const visible = useMemo(
     () => recs.filter((r) => !dismissed[r.id]),

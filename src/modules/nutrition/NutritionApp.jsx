@@ -100,7 +100,7 @@ export default function NutritionApp({
       log.setAddMealSheetOpen(true);
       onPwaActionConsumed?.();
     }
-  }, []);
+  }, [log, onPwaActionConsumed, pwaAction]);
 
   const [prefs, setPrefs] = useState(() => loadNutritionPrefs());
   const [prefsStorageErr, setPrefsStorageErr] = useState("");
@@ -179,7 +179,7 @@ export default function NutritionApp({
       setRecipesRaw(c.recipesRaw || "");
       setRecipesTried(true);
     }
-  }, [activePage, recipeCacheKey]);
+  }, [activePage, recipeCacheKey, setRecipes, setRecipesRaw, setRecipesTried]);
 
   const lastNotifyKeyRef = useRef("");
 
@@ -299,7 +299,7 @@ export default function NutritionApp({
         setPantryScanStatus("Помилка пошуку. Перевір з\u2019єднання.");
       }
     },
-    [pantry],
+    [pantry, setPantryScanStatus, setPantryScannerOpen],
   );
 
   const recommendRecipes = async () => {
@@ -404,7 +404,13 @@ export default function NutritionApp({
     } finally {
       setDayHintBusy(false);
     }
-  }, [log.nutritionLog, log.selectedDate, prefs]);
+  }, [
+    log.nutritionLog,
+    log.selectedDate,
+    prefs,
+    setDayHintBusy,
+    setDayHintText,
+  ]);
 
   const fetchDayPlan = useCallback(
     async (regenerateMealType) => {
@@ -449,7 +455,7 @@ export default function NutritionApp({
         setDayPlanBusy(false);
       }
     },
-    [pantry.effectiveItems, prefs, dayPlan],
+    [pantry.effectiveItems, prefs, dayPlan, setDayPlan, setDayPlanBusy],
   );
 
   const addMealFromPlan = useCallback(
@@ -506,7 +512,7 @@ export default function NutritionApp({
         setShoppingBusy(false);
       }
     },
-    [pantry.effectiveItems, recipes, weekPlan, shopping],
+    [pantry.effectiveItems, recipes, weekPlan, shopping, setShoppingBusy],
   );
 
   const addCheckedItemsToPantry = useCallback(() => {
@@ -523,7 +529,7 @@ export default function NutritionApp({
       title: "Пароль для шифрування",
       description: "Введіть пароль для шифрування бекапу (запам'ятайте його):",
     });
-  }, [cloudBackupBusy]);
+  }, [cloudBackupBusy, setBackupPasswordDialog]);
 
   const handleBackupPasswordConfirm = useCallback(
     async (pass) => {
@@ -557,7 +563,13 @@ export default function NutritionApp({
         }
       }
     },
-    [backupPasswordDialog, toast],
+    [
+      backupPasswordDialog,
+      setBackupPasswordDialog,
+      setCloudBackupBusy,
+      setRestoreConfirm,
+      toast,
+    ],
   );
 
   const downloadCloudBackup = useCallback(() => {
@@ -567,7 +579,7 @@ export default function NutritionApp({
       title: "Пароль для розшифрування",
       description: "Введіть пароль для розшифрування бекапу:",
     });
-  }, [cloudBackupBusy]);
+  }, [cloudBackupBusy, setBackupPasswordDialog]);
 
   const recipeCacheEntry = useMemo(
     () => readRecipeCache(recipeCacheKey),
@@ -587,7 +599,7 @@ export default function NutritionApp({
         if (blob) await saveMealThumbnail(meal.id, blob);
       }
     },
-    [log, photo.fileRef, editingMeal],
+    [editingMeal, log, photo.fileRef, setEditingMeal],
   );
 
   const storageBanner = [

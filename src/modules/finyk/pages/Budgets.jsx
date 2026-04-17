@@ -46,21 +46,23 @@ export function Budgets({ mono, storage }) {
     savedAmount: "",
   });
 
-  const now = new Date();
-  const todayKey = now.toDateString();
+  const now = useMemo(() => new Date(), []);
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const expenseCategoryList = useMemo(
     () => mergeExpenseCategoryDefinitions(customCategories),
     [customCategories],
   );
-  const calcSpent = (budget) =>
-    calcCategorySpent(
-      statTx,
-      budget.categoryId,
-      txCategories,
-      txSplits,
-      customCategories,
-    );
+  const calcSpent = useCallback(
+    (budget) =>
+      calcCategorySpent(
+        statTx,
+        budget.categoryId,
+        txCategories,
+        txSplits,
+        customCategories,
+      ),
+    [customCategories, statTx, txCategories, txSplits],
+  );
   const limitBudgets = useMemo(
     () => budgets.filter((b) => b.type === "limit"),
     [budgets],
@@ -95,19 +97,22 @@ export function Budgets({ mono, storage }) {
   const PROACTIVE_CACHE_PREFIX = "finyk_proactive_v1_";
   const PROACTIVE_CACHE_TTL = 24 * 60 * 60 * 1000;
 
-  const getAdviceCache = useCallback((categoryId, monthKey) => {
-    try {
-      const raw = localStorage.getItem(
-        PROACTIVE_CACHE_PREFIX + categoryId + "_" + monthKey,
-      );
-      if (!raw) return null;
-      const { text, ts } = JSON.parse(raw);
-      if (Date.now() - ts > PROACTIVE_CACHE_TTL) return null;
-      return text;
-    } catch {
-      return null;
-    }
-  }, []);
+  const getAdviceCache = useCallback(
+    (categoryId, monthKey) => {
+      try {
+        const raw = localStorage.getItem(
+          PROACTIVE_CACHE_PREFIX + categoryId + "_" + monthKey,
+        );
+        if (!raw) return null;
+        const { text, ts } = JSON.parse(raw);
+        if (Date.now() - ts > PROACTIVE_CACHE_TTL) return null;
+        return text;
+      } catch {
+        return null;
+      }
+    },
+    [PROACTIVE_CACHE_TTL],
+  );
 
   const setAdviceCache = useCallback((categoryId, monthKey, text) => {
     try {
@@ -128,14 +133,7 @@ export function Budgets({ mono, storage }) {
       txSplits,
       customCategories,
     );
-  }, [
-    statTx,
-    limitBudgets,
-    txCategories,
-    txSplits,
-    customCategories,
-    todayKey,
-  ]);
+  }, [statTx, limitBudgets, now, txCategories, txSplits, customCategories]);
 
   const atRiskKey = useMemo(() => {
     if (forecasts.length === 0) return "";
@@ -147,7 +145,7 @@ export function Budgets({ mono, storage }) {
       .map((fc) => fc.categoryId)
       .sort();
     return ids.length > 0 ? `${monthKey}|${ids.join(",")}` : "";
-  }, [forecasts, todayKey]);
+  }, [forecasts, now]);
 
   useEffect(() => {
     if (!atRiskKey) return;
@@ -230,7 +228,16 @@ export function Budgets({ mono, storage }) {
         }
       }),
     );
-  }, [atRiskKey]);
+  }, [
+    atRiskKey,
+    calcSpent,
+    customCategories,
+    forecasts,
+    getAdviceCache,
+    limitBudgets,
+    now,
+    setAdviceCache,
+  ]);
 
   const explainCategory = async (
     categoryId,

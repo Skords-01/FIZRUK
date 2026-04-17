@@ -171,7 +171,7 @@ export default function FizrukApp({
       setHash("workouts");
       onPwaActionConsumed?.();
     }
-  }, []);
+  }, [onPwaActionConsumed, pwaAction]);
 
   const handleStartProgramWorkout = (session, _prog) => {
     if (!session) return;

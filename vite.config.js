@@ -133,5 +133,11 @@ export default defineConfig(({ mode }) => {
         "@nutrition": resolve(__dirname, "src/modules/nutrition"),
       },
     },
+    test: {
+      environmentMatchGlobs: [
+        ["server/**", "node"],
+        ["src/**", "jsdom"],
+      ],
+    },
   };
 });
