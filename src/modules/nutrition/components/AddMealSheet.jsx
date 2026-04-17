@@ -22,25 +22,38 @@ function FoodHitRow({ p, badge, onPick }) {
     <li>
       <button
         type="button"
-        className="w-full text-left px-3 py-2 hover:bg-panelHi/60 transition-colors"
+        className="w-full text-left px-3 py-2.5 hover:bg-panelHi/60 active:bg-panelHi transition-colors"
         onClick={onPick}
       >
         <div className="flex items-center justify-between gap-2">
           <div className="text-sm text-text font-semibold truncate">
-            {[p.name, p.brand].filter(Boolean).join(" ")}
+            {[p.name, p.brand].filter(Boolean).join(" · ")}
             {badge && <span className="ml-1 text-[10px] text-subtle">{badge}</span>}
           </div>
-          <div className="text-[11px] text-subtle shrink-0">
-            {Math.round(p.per100?.kcal || 0)} ккал/100г
+          <div className="text-xs font-semibold text-nutrition shrink-0">
+            {Math.round(p.per100?.kcal || 0)} ккал
           </div>
         </div>
         <div className="text-[11px] text-subtle mt-0.5">
-          Б {Math.round(p.per100?.protein_g || 0)} • Ж{" "}
-          {Math.round(p.per100?.fat_g || 0)} • В{" "}
-          {Math.round(p.per100?.carbs_g || 0)}
+          Б {Math.round(p.per100?.protein_g || 0)}г · Ж{" "}
+          {Math.round(p.per100?.fat_g || 0)}г · В{" "}
+          {Math.round(p.per100?.carbs_g || 0)}г{" "}
+          <span className="opacity-60">на 100г</span>
         </div>
       </button>
     </li>
+  );
+}
+
+function MacroChip({ label, value, unit = "г", color }) {
+  return (
+    <div className={cn("flex flex-col items-center px-3 py-2 min-w-0", color)}>
+      <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">{label}</span>
+      <span className="text-base font-extrabold leading-tight">
+        {value != null ? Math.round(value) : "—"}
+      </span>
+      <span className="text-[10px] opacity-60">{unit}</span>
+    </div>
   );
 }
 
@@ -56,8 +69,7 @@ function emptyForm(photoResult) {
     mealType: "breakfast",
     time: currentTime(),
     kcal: macros.kcal != null ? String(Math.round(macros.kcal)) : "",
-    protein_g:
-      macros.protein_g != null ? String(Math.round(macros.protein_g)) : "",
+    protein_g: macros.protein_g != null ? String(Math.round(macros.protein_g)) : "",
     fat_g: macros.fat_g != null ? String(Math.round(macros.fat_g)) : "",
     carbs_g: macros.carbs_g != null ? String(Math.round(macros.carbs_g)) : "",
     err: "",
@@ -163,6 +175,9 @@ export function AddMealSheet({
       macros: { kcal, protein_g, fat_g, carbs_g },
       source,
       macroSource,
+      ...(pickedFood
+        ? { amount_g: Number(pickedGrams) || 100, foodId: pickedFood.id }
+        : {}),
     });
   }
 
@@ -185,7 +200,6 @@ export function AddMealSheet({
         .finally(() => { if (!cancelled) setFoodBusy(false); });
     }, 180);
 
-    // Пошук у Open Food Facts (з більшою затримкою щоб не спамити)
     if (q.length >= 2) {
       setOffBusy(true);
       setOffHits([]);
@@ -210,11 +224,7 @@ export function AddMealSheet({
   }, [foodQuery]);
 
   const applyPickedFood = useCallback((p, gramsRaw) => {
-    const g = Number(
-      String(gramsRaw || "")
-        .trim()
-        .replace(",", "."),
-    );
+    const g = Number(String(gramsRaw || "").trim().replace(",", "."));
     const grams = Number.isFinite(g) && g > 0 ? g : p?.defaultGrams || 100;
     const mac = macrosForGrams(p?.per100, grams);
     setForm((s) => ({
@@ -228,62 +238,82 @@ export function AddMealSheet({
     }));
   }, []);
 
+  // Live-recalculation при зміні кількості грамів
+  useEffect(() => {
+    if (!pickedFood) return;
+    applyPickedFood(pickedFood, pickedGrams);
+  }, [pickedGrams, pickedFood, applyPickedFood]);
+
   const handleBarcodeLookup = useCallback(
     async (codeRaw) => {
-      const code = String(codeRaw || '').trim();
+      const code = String(codeRaw || "").trim();
       if (!code) return;
-      setBarcodeStatus('Шукаю…');
+      setBarcodeStatus("Шукаю…");
 
       const localFound = await lookupFoodByBarcode(code);
       if (localFound) {
-        setBarcodeStatus('Знайдено ✔');
+        setBarcodeStatus("Знайдено ✔");
         setPickedFood(localFound);
         setPickedGrams(String(Math.round(localFound.defaultGrams || 100)));
-        applyPickedFood(localFound, String(localFound.defaultGrams || 100));
         return;
       }
 
       if (!navigator.onLine) {
-        setBarcodeStatus('Немає підключення. Перевір інтернет і спробуй знову.');
+        setBarcodeStatus("Немає підключення. Перевір інтернет і спробуй знову.");
         return;
       }
 
       try {
         const res = await fetch(apiUrl(`/api/barcode?barcode=${encodeURIComponent(code)}`));
         if (res.status === 404) {
-          setBarcodeStatus('Продукт не знайдено. Можна ввести дані вручну.');
+          setBarcodeStatus("Продукт не знайдено. Можна ввести дані вручну.");
           return;
         }
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          setBarcodeStatus(err?.error || 'Помилка пошуку. Спробуй пізніше.');
+          setBarcodeStatus(err?.error || "Помилка пошуку. Спробуй пізніше.");
           return;
         }
         const data = await res.json();
         const p = data?.product;
         if (!p?.name) {
-          setBarcodeStatus('Продукт знайдено, але дані неповні. Введи вручну.');
+          setBarcodeStatus("Продукт знайдено, але дані неповні. Введи вручну.");
           return;
         }
-        setBarcodeStatus(`Знайдено: ${[p.name, p.brand].filter(Boolean).join(' — ')} ✔`);
+        setBarcodeStatus(`Знайдено: ${[p.name, p.brand].filter(Boolean).join(" — ")} ✔`);
         const grams = p.servingGrams || 100;
         const gramsStr = String(Math.round(grams));
         const factor = grams / 100;
+        const fakeFood = {
+          id: `barcode_${code}`,
+          name: p.name,
+          brand: p.brand || "",
+          defaultGrams: grams,
+          per100: {
+            kcal: p.kcal_100g || 0,
+            protein_g: p.protein_100g || 0,
+            fat_g: p.fat_100g || 0,
+            carbs_g: p.carbs_100g || 0,
+          },
+          source: "barcode",
+        };
+        setPickedFood(fakeFood);
+        setPickedGrams(gramsStr);
+        // fallback fields for barcode products with no per100
         setForm((s) => ({
           ...s,
-          name: [p.name, p.brand].filter(Boolean).join(' ').trim() || s.name,
+          name: [p.name, p.brand].filter(Boolean).join(" ").trim() || s.name,
           kcal: p.kcal_100g != null ? String(Math.round(p.kcal_100g * factor)) : s.kcal,
           protein_g: p.protein_100g != null ? String(Math.round(p.protein_100g * factor)) : s.protein_g,
           fat_g: p.fat_100g != null ? String(Math.round(p.fat_100g * factor)) : s.fat_g,
           carbs_g: p.carbs_100g != null ? String(Math.round(p.carbs_100g * factor)) : s.carbs_g,
-          err: '',
+          err: "",
         }));
-        setPickedGrams(gramsStr);
       } catch {
         setBarcodeStatus("Помилка пошуку. Перевір з'єднання і спробуй пізніше.");
       }
     },
-    [applyPickedFood],
+    [],
   );
 
   async function handleBarcodeBind(codeRaw) {
@@ -293,15 +323,12 @@ export function AddMealSheet({
       return;
     }
     if (!pickedFood?.id) {
-      setBarcodeStatus(
-        "Спочатку обери продукт (або збережи поточний як продукт).",
-      );
+      setBarcodeStatus("Спочатку обери продукт (або збережи поточний як продукт).");
       return;
     }
     const ok = await bindBarcodeToFood(code, pickedFood.id);
-    setBarcodeStatus(ok ? "Прив’язано ✔" : "Не вдалося прив’язати");
+    setBarcodeStatus(ok ? "Прив'язано ✔" : "Не вдалося прив'язати");
   }
-
 
   const hasPhotoMacros =
     photoResult?.macros &&
@@ -342,10 +369,7 @@ export function AddMealSheet({
         <div className="px-5 pb-8 pt-2">
           {/* Header */}
           <div className="flex items-center justify-between gap-3 mb-4">
-            <div
-              id="add-meal-sheet-title"
-              className="text-lg font-extrabold text-text"
-            >
+            <div id="add-meal-sheet-title" className="text-lg font-extrabold text-text">
               Додати прийом їжі
             </div>
             <button
@@ -358,6 +382,7 @@ export function AddMealSheet({
             </button>
           </div>
 
+          {/* Шаблони */}
           {Array.isArray(mealTemplates) && mealTemplates.length > 0 && (
             <div className="mb-4">
               <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
@@ -373,22 +398,10 @@ export function AddMealSheet({
                         ...s,
                         name: t.name,
                         mealType: t.mealType || "snack",
-                        kcal:
-                          t.macros?.kcal != null
-                            ? String(Math.round(t.macros.kcal))
-                            : "",
-                        protein_g:
-                          t.macros?.protein_g != null
-                            ? String(Math.round(t.macros.protein_g))
-                            : "",
-                        fat_g:
-                          t.macros?.fat_g != null
-                            ? String(Math.round(t.macros.fat_g))
-                            : "",
-                        carbs_g:
-                          t.macros?.carbs_g != null
-                            ? String(Math.round(t.macros.carbs_g))
-                            : "",
+                        kcal: t.macros?.kcal != null ? String(Math.round(t.macros.kcal)) : "",
+                        protein_g: t.macros?.protein_g != null ? String(Math.round(t.macros.protein_g)) : "",
+                        fat_g: t.macros?.fat_g != null ? String(Math.round(t.macros.fat_g)) : "",
+                        carbs_g: t.macros?.carbs_g != null ? String(Math.round(t.macros.carbs_g)) : "",
                         err: "",
                       }))
                     }
@@ -401,7 +414,7 @@ export function AddMealSheet({
             </div>
           )}
 
-          {/* Мілі */}
+          {/* Тип прийому */}
           <div className="mb-4">
             <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
               Мілі
@@ -506,202 +519,219 @@ export function AddMealSheet({
             </div>
           )}
 
-          {/* База продуктів */}
-          <div className="mb-4 rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
+          {/* ── ПРОДУКТ (Yazio-стиль) ── */}
+          <div className="mb-4 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-                Пошук продукту
+                Продукт
               </div>
-              <span className="text-[10px] text-subtle">
-                {foodBusy || offBusy ? "пошук…" : ""}
-              </span>
+              {(foodBusy || offBusy) && (
+                <span className="text-[10px] text-subtle flex items-center gap-1.5">
+                  <span className="inline-block w-3 h-3 border border-nutrition/40 border-t-nutrition rounded-full animate-spin" />
+                  пошук…
+                </span>
+              )}
             </div>
-            <Input
-              value={foodQuery}
-              onChange={(e) => setFoodQuery(e.target.value)}
-              placeholder="Курка, Activia, вівсянка, Lays…"
-              aria-label="Пошук продукту"
-            />
-            {pickedFood && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <div className="text-xs text-text font-semibold min-w-0 truncate">
-                  Обрано:{" "}
-                  {[pickedFood.name, pickedFood.brand]
-                    .filter(Boolean)
-                    .join(" ")}
-                  {pickedFood.source === "off" && (
-                    <span className="ml-1 text-[10px] text-subtle">🌍</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={pickedGrams}
-                    onChange={(e) => setPickedGrams(e.target.value)}
-                    inputMode="decimal"
-                    aria-label="Грами"
-                    className="w-[92px]"
-                    placeholder="г"
-                  />
-                  <span className="text-xs text-subtle">г</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-9 text-xs"
-                    onClick={() => applyPickedFood(pickedFood, pickedGrams)}
-                  >
-                    Підставити КБЖВ
-                  </Button>
-                </div>
-              </div>
-            )}
-            {foodErr && <div className="text-[11px] text-muted">{foodErr}</div>}
-            {!pickedFood && (foodHits.length > 0 || offHits.length > 0) && (
-              <div className="max-h-52 overflow-y-auto rounded-xl border border-line/40 bg-bg/40">
-                <ul className="divide-y divide-line/30">
-                  {foodHits.map((p) => (
-                    <FoodHitRow
-                      key={p.id}
-                      p={p}
-                      onPick={() => {
-                        setPickedFood(p);
-                        setPickedGrams(String(Math.round(p.defaultGrams || 100)));
-                        applyPickedFood(p, String(p.defaultGrams || 100));
-                        setFoodQuery("");
-                      }}
-                    />
-                  ))}
-                  {offHits.length > 0 && (
-                    <>
-                      {foodHits.length > 0 && (
-                        <li className="px-3 py-1 text-[10px] text-subtle bg-panelHi/40 font-semibold uppercase tracking-widest">
-                          🌍 Open Food Facts
-                        </li>
-                      )}
-                      {offHits.map((p) => (
+
+            {!pickedFood ? (
+              /* Режим пошуку */
+              <>
+                <Input
+                  value={foodQuery}
+                  onChange={(e) => setFoodQuery(e.target.value)}
+                  placeholder="Курка, Activia, вівсянка, Lays…"
+                  aria-label="Пошук продукту"
+                />
+                {foodErr && <div className="text-[11px] text-muted">{foodErr}</div>}
+                {(foodHits.length > 0 || offHits.length > 0) && (
+                  <div className="max-h-56 overflow-y-auto rounded-2xl border border-line/60 bg-bg shadow-sm">
+                    <ul className="divide-y divide-line/20">
+                      {foodHits.map((p) => (
                         <FoodHitRow
                           key={p.id}
                           p={p}
-                          badge="🌍"
                           onPick={() => {
                             setPickedFood(p);
                             setPickedGrams(String(Math.round(p.defaultGrams || 100)));
-                            applyPickedFood(p, String(p.defaultGrams || 100));
                             setFoodQuery("");
                           }}
                         />
                       ))}
-                    </>
-                  )}
-                </ul>
+                      {offHits.length > 0 && (
+                        <>
+                          {foodHits.length > 0 && (
+                            <li className="px-3 py-1.5 text-[10px] text-subtle bg-panelHi/50 font-semibold uppercase tracking-widest">
+                              🌍 Open Food Facts
+                            </li>
+                          )}
+                          {offHits.map((p) => (
+                            <FoodHitRow
+                              key={p.id}
+                              p={p}
+                              badge="🌍"
+                              onPick={() => {
+                                setPickedFood(p);
+                                setPickedGrams(String(Math.round(p.defaultGrams || 100)));
+                                setFoodQuery("");
+                              }}
+                            />
+                          ))}
+                        </>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Продукт вибраний — картка з live КБЖВ */
+              <div className="rounded-2xl border border-nutrition/30 bg-nutrition/5 overflow-hidden">
+                {/* Назва + скинути */}
+                <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-text truncate">
+                      {[pickedFood.name, pickedFood.brand].filter(Boolean).join(" · ")}
+                      {pickedFood.source === "off" && (
+                        <span className="ml-1 text-[10px] text-subtle">🌍</span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-subtle mt-0.5">
+                      {Math.round(pickedFood.per100?.kcal || 0)} ккал ·{" "}
+                      Б {Math.round(pickedFood.per100?.protein_g || 0)}г ·{" "}
+                      Ж {Math.round(pickedFood.per100?.fat_g || 0)}г ·{" "}
+                      В {Math.round(pickedFood.per100?.carbs_g || 0)}г{" "}
+                      <span className="opacity-60">/ 100г</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setPickedFood(null); setPickedGrams("100"); setFoodQuery(""); }}
+                    className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-line/50 text-muted hover:text-text hover:bg-line transition-colors text-sm"
+                    aria-label="Скинути продукт"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Порція з кроками */}
+                <div className="px-4 pb-3 flex flex-wrap items-center gap-2">
+                  <div className="text-xs text-subtle font-semibold shrink-0">Порція</div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      aria-label="Зменшити"
+                      onClick={() => {
+                        const cur = Number(pickedGrams) || 100;
+                        setPickedGrams(String(Math.max(1, cur - (cur > 50 ? 10 : 5))));
+                      }}
+                      className="w-8 h-8 rounded-full bg-panelHi text-text font-bold text-lg hover:bg-line transition-colors flex items-center justify-center"
+                    >−</button>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={pickedGrams}
+                        min={1}
+                        onChange={(e) => setPickedGrams(e.target.value)}
+                        aria-label="Грами"
+                        className="w-[76px] text-center bg-panel border border-line rounded-xl px-2 py-2 text-sm font-bold text-text outline-none focus:border-nutrition/60 transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-subtle pointer-events-none">г</span>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Збільшити"
+                      onClick={() => {
+                        const cur = Number(pickedGrams) || 100;
+                        setPickedGrams(String(cur + (cur >= 50 ? 10 : 5)));
+                      }}
+                      className="w-8 h-8 rounded-full bg-panelHi text-text font-bold text-lg hover:bg-line transition-colors flex items-center justify-center"
+                    >+</button>
+                  </div>
+                  {/* Швидкі порції */}
+                  <div className="flex gap-1 flex-wrap">
+                    {[50, 100, 150, 200].map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setPickedGrams(String(g))}
+                        className={cn(
+                          "px-2 py-0.5 rounded-lg text-[11px] font-semibold border transition-all",
+                          Number(pickedGrams) === g
+                            ? "bg-nutrition text-white border-nutrition"
+                            : "bg-panelHi text-subtle border-line hover:border-nutrition/40",
+                        )}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Live КБЖВ плашки */}
+                <div className="grid grid-cols-4 border-t border-line/20 divide-x divide-line/20">
+                  <MacroChip
+                    label="Ккал"
+                    value={form.kcal !== "" ? Number(form.kcal) : null}
+                    unit="ккал"
+                    color="bg-nutrition/8 text-nutrition"
+                  />
+                  <MacroChip
+                    label="Білки"
+                    value={form.protein_g !== "" ? Number(form.protein_g) : null}
+                    color="bg-panel text-text"
+                  />
+                  <MacroChip
+                    label="Жири"
+                    value={form.fat_g !== "" ? Number(form.fat_g) : null}
+                    color="bg-panel text-text"
+                  />
+                  <MacroChip
+                    label="Вуглев."
+                    value={form.carbs_g !== "" ? Number(form.carbs_g) : null}
+                    color="bg-panel text-text"
+                  />
+                </div>
               </div>
             )}
-            <div className="flex flex-wrap gap-2">
+          </div>
+
+          {/* Штрихкод */}
+          <div className="mb-4 rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
+            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+              Штрихкод
+            </div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <Input
+                value={barcode}
+                onChange={(e) => { setBarcode(e.target.value.replace(/\s+/g, "")); setBarcodeStatus(""); }}
+                inputMode="numeric"
+                placeholder="EAN/UPC…"
+                aria-label="Штрихкод"
+                className="w-[160px]"
+              />
+              <Button type="button" variant="ghost" className="h-9 text-xs" onClick={() => handleBarcodeLookup(barcode)}>
+                Знайти
+              </Button>
+              <Button type="button" variant="ghost" className="h-9 text-xs" onClick={() => handleBarcodeBind(barcode)}>
+                Прив'язати
+              </Button>
               <Button
                 type="button"
                 variant="ghost"
                 className="h-9 text-xs"
-                onClick={async () => {
-                  const name = String(form.name || "").trim();
-                  if (!name) {
-                    setForm((s) => ({
-                      ...s,
-                      err: "Введіть назву, щоб зберегти продукт.",
-                    }));
-                    return;
-                  }
-                  const kcal = form.kcal === "" ? 0 : Number(form.kcal);
-                  const protein_g =
-                    form.protein_g === "" ? 0 : Number(form.protein_g);
-                  const fat_g = form.fat_g === "" ? 0 : Number(form.fat_g);
-                  const carbs_g =
-                    form.carbs_g === "" ? 0 : Number(form.carbs_g);
-                  if (
-                    [kcal, protein_g, fat_g, carbs_g].some(
-                      (n) => !Number.isFinite(n) || n < 0,
-                    )
-                  ) {
-                    setForm((s) => ({
-                      ...s,
-                      err: "КБЖВ має бути числами (без від’ємних значень).",
-                    }));
-                    return;
-                  }
-                  const res = await upsertFood({
-                    name,
-                    per100: { kcal, protein_g, fat_g, carbs_g },
-                    defaultGrams: 100,
-                  });
-                  if (!res.ok) {
-                    setFoodErr(res.error || "Не вдалося зберегти продукт.");
-                    return;
-                  }
-                  setPickedFood(res.product);
-                  setPickedGrams("100");
-                  setFoodQuery(name);
-                  setFoodErr("");
-                }}
+                onClick={() => { setBarcodeStatus(""); setScannerOpen(true); }}
               >
-                + Зберегти як продукт (на 100г)
+                📷 Сканувати
               </Button>
             </div>
-
-            <div className="pt-1 border-t border-line/30">
-              <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
-                Штрихкод (опційно)
-              </div>
-              <div className="flex flex-wrap gap-2 items-center">
-                <Input
-                  value={barcode}
-                  onChange={(e) => {
-                    setBarcode(e.target.value.replace(/\s+/g, ""));
-                    setBarcodeStatus("");
-                  }}
-                  inputMode="numeric"
-                  placeholder="EAN/UPC…"
-                  aria-label="Штрихкод"
-                  className="w-[180px]"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-9 text-xs"
-                  onClick={() => handleBarcodeLookup(barcode)}
-                >
-                  Знайти
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-9 text-xs"
-                  onClick={() => handleBarcodeBind(barcode)}
-                >
-                  Прив’язати до обраного
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-9 text-xs"
-                  onClick={() => {
-                    setBarcodeStatus("");
-                    setScannerOpen(true);
-                  }}
-                >
-                  📷 Сканувати штрих-код
-                </Button>
-              </div>
-              {barcodeStatus && (
-                <div className="text-[11px] text-subtle mt-1">
-                  {barcodeStatus}
-                </div>
-              )}
-            </div>
+            {barcodeStatus && <div className="text-[11px] text-subtle mt-1">{barcodeStatus}</div>}
           </div>
 
-          {/* КБЖВ */}
+          {/* КБЖВ — ручне редагування */}
           <div className="mb-1">
             <div className="flex items-center justify-between mb-2">
               <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
-                КБЖВ
+                {pickedFood ? "КБЖВ (редагувати вручну)" : "КБЖВ"}
               </div>
               {hasPhotoMacros && (
                 <button
@@ -735,7 +765,10 @@ export function AddMealSheet({
                   </div>
                   <Input
                     value={form[key]}
-                    onChange={(e) => field(key)(e.target.value)}
+                    onChange={(e) => {
+                      if (pickedFood) setPickedFood(null);
+                      field(key)(e.target.value);
+                    }}
                     inputMode="decimal"
                     placeholder={placeholder}
                     aria-label={label}
@@ -743,7 +776,50 @@ export function AddMealSheet({
                 </div>
               ))}
             </div>
+            {pickedFood && (
+              <div className="text-[11px] text-subtle mt-1.5">
+                Редагування вручну відʼєднає від продукту
+              </div>
+            )}
           </div>
+
+          {/* Зберегти як продукт */}
+          {!pickedFood && (
+            <div className="mt-3 mb-1">
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 text-xs"
+                onClick={async () => {
+                  const name = String(form.name || "").trim();
+                  if (!name) {
+                    setForm((s) => ({ ...s, err: "Введіть назву, щоб зберегти продукт." }));
+                    return;
+                  }
+                  const kcal = form.kcal === "" ? 0 : Number(form.kcal);
+                  const protein_g = form.protein_g === "" ? 0 : Number(form.protein_g);
+                  const fat_g = form.fat_g === "" ? 0 : Number(form.fat_g);
+                  const carbs_g = form.carbs_g === "" ? 0 : Number(form.carbs_g);
+                  if ([kcal, protein_g, fat_g, carbs_g].some((n) => !Number.isFinite(n) || n < 0)) {
+                    setForm((s) => ({ ...s, err: "КБЖВ має бути числами (без від'ємних значень)." }));
+                    return;
+                  }
+                  const res = await upsertFood({
+                    name,
+                    per100: { kcal, protein_g, fat_g, carbs_g },
+                    defaultGrams: 100,
+                  });
+                  if (!res.ok) { setFoodErr(res.error || "Не вдалося зберегти продукт."); return; }
+                  setPickedFood(res.product);
+                  setPickedGrams("100");
+                  setFoodQuery(name);
+                  setFoodErr("");
+                }}
+              >
+                + Зберегти як продукт (на 100г)
+              </Button>
+            </div>
+          )}
 
           {form.err && (
             <div className="text-xs text-danger mt-2">{form.err}</div>
@@ -757,35 +833,21 @@ export function AddMealSheet({
                 onClick={() => {
                   const name = form.name.trim();
                   if (!name) {
-                    setForm((s) => ({
-                      ...s,
-                      err: "Спочатку введіть назву для шаблону.",
-                    }));
+                    setForm((s) => ({ ...s, err: "Спочатку введіть назву для шаблону." }));
                     return;
                   }
                   const kcal = form.kcal === "" ? 0 : Number(form.kcal);
-                  const protein_g =
-                    form.protein_g === "" ? 0 : Number(form.protein_g);
+                  const protein_g = form.protein_g === "" ? 0 : Number(form.protein_g);
                   const fat_g = form.fat_g === "" ? 0 : Number(form.fat_g);
-                  const carbs_g =
-                    form.carbs_g === "" ? 0 : Number(form.carbs_g);
-                  if (
-                    [kcal, protein_g, fat_g, carbs_g].some(
-                      (n) => !Number.isFinite(n),
-                    )
-                  ) {
-                    setForm((s) => ({
-                      ...s,
-                      err: "Некоректне КБЖВ для шаблону.",
-                    }));
+                  const carbs_g = form.carbs_g === "" ? 0 : Number(form.carbs_g);
+                  if ([kcal, protein_g, fat_g, carbs_g].some((n) => !Number.isFinite(n))) {
+                    setForm((s) => ({ ...s, err: "Некоректне КБЖВ для шаблону." }));
                     return;
                   }
                   setPrefs((p) => ({
                     ...p,
                     mealTemplates: [
-                      ...(Array.isArray(p.mealTemplates)
-                        ? p.mealTemplates
-                        : []),
+                      ...(Array.isArray(p.mealTemplates) ? p.mealTemplates : []),
                       {
                         id: `tpl_${Date.now()}`,
                         name,
