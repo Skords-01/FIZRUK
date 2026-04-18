@@ -80,7 +80,6 @@ export function Budgets({ mono, storage }) {
   );
   const planIncome = Number(monthlyPlan?.income || 0);
   const planExpense = Number(monthlyPlan?.expense || 0);
-  const planSavings = Number(monthlyPlan?.savings || 0);
 
   const totalExpenseFact = useMemo(
     () =>

@@ -111,8 +111,8 @@ function CategoryForm({ initial = {}, allCategories = [], onSave, onCancel }) {
 
   return (
     <div className="space-y-3">
-      <div>
-        <label className="text-xs text-muted mb-1 block">Назва</label>
+      <label className="block">
+        <span className="text-xs text-muted mb-1 block">Назва</span>
         <Input
           value={label}
           onChange={(e) => {
@@ -123,23 +123,21 @@ function CategoryForm({ initial = {}, allCategories = [], onSave, onCancel }) {
           maxLength={80}
         />
         {error && <p className="text-xs text-danger mt-1">{error}</p>}
-      </div>
+      </label>
 
       <div>
-        <label className="text-xs text-muted mb-1.5 block">Іконка</label>
+        <div className="text-xs text-muted mb-1.5">Іконка</div>
         <IconPicker value={icon} onChange={setIcon} />
       </div>
 
       <div>
-        <label className="text-xs text-muted mb-1.5 block">Колір</label>
+        <div className="text-xs text-muted mb-1.5">Колір</div>
         <ColorPicker value={color} onChange={setColor} />
       </div>
 
       {rootCategories.length > 0 && (
-        <div>
-          <label className="text-xs text-muted mb-1 block">
-            Підкатегорія до
-          </label>
+        <label className="block">
+          <span className="text-xs text-muted mb-1 block">Підкатегорія до</span>
           <select
             className="w-full h-10 rounded-xl border border-line bg-bg px-3 text-sm text-text outline-none focus:border-primary"
             value={parentId}
@@ -152,7 +150,7 @@ function CategoryForm({ initial = {}, allCategories = [], onSave, onCancel }) {
               </option>
             ))}
           </select>
-        </div>
+        </label>
       )}
 
       <div className="flex gap-2 pt-1">
@@ -177,10 +175,6 @@ export function CategoryManager({
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-
-  const editingCat = editingId
-    ? customCategories.find((c) => c.id === editingId)
-    : null;
 
   const getParentLabel = (parentId) => {
     if (!parentId) return null;
