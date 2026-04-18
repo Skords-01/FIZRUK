@@ -121,6 +121,11 @@ export default defineConfig(({ mode }) => {
               if (id.includes("react-virtuoso")) return "vendor-virtuoso";
               if (id.includes("@zxing")) return "vendor-zxing";
               if (id.includes("react-markdown")) return "vendor-markdown";
+              // Ізольований chunk для Sentry, щоб SDK (~30–40 KB gzip) не
+              // потрапляв у загальний `vendor`, який шериться між eager-
+              // імпортами main bundle. Див. правило 2.3 у
+              // `.agents/skills/vercel-react-best-practices/AGENTS.md`.
+              if (id.includes("@sentry")) return "vendor-sentry";
               return "vendor";
             }
           },
