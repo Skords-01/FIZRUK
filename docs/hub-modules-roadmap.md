@@ -4,8 +4,9 @@
 
 ### Поточний фокус (наступний спринт)
 
-1. **Web Push з підпискою** — довести до кінця UX підписки в PWA й узгодити з уже наявними VAPID / API (див. «Наступні кроки» в Hub нижче).
-2. **Уніфікований експорт даних** — один архів по всіх модулях для резервного копіювання та міграції.
+1. **Уніфікований експорт даних** — один архів по всіх модулях для резервного копіювання та міграції.
+2. **Спільна сторінка «Щоденник»** — агрегований лог активностей усіх модулів за день.
+3. **Докінчити TypeScript-міграцію** — вже мігровані `shared/hooks/*`; наступні фази на `shared/lib/*` і `core/lib/*`.
 
 ---
 
@@ -14,12 +15,13 @@
 ### Реалізовано
 
 - [x] Навігація між 4 модулями (Фінік, Фізрук, Рутина, Харчування)
-- [x] Спільна UI-бібліотека (Banner, Button, Card, ConfirmDialog, EmptyState, Input, InputDialog, Select, Skeleton, SwipeToAction, Toast, VoiceMicButton)
-- [x] Спільні хуки (useDarkMode, useDialogFocusTrap, useOnlineStatus, useToast)
+- [x] Спільна UI-бібліотека (Banner, Button, Card, ConfirmDialog, EmptyState, Icon, Input, InputDialog, ProgressRing, SectionErrorBoundary, Skeleton, SwipeToAction, Toast, VoiceMicButton)
+- [x] Спільні хуки на TypeScript: useDarkMode, useDebounce, useDialogFocusTrap, useOnlineStatus, usePushNotifications, useToast, useVisualKeyboardInset
 - [x] AI-чат (HubChat, Anthropic)
 - [x] Hub-бекап/відновлення (HubBackupPanel)
 - [x] ModuleErrorBoundary — ізоляція помилок модулів
 - [x] PWA: Service Worker, офлайн-кеш, встановлення на пристрій, push-нагадування у фоні
+- [x] Web Push через VAPID: `usePushNotifications`, `PushNotificationToggle`, серверні ендпоінти `/api/push/vapid-public`, `/subscribe`, `/unsubscribe`, `/send` (`web-push`, захищені `API_SECRET`)
 - [x] PWA shortcuts: 3 ярлики на головному екрані з deep-link роутингом
 - [x] API-сервер: Railway / Replit (Express-агрегатор), CORS, rate-limit
 - [x] Авторизація: email/password (Better Auth), сесійні cookie, PostgreSQL
@@ -30,18 +32,23 @@
 - [x] Глобальний пошук по Hub (HubSearch — їжа / тренування / транзакції / звички)
 - [x] Онбординг для нових користувачів (OnboardingWizard)
 - [x] Щотижневий AI-дайджест (WeeklyDigestCard, useWeeklyDigest, /api/weekly-digest)
+- [x] AI-порада дня (CoachInsightCard, useCoachInsight, /api/coach)
 - [x] Рекомендаційний рушій (HubRecommendations, recommendationEngine — без AI API)
-- [x] Голосовий ввід (VoiceMicButton, speechParsers — UK/EN, у Харчуванні, Фізруку, Фінікові)
-- [x] Hub-налаштування (HubSettingsPage) — централізована сторінка для всіх модулів
+- [x] Голосовий ввід (VoiceMicButton, speechParsers, useSpeech — UK/EN, у Харчуванні, Фізруку, Фінікові, HubChat)
+- [x] AI-чат розбитий на модулі (hubChatContext, hubChatActions, hubChatUtils, hubChatSpeech) + ChatInput/ChatMessage/AssistantMessageBody
+- [x] Hub-налаштування (HubSettingsPage) + секції в `core/settings/*`: GeneralSection, FinykSection, FizrukSection, RoutineSection, NotificationsSection, AIDigestSection
 - [x] Hub-звіти (HubReports) — зведені звіти по всіх модулях
 - [x] Сторінка входу/реєстрації (AuthPage), AuthContext/useAuth, authClient
+- [x] Розділення App.jsx на app-shell (OfflineBanner, PageLoader, DarkModeToggle, IOSInstallBanner, UserMenuButton, MigrationPrompt, usePwaInstall, useIosInstallBanner, useSWUpdate)
+- [x] Індикатор синхронізації в шапці (SyncStatusIndicator, useSyncStatus)
+- [x] Щоденні AI-квоти per-user / per-IP (`server/aiQuota.js`, таблиця `ai_usage_daily`)
 
 ### Наступні кроки
 
 1. Уніфікований експорт даних усіх модулів в один архів
-2. Push-нотифікації через Web Push API (зараз — тільки SW showNotification без підписки)
-3. Спільна сторінка «Щоденник» — агрегований лог активностей усіх модулів за день
-4. Email-нотифікації (тижневий дайджест, нагадування)
+2. Спільна сторінка «Щоденник» — агрегований лог активностей усіх модулів за день
+3. Email-нотифікації (тижневий дайджест, нагадування)
+4. TypeScript-міграція `shared/lib/*`, `core/lib/*`, `core/settings/*` (shared/hooks уже готові)
 
 ---
 
@@ -50,20 +57,24 @@
 ### Реалізовано
 
 - [x] Синхронізація з Monobank (імпорт транзакцій, useMonobank, /api/mono)
-- [x] Огляд, список транзакцій, фільтри (Overview, Transactions)
-- [x] Категорії витрат із графіком (CategoryChart)
-- [x] Бюджети (Budgets)
+- [x] Огляд, список транзакцій, фільтри, пошук із debounce (Overview, Transactions, TxRow, TxListItem)
+- [x] Категорії витрат із графіком (CategoryChart) + менеджер категорій (CategoryManager, CategorySelector)
+- [x] Аналітика-сторінка (Analytics) з CategoryPieChart, MerchantList, центральною палітрою `constants/chartPalette`
+- [x] Бюджети: Limit + Goal budgets (Budgets, GoalBudgetCard, LimitBudgetCard, useBudget)
 - [x] Активи та чиста вартість (Assets, NetworthChart)
 - [x] Борги (DebtCard, debtEngine)
 - [x] Підписки (SubCard, subscriptionUtils, інтеграція з календарем Рутини)
-- [x] AI-чат по фінансах (Chat)
+- [x] AI-чат по фінансах (HubChat із контекстом Фініка)
 - [x] Бекап/відновлення даних Фініка (finykBackup)
-- [x] Тренди бюджету (BudgetTrendChart)
+- [x] Тренди бюджету (BudgetTrendChart) + lazy-завантаження графіків (components/charts/lazy.js)
 - [x] Ручне додавання витрат/боргів (ManualExpenseSheet)
 - [x] Прогноз витрат (forecastEngine)
 - [x] SyncStatusBadge — стан хмарної синхронізації на Overview
 - [x] PrivatBank business API (usePrivatbank, /api/privat) — реалізовано, вимкнено прапором `PRIVAT_ENABLED`
 - [x] Інтеграція з календарем Рутини (hubRoutineSync)
+- [x] Доменний шар `domain/`: уніфікована модель `Transaction` і `normalizeTransaction` (manual / mono / ai / import), `domain/selectors.js` із чистими проєкціями для аналітики
+- [x] Централізований шар сховища `lib/finykStorage.js` + `storageManager.js` замість прямих викликів localStorage у компонентах/хуках (debounce + safeJsonSet)
+- [x] Оптимізації рендеру: memoization чистих компонентів (TxRow/SwipeToAction), кеш аналітики через `useAnalytics`, єдиний `useUnifiedFinanceData`
 
 ### Наступні кроки
 
@@ -128,6 +139,7 @@
 - [x] Денний звіт (DayReportSheet) — повний список звичок за день з перемиканням
 - [x] Прогрес-кільце дня (DayProgressRing) — SVG-кільце виконання на hero-секції
 - [x] Чернетки звичок (routineDraftUtils)
+- [x] Розділений календарний стан (`context/RoutineCalendarContext` — data/actions окремо) для оптимізації рендерів
 
 ### Наступні кроки
 
@@ -189,10 +201,14 @@
 - [x] date.js (`toLocalISODate`) — уніфікований UTC-незалежний форматер дат
 - [x] Barcode multi-DB cascade (`lookupOFF` / `lookupUSDA` / `lookupUPCitemdb`)
 - [x] Єдиний `pg.Pool` у [server/db.js](server/db.js) для API та Better Auth; інкрементальні SQL-файли в `server/migrations/` + `schema_migrations`
+- [x] Web Push стек на бекенді: `server/api/push.js` (vapid-public / subscribe / unsubscribe / send), `web-push` у `package.json`, `API_SECRET` для захисту `/send`
+- [x] Щоденні AI-квоти: `server/aiQuota.js` + міграція `002_ai_usage_daily.sql`, `AI_DAILY_USER_LIMIT` / `AI_DAILY_ANON_LIMIT` / `AI_QUOTA_DISABLED`
+- [x] Спільні HTTP-утиліти для entrypoints (`server/httpCommon.mjs`), роздільні `railway.mjs` / `replit.mjs`
+- [x] CI/CD pipeline: GitHub Actions (`.github/workflows/ci.yml`) — `npm audit`, license policy check, `npm run check` (format, lint, test, build) з SHA-pinned actions
 
 ### Наступні кроки
 
 1. Резервне копіювання PostgreSQL (scheduled snapshots) — інфраструктура провайдера (див. replit.md)
-2. Тести інтеграції для sync endpoints
+2. Тести інтеграції для sync endpoints і push endpoints
 3. Rate-limiting per-user для auth endpoints
-4. CI/CD pipeline (GitHub Actions або Vercel checks)
+4. Моніторинг / алерти на помилки API (Sentry або подібне)
