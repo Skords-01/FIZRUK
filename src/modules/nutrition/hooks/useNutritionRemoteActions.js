@@ -71,7 +71,6 @@ export function useNutritionRemoteActions({
   setWeekPlanRaw,
   setWeekPlanBusy,
   // day plan / day hint
-  dayPlan,
   setDayPlan,
   setDayPlanBusy,
   setDayHintBusy,
@@ -245,25 +244,26 @@ export function useNutritionRemoteActions({
       setErr("");
     },
     onSuccess: ({ plan, regenerateMealType }) => {
-      if (regenerateMealType && dayPlan?.meals?.length > 0) {
-        const newMeals = Array.isArray(plan.meals) ? plan.meals : [];
-        const merged = [
-          ...dayPlan.meals.filter((m) => m.type !== regenerateMealType),
-          ...newMeals.filter((m) => m.type === regenerateMealType),
-        ];
-        const totals = merged.reduce(
-          (acc, m) => ({
-            totalKcal: (acc.totalKcal ?? 0) + (m.kcal ?? 0),
-            totalProtein_g: (acc.totalProtein_g ?? 0) + (m.protein_g ?? 0),
-            totalFat_g: (acc.totalFat_g ?? 0) + (m.fat_g ?? 0),
-            totalCarbs_g: (acc.totalCarbs_g ?? 0) + (m.carbs_g ?? 0),
-          }),
-          {},
-        );
-        setDayPlan({ ...dayPlan, meals: merged, ...totals });
-      } else {
-        setDayPlan(plan);
-      }
+      setDayPlan((prev) => {
+        if (regenerateMealType && prev?.meals?.length > 0) {
+          const newMeals = Array.isArray(plan.meals) ? plan.meals : [];
+          const merged = [
+            ...prev.meals.filter((m) => m.type !== regenerateMealType),
+            ...newMeals.filter((m) => m.type === regenerateMealType),
+          ];
+          const totals = merged.reduce(
+            (acc, m) => ({
+              totalKcal: (acc.totalKcal ?? 0) + (m.kcal ?? 0),
+              totalProtein_g: (acc.totalProtein_g ?? 0) + (m.protein_g ?? 0),
+              totalFat_g: (acc.totalFat_g ?? 0) + (m.fat_g ?? 0),
+              totalCarbs_g: (acc.totalCarbs_g ?? 0) + (m.carbs_g ?? 0),
+            }),
+            {},
+          );
+          return { ...prev, meals: merged, ...totals };
+        }
+        return plan;
+      });
     },
     onError: (err) => {
       setErr(err?.message || "Помилка генерації плану");
