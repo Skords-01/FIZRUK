@@ -61,16 +61,23 @@ export function buildApiCspDirectives() {
 }
 
 /**
- * JSON API сервер (див. server/railway.mjs).
+ * Helmet middleware для Express.
  *
- * - CSP API-only (див. buildApiCspDirectives). Можна вимкнути через
- *   `CSP_DISABLE=1` або перевести в report-only через `CSP_REPORT_ONLY=1`
- *   (корисно для поступового розгортання на стейджі).
- * - `crossOriginResourcePolicy: 'cross-origin'` — щоб fetch з іншого домену
- *   (Vercel → Railway) не ламався.
+ * @param {{ servesFrontend?: boolean }} [opts]
+ * - `servesFrontend: true` — цей процес окрім API віддає ще й React SPA
+ *   (наприклад, `server/replit.mjs`). У цьому режимі CSP вимикається, бо
+ *   API-CSP з `script-src 'none'` зламала б фронтенд (Vite-PWA вбудовує
+ *   інлайн-скрипт реєстрації SW, плюс `blob:` worker). Для розгортань, де
+ *   потрібна CSP на SPA, політика задається на CDN-рівні (Vercel headers).
+ * - `servesFrontend: false` (дефолт) — API-only (Railway). CSP буде строгою
+ *   (див. buildApiCspDirectives). `CSP_REPORT_ONLY=1` переводить у
+ *   report-only, `CSP_DISABLE=1` — повне вимкнення без re-deploy.
+ *
+ * `crossOriginResourcePolicy: 'cross-origin'` — щоб fetch з іншого домену
+ * (Vercel → Railway) не ламався.
  */
-export function apiHelmetMiddleware() {
-  const cspDisabled = process.env.CSP_DISABLE === "1";
+export function apiHelmetMiddleware({ servesFrontend = false } = {}) {
+  const cspDisabled = process.env.CSP_DISABLE === "1" || servesFrontend;
   const reportOnly = process.env.CSP_REPORT_ONLY === "1";
 
   return helmet({
