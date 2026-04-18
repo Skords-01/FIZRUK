@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { postJson } from "../lib/nutritionApi.js";
+import { parsePantry as apiParsePantry } from "../lib/nutritionApi.js";
 import { mergeItems } from "../lib/mergeItems.js";
 import {
   loadActivePantryId,
@@ -246,7 +246,7 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
     mutationFn: () => {
       if (!pantryText.trim())
         throw new Error("Надиктуй/впиши список продуктів.");
-      return postJson("/api/nutrition/parse-pantry", {
+      return apiParsePantry({
         text: pantryText.trim(),
         locale: "uk-UA",
       });
