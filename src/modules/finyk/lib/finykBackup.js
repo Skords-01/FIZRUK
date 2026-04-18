@@ -1,5 +1,6 @@
 import { DEFAULT_SUBSCRIPTIONS } from "../constants.js";
 import { notifyFinykRoutineCalendarSync } from "../hubRoutineSync.js";
+import { readJSON, writeJSON } from "./finykStorage.js";
 
 /** Версія формату експорту JSON (бекап). */
 export const FINYK_BACKUP_VERSION = 2;
@@ -7,14 +8,7 @@ export const FINYK_BACKUP_VERSION = 2;
 const DEFAULT_MONTHLY_PLAN = { income: "", expense: "", savings: "" };
 
 function readJsonFromLocalStorage(key, fallback) {
-  if (typeof localStorage === "undefined") return fallback;
-  try {
-    const s = localStorage.getItem(key);
-    if (s === null) return fallback;
-    return JSON.parse(s);
-  } catch {
-    return fallback;
-  }
+  return readJSON(key, fallback);
 }
 
 /**
@@ -65,12 +59,11 @@ const FINYK_FIELD_TO_STORAGE_KEY = {
  * Записує нормалізований бекап Фініка в localStorage (після normalizeFinykBackup).
  */
 export function persistFinykNormalizedToStorage(normalized) {
-  if (typeof localStorage === "undefined") return;
   for (const [field, storageKey] of Object.entries(
     FINYK_FIELD_TO_STORAGE_KEY,
   )) {
     if (normalized[field] !== undefined) {
-      localStorage.setItem(storageKey, JSON.stringify(normalized[field]));
+      writeJSON(storageKey, normalized[field]);
     }
   }
   notifyFinykRoutineCalendarSync();

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useMonobank } from "./hooks/useMonobank";
 import { usePrivatbank } from "./hooks/usePrivatbank";
 import { useStorage } from "./hooks/useStorage";
+import { readRaw, writeRaw } from "./lib/finykStorage.js";
 import { PAGES } from "./constants";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
@@ -162,28 +163,18 @@ export default function App({
   const [page, navigate] = useHashRouter();
   const [tokenInput, setTokenInput] = useState("");
   const [showToken, setShowToken] = useState(false);
-  const [rememberToken, setRememberToken] = useState(() => {
-    try {
-      return !!localStorage.getItem("finyk_token_remembered");
-    } catch {
-      return false;
-    }
-  });
+  const [rememberToken, setRememberToken] = useState(
+    () => !!readRaw("finyk_token_remembered", ""),
+  );
   const [categoryFilter, setCategoryFilter] = useState(null);
-  const [showBalance, setShowBalance] = useState(() => {
-    try {
-      return localStorage.getItem("finyk_show_balance_v1") !== "0";
-    } catch {
-      return true;
-    }
-  });
+  const [showBalance, setShowBalance] = useState(
+    () => readRaw("finyk_show_balance_v1", "1") !== "0",
+  );
   const [showExpenseSheet, setShowExpenseSheet] = useState(false);
   const [editingManualExpenseId, setEditingManualExpenseId] = useState(null);
 
   useEffect(() => {
-    try {
-      localStorage.setItem("finyk_show_balance_v1", showBalance ? "1" : "0");
-    } catch {}
+    writeRaw("finyk_show_balance_v1", showBalance ? "1" : "0");
   }, [showBalance]);
 
   useEffect(() => {

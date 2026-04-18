@@ -26,6 +26,7 @@ import { GoalBudgetCard } from "../components/budgets/GoalBudgetCard.jsx";
 import { CategorySelector } from "../components/CategorySelector.jsx";
 import { CategoryManager } from "../components/CategoryManager.jsx";
 import { calculateSafeToSpendPerDay } from "../hooks/useBudget.js";
+import { readJSON, writeJSON } from "../lib/finykStorage.js";
 
 const formInp =
   "w-full h-10 rounded-xl border border-line bg-bg px-3 text-sm text-text outline-none focus:border-primary";
@@ -116,28 +117,23 @@ export function Budgets({ mono, storage }) {
 
   const getAdviceCache = useCallback(
     (categoryId, monthKey) => {
-      try {
-        const raw = localStorage.getItem(
-          PROACTIVE_CACHE_PREFIX + categoryId + "_" + monthKey,
-        );
-        if (!raw) return null;
-        const { text, ts } = JSON.parse(raw);
-        if (Date.now() - ts > PROACTIVE_CACHE_TTL) return null;
-        return text;
-      } catch {
-        return null;
-      }
+      const cached = readJSON(
+        PROACTIVE_CACHE_PREFIX + categoryId + "_" + monthKey,
+        null,
+      );
+      if (!cached || typeof cached !== "object") return null;
+      const { text, ts } = cached;
+      if (!ts || Date.now() - ts > PROACTIVE_CACHE_TTL) return null;
+      return text;
     },
     [PROACTIVE_CACHE_TTL],
   );
 
   const setAdviceCache = useCallback((categoryId, monthKey, text) => {
-    try {
-      localStorage.setItem(
-        PROACTIVE_CACHE_PREFIX + categoryId + "_" + monthKey,
-        JSON.stringify({ text, ts: Date.now() }),
-      );
-    } catch {}
+    writeJSON(PROACTIVE_CACHE_PREFIX + categoryId + "_" + monthKey, {
+      text,
+      ts: Date.now(),
+    });
   }, []);
 
   const forecasts = useMemo(() => {
