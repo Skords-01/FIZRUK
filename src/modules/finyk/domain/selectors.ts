@@ -250,10 +250,15 @@ export function selectCategoryDistributionFromIndex(
   customCategories: Category[] = [],
 ): TopCategory[] {
   const top = buildCategoryList(index, customCategories).slice(0, 20);
-  const totalSpent = top.reduce((s, c) => s + c.spent, 0);
+  // pct рахуємо від повної суми витрат (а не від видимої топ-20),
+  // щоб «довгий хвіст» не інфлейтив долю показаних категорій.
+  const total =
+    typeof index?.totalSpent === "number" && index.totalSpent > 0
+      ? index.totalSpent
+      : top.reduce((s, c) => s + c.spent, 0);
   return top.map((c, idx) => ({
     ...c,
-    pct: totalSpent > 0 ? Math.round((c.spent / totalSpent) * 100) : 0,
+    pct: total > 0 ? Math.round((c.spent / total) * 100) : 0,
     color: c.color || getCatColor(c.categoryId, customCategories, idx),
   }));
 }
@@ -336,6 +341,13 @@ interface TopMerchantsOptions extends SelectorOptions {
 
 // Top merchants by aggregated expense. Deterministic, pure sort — useful
 // both in the UI and in tests.
+// Ключ для групування мерчантів: нормалізовані пробіли + регістр, щоб
+// «АТБ», «атб», «АТБ  » зливалися в один запис. Для відображення
+// використовується перша зустрінута форма.
+function merchantGroupKey(name: string): string {
+  return name.replace(/\s+/g, " ").trim().toLocaleLowerCase("uk-UA");
+}
+
 export function getTopMerchants(
   transactions: readonly Transaction[] | null | undefined,
   opts: TopMerchantsOptions | number = {},
@@ -357,11 +369,13 @@ export function getTopMerchants(
   for (const tx of list) {
     if (!tx || excluded.has(tx.id) || tx.amount >= 0) continue;
     if (inMonth && !inMonth(tx)) continue;
-    const name = (tx.description || "").trim();
-    if (!name) continue;
-    if (!merchants[name]) merchants[name] = { name, count: 0, total: 0 };
-    merchants[name].count++;
-    merchants[name].total += Math.abs(tx.amount / 100);
+    const raw = (tx.description || "").trim();
+    if (!raw) continue;
+    const key = merchantGroupKey(raw);
+    if (!key) continue;
+    if (!merchants[key]) merchants[key] = { name: raw, count: 0, total: 0 };
+    merchants[key].count++;
+    merchants[key].total += Math.abs(tx.amount / 100);
   }
 
   return Object.values(merchants)
