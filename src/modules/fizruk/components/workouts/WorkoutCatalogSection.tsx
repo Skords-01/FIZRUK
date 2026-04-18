@@ -112,7 +112,7 @@ export function WorkoutCatalogSection({
                           {mode === "log" && (
                             <button
                               type="button"
-                              className="shrink-0 w-12 min-h-[48px] flex items-center justify-center border-l border-line/80 text-muted hover:text-text hover:bg-panelHi transition-colors"
+                              className="shrink-0 w-12 min-h-[48px] flex items-center justify-center border-l border-line text-muted hover:text-text hover:bg-panelHi transition-colors"
                               aria-label="Опис і фото вправи"
                               onClick={() => setSelected(ex)}
                             >

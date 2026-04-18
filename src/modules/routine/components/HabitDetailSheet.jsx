@@ -280,7 +280,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               <button
                 type="button"
                 onClick={() => goCalMonth(-1)}
-                className="w-8 h-8 rounded-lg border border-line/70 text-muted hover:text-text flex items-center justify-center text-sm"
+                className="w-8 h-8 rounded-lg border border-line text-muted hover:text-text flex items-center justify-center text-sm"
                 aria-label="Попередній місяць"
               >
                 ‹
@@ -291,7 +291,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               <button
                 type="button"
                 onClick={() => goCalMonth(1)}
-                className="w-8 h-8 rounded-lg border border-line/70 text-muted hover:text-text flex items-center justify-center text-sm"
+                className="w-8 h-8 rounded-lg border border-line text-muted hover:text-text flex items-center justify-center text-sm"
                 aria-label="Наступний місяць"
               >
                 ›

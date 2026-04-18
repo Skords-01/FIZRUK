@@ -58,7 +58,7 @@ export const HabitListItem = memo(function HabitListItem({
           <div className="flex gap-1">
             <button
               type="button"
-              className="min-w-[32px] min-h-[36px] rounded-lg border border-line/70 text-xs text-muted hover:text-text"
+              className="min-w-[32px] min-h-[36px] rounded-lg border border-line text-xs text-muted hover:text-text"
               onClick={onMoveUp}
               aria-label="Вгору в списку"
             >
@@ -66,7 +66,7 @@ export const HabitListItem = memo(function HabitListItem({
             </button>
             <button
               type="button"
-              className="min-w-[32px] min-h-[36px] rounded-lg border border-line/70 text-xs text-muted hover:text-text"
+              className="min-w-[32px] min-h-[36px] rounded-lg border border-line text-xs text-muted hover:text-text"
               onClick={onMoveDown}
               aria-label="Вниз в списку"
             >
@@ -86,7 +86,7 @@ export const HabitListItem = memo(function HabitListItem({
             type="button"
             variant="ghost"
             size="sm"
-            className="!h-9 !px-3 !text-xs border border-line/70"
+            className="!h-9 !px-3 !text-xs border border-line"
             onClick={onStartEdit}
           >
             Змінити
@@ -95,7 +95,7 @@ export const HabitListItem = memo(function HabitListItem({
             type="button"
             variant="ghost"
             size="sm"
-            className="!h-9 !px-3 !text-xs border border-line/70"
+            className="!h-9 !px-3 !text-xs border border-line"
             onClick={onArchive}
           >
             В архів

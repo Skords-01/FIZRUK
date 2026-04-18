@@ -287,7 +287,7 @@ export default function FizrukApp({
             <button
               type="button"
               onClick={onBackToHub}
-              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line/80 bg-panel/80"
+              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line bg-panel/80"
               aria-label="До вибору модуля"
               title="До хабу"
             >
@@ -358,7 +358,7 @@ export default function FizrukApp({
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line/80 bg-panel/80"
+            className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line bg-panel/80"
             aria-label="Налаштування даних"
             title="Налаштування даних"
           >

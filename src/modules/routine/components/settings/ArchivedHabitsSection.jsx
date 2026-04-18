@@ -31,7 +31,7 @@ export function ArchivedHabitsSection({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="!h-9 !px-3 !text-xs border border-line/70"
+                className="!h-9 !px-3 !text-xs border border-line"
                 onClick={() =>
                   setRoutine((s) => setHabitArchived(s, h.id, false))
                 }

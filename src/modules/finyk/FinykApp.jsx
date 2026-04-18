@@ -311,7 +311,7 @@ export default function App({
           <div
             className={cn(
               "bg-panel/95 backdrop-blur-xl border rounded-3xl p-6 shadow-float",
-              "border-line/80 dark:border-line",
+              "border-line dark:border-line",
             )}
           >
             <label

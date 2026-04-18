@@ -35,7 +35,7 @@ export function RoutineBackupSection({ theme, toast, onImportParsed }) {
         <Button
           type="button"
           variant="ghost"
-          className="border border-line/70"
+          className="border border-line"
           onClick={() => backupRef.current?.click()}
         >
           Імпорт

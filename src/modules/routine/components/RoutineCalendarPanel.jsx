@@ -301,7 +301,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
-              className="w-10 h-10 rounded-xl border border-line/80 bg-panel/90 text-muted hover:text-text shadow-sm"
+              className="w-10 h-10 rounded-xl border border-line bg-panel/90 text-muted hover:text-text shadow-sm"
               onClick={() => goMonth(-1)}
               aria-label="Попередній місяць"
             >
@@ -312,7 +312,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
             </span>
             <button
               type="button"
-              className="w-10 h-10 rounded-xl border border-line/80 bg-panel/90 text-muted hover:text-text shadow-sm"
+              className="w-10 h-10 rounded-xl border border-line bg-panel/90 text-muted hover:text-text shadow-sm"
               onClick={() => goMonth(1)}
               aria-label="Наступний місяць"
             >
@@ -408,7 +408,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
             <Button
               type="button"
               variant="ghost"
-              className="mt-3 border border-line/70"
+              className="mt-3 border border-line"
               onClick={() => {
                 setTagFilter(null);
                 setListQuery("");
@@ -542,7 +542,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="!h-9 !px-3 !text-xs border border-line/70 bg-panelHi/80"
+                              className="!h-9 !px-3 !text-xs border border-line bg-panelHi/80"
                               type="button"
                               onClick={() =>
                                 onOpenModule("fizruk", { hash: "plan" })

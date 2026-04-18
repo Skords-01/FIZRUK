@@ -446,7 +446,7 @@ export default function RoutineApp({
             <button
               type="button"
               onClick={onBackToHub}
-              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line/80 bg-panel/80"
+              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line bg-panel/80"
               aria-label="До вибору модуля"
               title="До хабу"
             >

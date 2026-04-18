@@ -25,7 +25,7 @@ export function WeekDayStrip({
     <div className="flex items-center gap-1.5 sm:gap-2">
       <button
         type="button"
-        className="shrink-0 flex h-11 w-9 items-center justify-center rounded-xl border border-line/80 bg-panel/90 text-lg text-muted transition-colors hover:bg-panelHi hover:text-text"
+        className="shrink-0 flex h-11 w-9 items-center justify-center rounded-xl border border-line bg-panel/90 text-lg text-muted transition-colors hover:bg-panelHi hover:text-text"
         onClick={() => onShiftWeek(-1)}
         aria-label="Попередній тиждень"
       >
@@ -59,7 +59,7 @@ export function WeekDayStrip({
       </div>
       <button
         type="button"
-        className="shrink-0 flex h-11 w-9 items-center justify-center rounded-xl border border-line/80 bg-panel/90 text-lg text-muted transition-colors hover:bg-panelHi hover:text-text"
+        className="shrink-0 flex h-11 w-9 items-center justify-center rounded-xl border border-line bg-panel/90 text-lg text-muted transition-colors hover:bg-panelHi hover:text-text"
         onClick={() => onShiftWeek(1)}
         aria-label="Наступний тиждень"
       >

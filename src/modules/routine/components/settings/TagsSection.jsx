@@ -32,7 +32,7 @@ export function TagsSection({ routine, setRoutine, tagDraft, setTagDraft }) {
         <Button
           type="button"
           variant="ghost"
-          className="min-h-[44px] shrink-0 border border-line/70 px-4"
+          className="min-h-[44px] shrink-0 border border-line px-4"
           onClick={() => {
             setRoutine((s) => createTag(s, tagDraft));
             setTagDraft("");

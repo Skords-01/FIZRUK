@@ -12,7 +12,7 @@ export function NutritionHeader({ busy: _busy, onBackToHub }) {
               "shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1",
               "flex items-center justify-center rounded-xl",
               "text-muted hover:text-text transition-all duration-200",
-              "border border-line/80 bg-panel/80 hover:bg-panelHi",
+              "border border-line bg-panel/80 hover:bg-panelHi",
               "active:scale-95",
             )}
             aria-label="До вибору модуля"

@@ -341,7 +341,7 @@ export function WeeklyDigestCard() {
     <div
       className={cn(
         "rounded-2xl border bg-panel shadow-card overflow-hidden",
-        "border-line/80 dark:border-line",
+        "border-line dark:border-line",
         "transition-all duration-200 hover:shadow-float",
       )}
     >

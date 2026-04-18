@@ -204,7 +204,7 @@ export function HabitForm({
           <Button
             type="button"
             variant="ghost"
-            className="w-full border border-line/70"
+            className="w-full border border-line"
             onClick={onCancel}
           >
             Скасувати
