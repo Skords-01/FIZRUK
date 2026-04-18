@@ -4,10 +4,11 @@ import {
   habitScheduledOnDate,
 } from "../lib/hubCalendarAggregate.js";
 import { normalizeReminderTimes } from "../lib/routineDraftUtils.js";
+import type { RoutineState } from "../lib/types";
 
 export const ROUTINE_NOTIFY_PREFIX = "routine_notify_";
 
-export function cleanupStaleRoutineNotifyKeys(maxAgeDays = 45) {
+export function cleanupStaleRoutineNotifyKeys(maxAgeDays = 45): void {
   try {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - maxAgeDays);
@@ -31,7 +32,11 @@ function currentHm() {
   return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
 }
 
-async function showNotification(title, body, tag) {
+async function showNotification(
+  title: string,
+  body: string,
+  tag: string,
+): Promise<void> {
   try {
     if ("serviceWorker" in navigator) {
       const reg = await navigator.serviceWorker.ready;
@@ -50,7 +55,7 @@ async function showNotification(title, body, tag) {
   } catch {}
 }
 
-function sendRoutineStateToSW(routine) {
+function sendRoutineStateToSW(routine: RoutineState): void {
   try {
     if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller)
       return;
@@ -65,9 +70,9 @@ function sendRoutineStateToSW(routine) {
   } catch {}
 }
 
-export function useRoutineReminders(routine) {
+export function useRoutineReminders(routine: RoutineState): void {
   const enabled = routine.prefs?.routineRemindersEnabled === true;
-  const routineRef = useRef(routine);
+  const routineRef = useRef<RoutineState>(routine);
   routineRef.current = routine;
 
   useEffect(() => {
@@ -80,7 +85,7 @@ export function useRoutineReminders(routine) {
 
   useEffect(() => {
     if (!enabled) return undefined;
-    let timerId = null;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
     let disposed = false;
 
     const fireAndSchedule = () => {

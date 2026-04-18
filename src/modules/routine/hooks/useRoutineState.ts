@@ -5,6 +5,7 @@ import {
   loadRoutineState,
   setPref,
 } from "../lib/routineStorage.js";
+import type { RoutineState } from "../lib/types";
 
 /**
  * Reactive routine state with cross-tab (`storage`) and same-tab
@@ -12,11 +13,13 @@ import {
  * previously duplicated this subscription.
  */
 export function useRoutineState() {
-  const [routine, setRoutine] = useState(() => loadRoutineState());
+  const [routine, setRoutine] = useState<RoutineState>(() =>
+    loadRoutineState(),
+  );
 
   useEffect(() => {
     const handler = () => setRoutine(loadRoutineState());
-    const storageHandler = (e) => {
+    const storageHandler = (e: StorageEvent) => {
       if (e.key === ROUTINE_STORAGE_KEY || e.key === null) handler();
     };
     window.addEventListener(ROUTINE_EVENT, handler);
@@ -27,7 +30,7 @@ export function useRoutineState() {
     };
   }, []);
 
-  const updatePref = useCallback((key, value) => {
+  const updatePref = useCallback((key: string, value: unknown) => {
     setRoutine((s) => setPref(s, key, value));
   }, []);
 

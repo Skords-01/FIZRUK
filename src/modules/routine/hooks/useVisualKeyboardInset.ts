@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 /** Піднімає bottom sheet над віртуальною клавіатурою (iOS/Android Chrome). */
-export function useVisualKeyboardInset(active) {
+export function useVisualKeyboardInset(active: boolean): number {
   const [insetPx, setInsetPx] = useState(0);
 
   useEffect(() => {
