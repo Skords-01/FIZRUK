@@ -135,6 +135,10 @@ export async function anthropicMessages(
  * інструментує outcome/latency (розмір відповіді = час до закриття з'єднання),
  * і повертає `{ response, recordStreamEnd }`. Викликай `recordStreamEnd(outcome?)`
  * коли боді повністю спожите (або з помилкою) щоб закрити latency-вимір.
+ *
+ * Таймаут (`AbortController`) навмисно НЕ гаситься у `finally`: боді SSE
+ * споживається у caller-і після повернення з цієї функції, тому abort-таймер
+ * мусить жити до виклику `recordStreamEnd`, щоб захистити stream від зависання.
  */
 export async function anthropicMessagesStream(
   apiKey,
@@ -146,8 +150,9 @@ export async function anthropicMessagesStream(
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
 
+  let response;
   try {
-    const response = await fetch(ANTHROPIC_URL, {
+    response = await fetch(ANTHROPIC_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -157,27 +162,8 @@ export async function anthropicMessagesStream(
       body: JSON.stringify({ ...payload, stream: true }),
       signal: controller.signal,
     });
-
-    if (!response.ok) {
-      const ms = Number(process.hrtime.bigint() - start) / 1e6;
-      recordOutcome(response.status === 429 ? "rate_limited" : "error", {
-        model,
-        endpoint,
-        ms,
-      });
-      return { response, recordStreamEnd: () => {} };
-    }
-
-    let settled = false;
-    const recordStreamEnd = (outcome = "ok") => {
-      if (settled) return;
-      settled = true;
-      const ms = Number(process.hrtime.bigint() - start) / 1e6;
-      recordOutcome(outcome, { model, endpoint, ms });
-    };
-
-    return { response, recordStreamEnd };
   } catch (e) {
+    clearTimeout(t);
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     recordOutcome(isAbortError(e) ? "timeout" : "error", {
       model,
@@ -185,9 +171,29 @@ export async function anthropicMessagesStream(
       ms,
     });
     throw e;
-  } finally {
-    clearTimeout(t);
   }
+
+  if (!response.ok) {
+    clearTimeout(t);
+    const ms = Number(process.hrtime.bigint() - start) / 1e6;
+    recordOutcome(response.status === 429 ? "rate_limited" : "error", {
+      model,
+      endpoint,
+      ms,
+    });
+    return { response, recordStreamEnd: () => {} };
+  }
+
+  let settled = false;
+  const recordStreamEnd = (outcome = "ok") => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(t);
+    const ms = Number(process.hrtime.bigint() - start) / 1e6;
+    recordOutcome(outcome, { model, endpoint, ms });
+  };
+
+  return { response, recordStreamEnd };
 }
 
 export function extractAnthropicText(data) {
