@@ -18,6 +18,28 @@ registerRoute(
   ),
 );
 
+// GET /api/* — NetworkFirst with a short timeout so the cache only kicks in
+// when the network is actually unreachable or very slow. Non-GET requests
+// (POST/PUT/DELETE) are NOT cached; they continue to go through the in-JS
+// offline queue implemented in useCloudSync.js.
+registerRoute(
+  ({ url, request }) =>
+    url.pathname.startsWith("/api/") && request.method === "GET",
+  new NetworkFirst({
+    cacheName: "api-cache",
+    networkTimeoutSeconds: 5,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({
+        maxEntries: 60,
+        maxAgeSeconds: 60 * 60 * 24, // 1 day
+        purgeOnQuotaError: true,
+      }),
+    ],
+  }),
+  "GET",
+);
+
 registerRoute(
   ({ url }) => url.origin === "https://fonts.googleapis.com",
   new CacheFirst({
