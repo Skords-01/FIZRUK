@@ -440,6 +440,7 @@ export default function App({
             )}
 
             <Button
+              type="button"
               className={cn(
                 "mt-4 w-full h-12 min-h-[48px] text-base border-0",
                 "bg-gradient-to-r from-brand-600 to-teal-600",
@@ -449,21 +450,31 @@ export default function App({
                 "transition-all duration-200",
                 "active:scale-[0.98]",
               )}
-              onClick={() => connect(tokenInput.trim(), false, rememberToken)}
-              disabled={connecting}
-            >
-              {connecting ? "Підключення..." : "Підключити"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="mt-2 w-full min-h-[44px]"
               onClick={() => {
                 enableFinykManualOnly();
                 setManualOnly(true);
               }}
             >
-              Далі без банку
+              Почати без банку
+            </Button>
+            <p className="mt-2 text-center text-[11px] text-subtle">
+              Ручні витрати, бюджети та аналітика — без API-токена. Monobank
+              можна підключити пізніше.
+            </p>
+
+            <div className="my-4 flex items-center gap-3 text-[11px] text-muted uppercase tracking-wider">
+              <span className="flex-1 h-px bg-line" />
+              або через API
+              <span className="flex-1 h-px bg-line" />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full min-h-[48px]"
+              onClick={() => connect(tokenInput.trim(), false, rememberToken)}
+              disabled={connecting || !tokenInput.trim()}
+            >
+              {connecting ? "Підключення..." : "Підключити Monobank"}
             </Button>
             {typeof onBackToHub === "function" && (
               <Button

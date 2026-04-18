@@ -2,17 +2,19 @@ import { useState } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { useAuth } from "./AuthContext.jsx";
 
-export function AuthPage() {
+export function AuthPage({ onContinueWithoutAccount }) {
   const { login, register, authError, setAuthError } = useAuth();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   const switchMode = () => {
     setMode((m) => (m === "login" ? "register" : "login"));
     setAuthError(null);
+    setShowForgot(false);
   };
 
   const handleSubmit = async (e) => {
@@ -88,12 +90,23 @@ export function AuthPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="auth-password"
-              className="block text-xs font-medium text-muted mb-1.5"
-            >
-              Пароль
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="auth-password"
+                className="block text-xs font-medium text-muted"
+              >
+                Пароль
+              </label>
+              {mode === "login" && (
+                <button
+                  type="button"
+                  onClick={() => setShowForgot((v) => !v)}
+                  className="text-xs text-brand-600 dark:text-brand-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 rounded"
+                >
+                  Забули пароль?
+                </button>
+              )}
+            </div>
             <input
               id="auth-password"
               type="password"
@@ -108,6 +121,23 @@ export function AuthPage() {
               }
             />
           </div>
+
+          {showForgot && (
+            <div
+              role="note"
+              className="text-xs text-text bg-brand-500/10 border border-brand-500/30 rounded-xl px-4 py-3 leading-relaxed"
+            >
+              Напишіть з email акаунту на{" "}
+              <a
+                href="mailto:support@sergeant.app?subject=Password%20reset"
+                className="font-semibold underline"
+              >
+                support@sergeant.app
+              </a>{" "}
+              — скинемо пароль вручну. Локальні дані на пристрої залишаються без
+              змін.
+            </div>
+          )}
 
           {authError && (
             <div
@@ -144,6 +174,29 @@ export function AuthPage() {
               : "Вже є акаунт? Увійти"}
           </button>
         </div>
+
+        {typeof onContinueWithoutAccount === "function" && (
+          <>
+            <div className="my-6 flex items-center gap-3 text-[11px] text-muted uppercase tracking-wider">
+              <span className="flex-1 h-px bg-line" />
+              або
+              <span className="flex-1 h-px bg-line" />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={onContinueWithoutAccount}
+            >
+              Продовжити без акаунту
+            </Button>
+            <p className="mt-2 text-center text-[11px] text-subtle leading-relaxed">
+              Все працює локально. Акаунт потрібен лише для синхронізації між
+              пристроями.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

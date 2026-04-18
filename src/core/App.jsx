@@ -104,16 +104,7 @@ function AppInner() {
     return (
       <Suspense fallback={<PageLoader />}>
         <div className="page-enter">
-          <AuthPage />
-          <div className="fixed bottom-6 left-0 right-0 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowAuth(false)}
-              className="text-sm text-muted hover:text-text underline"
-            >
-              Продовжити без акаунту
-            </button>
-          </div>
+          <AuthPage onContinueWithoutAccount={() => setShowAuth(false)} />
         </div>
       </Suspense>
     );
