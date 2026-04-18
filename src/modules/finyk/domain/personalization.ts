@@ -241,13 +241,7 @@ export function getFrequentCategories(
       customCategories,
       me.category,
     );
-    add(
-      canonicalId,
-      label,
-      Math.abs(Number(me.amount) || 0),
-      ts,
-      me.category,
-    );
+    add(canonicalId, label, Math.abs(Number(me.amount) || 0), ts, me.category);
   }
 
   const arr = Array.from(byId.values());

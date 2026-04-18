@@ -16,10 +16,7 @@ export function useFinykPersonalization({ mono, storage, now } = {}) {
 
   // Стабілізуємо посилання — селектори приймають readonly-дані, а падаючі
   // `undefined → []` кожного рендера ламали dep-array useMemo.
-  const transactions = useMemo(
-    () => rawTransactions || [],
-    [rawTransactions],
-  );
+  const transactions = useMemo(() => rawTransactions || [], [rawTransactions]);
   const manualExpenses = useMemo(
     () => rawManualExpenses || [],
     [rawManualExpenses],
@@ -28,10 +25,7 @@ export function useFinykPersonalization({ mono, storage, now } = {}) {
     () => rawCustomCategories || [],
     [rawCustomCategories],
   );
-  const txCategories = useMemo(
-    () => rawTxCategories || {},
-    [rawTxCategories],
-  );
+  const txCategories = useMemo(() => rawTxCategories || {}, [rawTxCategories]);
 
   const opts = useMemo(
     () => ({ customCategories, excludedTxIds, txCategories, now }),

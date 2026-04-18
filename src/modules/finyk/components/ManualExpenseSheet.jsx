@@ -128,9 +128,7 @@ export function ManualExpenseSheet({
       .trim()
       .toLocaleLowerCase("uk-UA");
     return frequentMerchants
-      .filter(
-        (m) => m.name && m.name.toLocaleLowerCase("uk-UA") !== currentKey,
-      )
+      .filter((m) => m.name && m.name.toLocaleLowerCase("uk-UA") !== currentKey)
       .slice(0, 5);
   }, [frequentMerchants, form.description]);
 
