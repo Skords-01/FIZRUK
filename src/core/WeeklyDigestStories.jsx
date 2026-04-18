@@ -232,7 +232,7 @@ function FinykSlide({ slide }) {
       <div className="mb-4">
         <StatRow
           label="Чистий потік"
-          value={`${net >= 0 ? "+" : ""}${fmtUah(Math.abs(net))}`}
+          value={`${net >= 0 ? "+" : "−"}${fmtUah(Math.abs(net))}`}
           accent
         />
       </div>
@@ -555,38 +555,50 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
   const touchStartRef = useRef(null);
   const dragYRef = useRef(0);
   const containerRef = useRef(null);
+  // Mirror of `index` and `progress` kept in refs so the navigation helpers
+  // and the auto-advance timer can read/update them without stuffing side
+  // effects into `setState` updaters (React requires updater fns to be pure).
+  const indexRef = useRef(0);
+  const progressRef = useRef(0);
 
   const clampedIndex = Math.min(index, Math.max(0, slides.length - 1));
 
   const next = useCallback(() => {
+    const cur = indexRef.current;
+    if (cur >= slides.length - 1) {
+      onClose?.();
+      return;
+    }
+    indexRef.current = cur + 1;
+    progressRef.current = 0;
+    setIndex(cur + 1);
     setProgress(0);
-    setIndex((i) => {
-      if (i >= slides.length - 1) {
-        onClose?.();
-        return i;
-      }
-      return i + 1;
-    });
   }, [slides.length, onClose]);
 
   const prev = useCallback(() => {
+    const target = Math.max(0, indexRef.current - 1);
+    indexRef.current = target;
+    progressRef.current = 0;
+    setIndex(target);
     setProgress(0);
-    setIndex((i) => Math.max(0, i - 1));
   }, []);
 
   // Auto-advance timer — ticks TICK_MS at a time so we can render a smooth
-  // progress bar and also react to pause state mid-slide.
+  // progress bar and also react to pause state mid-slide. Progress is tracked
+  // in a ref so the interval can advance and call `next()` directly rather
+  // than scheduling a side effect from inside a setState updater.
   useEffect(() => {
     if (paused) return;
     const interval = setInterval(() => {
-      setProgress((p) => {
-        const nextP = p + (TICK_MS / SLIDE_MS) * 100;
-        if (nextP >= 100) {
-          queueMicrotask(() => next());
-          return 0;
-        }
-        return nextP;
-      });
+      const nextP = progressRef.current + (TICK_MS / SLIDE_MS) * 100;
+      if (nextP >= 100) {
+        progressRef.current = 0;
+        setProgress(0);
+        next();
+      } else {
+        progressRef.current = nextP;
+        setProgress(nextP);
+      }
     }, TICK_MS);
     return () => clearInterval(interval);
   }, [paused, clampedIndex, next]);
@@ -651,11 +663,18 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
   };
 
   const handlePressEnd = (e) => {
+    const wasHeld = holdTimerRef.current === null;
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
     }
-    if (paused) setPaused(false);
+    // If the press was long enough for the hold-timer to fire, the user meant
+    // to pause — releasing should only resume, not also advance the slide.
+    if (paused || wasHeld) {
+      if (paused) setPaused(false);
+      resetDrag();
+      return;
+    }
     if (dragYRef.current > SWIPE_CLOSE_THRESHOLD) {
       resetDrag();
       onClose?.();
