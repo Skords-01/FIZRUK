@@ -1,4 +1,4 @@
-export function MealTemplatesRow({ mealTemplates, setForm }) {
+export function MealTemplatesRow({ mealTemplates, setForm, onSelected }) {
   if (!Array.isArray(mealTemplates) || mealTemplates.length === 0) return null;
   return (
     <div className="mb-4">
@@ -10,7 +10,7 @@ export function MealTemplatesRow({ mealTemplates, setForm }) {
           <button
             key={t.id}
             type="button"
-            onClick={() =>
+            onClick={() => {
               setForm((s) => ({
                 ...s,
                 name: t.name,
@@ -32,8 +32,9 @@ export function MealTemplatesRow({ mealTemplates, setForm }) {
                     ? String(Math.round(t.macros.carbs_g))
                     : "",
                 err: "",
-              }))
-            }
+              }));
+              onSelected?.();
+            }}
             className="px-2 py-1 rounded-lg text-xs border border-line bg-panelHi hover:border-nutrition/50"
           >
             {t.name}

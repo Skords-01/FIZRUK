@@ -36,6 +36,11 @@ export function AddMealSheet({
   const [pickedFood, setPickedFood] = useState(null);
   const [pickedGrams, setPickedGrams] = useState("100");
   const [fromPantryItem, setFromPantryItem] = useState(null);
+  // Two-step flow: "source" (pick a source — template / pantry / food
+  // search / barcode / photo / manual) then "fill" (name, time, macros,
+  // save). Editing an existing meal or a photo import skips straight to
+  // "fill" since the source is already decided.
+  const [step, setStep] = useState("source");
 
   const { foodHits, offHits, foodBusy, offBusy, foodErr, setFoodErr } =
     useFoodSearch(foodQuery);
@@ -88,6 +93,8 @@ export function AddMealSheet({
       setBarcodeStatus("");
       setScannerOpen(false);
       setFromPantryItem(null);
+      // Jump directly to fill when we already have content to edit.
+      setStep(initialMeal?.id || photoResult ? "fill" : "source");
       void ensureSeedFoods();
     }
   }, [
@@ -103,6 +110,14 @@ export function AddMealSheet({
   function field(key) {
     return (v) => setForm((s) => ({ ...s, [key]: v, err: "" }));
   }
+
+  // Auto-advance to fill step whenever a source selection lands (linked
+  // food from search/barcode or pantry item).
+  useEffect(() => {
+    if (step === "source" && (pickedFood || fromPantryItem)) {
+      setStep("fill");
+    }
+  }, [pickedFood, fromPantryItem, step]);
 
   function handleSave() {
     const name = form.name.trim();
@@ -197,11 +212,23 @@ export function AddMealSheet({
         <div className="px-5 pb-8 pt-2">
           {/* Header */}
           <div className="flex items-center justify-between gap-3 mb-4">
-            <div
-              id="add-meal-sheet-title"
-              className="text-lg font-extrabold text-text"
-            >
-              Додати прийом їжі
+            <div className="flex items-center gap-2 min-w-0">
+              {step === "fill" && !initialMeal?.id && !photoResult && (
+                <button
+                  type="button"
+                  onClick={() => setStep("source")}
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text transition-colors"
+                  aria-label="Назад до вибору джерела"
+                >
+                  ←
+                </button>
+              )}
+              <div
+                id="add-meal-sheet-title"
+                className="text-lg font-extrabold text-text truncate"
+              >
+                {step === "source" ? "Звідки страва?" : "Додати прийом їжі"}
+              </div>
             </div>
             <button
               type="button"
@@ -213,91 +240,123 @@ export function AddMealSheet({
             </button>
           </div>
 
-          <MealTemplatesRow mealTemplates={mealTemplates} setForm={setForm} />
+          {step === "source" ? (
+            <>
+              <p className="text-xs text-muted mb-3">
+                Оберіть джерело — або заповніть вручну. Макроси, назву й час
+                відредагуєте на наступному кроці.
+              </p>
 
-          <MealTypePicker mealType={form.mealType} setForm={setForm} />
+              <MealTemplatesRow
+                mealTemplates={mealTemplates}
+                setForm={setForm}
+                onSelected={() => setStep("fill")}
+              />
 
-          <NameTimeRow form={form} field={field} setForm={setForm} />
+              <FromPantryRow
+                pantryItems={pantryItems}
+                fromPantryItem={fromPantryItem}
+                setFromPantryItem={setFromPantryItem}
+                setForm={setForm}
+                setFoodQuery={setFoodQuery}
+              />
 
-          <FromPantryRow
-            pantryItems={pantryItems}
-            fromPantryItem={fromPantryItem}
-            setFromPantryItem={setFromPantryItem}
-            setForm={setForm}
-            setFoodQuery={setFoodQuery}
-          />
+              <FoodPickerSection
+                form={form}
+                setForm={setForm}
+                foodQuery={foodQuery}
+                setFoodQuery={setFoodQuery}
+                foodHits={foodHits}
+                offHits={offHits}
+                foodBusy={foodBusy}
+                offBusy={offBusy}
+                foodErr={foodErr}
+                pickedFood={pickedFood}
+                setPickedFood={setPickedFood}
+                pickedGrams={pickedGrams}
+                setPickedGrams={setPickedGrams}
+              />
 
-          <FoodPickerSection
-            form={form}
-            setForm={setForm}
-            foodQuery={foodQuery}
-            setFoodQuery={setFoodQuery}
-            foodHits={foodHits}
-            offHits={offHits}
-            foodBusy={foodBusy}
-            offBusy={offBusy}
-            foodErr={foodErr}
-            pickedFood={pickedFood}
-            setPickedFood={setPickedFood}
-            pickedGrams={pickedGrams}
-            setPickedGrams={setPickedGrams}
-          />
+              <BarcodeSection
+                barcode={barcode}
+                setBarcode={setBarcode}
+                barcodeStatus={barcodeStatus}
+                setBarcodeStatus={setBarcodeStatus}
+                handleBarcodeLookup={handleBarcodeLookup}
+                handleBarcodeBind={handleBarcodeBind}
+                setScannerOpen={setScannerOpen}
+              />
 
-          <BarcodeSection
-            barcode={barcode}
-            setBarcode={setBarcode}
-            barcodeStatus={barcodeStatus}
-            setBarcodeStatus={setBarcodeStatus}
-            handleBarcodeLookup={handleBarcodeLookup}
-            handleBarcodeBind={handleBarcodeBind}
-            setScannerOpen={setScannerOpen}
-          />
+              <div className="mt-5 flex items-center gap-3 text-[11px] text-muted uppercase tracking-wider">
+                <span className="flex-1 h-px bg-line" />
+                або
+                <span className="flex-1 h-px bg-line" />
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-3 w-full h-12 min-h-[44px]"
+                onClick={() => setStep("fill")}
+              >
+                Ввести вручну
+              </Button>
+            </>
+          ) : (
+            <>
+              <MealTypePicker mealType={form.mealType} setForm={setForm} />
 
-          <MacrosEditor
-            form={form}
-            field={field}
-            setForm={setForm}
-            pickedFood={pickedFood}
-            setPickedFood={setPickedFood}
-            photoResult={photoResult}
-            hasPhotoMacros={hasPhotoMacros}
-          />
+              <NameTimeRow form={form} field={field} setForm={setForm} />
 
-          {!pickedFood && (
-            <SaveAsFood
-              form={form}
-              setForm={setForm}
-              setPickedFood={setPickedFood}
-              setPickedGrams={setPickedGrams}
-              setFoodQuery={setFoodQuery}
-              setFoodErr={setFoodErr}
-            />
+              <MacrosEditor
+                form={form}
+                field={field}
+                setForm={setForm}
+                pickedFood={pickedFood}
+                setPickedFood={setPickedFood}
+                photoResult={photoResult}
+                hasPhotoMacros={hasPhotoMacros}
+              />
+
+              {!pickedFood && (
+                <SaveAsFood
+                  form={form}
+                  setForm={setForm}
+                  setPickedFood={setPickedFood}
+                  setPickedGrams={setPickedGrams}
+                  setFoodQuery={setFoodQuery}
+                  setFoodErr={setFoodErr}
+                />
+              )}
+
+              {form.err && (
+                <div className="text-xs text-danger mt-2">{form.err}</div>
+              )}
+
+              <SaveAsTemplate
+                form={form}
+                setForm={setForm}
+                setPrefs={setPrefs}
+              />
+
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  className="h-12 min-h-[44px] bg-nutrition text-white hover:bg-nutrition-hover"
+                  onClick={handleSave}
+                >
+                  Зберегти
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-12 min-h-[44px]"
+                  onClick={onClose}
+                >
+                  Скасувати
+                </Button>
+              </div>
+            </>
           )}
-
-          {form.err && (
-            <div className="text-xs text-danger mt-2">{form.err}</div>
-          )}
-
-          <SaveAsTemplate form={form} setForm={setForm} setPrefs={setPrefs} />
-
-          {/* Кнопки */}
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Button
-              type="button"
-              className="h-12 min-h-[44px] bg-nutrition text-white hover:bg-nutrition-hover"
-              onClick={handleSave}
-            >
-              Зберегти
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-12 min-h-[44px]"
-              onClick={onClose}
-            >
-              Скасувати
-            </Button>
-          </div>
         </div>
       </div>
     </div>
