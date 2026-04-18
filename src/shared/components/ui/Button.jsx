@@ -81,7 +81,7 @@ export const Button = forwardRef(function Button(
     children,
     ...props
   },
-  ref
+  ref,
 ) {
   const isDisabled = disabled || loading;
 
@@ -100,7 +100,7 @@ export const Button = forwardRef(function Button(
         variants[variant],
         // Size
         iconOnly ? iconSizes[size] : sizes[size],
-        className
+        className,
       )}
       {...props}
     >

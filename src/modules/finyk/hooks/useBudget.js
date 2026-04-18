@@ -14,8 +14,14 @@ export function calculateSafeToSpendPerDay(remaining, daysLeft) {
 }
 
 export function useBudget(storage) {
-  const { budgets, setBudgets, monthlyPlan, setMonthlyPlan, excludedTxIds, txSplits } =
-    storage;
+  const {
+    budgets,
+    setBudgets,
+    monthlyPlan,
+    setMonthlyPlan,
+    excludedTxIds,
+    txSplits,
+  } = storage;
 
   const limitBudgets = useMemo(
     () => budgets.filter((b) => b.type === "limit"),
@@ -27,8 +33,7 @@ export function useBudget(storage) {
   );
 
   const getMonthBudgetSummary = (transactions) => {
-    const excluded =
-      excludedTxIds instanceof Set ? excludedTxIds : new Set();
+    const excluded = excludedTxIds instanceof Set ? excludedTxIds : new Set();
     const splits = txSplits || {};
     const planExpense = Number(monthlyPlan?.income || 0);
     const planIncome = Number(monthlyPlan?.income || 0);
@@ -74,9 +79,7 @@ export function useBudget(storage) {
   };
 
   const updateBudget = (id, patch) => {
-    setBudgets((bs) =>
-      bs.map((b) => (b.id === id ? { ...b, ...patch } : b)),
-    );
+    setBudgets((bs) => bs.map((b) => (b.id === id ? { ...b, ...patch } : b)));
   };
 
   return {

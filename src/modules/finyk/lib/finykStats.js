@@ -24,8 +24,16 @@ const CAT_COLORS = {
 };
 
 const FALLBACK_COLORS = [
-  "#6366f1", "#10b981", "#f59e0b", "#ec4899", "#0ea5e9",
-  "#f97316", "#14b8a6", "#8b5cf6", "#22c55e", "#e879f9",
+  "#6366f1",
+  "#10b981",
+  "#f59e0b",
+  "#ec4899",
+  "#0ea5e9",
+  "#f97316",
+  "#14b8a6",
+  "#8b5cf6",
+  "#22c55e",
+  "#e879f9",
 ];
 
 export function getCatColor(categoryId, customCategories = [], idx = 0) {
@@ -111,8 +119,7 @@ export function getTopCategories(
         categoryId,
         label: meta.label,
         spent: Math.round(rawSpent),
-        pct:
-          totalSpent > 0 ? Math.round((rawSpent / totalSpent) * 100) : 0,
+        pct: totalSpent > 0 ? Math.round((rawSpent / totalSpent) * 100) : 0,
         color: getCatColor(categoryId, customCategories, idx),
       };
     })
@@ -157,8 +164,7 @@ export function getMonthlyTrendComparison(
   const curr = getMonthlySummary(currentTx, { excludedTxIds, txSplits });
   const prev = getMonthlySummary(prevTx, { excludedTxIds, txSplits });
   const diff = curr.spent - prev.spent;
-  const diffPct =
-    prev.spent > 0 ? Math.round((diff / prev.spent) * 100) : null;
+  const diffPct = prev.spent > 0 ? Math.round((diff / prev.spent) * 100) : null;
 
   return {
     currentSpent: curr.spent,
@@ -172,27 +178,23 @@ export function getMonthlyTrendComparison(
 
 export function getMonthlySpendSeries(monthlyData) {
   if (!Array.isArray(monthlyData)) return [];
-  return monthlyData.map(
-    ({ month, transactions, excludedTxIds, txSplits }) => {
-      const txList = Array.isArray(transactions) ? transactions : [];
-      const excluded =
-        excludedTxIds instanceof Set ? excludedTxIds : new Set();
-      const { spent, income } = getMonthlySummary(txList, {
-        excludedTxIds: excluded,
-        txSplits: txSplits || {},
-      });
-      const [year, mon] = (month || "").split("-");
-      const label =
-        year && mon
-          ? new Date(
-              Number(year),
-              Number(mon) - 1,
-              1,
-            ).toLocaleDateString("uk-UA", { month: "short" })
-          : month;
-      return { month, label, spent, income };
-    },
-  );
+  return monthlyData.map(({ month, transactions, excludedTxIds, txSplits }) => {
+    const txList = Array.isArray(transactions) ? transactions : [];
+    const excluded = excludedTxIds instanceof Set ? excludedTxIds : new Set();
+    const { spent, income } = getMonthlySummary(txList, {
+      excludedTxIds: excluded,
+      txSplits: txSplits || {},
+    });
+    const [year, mon] = (month || "").split("-");
+    const label =
+      year && mon
+        ? new Date(Number(year), Number(mon) - 1, 1).toLocaleDateString(
+            "uk-UA",
+            { month: "short" },
+          )
+        : month;
+    return { month, label, spent, income };
+  });
 }
 
 export function getCategoryDistribution(

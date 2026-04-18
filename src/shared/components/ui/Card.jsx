@@ -60,7 +60,7 @@ export const Card = forwardRef(function Card(
     children,
     ...props
   },
-  ref
+  ref,
 ) {
   return (
     <Component
@@ -103,9 +103,7 @@ export function CardTitle({ className, as: Component = "h3", ...props }) {
  * CardDescription — Secondary text for cards
  */
 export function CardDescription({ className, ...props }) {
-  return (
-    <p className={cn("text-sm text-muted mt-1", className)} {...props} />
-  );
+  return <p className={cn("text-sm text-muted mt-1", className)} {...props} />;
 }
 
 /**
@@ -123,7 +121,7 @@ export function CardFooter({ className, ...props }) {
     <div
       className={cn(
         "flex items-center gap-3 mt-4 pt-4 border-t border-line",
-        className
+        className,
       )}
       {...props}
     />
@@ -174,7 +172,7 @@ export function MetricCard({
             <span
               className={cn(
                 "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-                trendColor
+                trendColor,
               )}
             >
               {trend > 0 ? "+" : ""}

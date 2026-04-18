@@ -10,12 +10,7 @@ import {
 
 export function useAnalytics({ mono, storage, monthlyHistory = [] }) {
   const { realTx = [], loadingTx } = mono;
-  const {
-    excludedTxIds,
-    txCategories,
-    txSplits,
-    customCategories,
-  } = storage;
+  const { excludedTxIds, txCategories, txSplits, customCategories } = storage;
 
   const opts = useMemo(
     () => ({ excludedTxIds, txCategories, txSplits, customCategories }),

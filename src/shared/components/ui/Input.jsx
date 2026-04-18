@@ -33,7 +33,7 @@ export const Input = forwardRef(function Input(
     suffix,
     ...props
   },
-  ref
+  ref,
 ) {
   const stateClass = error
     ? "border-red-400 focus:border-red-500 focus:ring-red-100"
@@ -59,7 +59,7 @@ export const Input = forwardRef(function Input(
           stateClass,
           icon && "pl-10",
           suffix && "pr-10",
-          className
+          className,
         )}
         {...props}
       />
@@ -77,7 +77,7 @@ export const Input = forwardRef(function Input(
  */
 export const Textarea = forwardRef(function Textarea(
   { className, variant = "default", error, rows = 3, ...props },
-  ref
+  ref,
 ) {
   const stateClass = error
     ? "border-red-400 focus:border-red-500 focus:ring-red-100"
@@ -93,7 +93,7 @@ export const Textarea = forwardRef(function Textarea(
         "disabled:opacity-50 disabled:cursor-not-allowed",
         variants[variant],
         stateClass,
-        className
+        className,
       )}
       {...props}
     />
@@ -121,12 +121,7 @@ export function InputGroup({
       )}
       {children}
       {(helper || error) && (
-        <p
-          className={cn(
-            "text-xs",
-            error ? "text-red-500" : "text-muted"
-          )}
-        >
+        <p className={cn("text-xs", error ? "text-red-500" : "text-muted")}>
           {error || helper}
         </p>
       )}
@@ -139,7 +134,7 @@ export function InputGroup({
  */
 export const SearchInput = forwardRef(function SearchInput(
   { className, ...props },
-  ref
+  ref,
 ) {
   return (
     <Input

@@ -31,11 +31,17 @@ export function MonthlyChart({ data = [], height = 120, className }) {
     <div className={cn("w-full", className)}>
       <div className="flex items-center gap-4 mb-2 text-[10px] text-subtle">
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: spentColor }} />
+          <span
+            className="w-2.5 h-2.5 rounded-sm inline-block"
+            style={{ background: spentColor }}
+          />
           Витрати
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: incomeColor }} />
+          <span
+            className="w-2.5 h-2.5 rounded-sm inline-block"
+            style={{ background: incomeColor }}
+          />
           Дохід
         </span>
       </div>
