@@ -10,12 +10,7 @@ import {
 
 export function useAnalytics({ mono, storage, monthlyHistory = [] }) {
   const { realTx = [], loadingTx } = mono;
-  const {
-    excludedTxIds,
-    txCategories,
-    txSplits,
-    customCategories,
-  } = storage;
+  const { excludedTxIds, txCategories, txSplits, customCategories } = storage;
 
   const opts = useMemo(
     () => ({ excludedTxIds, txCategories, txSplits, customCategories }),
@@ -24,25 +19,25 @@ export function useAnalytics({ mono, storage, monthlyHistory = [] }) {
 
   const summary = useMemo(
     () => getMonthlySummary(realTx, { excludedTxIds, txSplits }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [realTx, excludedTxIds, txSplits],
   );
 
   const topCategories = useMemo(
     () => getTopCategories(realTx, opts, 5),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [realTx, opts],
   );
 
   const distribution = useMemo(
     () => getCategoryDistribution(realTx, opts),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [realTx, opts],
   );
 
   const topMerchants = useMemo(
     () => getTopMerchants(realTx, { excludedTxIds }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [realTx, excludedTxIds],
   );
 
@@ -60,7 +55,6 @@ export function useAnalytics({ mono, storage, monthlyHistory = [] }) {
       prev?.transactions || [],
       { excludedTxIds, txSplits },
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthlyHistory, excludedTxIds, txSplits]);
 
   return {
