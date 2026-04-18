@@ -668,16 +668,19 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
     }
+    // Swipe-down-to-close wins over everything else: normal swipe gestures
+    // run 200–500ms and would otherwise be swallowed by the hold guard below.
+    if (dragYRef.current > SWIPE_CLOSE_THRESHOLD) {
+      if (paused) setPaused(false);
+      resetDrag();
+      onClose?.();
+      return;
+    }
     // If the press was long enough for the hold-timer to fire, the user meant
     // to pause — releasing should only resume, not also advance the slide.
     if (paused || wasHeld) {
       if (paused) setPaused(false);
       resetDrag();
-      return;
-    }
-    if (dragYRef.current > SWIPE_CLOSE_THRESHOLD) {
-      resetDrag();
-      onClose?.();
       return;
     }
     resetDrag();
