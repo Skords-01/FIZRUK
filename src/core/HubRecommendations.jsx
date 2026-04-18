@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@shared/lib/cn";
+import { Icon } from "@shared/components/ui/Icon";
 import { generateRecommendations } from "./lib/recommendationEngine.js";
 
 const DISMISSED_KEY = "hub_recs_dismissed_v1";
@@ -189,20 +190,7 @@ function RecCard({ rec, onDismiss, onAction }) {
           "opacity-60 group-hover:opacity-100",
         )}
       >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        >
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
+        <Icon name="close" size={14} />
       </button>
     </div>
   );

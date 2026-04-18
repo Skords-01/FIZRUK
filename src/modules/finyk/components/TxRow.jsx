@@ -8,6 +8,7 @@ import {
   mergeExpenseCategoryDefinitions,
 } from "../constants";
 import { cn } from "@shared/lib/cn";
+import { Icon } from "@shared/components/ui/Icon";
 
 const splitInp =
   "flex-1 text-xs h-9 rounded-xl border border-line bg-panelHi px-2 text-text outline-none focus:border-primary/50 transition-colors";
@@ -296,19 +297,7 @@ function TxRowImpl({
                   <circle cx="12" cy="12" r="3" />
                 </svg>
               ) : (
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                </svg>
+                <Icon name="trash" size={14} />
               )}
             </button>
           )}

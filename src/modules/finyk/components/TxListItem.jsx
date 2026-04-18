@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { cn } from "@shared/lib/cn";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
+import { Icon } from "@shared/components/ui/Icon";
 import { TxRow } from "./TxRow";
 
 function TxListItemImpl({
@@ -52,18 +53,12 @@ function TxListItemImpl({
           aria-hidden
         >
           {selected && (
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+            <Icon
+              name="check"
+              size={10}
+              strokeWidth={3}
+              className="text-white"
+            />
           )}
         </span>
       )}

@@ -11,6 +11,7 @@ import { LogCard } from "./components/LogCard.jsx";
 import { NutritionPantrySelector } from "./components/NutritionPantrySelector.jsx";
 import { NutritionOverlays } from "./components/NutritionOverlays.jsx";
 import { Banner } from "@shared/components/ui/Banner.jsx";
+import { Icon } from "@shared/components/ui/Icon";
 import {
   loadNutritionPrefs,
   persistNutritionPrefs,
@@ -277,19 +278,11 @@ export default function NutritionApp({
                 />
                 <details className="group">
                   <summary className="flex items-center gap-2 cursor-pointer select-none py-2 px-1 text-sm font-semibold text-text">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                    <Icon
+                      name="chevron-right"
+                      size={16}
                       className="transition-transform group-open:rotate-90"
-                    >
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
+                    />
                     Аналіз фото страви
                   </summary>
                   <div className="pt-1">

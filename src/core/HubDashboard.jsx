@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { cn } from "@shared/lib/cn";
 import { ProgressRing } from "@shared/components/ui/ProgressRing";
+import { Icon } from "@shared/components/ui/Icon";
 import { safeReadLS, safeWriteLS, safeRemoveLS } from "@shared/lib/storage.js";
 import { STORAGE_KEYS } from "@shared/lib/storageKeys.js";
 import { HubRecommendations } from "./HubRecommendations.jsx";
@@ -376,18 +377,7 @@ function DailyProgressHero() {
             </p>
             {percentage === 100 && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-[10px] font-semibold">
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+                <Icon name="check" size={10} strokeWidth={3} />
                 Виконано
               </span>
             )}
