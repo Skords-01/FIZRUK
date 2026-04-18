@@ -47,7 +47,7 @@ export function PushupsWidget() {
               setInput("");
               setOpen(true);
             }}
-            className="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-transform active:scale-95 bg-routine text-white shadow-md"
+            className="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-transform active:scale-95 bg-routine text-white shadow-sm"
             aria-label="Додати відтискання"
           >
             <svg

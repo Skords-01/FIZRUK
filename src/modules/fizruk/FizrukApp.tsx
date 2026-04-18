@@ -396,7 +396,7 @@ export default function FizrukApp({
             role="dialog"
             aria-modal="true"
             aria-labelledby="fizruk-settings-title"
-            className="relative w-full max-w-sm h-full bg-panel border-l border-line shadow-2xl flex flex-col safe-area-pt-pb"
+            className="relative w-full max-w-sm h-full bg-panel border-l border-line shadow-float flex flex-col safe-area-pt-pb"
           >
             <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-line/60">
               <h2
