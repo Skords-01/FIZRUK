@@ -15,7 +15,13 @@ import { useEffect, useRef } from "react";
 import { useToast } from "@shared/hooks/useToast";
 
 export function useFirstEntryCelebration(hasRealEntry) {
-  const toast = useToast();
+  // Narrow to the stable `success` callback rather than the whole
+  // context value: `ToastProvider` re-memos the context on every toast
+  // emission (because `toasts` is in its dep array), so depending on
+  // `toast` would re-run this effect each time any toast appears or
+  // dismisses anywhere in the app. `success` itself is a stable
+  // `useCallback`, so this keeps the effect narrowly reactive.
+  const { success } = useToast();
   const firedRef = useRef(false);
   // Snapshot the value at mount. If the user already had real data when
   // the dashboard first rendered, they're not a FTUX user — suppress the
@@ -30,6 +36,6 @@ export function useFirstEntryCelebration(hasRealEntry) {
     }
     if (!hasRealEntry) return;
     firedRef.current = true;
-    toast.success("Готово. Це вже твої дані.", 4000);
-  }, [hasRealEntry, toast]);
+    success("Готово. Це вже твої дані.", 4000);
+  }, [hasRealEntry, success]);
 }
