@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { apiUrl } from "@shared/lib/apiUrl.js";
 import { STORAGE_KEYS } from "@shared/lib/storageKeys.js";
 import { safeReadLS } from "@shared/lib/storage.js";
@@ -290,10 +291,42 @@ export function aggregateRoutine(weekKey) {
   };
 }
 
-export function useWeeklyDigest(selectedWeekKey) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+async function generateWeeklyDigest(weekKey) {
+  const currentWeekRange = getWeekRange(new Date(weekKey + "T12:00:00"));
+  const finyk = aggregateFinyk(weekKey);
+  const fizruk = aggregateFizruk(weekKey);
+  const nutrition = aggregateNutrition(weekKey);
+  const routine = aggregateRoutine(weekKey);
 
+  const res = await fetch(apiUrl("/api/weekly-digest"), {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      weekRange: currentWeekRange,
+      finyk,
+      fizruk,
+      nutrition,
+      routine,
+    }),
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(json?.error || "Помилка генерації звіту");
+    err.status = res.status;
+    throw err;
+  }
+
+  return {
+    report: json.report,
+    generatedAt: json.generatedAt,
+    weekKey,
+    weekRange: currentWeekRange,
+  };
+}
+
+export function useWeeklyDigest(selectedWeekKey) {
   const currentWeekKey = getWeekKey();
   const weekKey = selectedWeekKey || currentWeekKey;
   const weekRange = getWeekRange(new Date(weekKey + "T12:00:00"));
@@ -316,45 +349,20 @@ export function useWeeklyDigest(selectedWeekKey) {
       window.removeEventListener("hub-weekly-digest-updated", handler);
   }, [weekKey]);
 
-  const generate = useCallback(async () => {
-    if (!isCurrentWeek) return null;
-    setLoading(true);
-    setError(null);
-    try {
-      const currentWeekRange = getWeekRange(new Date(weekKey + "T12:00:00"));
-      const finyk = aggregateFinyk(weekKey);
-      const fizruk = aggregateFizruk(weekKey);
-      const nutrition = aggregateNutrition(weekKey);
-      const routine = aggregateRoutine(weekKey);
-
-      const res = await fetch(apiUrl("/api/weekly-digest"), {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          weekRange: currentWeekRange,
-          finyk,
-          fizruk,
-          nutrition,
-          routine,
-        }),
-      });
-
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json?.error || "Помилка генерації звіту");
-        return null;
-      }
-
+  const mutation = useMutation({
+    mutationFn: generateWeeklyDigest,
+    onSuccess: ({ report, generatedAt, weekKey: wk, weekRange: wr }) => {
       const newDigest = {
-        ...json.report,
-        generatedAt: json.generatedAt,
-        weekKey,
-        weekRange: currentWeekRange,
+        ...report,
+        generatedAt,
+        weekKey: wk,
+        weekRange: wr,
       };
-      saveDigest(weekKey, newDigest);
+      saveDigest(wk, newDigest);
       setDigest(newDigest);
 
+      // Fire-and-forget push of digest into coach memory so /api/coach/insight
+      // has richer context on the next call. Failures are non-fatal.
       try {
         fetch(apiUrl("/api/coach/memory"), {
           method: "POST",
@@ -362,28 +370,36 @@ export function useWeeklyDigest(selectedWeekKey) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             weeklyDigest: {
-              weekKey,
-              weekRange: currentWeekRange,
-              generatedAt: json.generatedAt,
-              ...(json.report || {}),
+              weekKey: wk,
+              weekRange: wr,
+              generatedAt,
+              ...(report || {}),
             },
           }),
         }).catch(() => {});
       } catch {}
+    },
+  });
 
-      return newDigest;
-    } catch (e) {
-      setError(e?.message || "Помилка мережі");
+  const generate = async () => {
+    if (!isCurrentWeek) return null;
+    try {
+      const result = await mutation.mutateAsync(weekKey);
+      return {
+        ...result.report,
+        generatedAt: result.generatedAt,
+        weekKey: result.weekKey,
+        weekRange: result.weekRange,
+      };
+    } catch {
       return null;
-    } finally {
-      setLoading(false);
     }
-  }, [weekKey, isCurrentWeek]);
+  };
 
   return {
     digest,
-    loading,
-    error,
+    loading: mutation.isPending,
+    error: mutation.error ? mutation.error.message || "Помилка мережі" : null,
     weekKey,
     weekRange,
     generate,

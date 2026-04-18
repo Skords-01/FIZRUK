@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { apiUrl } from "@shared/lib/apiUrl.js";
 
 const CACHE_KEY = "hub_coach_insight_cache_v1";
@@ -173,69 +174,74 @@ function aggregateCurrentSnapshot() {
   return { finyk, fizruk, nutrition, routine };
 }
 
+async function fetchCoachInsight() {
+  let memory = null;
+  try {
+    const memRes = await fetch(apiUrl("/api/coach/memory"), {
+      method: "GET",
+      credentials: "include",
+    });
+    if (memRes.ok) {
+      const memJson = await memRes.json();
+      memory = memJson.memory;
+    }
+  } catch {}
+
+  const snapshot = aggregateCurrentSnapshot();
+
+  const insightRes = await fetch(apiUrl("/api/coach/insight"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ snapshot, memory }),
+  });
+
+  if (!insightRes.ok) {
+    const err = await insightRes.json().catch(() => ({}));
+    const error = new Error(err?.error || "Помилка генерації інсайту");
+    error.status = insightRes.status;
+    throw error;
+  }
+
+  const insightJson = await insightRes.json();
+  return insightJson.insight ?? null;
+}
+
 export function useCoachInsight() {
   const [insight, setInsight] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  const loadInsight = useCallback(async (force = false) => {
-    const todayKey = localDateKey();
-    if (!force) {
-      const cached = safeParseLS(CACHE_KEY, null);
-      if (cached?.date === todayKey && cached?.text) {
-        setInsight(cached.text);
-        return cached.text;
-      }
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      let memory = null;
+  const mutation = useMutation({
+    mutationFn: fetchCoachInsight,
+    onSuccess: (text) => {
+      if (!text) return;
       try {
-        const memRes = await fetch(apiUrl("/api/coach/memory"), {
-          method: "GET",
-          credentials: "include",
-        });
-        if (memRes.ok) {
-          const memJson = await memRes.json();
-          memory = memJson.memory;
-        }
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({ date: localDateKey(), text }),
+        );
       } catch {}
+      setInsight(text);
+    },
+  });
 
-      const snapshot = aggregateCurrentSnapshot();
-
-      const insightRes = await fetch(apiUrl("/api/coach/insight"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ snapshot, memory }),
-      });
-
-      if (!insightRes.ok) {
-        const err = await insightRes.json().catch(() => ({}));
-        throw new Error(err?.error || "Помилка генерації інсайту");
+  const loadInsight = useCallback(
+    async (force = false) => {
+      const todayKey = localDateKey();
+      if (!force) {
+        const cached = safeParseLS(CACHE_KEY, null);
+        if (cached?.date === todayKey && cached?.text) {
+          setInsight(cached.text);
+          return cached.text;
+        }
       }
-
-      const insightJson = await insightRes.json();
-      const text = insightJson.insight;
-      if (text) {
-        try {
-          localStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({ date: todayKey, text }),
-          );
-        } catch {}
-        setInsight(text);
-        return text;
+      try {
+        return await mutation.mutateAsync();
+      } catch {
+        return null;
       }
-    } catch (e) {
-      setError(e?.message || "Помилка завантаження");
-    } finally {
-      setLoading(false);
-    }
-    return null;
-  }, []);
+    },
+    [mutation],
+  );
 
   useEffect(() => {
     const todayKey = localDateKey();
@@ -245,7 +251,15 @@ export function useCoachInsight() {
       return;
     }
     loadInsight();
-  }, [loadInsight]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  return { insight, loading, error, refresh: () => loadInsight(true) };
+  return {
+    insight,
+    loading: mutation.isPending,
+    error: mutation.error
+      ? mutation.error.message || "Помилка завантаження"
+      : null,
+    refresh: () => loadInsight(true),
+  };
 }
