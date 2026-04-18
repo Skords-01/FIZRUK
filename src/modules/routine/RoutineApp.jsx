@@ -117,7 +117,12 @@ function groupEventsForList(events) {
   });
 }
 
-export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
+export default function RoutineApp({
+  onBackToHub,
+  onOpenModule,
+  pwaAction,
+  onPwaActionConsumed,
+} = {}) {
   const [routine, setRoutine] = useRoutineState();
   const toast = useToast();
   const [finykCalendarTick, setFinykCalendarTick] = useState(0);
@@ -169,6 +174,20 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
   const [habitDraft, setHabitDraft] = useState(emptyHabitDraft);
   const [tagDraft, setTagDraft] = useState("");
   const [catDraft, setCatDraft] = useState({ name: "", emoji: "" });
+  // Monotonic tick bumped whenever something asks us to focus the habit
+  // form (e.g. the `add_habit` PWA action or the FTUX first-action
+  // sheet). A tick — not a bool — so repeated triggers always fire.
+  const [habitFormFocusTick, setHabitFormFocusTick] = useState(0);
+
+  // Handle the `add_habit` PWA action: switch to the Settings tab
+  // (where the habit form lives) and bump the focus tick so the form
+  // scrolls itself into view and puts the caret in the name input.
+  useEffect(() => {
+    if (pwaAction !== "add_habit") return;
+    setMainTab("settings");
+    setHabitFormFocusTick((t) => t + 1);
+    onPwaActionConsumed?.();
+  }, [pwaAction, onPwaActionConsumed]);
 
   useEffect(() => {
     try {
@@ -608,6 +627,7 @@ export default function RoutineApp({ onBackToHub, onOpenModule } = {}) {
             catDraft={catDraft}
             setCatDraft={setCatDraft}
             onOpenCalendar={() => setMainTab("calendar")}
+            habitFormFocusTick={habitFormFocusTick}
             hidden={mainTab !== "settings"}
           />
         </main>

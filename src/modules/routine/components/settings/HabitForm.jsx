@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
@@ -16,13 +16,44 @@ export function HabitForm({
   editingId,
   onSave,
   onCancel,
+  // Monotonic tick bumped by the parent (`RoutineApp`) when the
+  // `add_habit` PWA action or the FTUX first-action sheet wants us to
+  // scroll into view and focus the name input. A tick — not a bool —
+  // so repeated triggers keep re-firing without the parent having to
+  // reset anything.
+  focusTick,
 }) {
   const fieldIds = useId();
   const startId = `${fieldIds}-start`;
   const endId = `${fieldIds}-end`;
+  const sectionRef = useRef(null);
+  const nameRef = useRef(null);
+
+  useEffect(() => {
+    if (!focusTick) return;
+    const section = sectionRef.current;
+    const name = nameRef.current;
+    if (section && typeof section.scrollIntoView === "function") {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (name && typeof name.focus === "function") {
+      // Defer to the next frame so the scroll-into-view doesn't steal
+      // focus by re-rendering the parent tab panel.
+      requestAnimationFrame(() => {
+        try {
+          name.focus({ preventScroll: true });
+        } catch {
+          name.focus();
+        }
+      });
+    }
+  }, [focusTick]);
 
   return (
-    <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
+    <section
+      ref={sectionRef}
+      className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3"
+    >
       <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
         {editingId ? "Редагувати звичку" : "Нова звичка"}
       </h2>
@@ -40,6 +71,7 @@ export function HabitForm({
           aria-label="Емодзі"
         />
         <Input
+          ref={nameRef}
           className="routine-touch-field min-w-0 flex-1"
           placeholder="Назва"
           value={habitDraft.name}
