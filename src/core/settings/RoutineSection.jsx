@@ -1,29 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-  loadRoutineState,
-  setPref,
-} from "../../modules/routine/lib/routineStorage.js";
+import { useRoutineState } from "../../modules/routine/hooks/useRoutineState.js";
 import { SettingsGroup, ToggleRow } from "./SettingsPrimitives.jsx";
 
 export function RoutineSection() {
-  const [routine, setRoutine] = useState(() => loadRoutineState());
-
-  useEffect(() => {
-    const handler = () => setRoutine(loadRoutineState());
-    const storageHandler = (e) => {
-      if (e.key === "hub_routine_v1" || e.key === null) handler();
-    };
-    window.addEventListener("hub-routine-storage", handler);
-    window.addEventListener("storage", storageHandler);
-    return () => {
-      window.removeEventListener("hub-routine-storage", handler);
-      window.removeEventListener("storage", storageHandler);
-    };
-  }, []);
-
-  const updatePref = useCallback((key, value) => {
-    setRoutine((s) => setPref(s, key, value));
-  }, []);
+  const { routine, updatePref } = useRoutineState();
 
   return (
     <SettingsGroup title="Рутина" emoji="✅">
