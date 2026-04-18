@@ -267,9 +267,6 @@ export function Workouts() {
         }
       }
       if (tpl?.id) templateApi.markTemplateUsed(tpl.id);
-      try {
-        localStorage.setItem(ACTIVE_WORKOUT_KEY, w.id);
-      } catch {}
       setActiveWorkoutId(w.id);
       setMode("log");
     },
@@ -304,9 +301,6 @@ export function Workouts() {
     const [hh, mm] = (retroTime || "12:00").split(":").map(Number);
     const startedAt = new Date(y, mo - 1, d, hh, mm, 0, 0).toISOString();
     const w = createWorkoutWithTimes({ startedAt });
-    try {
-      localStorage.setItem(ACTIVE_WORKOUT_KEY, w.id);
-    } catch {}
     setActiveWorkoutId(w.id);
     setRetroOpen(false);
   }, [retroDate, retroTime, createWorkoutWithTimes]);

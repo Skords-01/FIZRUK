@@ -231,7 +231,9 @@ export function useWorkouts() {
   );
 
   /**
-   * Add an exercise item to a workout. Prepends to the items list.
+   * Add an exercise item to a workout. Appends to the items list so that the
+   * stored order matches the order in which the user (or a template) added
+   * exercises — users read the workout log top-to-bottom chronologically.
    * @param {string} workoutId
    * @param {Partial<WorkoutItem>} item - Item data; `id` is generated if absent.
    * @returns {string} The generated item ID.
@@ -244,7 +246,7 @@ export function useWorkouts() {
           if (w.id !== workoutId) return w;
           return {
             ...w,
-            items: [{ id: itemId, ...item }, ...(w.items || [])],
+            items: [...(w.items || []), { id: itemId, ...item }],
           };
         }),
       );

@@ -154,6 +154,7 @@ export function ActiveWorkoutPanel({
   const { getDefaultForGroup } = useRestSettings();
   const [groupSelectMode, setGroupSelectMode] = useState(false);
   const [groupSelected, setGroupSelected] = useState(new Set());
+  const isReadOnly = Boolean(activeWorkout?.endedAt);
 
   const groups = useMemo(
     () => activeWorkout?.groups || [],
@@ -358,13 +359,16 @@ export function ActiveWorkoutPanel({
                 );
               })()}
             </div>
-            <button
-              type="button"
-              className="text-xs text-danger/80 hover:text-danger"
-              onClick={() => removeItem(activeWorkout.id, it.id)}
-            >
-              ✕
-            </button>
+            {!isReadOnly && (
+              <button
+                type="button"
+                className="text-xs text-danger/80 hover:text-danger"
+                onClick={() => removeItem(activeWorkout.id, it.id)}
+                aria-label="Видалити вправу з тренування"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           <div className="mt-2">
@@ -373,8 +377,9 @@ export function ActiveWorkoutPanel({
                 Тип
               </div>
               <select
-                className="w-full h-10 bg-transparent text-sm text-text outline-none"
+                className="w-full h-10 bg-transparent text-sm text-text outline-none disabled:opacity-70"
                 value={it.type || "strength"}
+                disabled={isReadOnly}
                 onChange={(e) => {
                   const t = e.target.value;
                   if (t === "strength")
@@ -416,11 +421,13 @@ export function ActiveWorkoutPanel({
               {(it.sets || []).map((s, idx) => (
                 <div key={idx} className="grid grid-cols-3 gap-2">
                   <input
-                    className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
+                    className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none read-only:opacity-70 read-only:cursor-not-allowed"
                     type="number"
                     inputMode="decimal"
                     placeholder="кг"
+                    aria-label="Вага в кілограмах"
                     value={s.weightKg || ""}
+                    readOnly={isReadOnly}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
                       const next = [...(it.sets || [])];
@@ -433,11 +440,13 @@ export function ActiveWorkoutPanel({
                     }}
                   />
                   <input
-                    className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
+                    className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none read-only:opacity-70 read-only:cursor-not-allowed"
                     type="number"
                     inputMode="numeric"
                     placeholder="повт."
+                    aria-label="Кількість повторень"
                     value={s.reps || ""}
+                    readOnly={isReadOnly}
                     onFocus={(e) => e.target.select()}
                     onKeyDown={(e) => {
                       if (e.key !== "Enter") return;
@@ -461,7 +470,8 @@ export function ActiveWorkoutPanel({
                   />
                   <button
                     type="button"
-                    className="h-10 rounded-xl border border-line text-xs text-subtle hover:text-danger hover:border-danger/40 transition-colors"
+                    className="h-10 rounded-xl border border-line text-xs text-subtle hover:text-danger hover:border-danger/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-subtle disabled:hover:border-line"
+                    disabled={isReadOnly}
                     onClick={() => {
                       const next = (it.sets || []).filter((_, i) => i !== idx);
                       updateItem(activeWorkout.id, it.id, { sets: next });
@@ -471,38 +481,40 @@ export function ActiveWorkoutPanel({
                   </button>
                 </div>
               ))}
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  className="flex-1 h-10 min-h-[44px]"
-                  type="button"
-                  onClick={() =>
-                    updateItem(activeWorkout.id, it.id, {
-                      sets: [...(it.sets || []), { weightKg: 0, reps: 0 }],
-                    })
-                  }
-                >
-                  + Підхід
-                </Button>
-                <VoiceMicButton
-                  size="md"
-                  label="Голосовий ввід підходу"
-                  onResult={(transcript) => {
-                    const parsed = parseWorkoutSetSpeech(transcript);
-                    if (!parsed) return;
-                    const newSet = {
-                      weightKg: parsed.weight ?? 0,
-                      reps: parsed.reps ?? 0,
-                    };
-                    updateItem(activeWorkout.id, it.id, {
-                      sets: [...(it.sets || []), newSet],
-                    });
-                    if (!activeWorkout.endedAt && !group) {
-                      setRestTimer({ remaining: defSec, total: defSec });
+              {!isReadOnly && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    className="flex-1 h-10 min-h-[44px]"
+                    type="button"
+                    onClick={() =>
+                      updateItem(activeWorkout.id, it.id, {
+                        sets: [...(it.sets || []), { weightKg: 0, reps: 0 }],
+                      })
                     }
-                  }}
-                />
-              </div>
+                  >
+                    + Підхід
+                  </Button>
+                  <VoiceMicButton
+                    size="md"
+                    label="Голосовий ввід підходу"
+                    onResult={(transcript) => {
+                      const parsed = parseWorkoutSetSpeech(transcript);
+                      if (!parsed) return;
+                      const newSet = {
+                        weightKg: parsed.weight ?? 0,
+                        reps: parsed.reps ?? 0,
+                      };
+                      updateItem(activeWorkout.id, it.id, {
+                        sets: [...(it.sets || []), newSet],
+                      });
+                      if (!activeWorkout.endedAt && !group) {
+                        setRestTimer({ remaining: defSec, total: defSec });
+                      }
+                    }}
+                  />
+                </div>
+              )}
               {!activeWorkout.endedAt && !group && (
                 <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-line/60">
                   <div className="flex items-center justify-between w-full gap-1">
@@ -543,11 +555,13 @@ export function ActiveWorkoutPanel({
           {it.type === "time" && (
             <div className="mt-2 grid grid-cols-2 gap-2">
               <input
-                className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
+                className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none read-only:opacity-70 read-only:cursor-not-allowed"
                 type="number"
                 inputMode="numeric"
                 placeholder="сек"
+                aria-label="Тривалість у секундах"
                 value={it.durationSec || ""}
+                readOnly={isReadOnly}
                 onFocus={(e) => e.target.select()}
                 onChange={(e) =>
                   updateItem(activeWorkout.id, it.id, {
@@ -566,11 +580,13 @@ export function ActiveWorkoutPanel({
             <div className="mt-2 space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <input
-                  className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
+                  className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none read-only:opacity-70 read-only:cursor-not-allowed"
                   type="number"
                   inputMode="numeric"
                   placeholder="метри"
+                  aria-label="Дистанція в метрах"
                   value={it.distanceM || ""}
+                  readOnly={isReadOnly}
                   onFocus={(e) => e.target.select()}
                   onChange={(e) =>
                     updateItem(activeWorkout.id, it.id, {
@@ -580,11 +596,13 @@ export function ActiveWorkoutPanel({
                   }
                 />
                 <input
-                  className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none"
+                  className="h-10 rounded-xl border border-line bg-panelHi px-3 text-sm text-text outline-none read-only:opacity-70 read-only:cursor-not-allowed"
                   type="number"
                   inputMode="numeric"
                   placeholder="сек"
+                  aria-label="Тривалість у секундах"
                   value={it.durationSec || ""}
+                  readOnly={isReadOnly}
                   onFocus={(e) => e.target.select()}
                   onChange={(e) =>
                     updateItem(activeWorkout.id, it.id, {
@@ -625,6 +643,7 @@ export function ActiveWorkoutPanel({
       groupSelectMode,
       groupSelected,
       handleToggleGroupSelect,
+      isReadOnly,
       itemIdToGroup,
       lastByExerciseId,
       musclesUk,

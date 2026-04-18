@@ -104,7 +104,8 @@ export function personalRecordsExerciseCount(workouts) {
   return Object.keys(by).length;
 }
 
-function mondayStartMs(d) {
+/** Початок поточного ISO-тижня (Пн 00:00) у мс. */
+export function mondayStartMs(d) {
   const x = new Date(d);
   const day = (x.getDay() + 6) % 7;
   x.setHours(0, 0, 0, 0);

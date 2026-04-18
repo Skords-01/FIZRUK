@@ -9,7 +9,9 @@ export const CUSTOM_EXERCISES_KEY = "fizruk_custom_exercises_v1";
 export const MEASUREMENTS_STORAGE_KEY = "fizruk_measurements_v1";
 export const TEMPLATES_STORAGE_KEY = "fizruk_workout_templates_v1";
 export const SELECTED_TEMPLATE_STORAGE_KEY = "fizruk_selected_template_id_v1";
-export const ACTIVE_WORKOUT_STORAGE_KEY = "fizruk_active_workout_id_v1";
+export const ACTIVE_WORKOUT_KEY = "fizruk_active_workout_id_v1";
+/** @deprecated Використовуй `ACTIVE_WORKOUT_KEY`. Залишено на перехідний період. */
+export const ACTIVE_WORKOUT_STORAGE_KEY = ACTIVE_WORKOUT_KEY;
 export const PLAN_TEMPLATE_STORAGE_KEY = "fizruk_plan_template_v1";
 export const MONTHLY_PLAN_STORAGE_KEY = "fizruk_monthly_plan_v1";
 
