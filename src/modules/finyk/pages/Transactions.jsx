@@ -10,9 +10,10 @@ import { cn } from "@shared/lib/cn";
 import { perfMark, perfEnd } from "@shared/lib/perf";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 import { useToast } from "@shared/hooks/useToast";
+import { useDebounce } from "@shared/hooks/useDebounce";
 
 const now = new Date();
-const SEARCH_DEBOUNCE_MS = 200;
+const SEARCH_DEBOUNCE_MS = 300;
 
 function dayKeyFromTx(ts) {
   const d = new Date(ts * 1000);
@@ -82,16 +83,11 @@ export function Transactions({
   }, [categoryFilter, onClearCategoryFilter]);
   const [showHidden, setShowHidden] = useState(false);
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
   // Batch selection
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [batchCatPicker, setBatchCatPicker] = useState(false);
-
-  useEffect(() => {
-    const id = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(id);
-  }, [search]);
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => {
