@@ -129,11 +129,18 @@ export function AddMealSheet({
     const mealLabel =
       MEAL_TYPES.find((m) => m.id === form.mealType)?.label || "Прийом їжі";
     const source = photoResult ? "photo" : "manual";
+    // Пріоритет foodId: новий вибір з pickedFood → інакше зберігаємо foodId з оригінальної страви.
+    // Раніше при простому редагуванні страви з продуктом зв'язок з foodDb втрачався, бо pickedFood
+    // скидається в null при відкритті схита.
+    const effectiveFoodId = pickedFood?.id ?? initialMeal?.foodId ?? null;
+    const hasAmount = pickedFood || initialMeal?.amount_g != null;
     const macroSource = photoResult
       ? "photoAI"
       : pickedFood
         ? "productDb"
-        : "manual";
+        : initialMeal?.foodId
+          ? "productDb"
+          : "manual";
     onSave({
       id:
         initialMeal?.id ||
@@ -145,9 +152,8 @@ export function AddMealSheet({
       macros: { kcal, protein_g, fat_g, carbs_g },
       source,
       macroSource,
-      ...(pickedFood
-        ? { amount_g: Number(pickedGrams) || 100, foodId: pickedFood.id }
-        : {}),
+      ...(effectiveFoodId ? { foodId: effectiveFoodId } : {}),
+      ...(hasAmount ? { amount_g: Number(pickedGrams) || 100 } : {}),
     });
   }
 
