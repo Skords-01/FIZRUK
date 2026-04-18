@@ -2,6 +2,13 @@
  * Один процес Express для деплою API на Railway (обхід ліміту Vercel Hobby на кількість functions).
  * Шляхи збігаються з Vercel: /api/chat, /api/mono, /api/nutrition/*
  */
+// ВАЖЛИВО: `./sentry.js` імпортується ПЕРШИМ, до `express`. У ESM модулі
+// оцінюються в порядку їх import-оголошень (depth-first), тому `Sentry.init()`
+// на module top-level у sentry.js виконається раніше за завантаження express
+// та http — тільки так OpenTelemetry auto-instrumentation зможе
+// монкі-патчити потрібні модулі. Детальніше: див. коментар у server/sentry.js.
+import { attachSentryErrorHandler } from "./sentry.js";
+
 import express from "express";
 
 import { toNodeHandler } from "better-auth/node";
@@ -145,6 +152,9 @@ app.use(
 app.post("/api/push/subscribe", wrap(pushSubscribe));
 app.delete("/api/push/subscribe", wrap(pushUnsubscribe));
 app.post("/api/push/send", wrap(sendPush));
+
+// Sentry error handler має стояти перед нашим, щоб захопити stack trace.
+attachSentryErrorHandler(app);
 
 app.use((err, req, res, _next) => {
   const rid = req?.requestId;
