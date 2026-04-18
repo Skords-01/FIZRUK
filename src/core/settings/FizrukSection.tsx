@@ -6,8 +6,11 @@ import {
 import { WorkoutBackupBar } from "../../modules/fizruk/components/workouts/WorkoutBackupBar";
 import { SettingsGroup, SettingsSubGroup } from "./SettingsPrimitives.jsx";
 
+type RestCategory = keyof typeof REST_CATEGORY_LABELS;
+
 export function FizrukSection() {
   const { settings, updateSetting } = useRestSettings();
+  const typedSettings = settings as Record<RestCategory, number>;
 
   return (
     <SettingsGroup title="Фізрук" emoji="🏋️">
@@ -18,7 +21,9 @@ export function FizrukSection() {
           кожній вправі.
         </p>
         <div className="space-y-3">
-          {Object.entries(REST_CATEGORY_LABELS).map(([cat, label]) => (
+          {(
+            Object.entries(REST_CATEGORY_LABELS) as [RestCategory, string][]
+          ).map(([cat, label]) => (
             <div key={cat} className="flex items-center gap-3">
               <span className="text-xs text-text flex-1 min-w-0">{label}</span>
               <div className="flex items-center gap-1 flex-wrap justify-end">
@@ -29,7 +34,7 @@ export function FizrukSection() {
                     onClick={() => updateSetting(cat, sec)}
                     className={cn(
                       "h-9 w-14 rounded-xl border text-xs font-semibold transition-colors",
-                      settings[cat] === sec
+                      typedSettings[cat] === sec
                         ? "border-success bg-success/15 text-success"
                         : "border-line bg-panelHi text-subtle hover:text-text",
                     )}
