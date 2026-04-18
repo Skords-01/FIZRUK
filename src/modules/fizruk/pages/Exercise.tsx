@@ -49,7 +49,7 @@ function LoadCalculator({ oneRM }) {
         <div className="text-xs font-bold text-subtle uppercase tracking-widest">
           Калькулятор навантаження
         </div>
-        <div className="text-[10px] text-subtle">1RM = {fmt(oneRM, 0)} кг</div>
+        <div className="text-2xs text-subtle">1RM = {fmt(oneRM, 0)} кг</div>
       </div>
       <div className="space-y-3">
         {CALC_ZONES.map((zone) => (
@@ -65,7 +65,7 @@ function LoadCalculator({ oneRM }) {
               <span className={cn("text-xs font-bold", zone.color)}>
                 {zone.goal}
               </span>
-              <span className="text-[10px] text-subtle">{zone.desc}</span>
+              <span className="text-2xs text-subtle">{zone.desc}</span>
             </div>
             <div className="grid grid-cols-4 gap-1">
               {zone.percents.map((pct) => {
@@ -75,13 +75,13 @@ function LoadCalculator({ oneRM }) {
                     key={pct}
                     className="text-center bg-panel/60 rounded-lg py-1.5 px-1"
                   >
-                    <div className="text-[10px] text-subtle leading-none mb-0.5">
+                    <div className="text-2xs text-subtle leading-none mb-0.5">
                       {pct}%
                     </div>
                     <div className="text-sm font-bold text-text tabular-nums leading-tight">
                       {kg > 0 ? `${kg}` : "—"}
                     </div>
-                    <div className="text-[9px] text-muted leading-none">кг</div>
+                    <div className="text-2xs text-muted leading-none">кг</div>
                   </div>
                 );
               })}
@@ -89,7 +89,7 @@ function LoadCalculator({ oneRM }) {
           </div>
         ))}
       </div>
-      <p className="text-[9px] text-muted mt-2 text-center">
+      <p className="text-2xs text-muted mt-2 text-center">
         Ваги округлені до найближчих 2.5 кг
       </p>
     </div>
@@ -440,7 +440,7 @@ export function Exercise({ exerciseId }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+            <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               Особистий рекорд
             </div>
             <div className="text-2xl font-extrabold text-text mt-1 tabular-nums">
@@ -452,7 +452,7 @@ export function Exercise({ exerciseId }) {
                 : "Немає силових сетів"}
             </div>
             {best.bestSet?._at && (
-              <div className="text-[10px] text-subtle/70 mt-1">
+              <div className="text-2xs text-subtle/70 mt-1">
                 {new Date(best.bestSet._at).toLocaleDateString("uk-UA", {
                   day: "numeric",
                   month: "short",
@@ -462,7 +462,7 @@ export function Exercise({ exerciseId }) {
             )}
           </div>
           <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+            <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               Наступного разу
             </div>
             <div className="text-2xl font-extrabold text-text mt-1 tabular-nums">
@@ -474,12 +474,12 @@ export function Exercise({ exerciseId }) {
                 : "Заповни сети, щоб зʼявилась рекомендація"}
             </div>
             {suggestedNext?.altWeightKg != null && (
-              <div className="text-[10px] text-fizruk mt-1">
+              <div className="text-2xs text-fizruk mt-1">
                 {`або ${fmt(suggestedNext.altWeightKg, 1)} × ${suggestedNext.altReps} повт.`}
               </div>
             )}
             {suggestedNext && best.lastTop && (
-              <div className="text-[10px] text-subtle/70 mt-1">
+              <div className="text-2xs text-subtle/70 mt-1">
                 {`зараз: ${best.lastTop.weightKg ?? 0} × ${best.lastTop.reps ?? 0}`}
               </div>
             )}
@@ -525,7 +525,7 @@ export function Exercise({ exerciseId }) {
               unit="хв/км"
               color="rgb(234 88 12)"
             />
-            <div className="text-[10px] text-subtle mt-1">
+            <div className="text-2xs text-subtle mt-1">
               Менше — краще (швидший темп)
             </div>
           </div>
@@ -575,7 +575,7 @@ export function Exercise({ exerciseId }) {
                     </div>
                     <div
                       className={cn(
-                        "text-[10px] px-2 py-1 rounded-full border",
+                        "text-2xs px-2 py-1 rounded-full border",
                         item.type === "strength"
                           ? "border-line text-subtle"
                           : "border-line text-subtle",

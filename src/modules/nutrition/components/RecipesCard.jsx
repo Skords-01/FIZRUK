@@ -463,7 +463,7 @@ export function RecipesCard({
                     </div>
                     {r.macros?.kcal != null && (
                       <div className="shrink-0 rounded-xl border border-line bg-bg px-3 py-2 text-xs text-subtle">
-                        <div className="text-[10px] text-subtle">≈ ккал</div>
+                        <div className="text-2xs text-subtle">≈ ккал</div>
                         <div className="text-sm font-semibold text-text">
                           {fmtMacro(r.macros.kcal)}
                         </div>

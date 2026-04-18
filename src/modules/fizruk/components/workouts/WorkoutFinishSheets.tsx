@@ -43,7 +43,7 @@ export function WorkoutFinishSheets({
               Оціни по шкалі 1–5 (можна пропустити).
             </p>
             <div>
-              <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+              <div className="text-2xs font-bold text-subtle uppercase tracking-widest mb-2">
                 Енергія
               </div>
               <div className="flex flex-wrap gap-2">
@@ -68,7 +68,7 @@ export function WorkoutFinishSheets({
               </div>
             </div>
             <div>
-              <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+              <div className="text-2xs font-bold text-subtle uppercase tracking-widest mb-2">
                 Настрій
               </div>
               <div className="flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ export function WorkoutFinishSheets({
               </div>
               <div className="grid grid-cols-3 gap-2 mt-3">
                 <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-                  <div className="text-[10px] uppercase tracking-wide text-white/60">
+                  <div className="text-2xs uppercase tracking-wide text-white/60">
                     Час
                   </div>
                   <div className="text-sm font-black text-white tabular-nums mt-0.5">
@@ -183,7 +183,7 @@ export function WorkoutFinishSheets({
                   </div>
                 </div>
                 <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-                  <div className="text-[10px] uppercase tracking-wide text-white/60">
+                  <div className="text-2xs uppercase tracking-wide text-white/60">
                     Вправ
                   </div>
                   <div className="text-lg font-black text-white tabular-nums">
@@ -191,7 +191,7 @@ export function WorkoutFinishSheets({
                   </div>
                 </div>
                 <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">
-                  <div className="text-[10px] uppercase tracking-wide text-white/60">
+                  <div className="text-2xs uppercase tracking-wide text-white/60">
                     Обʼєм
                   </div>
                   <div className="text-sm font-black text-white tabular-nums mt-0.5">

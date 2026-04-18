@@ -360,7 +360,7 @@ function NutritionSlide({ slide }) {
 
       <div className="grid grid-cols-3 gap-2 mb-4">
         <div className="rounded-xl bg-white/15 border border-white/20 px-3 py-2 text-center">
-          <div className="text-[10px] uppercase tracking-wider text-white/75 font-bold">
+          <div className="text-2xs uppercase tracking-wider text-white/75 font-bold">
             Білки
           </div>
           <div className="text-[20px] font-black tabular-nums mt-0.5">
@@ -368,7 +368,7 @@ function NutritionSlide({ slide }) {
           </div>
         </div>
         <div className="rounded-xl bg-white/15 border border-white/20 px-3 py-2 text-center">
-          <div className="text-[10px] uppercase tracking-wider text-white/75 font-bold">
+          <div className="text-2xs uppercase tracking-wider text-white/75 font-bold">
             Жири
           </div>
           <div className="text-[20px] font-black tabular-nums mt-0.5">
@@ -376,7 +376,7 @@ function NutritionSlide({ slide }) {
           </div>
         </div>
         <div className="rounded-xl bg-white/15 border border-white/20 px-3 py-2 text-center">
-          <div className="text-[10px] uppercase tracking-wider text-white/75 font-bold">
+          <div className="text-2xs uppercase tracking-wider text-white/75 font-bold">
             Вугл.
           </div>
           <div className="text-[20px] font-black tabular-nums mt-0.5">
@@ -438,7 +438,7 @@ function RoutineSlide({ slide }) {
             <div className="text-[28px] font-black leading-none tabular-nums">
               {agg?.overallRate ?? 0}%
             </div>
-            <div className="text-[10px] uppercase tracking-wider font-bold text-white/75 mt-0.5">
+            <div className="text-2xs uppercase tracking-wider font-bold text-white/75 mt-0.5">
               виконано
             </div>
           </div>

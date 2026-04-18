@@ -142,7 +142,7 @@ export function NutritionBottomNav({ activePage, setActivePage }) {
 
               <span
                 className={cn(
-                  "text-[10px] leading-none font-semibold transition-colors",
+                  "text-2xs leading-none font-semibold transition-colors",
                   active ? "text-text" : "text-muted",
                 )}
               >

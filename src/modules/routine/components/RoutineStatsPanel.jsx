@@ -63,7 +63,7 @@ export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <div className={C.statCard}>
-            <p className="text-[10px] uppercase tracking-wide text-subtle">
+            <p className="text-2xs uppercase tracking-wide text-subtle">
               Серія сьогодні
             </p>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
@@ -71,7 +71,7 @@ export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
             </p>
           </div>
           <div className={C.statCard}>
-            <p className="text-[10px] uppercase tracking-wide text-subtle">
+            <p className="text-2xs uppercase tracking-wide text-subtle">
               Макс. серія
             </p>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
@@ -79,35 +79,35 @@ export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
             </p>
           </div>
           <div className={C.statCard}>
-            <p className="text-[10px] uppercase tracking-wide text-subtle">
+            <p className="text-2xs uppercase tracking-wide text-subtle">
               7 днів
             </p>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
               {Math.round(summary.r7.rate * 100)}%
             </p>
-            <p className="text-[9px] text-subtle tabular-nums">
+            <p className="text-2xs text-subtle tabular-nums">
               {summary.r7.completed}/{summary.r7.scheduled}
             </p>
           </div>
           <div className={C.statCard}>
-            <p className="text-[10px] uppercase tracking-wide text-subtle">
+            <p className="text-2xs uppercase tracking-wide text-subtle">
               30 днів
             </p>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
               {Math.round(summary.r30.rate * 100)}%
             </p>
-            <p className="text-[9px] text-subtle tabular-nums">
+            <p className="text-2xs text-subtle tabular-nums">
               {summary.r30.completed}/{summary.r30.scheduled}
             </p>
           </div>
           <div className={cn(C.statCard, "col-span-2 sm:col-span-1")}>
-            <p className="text-[10px] uppercase tracking-wide text-subtle">
+            <p className="text-2xs uppercase tracking-wide text-subtle">
               90 днів
             </p>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
               {Math.round(summary.r90.rate * 100)}%
             </p>
-            <p className="text-[9px] text-subtle tabular-nums">
+            <p className="text-2xs text-subtle tabular-nums">
               {summary.r90.completed}/{summary.r90.scheduled}
             </p>
           </div>

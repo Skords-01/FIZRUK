@@ -373,7 +373,7 @@ export function Progress() {
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-bg border border-line rounded-xl p-2.5 text-center">
-                <div className="text-[10px] text-subtle uppercase tracking-wide">
+                <div className="text-2xs text-subtle uppercase tracking-wide">
                   Сьогодні
                 </div>
                 <div className="text-lg font-black text-text tabular-nums">
@@ -381,7 +381,7 @@ export function Progress() {
                 </div>
               </div>
               <div className="bg-bg border border-line rounded-xl p-2.5 text-center">
-                <div className="text-[10px] text-subtle uppercase tracking-wide">
+                <div className="text-2xs text-subtle uppercase tracking-wide">
                   Тиждень
                 </div>
                 <div className="text-lg font-black text-text tabular-nums">
@@ -389,7 +389,7 @@ export function Progress() {
                 </div>
               </div>
               <div className="bg-bg border border-line rounded-xl p-2.5 text-center">
-                <div className="text-[10px] text-subtle uppercase tracking-wide">
+                <div className="text-2xs text-subtle uppercase tracking-wide">
                   Місяць
                 </div>
                 <div className="text-lg font-black text-text tabular-nums">
@@ -403,7 +403,7 @@ export function Progress() {
         {/* Weight + fat cards */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+            <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               Вага
             </div>
             <div className="text-2xl font-extrabold text-text mt-1 tabular-nums">
@@ -430,7 +430,7 @@ export function Progress() {
             </div>
           </div>
           <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+            <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               % жиру
             </div>
             <div className="text-2xl font-extrabold text-text mt-1 tabular-nums">
@@ -649,7 +649,7 @@ export function Progress() {
                             </span>
                           )}
                           {p.muscleGroupLabel && (
-                            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-fizruk/10 text-fizruk/70 font-medium shrink-0">
+                            <span className="ml-auto text-2xs px-2 py-0.5 rounded-full bg-fizruk/10 text-fizruk/70 font-medium shrink-0">
                               {p.muscleGroupLabel}
                             </span>
                           )}

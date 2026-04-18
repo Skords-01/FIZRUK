@@ -155,7 +155,7 @@ export function WorkoutTemplatesSection({
             aria-label="Назва шаблону"
           />
           <div>
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+            <div className="text-2xs font-bold text-subtle uppercase tracking-widest mb-2">
               Додати вправу з каталогу
             </div>
             <Input
@@ -185,7 +185,7 @@ export function WorkoutTemplatesSection({
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+              <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
                 Порядок ({orderIds.length})
               </div>
               {orderIds.length >= 2 && !groupSelectMode && (
@@ -280,7 +280,7 @@ export function WorkoutTemplatesSection({
                       </span>
                       {group && (
                         <span
-                          className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${group.type === "circuit" ? "bg-fizruk/15 text-fizruk border border-fizruk/30" : "bg-success/15 text-success border border-success/30"}`}
+                          className={`text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${group.type === "circuit" ? "bg-fizruk/15 text-fizruk border border-fizruk/30" : "bg-success/15 text-success border border-success/30"}`}
                         >
                           {group.type === "circuit" ? "Коло" : "СС"}
                         </span>
@@ -288,7 +288,7 @@ export function WorkoutTemplatesSection({
                       {group && !groupSelectMode && (
                         <button
                           type="button"
-                          className="text-[10px] text-danger/60 hover:text-danger px-1"
+                          className="text-2xs text-danger/60 hover:text-danger px-1"
                           title="Прибрати з групи"
                           onClick={() => handleRemoveGroup(group.id)}
                         >

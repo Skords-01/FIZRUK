@@ -490,7 +490,7 @@ export default function RoutineApp({
           <div className="min-w-0 flex-1">
             <span
               className={cn(
-                "text-[9px] font-bold tracking-widest uppercase block leading-none mb-0.5",
+                "text-2xs font-bold tracking-widest uppercase block leading-none mb-0.5",
                 C.eyebrow,
               )}
             >
@@ -499,7 +499,7 @@ export default function RoutineApp({
             <span className="text-[16px] font-semibold tracking-wide text-text block leading-tight">
               РУТИНА
             </span>
-            <span className="text-[10px] text-subtle font-medium truncate">
+            <span className="text-2xs text-subtle font-medium truncate">
               Звички · план Фізрука · один розклад
             </span>
           </div>

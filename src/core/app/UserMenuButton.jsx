@@ -105,7 +105,7 @@ export function UserMenuButton({
               Завантажити з хмари
             </button>
             {lastSync && (
-              <p className="px-3 text-[10px] text-muted">
+              <p className="px-3 text-2xs text-muted">
                 Остання синхр.: {lastSync.toLocaleTimeString("uk-UA")}
               </p>
             )}

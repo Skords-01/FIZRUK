@@ -66,7 +66,7 @@ export function PushupsWidget() {
 
         {recentHistory.some((d) => d.total > 0) && (
           <div className="mt-4 pt-3 border-t border-line/60">
-            <p className="text-[10px] text-subtle mb-2">Останні 7 днів</p>
+            <p className="text-2xs text-subtle mb-2">Останні 7 днів</p>
             <div className="flex items-end gap-1 h-10">
               {recentHistory.map((d) => {
                 const max = Math.max(...recentHistory.map((x) => x.total), 1);

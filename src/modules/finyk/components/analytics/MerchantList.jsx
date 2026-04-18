@@ -33,7 +33,7 @@ function MerchantListComponent({ merchants = [], className }) {
                     style={{ width: `${barPct}%` }}
                   />
                 </div>
-                <span className="text-[10px] text-subtle shrink-0">
+                <span className="text-2xs text-subtle shrink-0">
                   {m.count} разів
                 </span>
               </div>

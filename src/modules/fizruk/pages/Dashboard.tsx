@@ -288,14 +288,14 @@ export function Dashboard({
           <p className="text-[11px] font-bold tracking-widest uppercase text-fizruk">
             {greeting} · {today}
           </p>
-          <h1 className="text-[26px] font-black text-white mt-3 leading-tight">
+          <h1 className="text-2xl font-black text-white mt-3 leading-tight">
             Твій прогрес
             <br />
             зібраний в одному місці
           </h1>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="rounded-2xl bg-white/10 border border-white/15 p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wide text-white/60">
+              <p className="text-2xs uppercase tracking-wide text-white/60">
                 Тиждень
               </p>
               <p className="text-xl font-black text-white tabular-nums mt-1">
@@ -303,7 +303,7 @@ export function Dashboard({
               </p>
             </div>
             <div className="rounded-2xl bg-white/10 border border-white/15 p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wide text-white/60">
+              <p className="text-2xs uppercase tracking-wide text-white/60">
                 Серія
               </p>
               <p className="text-xl font-black text-white tabular-nums mt-1">
@@ -311,7 +311,7 @@ export function Dashboard({
               </p>
             </div>
             <div className="rounded-2xl bg-white/10 border border-white/15 p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wide text-white/60">
+              <p className="text-2xs uppercase tracking-wide text-white/60">
                 Сер. час
               </p>
               <p className="text-xl font-black text-white tabular-nums mt-1">
@@ -319,7 +319,7 @@ export function Dashboard({
               </p>
             </div>
             <div className="rounded-2xl bg-white/10 border border-white/15 p-3 text-center">
-              <p className="text-[10px] uppercase tracking-wide text-white/60">
+              <p className="text-2xs uppercase tracking-wide text-white/60">
                 Місяць
               </p>
               <p className="text-xl font-black text-white tabular-nums mt-1">
@@ -370,7 +370,7 @@ export function Dashboard({
                   <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
                     Швидкий старт
                   </h2>
-                  <span className="text-[10px] text-muted">
+                  <span className="text-2xs text-muted">
                     {recentlyUsed.length > 0
                       ? "Нещодавно використані"
                       : "Останні шаблони"}
@@ -506,7 +506,7 @@ export function Dashboard({
 
           {recoveryOpen && (
             <>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-subtle mb-3 mt-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-subtle mb-3 mt-3">
                 <span className="inline-flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-success" /> готово
                 </span>
@@ -541,7 +541,7 @@ export function Dashboard({
               />
 
               <div className="mt-4 pt-3 border-t border-line/60">
-                <p className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+                <p className="text-2xs font-bold text-subtle uppercase tracking-widest mb-2">
                   Пріоритет після відпочинку
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -592,7 +592,7 @@ export function Dashboard({
                   <div className="text-2xs font-semibold text-subtle uppercase tracking-wide mt-2">
                     {card.label}
                   </div>
-                  <div className="text-[9px] text-muted mt-0.5 leading-snug">
+                  <div className="text-2xs text-muted mt-0.5 leading-snug">
                     {card.sub}
                   </div>
                 </div>
@@ -687,7 +687,7 @@ export function Dashboard({
             </p>
           )}
           <div className="rounded-2xl border border-line bg-panelHi px-3">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">
+            <div className="text-2xs font-bold text-subtle uppercase tracking-widest pt-2">
               Мій шаблон
             </div>
             <select

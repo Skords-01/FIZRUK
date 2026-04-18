@@ -39,7 +39,7 @@ export function AIDigestSection() {
           <p className="text-xs font-semibold text-text">Поточний тиждень</p>
           <p className="text-[11px] text-muted mt-0.5">{weekRange}</p>
           {generatedAt && (
-            <p className="text-[10px] text-subtle mt-1">
+            <p className="text-2xs text-subtle mt-1">
               Згенеровано: {generatedAt}
             </p>
           )}

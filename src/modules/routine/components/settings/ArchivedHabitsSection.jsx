@@ -14,7 +14,7 @@ export function ArchivedHabitsSection({
       <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
         Архів
       </h2>
-      <p className="text-[10px] text-subtle">
+      <p className="text-2xs text-subtle">
         Не показуються в календарі; відмітки збережені.
       </p>
       <ul className="space-y-2">

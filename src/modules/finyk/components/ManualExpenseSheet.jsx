@@ -298,7 +298,7 @@ export function ManualExpenseSheet({
               role="group"
               aria-label="Нещодавні мерчанти"
             >
-              <span className="text-[10px] text-subtle uppercase tracking-wide font-semibold w-full">
+              <span className="text-2xs text-subtle uppercase tracking-wide font-semibold w-full">
                 Нещодавнє
               </span>
               {merchantSuggestions.map((m) => (

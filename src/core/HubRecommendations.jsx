@@ -67,7 +67,7 @@ export function HubRecommendations({ onOpenModule }) {
           Рекомендації
         </h2>
         {visible.length > 1 && (
-          <span className="text-[10px] text-subtle bg-panelHi px-2 py-0.5 rounded-full">
+          <span className="text-2xs text-subtle bg-panelHi px-2 py-0.5 rounded-full">
             {visible.length}
           </span>
         )}

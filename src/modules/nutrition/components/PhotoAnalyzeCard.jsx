@@ -128,7 +128,7 @@ export function PhotoAnalyzeCard({
                 key={m.label}
                 className="rounded-xl border border-nutrition/20 bg-nutrition/8 px-2 py-2 text-center"
               >
-                <div className="text-[10px] text-nutrition/70 font-bold uppercase tracking-wide leading-none mb-1">
+                <div className="text-2xs text-nutrition/70 font-bold uppercase tracking-wide leading-none mb-1">
                   {m.label}
                 </div>
                 <div className="text-sm font-extrabold text-text leading-none">

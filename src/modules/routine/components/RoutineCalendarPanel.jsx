@@ -130,7 +130,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
           />
           <div className="flex-1 grid grid-cols-2 gap-2 w-full sm:grid-cols-2 lg:grid-cols-4">
             <div className={C.statCard}>
-              <p className="text-[10px] uppercase tracking-wide text-subtle">
+              <p className="text-2xs uppercase tracking-wide text-subtle">
                 Подій у зрізі
               </p>
               <p className="text-2xl font-black text-text tabular-nums mt-0.5">
@@ -138,7 +138,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
               </p>
             </div>
             <div className={C.statCard}>
-              <p className="text-[10px] uppercase tracking-wide text-subtle">
+              <p className="text-2xs uppercase tracking-wide text-subtle">
                 Звичок активних
               </p>
               <p className="text-2xl font-black text-text tabular-nums mt-0.5">
@@ -146,18 +146,18 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
               </p>
             </div>
             <div className={C.statCard}>
-              <p className="text-[10px] uppercase tracking-wide text-subtle">
+              <p className="text-2xs uppercase tracking-wide text-subtle">
                 Виконання
               </p>
               <p className="text-2xl font-black text-text tabular-nums mt-0.5">
                 {Math.round(completionRate.rate * 100)}%
               </p>
-              <p className="text-[9px] text-subtle tabular-nums">
+              <p className="text-2xs text-subtle tabular-nums">
                 {completionRate.completed}/{completionRate.scheduled}
               </p>
             </div>
             <div className={C.statCard}>
-              <p className="text-[10px] uppercase tracking-wide text-subtle">
+              <p className="text-2xs uppercase tracking-wide text-subtle">
                 Поточна серія
               </p>
               <p className="text-2xl font-black text-text tabular-nums mt-0.5">
@@ -206,7 +206,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
       </div>
 
       <div className="rounded-2xl border border-line/60 bg-panel/80 p-3 shadow-card">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-subtle">
+        <p className="mb-2 text-2xs font-bold uppercase tracking-widest text-subtle">
           Тиждень
         </p>
         <WeekDayStrip
@@ -220,7 +220,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
           onShiftWeek={shiftWeekStrip}
         />
         {timeMode === "day" && (
-          <p className="mt-2 text-center text-[10px] text-subtle">
+          <p className="mt-2 text-center text-2xs text-subtle">
             Обрано один день — натисни «Сьогодні» або «Тиждень», щоб повернути
             зріз
           </p>
@@ -236,7 +236,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
       />
 
       <div className="flex flex-wrap gap-1.5 items-center">
-        <span className="text-[10px] font-bold text-subtle uppercase tracking-widest w-full sm:w-auto">
+        <span className="text-2xs font-bold text-subtle uppercase tracking-widest w-full sm:w-auto">
           Теги
         </span>
         <button
@@ -334,7 +334,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
 
       {timeMode === "month" && (
         <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-subtle mb-2">
+          <div className="grid grid-cols-7 gap-1 text-center text-2xs font-semibold text-subtle mb-2">
             {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"].map((d) => (
               <div key={d}>{d}</div>
             ))}
@@ -377,7 +377,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                     <span className="flex items-center gap-0.5" aria-hidden>
                       <span className={cn("w-1.5 h-1.5 rounded-full", C.dot)} />
                       {n > 1 && (
-                        <span className="text-[9px] text-subtle tabular-nums">
+                        <span className="text-2xs text-subtle tabular-nums">
                           {n}
                         </span>
                       )}

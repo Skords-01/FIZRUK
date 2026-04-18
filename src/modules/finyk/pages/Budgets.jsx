@@ -430,7 +430,7 @@ export function Budgets({ mono, storage }) {
               {/* Fact row */}
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="text-[10px] text-subtle mb-0.5">
+                  <div className="text-2xs text-subtle mb-0.5">
                     Дохід (план)
                   </div>
                   <div className="text-sm font-semibold tabular-nums">
@@ -440,7 +440,7 @@ export function Budgets({ mono, storage }) {
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-subtle mb-0.5">
+                  <div className="text-2xs text-subtle mb-0.5">
                     Витрати (факт)
                   </div>
                   <div
@@ -453,7 +453,7 @@ export function Budgets({ mono, storage }) {
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-subtle mb-0.5">Залишок</div>
+                  <div className="text-2xs text-subtle mb-0.5">Залишок</div>
                   <div
                     className={cn(
                       "text-sm font-semibold tabular-nums",
@@ -628,7 +628,7 @@ export function Budgets({ mono, storage }) {
                       >
                         {fc.forecast.toLocaleString("uk-UA")} ₴
                       </span>
-                      <span className="text-[10px] text-subtle tabular-nums">
+                      <span className="text-2xs text-subtle tabular-nums">
                         ліміт {fc.limit.toLocaleString("uk-UA")} ₴
                       </span>
                     </div>
@@ -655,7 +655,7 @@ export function Budgets({ mono, storage }) {
                     />
                   </Suspense>
 
-                  <div className="flex items-center justify-between text-[10px] text-subtle mt-1 mb-2">
+                  <div className="flex items-center justify-between text-2xs text-subtle mt-1 mb-2">
                     <span>Факт: {fc.spent.toLocaleString("uk-UA")} ₴</span>
                     <span>≈{fc.avgPerDay.toLocaleString("uk-UA")} ₴/день</span>
                     <span>Залишилось: {fc.daysRemaining} дн.</span>

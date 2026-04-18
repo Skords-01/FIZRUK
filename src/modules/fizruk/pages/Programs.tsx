@@ -64,11 +64,11 @@ export function Programs({
                           {prog.name}
                         </h2>
                         {isActive && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/25">
+                          <span className="text-2xs font-bold px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/25">
                             Активна
                           </span>
                         )}
-                        <span className="text-[10px] text-subtle border border-line/60 rounded-full px-2 py-0.5">
+                        <span className="text-2xs text-subtle border border-line/60 rounded-full px-2 py-0.5">
                           {prog.days} дн/тиждень
                         </span>
                       </div>
@@ -88,7 +88,7 @@ export function Programs({
                         <div
                           key={i}
                           className={cn(
-                            "flex-1 text-center rounded py-1 text-[9px] font-bold transition-colors",
+                            "flex-1 text-center rounded py-1 text-2xs font-bold transition-colors",
                             hasSession
                               ? isToday && isActive
                                 ? "bg-success text-white"
@@ -168,7 +168,7 @@ export function Programs({
 function ProgramDetails({ prog, exercises }) {
   return (
     <div className="border-t border-line/60 px-4 pb-4 pt-3 space-y-3 bg-bg/50">
-      <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+      <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
         Розклад та вправи
       </div>
       {prog.schedule.map((schedEntry) => {
@@ -183,14 +183,14 @@ function ProgramDetails({ prog, exercises }) {
             className="rounded-xl bg-panel border border-line/40 p-3"
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-fizruk/10 text-success border border-success/20">
+              <span className="text-2xs font-bold px-2 py-0.5 rounded-full bg-fizruk/10 text-success border border-success/20">
                 День {schedEntry.day}
               </span>
               <span className="text-sm font-semibold text-text">
                 {schedEntry.name}
               </span>
             </div>
-            <div className="flex items-center gap-3 mb-2 text-[10px] text-subtle">
+            <div className="flex items-center gap-3 mb-2 text-2xs text-subtle">
               <span>
                 Відпочинок:{" "}
                 <span className="font-semibold text-text">
