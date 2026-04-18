@@ -40,6 +40,7 @@ export function Budgets({ mono, storage }) {
   const statTx = realTx.filter((t) => !excludedTxIds.has(t.id));
   const [editIdx, setEditIdx] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
   const [formType, setFormType] = useState("limit");
   const [newB, setNewB] = useState({
     type: "limit",
@@ -554,12 +555,21 @@ export function Budgets({ mono, storage }) {
           );
         })}
 
-        {/* Forecast */}
-        {forecasts.length > 0 && (
+        {/* Forecast — shown whenever there are limit budgets to avoid layout shifts */}
+        {limitBudgets.length > 0 && (
           <>
             <div className="text-[11px] font-bold text-subtle uppercase tracking-widest pt-1">
               Прогноз · кінець місяця
             </div>
+            {loadingTx && forecasts.length === 0 ? (
+              limitBudgets.map((b) => (
+                <Skeleton key={b.id} className="h-36 rounded-2xl" />
+              ))
+            ) : forecasts.length === 0 ? (
+              <div className="text-sm text-muted px-1">
+                Недостатньо даних для прогнозу
+              </div>
+            ) : null}
             {forecasts.map((fc) => {
               const cat = resolveExpenseCategoryMeta(
                 fc.categoryId,
@@ -734,18 +744,6 @@ export function Budgets({ mono, storage }) {
           );
         })}
 
-        {/* Add form */}
-        {/* Category manager */}
-        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
-          <CategoryManager
-            customCategories={customCategories}
-            allCategories={expenseCategoryList}
-            onAdd={addCustomCategory}
-            onEdit={editCustomCategory}
-            onRemove={removeCustomCategory}
-          />
-        </div>
-
         {showForm ? (
           <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card space-y-3">
             <div className="flex gap-2">
@@ -888,6 +886,43 @@ export function Budgets({ mono, storage }) {
             + Додати бюджет або ціль
           </button>
         )}
+
+        {/* Category manager — collapsible at bottom so it never shifts other sections */}
+        <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowCategories((v) => !v)}
+            className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold text-text hover:bg-panelHi transition-colors"
+          >
+            <span>Власні категорії</span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={cn("transition-transform text-muted", showCategories ? "rotate-180" : "")}
+              aria-hidden
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {showCategories && (
+            <div className="px-5 pb-5">
+              <CategoryManager
+                customCategories={customCategories}
+                allCategories={expenseCategoryList}
+                onAdd={addCustomCategory}
+                onEdit={editCustomCategory}
+                onRemove={removeCustomCategory}
+              />
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
