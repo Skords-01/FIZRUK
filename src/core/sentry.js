@@ -1,6 +1,5 @@
-import * as Sentry from "@sentry/react";
-
 let initialized = false;
+let sentryModule = null;
 
 function parseRate(val, fallback) {
   if (val == null || val === "") return fallback;
@@ -9,14 +8,24 @@ function parseRate(val, fallback) {
 }
 
 /**
- * Ініціалізує Sentry в браузері, якщо задано VITE_SENTRY_DSN.
- * Без DSN — no-op (dev/preview без моніторингу).
+ * Лениво завантажує `@sentry/react` і ініціалізує Sentry у браузері.
+ *
+ * Навмисно через динамічний `import()`, щоб SDK (~30–40 KB gzip) не
+ * потрапляв у головний бандл — аналітика/error tracking не повинні
+ * блокувати hydration (див. правило 2.3 у
+ * `.agents/skills/vercel-react-best-practices/AGENTS.md`).
+ *
+ * Без `VITE_SENTRY_DSN` — no-op і жодного чанку не підтягується.
  */
-export function initSentry() {
+export async function initSentry() {
+  if (initialized) return;
   const dsn = import.meta.env.VITE_SENTRY_DSN;
-  if (!dsn || initialized) return;
+  if (!dsn) return;
 
-  Sentry.init({
+  const mod = await import("@sentry/react");
+  sentryModule = mod;
+
+  mod.init({
     dsn,
     environment:
       import.meta.env.VITE_SENTRY_ENVIRONMENT ||
@@ -24,16 +33,12 @@ export function initSentry() {
       "production",
     release: import.meta.env.VITE_SENTRY_RELEASE,
     integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration({
-        // Не маскуємо текст — у застосунку немає PII окрім введених юзером даних;
-        // їх можна окремо замаскувати beforeSend-ом при потребі.
+      mod.browserTracingIntegration(),
+      mod.replayIntegration({
         maskAllText: false,
         blockAllMedia: true,
       }),
     ],
-    // `VITE_SENTRY_*_SAMPLE_RATE=0` має справді вимикати трейсинг/реплей,
-    // тому fallback виноситься через parseRate, а не через `|| 0.x`.
     tracesSampleRate: parseRate(
       import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE,
       0.1,
@@ -44,7 +49,6 @@ export function initSentry() {
     ),
     replaysOnErrorSampleRate: 1.0,
     beforeSend(event) {
-      // Приховуємо cookies/авто-налаштування, щоб не відправляти sid.
       if (event.request?.cookies) delete event.request.cookies;
       return event;
     },
@@ -53,4 +57,16 @@ export function initSentry() {
   initialized = true;
 }
 
-export { Sentry };
+/**
+ * Lazy-forward wrapper: поки SDK не завантажений — no-op, потім
+ * делегує у реальний `Sentry.captureException`. Використовується
+ * локальним `ErrorBoundary`, щоб не змушувати його залежати від SDK.
+ */
+export function captureException(error, hint) {
+  if (!sentryModule) return;
+  try {
+    sentryModule.captureException(error, hint);
+  } catch {
+    /* noop */
+  }
+}
