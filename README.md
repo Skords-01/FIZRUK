@@ -180,6 +180,19 @@ server/
 
 **Деплой:** фронт Vercel + API/PostgreSQL на Railway — покроково [docs/railway-vercel.md](docs/railway-vercel.md). Локальна БД: `npm run db:up` (Docker Compose).
 
+## Що покращити далі (пріоритети)
+
+1. **CI-якість перед деплоєм**  
+   Додати обовʼязковий pipeline на GitHub Actions з `npm run check` для кожного PR, щоб не пропускати формат/лінт/тайпчек/тести/білд до merge.
+2. **Централізовані e2e-тести критичних флоу**  
+   Зараз уже є багато unit/integration-тестів, але варто додати e2e (наприклад Playwright) для базових сценаріїв: реєстрація, додавання тренування, лог харчування, синхронізація.
+3. **Єдина система telemetry + error budget**  
+   Підʼєднати наскрізні метрики (API latency, SW cache hit, sync queue retry, AI error rate) і задати SLO/alerting, щоб пріоритезувати стабільність за фактом, а не інтуїтивно.
+4. **Ізоляція секретів і environment policy**  
+   Додати перевірку env на старті сервера + `.env.example` із чіткими профілями (local/staging/prod), щоб зменшити ризик неповної конфігурації при нових деплоях.
+5. **Продуктова аналітика по Hub-функціях**  
+   Для `HubSearch`, `HubRecommendations`, `HubChat`, `WeeklyDigest` і `CoachInsight` варто додати події використання та retention-воронки — це дасть дані, які фічі реально створюють цінність.
+
 ## PWA
 
 Hub — повноцінний Progressive Web App:

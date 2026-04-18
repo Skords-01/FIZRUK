@@ -1,5 +1,6 @@
 import { setCorsHeaders } from "./lib/cors.js";
 import { checkRateLimit } from "./lib/rateLimit.js";
+import { resilientFetch } from "./lib/resilientFetch.js";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Source 1: Open Food Facts (no key, 100 req/min, global crowdsourced DB)
@@ -54,13 +55,20 @@ function normalizeOFF(product) {
 
 async function lookupOFF(barcode) {
   const url = `${OFF_BASE}/${barcode}.json?fields=${OFF_FIELDS}`;
-  const r = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Sergeant-NutritionApp/1.0 (https://sergeant.2dmanager.com.ua)",
+  const r = await resilientFetch(
+    url,
+    {
+      headers: {
+        "User-Agent":
+          "Sergeant-NutritionApp/1.0 (https://sergeant.2dmanager.com.ua)",
+      },
     },
-    signal: AbortSignal.timeout(7000),
-  });
+    {
+      timeoutMs: 7000,
+      maxAttempts: 2,
+      retryDelayMs: [0, 250],
+    },
+  );
   if (!r.ok) return null;
   const data = await r.json();
   if (data?.status !== 1 || !data?.product) return null;
@@ -132,10 +140,11 @@ async function lookupUSDA(barcode) {
   const key = process.env.USDA_FDC_API_KEY || "DEMO_KEY";
   // Search Branded Foods by GTIN/UPC (barcode is stored in gtinUpc field)
   const url = `${FDC_BASE}/foods/search?query=${encodeURIComponent(barcode)}&dataType=Branded&pageSize=5&api_key=${key}`;
-  const r = await fetch(url, {
-    headers: { "User-Agent": "Sergeant-NutritionApp/1.0" },
-    signal: AbortSignal.timeout(7000),
-  });
+  const r = await resilientFetch(
+    url,
+    { headers: { "User-Agent": "Sergeant-NutritionApp/1.0" } },
+    { timeoutMs: 7000, maxAttempts: 2, retryDelayMs: [0, 250] },
+  );
   if (!r.ok) return null;
   const data = await r.json();
   const foods = data?.foods;
@@ -157,10 +166,11 @@ async function lookupUSDA(barcode) {
 // ──────────────────────────────────────────────────────────────────────────────
 async function lookupUPCitemdb(barcode) {
   const url = `https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(barcode)}`;
-  const r = await fetch(url, {
-    headers: { "User-Agent": "Sergeant-NutritionApp/1.0" },
-    signal: AbortSignal.timeout(6000),
-  });
+  const r = await resilientFetch(
+    url,
+    { headers: { "User-Agent": "Sergeant-NutritionApp/1.0" } },
+    { timeoutMs: 6000, maxAttempts: 2, retryDelayMs: [0, 250] },
+  );
   if (!r.ok) return null;
   const data = await r.json();
   const item = Array.isArray(data?.items) ? data.items[0] : null;

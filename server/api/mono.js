@@ -1,4 +1,5 @@
 import { setCorsHeaders } from "./lib/cors.js";
+import { resilientFetch } from "./lib/resilientFetch.js";
 
 export default async function handler(req, res) {
   setCorsHeaders(res, req, {
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(`https://api.monobank.ua${path}`, {
+    const response = await resilientFetch(`https://api.monobank.ua${path}`, {
       headers: { "X-Token": String(token) },
     });
 
@@ -45,6 +46,11 @@ export default async function handler(req, res) {
     const data = await response.json();
     res.status(200).json(data);
   } catch (e) {
+    if (e?.name === "AbortError") {
+      return res
+        .status(504)
+        .json({ error: "Monobank не відповідає (таймаут). Спробуй пізніше." });
+    }
     console.error("API Error:", e);
     res.status(500).json({ error: "Помилка сервера" });
   }
