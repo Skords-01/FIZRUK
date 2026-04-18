@@ -15,16 +15,12 @@ import { CategoryPieChart } from "../components/charts/lazy";
 import { ChartFallback } from "../components/charts/ChartFallback";
 import { MerchantList } from "../components/analytics/MerchantList";
 import { getMonthlyTrendComparison } from "../lib/finykStats";
+import { readJSON } from "../lib/finykStorage.js";
 
 function readTxCache(year, month) {
-  try {
-    const raw = localStorage.getItem(`finyk_tx_cache_${year}_${month}`);
-    if (!raw) return null;
-    const { txs } = JSON.parse(raw);
-    return Array.isArray(txs) ? txs : null;
-  } catch {
-    return null;
-  }
+  const cache = readJSON(`finyk_tx_cache_${year}_${month}`, null);
+  if (!cache || typeof cache !== "object") return null;
+  return Array.isArray(cache.txs) ? cache.txs : null;
 }
 
 // Презентаційний контейнер-секція. memo, бо приймає лише `title/className/children`

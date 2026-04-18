@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { apiUrl } from "@shared/lib/apiUrl.js";
 import { TX_CACHE_TTL, CURRENCY } from "../constants";
-import { safeJsonSet } from "@shared/lib/storageQuota.js";
+import {
+  readJSON,
+  writeJSON,
+  readRaw,
+  writeRaw,
+  removeItem,
+} from "../lib/finykStorage.js";
 import { normalizeTransaction } from "../domain/transactions";
 
 /**
@@ -50,33 +56,25 @@ function reportSilentError(scope, error) {
 // Migration from "finto_*" keys to "finyk_*" is handled by storageManager (finyk_001_rename_finto_keys).
 
 function loadCache() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const cache = JSON.parse(raw);
-    if (Date.now() - cache.timestamp > TX_CACHE_TTL) return null;
-    if (!cache.txs || cache.txs.length === 0) return null;
-    return cache;
-  } catch {
+  const cache = readJSON(CACHE_KEY, null);
+  if (!cache || typeof cache !== "object") return null;
+  if (!cache.timestamp || Date.now() - cache.timestamp > TX_CACHE_TTL)
     return null;
-  }
+  if (!Array.isArray(cache.txs) || cache.txs.length === 0) return null;
+  return cache;
 }
 
 function loadAnyCache() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const cache = JSON.parse(raw);
-    if (!cache.txs || cache.txs.length === 0) return null;
-    return cache;
-  } catch {
-    return null;
-  }
+  const cache = readJSON(CACHE_KEY, null);
+  if (!cache || typeof cache !== "object") return null;
+  if (!Array.isArray(cache.txs) || cache.txs.length === 0) return null;
+  return cache;
 }
 
 function saveCache(txs) {
-  const res = safeJsonSet(CACHE_KEY, { txs, timestamp: Date.now() });
-  if (res.ok) notifyHubFinykCache();
+  if (writeJSON(CACHE_KEY, { txs, timestamp: Date.now() })) {
+    notifyHubFinykCache();
+  }
 }
 
 /** Останній повний знімок — якщо поточний кеш зіпсований (мало транзакцій), відновлюємо звідси */
@@ -84,19 +82,14 @@ const LAST_GOOD_KEY = "finyk_tx_cache_last_good";
 
 function saveLastGoodBackup(txs) {
   if (!txs || txs.length < 3) return;
-  safeJsonSet(LAST_GOOD_KEY, { txs, timestamp: Date.now() });
+  writeJSON(LAST_GOOD_KEY, { txs, timestamp: Date.now() });
 }
 
 function loadLastGoodBackup() {
-  try {
-    const raw = localStorage.getItem(LAST_GOOD_KEY);
-    if (!raw) return null;
-    const c = JSON.parse(raw);
-    if (!c.txs || c.txs.length === 0) return null;
-    return c;
-  } catch {
-    return null;
-  }
+  const c = readJSON(LAST_GOOD_KEY, null);
+  if (!c || typeof c !== "object") return null;
+  if (!Array.isArray(c.txs) || c.txs.length === 0) return null;
+  return c;
 }
 
 function dedupeByIdSort(txs) {
@@ -217,23 +210,26 @@ async function fetchStatementWithRetry(tok, accId, from, to, maxAttempts = 3) {
  */
 export function useMonobank() {
   const [token, setToken] = useState(() => {
+    const rememberedToken = readRaw(REMEMBER_KEY, "");
+    if (rememberedToken) return rememberedToken;
+
+    let sessionToken = "";
     try {
-      const rememberedToken = localStorage.getItem(REMEMBER_KEY);
-      if (rememberedToken) return rememberedToken;
-
-      const sessionToken = sessionStorage.getItem(TOKEN_KEY);
-      if (sessionToken) return sessionToken;
-
-      const legacyToken = localStorage.getItem(TOKEN_KEY);
-      if (legacyToken) {
-        sessionStorage.setItem(TOKEN_KEY, legacyToken);
-        localStorage.removeItem(TOKEN_KEY);
-        return legacyToken;
-      }
-      return "";
+      sessionToken = sessionStorage.getItem(TOKEN_KEY) || "";
     } catch {
-      return "";
+      sessionToken = "";
     }
+    if (sessionToken) return sessionToken;
+
+    const legacyToken = readRaw(TOKEN_KEY, "");
+    if (legacyToken) {
+      try {
+        sessionStorage.setItem(TOKEN_KEY, legacyToken);
+      } catch {}
+      removeItem(TOKEN_KEY);
+      return legacyToken;
+    }
+    return "";
   });
   const [clientInfo, setClientInfo] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -442,13 +438,12 @@ export function useMonobank() {
 
     try {
       let info;
-      const infoCache = localStorage.getItem(INFO_CACHE_KEY);
-      if (!forceRefresh && infoCache) {
-        const parsed = JSON.parse(infoCache);
-        if (parsed?.token && parsed.token !== cleanToken) {
+      const parsedInfoCache = readJSON(INFO_CACHE_KEY, null);
+      if (!forceRefresh && parsedInfoCache) {
+        if (parsedInfoCache?.token && parsedInfoCache.token !== cleanToken) {
           throw new Error("Кеш профілю належить іншому токену");
         }
-        info = parsed?.info || parsed;
+        info = parsedInfoCache?.info || parsedInfoCache;
       } else {
         const res = await fetch(
           `${apiUrl("/api/mono")}?path=${encodeURIComponent("/personal/client-info")}`,
@@ -472,13 +467,8 @@ export function useMonobank() {
         }
 
         info = await res.json();
-        try {
-          localStorage.setItem(
-            INFO_CACHE_KEY,
-            JSON.stringify({ token: cleanToken, info }),
-          );
-        } catch (e) {
-          reportSilentError("save client-info cache", e);
+        if (!writeJSON(INFO_CACHE_KEY, { token: cleanToken, info })) {
+          reportSilentError("save client-info cache", "write failed");
         }
       }
 
@@ -486,14 +476,14 @@ export function useMonobank() {
       setAccounts(info.accounts || []);
       try {
         sessionStorage.setItem(TOKEN_KEY, cleanToken);
-        localStorage.removeItem(TOKEN_KEY);
-        if (remember) {
-          localStorage.setItem(REMEMBER_KEY, cleanToken);
-        } else {
-          localStorage.removeItem(REMEMBER_KEY);
-        }
       } catch (e) {
-        reportSilentError("save token", e);
+        reportSilentError("save session token", e);
+      }
+      removeItem(TOKEN_KEY);
+      if (remember) {
+        writeRaw(REMEMBER_KEY, cleanToken);
+      } else {
+        removeItem(REMEMBER_KEY);
       }
       setToken(cleanToken);
 
@@ -533,25 +523,20 @@ export function useMonobank() {
   const fetchMonth = async (year, month) => {
     const cacheKey = `finyk_tx_cache_${year}_${month}`;
     const legacyKey = `finto_tx_cache_${year}_${month}`;
-    try {
-      let raw = localStorage.getItem(cacheKey);
-      if (!raw) {
-        raw = localStorage.getItem(legacyKey);
-        if (raw) {
-          try {
-            localStorage.setItem(cacheKey, raw);
-            localStorage.removeItem(legacyKey);
-          } catch {}
-        }
+
+    let cached = readJSON(cacheKey, null);
+    if (!cached) {
+      const legacy = readJSON(legacyKey, null);
+      if (legacy) {
+        writeJSON(cacheKey, legacy);
+        removeItem(legacyKey);
+        cached = legacy;
       }
-      if (raw) {
-        const cached = JSON.parse(raw);
-        if (cached.txs && cached.txs.length > 0) {
-          setHistoryTx(cached.txs);
-          return;
-        }
-      }
-    } catch {}
+    }
+    if (cached && Array.isArray(cached.txs) && cached.txs.length > 0) {
+      setHistoryTx(cached.txs);
+      return;
+    }
 
     setLoadingHistory(true);
     try {
@@ -581,12 +566,7 @@ export function useMonobank() {
       ).sort((a, b) => b.time - a.time);
       setHistoryTx(unique);
       if (unique.length > 0) {
-        try {
-          localStorage.setItem(
-            cacheKey,
-            JSON.stringify({ txs: unique, timestamp: Date.now() }),
-          );
-        } catch {}
+        writeJSON(cacheKey, { txs: unique, timestamp: Date.now() });
       }
     } finally {
       setLoadingHistory(false);
@@ -606,10 +586,8 @@ export function useMonobank() {
         const info = await res.json();
         setClientInfo(info);
         setAccounts(info.accounts || []);
-        try {
-          localStorage.setItem(INFO_CACHE_KEY, JSON.stringify({ token, info }));
-        } catch (e) {
-          reportSilentError("refresh info cache", e);
+        if (!writeJSON(INFO_CACHE_KEY, { token, info })) {
+          reportSilentError("refresh info cache", "write failed");
         }
         await fetchAllTx(token, info.accounts || []);
         return;
@@ -630,10 +608,7 @@ export function useMonobank() {
   connectRef.current = connect;
   useEffect(() => {
     if (token) {
-      let isRemembered = false;
-      try {
-        isRemembered = localStorage.getItem(REMEMBER_KEY) === token;
-      } catch {}
+      const isRemembered = readRaw(REMEMBER_KEY, "") === token;
       connectRef.current(token, false, isRemembered);
     }
   }, [token]);
@@ -682,23 +657,21 @@ export function useMonobank() {
     });
     try {
       sessionStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(TOKEN_KEY); // legacy fallback
-      localStorage.removeItem(REMEMBER_KEY);
-      localStorage.removeItem("finto_token");
-      localStorage.removeItem(CACHE_KEY);
-      localStorage.removeItem(LAST_GOOD_KEY);
-      localStorage.removeItem(INFO_CACHE_KEY);
     } catch (e) {
       reportSilentError("disconnect cleanup", e);
     }
+    removeItem(TOKEN_KEY); // legacy fallback
+    removeItem(REMEMBER_KEY);
+    removeItem("finto_token");
+    removeItem(CACHE_KEY);
+    removeItem(LAST_GOOD_KEY);
+    removeItem(INFO_CACHE_KEY);
     notifyHubFinykCache();
   };
 
   const clearTxCache = () => {
-    try {
-      localStorage.removeItem(CACHE_KEY);
-      localStorage.removeItem(LAST_GOOD_KEY);
-    } catch {}
+    removeItem(CACHE_KEY);
+    removeItem(LAST_GOOD_KEY);
     notifyHubFinykCache();
     setTransactions([]);
     setLastUpdated(null);

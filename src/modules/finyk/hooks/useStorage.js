@@ -7,8 +7,12 @@ import {
   FINYK_BACKUP_VERSION,
 } from "../lib/finykBackup.js";
 import { toLocalISODate } from "@shared/lib/date";
-import { safeJsonSet } from "@shared/lib/storageQuota.js";
-import { finykStorageManager } from "../lib/storageManager";
+import {
+  readJSON,
+  writeJSON,
+  writeJSONDebounced,
+  finykStorageManager,
+} from "../lib/finykStorage.js";
 
 function reportSilentError(scope, error) {
   console.warn(`[finyk] ${scope}`, error);
@@ -20,22 +24,9 @@ try {
   reportSilentError("storage migrations", error);
 }
 function usePersist(key, defaultVal) {
-  const [val, setVal] = useState(() => {
-    try {
-      return finykStorageManager.getJSON(key, defaultVal);
-    } catch {
-      return defaultVal;
-    }
-  });
+  const [val, setVal] = useState(() => readJSON(key, defaultVal));
   useEffect(() => {
-    const res = safeJsonSet(key, val);
-    if (!res.ok) {
-      // Не ламаємо UX, але і не мовчимо повністю.
-      console.warn(
-        `[finyk] localStorage write failed for "${key}"`,
-        res.reason,
-      );
-    }
+    writeJSONDebounced(key, val);
   }, [key, val]);
   return [val, setVal];
 }
@@ -79,14 +70,7 @@ export function useStorage({ onImportFeedback } = {}) {
     [],
   );
   const networthSnapshotRef = useRef(
-    (() => {
-      try {
-        const saved = localStorage.getItem("finyk_networth_last_snap");
-        return saved ? JSON.parse(saved) : { date: null, value: null };
-      } catch {
-        return { date: null, value: null };
-      }
-    })(),
+    readJSON("finyk_networth_last_snap", { date: null, value: null }),
   );
 
   const addManualExpense = (expense) => {
@@ -433,12 +417,7 @@ export function useStorage({ onImportFeedback } = {}) {
         if (changePct < 0.01) return;
       }
       networthSnapshotRef.current = { date: today, value: rounded };
-      try {
-        localStorage.setItem(
-          "finyk_networth_last_snap",
-          JSON.stringify({ date: today, value: rounded }),
-        );
-      } catch {}
+      writeJSON("finyk_networth_last_snap", { date: today, value: rounded });
       const key = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
       setNetworthHistory((prev) => {
         const filtered = prev.filter((s) => s.month !== key);

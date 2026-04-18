@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { apiUrl } from "@shared/lib/apiUrl.js";
 import { normalizeTransaction } from "../domain/transactions";
+import {
+  readRaw,
+  writeRaw,
+  removeItem,
+  readJSON,
+  writeJSON,
+} from "../lib/finykStorage.js";
 
 const PRIVAT_ID_KEY = "finyk_privat_id";
 const PRIVAT_TOKEN_KEY = "finyk_privat_token";
@@ -9,87 +16,73 @@ const PRIVAT_BALANCE_KEY = "finyk_privat_balance_cache";
 const PRIVAT_CACHE_TTL = 30 * 60 * 1000;
 
 function loadStoredCreds() {
-  try {
-    const id =
-      localStorage.getItem(PRIVAT_ID_KEY) ||
-      sessionStorage.getItem(PRIVAT_ID_KEY) ||
-      "";
-    const token =
-      localStorage.getItem(PRIVAT_TOKEN_KEY) ||
-      sessionStorage.getItem(PRIVAT_TOKEN_KEY) ||
-      "";
-    return { id, token };
-  } catch {
-    return { id: "", token: "" };
+  let id = readRaw(PRIVAT_ID_KEY, "");
+  let token = readRaw(PRIVAT_TOKEN_KEY, "");
+  if (!id) {
+    try {
+      id = sessionStorage.getItem(PRIVAT_ID_KEY) || "";
+    } catch {
+      id = "";
+    }
   }
+  if (!token) {
+    try {
+      token = sessionStorage.getItem(PRIVAT_TOKEN_KEY) || "";
+    } catch {
+      token = "";
+    }
+  }
+  return { id, token };
 }
 
 function saveCreds(id, token, remember) {
-  try {
-    if (remember) {
-      localStorage.setItem(PRIVAT_ID_KEY, id);
-      localStorage.setItem(PRIVAT_TOKEN_KEY, token);
+  if (remember) {
+    writeRaw(PRIVAT_ID_KEY, id);
+    writeRaw(PRIVAT_TOKEN_KEY, token);
+    try {
       sessionStorage.removeItem(PRIVAT_ID_KEY);
       sessionStorage.removeItem(PRIVAT_TOKEN_KEY);
-    } else {
+    } catch {}
+  } else {
+    try {
       sessionStorage.setItem(PRIVAT_ID_KEY, id);
       sessionStorage.setItem(PRIVAT_TOKEN_KEY, token);
-      localStorage.removeItem(PRIVAT_ID_KEY);
-      localStorage.removeItem(PRIVAT_TOKEN_KEY);
-    }
-  } catch {}
+    } catch {}
+    removeItem(PRIVAT_ID_KEY);
+    removeItem(PRIVAT_TOKEN_KEY);
+  }
 }
 
 function clearCreds() {
+  removeItem(PRIVAT_ID_KEY);
+  removeItem(PRIVAT_TOKEN_KEY);
   try {
-    localStorage.removeItem(PRIVAT_ID_KEY);
-    localStorage.removeItem(PRIVAT_TOKEN_KEY);
     sessionStorage.removeItem(PRIVAT_ID_KEY);
     sessionStorage.removeItem(PRIVAT_TOKEN_KEY);
   } catch {}
 }
 
 function loadTxCache() {
-  try {
-    const raw = localStorage.getItem(PRIVAT_CACHE_KEY);
-    if (!raw) return null;
-    const c = JSON.parse(raw);
-    if (Date.now() - c.timestamp > PRIVAT_CACHE_TTL) return null;
-    if (!c.txs || c.txs.length === 0) return null;
-    return c;
-  } catch {
-    return null;
-  }
+  const c = readJSON(PRIVAT_CACHE_KEY, null);
+  if (!c || typeof c !== "object") return null;
+  if (!c.timestamp || Date.now() - c.timestamp > PRIVAT_CACHE_TTL) return null;
+  if (!Array.isArray(c.txs) || c.txs.length === 0) return null;
+  return c;
 }
 
 function saveTxCache(txs) {
-  try {
-    localStorage.setItem(
-      PRIVAT_CACHE_KEY,
-      JSON.stringify({ txs, timestamp: Date.now() }),
-    );
-  } catch {}
+  writeJSON(PRIVAT_CACHE_KEY, { txs, timestamp: Date.now() });
 }
 
 function loadBalanceCache() {
-  try {
-    const raw = localStorage.getItem(PRIVAT_BALANCE_KEY);
-    if (!raw) return null;
-    const c = JSON.parse(raw);
-    if (Date.now() - c.timestamp > PRIVAT_CACHE_TTL) return null;
-    return c.accounts || null;
-  } catch {
-    return null;
-  }
+  const c = readJSON(PRIVAT_BALANCE_KEY, null);
+  if (!c || typeof c !== "object") return null;
+  if (!c.timestamp || Date.now() - c.timestamp > PRIVAT_CACHE_TTL) return null;
+  return Array.isArray(c.accounts) ? c.accounts : null;
 }
 
 function saveBalanceCache(accounts) {
-  try {
-    localStorage.setItem(
-      PRIVAT_BALANCE_KEY,
-      JSON.stringify({ accounts, timestamp: Date.now() }),
-    );
-  } catch {}
+  writeJSON(PRIVAT_BALANCE_KEY, { accounts, timestamp: Date.now() });
 }
 
 function fmtDate(isoDate) {
@@ -390,17 +383,13 @@ export function usePrivatbank(enabled = true) {
       lastSuccess: null,
       lastError: "",
     });
-    try {
-      localStorage.removeItem(PRIVAT_CACHE_KEY);
-      localStorage.removeItem(PRIVAT_BALANCE_KEY);
-    } catch {}
+    removeItem(PRIVAT_CACHE_KEY);
+    removeItem(PRIVAT_BALANCE_KEY);
   };
 
   const clearCache = () => {
-    try {
-      localStorage.removeItem(PRIVAT_CACHE_KEY);
-      localStorage.removeItem(PRIVAT_BALANCE_KEY);
-    } catch {}
+    removeItem(PRIVAT_CACHE_KEY);
+    removeItem(PRIVAT_BALANCE_KEY);
     setTransactions([]);
     setAccounts([]);
     setLastUpdated(null);
