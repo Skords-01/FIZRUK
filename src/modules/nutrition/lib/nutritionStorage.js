@@ -258,7 +258,14 @@ export function normalizeMeal(m, idx) {
       ? String(raw.foodId).trim()
       : null;
 
-  return {
+  // Pass the FTUX demo flag through untouched. Seeded meals carry
+  // `demo: true` so cross-module detectors (see `firstRealEntry.js`) can
+  // tell seeded data apart from real entries. Because `useNutritionLog`
+  // immediately persists the normalized log back to localStorage, any
+  // property dropped here is lost on the first module visit — which is
+  // what used to silently re-classify demo meals as real entries and
+  // trip the soft-auth prompt.
+  const out = {
     id,
     name,
     time,
@@ -270,6 +277,8 @@ export function normalizeMeal(m, idx) {
     amount_g,
     foodId,
   };
+  if (raw.demo === true) out.demo = true;
+  return out;
 }
 
 export function normalizeNutritionLog(raw) {
