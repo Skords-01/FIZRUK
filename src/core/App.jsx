@@ -219,7 +219,12 @@ function AppInner() {
               />
             )}
             {activeModule === "routine" && (
-              <RoutineApp onBackToHub={goToHub} onOpenModule={openModule} />
+              <RoutineApp
+                onBackToHub={goToHub}
+                onOpenModule={openModule}
+                pwaAction={pwaAction}
+                onPwaActionConsumed={clearPwaAction}
+              />
             )}
             {activeModule === "nutrition" && (
               <NutritionApp

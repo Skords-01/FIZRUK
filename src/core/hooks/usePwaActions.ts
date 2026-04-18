@@ -1,12 +1,17 @@
 import { useCallback, useState } from "react";
 import { PWA_ACTION_KEY, consumePwaAction } from "../app/pwaAction.js";
 
-export type PwaAction = "add_expense" | "start_workout" | "add_meal";
+export type PwaAction =
+  | "add_expense"
+  | "start_workout"
+  | "add_meal"
+  | "add_habit";
 
 const VALID_ACTIONS = new Set<PwaAction>([
   "add_expense",
   "start_workout",
   "add_meal",
+  "add_habit",
 ]);
 
 function isPwaAction(value: string | null): value is PwaAction {

@@ -13,7 +13,11 @@
 export const HUB_OPEN_MODULE_EVENT = "hub:open-module";
 
 export type HubModuleId = "finyk" | "fizruk" | "routine" | "nutrition";
-export type HubModuleAction = "add_expense" | "start_workout" | "add_meal";
+export type HubModuleAction =
+  | "add_expense"
+  | "start_workout"
+  | "add_meal"
+  | "add_habit";
 
 export interface HubOpenModuleDetail {
   module: HubModuleId;
@@ -48,6 +52,7 @@ const VALID_HUB_ACTIONS = new Set<HubModuleAction>([
   "add_expense",
   "start_workout",
   "add_meal",
+  "add_habit",
 ]);
 
 /**

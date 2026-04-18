@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
@@ -16,13 +16,46 @@ export function HabitForm({
   editingId,
   onSave,
   onCancel,
+  // One-shot trigger set by the `add_habit` PWA action and the FTUX
+  // first-action sheet. When it flips truthy we scroll the form into
+  // view and focus the name input, then the parent resets it. Using a
+  // monotonic tick rather than a bool keeps repeated triggers reliable
+  // (focus-again would otherwise be a no-op if bool stayed `true`).
+  focusTick,
+  onFocusHandled,
 }) {
   const fieldIds = useId();
   const startId = `${fieldIds}-start`;
   const endId = `${fieldIds}-end`;
+  const sectionRef = useRef(null);
+  const nameRef = useRef(null);
+
+  useEffect(() => {
+    if (!focusTick) return;
+    const section = sectionRef.current;
+    const name = nameRef.current;
+    if (section && typeof section.scrollIntoView === "function") {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (name && typeof name.focus === "function") {
+      // Defer to the next frame so the scroll-into-view doesn't steal
+      // focus by re-rendering the parent tab panel.
+      requestAnimationFrame(() => {
+        try {
+          name.focus({ preventScroll: true });
+        } catch {
+          name.focus();
+        }
+      });
+    }
+    onFocusHandled?.();
+  }, [focusTick, onFocusHandled]);
 
   return (
-    <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
+    <section
+      ref={sectionRef}
+      className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3"
+    >
       <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
         {editingId ? "Редагувати звичку" : "Нова звичка"}
       </h2>
@@ -40,6 +73,7 @@ export function HabitForm({
           aria-label="Емодзі"
         />
         <Input
+          ref={nameRef}
           className="routine-touch-field min-w-0 flex-1"
           placeholder="Назва"
           value={habitDraft.name}

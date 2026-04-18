@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
-import { openHubModuleWithAction, openHubModule } from "@shared/lib/hubNav";
+import { openHubModuleWithAction } from "@shared/lib/hubNav";
 import { trackEvent, ANALYTICS_EVENTS } from "../analytics";
 import { clearFirstActionPending, getVibePicks } from "./vibePicks.js";
 
@@ -9,10 +9,6 @@ import { clearFirstActionPending, getVibePicks } from "./vibePicks.js";
  * Per-module "one tap to your first real entry" cards. Each option routes
  * into its module with a PWA action (the same handler PWA shortcuts use),
  * so a single tap lands the user on an already-open input.
- *
- * Routine is an exception: it doesn't have a dedicated PWA action, so we
- * just open the module. The module lands on the habit list where a demo
- * habit is ready to tap.
  */
 const ACTIONS = {
   finyk: {
@@ -38,10 +34,10 @@ const ACTIONS = {
   },
   routine: {
     icon: "check",
-    title: "Відмітити звичку",
+    title: "Створити звичку",
     desc: "Почни стрік сьогодні",
     accent: "text-routine bg-routine-soft",
-    run: () => openHubModule("routine"),
+    run: () => openHubModuleWithAction("routine", "add_habit"),
   },
 };
 
