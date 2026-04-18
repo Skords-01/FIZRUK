@@ -161,7 +161,7 @@ export function ManualExpenseSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm motion-safe:animate-fade-in">
       <div
         className="w-full max-w-lg bg-panel rounded-t-3xl p-5 pb-safe-area-bottom space-y-4 animate-slide-up"
         style={{ marginBottom: kbInsetPx }}
@@ -292,10 +292,10 @@ export function ManualExpenseSheet({
                 <button
                   key={cat}
                   onClick={() => setForm((f) => ({ ...f, category: cat }))}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 ease-smooth active:scale-95 ${
                     form.category === cat
-                      ? "bg-emerald-500 text-white border-emerald-500"
-                      : "bg-panelHi text-muted border-line hover:border-muted/50"
+                      ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                      : "bg-panelHi text-muted border-line hover:border-muted/50 hover:bg-panelHi/80"
                   }`}
                 >
                   {cat}
