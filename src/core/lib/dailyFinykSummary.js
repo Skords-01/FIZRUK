@@ -178,9 +178,8 @@ export function computeDailyFinykSummary({
   })();
   const txCategories = readLS("finyk_tx_cats", {}) || {};
   const txSplitsRaw = readLS("finyk_tx_splits", {}) || {};
-  const txSplits = txSplitsRaw && typeof txSplitsRaw === "object"
-    ? txSplitsRaw
-    : {};
+  const txSplits =
+    txSplitsRaw && typeof txSplitsRaw === "object" ? txSplitsRaw : {};
   const hiddenIds = new Set(readLS("finyk_hidden_txs", []) || []);
   const customCategories = readLS("finyk_custom_cats_v1", []) || [];
   const transferIds = new Set(
@@ -239,9 +238,7 @@ export function computeDailyFinykSummary({
   if (catEntries.length > 0 && todaySpent > 0) {
     const [catId, amount] = catEntries[0];
     const roundedAmount = Math.round(amount);
-    const pct = todaySpent > 0
-      ? Math.round((amount / todaySpent) * 100)
-      : 0;
+    const pct = todaySpent > 0 ? Math.round((amount / todaySpent) * 100) : 0;
     topCategory = {
       id: catId,
       label: resolveCatLabel(catId, customCategories),

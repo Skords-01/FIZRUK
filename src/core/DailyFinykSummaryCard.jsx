@@ -226,17 +226,18 @@ function HasExpensesContent({ summary }) {
 }
 
 function ReminderContent({ kind }) {
-  const copy = kind === "reminder_active_day"
-    ? {
-        text: "Активний день — не забудь зафіксувати витрати. Хочеш додати зараз?",
-      }
-    : kind === "reminder_no_expenses"
+  const copy =
+    kind === "reminder_active_day"
       ? {
-          text: "Сьогодні витрат ще не було. Якщо щось витратив — пара секунд на запис.",
+          text: "Активний день — не забудь зафіксувати витрати. Хочеш додати зараз?",
         }
-      : {
-          text: "Сьогодні витрат ще не було. Додавай їх, коли зручно.",
-        };
+      : kind === "reminder_no_expenses"
+        ? {
+            text: "Сьогодні витрат ще не було. Якщо щось витратив — пара секунд на запис.",
+          }
+        : {
+            text: "Сьогодні витрат ще не було. Додавай їх, коли зручно.",
+          };
 
   return (
     <div className="space-y-3">
@@ -275,13 +276,14 @@ export function DailyFinykSummaryCard() {
     summary.status === "quiet";
 
   const eyebrow = "Фінік · сьогодні";
-  const title = summary.status === "has_expenses"
-    ? formatUAH(summary.todaySpent)
-    : summary.status === "reminder_active_day"
-      ? "Активний день"
-      : summary.status === "reminder_no_expenses"
-        ? "Нагадування про витрати"
-        : "Сьогодні";
+  const title =
+    summary.status === "has_expenses"
+      ? formatUAH(summary.todaySpent)
+      : summary.status === "reminder_active_day"
+        ? "Активний день"
+        : summary.status === "reminder_no_expenses"
+          ? "Нагадування про витрати"
+          : "Сьогодні";
 
   return (
     <div
@@ -306,7 +308,9 @@ export function DailyFinykSummaryCard() {
         <div className="flex-1 min-w-0">
           <Header
             eyebrow={eyebrow}
-            title={summary.status === "has_expenses" ? "Витрати за сьогодні" : title}
+            title={
+              summary.status === "has_expenses" ? "Витрати за сьогодні" : title
+            }
             onDismiss={dismissToday}
           />
 
