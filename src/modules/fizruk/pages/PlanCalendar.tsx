@@ -142,7 +142,7 @@ export function PlanCalendar() {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-subtle mb-2">
+          <div className="grid grid-cols-7 gap-1 text-center text-2xs font-semibold text-subtle mb-2">
             {WEEKDAYS.map((w) => (
               <div key={w}>{w}</div>
             ))}
@@ -181,7 +181,7 @@ export function PlanCalendar() {
                 >
                   <span className="text-xs font-bold text-text">{day}</span>
                   {tpl && (
-                    <span className="text-[9px] text-subtle leading-tight line-clamp-1 mt-0.5 px-0.5">
+                    <span className="text-2xs text-subtle leading-tight line-clamp-1 mt-0.5 px-0.5">
                       {tpl.name}
                     </span>
                   )}
@@ -198,7 +198,7 @@ export function PlanCalendar() {
               );
             })}
           </div>
-          <p className="text-[10px] text-subtle mt-3">
+          <p className="text-2xs text-subtle mt-3">
             Натисни день, щоб призначити або зняти шаблон.
           </p>
         </section>

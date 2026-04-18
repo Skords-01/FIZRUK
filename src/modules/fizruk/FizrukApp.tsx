@@ -334,7 +334,7 @@ export default function FizrukApp({
           )}
           <div className="min-w-0 flex-1">
             {!isAtlas && !isExercise && (
-              <span className="text-[9px] text-success/70 font-bold tracking-widest uppercase block leading-none mb-0.5">
+              <span className="text-2xs text-success/70 font-bold tracking-widest uppercase block leading-none mb-0.5">
                 ОСОБИСТИЙ ЖУРНАЛ
               </span>
             )}
@@ -342,7 +342,7 @@ export default function FizrukApp({
               {headerTitle}
             </span>
             {!isAtlas && !isExercise && (
-              <span className="text-[10px] text-subtle font-medium truncate">
+              <span className="text-2xs text-subtle font-medium truncate">
                 {isPlan
                   ? "Календар · нагадування · відновлення"
                   : page === "programs"
@@ -485,7 +485,7 @@ export default function FizrukApp({
                   </span>
                   <span
                     className={cn(
-                      "text-[10px] leading-none font-semibold",
+                      "text-2xs leading-none font-semibold",
                       active ? "text-text" : "text-muted",
                     )}
                   >

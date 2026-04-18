@@ -128,7 +128,7 @@ function ModuleBlock({ moduleKey, data }) {
                     <div key={i} className="flex items-start gap-1.5">
                       <span
                         className={cn(
-                          "text-[10px] font-bold mt-0.5 shrink-0",
+                          "text-2xs font-bold mt-0.5 shrink-0",
                           cfg.colorClass,
                         )}
                       >
@@ -269,12 +269,12 @@ function DigestContent({
             {Array.isArray(digest.overallRecommendations) &&
               digest.overallRecommendations.length > 0 && (
                 <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5 space-y-1.5">
-                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                  <p className="text-2xs font-bold text-primary uppercase tracking-wider">
                     Загальні рекомендації
                   </p>
                   {digest.overallRecommendations.map((rec, i) => (
                     <div key={i} className="flex items-start gap-1.5">
-                      <span className="text-[10px] font-bold text-primary mt-0.5 shrink-0">
+                      <span className="text-2xs font-bold text-primary mt-0.5 shrink-0">
                         ★
                       </span>
                       <span className="text-[11px] text-text leading-snug">
@@ -378,7 +378,7 @@ export function WeeklyDigestCard() {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {digest?.generatedAt && (
-            <span className="text-[10px] text-subtle">
+            <span className="text-2xs text-subtle">
               {new Date(digest.generatedAt).toLocaleDateString("uk-UA", {
                 day: "numeric",
                 month: "short",
@@ -438,7 +438,7 @@ export function WeeklyDigestCard() {
               >
                 {h.weekRange}
                 {h.weekKey === currentWeekKey && (
-                  <span className="ml-1 text-[9px] opacity-70">поточний</span>
+                  <span className="ml-1 text-2xs opacity-70">поточний</span>
                 )}
               </button>
             ))}

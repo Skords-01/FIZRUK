@@ -72,7 +72,7 @@ export function ShoppingListCard({
               )}
             >
               <div>Рецепти</div>
-              <div className="text-[10px] opacity-70 mt-0.5">
+              <div className="text-2xs opacity-70 mt-0.5">
                 {hasRecipes ? `${recipes.length} рецептів` : "немає рецептів"}
               </div>
             </button>
@@ -88,7 +88,7 @@ export function ShoppingListCard({
               )}
             >
               <div>Тижневий план</div>
-              <div className="text-[10px] opacity-70 mt-0.5">
+              <div className="text-2xs opacity-70 mt-0.5">
                 {hasWeekPlan ? `${weekPlan.days.length} днів` : "немає плану"}
               </div>
             </button>

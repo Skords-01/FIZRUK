@@ -33,7 +33,7 @@ export function HabitLeadersBlock({ habits, completions }) {
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div className="rounded-xl border border-routine-line/40 dark:border-routine/20 bg-routine-surface/30 dark:bg-routine/8 p-3">
-          <p className="text-[10px] uppercase tracking-wide text-subtle mb-1">
+          <p className="text-2xs uppercase tracking-wide text-subtle mb-1">
             Найстабільніша
           </p>
           <p className="text-sm font-semibold text-text truncate">
@@ -45,7 +45,7 @@ export function HabitLeadersBlock({ habits, completions }) {
         </div>
         {worst && (
           <div className="rounded-xl border border-line/50 bg-panel p-3">
-            <p className="text-[10px] uppercase tracking-wide text-subtle mb-1">
+            <p className="text-2xs uppercase tracking-wide text-subtle mb-1">
               Найслабша
             </p>
             <p className="text-sm font-semibold text-text truncate">

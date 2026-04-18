@@ -538,7 +538,7 @@ export default function App({
               <span className="text-[16px] font-semibold tracking-wide text-text block leading-tight">
                 ФІНІК
               </span>
-              <span className="text-[10px] text-subtle font-medium hidden sm:block truncate">
+              <span className="text-2xs text-subtle font-medium hidden sm:block truncate">
                 Monobank · бюджети
               </span>
             </div>
@@ -777,7 +777,7 @@ export default function App({
                 >
                   {NAV_ICONS[item.id]}
                 </span>
-                <span className="text-[10px] leading-none font-semibold">
+                <span className="text-2xs leading-none font-semibold">
                   {item.label}
                 </span>
               </button>

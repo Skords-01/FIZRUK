@@ -189,7 +189,7 @@ export function Assets({
                 return (
                   <div key={i}>
                     {suggested && !isLinked && (
-                      <div className="text-[10px] font-semibold text-success px-1 pt-1">
+                      <div className="text-2xs font-semibold text-success px-1 pt-1">
                         ↑ Поповнення картки
                       </div>
                     )}

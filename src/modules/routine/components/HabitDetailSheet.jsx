@@ -189,13 +189,13 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               {tag.map((t) => (
                 <span
                   key={t}
-                  className="text-[10px] px-2 py-0.5 rounded-full bg-routine-surface dark:bg-routine/12 border border-routine-line/50 dark:border-routine/25 text-routine-kicker dark:text-routine font-medium"
+                  className="text-2xs px-2 py-0.5 rounded-full bg-routine-surface dark:bg-routine/12 border border-routine-line/50 dark:border-routine/25 text-routine-kicker dark:text-routine font-medium"
                 >
                   {t}
                 </span>
               ))}
               {category && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-panelHi border border-line/60 text-muted font-medium">
+                <span className="text-2xs px-2 py-0.5 rounded-full bg-panelHi border border-line/60 text-muted font-medium">
                   {category}
                 </span>
               )}
@@ -235,19 +235,19 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               <p className="text-2xl font-black text-text tabular-nums">
                 {currentStreak}
               </p>
-              <p className="text-[10px] text-subtle mt-0.5">Поточна серія</p>
+              <p className="text-2xs text-subtle mt-0.5">Поточна серія</p>
             </div>
             <div className={C.statCard}>
               <p className="text-2xl font-black text-text tabular-nums">
                 {bestStreak}
               </p>
-              <p className="text-[10px] text-subtle mt-0.5">Макс серія</p>
+              <p className="text-2xs text-subtle mt-0.5">Макс серія</p>
             </div>
             <div className={C.statCard}>
               <p className="text-2xl font-black text-text tabular-nums">
                 {totalDone}
               </p>
-              <p className="text-[10px] text-subtle mt-0.5">Разів виконано</p>
+              <p className="text-2xs text-subtle mt-0.5">Разів виконано</p>
             </div>
             <div className={C.statCard}>
               <div className="flex items-baseline justify-center gap-1.5">
@@ -262,7 +262,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
                   </span>
                 )}
                 {pct90 !== null && (
-                  <span className="text-[10px] text-subtle tabular-nums">
+                  <span className="text-2xs text-subtle tabular-nums">
                     {pct90}%
                   </span>
                 )}
@@ -270,9 +270,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
                   <span className="text-sm text-muted">—</span>
                 )}
               </div>
-              <p className="text-[10px] text-subtle mt-0.5">
-                % за 7 / 30 / 90 д
-              </p>
+              <p className="text-2xs text-subtle mt-0.5">% за 7 / 30 / 90 д</p>
             </div>
           </div>
         </section>
@@ -308,7 +306,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
             {WEEKDAY_LABELS.map((wd) => (
               <div
                 key={wd}
-                className="text-center text-[9px] text-subtle font-medium pb-1"
+                className="text-center text-2xs text-subtle font-medium pb-1"
               >
                 {wd}
               </div>
@@ -345,7 +343,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               );
             })}
           </div>
-          <div className="flex items-center gap-3 mt-2 text-[9px] text-subtle">
+          <div className="flex items-center gap-3 mt-2 text-2xs text-subtle">
             <span className="flex items-center gap-1">
               <span className="inline-block w-3 h-3 rounded bg-routine-surface2 dark:bg-routine/15 border border-routine-ring/40 dark:border-routine/30" />
               Виконано

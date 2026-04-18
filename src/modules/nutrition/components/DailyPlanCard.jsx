@@ -62,13 +62,13 @@ function MacroRatioBar({ prefs }) {
 
   return (
     <div className="mt-3 space-y-1.5">
-      <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+      <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
         Відсоткове співвідношення макро
       </div>
       <div className="flex rounded-lg overflow-hidden h-5">
         {pctP > 0 && (
           <div
-            className="bg-blue-500 flex items-center justify-center text-[9px] font-bold text-white"
+            className="bg-blue-500 flex items-center justify-center text-2xs font-bold text-white"
             style={{ width: `${pctP}%` }}
           >
             {pctP}%
@@ -76,7 +76,7 @@ function MacroRatioBar({ prefs }) {
         )}
         {pctF > 0 && (
           <div
-            className="bg-yellow-500 flex items-center justify-center text-[9px] font-bold text-white"
+            className="bg-yellow-500 flex items-center justify-center text-2xs font-bold text-white"
             style={{ width: `${pctF}%` }}
           >
             {pctF}%
@@ -84,7 +84,7 @@ function MacroRatioBar({ prefs }) {
         )}
         {pctC > 0 && (
           <div
-            className="bg-green-500 flex items-center justify-center text-[9px] font-bold text-white"
+            className="bg-green-500 flex items-center justify-center text-2xs font-bold text-white"
             style={{ width: `${pctC}%` }}
           >
             {pctC}%
@@ -92,15 +92,15 @@ function MacroRatioBar({ prefs }) {
         )}
       </div>
       <div className="flex gap-3 flex-wrap">
-        <span className="flex items-center gap-1 text-[10px] text-subtle">
+        <span className="flex items-center gap-1 text-2xs text-subtle">
           <span className="w-2 h-2 rounded-sm bg-blue-500" /> Б {pctP}% · {prot}
           г · {Math.round(protKcal)} ккал
         </span>
-        <span className="flex items-center gap-1 text-[10px] text-subtle">
+        <span className="flex items-center gap-1 text-2xs text-subtle">
           <span className="w-2 h-2 rounded-sm bg-yellow-500" /> Ж {pctF}% ·{" "}
           {fat}г · {Math.round(fatKcal)} ккал
         </span>
-        <span className="flex items-center gap-1 text-[10px] text-subtle">
+        <span className="flex items-center gap-1 text-2xs text-subtle">
           <span className="w-2 h-2 rounded-sm bg-green-500" /> В {pctC}% ·{" "}
           {carb}г · {Math.round(carbKcal)} ккал
         </span>
@@ -271,7 +271,7 @@ export function DailyPlanCard({
                 )}
               >
                 <div>{preset.label}</div>
-                <div className="text-[10px] opacity-70 mt-0.5">
+                <div className="text-2xs opacity-70 mt-0.5">
                   ~{preset.kcal} ккал
                 </div>
               </button>

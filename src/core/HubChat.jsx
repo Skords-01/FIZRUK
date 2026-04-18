@@ -421,7 +421,7 @@ function HubChat({ onClose, initialMessage }) {
               </div>
               <div
                 className={cn(
-                  "text-[10px]",
+                  "text-2xs",
                   hasData ? "text-subtle" : "text-warning",
                 )}
               >
@@ -429,20 +429,20 @@ function HubChat({ onClose, initialMessage }) {
                   ? "Фінік · Фізрук · Рутина · Харчування"
                   : "Mono не підключено"}
               </div>
-              <div className="text-[10px] text-subtle mt-0.5">
+              <div className="text-2xs text-subtle mt-0.5">
                 {contextState.status === "building"
                   ? "Готую контекст…"
                   : contextState.status === "ready"
                     ? "Контекст готовий"
                     : ""}
               </div>
-              <div className="text-[10px] text-subtle mt-0.5">
+              <div className="text-2xs text-subtle mt-0.5">
                 Сесія: {sessionInfo.historyCount}/10 · ~
                 {Math.round(sessionInfo.chars / 100) / 10}k символів
               </div>
               <p
                 id="hub-chat-privacy"
-                className="text-[10px] text-subtle mt-1 leading-snug max-w-[min(100%,280px)]"
+                className="text-2xs text-subtle mt-1 leading-snug max-w-[min(100%,280px)]"
               >
                 Запит і короткий контекст (фінанси, тренування, звички,
                 харчування) відправляються на сервер до AI. Не діліться чужим

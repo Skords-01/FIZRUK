@@ -82,7 +82,7 @@ function WarmupCooldownChecklist({ title, items, onToggle, onInit, color }) {
       >
         <span>{title}</span>
         <span
-          className={`ml-2 text-[10px] font-bold tabular-nums ${doneCount === total ? "text-success" : color.text}`}
+          className={`ml-2 text-2xs font-bold tabular-nums ${doneCount === total ? "text-success" : color.text}`}
         >
           {doneCount}/{total}
         </span>
@@ -127,7 +127,7 @@ function WarmupCooldownChecklist({ title, items, onToggle, onInit, color }) {
 function SupersetBadge({ type }) {
   return (
     <span
-      className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${type === "circuit" ? "bg-fizruk/15 text-fizruk border border-fizruk/30" : "bg-success/15 text-success border border-success/30"}`}
+      className={`text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${type === "circuit" ? "bg-fizruk/15 text-fizruk border border-fizruk/30" : "bg-success/15 text-success border border-success/30"}`}
     >
       {type === "circuit" ? "Коло" : "Суперсет"}
     </span>
@@ -373,7 +373,7 @@ export function ActiveWorkoutPanel({
 
           <div className="mt-2">
             <div className="rounded-2xl border border-line bg-panelHi px-3">
-              <div className="text-[10px] font-bold text-subtle uppercase tracking-widest pt-2">
+              <div className="text-2xs font-bold text-subtle uppercase tracking-widest pt-2">
                 Тип
               </div>
               <select
@@ -518,10 +518,10 @@ export function ActiveWorkoutPanel({
               {!activeWorkout.endedAt && !group && (
                 <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-line/60">
                   <div className="flex items-center justify-between w-full gap-1">
-                    <span className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+                    <span className="text-2xs font-bold text-subtle uppercase tracking-widest">
                       Таймер відпочинку
                     </span>
-                    <span className="text-[9px] text-muted">
+                    <span className="text-2xs text-muted">
                       {catLabel} · реком. {defSec}с
                     </span>
                   </div>
@@ -615,7 +615,7 @@ export function ActiveWorkoutPanel({
               {cardioMetrics && (
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl border border-line bg-bg px-3 py-2 text-center">
-                    <div className="text-[9px] font-bold text-subtle uppercase tracking-widest">
+                    <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
                       Темп
                     </div>
                     <div className="text-sm font-bold text-text tabular-nums">
@@ -623,7 +623,7 @@ export function ActiveWorkoutPanel({
                     </div>
                   </div>
                   <div className="rounded-xl border border-line bg-bg px-3 py-2 text-center">
-                    <div className="text-[9px] font-bold text-subtle uppercase tracking-widest">
+                    <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
                       Швидкість
                     </div>
                     <div className="text-sm font-bold text-text tabular-nums">
@@ -688,12 +688,12 @@ export function ActiveWorkoutPanel({
           <div className="flex items-center justify-between gap-2 px-1">
             <SupersetBadge type={group.type} />
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-subtle">
+              <span className="text-2xs text-subtle">
                 {groupItems.length} вправи разом
               </span>
               <button
                 type="button"
-                className="text-[10px] text-danger/70 hover:text-danger px-1"
+                className="text-2xs text-danger/70 hover:text-danger px-1"
                 onClick={() => handleRemoveGroup(group.id)}
                 title="Розгрупувати"
               >
@@ -704,7 +704,7 @@ export function ActiveWorkoutPanel({
           {groupItems.map((gIt) => renderItem(gIt))}
           {!activeWorkout?.endedAt && (
             <div className="flex flex-wrap items-center gap-2 px-1 pt-1 border-t border-success/20">
-              <span className="text-[10px] font-bold text-subtle uppercase tracking-widest w-full">
+              <span className="text-2xs font-bold text-subtle uppercase tracking-widest w-full">
                 Спільний таймер відпочинку між колами
               </span>
               <button
@@ -814,7 +814,7 @@ export function ActiveWorkoutPanel({
         </summary>
         <div className="mt-2 space-y-2">
           <label
-            className="block text-[10px] text-subtle"
+            className="block text-2xs text-subtle"
             htmlFor={workoutStartId}
           >
             Початок
@@ -832,7 +832,7 @@ export function ActiveWorkoutPanel({
           {activeWorkout.endedAt ? (
             <>
               <label
-                className="block text-[10px] text-subtle"
+                className="block text-2xs text-subtle"
                 htmlFor={workoutEndId}
               >
                 Завершення (можна виправити після занесення)

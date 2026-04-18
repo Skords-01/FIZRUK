@@ -108,7 +108,7 @@ function MiniBar({ rows, targetKcal }) {
             </div>
             <span
               className={cn(
-                "text-[9px] leading-none",
+                "text-2xs leading-none",
                 isToday ? "text-text font-bold" : "text-muted",
               )}
             >
@@ -189,11 +189,11 @@ export function NutritionDashboard({
                       </span>
                     </div>
                   </div>
-                  <div className="text-[10px] text-subtle font-semibold leading-none">
+                  <div className="text-2xs text-subtle font-semibold leading-none">
                     {m.label}
                   </div>
                   {target > 0 && (
-                    <div className="text-[9px] text-muted leading-none">
+                    <div className="text-2xs text-muted leading-none">
                       / {target}
                       {m.unit}
                     </div>
@@ -211,7 +211,7 @@ export function NutritionDashboard({
                   key={m.key}
                   className="rounded-xl border border-nutrition/20 bg-nutrition/8 px-2 py-2.5 text-center"
                 >
-                  <div className="text-[10px] text-nutrition/70 font-bold uppercase tracking-wide leading-none mb-1">
+                  <div className="text-2xs text-nutrition/70 font-bold uppercase tracking-wide leading-none mb-1">
                     {m.label}
                   </div>
                   <div className="text-sm font-extrabold text-text leading-none">

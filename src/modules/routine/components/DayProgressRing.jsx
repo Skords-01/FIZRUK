@@ -49,7 +49,7 @@ export function DayProgressRing({ completed, scheduled, onClick }) {
           </span>
         </div>
       </div>
-      <span className="text-[10px] text-subtle font-medium group-hover:text-text transition-colors">
+      <span className="text-2xs text-subtle font-medium group-hover:text-text transition-colors">
         Денний звіт
       </span>
     </button>

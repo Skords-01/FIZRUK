@@ -10,7 +10,7 @@ export function FoodHitRow({ p, badge, onPick }) {
           <div className="text-sm text-text font-semibold truncate">
             {[p.name, p.brand].filter(Boolean).join(" · ")}
             {badge && (
-              <span className="ml-1 text-[10px] text-subtle">{badge}</span>
+              <span className="ml-1 text-2xs text-subtle">{badge}</span>
             )}
           </div>
           <div className="text-xs font-semibold text-nutrition shrink-0">

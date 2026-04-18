@@ -10,7 +10,7 @@ export function FromPantryRow({
   if (!pantryItems || pantryItems.length === 0) return null;
   return (
     <div className="mb-4 rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
-      <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-2">
+      <div className="text-2xs font-bold text-subtle uppercase tracking-widest mb-2">
         Зі складу
         {fromPantryItem && (
           <span className="ml-2 text-nutrition font-semibold normal-case tracking-normal">
@@ -47,7 +47,7 @@ export function FromPantryRow({
             >
               {item.name}
               {item.qty != null && (
-                <span className="ml-1 text-[10px] opacity-70">
+                <span className="ml-1 text-2xs opacity-70">
                   {item.qty}
                   {item.unit || "г"}
                 </span>

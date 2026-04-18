@@ -111,7 +111,7 @@ export function WeeklyVolumeChart({
             <text
               x={4}
               y={t.y + 4}
-              className="fill-subtle text-[9px] font-medium"
+              className="fill-subtle text-2xs font-medium"
             >
               {t.lab}
             </text>
@@ -144,7 +144,7 @@ export function WeeklyVolumeChart({
               x={x}
               y={h - 6}
               textAnchor="middle"
-              className="fill-muted text-[9px] font-semibold"
+              className="fill-muted text-2xs font-semibold"
             >
               {lab}
             </text>

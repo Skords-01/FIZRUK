@@ -51,11 +51,11 @@ export function FoodPickerSection({
   return (
     <div className="mb-4 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+        <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
           Продукт
         </div>
         {(foodBusy || offBusy) && (
-          <span className="text-[10px] text-subtle flex items-center gap-1.5">
+          <span className="text-2xs text-subtle flex items-center gap-1.5">
             <span className="inline-block w-3 h-3 border border-nutrition/40 border-t-nutrition rounded-full animate-spin" />
             пошук…
           </span>
@@ -89,7 +89,7 @@ export function FoodPickerSection({
                 {offHits.length > 0 && (
                   <>
                     {foodHits.length > 0 && (
-                      <li className="px-3 py-1.5 text-[10px] text-subtle bg-panelHi/50 font-semibold uppercase tracking-widest">
+                      <li className="px-3 py-1.5 text-2xs text-subtle bg-panelHi/50 font-semibold uppercase tracking-widest">
                         🌍 Open Food Facts
                       </li>
                     )}
@@ -124,7 +124,7 @@ export function FoodPickerSection({
                   .filter(Boolean)
                   .join(" · ")}
                 {pickedFood.source === "off" && (
-                  <span className="ml-1 text-[10px] text-subtle">🌍</span>
+                  <span className="ml-1 text-2xs text-subtle">🌍</span>
                 )}
               </div>
               <div className="text-[11px] text-subtle mt-0.5">

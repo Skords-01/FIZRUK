@@ -116,7 +116,7 @@ export function HabitForm({
         className="flex items-center gap-1 text-xs text-muted hover:text-text transition-colors"
       >
         <span>{showAdvanced ? "Менше опцій" : "Більше опцій"}</span>
-        <span aria-hidden className="text-[10px]">
+        <span aria-hidden className="text-2xs">
           {showAdvanced ? "▲" : "▼"}
         </span>
       </button>
@@ -194,7 +194,7 @@ export function HabitForm({
                   </option>
                 ))}
               </select>
-              <span className="block text-[10px] text-subtle mt-1 leading-snug">
+              <span className="block text-2xs text-subtle mt-1 leading-snug">
                 Один тег на звичку (поле tagIds у даних — масив для сумісності).
               </span>
             </label>

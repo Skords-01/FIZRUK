@@ -134,7 +134,7 @@ function Header({ eyebrow, title, onDismiss, dismissLabel }) {
   return (
     <div className="flex items-start justify-between gap-2 mb-2">
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-600/80 dark:text-brand-400/80">
+        <p className="text-2xs font-semibold uppercase tracking-widest text-brand-600/80 dark:text-brand-400/80">
           {eyebrow}
         </p>
         <h3 className="text-base font-bold text-text leading-snug">{title}</h3>
@@ -180,7 +180,7 @@ function HasExpensesContent({ summary }) {
           )}
         >
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">
+            <span className="text-2xs font-semibold text-muted uppercase tracking-wider">
               Топ категорія
             </span>
             <span className="text-sm font-medium text-text truncate">
@@ -191,7 +191,7 @@ function HasExpensesContent({ summary }) {
             <div className="text-sm font-semibold tabular-nums text-text">
               {formatUAH(topCategory.amount)}
             </div>
-            <div className="text-[10px] text-muted">{topCategory.pct}%</div>
+            <div className="text-2xs text-muted">{topCategory.pct}%</div>
           </div>
         </div>
       )}

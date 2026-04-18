@@ -32,15 +32,15 @@ function WorkoutRow({ w, activeWorkoutId, setActiveWorkoutId }) {
             {(w.items || []).length} вправ
           </span>
           {isEnded ? (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-panelHi text-subtle border border-line">
+            <span className="text-2xs px-2 py-0.5 rounded-full bg-panelHi text-subtle border border-line">
               Завершене
             </span>
           ) : isActive ? (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/20">
+            <span className="text-2xs px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/20">
               Активне
             </span>
           ) : (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20">
+            <span className="text-2xs px-2 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20">
               Чернетка
             </span>
           )}
@@ -217,7 +217,7 @@ export function WorkoutJournalSection({
             </p>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-1">
+                <div className="text-2xs font-bold text-subtle uppercase tracking-widest mb-1">
                   Дата
                 </div>
                 <input
@@ -228,7 +228,7 @@ export function WorkoutJournalSection({
                 />
               </div>
               <div>
-                <div className="text-[10px] font-bold text-subtle uppercase tracking-widest mb-1">
+                <div className="text-2xs font-bold text-subtle uppercase tracking-widest mb-1">
                   Час початку
                 </div>
                 <input

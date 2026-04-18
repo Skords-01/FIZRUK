@@ -195,10 +195,10 @@ function CompareSlider({ beforeSrc, afterSrc }) {
           </svg>
         </div>
       </div>
-      <div className="absolute top-2 left-2 text-[10px] font-bold text-white bg-black/50 rounded px-1.5 py-0.5">
+      <div className="absolute top-2 left-2 text-2xs font-bold text-white bg-black/50 rounded px-1.5 py-0.5">
         ДО
       </div>
-      <div className="absolute top-2 right-2 text-[10px] font-bold text-white bg-black/50 rounded px-1.5 py-0.5">
+      <div className="absolute top-2 right-2 text-2xs font-bold text-white bg-black/50 rounded px-1.5 py-0.5">
         ПІСЛЯ
       </div>
     </div>
@@ -296,7 +296,7 @@ export function PhotoProgress() {
             <div>
               <label
                 htmlFor={compareBeforeId}
-                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+                className="text-2xs font-bold text-subtle uppercase tracking-widest block mb-1"
               >
                 До
               </label>
@@ -318,7 +318,7 @@ export function PhotoProgress() {
             <div>
               <label
                 htmlFor={compareAfterId}
-                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+                className="text-2xs font-bold text-subtle uppercase tracking-widest block mb-1"
               >
                 Після
               </label>
@@ -369,7 +369,7 @@ export function PhotoProgress() {
             <div>
               <label
                 htmlFor={addDateId}
-                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+                className="text-2xs font-bold text-subtle uppercase tracking-widest block mb-1"
               >
                 Дата
               </label>
@@ -384,7 +384,7 @@ export function PhotoProgress() {
             <div>
               <label
                 htmlFor={addNoteId}
-                className="text-[10px] font-bold text-subtle uppercase tracking-widest block mb-1"
+                className="text-2xs font-bold text-subtle uppercase tracking-widest block mb-1"
               >
                 Нотатка
               </label>
@@ -475,7 +475,7 @@ export function PhotoProgress() {
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
                   <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-1 pt-3 bg-gradient-to-t from-black/60 to-transparent">
-                    <p className="text-[9px] text-white font-semibold leading-tight">
+                    <p className="text-2xs text-white font-semibold leading-tight">
                       {p.date}
                     </p>
                     {p.note && (

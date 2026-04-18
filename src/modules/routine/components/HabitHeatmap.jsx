@@ -196,7 +196,7 @@ export function HabitHeatmap({ habits, completions }) {
           </span>
         </div>
       ) : (
-        <div className="mt-3 flex items-center gap-2 text-[9px] text-subtle/70 select-none">
+        <div className="mt-3 flex items-center gap-2 text-2xs text-subtle/70 select-none">
           <span>менше</span>
           {[
             "bg-panelHi dark:bg-line/25",

@@ -47,7 +47,7 @@ export const HabitListItem = memo(function HabitListItem({
           <span className="text-sm font-medium">
             {h.emoji} {h.name}
           </span>
-          <p className="text-[10px] text-subtle mt-0.5">
+          <p className="text-2xs text-subtle mt-0.5">
             {recLabel}
             {h.timeOfDay ? ` · ${h.timeOfDay}` : ""}
             {h.startDate ? ` · з ${h.startDate}` : ""}

@@ -114,7 +114,7 @@ function CoachRow({ insight, loading, error, onDiscuss, onRefresh }) {
       />
       <div className="pl-1">
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+          <span className="text-2xs font-semibold uppercase tracking-wider text-muted">
             Коуч
           </span>
           <button
@@ -201,7 +201,7 @@ export function HubInsightsPanel({
       >
         <span className="flex items-center gap-2 text-xs font-semibold text-text">
           Інсайти
-          <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-panelHi text-[10px] font-bold text-muted">
+          <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-panelHi text-2xs font-bold text-muted">
             {total}
           </span>
         </span>

@@ -87,7 +87,7 @@ export function PantryManagerSheet({
                       {p.name || "Склад"}
                     </div>
                     {active ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-nutrition/15 text-nutrition border border-nutrition/25">
+                      <span className="text-2xs px-2 py-0.5 rounded-full bg-nutrition/15 text-nutrition border border-nutrition/25">
                         Активний
                       </span>
                     ) : null}
@@ -116,7 +116,7 @@ export function PantryManagerSheet({
           </div>
 
           <div className="rounded-2xl border border-line bg-panelHi p-4">
-            <div className="text-[10px] font-bold text-subtle uppercase tracking-widest">
+            <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               {pantryForm.mode === "rename" ? "Нова назва" : "Назва складу"}
             </div>
             <div className="mt-2">
