@@ -121,8 +121,13 @@ export function persistPantries(
   pantries,
   activeId,
 ) {
-  const a = nutritionStorage.writeJSON(key, Array.isArray(pantries) ? pantries : []);
-  const b = activeId ? nutritionStorage.writeRaw(activeKey, String(activeId)) : true;
+  const a = nutritionStorage.writeJSON(
+    key,
+    Array.isArray(pantries) ? pantries : [],
+  );
+  const b = activeId
+    ? nutritionStorage.writeRaw(activeKey, String(activeId))
+    : true;
   return a && b;
 }
 

@@ -165,12 +165,15 @@ export function createModuleStorage({
     if (pendingTimers.has(k)) {
       clearTimeout(pendingTimers.get(k));
     }
-    const timer = setTimeout(() => {
-      pendingTimers.delete(k);
-      const val = pendingValues.get(k);
-      pendingValues.delete(k);
-      writeJSON(k, val);
-    }, Math.max(0, Number(delay) || 0));
+    const timer = setTimeout(
+      () => {
+        pendingTimers.delete(k);
+        const val = pendingValues.get(k);
+        pendingValues.delete(k);
+        writeJSON(k, val);
+      },
+      Math.max(0, Number(delay) || 0),
+    );
     pendingTimers.set(k, timer);
   }
 
