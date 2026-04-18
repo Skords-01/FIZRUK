@@ -440,13 +440,13 @@ export default function RoutineApp({
 
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
-      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative safe-area-pt">
+      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line z-40 relative safe-area-pt">
         <div className="flex min-h-[68px] items-center px-4 py-2 sm:px-5 gap-3">
           {typeof onBackToHub === "function" ? (
             <button
               type="button"
               onClick={onBackToHub}
-              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line/80 bg-panel/80"
+              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line bg-panel/80"
               aria-label="До вибору модуля"
               title="До хабу"
             >
@@ -490,7 +490,7 @@ export default function RoutineApp({
           <div className="min-w-0 flex-1">
             <span
               className={cn(
-                "text-2xs font-bold tracking-widest uppercase block leading-none mb-0.5",
+                "text-3xs font-bold tracking-widest uppercase block leading-none mb-0.5",
                 C.eyebrow,
               )}
             >

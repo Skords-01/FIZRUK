@@ -10,7 +10,7 @@ export function ArchivedHabitsSection({
   if (archived.length === 0) return null;
 
   return (
-    <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-2 opacity-95">
+    <section className="bg-panel border border-line rounded-2xl p-4 shadow-card space-y-2 opacity-95">
       <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
         Архів
       </h2>
@@ -31,7 +31,7 @@ export function ArchivedHabitsSection({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="!h-9 !px-3 !text-xs border border-line/70"
+                className="!h-9 !px-3 !text-xs border border-line"
                 onClick={() =>
                   setRoutine((s) => setHabitArchived(s, h.id, false))
                 }

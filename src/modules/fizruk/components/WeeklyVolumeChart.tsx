@@ -36,7 +36,7 @@ export function WeeklyVolumeChart({
         </div>
         <EmptyState
           compact
-          className="rounded-2xl border border-dashed border-line/60 bg-panelHi/50"
+          className="rounded-2xl border border-dashed border-line bg-panelHi/50"
           title="Поки без обʼєму за тиждень"
           description="Заверши тренування з силовими підходами — тут зʼявиться сумарний обʼєм (кг×повторення) по днях."
         />
@@ -111,7 +111,7 @@ export function WeeklyVolumeChart({
             <text
               x={4}
               y={t.y + 4}
-              className="fill-subtle text-2xs font-medium"
+              className="fill-subtle text-3xs font-medium"
             >
               {t.lab}
             </text>
@@ -144,7 +144,7 @@ export function WeeklyVolumeChart({
               x={x}
               y={h - 6}
               textAnchor="middle"
-              className="fill-muted text-2xs font-semibold"
+              className="fill-muted text-3xs font-semibold"
             >
               {lab}
             </text>

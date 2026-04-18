@@ -7,7 +7,7 @@ export function RoutineBackupSection({ theme, toast, onImportParsed }) {
   const backupRef = useRef(null);
 
   return (
-    <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
+    <section className="bg-panel border border-line rounded-2xl p-4 shadow-card space-y-3">
       <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
         Резервна копія
       </h2>
@@ -35,7 +35,7 @@ export function RoutineBackupSection({ theme, toast, onImportParsed }) {
         <Button
           type="button"
           variant="ghost"
-          className="border border-line/70"
+          className="border border-line"
           onClick={() => backupRef.current?.click()}
         >
           Імпорт

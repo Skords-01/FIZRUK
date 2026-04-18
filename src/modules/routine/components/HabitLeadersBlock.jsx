@@ -27,7 +27,7 @@ export function HabitLeadersBlock({ habits, completions }) {
   if (!best) return null;
 
   return (
-    <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+    <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
       <p className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
         Лідери та аутсайдери (30 днів)
       </p>
@@ -44,7 +44,7 @@ export function HabitLeadersBlock({ habits, completions }) {
           </p>
         </div>
         {worst && (
-          <div className="rounded-xl border border-line/50 bg-panel p-3">
+          <div className="rounded-xl border border-line bg-panel p-3">
             <p className="text-2xs uppercase tracking-wide text-subtle mb-1">
               Найслабша
             </p>

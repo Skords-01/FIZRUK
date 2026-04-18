@@ -260,7 +260,7 @@ export function FinykSection() {
             {customCategories.map((c) => (
               <li
                 key={c.id}
-                className="flex items-center justify-between gap-2 px-4 py-3 border-b border-line/60 last:border-0"
+                className="flex items-center justify-between gap-2 px-4 py-3 border-b border-line last:border-0"
               >
                 <span className="text-sm font-medium truncate">{c.label}</span>
                 <button
@@ -289,7 +289,7 @@ export function FinykSection() {
               return (
                 <div
                   key={acc.id}
-                  className="flex items-center justify-between px-4 py-3 border-b border-line/60 last:border-0"
+                  className="flex items-center justify-between px-4 py-3 border-b border-line last:border-0"
                 >
                   <div>
                     <div className="text-sm font-medium">

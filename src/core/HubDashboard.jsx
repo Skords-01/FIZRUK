@@ -531,7 +531,7 @@ export function HubDashboard({ onOpenModule, onOpenChat, user, onShowAuth }) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={order} strategy={verticalListSortingStrategy}>
-            <div className="rounded-2xl border border-line/60 bg-panel overflow-hidden divide-y divide-line/60">
+            <div className="rounded-2xl border border-line bg-panel overflow-hidden divide-y divide-line/60">
               {order.map((id) => (
                 <SortableCard key={id} id={id} onOpenModule={onOpenModule} />
               ))}

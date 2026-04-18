@@ -89,7 +89,7 @@ export function HubFloatingActions() {
               type="button"
               role="menuitem"
               onClick={() => runAction(a)}
-              className="group flex items-center gap-3 pl-3 pr-2 h-11 rounded-full bg-panel border border-line shadow-card hover:shadow-float transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+              className="group flex items-center gap-3 pl-3 pr-2 h-11 rounded-full bg-panel border border-line shadow-card hover:shadow-float transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45"
             >
               <span className="text-sm font-medium text-text whitespace-nowrap">
                 {a.label}
@@ -116,7 +116,7 @@ export function HubFloatingActions() {
         aria-label={open ? "Закрити меню додавання" : "Додати"}
         title="Додати"
         className={cn(
-          "pointer-events-auto w-14 h-14 flex items-center justify-center rounded-full bg-brand-500 text-white shadow-float hover:bg-brand-600 hover:shadow-glow active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+          "pointer-events-auto w-14 h-14 flex items-center justify-center rounded-full bg-brand-500 text-white shadow-float hover:bg-brand-600 hover:shadow-glow active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
           open && "rotate-45",
         )}
       >

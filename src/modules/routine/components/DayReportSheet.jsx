@@ -116,7 +116,7 @@ export function DayReportSheet({
               {missed.map((h) => (
                 <li
                   key={h.id}
-                  className="flex items-center gap-3 rounded-xl bg-panel border border-line/50 px-3 py-2.5"
+                  className="flex items-center gap-3 rounded-xl bg-panel border border-line px-3 py-2.5"
                 >
                   <button
                     type="button"
@@ -136,7 +136,7 @@ export function DayReportSheet({
         )}
 
         {scheduledHabits.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-line/50 text-center">
+          <div className="mt-4 pt-3 border-t border-line text-center">
             <p className="text-xs text-subtle">
               {done.length} з {scheduledHabits.length} виконано
               {scheduledHabits.length > 0 && (

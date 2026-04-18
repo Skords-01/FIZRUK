@@ -198,6 +198,7 @@ export default {
       // TYPOGRAPHY — Readable, friendly, clear hierarchy
       // ═══════════════════════════════════════════════════════════════════
       fontSize: {
+        "3xs": ["9px", { lineHeight: "12px" }],
         "2xs": ["10px", { lineHeight: "14px" }],
         xs: ["12px", { lineHeight: "16px" }],
         sm: ["14px", { lineHeight: "20px" }],

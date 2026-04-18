@@ -151,7 +151,7 @@ function EmptyFocus({ onOpenReports }) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-line/60 bg-panel p-4",
+        "relative overflow-hidden rounded-2xl border border-line bg-panel p-4",
         "flex items-center gap-3",
         washClass,
       )}
@@ -218,7 +218,7 @@ export function TodayFocusCard({ focus, onAction, onDismiss, onOpenReports }) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-line/60 bg-panel",
+        "relative overflow-hidden rounded-2xl border border-line bg-panel",
         "shadow-card p-4",
         wash,
       )}

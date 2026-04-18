@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { subtleNavButtonClass } from "@shared/components/ui/buttonPresets";
 import { cn } from "@shared/lib/cn";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { BUILTIN_PROGRAMS } from "../lib/trainingPrograms";
@@ -33,7 +34,7 @@ export function Programs({
             <button
               type="button"
               onClick={deactivateProgram}
-              className="h-9 px-3 rounded-xl border border-line text-xs font-semibold text-subtle hover:text-text hover:bg-panelHi transition-colors"
+              className={subtleNavButtonClass}
             >
               Зупинити
             </button>
@@ -53,7 +54,7 @@ export function Programs({
                 key={prog.id}
                 className={cn(
                   "bg-panel border rounded-2xl shadow-card overflow-hidden transition-all",
-                  isActive ? "border-success/60" : "border-line/60",
+                  isActive ? "border-success/60" : "border-line",
                 )}
               >
                 <div className="p-4">
@@ -68,7 +69,7 @@ export function Programs({
                             Активна
                           </span>
                         )}
-                        <span className="text-2xs text-subtle border border-line/60 rounded-full px-2 py-0.5">
+                        <span className="text-2xs text-subtle border border-line rounded-full px-2 py-0.5">
                           {prog.days} дн/тиждень
                         </span>
                       </div>
@@ -88,7 +89,7 @@ export function Programs({
                         <div
                           key={i}
                           className={cn(
-                            "flex-1 text-center rounded py-1 text-2xs font-bold transition-colors",
+                            "flex-1 text-center rounded py-1 text-3xs font-bold transition-colors",
                             hasSession
                               ? isToday && isActive
                                 ? "bg-success text-white"
@@ -167,7 +168,7 @@ export function Programs({
 
 function ProgramDetails({ prog, exercises }) {
   return (
-    <div className="border-t border-line/60 px-4 pb-4 pt-3 space-y-3 bg-bg/50">
+    <div className="border-t border-line px-4 pb-4 pt-3 space-y-3 bg-bg/50">
       <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
         Розклад та вправи
       </div>
@@ -209,7 +210,7 @@ function ProgramDetails({ prog, exercises }) {
                 {exList.map((ex) => (
                   <span
                     key={ex.id}
-                    className="text-[11px] px-2 py-0.5 rounded-full bg-panelHi border border-line/60 text-subtle"
+                    className="text-[11px] px-2 py-0.5 rounded-full bg-panelHi border border-line text-subtle"
                   >
                     {ex.name?.uk || ex.name?.en || ex.id}
                   </span>

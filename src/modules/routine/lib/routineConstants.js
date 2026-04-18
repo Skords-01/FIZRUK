@@ -40,7 +40,7 @@ export const ROUTINE_THEME = {
   chipOn:
     "border-routine-ring dark:border-routine/40 bg-routine-surface dark:bg-routine/15 text-routine shadow-sm",
   chipOff:
-    "border-line/60 bg-panel text-muted hover:text-text hover:bg-panelHi transition-colors",
+    "border-line bg-panel text-muted hover:text-text hover:bg-panelHi transition-colors",
 
   // Calendar dots
   dot: "bg-routine",

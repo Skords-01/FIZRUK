@@ -407,7 +407,7 @@ function HubChat({ onClose, initialMessage }) {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pb-3 shrink-0 border-b border-line/60">
+        <div className="flex items-center justify-between px-4 pb-3 shrink-0 border-b border-line">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="text-2xl leading-none shrink-0" aria-hidden>
               🤖

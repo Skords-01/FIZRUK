@@ -160,7 +160,7 @@ export function HubSettingsPage({
                   onClick={() => setTab(g.id)}
                   className={cn(
                     "flex-1 min-w-[100px] min-h-[40px] px-3 py-2 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
                     active
                       ? "bg-panel text-text shadow-sm"
                       : "text-muted hover:text-text",

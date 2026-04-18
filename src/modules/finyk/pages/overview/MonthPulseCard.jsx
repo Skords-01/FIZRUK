@@ -36,7 +36,7 @@ export function MonthPulseCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-line/60 bg-panel p-5 shadow-card border-l-[4px]",
+        "rounded-2xl border border-line bg-panel p-5 shadow-card border-l-[4px]",
         accentLeft,
         bg,
       )}
@@ -56,7 +56,7 @@ export function MonthPulseCard({
       <div className="flex justify-between items-start gap-4">
         <div>
           <div className="text-xs text-subtle font-medium">Витрати</div>
-          <div className="text-2xl font-bold tabular-nums mt-1 leading-tight">
+          <div className="text-[26px] font-bold tabular-nums mt-1 leading-tight">
             {showBalance
               ? spent.toLocaleString("uk-UA", { maximumFractionDigits: 0 })
               : "••••"}
@@ -67,7 +67,7 @@ export function MonthPulseCard({
         </div>
         <div className="text-right">
           <div className="text-xs text-subtle font-medium">Дохід</div>
-          <div className="text-2xl font-bold tabular-nums mt-1 leading-tight text-success">
+          <div className="text-[26px] font-bold tabular-nums mt-1 leading-tight text-success">
             {showBalance ? (
               <>
                 +
@@ -116,7 +116,7 @@ export function MonthPulseCard({
       </div>
 
       {showMonthForecast && (
-        <div className="mt-4 pt-4 border-t border-line/50 space-y-2">
+        <div className="mt-4 pt-4 border-t border-line space-y-2">
           <div className="text-xs font-medium text-subtle">
             Факт і прогноз витрат
           </div>
@@ -149,7 +149,7 @@ export function MonthPulseCard({
         </div>
       )}
 
-      <div className="mt-4 pt-4 border-t border-line/50">
+      <div className="mt-4 pt-4 border-t border-line">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium text-subtle">Фінпульс</span>
           <span className="text-[11px] text-subtle/60">

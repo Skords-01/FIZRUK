@@ -51,7 +51,7 @@ export function Measurements() {
           href="https://www.wikihow.com/Take-Body-Measurements"
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-3 bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+          className="flex items-center gap-3 bg-panel border border-line rounded-2xl p-4 shadow-card"
         >
           <div className="shrink-0 w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center text-success">
             <svg
@@ -79,7 +79,7 @@ export function Measurements() {
         </a>
 
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
+          <div className="bg-panel border border-line rounded-2xl p-3 shadow-card text-center">
             <div className="text-2xs font-semibold text-subtle uppercase tracking-widest">
               Записів
             </div>
@@ -87,7 +87,7 @@ export function Measurements() {
               {stats.total}
             </div>
           </div>
-          <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
+          <div className="bg-panel border border-line rounded-2xl p-3 shadow-card text-center">
             <div className="text-2xs font-semibold text-subtle uppercase tracking-widest">
               Останній
             </div>
@@ -95,7 +95,7 @@ export function Measurements() {
               {stats.latestAt}
             </div>
           </div>
-          <div className="bg-panel border border-line/60 rounded-2xl p-3 shadow-card text-center">
+          <div className="bg-panel border border-line rounded-2xl p-3 shadow-card text-center">
             <div className="text-2xs font-semibold text-subtle uppercase tracking-widest">
               Полів
             </div>
@@ -105,7 +105,7 @@ export function Measurements() {
           </div>
         </div>
 
-        <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+        <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
           <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
             Додати замір
           </div>
@@ -149,7 +149,7 @@ export function Measurements() {
         </div>
 
         {latest && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs font-bold text-subtle uppercase tracking-widest">
@@ -195,7 +195,7 @@ export function Measurements() {
           </div>
         )}
 
-        <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
+        <div className="bg-panel border border-line rounded-2xl shadow-card overflow-hidden">
           <div className="px-4 py-3 bg-panelHi/60 border-b border-line">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest">
               Історія

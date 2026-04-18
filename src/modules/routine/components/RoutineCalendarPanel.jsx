@@ -152,7 +152,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
               <p className="text-2xl font-black text-text tabular-nums mt-0.5">
                 {Math.round(completionRate.rate * 100)}%
               </p>
-              <p className="text-2xs text-subtle tabular-nums">
+              <p className="text-3xs text-subtle tabular-nums">
                 {completionRate.completed}/{completionRate.scheduled}
               </p>
             </div>
@@ -205,7 +205,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-line/60 bg-panel/80 p-3 shadow-card">
+      <div className="rounded-2xl border border-line bg-panel/80 p-3 shadow-card">
         <p className="mb-2 text-2xs font-bold uppercase tracking-widest text-subtle">
           Тиждень
         </p>
@@ -301,7 +301,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
-              className="w-10 h-10 rounded-xl border border-line/80 bg-panel/90 text-muted hover:text-text shadow-sm"
+              className="w-10 h-10 rounded-xl border border-line bg-panel/90 text-muted hover:text-text shadow-sm"
               onClick={() => goMonth(-1)}
               aria-label="Попередній місяць"
             >
@@ -312,7 +312,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
             </span>
             <button
               type="button"
-              className="w-10 h-10 rounded-xl border border-line/80 bg-panel/90 text-muted hover:text-text shadow-sm"
+              className="w-10 h-10 rounded-xl border border-line bg-panel/90 text-muted hover:text-text shadow-sm"
               onClick={() => goMonth(1)}
               aria-label="Наступний місяць"
             >
@@ -333,7 +333,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
       )}
 
       {timeMode === "month" && (
-        <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+        <section className="bg-panel border border-line rounded-2xl p-4 shadow-card">
           <div className="grid grid-cols-7 gap-1 text-center text-2xs font-semibold text-subtle mb-2">
             {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"].map((d) => (
               <div key={d}>{d}</div>
@@ -377,7 +377,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                     <span className="flex items-center gap-0.5" aria-hidden>
                       <span className={cn("w-1.5 h-1.5 rounded-full", C.dot)} />
                       {n > 1 && (
-                        <span className="text-2xs text-subtle tabular-nums">
+                        <span className="text-3xs text-subtle tabular-nums">
                           {n}
                         </span>
                       )}
@@ -387,7 +387,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
               );
             })}
           </div>
-          <p className="text-xs text-subtle mt-3 pt-3 border-t border-line/50">
+          <p className="text-xs text-subtle mt-3 pt-3 border-t border-line">
             Обрано:{" "}
             {parseDateKey(selectedDay).toLocaleDateString("uk-UA", {
               weekday: "long",
@@ -400,7 +400,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
 
       <section className="space-y-4 pb-2">
         {listIsEmpty && hasListFilter && (
-          <div className="rounded-2xl border border-line/60 bg-panel p-6 text-center shadow-card">
+          <div className="rounded-2xl border border-line bg-panel p-6 text-center shadow-card">
             <p className="text-sm text-muted">
               Нічого не знайдено за фільтром
               {hasNoHabits ? " (і звичок ще немає)" : ""}.
@@ -408,7 +408,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
             <Button
               type="button"
               variant="ghost"
-              className="mt-3 border border-line/70"
+              className="mt-3 border border-line"
               onClick={() => {
                 setTagFilter(null);
                 setListQuery("");
@@ -437,7 +437,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
           </div>
         )}
         {listIsEmpty && !hasListFilter && !hasNoHabits && (
-          <div className="rounded-2xl border border-line/60 bg-panel p-6 text-center shadow-card">
+          <div className="rounded-2xl border border-line bg-panel p-6 text-center shadow-card">
             <p className="text-sm text-muted leading-relaxed">
               У цьому періоді подій немає. Перевір регулярність звичок або{" "}
               {typeof onOpenModule === "function" ? (
@@ -490,7 +490,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                   >
                     <div
                       className={cn(
-                        "overflow-hidden rounded-2xl border border-line/60 bg-panel pl-4 pr-4 py-3 shadow-card flex flex-col gap-2 border-l-4",
+                        "overflow-hidden rounded-2xl border border-line bg-panel pl-4 pr-4 py-3 shadow-card flex flex-col gap-2 border-l-4",
                         e.fizruk
                           ? "border-l-sky-500"
                           : e.finykSub
@@ -542,7 +542,7 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="!h-9 !px-3 !text-xs border border-line/70 bg-panelHi/80"
+                              className="!h-9 !px-3 !text-xs border border-line bg-panelHi/80"
                               type="button"
                               onClick={() =>
                                 onOpenModule("fizruk", { hash: "plan" })

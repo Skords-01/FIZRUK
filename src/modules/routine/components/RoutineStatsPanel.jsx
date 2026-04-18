@@ -55,7 +55,7 @@ export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
       className="space-y-4"
     >
       <section
-        className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+        className="bg-panel border border-line rounded-2xl p-4 shadow-card"
         aria-label="Зведена статистика"
       >
         <p className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
@@ -85,7 +85,7 @@ export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
               {Math.round(summary.r7.rate * 100)}%
             </p>
-            <p className="text-2xs text-subtle tabular-nums">
+            <p className="text-3xs text-subtle tabular-nums">
               {summary.r7.completed}/{summary.r7.scheduled}
             </p>
           </div>
@@ -96,7 +96,7 @@ export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
               {Math.round(summary.r30.rate * 100)}%
             </p>
-            <p className="text-2xs text-subtle tabular-nums">
+            <p className="text-3xs text-subtle tabular-nums">
               {summary.r30.completed}/{summary.r30.scheduled}
             </p>
           </div>
@@ -107,7 +107,7 @@ export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
               {Math.round(summary.r90.rate * 100)}%
             </p>
-            <p className="text-2xs text-subtle tabular-nums">
+            <p className="text-3xs text-subtle tabular-nums">
               {summary.r90.completed}/{summary.r90.scheduled}
             </p>
           </div>

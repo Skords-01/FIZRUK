@@ -55,7 +55,7 @@ function SyncStatusBadgeComponent({
           ? "bg-danger/10 border-danger/30"
           : isPartial
             ? "bg-warning/10 border-warning/30"
-            : "bg-panel border-line/60",
+            : "bg-panel border-line",
       )}
     >
       <span className={cn("w-2 h-2 rounded-full shrink-0", dotClass)} />

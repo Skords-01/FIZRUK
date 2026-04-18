@@ -588,7 +588,7 @@ export function Transactions({
 
         {/* Empty */}
         {filtered.length === 0 && !activeLoading && (
-          <div className="rounded-2xl border border-dashed border-line/60 bg-panelHi/40">
+          <div className="rounded-2xl border border-dashed border-line bg-panelHi/40">
             <EmptyState
               icon={<Icon name="search" size={20} strokeWidth={1.6} />}
               title={
@@ -625,7 +625,7 @@ export function Transactions({
               increaseViewportBy={{ top: 400, bottom: 400 }}
               groupContent={(groupIndex) => (
                 <div
-                  className="px-3 py-2 bg-bg/95 backdrop-blur-sm border-b border-line/50 text-[11px] font-semibold text-subtle tracking-wide"
+                  className="px-3 py-2 bg-bg/95 backdrop-blur-sm border-b border-line text-[11px] font-semibold text-subtle tracking-wide"
                   role="presentation"
                 >
                   {formatStickyDayLabel(groupedByDate[groupIndex].key)}

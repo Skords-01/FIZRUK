@@ -25,7 +25,7 @@ interface ModuleReorderListProps {
 
 function ModuleReorderList({ order, onMove }: ModuleReorderListProps) {
   return (
-    <ul className="rounded-xl border border-line/60 divide-y divide-line/60 overflow-hidden">
+    <ul className="rounded-xl border border-line divide-y divide-line/60 overflow-hidden">
       {order.map((id, index) => {
         const isFirst = index === 0;
         const isLast = index === order.length - 1;

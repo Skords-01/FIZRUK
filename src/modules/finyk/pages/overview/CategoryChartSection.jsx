@@ -14,7 +14,7 @@ export function CategoryChartSection({
 }) {
   if (catSpends.length > 0) {
     return (
-      <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+      <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
         <div className="text-xs font-medium text-subtle mb-4">
           Витрати за категоріями
         </div>
@@ -36,7 +36,7 @@ export function CategoryChartSection({
   }
 
   return (
-    <div className="bg-panel border border-dashed border-line/60 rounded-2xl shadow-card">
+    <div className="bg-panel border border-dashed border-line rounded-2xl shadow-card">
       <EmptyState
         title="Поки немає витрат"
         description="Цього місяця витрат за категоріями ще немає."

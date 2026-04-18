@@ -33,7 +33,7 @@ const Section = memo(function Section({ title, children, className }) {
   return (
     <div
       className={cn(
-        "bg-panel border border-line/60 rounded-2xl p-5 shadow-card",
+        "bg-panel border border-line rounded-2xl p-5 shadow-card",
         className,
       )}
     >

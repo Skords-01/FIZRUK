@@ -28,7 +28,7 @@ export function WaterTrackerCard({ goalMl = 2000 }) {
   }, []);
 
   return (
-    <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+    <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <span className="text-lg leading-none" aria-hidden="true">

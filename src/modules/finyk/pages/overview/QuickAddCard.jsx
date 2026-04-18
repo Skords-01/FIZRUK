@@ -14,7 +14,7 @@ export function QuickAddCard({
     return null;
 
   return (
-    <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card space-y-3">
+    <div className="bg-panel border border-line rounded-2xl p-5 shadow-card space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
@@ -58,7 +58,7 @@ export function QuickAddCard({
         </div>
       )}
       {frequentMerchants.length > 0 && (
-        <div className="pt-2 border-t border-line/50">
+        <div className="pt-2 border-t border-line">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-subtle mb-2">
             Нещодавнє
           </div>

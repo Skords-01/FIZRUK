@@ -79,7 +79,7 @@ export function FirstActionHeroCard({ onDismiss }) {
 
   return (
     <section
-      className="relative bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3"
+      className="relative bg-panel border border-line rounded-2xl p-4 shadow-card space-y-3"
       aria-label="Перша дія"
     >
       <div className="flex items-start justify-between gap-3">
@@ -97,7 +97,7 @@ export function FirstActionHeroCard({ onDismiss }) {
         <button
           type="button"
           onClick={dismiss}
-          className="shrink-0 -mt-1 -mr-1 text-muted hover:text-text p-1.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          className="shrink-0 -mt-1 -mr-1 text-muted hover:text-text p-1.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45"
           aria-label="Сховати"
         >
           <Icon name="close" size={16} />
@@ -114,7 +114,7 @@ export function FirstActionHeroCard({ onDismiss }) {
               className={cn(
                 "w-full text-left px-3 py-2.5 rounded-xl border border-line bg-panelHi",
                 "hover:border-brand-500/50 hover:bg-brand-500/5 transition-all",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
               )}
             >
               <div className="flex items-center gap-3">

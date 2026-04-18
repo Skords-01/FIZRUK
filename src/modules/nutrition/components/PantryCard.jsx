@@ -207,7 +207,7 @@ export function PantryCard({
                 📷
               </button>
             )}
-            <div className="flex rounded-xl bg-panelHi border border-line/50 p-0.5">
+            <div className="flex rounded-xl bg-panelHi border border-line p-0.5">
               {INPUT_MODES.map((m) => (
                 <button
                   key={m.id}

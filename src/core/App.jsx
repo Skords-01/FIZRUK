@@ -219,7 +219,7 @@ function AppInner() {
           <button
             type="button"
             onClick={goToHub}
-            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl bg-panel/90 backdrop-blur-md border border-line/80 text-muted hover:text-text shadow-card transition-colors"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl bg-panel/90 backdrop-blur-md border border-line text-muted hover:text-text shadow-card transition-colors"
             title="До вибору модуля"
             aria-label="До вибору модуля"
           >

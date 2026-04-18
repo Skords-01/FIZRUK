@@ -19,7 +19,7 @@ function GoalBudgetCardComponent({
   onDelete,
 }) {
   return (
-    <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+    <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
       {isEditing ? (
         <div className="space-y-2">
           <input

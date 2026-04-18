@@ -29,7 +29,7 @@ export function PushupsWidget() {
   return (
     <>
       <section
-        className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+        className="bg-panel border border-line rounded-2xl p-4 shadow-card"
         aria-label="Відтискання"
       >
         <div className="flex items-center justify-between gap-2">
@@ -65,7 +65,7 @@ export function PushupsWidget() {
         </div>
 
         {recentHistory.some((d) => d.total > 0) && (
-          <div className="mt-4 pt-3 border-t border-line/60">
+          <div className="mt-4 pt-3 border-t border-line">
             <p className="text-2xs text-subtle mb-2">Останні 7 днів</p>
             <div className="flex items-end gap-1 h-10">
               {recentHistory.map((d) => {

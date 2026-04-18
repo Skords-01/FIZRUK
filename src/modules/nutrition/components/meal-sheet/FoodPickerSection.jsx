@@ -73,7 +73,7 @@ export function FoodPickerSection({
           />
           {foodErr && <div className="text-[11px] text-muted">{foodErr}</div>}
           {(foodHits.length > 0 || offHits.length > 0) && (
-            <div className="max-h-56 overflow-y-auto rounded-2xl border border-line/60 bg-bg shadow-sm">
+            <div className="max-h-56 overflow-y-auto rounded-2xl border border-line bg-bg shadow-sm">
               <ul className="divide-y divide-line/20">
                 {foodHits.map((p) => (
                   <FoodHitRow

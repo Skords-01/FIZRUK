@@ -119,7 +119,7 @@ export function PlanCalendar() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
-        <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+        <section className="bg-panel border border-line rounded-2xl p-4 shadow-card">
           <div className="flex items-center justify-between gap-2 mb-4">
             <button
               type="button"
@@ -181,7 +181,7 @@ export function PlanCalendar() {
                 >
                   <span className="text-xs font-bold text-text">{day}</span>
                   {tpl && (
-                    <span className="text-2xs text-subtle leading-tight line-clamp-1 mt-0.5 px-0.5">
+                    <span className="text-3xs text-subtle leading-tight line-clamp-1 mt-0.5 px-0.5">
                       {tpl.name}
                     </span>
                   )}
@@ -203,7 +203,7 @@ export function PlanCalendar() {
           </p>
         </section>
 
-        <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+        <section className="bg-panel border border-line rounded-2xl p-4 shadow-card">
           <h2 className="text-sm font-semibold text-text mb-1">
             Повне відновлення м’язів (прогноз)
           </h2>

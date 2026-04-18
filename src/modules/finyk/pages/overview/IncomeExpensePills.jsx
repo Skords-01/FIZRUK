@@ -5,7 +5,7 @@
 export function IncomeExpensePills({ income, spent, showBalance = true }) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+      <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
         <div className="flex items-center gap-2 text-emerald-600">
           <svg
             width="16"
@@ -30,7 +30,7 @@ export function IncomeExpensePills({ income, spent, showBalance = true }) {
           <span className="text-base font-medium text-muted">₴</span>
         </p>
       </div>
-      <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+      <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
         <div className="flex items-center gap-2 text-red-500">
           <svg
             width="16"
