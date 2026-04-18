@@ -1,6 +1,5 @@
 import { Icon } from "@shared/components/ui/Icon";
 import { DarkModeToggle } from "./DarkModeToggle.jsx";
-import { SyncStatusIndicator } from "../SyncStatusIndicator.jsx";
 import { UserMenuButton } from "./UserMenuButton.jsx";
 
 const ICON_BUTTON_CLS =
@@ -49,32 +48,32 @@ export function HubHeader({
         </button>
 
         {user ? (
-          <>
-            <SyncStatusIndicator user={user} syncing={syncing} />
-            <UserMenuButton
-              user={user}
-              syncing={syncing}
-              lastSync={lastSync}
-              onSync={onSync}
-              onPull={onPull}
-              onLogout={onLogout}
-            />
-          </>
+          <UserMenuButton
+            user={user}
+            syncing={syncing}
+            lastSync={lastSync}
+            onSync={onSync}
+            onPull={onPull}
+            onLogout={onLogout}
+            dark={dark}
+            onToggleDark={onToggleDark}
+          />
         ) : (
-          !authLoading && (
-            <button
-              type="button"
-              onClick={onShowAuth}
-              aria-label="Увійти в акаунт"
-              title="Увійти"
-              className={ICON_BUTTON_CLS}
-            >
-              <Icon name="user" size={20} />
-            </button>
-          )
+          <>
+            <DarkModeToggle dark={dark} onToggle={onToggleDark} />
+            {!authLoading && (
+              <button
+                type="button"
+                onClick={onShowAuth}
+                aria-label="Увійти в акаунт"
+                title="Увійти"
+                className={ICON_BUTTON_CLS}
+              >
+                <Icon name="user" size={20} />
+              </button>
+            )}
+          </>
         )}
-
-        <DarkModeToggle dark={dark} onToggle={onToggleDark} />
       </div>
     </header>
   );
