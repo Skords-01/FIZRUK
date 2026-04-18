@@ -237,10 +237,12 @@ export function useStorage({ onImportFeedback } = {}) {
       prev.map((c) => {
         if (c.id !== id) return c;
         const next = { ...c };
-        if (patch.label != null) next.label = String(patch.label).trim() || c.label;
+        if (patch.label != null)
+          next.label = String(patch.label).trim() || c.label;
         if (patch.color !== undefined) next.color = patch.color || undefined;
         if (patch.icon !== undefined) next.icon = patch.icon || undefined;
-        if (patch.parentId !== undefined) next.parentId = patch.parentId || undefined;
+        if (patch.parentId !== undefined)
+          next.parentId = patch.parentId || undefined;
         return next;
       }),
     );

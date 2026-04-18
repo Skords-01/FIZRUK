@@ -17,8 +17,10 @@ const variants = {
   default: "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
 
   // Status
-  success: "bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400",
-  warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  success:
+    "bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400",
+  warning:
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   danger: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   info: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
 
@@ -27,7 +29,8 @@ const variants = {
   finyk: "bg-brand-100 text-finyk dark:bg-brand-900/30 dark:text-brand-400",
   fizruk: "bg-teal-100 text-fizruk dark:bg-teal-900/30 dark:text-teal-400",
   routine: "bg-coral-100 text-routine dark:bg-coral-900/30 dark:text-coral-400",
-  nutrition: "bg-lime-100 text-nutrition dark:bg-lime-900/30 dark:text-lime-400",
+  nutrition:
+    "bg-lime-100 text-nutrition dark:bg-lime-900/30 dark:text-lime-400",
 
   // Outline variants
   outline: "bg-transparent border border-line text-muted",
@@ -59,7 +62,7 @@ export function Badge({
         "inline-flex items-center gap-1 font-medium rounded-full whitespace-nowrap",
         variants[variant],
         sizes[size],
-        className
+        className,
       )}
       {...props}
     >
@@ -75,7 +78,7 @@ export function Badge({
                   ? "bg-red-500"
                   : variant === "info"
                     ? "bg-sky-500"
-                    : "bg-current"
+                    : "bg-current",
           )}
         />
       )}
@@ -124,7 +127,7 @@ export function CountBadge({
       size={size}
       className={cn(
         "min-w-[18px] h-[18px] justify-center tabular-nums",
-        className
+        className,
       )}
     >
       {displayCount}

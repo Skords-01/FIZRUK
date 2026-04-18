@@ -53,9 +53,18 @@ export function resetDashboardOrder() {
 const MODULE_CONFIGS = {
   finyk: {
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2"/>
-        <path d="M6 8h.01M6 12h.01M6 16h.01M10 8h8M10 12h8M10 16h8"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <path d="M6 8h.01M6 12h.01M6 16h.01M10 8h8M10 12h8M10 16h8" />
       </svg>
     ),
     label: "Фінік",
@@ -72,8 +81,12 @@ const MODULE_CONFIGS = {
         if (data) {
           const stats = JSON.parse(data);
           return {
-            main: stats.todaySpent ? `${stats.todaySpent.toLocaleString()} грн` : null,
-            sub: stats.budgetLeft ? `Залишок: ${stats.budgetLeft.toLocaleString()}` : null,
+            main: stats.todaySpent
+              ? `${stats.todaySpent.toLocaleString()} грн`
+              : null,
+            sub: stats.budgetLeft
+              ? `Залишок: ${stats.budgetLeft.toLocaleString()}`
+              : null,
           };
         }
       } catch {}
@@ -82,10 +95,19 @@ const MODULE_CONFIGS = {
   },
   fizruk: {
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6.5 6.5a3.5 3.5 0 1 0 7 0 3.5 3.5 0 1 0-7 0"/>
-        <path d="M3 20v-1a7 7 0 0 1 7-7"/>
-        <path d="M14 14l2 2 4-4"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M6.5 6.5a3.5 3.5 0 1 0 7 0 3.5 3.5 0 1 0-7 0" />
+        <path d="M3 20v-1a7 7 0 0 1 7-7" />
+        <path d="M14 14l2 2 4-4" />
       </svg>
     ),
     label: "Фізрук",
@@ -111,9 +133,18 @@ const MODULE_CONFIGS = {
   },
   routine: {
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
-        <path d="m9 12 2 2 4-4"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+        <path d="m9 12 2 2 4-4" />
       </svg>
     ),
     label: "Рутина",
@@ -129,9 +160,14 @@ const MODULE_CONFIGS = {
         if (data) {
           const stats = JSON.parse(data);
           return {
-            main: stats.todayDone !== undefined ? `${stats.todayDone}/${stats.todayTotal}` : null,
+            main:
+              stats.todayDone !== undefined
+                ? `${stats.todayDone}/${stats.todayTotal}`
+                : null,
             sub: stats.streak ? `Серія: ${stats.streak} днів` : null,
-            progress: stats.todayTotal ? (stats.todayDone / stats.todayTotal) * 100 : 0,
+            progress: stats.todayTotal
+              ? (stats.todayDone / stats.todayTotal) * 100
+              : 0,
           };
         }
       } catch {}
@@ -140,10 +176,19 @@ const MODULE_CONFIGS = {
   },
   nutrition: {
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14"/>
-        <path d="M16 8c4 0 6-2 6-6-4 0-6 2-6 6"/>
-        <path d="M17.41 3.59a10 10 0 1 0 3 3"/>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14" />
+        <path d="M16 8c4 0 6-2 6-6-4 0-6 2-6 6" />
+        <path d="M17.41 3.59a10 10 0 1 0 3 3" />
       </svg>
     ),
     label: "Харчування",
@@ -161,7 +206,9 @@ const MODULE_CONFIGS = {
           return {
             main: stats.todayCal ? `${stats.todayCal} ккал` : null,
             sub: stats.calGoal ? `Ціль: ${stats.calGoal} ккал` : null,
-            progress: stats.calGoal ? (stats.todayCal / stats.calGoal) * 100 : 0,
+            progress: stats.calGoal
+              ? (stats.todayCal / stats.calGoal) * 100
+              : 0,
           };
         }
       } catch {}
@@ -175,12 +222,12 @@ const MODULE_CONFIGS = {
 // ═══════════════════════════════════════════════════════════════════════════
 function DailyProgressHero() {
   const [progress, setProgress] = useState({ total: 0, completed: 0 });
-  
+
   useEffect(() => {
     // Aggregate progress from all modules
     let total = 0;
     let completed = 0;
-    
+
     // Check routine habits
     try {
       const routineData = localStorage.getItem("routine_quick_stats");
@@ -190,7 +237,7 @@ function DailyProgressHero() {
         completed += stats.todayDone || 0;
       }
     } catch {}
-    
+
     // Check nutrition goals (simplified)
     try {
       const nutritionData = localStorage.getItem("nutrition_quick_stats");
@@ -202,7 +249,7 @@ function DailyProgressHero() {
         }
       }
     } catch {}
-    
+
     // Check workout for today
     try {
       const fizrukData = localStorage.getItem("fizruk_quick_stats");
@@ -214,21 +261,22 @@ function DailyProgressHero() {
         }
       }
     } catch {}
-    
+
     setProgress({ total: total || 4, completed });
   }, []);
-  
-  const percentage = progress.total > 0 
-    ? Math.round((progress.completed / progress.total) * 100) 
-    : 0;
-  
+
+  const percentage =
+    progress.total > 0
+      ? Math.round((progress.completed / progress.total) * 100)
+      : 0;
+
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return "Добрий ранок";
     if (hour < 17) return "Добрий день";
     return "Добрий вечір";
   }, []);
-  
+
   const motivationalText = useMemo(() => {
     if (percentage === 0) return "Час почати день!";
     if (percentage < 25) return "Гарний початок!";
@@ -243,7 +291,7 @@ function DailyProgressHero() {
       {/* Decorative gradient orbs */}
       <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-brand-200/20 blur-3xl" />
       <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-teal-200/20 blur-3xl" />
-      
+
       <div className="relative flex items-center gap-5">
         {/* Progress Ring */}
         <ProgressRing
@@ -257,7 +305,7 @@ function DailyProgressHero() {
             {percentage}%
           </span>
         </ProgressRing>
-        
+
         {/* Text content */}
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-muted uppercase tracking-wider mb-0.5">
@@ -278,14 +326,9 @@ function DailyProgressHero() {
 // ═══════════════════════════════════════════════════════════════════════════
 // MODULE CARD — Interactive card with preview data
 // ═══════════════════════════════════════════════════════════════════════════
-function ModuleCard({
-  config,
-  onClick,
-  dragProps,
-  isDragging,
-}) {
+function ModuleCard({ config, onClick, dragProps, isDragging }) {
   const preview = config.getPreview();
-  
+
   return (
     <button
       type="button"
@@ -298,7 +341,8 @@ function ModuleCard({
         "active:scale-[0.98] active:shadow-card",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 focus-visible:ring-offset-2",
         config.borderClass,
-        isDragging && "opacity-70 scale-[0.97] shadow-float z-50 cursor-grabbing",
+        isDragging &&
+          "opacity-70 scale-[0.97] shadow-float z-50 cursor-grabbing",
       )}
       {...dragProps}
     >
@@ -311,7 +355,7 @@ function ModuleCard({
           config.hoverGradient,
         )}
       />
-      
+
       <div className="relative">
         {/* Header row */}
         <div className="flex items-center gap-2.5 mb-3">
@@ -344,7 +388,7 @@ function ModuleCard({
             <path d="M9 18l6-6-6-6" />
           </svg>
         </div>
-        
+
         {/* Preview content */}
         <div className="space-y-1">
           {preview.main ? (
@@ -357,13 +401,15 @@ function ModuleCard({
               )}
             </>
           ) : (
-            <p className="text-sm text-muted">{preview.sub || config.description}</p>
+            <p className="text-sm text-muted">
+              {preview.sub || config.description}
+            </p>
           )}
-          
+
           {/* Mini progress bar if available */}
           {preview.progress !== undefined && preview.progress > 0 && (
             <div className="mt-2 h-1.5 rounded-full bg-line/50 overflow-hidden">
-              <div 
+              <div
                 className={cn(
                   "h-full rounded-full transition-all duration-500",
                   config.module === "routine" && "bg-routine",
@@ -466,7 +512,7 @@ export function HubDashboard({ onOpenModule, onOpenChat }) {
   const [showCoach, setShowCoach] = useState(
     () => safeReadLS(HUB_PREFS_KEY, {}).showCoach !== false,
   );
-  
+
   useEffect(() => {
     const handler = (e) => {
       if (e.key === HUB_PREFS_KEY || e.key === null) {
@@ -481,7 +527,7 @@ export function HubDashboard({ onOpenModule, onOpenChat }) {
     <div className="space-y-5">
       {/* Daily Progress Hero */}
       <DailyProgressHero />
-      
+
       {/* Smart Recommendations */}
       <HubRecommendations onOpenModule={onOpenModule} />
 
@@ -494,12 +540,8 @@ export function HubDashboard({ onOpenModule, onOpenChat }) {
       {/* Module Cards Grid */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-0.5">
-          <h2 className="text-sm font-semibold text-text">
-            Модулі
-          </h2>
-          <span className="text-2xs text-subtle">
-            Утримуй для переміщення
-          </span>
+          <h2 className="text-sm font-semibold text-text">Модулі</h2>
+          <span className="text-2xs text-subtle">Утримуй для переміщення</span>
         </div>
 
         <DndContext

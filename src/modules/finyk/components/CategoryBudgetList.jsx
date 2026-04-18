@@ -28,7 +28,11 @@ export function CategoryBudgetList({ budgets = [], onBudgetClick }) {
                 <span
                   className={cn(
                     "text-xs font-semibold tabular-nums",
-                    isOver ? "text-danger" : pct >= 85 ? "text-warning" : "text-muted",
+                    isOver
+                      ? "text-danger"
+                      : pct >= 85
+                        ? "text-warning"
+                        : "text-muted",
                   )}
                 >
                   {pct}%

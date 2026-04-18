@@ -10,10 +10,15 @@ export function BudgetOverviewCard({
   planIncome,
 }) {
   const pct =
-    totalPlan > 0 ? Math.min(100, Math.round((totalFact / totalPlan) * 100)) : 0;
+    totalPlan > 0
+      ? Math.min(100, Math.round((totalFact / totalPlan) * 100))
+      : 0;
 
-  const barColor =
-    isOverall ? "bg-danger" : pct >= 85 ? "bg-warning" : "bg-emerald-500";
+  const barColor = isOverall
+    ? "bg-danger"
+    : pct >= 85
+      ? "bg-warning"
+      : "bg-emerald-500";
 
   return (
     <div

@@ -88,7 +88,12 @@ export function ProgressRing({
     : `${Math.round(percentage)}%`;
 
   return (
-    <div className={cn("relative inline-flex items-center justify-center", className)}>
+    <div
+      className={cn(
+        "relative inline-flex items-center justify-center",
+        className,
+      )}
+    >
       <svg
         width={size}
         height={size}
@@ -118,7 +123,7 @@ export function ProgressRing({
           className={cn(
             colors.fill,
             "progress-ring-circle",
-            animate && "transition-[stroke-dashoffset] duration-700 ease-out"
+            animate && "transition-[stroke-dashoffset] duration-700 ease-out",
           )}
           style={{
             "--progress-offset": offset,
@@ -137,7 +142,7 @@ export function ProgressRing({
                 className={cn(
                   "font-bold tabular-nums",
                   config.fontSize,
-                  colors.text
+                  colors.text,
                 )}
               >
                 {displayValue}
@@ -167,7 +172,12 @@ export function MultiProgressRing({
   const { size } = baseConfig;
 
   return (
-    <div className={cn("relative inline-flex items-center justify-center", className)}>
+    <div
+      className={cn(
+        "relative inline-flex items-center justify-center",
+        className,
+      )}
+    >
       <svg
         width={size}
         height={size}
@@ -182,7 +192,7 @@ export function MultiProgressRing({
           const circumference = 2 * Math.PI * radius;
           const percentage = Math.min(
             Math.max((ring.value / (ring.max || 100)) * 100, 0),
-            100
+            100,
           );
           const offset = circumference - (percentage / 100) * circumference;
           const colors = variants[ring.variant || "brand"];
@@ -210,7 +220,7 @@ export function MultiProgressRing({
                 strokeDashoffset={offset}
                 className={cn(
                   colors.fill,
-                  "progress-ring-circle transition-[stroke-dashoffset] duration-700 ease-out"
+                  "progress-ring-circle transition-[stroke-dashoffset] duration-700 ease-out",
                 )}
               />
             </g>
@@ -257,13 +267,13 @@ export function ProgressBar({
           "w-full rounded-full overflow-hidden",
           colors.track.replace("stroke-", "bg-"),
           "bg-opacity-30",
-          heights[size]
+          heights[size],
         )}
       >
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500 ease-out",
-            colors.fill.replace("stroke-", "bg-")
+            colors.fill.replace("stroke-", "bg-"),
           )}
           style={{ width: `${percentage}%` }}
         />
