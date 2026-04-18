@@ -57,7 +57,7 @@ function SubCardComponent({
 
   if (editing) {
     return (
-      <div className="bg-panel border border-primary/30 rounded-xl p-4 mb-3 space-y-3">
+      <div className="bg-panel border border-primary/30 rounded-2xl p-4 mb-3 space-y-3">
         <div className="flex gap-2 flex-wrap">
           {EMOJI_OPTIONS.map((e) => (
             <button
@@ -144,7 +144,7 @@ function SubCardComponent({
   return (
     <div
       className={cn(
-        "bg-panel border rounded-xl p-4 mb-3 flex items-center gap-3",
+        "bg-panel border rounded-2xl p-4 mb-3 flex items-center gap-3",
         veryClose
           ? "border-danger/50"
           : soon

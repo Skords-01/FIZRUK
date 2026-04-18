@@ -149,7 +149,7 @@ export function Assets({
           </div>
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-              <div className="bg-panel border border-line rounded-xl p-4 mb-3">
+              <div className="bg-panel border border-line rounded-2xl p-4 mb-3">
                 <div className="text-xs text-subtle mb-1">{label}</div>
                 <div className="text-2xl font-extrabold text-danger">
                   −
@@ -242,7 +242,7 @@ export function Assets({
           </div>
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-              <div className="bg-panel border border-line rounded-xl p-4 mb-4">
+              <div className="bg-panel border border-line rounded-2xl p-4 mb-4">
                 <p className="text-xs text-subtle leading-relaxed">
                   Обери списання (наприклад через Apple/Google). День місяця з
                   транзакції підставиться в «день списання»; сума піде в огляд і
@@ -324,7 +324,7 @@ export function Assets({
         </div>
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-            <div className="bg-panel border border-line rounded-xl p-4 mb-4">
+            <div className="bg-panel border border-line rounded-2xl p-4 mb-4">
               <div className="text-xs text-subtle">
                 {item?.emoji} {item?.name}
               </div>
@@ -455,7 +455,7 @@ export function Assets({
               />
             ))}
             {showSubForm ? (
-              <div className="bg-panel border border-line rounded-xl p-4 space-y-3 mt-2">
+              <div className="bg-panel border border-line rounded-2xl p-4 space-y-3 mt-2">
                 <input
                   className={formInp}
                   placeholder="Назва"
@@ -592,7 +592,7 @@ export function Assets({
               />
             ))}
             {showRecvForm ? (
-              <div className="bg-panel border border-line rounded-xl p-4 space-y-3">
+              <div className="bg-panel border border-line rounded-2xl p-4 space-y-3">
                 <input
                   className={formInp}
                   placeholder="Ім'я або назва"
@@ -709,7 +709,7 @@ export function Assets({
               </div>
             ))}
             {showAssetForm ? (
-              <div className="bg-panel border border-line rounded-xl p-4 space-y-3">
+              <div className="bg-panel border border-line rounded-2xl p-4 space-y-3">
                 <input
                   className={formInp}
                   placeholder="Назва"
@@ -827,7 +827,7 @@ export function Assets({
               />
             ))}
             {showDebtForm ? (
-              <div className="bg-panel border border-line rounded-xl p-4 space-y-3">
+              <div className="bg-panel border border-line rounded-2xl p-4 space-y-3">
                 <div className="flex gap-2">
                   <input
                     className={cn(formInp, "flex-1")}
