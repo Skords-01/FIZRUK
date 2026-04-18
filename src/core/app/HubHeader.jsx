@@ -8,6 +8,7 @@ const ICON_BUTTON_CLS =
 export function HubHeader({
   hubView,
   onOpenSearch,
+  onOpenChat,
   user,
   syncing,
   lastSync,
@@ -37,6 +38,17 @@ export function HubHeader({
         </p>
       </div>
       <div className="pt-1 flex items-center gap-1">
+        {onOpenChat && (
+          <button
+            type="button"
+            onClick={onOpenChat}
+            aria-label="Відкрити AI-асистента"
+            title="Асистент"
+            className={ICON_BUTTON_CLS}
+          >
+            <Icon name="sparkle" size={20} />
+          </button>
+        )}
         <button
           type="button"
           onClick={onOpenSearch}

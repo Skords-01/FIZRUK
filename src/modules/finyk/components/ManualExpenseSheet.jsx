@@ -6,16 +6,80 @@ import { useVisualKeyboardInset } from "@shared/hooks/useVisualKeyboardInset";
 import { toLocalISODate } from "@shared/lib/date";
 import { CANONICAL_TO_MANUAL_LABEL } from "../domain/personalization";
 
+// Manual-expense categories. Labels map to the MCC canonical ids used
+// across the rest of Finyk (see `MANUAL_CATEGORY_ID_MAP`), so manual
+// entries and bank transactions share one taxonomy for analytics and
+// budgets. Emojis mirror the MCC labels for visual consistency.
 const CATEGORIES = [
-  "їжа",
-  "транспорт",
-  "розваги",
-  "здоров'я",
-  "одяг",
-  "комунальні",
-  "техніка",
-  "інше",
+  "🍴 їжа",
+  "🛍 продукти",
+  "🍔 кафе та ресторани",
+  "🚗 транспорт",
+  "🎮 розваги",
+  "💊 здоров'я",
+  "🛍️ покупки",
+  "🏠 комунальні",
+  "📱 техніка",
+  "🎵 підписки",
+  "📚 навчання",
+  "✈️ подорожі",
+  "🏷 інше",
 ];
+const DEFAULT_CATEGORY = "🏷 інше";
+
+// Legacy labels (pre-emoji). Old manual expenses stored category as e.g.
+// "їжа". When loaded for edit, we upgrade the string to its emoji
+// counterpart so the picker highlights it; saved value still round-trips
+// through `MANUAL_CATEGORY_ID_MAP` for personalization/analytics.
+const LEGACY_CATEGORY_UPGRADE = {
+  їжа: "🍴 їжа",
+  транспорт: "🚗 транспорт",
+  розваги: "🎮 розваги",
+  "здоров'я": "💊 здоров'я",
+  одяг: "🛍️ покупки",
+  комунальні: "🏠 комунальні",
+  техніка: "📱 техніка",
+  інше: "🏷 інше",
+};
+
+function upgradeCategory(raw) {
+  if (!raw) return DEFAULT_CATEGORY;
+  if (CATEGORIES.includes(raw)) return raw;
+  const up = LEGACY_CATEGORY_UPGRADE[raw];
+  return up || raw;
+}
+
+// Strips leading emoji + space so "🍴 їжа" → "їжа", used as a human-readable
+// fallback description when the user leaves the name empty. We accept any
+// run of non-letter / non-digit grapheme chunks so compound emoji (zwj
+// sequences, variation selectors) all get peeled off.
+function stripEmoji(label) {
+  const str = String(label || "");
+  let i = 0;
+  while (i < str.length && !/[\p{L}\p{N}]/u.test(str[i])) i++;
+  return str.slice(i).trim();
+}
+
+// Amount suggestion pills. Defaults give a first-run user sane round
+// values; once the user has spending history we merge in the top-3
+// distinct recent amounts (see `mergeAmountSuggestions`).
+const DEFAULT_AMOUNTS = [50, 100, 200, 500];
+
+function mergeAmountSuggestions(frequentMerchants) {
+  const fromMerchants = [];
+  for (const m of frequentMerchants || []) {
+    if (!m || typeof m.total !== "number" || !m.count) continue;
+    const avg = Math.round(m.total / m.count);
+    if (avg > 0 && !fromMerchants.includes(avg)) fromMerchants.push(avg);
+    if (fromMerchants.length >= 3) break;
+  }
+  const merged = [...fromMerchants];
+  for (const v of DEFAULT_AMOUNTS) {
+    if (!merged.includes(v)) merged.push(v);
+    if (merged.length >= 6) break;
+  }
+  return merged.slice(0, 6);
+}
 
 const formInp =
   "w-full h-11 rounded-2xl border border-line bg-panelHi px-4 text-text outline-none focus:border-muted transition-colors";
@@ -68,7 +132,7 @@ export function ManualExpenseSheet({
   const [form, setForm] = useState({
     description: "",
     amount: "",
-    category: "інше",
+    category: DEFAULT_CATEGORY,
     date: toLocalISODate(),
   });
   const [error, setError] = useState("");
@@ -83,22 +147,24 @@ export function ManualExpenseSheet({
           description: String(initialExpense.description || ""),
           amount:
             initialExpense.amount != null ? String(initialExpense.amount) : "",
-          category: initialExpense.category || "інше",
+          category: upgradeCategory(initialExpense.category),
           date: toLocalISODate(d),
         });
       } else {
-        // Для нової витрати беремо або явно вказану категорію (клік по картці
-        // "часте" з dashboard'у), або найчастішу категорію користувача, якщо
-        // вона є у списку кнопок; інакше — дефолтне "інше".
-        let startCategory = "інше";
-        if (initialCategory && CATEGORIES.includes(initialCategory)) {
-          startCategory = initialCategory;
+        // Пріоритет: явна initialCategory (клік з дашборду) > найчастіша
+        // категорія з статистики > дефолт ("інше"). Будь-яка legacy
+        // мітка ("їжа", "транспорт") оновлюється до emoji-версії.
+        let startCategory = DEFAULT_CATEGORY;
+        if (initialCategory) {
+          startCategory = upgradeCategory(initialCategory);
         } else if (frequentCategories.length > 0) {
           const top = frequentCategories[0];
           const topLabel =
-            top.manualLabel && CATEGORIES.includes(top.manualLabel)
-              ? top.manualLabel
-              : CANONICAL_TO_MANUAL_LABEL[top.id];
+            top.manualLabel && typeof top.manualLabel === "string"
+              ? upgradeCategory(top.manualLabel)
+              : CANONICAL_TO_MANUAL_LABEL[top.id]
+                ? upgradeCategory(CANONICAL_TO_MANUAL_LABEL[top.id])
+                : null;
           if (topLabel && CATEGORIES.includes(topLabel)) {
             startCategory = topLabel;
           }
@@ -121,6 +187,11 @@ export function ManualExpenseSheet({
     () => sortCategoriesByFrequency(frequentCategories),
     [frequentCategories],
   );
+
+  const amountSuggestions = useMemo(
+    () => mergeAmountSuggestions(frequentMerchants),
+    [frequentMerchants],
+  );
   // Ховаємо зі списку пропозицій мерчанта, якого вже введено у полі description.
   const merchantSuggestions = useMemo(() => {
     if (!frequentMerchants.length) return [];
@@ -136,17 +207,19 @@ export function ManualExpenseSheet({
 
   const handleSubmit = () => {
     const amt = parseFloat(form.amount);
-    if (!form.description.trim()) {
-      setError("Вкажіть назву витрати");
-      return;
-    }
     if (!form.amount || isNaN(amt) || amt <= 0) {
       setError("Вкажіть суму більше 0");
       return;
     }
+    // Description is now optional: if empty we fall back to the category
+    // label (without the emoji prefix) so the ledger still has a
+    // human-readable line. Keeps the 5-second-add promise while staying
+    // searchable.
+    const trimmedDesc = form.description.trim();
+    const description = trimmedDesc || stripEmoji(form.category);
     onSave?.({
       ...(initialExpense?.id ? { id: String(initialExpense.id) } : {}),
-      description: form.description.trim(),
+      description,
       amount: amt,
       category: form.category,
       // "YYYY-MM-DD" як local date може з’їхати при toISOString() в UTC.
@@ -184,7 +257,10 @@ export function ManualExpenseSheet({
                 htmlFor={descId}
                 className="text-xs text-muted uppercase tracking-wide font-semibold mb-1 block"
               >
-                Назва
+                Назва{" "}
+                <span className="text-subtle normal-case">
+                  · необов&apos;язково
+                </span>
               </label>
               <input
                 id={descId}
@@ -259,6 +335,26 @@ export function ManualExpenseSheet({
             >
               Сума ₴
             </label>
+            {amountSuggestions.length > 0 && (
+              <div
+                className="flex flex-wrap gap-1.5 mb-2"
+                role="group"
+                aria-label="Швидкі суми"
+              >
+                {amountSuggestions.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({ ...f, amount: String(v) }))
+                    }
+                    className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-panelHi text-muted border border-line hover:border-muted/50 transition-colors tabular-nums"
+                  >
+                    {v.toLocaleString("uk-UA")} ₴
+                  </button>
+                ))}
+              </div>
+            )}
             <input
               id={amountId}
               className={formInp}

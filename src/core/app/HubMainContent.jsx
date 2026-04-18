@@ -1,15 +1,9 @@
-import { useEffect, useState } from "react";
 import { Icon } from "@shared/components/ui/Icon";
 import { HubDashboard } from "../HubDashboard.jsx";
 import { HubReports } from "../HubReports.jsx";
 import { HubSettingsPage } from "../HubSettingsPage.jsx";
 import { OnboardingWizard } from "../OnboardingWizard.jsx";
-import { FirstActionSheet } from "../onboarding/FirstActionSheet.jsx";
 import { IOSInstallBanner } from "./IOSInstallBanner.jsx";
-import {
-  isFirstActionPending,
-  clearFirstActionPending,
-} from "../onboarding/vibePicks.js";
 
 export function HubMainContent({
   updateAvailable,
@@ -32,20 +26,22 @@ export function HubMainContent({
   user,
   onShowAuth,
 }) {
-  // The first-action sheet is the third beat of the FTUX flow: wizard →
-  // demo-populated dashboard → quick-win sheet. It is controlled by a
-  // localStorage flag so a refresh mid-flow doesn't swallow it.
-  const [firstActionOpen, setFirstActionOpen] = useState(false);
-
-  useEffect(() => {
-    if (!onboarding && isFirstActionPending()) {
-      setFirstActionOpen(true);
-    }
-  }, [onboarding]);
+  // Post-wizard FTUX is now a non-blocking hero card rendered inline on
+  // the dashboard (see `FirstActionHeroCard`), not a third stacked modal.
+  // The wizard just flips the `first_action_pending` flag and lands the
+  // user on the populated hub.
+  //
+  // Banner budget: at most one chrome banner above the hub content.
+  // Priority: update > install (PWA) > iOS install. This prevents a cold
+  // start where update + install + iOS stack three banners before any
+  // real data is visible.
+  const showUpdate = !!updateAvailable;
+  const showInstall = !showUpdate && !!canInstall;
+  const showIos = !showUpdate && !showInstall && iosVisible;
 
   return (
     <>
-      {updateAvailable && (
+      {showUpdate && (
         <div className="px-5 max-w-lg mx-auto w-full mb-2">
           <div className="px-4 py-3 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-3">
             <svg
@@ -76,7 +72,7 @@ export function HubMainContent({
         </div>
       )}
 
-      {canInstall && (
+      {showInstall && (
         <div className="px-5 max-w-lg mx-auto w-full mb-2">
           <div className="px-4 py-3 rounded-2xl bg-panel border border-line shadow-card flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -126,31 +122,17 @@ export function HubMainContent({
         <OnboardingWizard
           onDone={(startModuleId, opts = {}) => {
             setOnboarding(false);
-            if (opts.intent === "vibe_demo") {
-              // Wizard already seeded demo data and flipped the pending
-              // first-action flag. We land on the hub dashboard so the
-              // user sees a populated dashboard before the quick-win
-              // sheet appears.
-              setFirstActionOpen(true);
-            } else if (startModuleId) {
+            if (opts.intent !== "vibe_demo" && startModuleId) {
               // Legacy paths / external callers: if a module id is
-              // explicitly passed, open it immediately.
+              // explicitly passed, open it immediately. vibe_demo lands
+              // on the dashboard where the inline hero card picks up.
               onOpenModule(startModuleId);
             }
           }}
         />
       )}
 
-      {firstActionOpen && (
-        <FirstActionSheet
-          onClose={() => {
-            clearFirstActionPending();
-            setFirstActionOpen(false);
-          }}
-        />
-      )}
-
-      {iosVisible && <IOSInstallBanner onDismiss={onDismissIos} />}
+      {showIos && <IOSInstallBanner onDismiss={onDismissIos} />}
 
       <main className="flex-1 px-5 pb-28 max-w-lg mx-auto w-full overflow-y-auto">
         {hubView === "dashboard" && (

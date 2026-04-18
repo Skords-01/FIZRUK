@@ -9,11 +9,13 @@ import { WeeklyDigestCard, hasLiveWeeklyDigest } from "./WeeklyDigestCard.jsx";
 import { useWeeklyDigest, loadDigest, getWeekKey } from "./useWeeklyDigest.js";
 import { SoftAuthPromptCard } from "./onboarding/SoftAuthPromptCard.jsx";
 import { DemoModeBanner } from "./onboarding/DemoModeBanner.jsx";
+import { FirstActionHeroCard } from "./onboarding/FirstActionSheet.jsx";
 import { detectFirstRealEntry } from "./onboarding/firstRealEntry.js";
 import {
   isSoftAuthDismissed,
   isDemoBannerDismissed,
   dismissDemoBanner,
+  isFirstActionPending,
 } from "./onboarding/vibePicks.js";
 import { wasDemoSeeded } from "./onboarding/demoSeeds.js";
 import { useFirstEntryCelebration } from "./onboarding/useFirstEntryCelebration.js";
@@ -416,6 +418,12 @@ export function HubDashboard({ onOpenModule, onOpenChat, user, onShowAuth }) {
   const [order, setOrder] = useState(loadOrder);
   useMondayAutoDigest();
 
+  // Inline FTUX hero — replaces the old post-wizard `FirstActionSheet`
+  // modal. Reads the localStorage flag once; dismiss clears the flag.
+  const [firstActionVisible, setFirstActionVisible] = useState(() =>
+    isFirstActionPending(),
+  );
+
   // Soft auth prompt appears only once the user has typed in real data and
   // has no account yet — an "offer to save", never a toll gate.
   const hasRealEntry = detectFirstRealEntry();
@@ -475,21 +483,25 @@ export function HubDashboard({ onOpenModule, onOpenChat, user, onShowAuth }) {
         onDismiss={dismiss}
       />
 
-      {showDemoBanner && (
+      {/* Banner budget: one system card at a time on the dashboard.
+          Priority: first-action hero (post-wizard FTUX) > demo banner >
+          soft-auth nudge. Prevents the cold-start where two or three
+          "meta" cards push real data below the fold. */}
+      {firstActionVisible ? (
+        <FirstActionHeroCard onDismiss={() => setFirstActionVisible(false)} />
+      ) : showDemoBanner ? (
         <DemoModeBanner
           onDismiss={() => {
             dismissDemoBanner();
             setDemoBannerDismissed(true);
           }}
         />
-      )}
-
-      {showSoftAuth && (
+      ) : showSoftAuth ? (
         <SoftAuthPromptCard
           onOpenAuth={onShowAuth}
           onDismiss={() => setSoftAuthDismissed(true)}
         />
-      )}
+      ) : null}
 
       {/* Today at a glance — compact module list (replaces the 2×2 grid) */}
       <section className="space-y-2">

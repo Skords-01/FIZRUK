@@ -94,28 +94,38 @@ export const MANUAL_CATEGORY_ID_MAP: Record<string, string> = {
 
 // Зворотний пошук: canonical id → відповідний manual-label, який є серед
 // кнопок у ManualExpenseSheet (щоб при кліку по картці у dashboard виставляти
-// коректний вибір у списку).
+// коректний вибір у списку). Повертаємо нові emoji-labels — `ManualExpenseSheet`
+// also runs them through `upgradeCategory` to stay tolerant of legacy strings.
 export const CANONICAL_TO_MANUAL_LABEL: Record<string, string> = {
-  food: "їжа",
-  restaurant: "їжа",
-  transport: "транспорт",
-  entertainment: "розваги",
-  health: "здоров'я",
-  shopping: "одяг",
-  utilities: "комунальні",
-  // "підписки" відсутні серед кнопок ManualExpenseSheet, тому мапимо у "інше"
-  // замість "техніка" — інакше subscription-мерчанти зберігались би як shopping
-  // (round-trip `техніка` → `shopping`).
-  subscriptions: "інше",
-  sport: "розваги",
-  beauty: "розваги",
-  travel: "розваги",
-  education: "розваги",
-  other: "інше",
+  food: "🍴 їжа",
+  restaurant: "🍔 кафе та ресторани",
+  transport: "🚗 транспорт",
+  entertainment: "🎮 розваги",
+  health: "💊 здоров'я",
+  shopping: "🛍️ покупки",
+  utilities: "🏠 комунальні",
+  subscriptions: "🎵 підписки",
+  sport: "🎮 розваги",
+  beauty: "🛍️ покупки",
+  travel: "✈️ подорожі",
+  education: "📚 навчання",
+  other: "🏷 інше",
 };
 
+// Labels in `ManualExpenseSheet` are now emoji-prefixed (e.g. "🍴 їжа").
+// Strip leading non-letter / non-digit runs (emoji, ZWJ sequences,
+// variation selectors, whitespace) before lookup so map keys stay
+// stable across legacy and new entries.
+function stripLeadingSymbols(str: string): string {
+  let i = 0;
+  while (i < str.length && !/[\p{L}\p{N}]/u.test(str[i])) i++;
+  return str.slice(i);
+}
+
 function normalizeManualLabel(label: string | undefined | null): string {
-  return (label || "").trim().toLocaleLowerCase("uk-UA");
+  return stripLeadingSymbols((label || "").trim())
+    .trim()
+    .toLocaleLowerCase("uk-UA");
 }
 
 /** Підпис manual-категорії → canonical id або сам підпис (для custom). */

@@ -6,7 +6,7 @@ import { trackEvent, ANALYTICS_EVENTS } from "../analytics";
 import { clearFirstActionPending, getVibePicks } from "./vibePicks.js";
 
 /**
- * Per-module "one tap to your first real entry" cards. Each option routes
+ * Per-module "one tap to your first real entry" tiles. Each option routes
  * into its module with a PWA action (the same handler PWA shortcuts use),
  * so a single tap lands the user on an already-open input.
  */
@@ -41,7 +41,13 @@ const ACTIONS = {
   },
 };
 
-export function FirstActionSheet({ onClose }) {
+/**
+ * Inline FTUX hero card rendered on the Hub dashboard when a first action
+ * is pending. Replaces the old blocking `FirstActionSheet` modal so the
+ * user sees their populated hub plus the quick-win CTAs in the same view
+ * (no dialog to dismiss before touching their data).
+ */
+export function FirstActionHeroCard({ onDismiss }) {
   const picks = useMemo(() => {
     const raw = getVibePicks();
     return raw.length > 0 ? raw : Object.keys(ACTIONS);
@@ -55,103 +61,85 @@ export function FirstActionSheet({ onClose }) {
 
   const dismiss = () => {
     clearFirstActionPending();
-    onClose?.();
+    onDismiss?.();
   };
 
   const pick = (id) => {
     trackEvent(ANALYTICS_EVENTS.ONBOARDING_FIRST_ACTION_PICKED, {
       module: id,
     });
-    // Close the sheet first so the module opens without a stacked dialog.
     clearFirstActionPending();
-    onClose?.();
+    onDismiss?.();
     const action = ACTIONS[id];
     if (action) action.run();
   };
 
+  const visible = picks.filter((id) => ACTIONS[id]);
+  if (visible.length === 0) return null;
+
   return (
-    <div
-      className="fixed inset-0 z-[450] flex items-end sm:items-center justify-center p-4 pb-safe"
-      role="dialog"
-      aria-modal="true"
+    <section
+      className="relative bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3"
       aria-label="Перша дія"
     >
-      <button
-        type="button"
-        aria-label="Закрити"
-        onClick={dismiss}
-        className="absolute inset-0 bg-bg/70 backdrop-blur-sm"
-      />
-      <div className="relative w-full max-w-sm bg-panel border border-line rounded-3xl shadow-float p-6 space-y-4 animate-onboarding-enter">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-bold text-text">
-              Одна дія — і хаб твій.
-            </h2>
-            <p className="text-sm text-muted mt-1 leading-snug">
-              Цифри нижче — приклад. Твої з&apos;являться, щойно щось додаси.
-            </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-subtle">
+            Старт
           </div>
-          <button
-            type="button"
-            onClick={dismiss}
-            className="text-muted hover:text-text p-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
-            aria-label="Закрити"
-          >
-            <Icon name="close" size={18} />
-          </button>
-        </div>
-        <div className="space-y-2">
-          {picks
-            .filter((id) => ACTIONS[id])
-            .map((id) => {
-              const a = ACTIONS[id];
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => pick(id)}
-                  className={cn(
-                    "w-full text-left px-4 py-3 rounded-2xl border border-line bg-panelHi",
-                    "hover:border-brand-500/50 hover:bg-brand-500/5 transition-all",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50",
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center",
-                        a.accent,
-                      )}
-                    >
-                      <Icon name={a.icon} size={20} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-text">
-                        {a.title}
-                      </div>
-                      <div className="text-xs text-muted mt-0.5 truncate">
-                        {a.desc}
-                      </div>
-                    </div>
-                    <Icon
-                      name="chevron-right"
-                      size={16}
-                      className="text-muted"
-                    />
-                  </div>
-                </button>
-              );
-            })}
+          <h2 className="text-base font-bold text-text mt-0.5">
+            Одна дія — і хаб твій
+          </h2>
+          <p className="text-xs text-muted mt-0.5 leading-snug">
+            Цифри нижче — приклад. Твої з&apos;являться, щойно щось додаси.
+          </p>
         </div>
         <button
           type="button"
           onClick={dismiss}
-          className="w-full text-sm text-muted hover:text-text px-3 py-2 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          className="shrink-0 -mt-1 -mr-1 text-muted hover:text-text p-1.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          aria-label="Сховати"
         >
-          Пізніше — хочу спочатку подивитися
+          <Icon name="close" size={16} />
         </button>
       </div>
-    </div>
+      <div className="space-y-2">
+        {visible.map((id) => {
+          const a = ACTIONS[id];
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => pick(id)}
+              className={cn(
+                "w-full text-left px-3 py-2.5 rounded-xl border border-line bg-panelHi",
+                "hover:border-brand-500/50 hover:bg-brand-500/5 transition-all",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50",
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    "w-9 h-9 shrink-0 rounded-xl flex items-center justify-center",
+                    a.accent,
+                  )}
+                >
+                  <Icon name={a.icon} size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-text">
+                    {a.title}
+                  </div>
+                  <div className="text-xs text-muted mt-0.5 truncate">
+                    {a.desc}
+                  </div>
+                </div>
+                <Icon name="chevron-right" size={16} className="text-muted" />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
