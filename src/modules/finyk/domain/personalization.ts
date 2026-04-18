@@ -103,7 +103,10 @@ export const CANONICAL_TO_MANUAL_LABEL: Record<string, string> = {
   health: "здоров'я",
   shopping: "одяг",
   utilities: "комунальні",
-  subscriptions: "техніка",
+  // "підписки" відсутні серед кнопок ManualExpenseSheet, тому мапимо у "інше"
+  // замість "техніка" — інакше subscription-мерчанти зберігались би як shopping
+  // (round-trip `техніка` → `shopping`).
+  subscriptions: "інше",
   sport: "розваги",
   beauty: "розваги",
   travel: "розваги",

@@ -4,6 +4,7 @@
  */
 
 import { getCategory } from "../../modules/finyk/utils";
+import { manualCategoryToCanonicalId } from "../../modules/finyk/domain/personalization";
 
 function safeLS(key, fallback) {
   try {
@@ -269,7 +270,12 @@ function buildFinanceRecs() {
       catCount.set(catId, (catCount.get(catId) || 0) + 1);
     }
     for (const me of manualExpenses) {
-      const key = me.category || "other";
+      // Нормалізуємо manual-підпис ("їжа") у canonical id ("food"), щоб він
+      // співпадав з банківськими транзакціями та лімітами бюджету
+      // (інакше `food` і `їжа` рахувалися б окремо, а перевірка лімітів
+      // — які теж зберігаються за canonical id — промахувалась би повз ручні
+      // витрати).
+      const key = manualCategoryToCanonicalId(me.category) || "other";
       if (key === "internal_transfer") continue;
       catCount.set(key, (catCount.get(key) || 0) + 1);
     }
