@@ -3,6 +3,8 @@
  * Reads data from localStorage and generates cross-module nudges.
  */
 
+import { getCategory } from "../../modules/finyk/utils";
+
 function safeLS(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
@@ -251,7 +253,18 @@ function buildFinanceRecs() {
     for (const tx of transactions) {
       if (hiddenTxIds.has(tx.id) || transferIds.has(tx.id)) continue;
       if ((tx.amount ?? 0) >= 0) continue;
-      const catId = txCategories[tx.id];
+      // Використовуємо `getCategory` замість сирого `txCategories[tx.id]`:
+      // перший також резолвить автоматичні категорії з MCC / ключових слів
+      // опису, а не лише ручні overrides, інакше правило майже не тригериться
+      // для користувачів без кастомних категоризацій.
+      const override = txCategories[tx.id] || null;
+      const cat = getCategory(
+        tx.description || "",
+        tx.mcc || 0,
+        override,
+        customCategories,
+      );
+      const catId = cat?.id;
       if (!catId || catId === "internal_transfer") continue;
       catCount.set(catId, (catCount.get(catId) || 0) + 1);
     }

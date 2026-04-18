@@ -12,7 +12,7 @@ export function useFinykPersonalization({ mono, storage, now } = {}) {
   const rawManualExpenses = storage?.manualExpenses;
   const rawCustomCategories = storage?.customCategories;
   const rawTxCategories = storage?.txCategories;
-  const excludedTxIds = storage?.excludedTxIds;
+  const rawExcludedTxIds = storage?.excludedTxIds;
 
   // Стабілізуємо посилання — селектори приймають readonly-дані, а падаючі
   // `undefined → []` кожного рендера ламали dep-array useMemo.
@@ -26,6 +26,16 @@ export function useFinykPersonalization({ mono, storage, now } = {}) {
     [rawCustomCategories],
   );
   const txCategories = useMemo(() => rawTxCategories || {}, [rawTxCategories]);
+
+  // `storage.excludedTxIds` — `new Set(...)` збирається у useStorage кожного
+  // рендера, тож її посилання нестабільне. Використовуємо розмір як дешевий
+  // invalidate-ключ: додались/прибрались — перераховуємо, інакше — ні.
+  const excludedTxIdsSize = rawExcludedTxIds?.size ?? 0;
+  const excludedTxIds = useMemo(
+    () => rawExcludedTxIds || null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [excludedTxIdsSize],
+  );
 
   const opts = useMemo(
     () => ({ customCategories, excludedTxIds, txCategories, now }),
@@ -42,10 +52,9 @@ export function useFinykPersonalization({ mono, storage, now } = {}) {
     [transactions, manualExpenses, opts],
   );
 
-  const hasSignal = useMemo(
-    () => frequentCategories.some((c) => c.count >= 2),
-    [frequentCategories],
-  );
+  // Простий boolean — без useMemo (rule 5.3): cost of memo comparison > cost
+  // of a single `.some()` on ≤8 елементів.
+  const hasSignal = frequentCategories.some((c) => c.count >= 2);
 
   return { frequentCategories, frequentMerchants, hasSignal };
 }
