@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { useToast } from "@shared/hooks/useToast.jsx";
-import {
-  loadRoutineState,
-  setPref,
-} from "../../modules/routine/lib/routineStorage.js";
 import { requestRoutineNotificationPermission } from "../../modules/routine/hooks/useRoutineReminders.js";
+import { useRoutineState } from "../../modules/routine/hooks/useRoutineState.js";
 import { useMonthlyPlan } from "../../modules/fizruk/hooks/useMonthlyPlan.js";
 import {
   loadNutritionPrefs,
@@ -28,19 +25,7 @@ export function NotificationsSection() {
   );
   const { warning: toastWarning } = useToast();
 
-  const [routine, setRoutine] = useState(() => loadRoutineState());
-  useEffect(() => {
-    const handler = () => setRoutine(loadRoutineState());
-    const storageHandler = (e) => {
-      if (e.key === "hub_routine_v1" || e.key === null) handler();
-    };
-    window.addEventListener("hub-routine-storage", handler);
-    window.addEventListener("storage", storageHandler);
-    return () => {
-      window.removeEventListener("hub-routine-storage", handler);
-      window.removeEventListener("storage", storageHandler);
-    };
-  }, []);
+  const { routine, updatePref: updateRoutinePref } = useRoutineState();
 
   const monthlyPlan = useMonthlyPlan();
 
@@ -70,10 +55,6 @@ export function NotificationsSection() {
     } catch {
       setPermStatus("denied");
     }
-  };
-
-  const updateRoutinePref = (key, value) => {
-    setRoutine((s) => setPref(s, key, value));
   };
 
   const handleRoutineToggle = async (checked) => {

@@ -7,7 +7,7 @@ import {
   SettingsSubGroup,
   ToggleRow,
 } from "./SettingsPrimitives.jsx";
-import { loadHubPrefs, saveHubPref } from "./hubPrefs.js";
+import { useHubPref } from "./hubPrefs.js";
 
 export function GeneralSection({
   dark,
@@ -18,20 +18,12 @@ export function GeneralSection({
   user,
 }) {
   const [orderReset, setOrderReset] = useState(false);
-  const [showCoach, setShowCoach] = useState(
-    () => loadHubPrefs().showCoach !== false,
-  );
+  const [showCoach, setShowCoach] = useHubPref("showCoach", true);
 
   const handleResetOrder = () => {
     resetDashboardOrder();
     setOrderReset(true);
     setTimeout(() => setOrderReset(false), 2000);
-  };
-
-  const handleToggleCoach = (e) => {
-    const val = e.target.checked;
-    setShowCoach(val);
-    saveHubPref("showCoach", val);
   };
 
   return (
@@ -41,8 +33,8 @@ export function GeneralSection({
         <ToggleRow
           label="Показувати AI-коуч"
           description="Блок з щоденною порадою коуча на головному екрані."
-          checked={showCoach}
-          onChange={handleToggleCoach}
+          checked={showCoach !== false}
+          onChange={(e) => setShowCoach(e.target.checked)}
         />
       </SettingsSubGroup>
       <SettingsSubGroup title="Дашборд — порядок блоків">
