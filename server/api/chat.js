@@ -381,6 +381,7 @@ async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
 
   const reader = response.body?.getReader();
   if (!reader) {
+    recordStreamEnd("error");
     res.status(500).json({ error: "No response body" });
     return;
   }
