@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@shared/components/ui/Button";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { useVisualKeyboardInset } from "@shared/hooks/useVisualKeyboardInset";
 import { MEAL_TYPES } from "../lib/mealTypes.js";
@@ -237,14 +238,7 @@ export function AddMealSheet({
                 {step === "source" ? "Звідки страва?" : "Додати прийом їжі"}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text text-lg transition-colors"
-              aria-label="Закрити"
-            >
-              ✕
-            </button>
+            <CloseButton size="md" onClick={onClose} />
           </div>
 
           {step === "source" ? (

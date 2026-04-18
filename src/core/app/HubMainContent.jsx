@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Icon } from "@shared/components/ui/Icon";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { HubDashboard } from "../HubDashboard.jsx";
 import { HubReports } from "../HubReports.jsx";
 import { HubSettingsPage } from "../HubSettingsPage.jsx";
@@ -111,13 +111,7 @@ export function HubMainContent({
             >
               Так
             </button>
-            <button
-              onClick={onDismissInstall}
-              className="text-muted hover:text-text shrink-0 p-1"
-              aria-label="Закрити"
-            >
-              <Icon name="close" size={16} />
-            </button>
+            <CloseButton onClick={onDismissInstall} />
           </div>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Button } from "@shared/components/ui/Button";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { cn } from "@shared/lib/cn";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { openHubModule } from "@shared/lib/hubNav";
@@ -164,14 +165,7 @@ export function WorkoutFinishSheets({
                     Тренування виконано
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="w-9 h-9 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-white/10 text-white/70 hover:text-white text-lg"
-                  aria-label="Закрити"
-                  onClick={() => setFinishFlash(null)}
-                >
-                  ✕
-                </button>
+                <CloseButton onDark onClick={() => setFinishFlash(null)} />
               </div>
               <div className="grid grid-cols-3 gap-2 mt-3">
                 <div className="rounded-xl bg-white/10 border border-white/15 p-2.5 text-center">

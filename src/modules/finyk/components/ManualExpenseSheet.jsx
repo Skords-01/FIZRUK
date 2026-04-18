@@ -1,5 +1,6 @@
 import { useState, useEffect, useId, useMemo } from "react";
 import { Button } from "@shared/components/ui/Button";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { VoiceMicButton } from "@shared/components/ui/VoiceMicButton.jsx";
 import { parseExpenseSpeech } from "../../../core/lib/speechParsers.js";
 import { useVisualKeyboardInset } from "@shared/hooks/useVisualKeyboardInset";
@@ -168,13 +169,7 @@ export function ManualExpenseSheet({
           <h2 className="text-base font-bold text-text">
             {isEditing ? "Редагувати витрату" : "Додати витрату"}
           </h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-panelHi flex items-center justify-center text-muted hover:text-text transition-colors"
-            aria-label="Закрити"
-          >
-            ✕
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         <div className="space-y-3">

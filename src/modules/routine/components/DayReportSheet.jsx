@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { cn } from "@shared/lib/cn";
 import { ROUTINE_THEME as C } from "../lib/routineConstants.js";
@@ -48,24 +49,7 @@ export function DayReportSheet({
           >
             Денний звіт
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-panelHi transition-colors"
-            aria-label="Закрити"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <path d="M4 4l8 8M12 4l-8 8" />
-            </svg>
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         <p className="text-xs text-subtle mb-4">{dayLabel}</p>

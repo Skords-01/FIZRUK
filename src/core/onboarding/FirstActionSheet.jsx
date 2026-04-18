@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { cn } from "@shared/lib/cn";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { Icon } from "@shared/components/ui/Icon";
 import { openHubModuleWithAction } from "@shared/lib/hubNav";
 import { trackEvent, ANALYTICS_EVENTS } from "../analytics";
@@ -92,14 +93,7 @@ export function FirstActionSheet({ onClose }) {
               Цифри нижче — приклад. Твої з&apos;являться, щойно щось додаси.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={dismiss}
-            className="text-muted hover:text-text p-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
-            aria-label="Закрити"
-          >
-            <Icon name="close" size={18} />
-          </button>
+          <CloseButton onClick={dismiss} />
         </div>
         <div className="space-y-2">
           {picks

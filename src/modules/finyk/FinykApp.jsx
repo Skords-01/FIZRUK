@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { useMonobank } from "./hooks/useMonobank";
 import { usePrivatbank } from "./hooks/usePrivatbank";
 import { useStorage } from "./hooks/useStorage";
@@ -707,13 +708,7 @@ export default function App({
                 </button>
               )}
             </div>
-            <button
-              onClick={() => mono.setAuthError("")}
-              className="text-muted hover:text-text transition-colors shrink-0"
-              aria-label="Закрити"
-            >
-              ✕
-            </button>
+            <CloseButton onClick={() => mono.setAuthError("")} />
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { useRef, useMemo, useState } from "react";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { cn } from "@shared/lib/cn";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import {
@@ -201,14 +202,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 w-9 h-9 rounded-xl border border-line/70 flex items-center justify-center text-muted hover:text-text hover:bg-panelHi transition-colors"
-            aria-label="Закрити"
-          >
-            ✕
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         <div className="text-[11px] text-subtle space-y-0.5 mb-5">

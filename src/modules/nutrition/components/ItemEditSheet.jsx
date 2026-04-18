@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import { cn } from "@shared/lib/cn";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { normalizeUnit } from "../lib/pantryTextParser.js";
@@ -46,14 +47,7 @@ export function ItemEditSheet({ itemEdit, setItemEdit, onClose, onSave }) {
                 Кількість і одиниці (порожньо — прибрати)
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-panelHi text-muted hover:text-text text-lg transition-colors"
-              aria-label="Закрити"
-            >
-              ✕
-            </button>
+            <CloseButton size="md" onClick={onClose} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

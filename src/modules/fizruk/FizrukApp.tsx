@@ -17,7 +17,7 @@ import { useWorkouts } from "./hooks/useWorkouts";
 import { useExerciseCatalog } from "./hooks/useExerciseCatalog";
 import { ACTIVE_WORKOUT_KEY } from "./lib/workoutUi";
 import { cn } from "@shared/lib/cn";
-import { Icon } from "@shared/components/ui/Icon";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 
 const NAV = [
   {
@@ -405,14 +405,7 @@ export default function FizrukApp({
               >
                 Дані й резер��ні копії
               </h2>
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(false)}
-                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
-                aria-label="Закрити"
-              >
-                <Icon name="close" size={22} />
-              </button>
+              <CloseButton size="md" onClick={() => setSettingsOpen(false)} />
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4">
               <WorkoutBackupBar className="border-0 bg-transparent p-0" />

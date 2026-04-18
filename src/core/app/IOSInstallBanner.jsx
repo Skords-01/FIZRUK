@@ -1,4 +1,4 @@
-import { Icon } from "@shared/components/ui/Icon";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 
 export function IOSInstallBanner({ onDismiss }) {
   return (
@@ -33,14 +33,7 @@ export function IOSInstallBanner({ onDismiss }) {
             <span className="font-semibold">На початковий екран</span>.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="text-muted hover:text-text shrink-0 p-1 -mt-1 -mr-1"
-          aria-label="Закрити"
-        >
-          <Icon name="close" size={16} />
-        </button>
+        <CloseButton className="-mt-1 -mr-1" onClick={onDismiss} />
       </div>
     </div>
   );

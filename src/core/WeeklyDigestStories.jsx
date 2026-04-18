@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { cn } from "@shared/lib/cn";
-import { Icon } from "@shared/components/ui/Icon";
+import { CloseButton } from "@shared/components/ui/CloseButton";
 import {
   aggregateFinyk,
   aggregateFizruk,
@@ -779,17 +779,13 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
                 {weekRange}
               </div>
             </div>
-            <button
-              type="button"
+            <CloseButton
+              onDark
               onClick={(e) => {
                 e.stopPropagation();
                 onClose?.();
               }}
-              aria-label="Закрити"
-              className="w-9 h-9 rounded-full bg-white/15 border border-white/20 text-white hover:bg-white/25 flex items-center justify-center transition-colors"
-            >
-              <Icon name="close" size={16} strokeWidth={2.5} />
-            </button>
+            />
           </div>
         </div>
 
