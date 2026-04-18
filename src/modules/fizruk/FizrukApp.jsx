@@ -17,6 +17,7 @@ import { useWorkouts } from "./hooks/useWorkouts";
 import { useExerciseCatalog } from "./hooks/useExerciseCatalog";
 import { ACTIVE_WORKOUT_KEY } from "./lib/workoutUi";
 import { cn } from "@shared/lib/cn";
+import { Icon } from "@shared/components/ui/Icon";
 
 const NAV = [
   {
@@ -385,18 +386,7 @@ export default function FizrukApp({
                 className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
                 aria-label="Закрити"
               >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                <Icon name="close" size={22} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-4">

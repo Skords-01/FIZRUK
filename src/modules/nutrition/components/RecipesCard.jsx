@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
+import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import {
@@ -22,23 +23,15 @@ function guessMealTypeIdNow() {
 
 function ChevronIcon({ open }) {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <Icon
+      name="chevron-right"
+      size={16}
+      strokeWidth={2.5}
       className={cn(
         "shrink-0 text-subtle transition-transform duration-200",
         open && "rotate-90",
       )}
-      aria-hidden
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
+    />
   );
 }
 

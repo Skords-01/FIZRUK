@@ -1,25 +1,17 @@
 import { useState } from "react";
 import { cn } from "@shared/lib/cn";
+import { Icon } from "@shared/components/ui/Icon";
 
 export function ChevronIcon({ expanded }) {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <Icon
+      name="chevron-right"
+      size={16}
       className={cn(
         "transition-transform duration-200 shrink-0",
         expanded && "rotate-90",
       )}
-      aria-hidden
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
+    />
   );
 }
 

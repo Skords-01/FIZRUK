@@ -20,6 +20,7 @@ import {
 import { getCategorySpendList } from "../domain/categories";
 import { filterStatTransactions } from "../domain/transactions";
 import { Skeleton } from "@shared/components/ui/Skeleton";
+import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
 import { THEME_HEX } from "@shared/lib/themeHex.js";
 import { SyncStatusBadge } from "../components/SyncStatusBadge";
@@ -512,20 +513,7 @@ export function Overview({
               className="text-muted hover:text-text shrink-0 -mr-1"
               aria-label="Закрити підказку"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <Icon name="close" size={16} />
             </button>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@shared/lib/cn";
+import { Icon } from "@shared/components/ui/Icon";
 
 function safeParseLS(key, fallback) {
   try {
@@ -268,21 +269,11 @@ export function HubSearch({ onClose, onOpenModule }) {
     <div className="fixed inset-0 z-[200] flex flex-col bg-bg safe-area-pt-pb page-enter">
       <div className="px-4 pt-4 pb-2 flex items-center gap-3 border-b border-line">
         <div className="flex-1 relative">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <Icon
+            name="search"
+            size={18}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-            aria-hidden
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          />
           <input
             ref={inputRef}
             type="search"

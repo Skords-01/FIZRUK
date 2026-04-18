@@ -6,6 +6,7 @@ import { manualExpenseToTransaction } from "../domain/transactions";
 import { mergeExpenseCategoryDefinitions } from "../constants";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
+import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
 import { perfMark, perfEnd } from "@shared/lib/perf";
 import { useToast } from "@shared/hooks/useToast";
@@ -589,21 +590,7 @@ export function Transactions({
         {filtered.length === 0 && !activeLoading && (
           <div className="rounded-2xl border border-dashed border-line/60 bg-panelHi/40">
             <EmptyState
-              icon={
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-              }
+              icon={<Icon name="search" size={20} strokeWidth={1.6} />}
               title={
                 search.trim()
                   ? `Нічого не знайдено за «${search}»`

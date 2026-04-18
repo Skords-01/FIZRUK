@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
+import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
 import { groupItemsByCategory } from "../lib/foodCategories.js";
 
@@ -11,20 +12,11 @@ const INPUT_MODES = [
 
 function ChevronIcon({ open }) {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <Icon
+      name="chevron-right"
+      size={14}
       className={cn("transition-transform shrink-0", open && "rotate-90")}
-      aria-hidden
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
+    />
   );
 }
 

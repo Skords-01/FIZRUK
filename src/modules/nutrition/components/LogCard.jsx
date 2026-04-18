@@ -4,6 +4,7 @@ import { Input } from "@shared/components/ui/Input";
 import { cn } from "@shared/lib/cn";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
+import { Icon } from "@shared/components/ui/Icon";
 import {
   searchMealsByName,
   getMacrosForDateRange,
@@ -279,22 +280,15 @@ export function LogCard({
           onClick={() => setWeekOpen((v) => !v)}
           className="flex items-center gap-2 text-[10px] font-bold text-subtle uppercase tracking-widest w-full text-left py-1"
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <Icon
+            name="chevron-right"
+            size={12}
+            strokeWidth={2.5}
             className={cn(
               "transition-transform shrink-0",
               weekOpen ? "rotate-90" : "",
             )}
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          />
           Журнал за тиждень
         </button>
 
