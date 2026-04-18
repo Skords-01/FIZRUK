@@ -168,13 +168,16 @@ export function writeJSONDebounced(key, value, delay = DEFAULT_DEBOUNCE_MS) {
   if (pendingTimers.has(k)) {
     clearTimeout(pendingTimers.get(k));
   }
-  const timer = setTimeout(() => {
-    pendingTimers.delete(k);
-    if (!pendingValues.has(k)) return;
-    const pending = pendingValues.get(k);
-    pendingValues.delete(k);
-    writeJSON(k, pending);
-  }, Math.max(0, Number(delay) || DEFAULT_DEBOUNCE_MS));
+  const timer = setTimeout(
+    () => {
+      pendingTimers.delete(k);
+      if (!pendingValues.has(k)) return;
+      const pending = pendingValues.get(k);
+      pendingValues.delete(k);
+      writeJSON(k, pending);
+    },
+    Math.max(0, Number(delay) || DEFAULT_DEBOUNCE_MS),
+  );
   pendingTimers.set(k, timer);
 }
 
