@@ -112,7 +112,7 @@ function CategoryForm({ initial = {}, allCategories = [], onSave, onCancel }) {
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-xs text-muted mb-1 block">Назва</label>
+        <span className="text-xs text-muted mb-1 block">Назва</span>
         <Input
           value={label}
           onChange={(e) => {
@@ -126,21 +126,25 @@ function CategoryForm({ initial = {}, allCategories = [], onSave, onCancel }) {
       </div>
 
       <div>
-        <label className="text-xs text-muted mb-1.5 block">Іконка</label>
+        <span className="text-xs text-muted mb-1.5 block">Іконка</span>
         <IconPicker value={icon} onChange={setIcon} />
       </div>
 
       <div>
-        <label className="text-xs text-muted mb-1.5 block">Колір</label>
+        <span className="text-xs text-muted mb-1.5 block">Колір</span>
         <ColorPicker value={color} onChange={setColor} />
       </div>
 
       {rootCategories.length > 0 && (
         <div>
-          <label className="text-xs text-muted mb-1 block">
+          <label
+            className="text-xs text-muted mb-1 block"
+            htmlFor="cat-parent-select"
+          >
             Підкатегорія до
           </label>
           <select
+            id="cat-parent-select"
             className="w-full h-10 rounded-xl border border-line bg-bg px-3 text-sm text-text outline-none focus:border-primary"
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
@@ -178,7 +182,7 @@ export function CategoryManager({
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  const editingCat = editingId
+  const _editingCat = editingId
     ? customCategories.find((c) => c.id === editingId)
     : null;
 

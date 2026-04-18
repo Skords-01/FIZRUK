@@ -35,7 +35,7 @@ export function useBudget(storage) {
   const getMonthBudgetSummary = (transactions) => {
     const excluded = excludedTxIds instanceof Set ? excludedTxIds : new Set();
     const splits = txSplits || {};
-    const planExpense = Number(monthlyPlan?.income || 0);
+    const _planExpense = Number(monthlyPlan?.income || 0);
     const planIncome = Number(monthlyPlan?.income || 0);
 
     const statTx = Array.isArray(transactions)
