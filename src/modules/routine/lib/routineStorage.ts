@@ -6,6 +6,7 @@ import {
 } from "./hubCalendarAggregate.js";
 import { completionNoteKey } from "./completionNoteKey.js";
 import { createModuleStorage } from "@shared/lib/createModuleStorage.js";
+import type { CreateHabitOptions } from "./types";
 
 const storage = createModuleStorage({ name: "routine" });
 
@@ -97,7 +98,9 @@ const defaultState = () => ({
 
 function ensureHabitOrder(state) {
   const active = state.habits.filter((h) => !h.archived).map((h) => h.id);
-  let order = [...(state.habitOrder || [])].filter((id) => active.includes(id));
+  const order = [...(state.habitOrder || [])].filter((id) =>
+    active.includes(id),
+  );
   for (const id of active) {
     if (!order.includes(id)) order.push(id);
   }
@@ -198,14 +201,12 @@ export function createCategory(state, name, emoji = "") {
 
 /**
  * Create a new habit, append it to `state.habits`, persist, and return next state.
- * @param {ReturnType<typeof loadRoutineState>} state
- * @param {{ name: string, emoji?: string, tagIds?: string[], categoryId?: string|null, recurrence?: 'daily'|'weekly'|'custom', startDate?: string|null, endDate?: string|null, timeOfDay?: string, reminderTimes?: string[], weekdays?: number[] }} options
- * @returns {ReturnType<typeof loadRoutineState>} Updated state (or original state if `name` is empty).
+ * Returns original state (unchanged) if `name` is empty/blank.
  */
 export function createHabit(
   state,
   {
-    name,
+    name = "",
     emoji = "✓",
     tagIds = [],
     categoryId = null,
@@ -215,7 +216,7 @@ export function createHabit(
     timeOfDay = "",
     reminderTimes = [],
     weekdays = [0, 1, 2, 3, 4, 5, 6],
-  } = {},
+  }: Partial<CreateHabitOptions> = {},
 ) {
   const n = (name || "").trim();
   if (!n) return state;
@@ -360,7 +361,9 @@ export function addPushupReps(state, reps) {
 
 export function moveHabitInOrder(state, habitId, delta) {
   const active = state.habits.filter((h) => !h.archived).map((h) => h.id);
-  let order = [...(state.habitOrder || [])].filter((id) => active.includes(id));
+  const order = [...(state.habitOrder || [])].filter((id) =>
+    active.includes(id),
+  );
   for (const id of active) {
     if (!order.includes(id)) order.push(id);
   }
