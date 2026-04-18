@@ -334,7 +334,11 @@ function VibePickerStep({ picks, togglePick, onNext, onBack }) {
 
 export function OnboardingWizard({ onDone }) {
   const [step, setStep] = useState(0);
-  const [picks, setPicks] = useState(() => [...ALL_MODULES]);
+  // Start empty so the vibe picker's question ("Що тобі зараз болить?") is an
+  // actual choice. Preselecting everything made the default answer
+  // "все", which defeated the narrowing and rendered the demo + first
+  // action flow generic.
+  const [picks, setPicks] = useState(() => []);
 
   const TOTAL = 2;
 
@@ -382,22 +386,24 @@ export function OnboardingWizard({ onDone }) {
       <div className="relative w-full max-w-sm bg-panel border border-line rounded-3xl shadow-float p-6 space-y-5 animate-onboarding-enter">
         <div className="flex items-center justify-between">
           <StepDots total={TOTAL} current={step} />
-          <button
-            type="button"
-            onClick={() => {
-              // Skip is an escape hatch for returning users who already know
-              // the product. Name its cost honestly so casual skippers
-              // understand why the hub is empty.
-              trackEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED, {
-                intent: "skipped",
-              });
-              markOnboardingDone();
-              onDone(null, { intent: "skipped" });
-            }}
-            className="text-xs text-muted hover:text-text transition-colors px-2 py-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
-          >
-            Пропустити до пустого хабу
-          </button>
+          {step === 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                // Skip is an escape hatch for returning users who already
+                // know the product. Only show it on the splash step — on
+                // the vibe picker the primary CTA already gates progress.
+                trackEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED, {
+                  intent: "skipped",
+                });
+                markOnboardingDone();
+                onDone(null, { intent: "skipped" });
+              }}
+              className="text-xs text-muted hover:text-text transition-colors px-2 py-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+            >
+              Пропустити
+            </button>
+          )}
         </div>
 
         {step === 0 && <SplashStep onNext={() => setStep(1)} />}

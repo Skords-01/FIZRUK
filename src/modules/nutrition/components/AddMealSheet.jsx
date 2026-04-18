@@ -254,19 +254,27 @@ export function AddMealSheet({
                 відредагуєте на наступному кроці.
               </p>
 
-              <MealTemplatesRow
-                mealTemplates={mealTemplates}
-                setForm={setForm}
-                onSelected={() => setStep("fill")}
-              />
+              {/* Templates / pantry rows disappear when empty so a
+                  first-time user sees search + barcode as the whole step
+                  (no half-broken UI). They come back automatically once
+                  the user saves a template or stocks the pantry. */}
+              {mealTemplates.length > 0 && (
+                <MealTemplatesRow
+                  mealTemplates={mealTemplates}
+                  setForm={setForm}
+                  onSelected={() => setStep("fill")}
+                />
+              )}
 
-              <FromPantryRow
-                pantryItems={pantryItems}
-                fromPantryItem={fromPantryItem}
-                setFromPantryItem={setFromPantryItem}
-                setForm={setForm}
-                setFoodQuery={setFoodQuery}
-              />
+              {pantryItems.length > 0 && (
+                <FromPantryRow
+                  pantryItems={pantryItems}
+                  fromPantryItem={fromPantryItem}
+                  setFromPantryItem={setFromPantryItem}
+                  setForm={setForm}
+                  setFoodQuery={setFoodQuery}
+                />
+              )}
 
               <FoodPickerSection
                 form={form}

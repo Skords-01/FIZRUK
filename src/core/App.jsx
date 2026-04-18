@@ -158,6 +158,7 @@ function AppInner() {
         <HubHeader
           hubView={ui.hubView}
           onOpenSearch={() => ui.setSearchOpen(true)}
+          onOpenChat={() => ui.openChat()}
           user={user}
           syncing={sync.syncing}
           lastSync={sync.lastSync}
@@ -194,7 +195,9 @@ function AppInner() {
           onShowAuth={openAuth}
         />
 
-        <HubFloatingActions onOpenChat={() => ui.openChat()} />
+        {/* Primary quick-add surface for the hub. AI chat moved to the
+            header — see `HubHeader` / `HubHeaderWithProps` (`onOpenChat`). */}
+        <HubFloatingActions />
 
         <HubModals
           chatOpen={ui.chatOpen}
