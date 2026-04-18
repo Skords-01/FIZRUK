@@ -1,4 +1,11 @@
-import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  Suspense,
+} from "react";
 import { Button } from "@shared/components/ui/Button";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
@@ -11,7 +18,8 @@ import {
 import { mergeExpenseCategoryDefinitions } from "../constants";
 import { cn } from "@shared/lib/cn";
 import { calcForecast } from "../lib/forecastEngine";
-import { BudgetTrendChart } from "../components/BudgetTrendChart";
+import { BudgetTrendChart } from "../components/charts/lazy";
+import { ChartFallback } from "../components/charts/ChartFallback";
 import { apiUrl } from "@shared/lib/apiUrl.js";
 import { LimitBudgetCard } from "../components/budgets/LimitBudgetCard.jsx";
 import { GoalBudgetCard } from "../components/budgets/GoalBudgetCard.jsx";
@@ -364,13 +372,18 @@ export function Budgets({ mono, storage }) {
   }
 
   const now2 = new Date();
-  const daysInMonth2 = new Date(now2.getFullYear(), now2.getMonth() + 1, 0).getDate();
+  const daysInMonth2 = new Date(
+    now2.getFullYear(),
+    now2.getMonth() + 1,
+    0,
+  ).getDate();
   const daysLeft2 = daysInMonth2 - now2.getDate();
   const remaining2 = Math.max(0, planExpense - totalExpenseFact);
   const safePerDay = calculateSafeToSpendPerDay(remaining2, daysLeft2);
-  const pctExpense = planExpense > 0
-    ? Math.min(100, Math.round((totalExpenseFact / planExpense) * 100))
-    : 0;
+  const pctExpense =
+    planExpense > 0
+      ? Math.min(100, Math.round((totalExpenseFact / planExpense) * 100))
+      : 0;
   const isOver = planExpense > 0 && totalExpenseFact > planExpense;
 
   return (
@@ -393,7 +406,10 @@ export function Budgets({ mono, storage }) {
               placeholder="План доходу ₴"
               value={monthlyPlan?.income ?? ""}
               onChange={(e) =>
-                setMonthlyPlan((p) => ({ ...(p || {}), income: e.target.value }))
+                setMonthlyPlan((p) => ({
+                  ...(p || {}),
+                  income: e.target.value,
+                }))
               }
             />
             <input
@@ -402,7 +418,10 @@ export function Budgets({ mono, storage }) {
               placeholder="План витрат ₴"
               value={monthlyPlan?.expense ?? ""}
               onChange={(e) =>
-                setMonthlyPlan((p) => ({ ...(p || {}), expense: e.target.value }))
+                setMonthlyPlan((p) => ({
+                  ...(p || {}),
+                  expense: e.target.value,
+                }))
               }
             />
             <input
@@ -411,7 +430,10 @@ export function Budgets({ mono, storage }) {
               placeholder="План накопичень ₴"
               value={monthlyPlan?.savings ?? ""}
               onChange={(e) =>
-                setMonthlyPlan((p) => ({ ...(p || {}), savings: e.target.value }))
+                setMonthlyPlan((p) => ({
+                  ...(p || {}),
+                  savings: e.target.value,
+                }))
               }
             />
           </div>
@@ -421,20 +443,36 @@ export function Budgets({ mono, storage }) {
               {/* Fact row */}
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="text-[10px] text-subtle mb-0.5">Дохід (план)</div>
+                  <div className="text-[10px] text-subtle mb-0.5">
+                    Дохід (план)
+                  </div>
                   <div className="text-sm font-semibold tabular-nums">
-                    {planIncome > 0 ? `${planIncome.toLocaleString("uk-UA")} ₴` : "—"}
+                    {planIncome > 0
+                      ? `${planIncome.toLocaleString("uk-UA")} ₴`
+                      : "—"}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-subtle mb-0.5">Витрати (факт)</div>
-                  <div className={cn("text-sm font-semibold tabular-nums", isOver ? "text-danger" : "")}>
+                  <div className="text-[10px] text-subtle mb-0.5">
+                    Витрати (факт)
+                  </div>
+                  <div
+                    className={cn(
+                      "text-sm font-semibold tabular-nums",
+                      isOver ? "text-danger" : "",
+                    )}
+                  >
                     {totalExpenseFact.toLocaleString("uk-UA")} ₴
                   </div>
                 </div>
                 <div>
                   <div className="text-[10px] text-subtle mb-0.5">Залишок</div>
-                  <div className={cn("text-sm font-semibold tabular-nums", isOver ? "text-danger" : "text-emerald-600")}>
+                  <div
+                    className={cn(
+                      "text-sm font-semibold tabular-nums",
+                      isOver ? "text-danger" : "text-emerald-600",
+                    )}
+                  >
                     {isOver
                       ? `−${(totalExpenseFact - planExpense).toLocaleString("uk-UA")} ₴`
                       : `${remaining2.toLocaleString("uk-UA")} ₴`}
@@ -453,7 +491,11 @@ export function Budgets({ mono, storage }) {
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",
-                        isOver ? "bg-danger" : pctExpense >= 85 ? "bg-warning" : "bg-emerald-500",
+                        isOver
+                          ? "bg-danger"
+                          : pctExpense >= 85
+                            ? "bg-warning"
+                            : "bg-emerald-500",
                       )}
                       style={{ width: `${pctExpense}%` }}
                     />
@@ -463,12 +505,16 @@ export function Budgets({ mono, storage }) {
 
               {/* Safe to spend */}
               {safePerDay > 0 && daysLeft2 > 0 && planExpense > 0 && (
-                <div className={cn(
-                  "rounded-xl px-3 py-2 text-sm",
-                  isOver ? "bg-danger/10 text-danger"
-                    : pctExpense >= 85 ? "bg-warning/10 text-warning"
-                    : "bg-emerald-500/10 text-emerald-700",
-                )}>
+                <div
+                  className={cn(
+                    "rounded-xl px-3 py-2 text-sm",
+                    isOver
+                      ? "bg-danger/10 text-danger"
+                      : pctExpense >= 85
+                        ? "bg-warning/10 text-warning"
+                        : "bg-emerald-500/10 text-emerald-700",
+                  )}
+                >
                   <span className="font-semibold">
                     {safePerDay.toLocaleString("uk-UA")} ₴/день
                   </span>
@@ -616,12 +662,14 @@ export function Budgets({ mono, storage }) {
                     </div>
                   )}
 
-                  <BudgetTrendChart
-                    dailyData={fc.dailyData}
-                    limit={fc.limit}
-                    color={fc.overLimit ? "#ef4444" : "#6366f1"}
-                    className="mb-2"
-                  />
+                  <Suspense fallback={<ChartFallback className="h-20 mb-2" />}>
+                    <BudgetTrendChart
+                      dailyData={fc.dailyData}
+                      limit={fc.limit}
+                      color={fc.overLimit ? "#ef4444" : "#6366f1"}
+                      className="mb-2"
+                    />
+                  </Suspense>
 
                   <div className="flex items-center justify-between text-[10px] text-subtle mt-1 mb-2">
                     <span>Факт: {fc.spent.toLocaleString("uk-UA")} ₴</span>
@@ -780,8 +828,12 @@ export function Budgets({ mono, storage }) {
               <>
                 <CategorySelector
                   value={newB.categoryId}
-                  onChange={(val) => setNewB((b) => ({ ...b, categoryId: val }))}
-                  categories={expenseCategoryList.filter((c) => c.id !== "income")}
+                  onChange={(val) =>
+                    setNewB((b) => ({ ...b, categoryId: val }))
+                  }
+                  categories={expenseCategoryList.filter(
+                    (c) => c.id !== "income",
+                  )}
                   placeholder="Вибери категорію"
                 />
                 <input
@@ -904,7 +956,10 @@ export function Budgets({ mono, storage }) {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={cn("transition-transform text-muted", showCategories ? "rotate-180" : "")}
+              className={cn(
+                "transition-transform text-muted",
+                showCategories ? "rotate-180" : "",
+              )}
               aria-hidden
             >
               <polyline points="6 9 12 15 18 9" />
@@ -922,7 +977,6 @@ export function Budgets({ mono, storage }) {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

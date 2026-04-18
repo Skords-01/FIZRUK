@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { cn } from "@shared/lib/cn";
 import { useAnalytics } from "../hooks/useAnalytics";
-import { CategoryPieChart } from "../components/analytics/CategoryPieChart";
+import { CategoryPieChart } from "../components/charts/lazy";
+import { ChartFallback } from "../components/charts/ChartFallback";
 import { MerchantList } from "../components/analytics/MerchantList";
 import { getMonthlyTrendComparison } from "../lib/finykStats";
 
@@ -46,8 +47,14 @@ function MonthNav({ year, month, onChange }) {
   const go = (delta) => {
     let m = month + delta;
     let y = year;
-    if (m > 12) { m = 1; y++; }
-    if (m < 1) { m = 12; y--; }
+    if (m > 12) {
+      m = 1;
+      y++;
+    }
+    if (m < 1) {
+      m = 12;
+      y--;
+    }
     onChange(y, m);
   };
 
@@ -61,7 +68,9 @@ function MonthNav({ year, month, onChange }) {
       >
         ‹
       </button>
-      <span className="text-sm font-semibold text-text capitalize">{label}</span>
+      <span className="text-sm font-semibold text-text capitalize">
+        {label}
+      </span>
       <button
         type="button"
         onClick={() => go(1)}
@@ -156,14 +165,14 @@ export function Analytics({ mono, storage }) {
     if (!isCurrentMonth && !historyCache[monthKey]) {
       ensureMonth(year, month, monthKey);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [year, month, isCurrentMonth, monthKey]);
 
   useEffect(() => {
     if (!isPrevCurrent && !historyCache[prevKey]) {
       ensureMonth(prevYear, prevMonth, prevKey);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prevYear, prevMonth, isPrevCurrent, prevKey]);
 
   const activeTx = useMemo(() => {
@@ -187,9 +196,17 @@ export function Analytics({ mono, storage }) {
       excludedTxIds: storage.excludedTxIds,
       txSplits: storage.txSplits,
     });
-  }, [activeTx, prevTx, historyCache, prevKey, storage.excludedTxIds, storage.txSplits]);
+  }, [
+    activeTx,
+    prevTx,
+    historyCache,
+    prevKey,
+    storage.excludedTxIds,
+    storage.txSplits,
+  ]);
 
-  const pageLoading = (isCurrentMonth ? mono.loadingTx : loading) && activeTx.length === 0;
+  const pageLoading =
+    (isCurrentMonth ? mono.loadingTx : loading) && activeTx.length === 0;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -270,7 +287,9 @@ export function Analytics({ mono, storage }) {
               description="Транзакцій за цей місяць не знайдено"
             />
           ) : (
-            <CategoryPieChart data={distribution} />
+            <Suspense fallback={<ChartFallback className="h-40" />}>
+              <CategoryPieChart data={distribution} />
+            </Suspense>
           )}
         </Section>
 
