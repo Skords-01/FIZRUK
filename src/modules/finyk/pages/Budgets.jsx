@@ -15,6 +15,9 @@ import { BudgetTrendChart } from "../components/BudgetTrendChart";
 import { apiUrl } from "@shared/lib/apiUrl.js";
 import { LimitBudgetCard } from "../components/budgets/LimitBudgetCard.jsx";
 import { GoalBudgetCard } from "../components/budgets/GoalBudgetCard.jsx";
+import { CategorySelector } from "../components/CategorySelector.jsx";
+import { CategoryManager } from "../components/CategoryManager.jsx";
+import { calculateSafeToSpendPerDay } from "../hooks/useBudget.js";
 
 const formInp =
   "w-full h-10 rounded-xl border border-line bg-bg px-3 text-sm text-text outline-none focus:border-primary";
@@ -30,10 +33,14 @@ export function Budgets({ mono, storage }) {
     txCategories,
     txSplits,
     customCategories,
+    addCustomCategory,
+    editCustomCategory,
+    removeCustomCategory,
   } = storage;
   const statTx = realTx.filter((t) => !excludedTxIds.has(t.id));
   const [editIdx, setEditIdx] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
   const [formType, setFormType] = useState("limit");
   const [newB, setNewB] = useState({
     type: "limit",
@@ -356,11 +363,26 @@ export function Budgets({ mono, storage }) {
     );
   }
 
+  const now2 = new Date();
+  const daysInMonth2 = new Date(now2.getFullYear(), now2.getMonth() + 1, 0).getDate();
+  const daysLeft2 = daysInMonth2 - now2.getDate();
+  const remaining2 = Math.max(0, planExpense - totalExpenseFact);
+  const safePerDay = calculateSafeToSpendPerDay(remaining2, daysLeft2);
+  const pctExpense = planExpense > 0
+    ? Math.min(100, Math.round((totalExpenseFact / planExpense) * 100))
+    : 0;
+  const isOver = planExpense > 0 && totalExpenseFact > planExpense;
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
-        {/* Monthly plan */}
-        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+        {/* Merged monthly plan block */}
+        <div
+          className={cn(
+            "bg-panel border rounded-2xl p-5 shadow-card",
+            isOver ? "border-danger/40" : "border-line/60",
+          )}
+        >
           <div className="text-[11px] font-bold text-subtle uppercase tracking-widest mb-3">
             Фінплан на місяць
           </div>
@@ -371,10 +393,7 @@ export function Budgets({ mono, storage }) {
               placeholder="План доходу ₴"
               value={monthlyPlan?.income ?? ""}
               onChange={(e) =>
-                setMonthlyPlan((p) => ({
-                  ...(p || {}),
-                  income: e.target.value,
-                }))
+                setMonthlyPlan((p) => ({ ...(p || {}), income: e.target.value }))
               }
             />
             <input
@@ -383,10 +402,7 @@ export function Budgets({ mono, storage }) {
               placeholder="План витрат ₴"
               value={monthlyPlan?.expense ?? ""}
               onChange={(e) =>
-                setMonthlyPlan((p) => ({
-                  ...(p || {}),
-                  expense: e.target.value,
-                }))
+                setMonthlyPlan((p) => ({ ...(p || {}), expense: e.target.value }))
               }
             />
             <input
@@ -395,52 +411,71 @@ export function Budgets({ mono, storage }) {
               placeholder="План накопичень ₴"
               value={monthlyPlan?.savings ?? ""}
               onChange={(e) =>
-                setMonthlyPlan((p) => ({
-                  ...(p || {}),
-                  savings: e.target.value,
-                }))
+                setMonthlyPlan((p) => ({ ...(p || {}), savings: e.target.value }))
               }
             />
           </div>
-          {(planIncome > 0 || planExpense > 0 || planSavings > 0) && (
-            <div className="text-xs text-muted mt-3 pt-3 border-t border-line space-y-3">
-              <div className="flex justify-between gap-2 flex-wrap">
-                <span>
-                  План: +{planIncome.toLocaleString("uk-UA")} / −
-                  {planExpense.toLocaleString("uk-UA")} /{" "}
-                  {planSavings.toLocaleString("uk-UA")} ₴
-                </span>
+
+          {(planIncome > 0 || planExpense > 0) && (
+            <div className="mt-4 pt-4 border-t border-line space-y-3">
+              {/* Fact row */}
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div className="text-[10px] text-subtle mb-0.5">Дохід (план)</div>
+                  <div className="text-sm font-semibold tabular-nums">
+                    {planIncome > 0 ? `${planIncome.toLocaleString("uk-UA")} ₴` : "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-subtle mb-0.5">Витрати (факт)</div>
+                  <div className={cn("text-sm font-semibold tabular-nums", isOver ? "text-danger" : "")}>
+                    {totalExpenseFact.toLocaleString("uk-UA")} ₴
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-subtle mb-0.5">Залишок</div>
+                  <div className={cn("text-sm font-semibold tabular-nums", isOver ? "text-danger" : "text-emerald-600")}>
+                    {isOver
+                      ? `−${(totalExpenseFact - planExpense).toLocaleString("uk-UA")} ₴`
+                      : `${remaining2.toLocaleString("uk-UA")} ₴`}
+                  </div>
+                </div>
               </div>
+
+              {/* Progress bar */}
               {planExpense > 0 && (
                 <>
                   <div className="flex justify-between text-[11px] text-subtle">
-                    <span>Витрати: план / факт</span>
-                    <span className="tabular-nums font-medium text-text">
-                      {planExpense.toLocaleString("uk-UA")} ₴ /{" "}
-                      {totalExpenseFact.toLocaleString("uk-UA")} ₴
-                    </span>
+                    <span>{pctExpense}% від плану</span>
+                    <span>план {planExpense.toLocaleString("uk-UA")} ₴</span>
                   </div>
                   <div className="h-2 bg-bg rounded-full overflow-hidden">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",
-                        totalExpenseFact > planExpense
-                          ? "bg-danger"
-                          : totalExpenseFact / planExpense >= 0.85
-                            ? "bg-warning"
-                            : "bg-emerald-500",
+                        isOver ? "bg-danger" : pctExpense >= 85 ? "bg-warning" : "bg-emerald-500",
                       )}
-                      style={{
-                        width: `${Math.min(100, planExpense > 0 ? (totalExpenseFact / planExpense) * 100 : 0)}%`,
-                      }}
+                      style={{ width: `${pctExpense}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-subtle">
-                    {totalExpenseFact <= planExpense
-                      ? `Залишок до ліміту плану: ${(planExpense - totalExpenseFact).toLocaleString("uk-UA")} ₴`
-                      : `Перевищення плану на ${(totalExpenseFact - planExpense).toLocaleString("uk-UA")} ₴`}
-                  </p>
                 </>
+              )}
+
+              {/* Safe to spend */}
+              {safePerDay > 0 && daysLeft2 > 0 && planExpense > 0 && (
+                <div className={cn(
+                  "rounded-xl px-3 py-2 text-sm",
+                  isOver ? "bg-danger/10 text-danger"
+                    : pctExpense >= 85 ? "bg-warning/10 text-warning"
+                    : "bg-emerald-500/10 text-emerald-700",
+                )}>
+                  <span className="font-semibold">
+                    {safePerDay.toLocaleString("uk-UA")} ₴/день
+                  </span>
+                  <span className="text-[11px] ml-1 opacity-75">
+                    · безпечно витрачати ({daysLeft2} дн.)
+                  </span>
+                </div>
               )}
             </div>
           )}
@@ -520,12 +555,21 @@ export function Budgets({ mono, storage }) {
           );
         })}
 
-        {/* Forecast */}
-        {forecasts.length > 0 && (
+        {/* Forecast — shown whenever there are limit budgets to avoid layout shifts */}
+        {limitBudgets.length > 0 && (
           <>
             <div className="text-[11px] font-bold text-subtle uppercase tracking-widest pt-1">
               Прогноз · кінець місяця
             </div>
+            {loadingTx && forecasts.length === 0 ? (
+              limitBudgets.map((b) => (
+                <Skeleton key={b.id} className="h-36 rounded-2xl" />
+              ))
+            ) : forecasts.length === 0 ? (
+              <div className="text-sm text-muted px-1">
+                Недостатньо даних для прогнозу
+              </div>
+            ) : null}
             {forecasts.map((fc) => {
               const cat = resolveExpenseCategoryMeta(
                 fc.categoryId,
@@ -700,7 +744,6 @@ export function Budgets({ mono, storage }) {
           );
         })}
 
-        {/* Add form */}
         {showForm ? (
           <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card space-y-3">
             <div className="flex gap-2">
@@ -735,22 +778,12 @@ export function Budgets({ mono, storage }) {
             </div>
             {formType === "limit" ? (
               <>
-                <select
-                  className={formInp}
+                <CategorySelector
                   value={newB.categoryId}
-                  onChange={(e) =>
-                    setNewB((b) => ({ ...b, categoryId: e.target.value }))
-                  }
-                >
-                  <option value="">Вибери категорію</option>
-                  {expenseCategoryList
-                    .filter((c) => c.id !== "income")
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.label}
-                      </option>
-                    ))}
-                </select>
+                  onChange={(val) => setNewB((b) => ({ ...b, categoryId: val }))}
+                  categories={expenseCategoryList.filter((c) => c.id !== "income")}
+                  placeholder="Вибери категорію"
+                />
                 <input
                   className={formInp}
                   placeholder="Ліміт ₴"
@@ -853,6 +886,43 @@ export function Budgets({ mono, storage }) {
             + Додати бюджет або ціль
           </button>
         )}
+
+        {/* Category manager — collapsible at bottom so it never shifts other sections */}
+        <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowCategories((v) => !v)}
+            className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold text-text hover:bg-panelHi transition-colors"
+          >
+            <span>Власні категорії</span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={cn("transition-transform text-muted", showCategories ? "rotate-180" : "")}
+              aria-hidden
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {showCategories && (
+            <div className="px-5 pb-5">
+              <CategoryManager
+                customCategories={customCategories}
+                allCategories={expenseCategoryList}
+                onAdd={addCustomCategory}
+                onEdit={editCustomCategory}
+                onRemove={removeCustomCategory}
+              />
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );

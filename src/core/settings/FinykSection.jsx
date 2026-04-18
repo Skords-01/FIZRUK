@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { apiUrl } from "@shared/lib/apiUrl.js";
+import { safeReadLS } from "@shared/lib/storage.js";
 import { useStorage as useFinykStorage } from "../../modules/finyk/hooks/useStorage.js";
 import { getAccountLabel } from "../../modules/finyk/utils.js";
 import {
@@ -9,7 +10,6 @@ import {
   SettingsGroup,
   SettingsSubGroup,
 } from "./SettingsPrimitives.jsx";
-import { safeParseLS } from "./hubPrefs.js";
 
 const PRIVAT_ENABLED = false;
 

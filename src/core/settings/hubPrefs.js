@@ -1,15 +1,5 @@
 export const HUB_PREFS_KEY = "hub_prefs_v1";
 
-export function safeParseLS(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export function loadHubPrefs() {
   try {
     const raw = localStorage.getItem(HUB_PREFS_KEY);
