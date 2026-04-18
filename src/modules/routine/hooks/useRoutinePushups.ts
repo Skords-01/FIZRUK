@@ -5,13 +5,22 @@ import {
   ROUTINE_EVENT,
 } from "../lib/routineStorage.js";
 import { dateKeyFromDate } from "../lib/hubCalendarAggregate.js";
+import type { RoutineState } from "../lib/types";
 
 const HISTORY_DAYS = 30;
 
-function buildHistory(pushupsByDate, days) {
+export interface PushupHistoryEntry {
+  date: string;
+  total: number;
+}
+
+function buildHistory(
+  pushupsByDate: Record<string, number> | null | undefined,
+  days: number,
+): PushupHistoryEntry[] {
   const data =
     pushupsByDate && typeof pushupsByDate === "object" ? pushupsByDate : {};
-  const result = [];
+  const result: PushupHistoryEntry[] = [];
   const now = new Date();
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now);
@@ -23,7 +32,7 @@ function buildHistory(pushupsByDate, days) {
 }
 
 export function useRoutinePushups() {
-  const [state, setState] = useState(() => loadRoutineState());
+  const [state, setState] = useState<RoutineState>(() => loadRoutineState());
 
   useEffect(() => {
     const sync = () => setState(loadRoutineState());
@@ -45,7 +54,7 @@ export function useRoutinePushups() {
   );
   const todayCount = data[today] ?? 0;
 
-  const addReps = useCallback((reps) => {
+  const addReps = useCallback((reps: number) => {
     // Load fresh state directly from localStorage so the save is never
     // deferred or dropped by React Concurrent Mode scheduling.
     const next = addPushupReps(loadRoutineState(), reps);
