@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { HubBackupPanel } from "../HubBackupPanel.jsx";
 import { resetDashboardOrder } from "../HubDashboard.jsx";
@@ -9,6 +9,15 @@ import {
 } from "./SettingsPrimitives.jsx";
 import { useHubPref } from "./hubPrefs.js";
 
+export interface GeneralSectionProps {
+  dark: boolean;
+  onToggleDark: (event: ChangeEvent<HTMLInputElement>) => void;
+  syncing: boolean;
+  onSync: () => void;
+  onPull: () => void;
+  user: unknown;
+}
+
 export function GeneralSection({
   dark,
   onToggleDark,
@@ -16,9 +25,9 @@ export function GeneralSection({
   onSync,
   onPull,
   user,
-}) {
+}: GeneralSectionProps) {
   const [orderReset, setOrderReset] = useState(false);
-  const [showCoach, setShowCoach] = useHubPref("showCoach", true);
+  const [showCoach, setShowCoach] = useHubPref<boolean>("showCoach", true);
 
   const handleResetOrder = () => {
     resetDashboardOrder();
@@ -76,7 +85,7 @@ export function GeneralSection({
         </SettingsSubGroup>
       )}
       <SettingsSubGroup title="Резервна копія Hub" defaultOpen>
-        <HubBackupPanel />
+        <HubBackupPanel className="" />
       </SettingsSubGroup>
     </SettingsGroup>
   );

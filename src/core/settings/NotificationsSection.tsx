@@ -17,8 +17,16 @@ import {
   ToggleRow,
 } from "./SettingsPrimitives.jsx";
 
+type PermStatus = NotificationPermission | "unsupported";
+
+interface NutritionPrefs {
+  reminderEnabled?: boolean;
+  reminderHour?: number;
+  [key: string]: unknown;
+}
+
 export function NotificationsSection() {
-  const [permStatus, setPermStatus] = useState(() =>
+  const [permStatus, setPermStatus] = useState<PermStatus>(() =>
     typeof Notification !== "undefined"
       ? Notification.permission
       : "unsupported",
@@ -29,11 +37,11 @@ export function NotificationsSection() {
 
   const monthlyPlan = useMonthlyPlan();
 
-  const [nutritionPrefs, setNutritionPrefs] = useState(() =>
+  const [nutritionPrefs, setNutritionPrefs] = useState<NutritionPrefs>(() =>
     loadNutritionPrefs(),
   );
   useEffect(() => {
-    const handler = (e) => {
+    const handler = (e: StorageEvent) => {
       if (e.key === NUTRITION_PREFS_KEY || e.key === null) {
         setNutritionPrefs(loadNutritionPrefs());
       }
@@ -57,7 +65,7 @@ export function NotificationsSection() {
     }
   };
 
-  const handleRoutineToggle = async (checked) => {
+  const handleRoutineToggle = async (checked: boolean) => {
     if (checked) {
       const perm = await requestRoutineNotificationPermission();
       setPermStatus(perm);
@@ -71,7 +79,7 @@ export function NotificationsSection() {
     updateRoutinePref("routineRemindersEnabled", checked);
   };
 
-  const handleFizrukToggle = async (checked) => {
+  const handleFizrukToggle = async (checked: boolean) => {
     if (checked && permStatus !== "granted") {
       const perm = await requestRoutineNotificationPermission();
       setPermStatus(perm);
@@ -85,7 +93,7 @@ export function NotificationsSection() {
     monthlyPlan.setReminderEnabled(checked);
   };
 
-  const handleNutritionToggle = async (checked) => {
+  const handleNutritionToggle = async (checked: boolean) => {
     if (checked && permStatus !== "granted") {
       const perm = await requestRoutineNotificationPermission();
       setPermStatus(perm);
@@ -96,26 +104,28 @@ export function NotificationsSection() {
         return;
       }
     }
-    const next = { ...nutritionPrefs, reminderEnabled: checked };
+    const next: NutritionPrefs = {
+      ...nutritionPrefs,
+      reminderEnabled: checked,
+    };
     persistNutritionPrefs(next, NUTRITION_PREFS_KEY);
     setNutritionPrefs(next);
   };
 
-  const permLabel =
-    {
-      granted: "Дозволено",
-      denied: "Заблоковано",
-      default: "Не встановлено",
-      unsupported: "Не підтримується",
-    }[permStatus] ?? "Невідомо";
-
-  const permColor =
-    {
-      granted: "text-success",
-      denied: "text-danger",
-      default: "text-warning",
-      unsupported: "text-muted",
-    }[permStatus] ?? "text-muted";
+  const permLabels: Record<PermStatus, string> = {
+    granted: "Дозволено",
+    denied: "Заблоковано",
+    default: "Не встановлено",
+    unsupported: "Не підтримується",
+  };
+  const permColors: Record<PermStatus, string> = {
+    granted: "text-success",
+    denied: "text-danger",
+    default: "text-warning",
+    unsupported: "text-muted",
+  };
+  const permLabel = permLabels[permStatus] ?? "Невідомо";
+  const permColor = permColors[permStatus] ?? "text-muted";
 
   return (
     <SettingsGroup title="Сповіщення" emoji="🔔" defaultOpen>
@@ -194,7 +204,7 @@ export function NotificationsSection() {
               className="w-16 h-9 rounded-xl bg-panel border border-line px-2 text-sm text-text"
               value={nutritionPrefs.reminderHour ?? 12}
               onChange={(e) => {
-                const next = {
+                const next: NutritionPrefs = {
                   ...nutritionPrefs,
                   reminderHour: Math.min(
                     23,

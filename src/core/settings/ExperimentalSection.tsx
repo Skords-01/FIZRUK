@@ -1,4 +1,4 @@
-import { FLAG_REGISTRY, setFlag, useAllFlags } from "../lib/featureFlags.ts";
+import { FLAG_REGISTRY, setFlag, useAllFlags } from "../lib/featureFlags";
 import { SettingsGroup, ToggleRow } from "./SettingsPrimitives.jsx";
 
 /**

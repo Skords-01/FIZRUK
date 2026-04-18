@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, type ChangeEvent, type ReactNode } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 
-export function ChevronIcon({ expanded }) {
+export interface ChevronIconProps {
+  expanded: boolean;
+}
+
+export function ChevronIcon({ expanded }: ChevronIconProps) {
   return (
     <Icon
       name="chevron-right"
@@ -15,8 +19,20 @@ export function ChevronIcon({ expanded }) {
   );
 }
 
-export function SettingsGroup({ title, emoji, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
+export interface SettingsGroupProps {
+  title: string;
+  emoji?: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}
+
+export function SettingsGroup({
+  title,
+  emoji,
+  children,
+  defaultOpen = false,
+}: SettingsGroupProps) {
+  const [open, setOpen] = useState<boolean>(defaultOpen);
   return (
     <div className="rounded-2xl border border-line bg-panel shadow-card overflow-hidden">
       <button
@@ -46,8 +62,18 @@ export function SettingsGroup({ title, emoji, children, defaultOpen = false }) {
   );
 }
 
-export function SettingsSubGroup({ title, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
+export interface SettingsSubGroupProps {
+  title: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}
+
+export function SettingsSubGroup({
+  title,
+  children,
+  defaultOpen = false,
+}: SettingsSubGroupProps) {
+  const [open, setOpen] = useState<boolean>(defaultOpen);
   return (
     <div>
       <button
@@ -74,7 +100,19 @@ export function SettingsSubGroup({ title, children, defaultOpen = false }) {
   );
 }
 
-export function ToggleRow({ label, description, checked, onChange }) {
+export interface ToggleRowProps {
+  label: ReactNode;
+  description?: ReactNode;
+  checked: boolean;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+}
+
+export function ToggleRow({
+  label,
+  description,
+  checked,
+  onChange,
+}: ToggleRowProps) {
   return (
     <label className="flex items-start justify-between gap-3 cursor-pointer group">
       <div className="flex-1 min-w-0">
@@ -97,6 +135,16 @@ export function ToggleRow({ label, description, checked, onChange }) {
   );
 }
 
+export interface ConfirmModalProps {
+  open: boolean;
+  title: string;
+  body?: ReactNode;
+  confirmLabel: string;
+  danger?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
 export function ConfirmModal({
   open,
   title,
@@ -105,7 +153,7 @@ export function ConfirmModal({
   danger,
   onConfirm,
   onCancel,
-}) {
+}: ConfirmModalProps) {
   if (!open) return null;
   return (
     <div

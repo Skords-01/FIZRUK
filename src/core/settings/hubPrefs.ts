@@ -3,16 +3,20 @@ import { STORAGE_KEYS } from "@shared/lib/storageKeys.js";
 
 export const HUB_PREFS_KEY = STORAGE_KEYS.HUB_PREFS;
 
-export function loadHubPrefs() {
+export type HubPrefs = Record<string, unknown>;
+
+export function loadHubPrefs(): HubPrefs {
   try {
     const raw = localStorage.getItem(HUB_PREFS_KEY);
-    return raw ? JSON.parse(raw) : {};
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as HubPrefs) : {};
   } catch {
     return {};
   }
 }
 
-export function saveHubPref(key, value) {
+export function saveHubPref(key: string, value: unknown): void {
   try {
     const prefs = loadHubPrefs();
     localStorage.setItem(
@@ -29,15 +33,18 @@ export function saveHubPref(key, value) {
  * Reactive single-pref hook that stays in sync with cross-tab `storage`
  * events and the same-tab StorageEvent dispatched by `saveHubPref`.
  */
-export function useHubPref(key, defaultValue) {
-  const read = () => {
+export function useHubPref<T>(
+  key: string,
+  defaultValue: T,
+): [T, (next: T) => void] {
+  const read = (): T => {
     const prefs = loadHubPrefs();
-    return key in prefs ? prefs[key] : defaultValue;
+    return key in prefs ? (prefs[key] as T) : defaultValue;
   };
-  const [value, setValue] = useState(read);
+  const [value, setValue] = useState<T>(read);
 
   useEffect(() => {
-    const handler = (e) => {
+    const handler = (e: StorageEvent) => {
       if (e.key === HUB_PREFS_KEY || e.key === null) setValue(read());
     };
     window.addEventListener("storage", handler);
@@ -45,7 +52,7 @@ export function useHubPref(key, defaultValue) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  const update = (next) => {
+  const update = (next: T) => {
     setValue(next);
     saveHubPref(key, next);
   };
