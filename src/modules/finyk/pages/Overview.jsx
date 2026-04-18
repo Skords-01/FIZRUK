@@ -16,9 +16,7 @@ import {
   isBudgetAlert,
   getCurrentMonthContext,
 } from "../domain/budget";
-import {
-  getCategorySpendList,
-} from "../domain/categories";
+import { getCategorySpendList } from "../domain/categories";
 import { filterStatTransactions } from "../domain/transactions";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { cn } from "@shared/lib/cn";

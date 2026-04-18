@@ -167,7 +167,16 @@ export function calculateGoalProgress(
 // Готовий лейбл для підпису цілі. Виділяємо його сюди, щоб компонент
 // GoalBudgetCard залишався суто презентаційним.
 export function getGoalMonthlyLabel(
-  progress: { monthly?: { isAchieved?: boolean; isOverdue?: boolean; monthlyNeeded?: number | null } } | null | undefined,
+  progress:
+    | {
+        monthly?: {
+          isAchieved?: boolean;
+          isOverdue?: boolean;
+          monthlyNeeded?: number | null;
+        };
+      }
+    | null
+    | undefined,
 ) {
   if (!progress) return null;
   const { monthly } = progress;

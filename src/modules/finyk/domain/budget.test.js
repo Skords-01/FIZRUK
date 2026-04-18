@@ -84,15 +84,12 @@ describe("budget: rules", () => {
 
   it("shouldShowProactiveAdvice triggers on >=80% or forecast overLimit", () => {
     expect(
-      shouldShowProactiveAdvice(
-        { pctRaw: 70 },
-        { overLimit: false },
-      ),
+      shouldShowProactiveAdvice({ pctRaw: 70 }, { overLimit: false }),
     ).toBe(false);
     expect(shouldShowProactiveAdvice({ pctRaw: 80 }, null)).toBe(true);
-    expect(
-      shouldShowProactiveAdvice({ pctRaw: 10 }, { overLimit: true }),
-    ).toBe(true);
+    expect(shouldShowProactiveAdvice({ pctRaw: 10 }, { overLimit: true })).toBe(
+      true,
+    );
     expect(BUDGET_WARN_THRESHOLD).toBeCloseTo(0.8);
   });
 
@@ -189,10 +186,9 @@ describe("budget: form validators", () => {
       validateLimitBudgetForm({ categoryId: "food", limit: "abc" }).error,
     ).toBeTruthy();
     expect(
-      validateLimitBudgetForm(
-        { categoryId: "food", limit: 100 },
-        [{ type: "limit", categoryId: "food" }],
-      ).error,
+      validateLimitBudgetForm({ categoryId: "food", limit: 100 }, [
+        { type: "limit", categoryId: "food" },
+      ]).error,
     ).toMatch(/вже існує/);
     const ok = validateLimitBudgetForm({ categoryId: "food", limit: "100" });
     expect(ok.error).toBeNull();

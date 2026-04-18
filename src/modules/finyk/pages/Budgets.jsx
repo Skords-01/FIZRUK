@@ -9,13 +9,8 @@ import {
 import { Button } from "@shared/components/ui/Button";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
-import {
-  calcCategorySpent,
-  resolveExpenseCategoryMeta,
-} from "../utils";
-import {
-  buildExpenseCategoryList,
-} from "../domain/categories";
+import { calcCategorySpent, resolveExpenseCategoryMeta } from "../utils";
+import { buildExpenseCategoryList } from "../domain/categories";
 import {
   getLimitBudgets,
   getGoalBudgets,
