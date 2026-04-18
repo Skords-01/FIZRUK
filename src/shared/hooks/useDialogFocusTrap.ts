@@ -1,12 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, type RefObject } from "react";
+
+export interface DialogFocusTrapOptions {
+  onEscape?: () => void;
+}
 
 /**
  * Tab циклічно лишається в межах контейнера; Escape викликає onEscape.
- * @param {boolean} open
- * @param {React.RefObject<HTMLElement | null>} containerRef
- * @param {{ onEscape?: () => void }} [options]
  */
-export function useDialogFocusTrap(open, containerRef, options = {}) {
+export function useDialogFocusTrap(
+  open: boolean,
+  containerRef: RefObject<HTMLElement | null>,
+  options: DialogFocusTrapOptions = {},
+): void {
   const { onEscape } = options;
 
   useEffect(() => {
@@ -14,9 +19,9 @@ export function useDialogFocusTrap(open, containerRef, options = {}) {
     const panel = containerRef.current;
     if (!panel) return;
 
-    const getFocusable = () =>
+    const getFocusable = (): HTMLElement[] =>
       Array.from(
-        panel.querySelectorAll(
+        panel.querySelectorAll<HTMLElement>(
           'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
         ),
       ).filter(
@@ -25,7 +30,7 @@ export function useDialogFocusTrap(open, containerRef, options = {}) {
           el.getAttribute("aria-hidden") !== "true",
       );
 
-    const onKeyDown = (e) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && onEscape) {
         e.preventDefault();
         onEscape();

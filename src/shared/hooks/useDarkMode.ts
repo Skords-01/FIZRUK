@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const DARK_KEY = "hub_dark_mode_v1";
 
-function applyTheme(dark) {
+function applyTheme(dark: boolean): void {
   if (dark) {
     document.documentElement.classList.add("dark");
   } else {
@@ -10,16 +10,18 @@ function applyTheme(dark) {
   }
 }
 
-function readInitial() {
+function readInitial(): boolean {
   try {
     const stored = localStorage.getItem(DARK_KEY);
     if (stored !== null) return stored === "1";
-  } catch {}
+  } catch {
+    /* ignore */
+  }
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
 }
 
-export function useDarkMode() {
-  const [dark, setDark] = useState(() => {
+export function useDarkMode(): { dark: boolean; toggle: () => void } {
+  const [dark, setDark] = useState<boolean>(() => {
     const d = readInitial();
     applyTheme(d);
     return d;
@@ -29,7 +31,9 @@ export function useDarkMode() {
     applyTheme(dark);
     try {
       localStorage.setItem(DARK_KEY, dark ? "1" : "0");
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   }, [dark]);
 
   const toggle = useCallback(() => setDark((d) => !d), []);
