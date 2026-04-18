@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { postJson } from "../lib/nutritionApi.js";
 import {
   applyNutritionBackupPayload,
@@ -36,45 +37,64 @@ export function useNutritionCloudBackup({
     });
   }, [cloudBackupBusy, setBackupPasswordDialog]);
 
+  const uploadMutation = useMutation({
+    mutationFn: async ({ pass }) => {
+      const payload = buildNutritionBackupPayload();
+      const blob = await encryptJsonToBlob(payload, pass);
+      return postJson("/api/nutrition/backup-upload", { blob });
+    },
+    onMutate: () => {
+      setCloudBackupBusy(true);
+      setErr("");
+    },
+    onSuccess: () => {
+      toast.success("Бекап завантажено.");
+    },
+    onError: (err) => {
+      setErr(err?.message || "Не вдалося завантажити бекап");
+    },
+    onSettled: () => {
+      setCloudBackupBusy(false);
+    },
+  });
+
+  const downloadMutation = useMutation({
+    mutationFn: async ({ pass }) => {
+      const data = await postJson("/api/nutrition/backup-download", {});
+      const payload = await decryptBlobToJson(data?.blob, pass);
+      return { payload };
+    },
+    onMutate: () => {
+      setCloudBackupBusy(true);
+      setErr("");
+    },
+    onSuccess: ({ payload }) => {
+      setRestoreConfirm({ payload });
+    },
+    onError: (err) => {
+      setErr(err?.message || "Не вдалося відновити бекап");
+    },
+    onSettled: () => {
+      setCloudBackupBusy(false);
+    },
+  });
+
   const handleBackupPasswordConfirm = useCallback(
-    async (pass) => {
+    (pass) => {
       const mode = backupPasswordDialog?.mode;
       setBackupPasswordDialog(null);
       if (!pass) return;
       if (mode === "upload") {
-        try {
-          setCloudBackupBusy(true);
-          setErr("");
-          const payload = buildNutritionBackupPayload();
-          const blob = await encryptJsonToBlob(payload, pass);
-          await postJson("/api/nutrition/backup-upload", { blob });
-          toast.success("Бекап завантажено.");
-        } catch (e) {
-          setErr(e?.message || "Не вдалося завантажити бекап");
-        } finally {
-          setCloudBackupBusy(false);
-        }
+        uploadMutation.mutate({ pass });
       } else if (mode === "download") {
-        try {
-          setCloudBackupBusy(true);
-          setErr("");
-          const data = await postJson("/api/nutrition/backup-download", {});
-          const payload = await decryptBlobToJson(data?.blob, pass);
-          setRestoreConfirm({ payload });
-        } catch (e) {
-          setErr(e?.message || "Не вдалося відновити бекап");
-        } finally {
-          setCloudBackupBusy(false);
-        }
+        downloadMutation.mutate({ pass });
       }
     },
     [
       backupPasswordDialog,
       setBackupPasswordDialog,
-      setCloudBackupBusy,
-      setErr,
-      setRestoreConfirm,
-      toast,
+      uploadMutation,
+      downloadMutation,
     ],
   );
 

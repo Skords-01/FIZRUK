@@ -1,8 +1,49 @@
 import { useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { postJson } from "../lib/nutritionApi.js";
 import { writeRecipeCache } from "../lib/recipeCache.js";
 import { stableRecipeId } from "../lib/recipeIds.js";
 import { getDayMacros, getDaySummary } from "../lib/nutritionStorage.js";
+
+/**
+ * React Query mutation factory — wraps a `postJson` call and wires the
+ * shared `setBusy` / `setErr` / `setStatusText` lifecycle so the hook's
+ * public surface stays identical to the pre-RQ version.
+ *
+ * `statusText` is set on mutate and cleared on settle; `busy` flags (per
+ * action) and error banner mirror the previous try/catch/finally shape.
+ */
+function buildMutationHandlers({
+  setBusy,
+  setErr,
+  setStatusText,
+  fallbackError,
+  onSuccessSideEffects,
+  onMutateSideEffects,
+}) {
+  return {
+    onMutate: () => {
+      setBusy?.(true);
+      setErr?.("");
+      if (setStatusText && onMutateSideEffects?.statusText) {
+        setStatusText(onMutateSideEffects.statusText);
+      }
+      onMutateSideEffects?.run?.();
+    },
+    onSuccess: (data) => {
+      onSuccessSideEffects?.(data);
+    },
+    onError: (err) => {
+      setErr?.(err?.message || fallbackError);
+    },
+    onSettled: () => {
+      setBusy?.(false);
+      if (setStatusText && onMutateSideEffects?.statusText) {
+        setStatusText("");
+      }
+    },
+  };
+}
 
 export function useNutritionRemoteActions({
   // shared state
@@ -34,18 +75,13 @@ export function useNutritionRemoteActions({
   shopping,
   setShoppingBusy,
 }) {
-  const recommendRecipes = async () => {
-    setBusy(true);
-    setErr("");
-    setRecipes([]);
-    setRecipesRaw("");
-    setRecipesTried(true);
-    setStatusText("Генерую рецепти…");
-    try {
+  // ─── Recipes ────────────────────────────────────────────────────────────
+  const recipesMutation = useMutation({
+    mutationFn: () => {
       const items = pantry.effectiveItems;
       if (items.length === 0)
         throw new Error("Дай хоча б 2–3 продукти для рецептів.");
-      const data = await postJson("/api/nutrition/recommend-recipes", {
+      return postJson("/api/nutrition/recommend-recipes", {
         items: items.slice(0, 40),
         preferences: {
           goal: prefs.goal,
@@ -55,56 +91,85 @@ export function useNutritionRemoteActions({
           locale: "uk-UA",
         },
       });
-      const list = Array.isArray(data?.recipes)
-        ? data.recipes.map((r) => ({
-            ...r,
-            id: r?.id ? String(r.id) : stableRecipeId(r),
-          }))
-        : [];
-      const raw = typeof data?.rawText === "string" ? data.rawText : "";
-      setRecipes(list);
-      setRecipesRaw(raw);
-      writeRecipeCache(recipeCacheKey, { recipes: list, recipesRaw: raw });
-    } catch (e) {
-      setErr(e?.message || "Помилка рекомендацій");
-    } finally {
-      setStatusText("");
-      setBusy(false);
-    }
-  };
+    },
+    ...buildMutationHandlers({
+      setBusy,
+      setErr,
+      setStatusText,
+      fallbackError: "Помилка рекомендацій",
+      onMutateSideEffects: {
+        statusText: "Генерую рецепти…",
+        run: () => {
+          setRecipes([]);
+          setRecipesRaw("");
+          setRecipesTried(true);
+        },
+      },
+      onSuccessSideEffects: (data) => {
+        const list = Array.isArray(data?.recipes)
+          ? data.recipes.map((r) => ({
+              ...r,
+              id: r?.id ? String(r.id) : stableRecipeId(r),
+            }))
+          : [];
+        const raw = typeof data?.rawText === "string" ? data.rawText : "";
+        setRecipes(list);
+        setRecipesRaw(raw);
+        writeRecipeCache(recipeCacheKey, { recipes: list, recipesRaw: raw });
+      },
+    }),
+  });
 
-  const fetchWeekPlan = async () => {
-    setWeekPlanBusy(true);
-    setErr("");
-    setWeekPlan(null);
-    setWeekPlanRaw("");
-    try {
+  const recommendRecipes = useCallback(
+    () => recipesMutation.mutate(),
+    [recipesMutation],
+  );
+
+  // ─── Week plan ──────────────────────────────────────────────────────────
+  const weekPlanMutation = useMutation({
+    mutationFn: () => {
       const items = pantry.effectiveItems;
       if (items.length === 0) throw new Error("Додай продукти на склад.");
-      const data = await postJson("/api/nutrition/week-plan", {
+      return postJson("/api/nutrition/week-plan", {
         items: items.slice(0, 50),
         preferences: { goal: prefs.goal },
         locale: "uk-UA",
       });
+    },
+    onMutate: () => {
+      setWeekPlanBusy(true);
+      setErr("");
+      setWeekPlan(null);
+      setWeekPlanRaw("");
+    },
+    onSuccess: (data) => {
       setWeekPlan(data?.plan || null);
       setWeekPlanRaw(typeof data?.rawText === "string" ? data.rawText : "");
-    } catch (e) {
-      setErr(e?.message || "Помилка плану");
-    } finally {
+    },
+    onError: (err) => {
+      setErr(err?.message || "Помилка плану");
+    },
+    onSettled: () => {
       setWeekPlanBusy(false);
-    }
-  };
+    },
+  });
 
-  const fetchDayHint = useCallback(async () => {
-    setDayHintBusy(true);
-    setErr("");
-    try {
+  const fetchWeekPlan = useCallback(
+    () => weekPlanMutation.mutate(),
+    [weekPlanMutation],
+  );
+
+  // ─── Day hint ───────────────────────────────────────────────────────────
+  const dayHintMutation = useMutation({
+    mutationFn: () => {
       const summary = getDaySummary(log.nutritionLog, log.selectedDate);
       if (!summary.hasMeals) {
-        setDayHintText(
-          "День порожній. Додай прийом їжі — і я зможу дати підказку.",
-        );
-        return;
+        // Return a synthetic payload so `onSuccess` can render the "empty day"
+        // message without triggering an actual API call.
+        return Promise.resolve({
+          hint: "День порожній. Додай прийом їжі — і я зможу дати підказку.",
+          _synthetic: true,
+        });
       }
       const meals = log.nutritionLog?.[log.selectedDate]?.meals || [];
       const macroSources = meals.reduce((acc, m) => {
@@ -117,7 +182,7 @@ export function useNutritionRemoteActions({
       const macros = summary.hasAnyMacros
         ? getDayMacros(log.nutritionLog, log.selectedDate)
         : { kcal: null, protein_g: null, fat_g: null, carbs_g: null };
-      const data = await postJson("/api/nutrition/day-hint", {
+      return postJson("/api/nutrition/day-hint", {
         macros,
         hasMeals: summary.hasMeals,
         hasAnyMacros: summary.hasAnyMacros,
@@ -130,67 +195,84 @@ export function useNutritionRemoteActions({
         },
         locale: "uk-UA",
       });
-      setDayHintText(typeof data?.hint === "string" ? data.hint : "");
-    } catch (e) {
-      setErr(e?.message || "Помилка підказки");
-    } finally {
-      setDayHintBusy(false);
-    }
-  }, [
-    log.nutritionLog,
-    log.selectedDate,
-    prefs,
-    setDayHintBusy,
-    setDayHintText,
-    setErr,
-  ]);
-
-  const fetchDayPlan = useCallback(
-    async (regenerateMealType) => {
-      setDayPlanBusy(true);
-      setErr("");
-      try {
-        const data = await postJson("/api/nutrition/day-plan", {
-          items: pantry.effectiveItems.slice(0, 50),
-          targets: {
-            kcal: prefs.dailyTargetKcal,
-            protein_g: prefs.dailyTargetProtein_g,
-            fat_g: prefs.dailyTargetFat_g,
-            carbs_g: prefs.dailyTargetCarbs_g,
-          },
-          regenerateMealType: regenerateMealType || null,
-          locale: "uk-UA",
-        });
-        const plan = data?.plan;
-        if (!plan) throw new Error("Не вдалося отримати план харчування");
-        if (regenerateMealType && dayPlan?.meals?.length > 0) {
-          const newMeals = Array.isArray(plan.meals) ? plan.meals : [];
-          const merged = [
-            ...dayPlan.meals.filter((m) => m.type !== regenerateMealType),
-            ...newMeals.filter((m) => m.type === regenerateMealType),
-          ];
-          const totals = merged.reduce(
-            (acc, m) => ({
-              totalKcal: (acc.totalKcal ?? 0) + (m.kcal ?? 0),
-              totalProtein_g: (acc.totalProtein_g ?? 0) + (m.protein_g ?? 0),
-              totalFat_g: (acc.totalFat_g ?? 0) + (m.fat_g ?? 0),
-              totalCarbs_g: (acc.totalCarbs_g ?? 0) + (m.carbs_g ?? 0),
-            }),
-            {},
-          );
-          setDayPlan({ ...dayPlan, meals: merged, ...totals });
-        } else {
-          setDayPlan(plan);
-        }
-      } catch (e) {
-        setErr(e?.message || "Помилка генерації плану");
-      } finally {
-        setDayPlanBusy(false);
-      }
     },
-    [pantry.effectiveItems, prefs, dayPlan, setDayPlan, setDayPlanBusy, setErr],
+    onMutate: () => {
+      setDayHintBusy(true);
+      setErr("");
+    },
+    onSuccess: (data) => {
+      setDayHintText(typeof data?.hint === "string" ? data.hint : "");
+    },
+    onError: (err) => {
+      setErr(err?.message || "Помилка підказки");
+    },
+    onSettled: () => {
+      setDayHintBusy(false);
+    },
+  });
+
+  const fetchDayHint = useCallback(
+    () => dayHintMutation.mutate(),
+    [dayHintMutation],
   );
 
+  // ─── Day plan ───────────────────────────────────────────────────────────
+  const dayPlanMutation = useMutation({
+    mutationFn: (regenerateMealType) =>
+      postJson("/api/nutrition/day-plan", {
+        items: pantry.effectiveItems.slice(0, 50),
+        targets: {
+          kcal: prefs.dailyTargetKcal,
+          protein_g: prefs.dailyTargetProtein_g,
+          fat_g: prefs.dailyTargetFat_g,
+          carbs_g: prefs.dailyTargetCarbs_g,
+        },
+        regenerateMealType: regenerateMealType || null,
+        locale: "uk-UA",
+      }).then((data) => {
+        const plan = data?.plan;
+        if (!plan) throw new Error("Не вдалося отримати план харчування");
+        return { plan, regenerateMealType };
+      }),
+    onMutate: () => {
+      setDayPlanBusy(true);
+      setErr("");
+    },
+    onSuccess: ({ plan, regenerateMealType }) => {
+      if (regenerateMealType && dayPlan?.meals?.length > 0) {
+        const newMeals = Array.isArray(plan.meals) ? plan.meals : [];
+        const merged = [
+          ...dayPlan.meals.filter((m) => m.type !== regenerateMealType),
+          ...newMeals.filter((m) => m.type === regenerateMealType),
+        ];
+        const totals = merged.reduce(
+          (acc, m) => ({
+            totalKcal: (acc.totalKcal ?? 0) + (m.kcal ?? 0),
+            totalProtein_g: (acc.totalProtein_g ?? 0) + (m.protein_g ?? 0),
+            totalFat_g: (acc.totalFat_g ?? 0) + (m.fat_g ?? 0),
+            totalCarbs_g: (acc.totalCarbs_g ?? 0) + (m.carbs_g ?? 0),
+          }),
+          {},
+        );
+        setDayPlan({ ...dayPlan, meals: merged, ...totals });
+      } else {
+        setDayPlan(plan);
+      }
+    },
+    onError: (err) => {
+      setErr(err?.message || "Помилка генерації плану");
+    },
+    onSettled: () => {
+      setDayPlanBusy(false);
+    },
+  });
+
+  const fetchDayPlan = useCallback(
+    (regenerateMealType) => dayPlanMutation.mutate(regenerateMealType),
+    [dayPlanMutation],
+  );
+
+  // ─── Add meal from plan (local-only; no network) ────────────────────────
   const addMealFromPlan = useCallback(
     (meal) => {
       const id = `meal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -219,40 +301,44 @@ export function useNutritionRemoteActions({
     [log],
   );
 
-  const generateShoppingList = useCallback(
-    async (source) => {
-      setShoppingBusy(true);
-      setErr("");
-      try {
-        const body = {
-          pantryItems: pantry.effectiveItems.slice(0, 50),
-          locale: "uk-UA",
-        };
-        if (source === "weekplan" && weekPlan?.days?.length > 0) {
-          body.weekPlan = weekPlan;
-        } else if (recipes.length > 0) {
-          body.recipes = recipes;
-        } else {
-          throw new Error("Немає рецептів чи тижневого плану для генерації.");
-        }
-        const data = await postJson("/api/nutrition/shopping-list", body);
+  // ─── Shopping list ──────────────────────────────────────────────────────
+  const shoppingMutation = useMutation({
+    mutationFn: (source) => {
+      const body = {
+        pantryItems: pantry.effectiveItems.slice(0, 50),
+        locale: "uk-UA",
+      };
+      if (source === "weekplan" && weekPlan?.days?.length > 0) {
+        body.weekPlan = weekPlan;
+      } else if (recipes.length > 0) {
+        body.recipes = recipes;
+      } else {
+        throw new Error("Немає рецептів чи тижневого плану для генерації.");
+      }
+      return postJson("/api/nutrition/shopping-list", body).then((data) => {
         if (!Array.isArray(data?.categories))
           throw new Error("Не вдалося згенерувати список покупок.");
-        shopping.setGeneratedList(data.categories);
-      } catch (e) {
-        setErr(e?.message || "Помилка генерації списку покупок");
-      } finally {
-        setShoppingBusy(false);
-      }
+        return data;
+      });
     },
-    [
-      pantry.effectiveItems,
-      recipes,
-      weekPlan,
-      shopping,
-      setShoppingBusy,
-      setErr,
-    ],
+    onMutate: () => {
+      setShoppingBusy(true);
+      setErr("");
+    },
+    onSuccess: (data) => {
+      shopping.setGeneratedList(data.categories);
+    },
+    onError: (err) => {
+      setErr(err?.message || "Помилка генерації списку покупок");
+    },
+    onSettled: () => {
+      setShoppingBusy(false);
+    },
+  });
+
+  const generateShoppingList = useCallback(
+    (source) => shoppingMutation.mutate(source),
+    [shoppingMutation],
   );
 
   return {

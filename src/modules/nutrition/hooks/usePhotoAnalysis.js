@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { fileToBase64 } from "../lib/fileToBase64.js";
 import { postJson } from "../lib/nutritionApi.js";
 
@@ -63,14 +64,9 @@ export function usePhotoAnalysis({ setBusy, setErr, setStatusText }) {
     }
   };
 
-  const analyzePhoto = async () => {
-    setBusy(true);
-    setErr("");
-    setStatusText("Аналізую фото…");
-    setPhotoResult(null);
-    setAnswers({});
-    setPortionGrams("");
-    try {
+  // ─── Analyze photo ──────────────────────────────────────────────────────
+  const analyzeMutation = useMutation({
+    mutationFn: async () => {
       const file = fileRef.current?.files?.[0];
       if (!file) throw new Error("Спочатку обери фото.");
       const b64 = await fileToBase64(file);
@@ -80,21 +76,36 @@ export function usePhotoAnalysis({ setBusy, setErr, setStatusText }) {
         locale: "uk-UA",
       };
       setLastPhotoPayload(payload);
-      const data = await postJson("/api/nutrition/analyze-photo", payload);
+      return postJson("/api/nutrition/analyze-photo", payload);
+    },
+    onMutate: () => {
+      setBusy(true);
+      setErr("");
+      setStatusText("Аналізую фото…");
+      setPhotoResult(null);
+      setAnswers({});
+      setPortionGrams("");
+    },
+    onSuccess: (data) => {
       setPhotoResult(data?.result || null);
-    } catch (e) {
-      setErr(e?.message || "Помилка аналізу фото");
-    } finally {
+    },
+    onError: (err) => {
+      setErr(err?.message || "Помилка аналізу фото");
+    },
+    onSettled: () => {
       setStatusText("");
       setBusy(false);
-    }
-  };
+    },
+  });
 
-  const refinePhoto = async () => {
-    setBusy(true);
-    setErr("");
-    setStatusText("Уточнюю порцію та перераховую…");
-    try {
+  const analyzePhoto = useCallback(
+    () => analyzeMutation.mutate(),
+    [analyzeMutation],
+  );
+
+  // ─── Refine photo ───────────────────────────────────────────────────────
+  const refineMutation = useMutation({
+    mutationFn: () => {
       if (!lastPhotoPayload)
         throw new Error("Немає вихідного фото. Спочатку зроби аналіз.");
       const questions = Array.isArray(photoResult?.questions)
@@ -104,21 +115,35 @@ export function usePhotoAnalysis({ setBusy, setErr, setStatusText }) {
         .map((q) => ({ question: q, answer: String(answers[q] || "").trim() }))
         .filter((x) => x.answer);
       const grams = Number(String(portionGrams).replace(",", "."));
-      const data = await postJson("/api/nutrition/refine-photo", {
+      return postJson("/api/nutrition/refine-photo", {
         ...lastPhotoPayload,
         prior_result: photoResult,
         portion_grams: Number.isFinite(grams) && grams > 0 ? grams : null,
         qna,
         locale: "uk-UA",
       });
+    },
+    onMutate: () => {
+      setBusy(true);
+      setErr("");
+      setStatusText("Уточнюю порцію та перераховую…");
+    },
+    onSuccess: (data) => {
       setPhotoResult(data?.result || null);
-    } catch (e) {
-      setErr(e?.message || "Помилка уточнення");
-    } finally {
+    },
+    onError: (err) => {
+      setErr(err?.message || "Помилка уточнення");
+    },
+    onSettled: () => {
       setStatusText("");
       setBusy(false);
-    }
-  };
+    },
+  });
+
+  const refinePhoto = useCallback(
+    () => refineMutation.mutate(),
+    [refineMutation],
+  );
 
   return {
     fileRef,
