@@ -9,7 +9,7 @@ export function FromPantryRow({
 }) {
   if (!pantryItems || pantryItems.length === 0) return null;
   return (
-    <div className="mb-4 rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
+    <div className="mb-4 rounded-2xl border border-line bg-panel/40 px-3 py-3">
       <div className="text-2xs font-bold text-subtle uppercase tracking-widest mb-2">
         Зі складу
         {fromPantryItem && (

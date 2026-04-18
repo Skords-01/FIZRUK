@@ -41,7 +41,7 @@ function RecRow({ rec, onAction, onDismiss }) {
   return (
     <div
       className={cn(
-        "relative flex gap-3 rounded-xl border border-line/60 bg-bg px-3 py-2.5",
+        "relative flex gap-3 rounded-xl border border-line bg-bg px-3 py-2.5",
       )}
     >
       <div
@@ -94,7 +94,7 @@ function RecRow({ rec, onAction, onDismiss }) {
 function CoachRow({ insight, loading, error, onDiscuss, onRefresh }) {
   if (loading && !insight) {
     return (
-      <div className="rounded-xl border border-line/60 bg-bg px-3 py-2.5">
+      <div className="rounded-xl border border-line bg-bg px-3 py-2.5">
         <p className="text-xs text-muted animate-pulse">
           Коуч готує повідомлення…
         </p>
@@ -107,7 +107,7 @@ function CoachRow({ insight, loading, error, onDiscuss, onRefresh }) {
   if (!insight) return null;
 
   return (
-    <div className="relative rounded-xl border border-line/60 bg-bg px-3 py-2.5">
+    <div className="relative rounded-xl border border-line bg-bg px-3 py-2.5">
       <div
         className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-primary"
         aria-hidden
@@ -195,7 +195,7 @@ export function HubInsightsPanel({
         aria-expanded={open}
         className={cn(
           "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl",
-          "border border-line/60 bg-panel",
+          "border border-line bg-panel",
           "hover:bg-panelHi transition-colors",
         )}
       >

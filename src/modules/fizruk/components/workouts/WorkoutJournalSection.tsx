@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Button } from "@shared/components/ui/Button";
+import { compactToolbarButtonClass } from "@shared/components/ui/buttonPresets";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { ActiveWorkoutPanel } from "../workouts/ActiveWorkoutPanel";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
@@ -99,7 +100,7 @@ export function WorkoutJournalSection({
   return (
     <div className="space-y-3">
       {!activeWorkout && (
-        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card text-center">
+        <div className="bg-panel border border-line rounded-2xl p-5 shadow-card text-center">
           <div className="text-sm font-semibold text-text">
             Немає активного тренування
           </div>
@@ -190,7 +191,7 @@ export function WorkoutJournalSection({
         </SectionErrorBoundary>
       )}
 
-      <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-panel border border-line rounded-2xl shadow-card overflow-hidden">
         <div className="px-4 py-3 bg-panelHi/60 border-b border-line flex items-center justify-between gap-2">
           <div className="text-xs font-bold text-subtle uppercase tracking-widest">
             Останні тренування
@@ -198,7 +199,7 @@ export function WorkoutJournalSection({
           <button
             type="button"
             onClick={() => setRetroOpen((o) => !o)}
-            className="h-8 px-2.5 rounded-lg border border-line text-xs text-subtle hover:text-text hover:bg-panel transition-colors"
+            className={compactToolbarButtonClass}
             aria-expanded={retroOpen}
             title="Записати заднім числом"
           >

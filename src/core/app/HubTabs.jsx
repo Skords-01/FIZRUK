@@ -10,7 +10,7 @@ function TabButton({ active, onClick, children, iconName, iconBody }) {
       aria-selected={active}
       className={cn(
         "flex-1 flex items-center justify-center gap-1.5 min-h-[44px] py-2 rounded-xl text-sm font-medium transition-all",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
         active
           ? "bg-panel text-text shadow-card"
           : "text-muted hover:text-text",

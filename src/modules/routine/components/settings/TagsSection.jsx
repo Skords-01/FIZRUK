@@ -18,7 +18,7 @@ export function TagsSection({ routine, setRoutine, tagDraft, setTagDraft }) {
   };
 
   return (
-    <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
+    <section className="bg-panel border border-line rounded-2xl p-4 shadow-card space-y-3">
       <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
         Теги
       </h2>
@@ -32,7 +32,7 @@ export function TagsSection({ routine, setRoutine, tagDraft, setTagDraft }) {
         <Button
           type="button"
           variant="ghost"
-          className="min-h-[44px] shrink-0 border border-line/70 px-4"
+          className="min-h-[44px] shrink-0 border border-line px-4"
           onClick={() => {
             setRoutine((s) => createTag(s, tagDraft));
             setTagDraft("");
@@ -45,7 +45,7 @@ export function TagsSection({ routine, setRoutine, tagDraft, setTagDraft }) {
         {routine.tags.map((t) => (
           <li
             key={t.id}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-panelHi text-xs border border-line/50 font-medium"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-panelHi text-xs border border-line font-medium"
           >
             {editingTagId === t.id ? (
               <form

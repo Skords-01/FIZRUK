@@ -68,7 +68,7 @@ function MacroRatioBar({ prefs }) {
       <div className="flex rounded-lg overflow-hidden h-5">
         {pctP > 0 && (
           <div
-            className="bg-blue-500 flex items-center justify-center text-2xs font-bold text-white"
+            className="bg-blue-500 flex items-center justify-center text-3xs font-bold text-white"
             style={{ width: `${pctP}%` }}
           >
             {pctP}%
@@ -76,7 +76,7 @@ function MacroRatioBar({ prefs }) {
         )}
         {pctF > 0 && (
           <div
-            className="bg-yellow-500 flex items-center justify-center text-2xs font-bold text-white"
+            className="bg-yellow-500 flex items-center justify-center text-3xs font-bold text-white"
             style={{ width: `${pctF}%` }}
           >
             {pctF}%
@@ -84,7 +84,7 @@ function MacroRatioBar({ prefs }) {
         )}
         {pctC > 0 && (
           <div
-            className="bg-green-500 flex items-center justify-center text-2xs font-bold text-white"
+            className="bg-green-500 flex items-center justify-center text-3xs font-bold text-white"
             style={{ width: `${pctC}%` }}
           >
             {pctC}%
@@ -129,7 +129,7 @@ function MealRow({ meal, onAddToLog, onRegen, busy }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="rounded-2xl border border-line/60 bg-bg/40 p-3">
+    <div className="rounded-2xl border border-line bg-bg/40 p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-0.5">
@@ -489,7 +489,7 @@ export function DailyPlanCard({
             </div>
 
             {dayPlan?.note && (
-              <div className="rounded-xl bg-panel/60 border border-line/60 px-3 py-2 text-xs text-subtle">
+              <div className="rounded-xl bg-panel/60 border border-line px-3 py-2 text-xs text-subtle">
                 {dayPlan.note}
               </div>
             )}

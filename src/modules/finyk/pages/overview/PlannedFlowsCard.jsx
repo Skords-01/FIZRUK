@@ -8,7 +8,7 @@ export function PlannedFlowsCard({ plannedFlows, onNavigate, showBalance }) {
   if (plannedFlows.length === 0) return null;
 
   return (
-    <div className="bg-panel border border-line/60 rounded-2xl overflow-hidden shadow-card">
+    <div className="bg-panel border border-line rounded-2xl overflow-hidden shadow-card">
       <div className="px-5 pt-4 pb-2 flex items-center justify-between">
         <span className="text-xs font-medium text-subtle">
           Найближчі платежі

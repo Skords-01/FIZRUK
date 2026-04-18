@@ -183,7 +183,7 @@ export function VoiceMicButton({
         sizeMap[size] || sizeMap.md,
         listening
           ? "bg-error/15 text-error border border-error/30 animate-pulse"
-          : "bg-panelHi text-muted hover:text-text hover:bg-line/40 border border-line/60",
+          : "bg-panelHi text-muted hover:text-text hover:bg-line/40 border border-line",
         disabled && "opacity-40 pointer-events-none",
         className,
       )}

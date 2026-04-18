@@ -235,7 +235,7 @@ export function CategoryManager({
           return (
             <div
               key={cat.id}
-              className="bg-panel border border-line/60 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-card"
+              className="bg-panel border border-line rounded-2xl px-4 py-3 flex items-center gap-3 shadow-card"
             >
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0"
@@ -308,7 +308,7 @@ export function CategoryManager({
       </div>
 
       {showForm ? (
-        <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+        <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
           <div className="text-sm font-semibold text-text mb-3">
             Нова категорія
           </div>

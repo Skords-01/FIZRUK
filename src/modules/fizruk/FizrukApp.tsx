@@ -261,7 +261,7 @@ export default function FizrukApp({
 
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
-      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative safe-area-pt">
+      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line z-40 relative safe-area-pt">
         <div className="flex min-h-[68px] items-center px-4 py-2 sm:px-5 gap-3">
           {isAtlas || isExercise ? (
             <button
@@ -287,7 +287,7 @@ export default function FizrukApp({
             <button
               type="button"
               onClick={onBackToHub}
-              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line/80 bg-panel/80"
+              className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] -ml-1 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line bg-panel/80"
               aria-label="До вибору модуля"
               title="До хабу"
             >
@@ -334,7 +334,7 @@ export default function FizrukApp({
           )}
           <div className="min-w-0 flex-1">
             {!isAtlas && !isExercise && (
-              <span className="text-2xs text-success/70 font-bold tracking-widest uppercase block leading-none mb-0.5">
+              <span className="text-3xs text-success/70 font-bold tracking-widest uppercase block leading-none mb-0.5">
                 ОСОБИСТИЙ ЖУРНАЛ
               </span>
             )}
@@ -358,7 +358,7 @@ export default function FizrukApp({
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line/80 bg-panel/80"
+            className="shrink-0 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors border border-line bg-panel/80"
             aria-label="Налаштування даних"
             title="Налаштування даних"
           >
@@ -398,7 +398,7 @@ export default function FizrukApp({
             aria-labelledby="fizruk-settings-title"
             className="relative w-full max-w-sm h-full bg-panel border-l border-line shadow-2xl flex flex-col safe-area-pt-pb"
           >
-            <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-line/60">
+            <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-line">
               <h2
                 id="fizruk-settings-title"
                 className="text-base font-semibold text-text"
@@ -452,7 +452,7 @@ export default function FizrukApp({
       </div>
 
       {!isAtlas && !isExercise && (
-        <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30 safe-area-pb">
+        <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line relative z-30 safe-area-pb">
           <div className="flex h-[58px]">
             {NAV.map((item) => {
               const active = page === item.id;

@@ -334,7 +334,7 @@ export function Progress() {
         </div>
 
         {!hasAny && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-8 shadow-card text-center">
+          <div className="bg-panel border border-line rounded-2xl p-8 shadow-card text-center">
             <div className="text-3xl mb-3">📈</div>
             <div className="text-sm font-medium text-text mb-1">
               Даних ще немає
@@ -347,14 +347,14 @@ export function Progress() {
 
         {/* Weekly volume chart */}
         {(workouts || []).some((w) => w.endedAt) && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
             <WeeklyVolumeChart volumeKg={weekly.volumeKg} />
           </div>
         )}
 
         {/* Cross-module activity */}
         {hasPushupData && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
               Активність з інших модулів
             </div>
@@ -402,7 +402,7 @@ export function Progress() {
 
         {/* Weight + fat cards */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               Вага
             </div>
@@ -429,7 +429,7 @@ export function Progress() {
               )}
             </div>
           </div>
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               % жиру
             </div>
@@ -460,7 +460,7 @@ export function Progress() {
 
         {/* Weight trend chart */}
         {weightTrend.filter((d) => d.value != null).length >= 2 && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
               Тренд ваги
             </div>
@@ -475,7 +475,7 @@ export function Progress() {
 
         {/* Body fat trend chart */}
         {fatTrend.filter((d) => d.value != null).length >= 2 && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
               Тренд % жиру
             </div>
@@ -490,7 +490,7 @@ export function Progress() {
 
         {/* Wellbeing chart */}
         {wellbeingData.length >= 2 && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
               Самопочуття
             </div>
@@ -499,7 +499,7 @@ export function Progress() {
         )}
 
         {/* Muscle volume bars */}
-        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+        <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
           <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
             Обʼєм по мʼязах
           </div>
@@ -544,7 +544,7 @@ export function Progress() {
               : prs.filter((p) => p.muscleGroup === prFilter);
           const MEDALS = ["🥇", "🥈", "🥉"];
           return (
-            <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+            <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="text-xs font-bold text-subtle uppercase tracking-widest">
                   Рекорди (PR) · {prs.length}
@@ -664,7 +664,7 @@ export function Progress() {
         })()}
 
         {/* Data management */}
-        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+        <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
           <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
             Дані
           </div>

@@ -40,7 +40,7 @@ export function WorkoutCatalogSection({
         </p>
       )}
 
-      <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-panel border border-line rounded-2xl shadow-card overflow-hidden">
         {grouped.length === 0 ? (
           <EmptyState
             compact
@@ -112,7 +112,7 @@ export function WorkoutCatalogSection({
                           {mode === "log" && (
                             <button
                               type="button"
-                              className="shrink-0 w-12 min-h-[48px] flex items-center justify-center border-l border-line/80 text-muted hover:text-text hover:bg-panelHi transition-colors"
+                              className="shrink-0 w-12 min-h-[48px] flex items-center justify-center border-l border-line text-muted hover:text-text hover:bg-panelHi transition-colors"
                               aria-label="Опис і фото вправи"
                               onClick={() => setSelected(ex)}
                             >

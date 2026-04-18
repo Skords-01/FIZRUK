@@ -57,7 +57,7 @@ export function SoftAuthPromptCard({ onOpenAuth, onDismiss }) {
             <button
               type="button"
               onClick={handleDismiss}
-              className="text-xs text-muted hover:text-text px-3 py-2 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+              className="text-xs text-muted hover:text-text px-3 py-2 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45"
             >
               Пізніше
             </button>

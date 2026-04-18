@@ -147,7 +147,7 @@ export function WorkoutTemplatesSection({
       )}
 
       {editingId && (
-        <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
+        <div className="bg-panel border border-line rounded-2xl p-4 shadow-card space-y-3">
           <Input
             placeholder="Назва (за замовчуванням — «Мій шаблон»)"
             value={name}
@@ -280,7 +280,7 @@ export function WorkoutTemplatesSection({
                       </span>
                       {group && (
                         <span
-                          className={`text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${group.type === "circuit" ? "bg-fizruk/15 text-fizruk border border-fizruk/30" : "bg-success/15 text-success border border-success/30"}`}
+                          className={`text-3xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${group.type === "circuit" ? "bg-fizruk/15 text-fizruk border border-fizruk/30" : "bg-success/15 text-success border border-success/30"}`}
                         >
                           {group.type === "circuit" ? "Коло" : "СС"}
                         </span>
@@ -354,7 +354,7 @@ export function WorkoutTemplatesSection({
         </div>
       )}
 
-      <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-panel border border-line rounded-2xl shadow-card overflow-hidden">
         <div className="px-4 py-3 bg-panelHi/60 border-b border-line">
           <div className="text-xs font-bold text-subtle uppercase tracking-widest">
             Збережені шаблони

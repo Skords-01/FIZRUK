@@ -380,7 +380,7 @@ export function Budgets({ mono, storage }) {
         <div
           className={cn(
             "bg-panel border rounded-2xl p-5 shadow-card",
-            isOver ? "border-danger/40" : "border-line/60",
+            isOver ? "border-danger/40" : "border-line",
           )}
         >
           <div className="text-[11px] font-bold text-subtle uppercase tracking-widest mb-3">
@@ -612,7 +612,7 @@ export function Budgets({ mono, storage }) {
                   key={fc.categoryId}
                   className={cn(
                     "bg-panel border rounded-2xl p-5 shadow-card",
-                    fc.overLimit ? "border-danger/50" : "border-line/60",
+                    fc.overLimit ? "border-danger/50" : "border-line",
                   )}
                 >
                   <div className="flex justify-between items-start mb-1">
@@ -757,7 +757,7 @@ export function Budgets({ mono, storage }) {
         })}
 
         {showForm ? (
-          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card space-y-3">
+          <div className="bg-panel border border-line rounded-2xl p-5 shadow-card space-y-3">
             <div className="flex gap-2">
               <button
                 onClick={() => {
@@ -904,7 +904,7 @@ export function Budgets({ mono, storage }) {
         )}
 
         {/* Category manager — collapsible at bottom so it never shifts other sections */}
-        <div className="bg-panel border border-line/60 rounded-2xl shadow-card overflow-hidden">
+        <div className="bg-panel border border-line rounded-2xl shadow-card overflow-hidden">
           <button
             type="button"
             onClick={() => setShowCategories((v) => !v)}

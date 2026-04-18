@@ -76,7 +76,7 @@ function MealThumb({ mealId }) {
       decoding="async"
       width="40"
       height="40"
-      className="w-10 h-10 rounded-lg object-cover shrink-0 border border-line/60"
+      className="w-10 h-10 rounded-lg object-cover shrink-0 border border-line"
     />
   );
 }
@@ -190,7 +190,7 @@ export function LogCard({
           </button>
         </div>
 
-        <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-2">
+        <div className="rounded-2xl border border-line bg-panel/40 px-3 py-3 space-y-2">
           <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
             Пошук по журналу
           </div>
@@ -294,7 +294,7 @@ export function LogCard({
         </button>
 
         {weekOpen && (
-          <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3">
+          <div className="rounded-2xl border border-line bg-panel/40 px-3 py-3">
             <div className="overflow-x-auto">
               <table className="w-full text-[11px] text-left">
                 <thead>
@@ -324,7 +324,7 @@ export function LogCard({
           </div>
         )}
 
-        <div className="rounded-2xl border border-line/50 bg-panel/40 px-3 py-3 space-y-3">
+        <div className="rounded-2xl border border-line bg-panel/40 px-3 py-3 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               Аналітика (тренди)

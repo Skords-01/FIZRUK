@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@shared/components/ui/Button";
+import { subtleNavButtonClass } from "@shared/components/ui/buttonPresets";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { cn } from "@shared/lib/cn";
 import { useToast } from "@shared/hooks/useToast";
@@ -397,14 +398,14 @@ export function Workouts() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="h-9 px-3 rounded-xl border border-line text-xs font-semibold text-subtle hover:text-text hover:bg-panelHi transition-colors"
+              className={subtleNavButtonClass}
               onClick={() => (window.location.hash = "#progress")}
             >
               Прогрес →
             </button>
             <button
               type="button"
-              className="h-9 px-3 rounded-xl border border-line text-xs font-semibold text-subtle hover:text-text hover:bg-panelHi transition-colors"
+              className={subtleNavButtonClass}
               onClick={() => (window.location.hash = "#programs")}
             >
               Програми →

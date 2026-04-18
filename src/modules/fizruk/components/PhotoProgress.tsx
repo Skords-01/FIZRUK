@@ -257,7 +257,7 @@ export function PhotoProgress() {
 
   if (!ready) {
     return (
-      <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+      <section className="bg-panel border border-line rounded-2xl p-4 shadow-card">
         <div className="text-xs text-subtle text-center py-4">
           Завантаження…
         </div>
@@ -267,7 +267,7 @@ export function PhotoProgress() {
 
   return (
     <section
-      className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+      className="bg-panel border border-line rounded-2xl p-4 shadow-card"
       aria-label="Фото-прогрес"
     >
       <div className="flex items-center justify-between gap-3 mb-3">
@@ -347,7 +347,7 @@ export function PhotoProgress() {
           {(!beforePhoto ||
             !afterPhoto ||
             beforePhoto.id === afterPhoto.id) && (
-            <div className="rounded-xl border border-dashed border-line/60 bg-panelHi/50 py-6 text-center text-xs text-subtle">
+            <div className="rounded-xl border border-dashed border-line bg-panelHi/50 py-6 text-center text-xs text-subtle">
               Обери два різні фото для порівняння
             </div>
           )}
@@ -454,7 +454,7 @@ export function PhotoProgress() {
           </div>
 
           {photos.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-line/60 bg-panelHi/50 py-8 text-center text-xs text-subtle">
+            <div className="rounded-xl border border-dashed border-line bg-panelHi/50 py-8 text-center text-xs text-subtle">
               Додай перше фото прогресу
             </div>
           ) : (
@@ -475,7 +475,7 @@ export function PhotoProgress() {
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
                   <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-1 pt-3 bg-gradient-to-t from-black/60 to-transparent">
-                    <p className="text-2xs text-white font-semibold leading-tight">
+                    <p className="text-3xs text-white font-semibold leading-tight">
                       {p.date}
                     </p>
                     {p.note && (

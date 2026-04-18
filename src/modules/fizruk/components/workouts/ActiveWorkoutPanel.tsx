@@ -127,7 +127,7 @@ function WarmupCooldownChecklist({ title, items, onToggle, onInit, color }) {
 function SupersetBadge({ type }) {
   return (
     <span
-      className={`text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${type === "circuit" ? "bg-fizruk/15 text-fizruk border border-fizruk/30" : "bg-success/15 text-success border border-success/30"}`}
+      className={`text-3xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${type === "circuit" ? "bg-fizruk/15 text-fizruk border border-fizruk/30" : "bg-success/15 text-success border border-success/30"}`}
     >
       {type === "circuit" ? "Коло" : "Суперсет"}
     </span>
@@ -516,12 +516,12 @@ export function ActiveWorkoutPanel({
                 </div>
               )}
               {!activeWorkout.endedAt && !group && (
-                <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-line/60">
+                <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-line">
                   <div className="flex items-center justify-between w-full gap-1">
                     <span className="text-2xs font-bold text-subtle uppercase tracking-widest">
                       Таймер відпочинку
                     </span>
-                    <span className="text-2xs text-muted">
+                    <span className="text-3xs text-muted">
                       {catLabel} · реком. {defSec}с
                     </span>
                   </div>
@@ -615,7 +615,7 @@ export function ActiveWorkoutPanel({
               {cardioMetrics && (
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl border border-line bg-bg px-3 py-2 text-center">
-                    <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
+                    <div className="text-3xs font-bold text-subtle uppercase tracking-widest">
                       Темп
                     </div>
                     <div className="text-sm font-bold text-text tabular-nums">
@@ -623,7 +623,7 @@ export function ActiveWorkoutPanel({
                     </div>
                   </div>
                   <div className="rounded-xl border border-line bg-bg px-3 py-2 text-center">
-                    <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
+                    <div className="text-3xs font-bold text-subtle uppercase tracking-widest">
                       Швидкість
                     </div>
                     <div className="text-sm font-bold text-text tabular-nums">
@@ -752,7 +752,7 @@ export function ActiveWorkoutPanel({
   if (!activeWorkout) return null;
 
   return (
-    <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+    <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-sm font-bold text-text">
@@ -808,7 +808,7 @@ export function ActiveWorkoutPanel({
         </div>
       </div>
 
-      <details className="mt-3 rounded-xl border border-line/60 bg-panelHi/50 px-3 py-2">
+      <details className="mt-3 rounded-xl border border-line bg-panelHi/50 px-3 py-2">
         <summary className="text-xs font-semibold text-subtle cursor-pointer select-none">
           Час тренування
         </summary>

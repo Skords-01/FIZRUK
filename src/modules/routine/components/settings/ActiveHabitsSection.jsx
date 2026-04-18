@@ -37,7 +37,7 @@ export function ActiveHabitsSection({
   const hasActive = routine.habits.some((h) => !h.archived);
 
   return (
-    <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-2">
+    <section className="bg-panel border border-line rounded-2xl p-4 shadow-card space-y-2">
       <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
         Активні звички
       </h2>
@@ -57,7 +57,7 @@ export function ActiveHabitsSection({
         Порядок у списку можна змінити перетягуванням або кнопками вгору вниз.
       </p>
       {!hasActive && (
-        <div className="rounded-xl border border-dashed border-line/70 bg-panelHi/50 p-4 text-center">
+        <div className="rounded-xl border border-dashed border-line bg-panelHi/50 p-4 text-center">
           <p className="text-sm text-muted">
             Поки порожньо — додай першу звичку формою вище.
           </p>
@@ -65,7 +65,7 @@ export function ActiveHabitsSection({
             <Button
               type="button"
               variant="ghost"
-              className="mt-3 border border-line/70"
+              className="mt-3 border border-line"
               onClick={onOpenCalendar}
             >
               Перейти до календаря

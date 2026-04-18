@@ -288,7 +288,7 @@ export function Dashboard({
           <p className="text-[11px] font-bold tracking-widest uppercase text-fizruk">
             {greeting} · {today}
           </p>
-          <h1 className="text-2xl font-black text-white mt-3 leading-tight">
+          <h1 className="text-[26px] font-black text-white mt-3 leading-tight">
             Твій прогрес
             <br />
             зібраний в одному місці
@@ -363,7 +363,7 @@ export function Dashboard({
               recentlyUsed.length > 0 ? recentlyUsed : templates.slice(0, 3);
             return (
               <section
-                className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+                className="bg-panel border border-line rounded-2xl p-4 shadow-card"
                 aria-label="Швидкий старт"
               >
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -422,7 +422,7 @@ export function Dashboard({
 
         {activeProgram && (
           <section
-            className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+            className="bg-panel border border-line rounded-2xl p-4 shadow-card"
             aria-label="Програма сьогодні"
           >
             <div className="flex items-center justify-between gap-2 mb-3">
@@ -467,7 +467,7 @@ export function Dashboard({
         )}
 
         <section
-          className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+          className="bg-panel border border-line rounded-2xl p-4 shadow-card"
           aria-label="Відновлення та фокус тренування"
         >
           <div className="flex items-start justify-between gap-2">
@@ -540,7 +540,7 @@ export function Dashboard({
                 showLegend={false}
               />
 
-              <div className="mt-4 pt-3 border-t border-line/60">
+              <div className="mt-4 pt-3 border-t border-line">
                 <p className="text-2xs font-bold text-subtle uppercase tracking-widest mb-2">
                   Пріоритет після відпочинку
                 </p>
@@ -582,7 +582,7 @@ export function Dashboard({
             <div
               key={card.id}
               role="listitem"
-              className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card min-h-[100px]"
+              className="bg-panel border border-line rounded-2xl p-4 shadow-card min-h-[100px]"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -592,7 +592,7 @@ export function Dashboard({
                   <div className="text-2xs font-semibold text-subtle uppercase tracking-wide mt-2">
                     {card.label}
                   </div>
-                  <div className="text-2xs text-muted mt-0.5 leading-snug">
+                  <div className="text-3xs text-muted mt-0.5 leading-snug">
                     {card.sub}
                   </div>
                 </div>
@@ -666,7 +666,7 @@ export function Dashboard({
           ))}
         </div>
 
-        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+        <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="text-xs font-medium text-subtle">
               План на сьогодні

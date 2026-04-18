@@ -38,7 +38,7 @@ export function HubBackupPanel({ className }) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-line/60 bg-panelHi/40 px-3 py-2.5 flex flex-col gap-3 text-xs text-subtle",
+        "rounded-2xl border border-line bg-panelHi/40 px-3 py-2.5 flex flex-col gap-3 text-xs text-subtle",
         className,
       )}
     >

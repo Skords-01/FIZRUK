@@ -222,7 +222,7 @@ export function BarcodeScanner({ onDetected, onClose }) {
           </button>
         </div>
         <div className="px-4 pb-8 space-y-3">
-          <div className="rounded-2xl overflow-hidden border border-line/50 bg-black relative">
+          <div className="rounded-2xl overflow-hidden border border-line bg-black relative">
             <video
               ref={videoRef}
               className="w-full aspect-video object-cover"

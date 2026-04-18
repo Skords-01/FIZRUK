@@ -195,7 +195,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
                 </span>
               ))}
               {category && (
-                <span className="text-2xs px-2 py-0.5 rounded-full bg-panelHi border border-line/60 text-muted font-medium">
+                <span className="text-2xs px-2 py-0.5 rounded-full bg-panelHi border border-line text-muted font-medium">
                   {category}
                 </span>
               )}
@@ -204,7 +204,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 w-9 h-9 rounded-xl border border-line/70 flex items-center justify-center text-muted hover:text-text hover:bg-panelHi transition-colors"
+            className="shrink-0 w-9 h-9 rounded-xl border border-line flex items-center justify-center text-muted hover:text-text hover:bg-panelHi transition-colors"
             aria-label="Закрити"
           >
             ✕
@@ -284,7 +284,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               <button
                 type="button"
                 onClick={() => goCalMonth(-1)}
-                className="w-8 h-8 rounded-lg border border-line/70 text-muted hover:text-text flex items-center justify-center text-sm"
+                className="w-8 h-8 rounded-lg border border-line text-muted hover:text-text flex items-center justify-center text-sm"
                 aria-label="Попередній місяць"
               >
                 ‹
@@ -295,7 +295,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               <button
                 type="button"
                 onClick={() => goCalMonth(1)}
-                className="w-8 h-8 rounded-lg border border-line/70 text-muted hover:text-text flex items-center justify-center text-sm"
+                className="w-8 h-8 rounded-lg border border-line text-muted hover:text-text flex items-center justify-center text-sm"
                 aria-label="Наступний місяць"
               >
                 ›
@@ -306,7 +306,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
             {WEEKDAY_LABELS.map((wd) => (
               <div
                 key={wd}
-                className="text-center text-2xs text-subtle font-medium pb-1"
+                className="text-center text-3xs text-subtle font-medium pb-1"
               >
                 {wd}
               </div>
@@ -343,7 +343,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
               );
             })}
           </div>
-          <div className="flex items-center gap-3 mt-2 text-2xs text-subtle">
+          <div className="flex items-center gap-3 mt-2 text-3xs text-subtle">
             <span className="flex items-center gap-1">
               <span className="inline-block w-3 h-3 rounded bg-routine-surface2 dark:bg-routine/15 border border-routine-ring/40 dark:border-routine/30" />
               Виконано

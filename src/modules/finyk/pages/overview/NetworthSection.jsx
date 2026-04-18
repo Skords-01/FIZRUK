@@ -9,7 +9,7 @@ import { ChartFallback } from "../../components/charts/ChartFallback";
 export function NetworthSection({ networthHistory }) {
   if (networthHistory.length >= 2) {
     return (
-      <div className="bg-panel border border-line/60 rounded-2xl px-5 pt-4 pb-3 shadow-card">
+      <div className="bg-panel border border-line rounded-2xl px-5 pt-4 pb-3 shadow-card">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-medium text-subtle">
             Динаміка нетворсу
@@ -26,7 +26,7 @@ export function NetworthSection({ networthHistory }) {
   }
 
   return (
-    <div className="bg-panel border border-dashed border-line/60 rounded-2xl p-6 text-center shadow-card">
+    <div className="bg-panel border border-dashed border-line rounded-2xl p-6 text-center shadow-card">
       <p className="text-sm text-subtle">
         Ще мало знімків для графіка нетворсу — з’явиться після кількох змін
         балансу.

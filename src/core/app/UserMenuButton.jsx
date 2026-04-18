@@ -64,7 +64,7 @@ export function UserMenuButton({
         className={cn(
           "relative w-11 h-11 flex items-center justify-center rounded-2xl text-sm font-bold transition-colors",
           "bg-brand-500/15 text-brand-600 dark:text-brand-400 hover:bg-brand-500/25",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
           syncing && "animate-pulse",
         )}
       >
@@ -79,7 +79,7 @@ export function UserMenuButton({
             </p>
             <p className="text-xs text-muted truncate">{user.email}</p>
           </div>
-          <div className="border-t border-line/60 pt-2 space-y-1">
+          <div className="border-t border-line pt-2 space-y-1">
             <button
               type="button"
               onClick={() => {
@@ -111,7 +111,7 @@ export function UserMenuButton({
             )}
           </div>
           {typeof onToggleDark === "function" && (
-            <div className="border-t border-line/60 pt-2">
+            <div className="border-t border-line pt-2">
               <button
                 type="button"
                 onClick={() => {
@@ -124,7 +124,7 @@ export function UserMenuButton({
               </button>
             </div>
           )}
-          <div className="border-t border-line/60 pt-2">
+          <div className="border-t border-line pt-2">
             <button
               type="button"
               onClick={() => {

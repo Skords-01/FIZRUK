@@ -166,7 +166,7 @@ export function ShoppingListCard({
               {shoppingList.categories.map((cat) => (
                 <div
                   key={cat.name}
-                  className="rounded-2xl border border-line/60 bg-bg/30 overflow-hidden"
+                  className="rounded-2xl border border-line bg-bg/30 overflow-hidden"
                 >
                   <div className="px-3 py-2 border-b border-line/40 bg-panel/40">
                     <div className="flex items-center gap-1.5">

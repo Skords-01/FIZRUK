@@ -454,7 +454,7 @@ export function HubReports() {
           ))}
         </div>
       ) : (
-        <div className="bg-panel border border-line/50 rounded-2xl p-4 text-center text-xs text-muted">
+        <div className="bg-panel border border-line rounded-2xl p-4 text-center text-xs text-muted">
           Збери більше даних для інсайтів
         </div>
       )}

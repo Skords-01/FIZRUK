@@ -24,7 +24,7 @@ export function SubTabs({ value, onChange, tabs, className }) {
             onClick={() => onChange(t.id)}
             className={cn(
               "flex-1 min-h-[40px] px-3 py-2 rounded-xl text-sm font-semibold transition-colors",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
               active
                 ? "bg-panel text-text shadow-sm"
                 : "text-muted hover:text-text",

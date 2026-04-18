@@ -115,7 +115,7 @@ function ModuleBlock({ moduleKey, data }) {
         )}
       >
         <div className="overflow-hidden">
-          <div className="px-3 pb-3 border-t border-line/60 pt-2 space-y-2">
+          <div className="px-3 pb-3 border-t border-line pt-2 space-y-2">
             {data.comment && (
               <p className="text-xs text-muted leading-relaxed">
                 {data.comment}
@@ -260,7 +260,7 @@ function DigestContent({
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-line/60 px-4 pt-3 pb-4 space-y-2">
+          <div className="border-t border-line px-4 pt-3 pb-4 space-y-2">
             {["finyk", "fizruk", "nutrition", "routine"].map((key) =>
               digest[key] ? (
                 <ModuleBlock key={key} moduleKey={key} data={digest[key]} />
@@ -309,7 +309,7 @@ function DigestContent({
         </div>
       )}
       {expanded && (
-        <div className="px-4 pb-3 border-t border-line/60 pt-2">
+        <div className="px-4 pb-3 border-t border-line pt-2">
           <button
             type="button"
             onClick={() => setExpanded(false)}
@@ -341,7 +341,7 @@ export function WeeklyDigestCard() {
     <div
       className={cn(
         "rounded-2xl border bg-panel shadow-card overflow-hidden",
-        "border-line/80 dark:border-line",
+        "border-line dark:border-line",
         "transition-all duration-200 hover:shadow-float",
       )}
     >
@@ -419,7 +419,7 @@ export function WeeklyDigestCard() {
       </div>
 
       {showHistory && history.length > 1 && (
-        <div className="border-t border-line/60 px-4 py-2">
+        <div className="border-t border-line px-4 py-2">
           <div className="flex flex-wrap gap-1">
             {history.map((h) => (
               <button
@@ -438,7 +438,7 @@ export function WeeklyDigestCard() {
               >
                 {h.weekRange}
                 {h.weekKey === currentWeekKey && (
-                  <span className="ml-1 text-2xs opacity-70">поточний</span>
+                  <span className="ml-1 text-3xs opacity-70">поточний</span>
                 )}
               </button>
             ))}

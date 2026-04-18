@@ -53,9 +53,7 @@ export function SettingsGroup({
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-line/60 p-4 space-y-5">
-            {children}
-          </div>
+          <div className="border-t border-line p-4 space-y-5">{children}</div>
         </div>
       </div>
     </div>

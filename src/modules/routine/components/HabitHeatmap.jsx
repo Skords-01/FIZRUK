@@ -109,7 +109,7 @@ export function HabitHeatmap({ habits, completions }) {
   return (
     <div
       ref={rootRef}
-      className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+      className="bg-panel border border-line rounded-2xl p-4 shadow-card"
     >
       <p className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
         Активність за рік
@@ -178,7 +178,7 @@ export function HabitHeatmap({ habits, completions }) {
       </div>
 
       {selectedCell ? (
-        <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-line/60 bg-bg px-3 py-2 text-xs">
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-line bg-bg px-3 py-2 text-xs">
           <span className="text-subtle truncate">
             {selectedCell.dt.toLocaleDateString("uk-UA", {
               weekday: "long",
@@ -196,7 +196,7 @@ export function HabitHeatmap({ habits, completions }) {
           </span>
         </div>
       ) : (
-        <div className="mt-3 flex items-center gap-2 text-2xs text-subtle/70 select-none">
+        <div className="mt-3 flex items-center gap-2 text-3xs text-subtle/70 select-none">
           <span>менше</span>
           {[
             "bg-panelHi dark:bg-line/25",

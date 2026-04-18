@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { subtleNavButtonClass } from "@shared/components/ui/buttonPresets";
 import { cn } from "@shared/lib/cn";
 import { useDailyLog } from "../hooks/useDailyLog";
 import { MiniLineChart } from "../components/MiniLineChart";
@@ -38,7 +39,7 @@ function ScoreButton({ value, selected, onClick, label }) {
       <span className="text-base leading-none">{value}</span>
       <span
         className={cn(
-          "text-2xs leading-none truncate max-w-full px-1",
+          "text-3xs leading-none truncate max-w-full px-1",
           selected ? "text-white/80" : "text-muted",
         )}
       >
@@ -184,7 +185,7 @@ export function Body({ onOpenMeasurements }) {
               <button
                 type="button"
                 onClick={onOpenMeasurements}
-                className="h-9 px-3 rounded-xl border border-line text-xs font-semibold text-subtle hover:text-text hover:bg-panelHi transition-colors"
+                className={subtleNavButtonClass}
               >
                 Виміри
               </button>
@@ -193,7 +194,7 @@ export function Body({ onOpenMeasurements }) {
         </div>
 
         <section
-          className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+          className="bg-panel border border-line rounded-2xl p-4 shadow-card"
           aria-label="Записати показники"
         >
           <h2 className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
@@ -331,7 +332,7 @@ export function Body({ onOpenMeasurements }) {
 
         {weightData.length >= 2 && (
           <section
-            className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+            className="bg-panel border border-line rounded-2xl p-4 shadow-card"
             aria-label="Динаміка ваги"
           >
             <h2 className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
@@ -348,7 +349,7 @@ export function Body({ onOpenMeasurements }) {
 
         {sleepData.length >= 2 && (
           <section
-            className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+            className="bg-panel border border-line rounded-2xl p-4 shadow-card"
             aria-label="Динаміка сну"
           >
             <h2 className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
@@ -365,7 +366,7 @@ export function Body({ onOpenMeasurements }) {
 
         {energyData.length >= 2 && (
           <section
-            className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+            className="bg-panel border border-line rounded-2xl p-4 shadow-card"
             aria-label="Динаміка енергії"
           >
             <h2 className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
@@ -382,7 +383,7 @@ export function Body({ onOpenMeasurements }) {
 
         {moodData.length >= 2 && (
           <section
-            className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+            className="bg-panel border border-line rounded-2xl p-4 shadow-card"
             aria-label="Динаміка настрою"
           >
             <h2 className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
@@ -401,7 +402,7 @@ export function Body({ onOpenMeasurements }) {
 
         {entries.length > 0 && (
           <section
-            className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card"
+            className="bg-panel border border-line rounded-2xl p-4 shadow-card"
             aria-label="Журнал записів"
           >
             <h2 className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">

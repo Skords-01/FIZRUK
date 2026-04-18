@@ -267,7 +267,7 @@ function VibePickerStep({ picks, togglePick, onNext, onBack }) {
               aria-pressed={active}
               className={cn(
                 "w-full text-left px-4 py-3 rounded-2xl border transition-all",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
                 active
                   ? "border-brand-500/60 bg-brand-500/5 shadow-card"
                   : "border-line bg-panelHi hover:border-brand-500/40",
@@ -399,7 +399,7 @@ export function OnboardingWizard({ onDone }) {
                 markOnboardingDone();
                 onDone(null, { intent: "skipped" });
               }}
-              className="text-xs text-muted hover:text-text transition-colors px-2 py-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+              className="text-xs text-muted hover:text-text transition-colors px-2 py-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45"
             >
               Пропустити
             </button>

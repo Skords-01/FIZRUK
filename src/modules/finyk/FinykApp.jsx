@@ -310,7 +310,7 @@ export default function App({
           <div
             className={cn(
               "bg-panel/95 backdrop-blur-xl border rounded-3xl p-6 shadow-float",
-              "border-line/80 dark:border-line",
+              "border-line dark:border-line",
             )}
           >
             <label
@@ -513,7 +513,7 @@ export default function App({
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line/60 z-40 relative safe-area-pt">
+      <div className="shrink-0 bg-panel/95 backdrop-blur-md border-b border-line z-40 relative safe-area-pt">
         <div className="flex h-14 items-center justify-between px-4 sm:px-5 gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div
@@ -682,7 +682,7 @@ export default function App({
             setEditingManualExpenseId(null);
             setShowExpenseSheet(true);
           }}
-          className="fixed bottom-[calc(58px+env(safe-area-inset-bottom,0px)+16px)] right-4 w-12 h-12 rounded-full bg-emerald-500 text-white shadow-lg flex items-center justify-center text-2xl hover:bg-emerald-600 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 ease-smooth z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
+          className="fixed bottom-[calc(58px+env(safe-area-inset-bottom,0px)+16px)] right-4 w-12 h-12 rounded-full bg-finyk text-white shadow-float flex items-center justify-center text-2xl hover:bg-finyk-hover hover:shadow-glow hover:scale-105 active:scale-95 transition-all duration-200 ease-smooth z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-finyk/45 focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
           aria-label="Додати витрату"
         >
           +
@@ -747,7 +747,7 @@ export default function App({
       />
 
       {/* Bottom navigation */}
-      <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line/60 relative z-30 safe-area-pb">
+      <nav className="shrink-0 bg-panel/95 backdrop-blur-md border-t border-line relative z-30 safe-area-pb">
         <div className="flex h-[58px]">
           {NAV_ITEMS.map((item) => {
             const active = page === item.id;

@@ -20,7 +20,7 @@ export function CategoriesSection({
 
   return (
     <>
-      <section className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3">
+      <section className="bg-panel border border-line rounded-2xl p-4 shadow-card space-y-3">
         <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
           {editingCatId ? "Редагувати категорію" : "Категорії"}
         </h2>
@@ -46,7 +46,7 @@ export function CategoriesSection({
               <Button
                 type="button"
                 variant="ghost"
-                className="min-h-[44px] min-w-0 border border-line/70 sm:min-w-[7rem]"
+                className="min-h-[44px] min-w-0 border border-line sm:min-w-[7rem]"
                 onClick={() => {
                   setRoutine((s) =>
                     updateCategory(s, editingCatId, {
@@ -63,7 +63,7 @@ export function CategoriesSection({
               <Button
                 type="button"
                 variant="ghost"
-                className="min-h-[44px] min-w-0 border border-line/70"
+                className="min-h-[44px] min-w-0 border border-line"
                 onClick={() => {
                   setEditingCatId(null);
                   setCatDraft({ name: "", emoji: "" });
@@ -76,7 +76,7 @@ export function CategoriesSection({
             <Button
               type="button"
               variant="ghost"
-              className="min-h-[44px] w-full min-w-0 border border-line/70 sm:w-auto sm:min-w-[7rem]"
+              className="min-h-[44px] w-full min-w-0 border border-line sm:w-auto sm:min-w-[7rem]"
               onClick={() => {
                 setRoutine((s) =>
                   createCategory(s, catDraft.name, catDraft.emoji),
@@ -98,7 +98,7 @@ export function CategoriesSection({
                 <li
                   key={c.id}
                   className={cn(
-                    "flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-panelHi border border-line/50",
+                    "flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-panelHi border border-line",
                     editingCatId === c.id &&
                       "ring-2 ring-routine-ring/60 dark:ring-routine/40",
                   )}
@@ -108,7 +108,7 @@ export function CategoriesSection({
                       {c.emoji ? `${c.emoji} ` : ""}
                       {c.name}
                     </span>
-                    <span className="shrink-0 text-2xs text-subtle bg-panel border border-line/50 rounded-full px-2 py-0.5">
+                    <span className="shrink-0 text-2xs text-subtle bg-panel border border-line rounded-full px-2 py-0.5">
                       {habitCount}{" "}
                       {habitCount === 1
                         ? "звичка"

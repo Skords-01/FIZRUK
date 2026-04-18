@@ -16,7 +16,7 @@ export function PlanFactCard({
   if (!(planIncome > 0 || planExpense > 0 || planSavings > 0)) return null;
 
   return (
-    <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+    <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
       <div className="text-xs font-medium text-subtle mb-3">План / Факт</div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">

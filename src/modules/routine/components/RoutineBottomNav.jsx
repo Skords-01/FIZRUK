@@ -76,7 +76,7 @@ export function RoutineBottomNav({ mainTab, onSelectTab }) {
       className={cn(
         "shrink-0 relative z-30 safe-area-pb",
         "bg-panel/95 backdrop-blur-xl",
-        "border-t border-line/60",
+        "border-t border-line",
       )}
       aria-label="Розділи Рутини"
     >

@@ -44,7 +44,7 @@ const CALC_ZONES = [
 
 function LoadCalculator({ oneRM }) {
   return (
-    <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+    <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
       <div className="flex items-baseline justify-between gap-2 mb-3">
         <div className="text-xs font-bold text-subtle uppercase tracking-widest">
           Калькулятор навантаження
@@ -81,7 +81,7 @@ function LoadCalculator({ oneRM }) {
                     <div className="text-sm font-bold text-text tabular-nums leading-tight">
                       {kg > 0 ? `${kg}` : "—"}
                     </div>
-                    <div className="text-2xs text-muted leading-none">кг</div>
+                    <div className="text-3xs text-muted leading-none">кг</div>
                   </div>
                 );
               })}
@@ -89,7 +89,7 @@ function LoadCalculator({ oneRM }) {
           </div>
         ))}
       </div>
-      <p className="text-2xs text-muted mt-2 text-center">
+      <p className="text-3xs text-muted mt-2 text-center">
         Ваги округлені до найближчих 2.5 кг
       </p>
     </div>
@@ -99,7 +99,7 @@ function LoadCalculator({ oneRM }) {
 function ProgressChart({ points, label, unit, color }) {
   if (!points || points.length < 2) {
     return (
-      <div className="rounded-xl border border-dashed border-line/60 bg-panelHi/50 py-6 text-center text-xs text-subtle">
+      <div className="rounded-xl border border-dashed border-line bg-panelHi/50 py-6 text-center text-xs text-subtle">
         Потрібно щонайменше 2 тренування для графіка
       </div>
     );
@@ -389,7 +389,7 @@ export function Exercise({ exerciseId }) {
     return (
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-          <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card text-sm text-subtle">
+          <div className="bg-panel border border-line rounded-2xl p-5 shadow-card text-sm text-subtle">
             Невірний ID вправи
           </div>
         </div>
@@ -439,7 +439,7 @@ export function Exercise({ exerciseId }) {
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               Особистий рекорд
             </div>
@@ -461,7 +461,7 @@ export function Exercise({ exerciseId }) {
               </div>
             )}
           </div>
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-2xs font-bold text-subtle uppercase tracking-widest">
               Наступного разу
             </div>
@@ -487,7 +487,7 @@ export function Exercise({ exerciseId }) {
         </div>
 
         {hasStrength && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
               Прогресія 1RM (за тижнями)
             </div>
@@ -501,7 +501,7 @@ export function Exercise({ exerciseId }) {
         )}
 
         {hasStrength && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
               Обʼєм тренування (кг × повтори, за тижнями)
             </div>
@@ -515,7 +515,7 @@ export function Exercise({ exerciseId }) {
         )}
 
         {hasCardio && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
               Темп (хв/км) — кардіо
             </div>
@@ -532,7 +532,7 @@ export function Exercise({ exerciseId }) {
         )}
 
         {hasCardio && (
-          <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
+          <div className="bg-panel border border-line rounded-2xl p-4 shadow-card">
             <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
               Дистанція (км) — кардіо
             </div>
@@ -547,7 +547,7 @@ export function Exercise({ exerciseId }) {
 
         {best.best1rm > 0 && <LoadCalculator oneRM={best.best1rm} />}
 
-        <div className="bg-panel border border-line/60 rounded-2xl p-5 shadow-card">
+        <div className="bg-panel border border-line rounded-2xl p-5 shadow-card">
           <div className="text-xs font-bold text-subtle uppercase tracking-widest mb-3">
             Історія сетів
           </div>

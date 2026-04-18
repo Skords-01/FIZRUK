@@ -102,7 +102,7 @@ export const RetroComparison = memo(function RetroComparison({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-line/60 bg-panel p-5 shadow-card border-l-[4px]",
+        "rounded-2xl border border-line bg-panel p-5 shadow-card border-l-[4px]",
         accentBorder,
         className,
       )}

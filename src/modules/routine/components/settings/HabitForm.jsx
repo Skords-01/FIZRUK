@@ -62,7 +62,7 @@ export function HabitForm({
   return (
     <section
       ref={sectionRef}
-      className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card space-y-3"
+      className="bg-panel border border-line rounded-2xl p-4 shadow-card space-y-3"
     >
       <h2 className="text-xs font-bold text-subtle uppercase tracking-widest">
         {editingId ? "Редагувати звичку" : "Нова звичка"}
@@ -236,7 +236,7 @@ export function HabitForm({
           <Button
             type="button"
             variant="ghost"
-            className="w-full border border-line/70"
+            className="w-full border border-line"
             onClick={onCancel}
           >
             Скасувати
