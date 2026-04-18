@@ -7,8 +7,32 @@ import {
   getCategory,
   resolveExpenseCategoryMeta,
 } from "../utils";
+import type {
+  AnalyticsResult,
+  Category,
+  CategorySpendIndex,
+  MerchantStat,
+  MonthFilter,
+  MonthlySummary,
+  SelectorOptions,
+  TopCategory,
+  Transaction,
+  TrendComparison,
+  TxSplit,
+  TxSplitsMap,
+} from "./types";
 
-const CAT_COLORS = {
+export type {
+  AnalyticsResult,
+  CategorySpendIndex,
+  MerchantStat,
+  MonthlySummary,
+  SelectorOptions,
+  TopCategory,
+  TrendComparison,
+} from "./types";
+
+const CAT_COLORS: Record<string, string> = {
   food: "#10b981",
   restaurant: "#f59e0b",
   transport: "#3b82f6",
@@ -27,7 +51,7 @@ const CAT_COLORS = {
   other: "#94a3b8",
 };
 
-const FALLBACK_COLORS = [
+const FALLBACK_COLORS: readonly string[] = [
   "#6366f1",
   "#10b981",
   "#f59e0b",
@@ -40,7 +64,11 @@ const FALLBACK_COLORS = [
   "#e879f9",
 ];
 
-function getCatColor(categoryId, customCategories = [], idx = 0) {
+function getCatColor(
+  categoryId: string,
+  customCategories: Category[] = [],
+  idx = 0,
+): string {
   if (CAT_COLORS[categoryId]) return CAT_COLORS[categoryId];
   const custom = Array.isArray(customCategories)
     ? customCategories.find((c) => c.id === categoryId)
@@ -49,13 +77,15 @@ function getCatColor(categoryId, customCategories = [], idx = 0) {
   return FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 }
 
+type MonthPredicate = (tx: Transaction | null | undefined) => boolean;
+
 // Turn a "YYYY-MM" string or a {year, month} object into a predicate
 // that matches a tx's local calendar month. Returns null when no month
 // filter is requested — callers should treat null as "include all".
-function buildMonthPredicate(month) {
+function buildMonthPredicate(month: MonthFilter): MonthPredicate | null {
   if (!month) return null;
-  let y;
-  let m;
+  let y: number;
+  let m: number;
   if (typeof month === "string") {
     const [ys, ms] = month.split("-");
     y = Number(ys);
@@ -63,6 +93,8 @@ function buildMonthPredicate(month) {
   } else if (typeof month === "object") {
     y = Number(month.year);
     m = Number(month.month);
+  } else {
+    return null;
   }
   if (!Number.isFinite(y) || !Number.isFinite(m)) return null;
   return (tx) => {
@@ -75,20 +107,35 @@ function buildMonthPredicate(month) {
 
 // Normalize the optional filter bag so selectors can accept either a
 // plain options object or a shorthand month string as their second arg.
-function normalizeOpts(optsOrMonth) {
+function normalizeOpts(
+  optsOrMonth: SelectorOptions | string | null | undefined,
+): SelectorOptions {
   if (optsOrMonth == null) return {};
   if (typeof optsOrMonth === "string") return { month: optsOrMonth };
   return optsOrMonth;
 }
 
+function toExcludedSet(
+  excluded: SelectorOptions["excludedTxIds"],
+): Set<string> {
+  if (excluded instanceof Set) return excluded;
+  return new Set<string>(excluded || []);
+}
+
 // Aggregated totals for a list of transactions (optionally scoped to
 // a single calendar month). Pure — never touches storage.
-export function getMonthlySummary(transactions, optsOrMonth) {
+export function getMonthlySummary(
+  transactions: readonly Transaction[] | null | undefined,
+  optsOrMonth?: SelectorOptions | string | null,
+): MonthlySummary {
   const opts = normalizeOpts(optsOrMonth);
-  const { excludedTxIds = new Set(), txSplits = {}, month = null } = opts;
+  const {
+    excludedTxIds = new Set<string>(),
+    txSplits = {} as TxSplitsMap,
+    month = null,
+  } = opts;
   const list = Array.isArray(transactions) ? transactions : [];
-  const excluded =
-    excludedTxIds instanceof Set ? excludedTxIds : new Set(excludedTxIds);
+  const excluded = toExcludedSet(excludedTxIds);
   const inMonth = buildMonthPredicate(month);
   let spent = 0;
   let income = 0;
@@ -122,26 +169,25 @@ export function getMonthlySummary(transactions, optsOrMonth) {
 // Shared by `getTopCategories` / `getCategoryDistribution` / hooks so the
 // transaction list is scanned at most once per (tx + filters) change.
 export function computeCategorySpendIndex(
-  transactions,
+  transactions: readonly Transaction[] | null | undefined,
   {
     txCategories = {},
-    txSplits = {},
-    customCategories = [],
-    excludedTxIds = new Set(),
+    txSplits = {} as TxSplitsMap,
+    customCategories = [] as Category[],
+    excludedTxIds = new Set<string>(),
     month = null,
-  } = {},
-) {
+  }: SelectorOptions = {},
+): CategorySpendIndex {
   const list = Array.isArray(transactions) ? transactions : [];
-  const excluded =
-    excludedTxIds instanceof Set ? excludedTxIds : new Set(excludedTxIds);
+  const excluded = toExcludedSet(excludedTxIds);
   const inMonth = buildMonthPredicate(month);
-  const catSpend = {};
+  const catSpend: Record<string, number> = {};
   let totalSpent = 0;
 
   for (const tx of list) {
     if (!tx || excluded.has(tx.id) || tx.amount >= 0) continue;
     if (inMonth && !inMonth(tx)) continue;
-    const splits = txSplits[tx.id];
+    const splits: TxSplit[] | undefined = txSplits[tx.id];
     if (splits && splits.length > 0) {
       for (const s of splits) {
         if (!s.categoryId || !s.amount) continue;
@@ -167,7 +213,10 @@ export function computeCategorySpendIndex(
 // Pure projection of a precomputed spend index into a sorted category list.
 // Cheap (O(k log k) on distinct categories), so it can be re-derived
 // whenever `customCategories` (labels/colors) change without re-scanning txs.
-function buildCategoryList({ catSpend, totalSpent }, customCategories = []) {
+function buildCategoryList(
+  { catSpend, totalSpent }: CategorySpendIndex,
+  customCategories: Category[] = [],
+): TopCategory[] {
   return Object.entries(catSpend)
     .map(([categoryId, rawSpent], idx) => {
       const meta = resolveExpenseCategoryMeta(categoryId, customCategories) || {
@@ -187,19 +236,19 @@ function buildCategoryList({ catSpend, totalSpent }, customCategories = []) {
 
 // Slice a precomputed category index into top-N entries.
 export function selectTopCategoriesFromIndex(
-  index,
-  customCategories = [],
+  index: CategorySpendIndex,
+  customCategories: Category[] = [],
   limit = 5,
-) {
+): TopCategory[] {
   return buildCategoryList(index, customCategories).slice(0, limit);
 }
 
 // Build a full distribution view (up to 20 categories) with pct
 // rebased on the displayed slice.
 export function selectCategoryDistributionFromIndex(
-  index,
-  customCategories = [],
-) {
+  index: CategorySpendIndex,
+  customCategories: Category[] = [],
+): TopCategory[] {
   const top = buildCategoryList(index, customCategories).slice(0, 20);
   const totalSpent = top.reduce((s, c) => s + c.spent, 0);
   return top.map((c, idx) => ({
@@ -212,8 +261,12 @@ export function selectCategoryDistributionFromIndex(
 // Top spending categories. Supports both the documented selector shape
 // `getTopCategories(txs, limit)` and the legacy `(txs, opts, limit)` form
 // used by older hooks/tests.
-export function getTopCategories(transactions, optsOrLimit = {}, maybeLimit) {
-  let opts = {};
+export function getTopCategories(
+  transactions: readonly Transaction[] | null | undefined,
+  optsOrLimit: SelectorOptions | number = {},
+  maybeLimit?: number,
+): TopCategory[] {
+  let opts: SelectorOptions = {};
   let limit = 5;
   if (typeof optsOrLimit === "number") {
     limit = optsOrLimit;
@@ -231,7 +284,10 @@ export function getTopCategories(transactions, optsOrLimit = {}, maybeLimit) {
 
 // Full `category → amount` distribution (returned as a sorted array of
 // `{ categoryId, label, spent, pct, color }`).
-export function getCategoryDistribution(transactions, opts = {}) {
+export function getCategoryDistribution(
+  transactions: readonly Transaction[] | null | undefined,
+  opts: SelectorOptions = {},
+): TopCategory[] {
   const index = computeCategorySpendIndex(transactions, opts);
   return selectCategoryDistributionFromIndex(
     index,
@@ -241,10 +297,21 @@ export function getCategoryDistribution(transactions, opts = {}) {
 
 // Compare two monthly summaries and return the absolute and percentage
 // delta for both spend and income.
-export function getTrendComparison(currentMonthTx, previousMonthTx, opts = {}) {
-  const { excludedTxIds = new Set(), txSplits = {} } = opts;
-  const curr = getMonthlySummary(currentMonthTx, { excludedTxIds, txSplits });
-  const prev = getMonthlySummary(previousMonthTx, { excludedTxIds, txSplits });
+export function getTrendComparison(
+  currentMonthTx: readonly Transaction[] | null | undefined,
+  previousMonthTx: readonly Transaction[] | null | undefined,
+  opts: Pick<SelectorOptions, "excludedTxIds" | "txSplits"> = {},
+): TrendComparison {
+  const { excludedTxIds = new Set<string>(), txSplits = {} as TxSplitsMap } =
+    opts;
+  const curr: AnalyticsResult = getMonthlySummary(currentMonthTx, {
+    excludedTxIds,
+    txSplits,
+  });
+  const prev: AnalyticsResult = getMonthlySummary(previousMonthTx, {
+    excludedTxIds,
+    txSplits,
+  });
   const diff = curr.spent - prev.spent;
   const diffPct = prev.spent > 0 ? Math.round((diff / prev.spent) * 100) : null;
   const incomeDiff = curr.income - prev.income;
@@ -263,20 +330,29 @@ export function getTrendComparison(currentMonthTx, previousMonthTx, opts = {}) {
   };
 }
 
+interface TopMerchantsOptions extends SelectorOptions {
+  limit?: number;
+}
+
 // Top merchants by aggregated expense. Deterministic, pure sort — useful
 // both in the UI and in tests.
-export function getTopMerchants(transactions, opts = {}, maybeLimit) {
+export function getTopMerchants(
+  transactions: readonly Transaction[] | null | undefined,
+  opts: TopMerchantsOptions | number = {},
+  maybeLimit?: number,
+): MerchantStat[] {
   const {
-    excludedTxIds = new Set(),
+    excludedTxIds = new Set<string>(),
     month = null,
     limit: optsLimit,
-  } = typeof opts === "number" ? { limit: opts } : opts || {};
+  } = typeof opts === "number"
+    ? ({ limit: opts } as TopMerchantsOptions)
+    : opts || {};
   const limit = typeof maybeLimit === "number" ? maybeLimit : (optsLimit ?? 10);
   const list = Array.isArray(transactions) ? transactions : [];
-  const excluded =
-    excludedTxIds instanceof Set ? excludedTxIds : new Set(excludedTxIds);
+  const excluded = toExcludedSet(excludedTxIds);
   const inMonth = buildMonthPredicate(month);
-  const merchants = {};
+  const merchants: Record<string, MerchantStat> = {};
 
   for (const tx of list) {
     if (!tx || excluded.has(tx.id) || tx.amount >= 0) continue;

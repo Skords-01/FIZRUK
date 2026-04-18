@@ -13,15 +13,31 @@
 
 import { createModuleStorage } from "@shared/lib/createModuleStorage.js";
 import { finykStorageManager } from "./storageManager.js";
+import type { Budget, Category, Transaction } from "../domain/types";
 
 /** Стандартні ключі доменних сутностей ФІНІК. Не змінювати без міграції. */
 export const FINYK_STORAGE_KEYS = Object.freeze({
   transactions: "finyk_manual_expenses_v1",
   categories: "finyk_custom_cats_v1",
   budget: "finyk_budgets",
-});
+} as const);
 
-const storage = createModuleStorage({ name: "finyk" });
+export type FinykStorageKey =
+  (typeof FINYK_STORAGE_KEYS)[keyof typeof FINYK_STORAGE_KEYS];
+
+// Типи створюються локально, бо createModuleStorage.js — untyped JS.
+// Сигнатури повторюють публічний API фабрики.
+interface ModuleStorage {
+  readJSON: <T = unknown>(key: string, fallback?: T | null) => T | null;
+  writeJSON: (key: string, value: unknown) => boolean;
+  readRaw: (key: string, fallback?: string | null) => string | null;
+  writeRaw: (key: string, value: unknown) => boolean;
+  removeItem: (key: string) => boolean;
+  writeJSONDebounced: (key: string, value: unknown, delay?: number) => void;
+  flushPendingWrites: () => void;
+}
+
+const storage = createModuleStorage({ name: "finyk" }) as ModuleStorage;
 
 export const {
   readJSON,
@@ -39,54 +55,52 @@ export const {
 
 /**
  * Повертає список вручну доданих транзакцій (finyk_manual_expenses_v1).
- * @returns {Array<object>}
  */
-export function getTransactions() {
-  const v = readJSON(FINYK_STORAGE_KEYS.transactions, []);
+export function getTransactions(): Transaction[] {
+  const v = readJSON<Transaction[]>(FINYK_STORAGE_KEYS.transactions, []);
   return Array.isArray(v) ? v : [];
 }
 
 /**
  * Зберігає список вручну доданих транзакцій (debounced + skip-if-equal).
- * @param {Array<object>} transactions
  */
-export function saveTransactions(transactions) {
+export function saveTransactions(
+  transactions: readonly Transaction[] | null | undefined,
+): void {
   const value = Array.isArray(transactions) ? transactions : [];
   writeJSONDebounced(FINYK_STORAGE_KEYS.transactions, value);
 }
 
 /**
  * Повертає кастомні категорії користувача (finyk_custom_cats_v1).
- * @returns {Array<object>}
  */
-export function getCategories() {
-  const v = readJSON(FINYK_STORAGE_KEYS.categories, []);
+export function getCategories(): Category[] {
+  const v = readJSON<Category[]>(FINYK_STORAGE_KEYS.categories, []);
   return Array.isArray(v) ? v : [];
 }
 
 /**
  * Зберігає кастомні категорії користувача (debounced + skip-if-equal).
- * @param {Array<object>} categories
  */
-export function saveCategories(categories) {
+export function saveCategories(
+  categories: readonly Category[] | null | undefined,
+): void {
   const value = Array.isArray(categories) ? categories : [];
   writeJSONDebounced(FINYK_STORAGE_KEYS.categories, value);
 }
 
 /**
  * Повертає конфіг бюджетів (finyk_budgets).
- * @returns {Array<object>}
  */
-export function getBudget() {
-  const v = readJSON(FINYK_STORAGE_KEYS.budget, []);
+export function getBudget(): Budget[] {
+  const v = readJSON<Budget[]>(FINYK_STORAGE_KEYS.budget, []);
   return Array.isArray(v) ? v : [];
 }
 
 /**
  * Зберігає конфіг бюджетів (debounced + skip-if-equal).
- * @param {Array<object>} budget
  */
-export function saveBudget(budget) {
+export function saveBudget(budget: readonly Budget[] | null | undefined): void {
   const value = Array.isArray(budget) ? budget : [];
   writeJSONDebounced(FINYK_STORAGE_KEYS.budget, value);
 }
