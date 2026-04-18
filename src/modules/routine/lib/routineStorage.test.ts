@@ -6,19 +6,23 @@ import {
 } from "./routineStorage.js";
 
 if (!globalThis.localStorage) {
-  let store = {};
+  let store: Record<string, string> = {};
   globalThis.localStorage = {
-    getItem: (key) => (key in store ? store[key] : null),
-    setItem: (key, value) => {
+    getItem: (key: string) => (key in store ? store[key] : null),
+    setItem: (key: string, value: string) => {
       store[key] = String(value);
     },
-    removeItem: (key) => {
+    removeItem: (key: string) => {
       delete store[key];
     },
     clear: () => {
       store = {};
     },
-  };
+    key: (i: number) => Object.keys(store)[i] ?? null,
+    get length() {
+      return Object.keys(store).length;
+    },
+  } as Storage;
 }
 
 describe("routine/routineStorage", () => {

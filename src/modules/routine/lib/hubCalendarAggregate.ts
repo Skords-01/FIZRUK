@@ -10,13 +10,19 @@ import { buildFinykSubscriptionEvents } from "./finykSubscriptionCalendar.js";
 export const FIZRUK_GROUP_LABEL = "Фізрук";
 
 export function loadMonthlyPlanDays() {
-  const p = safeReadLS(MONTHLY_PLAN_STORAGE_KEY, {});
+  const p = safeReadLS<{ days?: Record<string, { templateId?: string }> }>(
+    MONTHLY_PLAN_STORAGE_KEY,
+    {},
+  );
   return typeof p?.days === "object" && p.days ? p.days : {};
 }
 
 export function loadTemplateNameById() {
-  const map = new Map();
-  const arr = safeReadLS(TEMPLATES_STORAGE_KEY, []);
+  const map = new Map<string, string>();
+  const arr = safeReadLS<Array<{ id?: string; name?: string }>>(
+    TEMPLATES_STORAGE_KEY,
+    [],
+  );
   if (Array.isArray(arr)) {
     for (const t of arr) {
       if (t?.id && t?.name) map.set(t.id, String(t.name));
