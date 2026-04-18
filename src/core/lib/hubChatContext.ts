@@ -29,33 +29,159 @@ import { ls, fmt } from "./hubChatUtils.js";
 import { generateRecommendations } from "./recommendationEngine.js";
 import { generateInsights } from "./insightsEngine.js";
 
-function readAllData() {
-  const txCache = ls("finyk_tx_cache", null);
-  const rawInfo = ls("finyk_info_cache", null);
-  const infoCache = rawInfo?.info ?? rawInfo;
+interface Transaction {
+  id: string;
+  amount: number;
+  description?: string;
+  mcc?: number;
+  time?: number;
+}
+
+interface Account {
+  id?: string;
+  balance?: number;
+  creditLimit?: number;
+}
+
+interface InfoCache {
+  accounts?: Account[];
+  name?: string;
+}
+
+interface TxCache {
+  txs?: Transaction[];
+  timestamp?: number;
+}
+
+interface Debt {
+  id: string;
+  name: string;
+  amount: number;
+  totalAmount: number;
+  dueDate?: string;
+  emoji?: string;
+  linkedTxIds?: string[];
+}
+
+interface Receivable {
+  id: string;
+  name: string;
+  amount: number;
+  linkedTxIds?: string[];
+}
+
+interface BudgetLimit {
+  id: string;
+  type: "limit";
+  categoryId: string;
+  limit: number;
+}
+
+interface BudgetGoal {
+  id: string;
+  type: "goal";
+  name: string;
+  targetAmount: number;
+  savedAmount?: number;
+}
+
+type Budget = BudgetLimit | BudgetGoal;
+
+interface MonthlyPlan {
+  income?: string | number;
+  expense?: string | number;
+  savings?: string | number;
+}
+
+interface Subscription {
+  id: string;
+  name: string;
+}
+
+interface AllData {
+  transactions: Transaction[];
+  accounts: Account[];
+  clientName: string;
+  cacheTime: number | null;
+  hiddenAccounts: string[];
+  budgets: Budget[];
+  manualDebts: Debt[];
+  receivables: Receivable[];
+  txCategories: Record<string, string>;
+  txSplits: Record<string, unknown>;
+  customCategories: unknown[];
+  monthlyPlan: MonthlyPlan;
+  subscriptions: Subscription[];
+  monoDebtLinked: Record<string, unknown>;
+  statTx: Transaction[];
+  excludedIds: Set<string>;
+}
+
+interface HabitState {
+  habits?: Array<{
+    id: string;
+    name?: string;
+    emoji?: string;
+    archived?: boolean;
+  }>;
+  completions?: Record<string, string[]>;
+}
+
+interface NutritionMeal {
+  name?: string;
+  macros?: {
+    kcal?: number;
+    protein_g?: number;
+    fat_g?: number;
+    carbs_g?: number;
+  };
+}
+
+interface NutritionDay {
+  meals?: NutritionMeal[];
+}
+
+interface NutritionPrefs {
+  dailyTargetKcal?: number;
+  dailyTargetProtein_g?: number;
+  dailyTargetProtein?: number;
+}
+
+function readAllData(): AllData {
+  const txCache = ls<TxCache | null>("finyk_tx_cache", null);
+  const rawInfo = ls<{ info?: InfoCache } | InfoCache | null>(
+    "finyk_info_cache",
+    null,
+  );
+  const infoCache: InfoCache | null =
+    (rawInfo && "info" in rawInfo ? rawInfo.info : (rawInfo as InfoCache)) ||
+    null;
 
   const transactions = txCache?.txs || [];
   const accounts = infoCache?.accounts || [];
   const clientName = infoCache?.name || "";
   const cacheTime = txCache?.timestamp || null;
 
-  const hiddenAccounts = ls("finyk_hidden", []);
-  const budgets = ls("finyk_budgets", []);
-  const manualDebts = ls("finyk_debts", []);
-  const receivables = ls("finyk_recv", []);
-  const hiddenTxIds = ls("finyk_hidden_txs", []);
-  const txCategories = ls("finyk_tx_cats", {});
-  const txSplits = ls("finyk_tx_splits", {});
-  const customCategories = ls("finyk_custom_cats_v1", []);
-  const monthlyPlan = ls("finyk_monthly_plan", {});
-  const subscriptions = ls("finyk_subs", []);
-  const monoDebtLinked = ls("finyk_mono_debt_linked", {});
+  const hiddenAccounts = ls<string[]>("finyk_hidden", []);
+  const budgets = ls<Budget[]>("finyk_budgets", []);
+  const manualDebts = ls<Debt[]>("finyk_debts", []);
+  const receivables = ls<Receivable[]>("finyk_recv", []);
+  const hiddenTxIds = ls<string[]>("finyk_hidden_txs", []);
+  const txCategories = ls<Record<string, string>>("finyk_tx_cats", {});
+  const txSplits = ls<Record<string, unknown>>("finyk_tx_splits", {});
+  const customCategories = ls<unknown[]>("finyk_custom_cats_v1", []);
+  const monthlyPlan = ls<MonthlyPlan>("finyk_monthly_plan", {});
+  const subscriptions = ls<Subscription[]>("finyk_subs", []);
+  const monoDebtLinked = ls<Record<string, unknown>>(
+    "finyk_mono_debt_linked",
+    {},
+  );
 
   const transferTxIds = Object.entries(txCategories)
     .filter(([, catId]) => catId === INTERNAL_TRANSFER_ID)
     .map(([txId]) => txId);
 
-  const excludedIds = new Set([
+  const excludedIds = new Set<string>([
     ...hiddenTxIds,
     ...transferTxIds,
     ...receivables.flatMap((r) => r.linkedTxIds || []),
@@ -83,9 +209,9 @@ function readAllData() {
   };
 }
 
-export function buildContext() {
+export function buildContext(): string {
   const d = readAllData();
-  const lines = [];
+  const lines: string[] = [];
 
   const now = new Date();
   const dayOfMonth = now.getDate();
@@ -146,7 +272,13 @@ export function buildContext() {
     lines.push(`[Середня витрата/день] ${fmt(avgPerDay)} грн`);
     lines.push(`[Прогноз витрат до кінця місяця] ${fmt(projected)} грн`);
 
-    const cats = mergeExpenseCategoryDefinitions(d.customCategories)
+    interface CategoryDef {
+      id: string;
+      label: string;
+    }
+    const cats = (
+      mergeExpenseCategoryDefinitions(d.customCategories) as CategoryDef[]
+    )
       .filter((c) => c.id !== "income" && c.id !== INTERNAL_TRANSFER_ID)
       .map((c) => ({
         id: c.id,
@@ -220,7 +352,7 @@ export function buildContext() {
     );
   }
 
-  const limits = d.budgets.filter((b) => b.type === "limit");
+  const limits = d.budgets.filter((b): b is BudgetLimit => b.type === "limit");
   if (limits.length > 0) {
     lines.push(
       `[Ліміти] ${limits
@@ -242,7 +374,7 @@ export function buildContext() {
     );
   }
 
-  const goals = d.budgets.filter((b) => b.type === "goal");
+  const goals = d.budgets.filter((b): b is BudgetGoal => b.type === "goal");
   if (goals.length > 0) {
     lines.push(
       `[Цілі] ${goals.map((b) => `${b.name}: ${fmt(b.savedAmount || 0)}/${fmt(b.targetAmount)} грн`).join(", ")}`,
@@ -251,7 +383,7 @@ export function buildContext() {
 
   if (d.monthlyPlan?.income || d.monthlyPlan?.expense) {
     lines.push(
-      `[Фінплан] дохід ${fmt(d.monthlyPlan.income || 0)} грн/міс, витрати ${fmt(d.monthlyPlan.expense || 0)} грн/міс`,
+      `[Фінплан] дохід ${fmt(Number(d.monthlyPlan.income) || 0)} грн/міс, витрати ${fmt(Number(d.monthlyPlan.expense) || 0)} грн/міс`,
     );
   }
 
@@ -259,8 +391,14 @@ export function buildContext() {
     lines.push(`[Підписки] ${d.subscriptions.map((s) => s.name).join(", ")}`);
   }
 
+  interface CategoryDef {
+    id: string;
+    label: string;
+  }
   lines.push(
-    `[Категорії] ${mergeExpenseCategoryDefinitions(d.customCategories)
+    `[Категорії] ${(
+      mergeExpenseCategoryDefinitions(d.customCategories) as CategoryDef[]
+    )
       .map((c) => `${c.id}="${c.label}"`)
       .join(", ")}`,
   );
@@ -305,7 +443,10 @@ export function buildContext() {
       lines.push(`[Фізрук активне тренування] ${activeHint}`);
       if (sorted.length > 0 && sorted[0].items?.length > 0) {
         const exercises = sorted[0].items
-          .map((i) => i.nameUk || i.name || i.exercise || "—")
+          .map(
+            (i: { nameUk?: string; name?: string; exercise?: string }) =>
+              i.nameUk || i.name || i.exercise || "—",
+          )
           .join(", ");
         lines.push(`[Останнє тренування вправи] ${exercises}`);
       }
@@ -314,7 +455,7 @@ export function buildContext() {
 
   // ── Рутина (звички) ──────────────────────────────────────────
   try {
-    const routineState = ls("hub_routine_v1", null);
+    const routineState = ls<HabitState | null>("hub_routine_v1", null);
     if (routineState) {
       const habits = (routineState.habits || []).filter((h) => !h.archived);
       const completions = routineState.completions || {};
@@ -348,12 +489,12 @@ export function buildContext() {
         let weekDone = 0;
         let weekTotal = 0;
         for (let i = 0; i <= dow; i++) {
-          const d = new Date(now);
-          d.setDate(now.getDate() - dow + i);
+          const d2 = new Date(now);
+          d2.setDate(now.getDate() - dow + i);
           const dk = [
-            d.getFullYear(),
-            String(d.getMonth() + 1).padStart(2, "0"),
-            String(d.getDate()).padStart(2, "0"),
+            d2.getFullYear(),
+            String(d2.getMonth() + 1).padStart(2, "0"),
+            String(d2.getDate()).padStart(2, "0"),
           ].join("-");
           weekTotal += habits.length;
           for (const h of habits) {
@@ -400,8 +541,14 @@ export function buildContext() {
 
   // ── Харчування ────────────────────────────────────────────────
   try {
-    const nutritionLog = ls("nutrition_log_v1", {});
-    const nutritionPrefs = ls("nutrition_prefs_v1", null);
+    const nutritionLog = ls<Record<string, NutritionDay>>(
+      "nutrition_log_v1",
+      {},
+    );
+    const nutritionPrefs = ls<NutritionPrefs | null>(
+      "nutrition_prefs_v1",
+      null,
+    );
     const todayKey = [
       now.getFullYear(),
       String(now.getMonth() + 1).padStart(2, "0"),
@@ -445,17 +592,17 @@ export function buildContext() {
       }
     }
 
-    const weekKcalArr = [];
+    const weekKcalArr: number[] = [];
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
+      const d3 = new Date(now);
+      d3.setDate(now.getDate() - i);
       const dk = [
-        d.getFullYear(),
-        String(d.getMonth() + 1).padStart(2, "0"),
-        String(d.getDate()).padStart(2, "0"),
+        d3.getFullYear(),
+        String(d3.getMonth() + 1).padStart(2, "0"),
+        String(d3.getDate()).padStart(2, "0"),
       ].join("-");
-      const dayMeals = Array.isArray(nutritionLog[dk]?.meals)
-        ? nutritionLog[dk].meals
+      const dayMeals: NutritionMeal[] = Array.isArray(nutritionLog[dk]?.meals)
+        ? (nutritionLog[dk].meals as NutritionMeal[])
         : [];
       const k = dayMeals.reduce((s, m) => s + (m?.macros?.kcal ?? 0), 0);
       if (k > 0) weekKcalArr.push(k);
@@ -497,7 +644,7 @@ export function buildContext() {
     : "Даних немає. Monobank не підключено.";
 }
 
-export function buildContextMeasured() {
+export function buildContextMeasured(): string {
   const m = perfMark("hubchat:buildContext");
   const ctx = buildContext();
   perfEnd(m, { len: ctx?.length || 0 });

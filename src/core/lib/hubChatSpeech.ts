@@ -1,6 +1,6 @@
 export const VOICE_KEYWORDS = /голосом|вголос|скажи|озвуч|прочитай/i;
 
-export function cleanTextForSpeech(text) {
+export function cleanTextForSpeech(text: string): string {
   return text
     .replace(/✅/g, "")
     .replace(/\[.*?\]/g, "")
@@ -11,7 +11,7 @@ export function cleanTextForSpeech(text) {
     .trim();
 }
 
-function getUkVoice() {
+function getUkVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
   return (
     voices.find((v) => v.lang === "uk-UA") ||
@@ -23,7 +23,7 @@ function getUkVoice() {
 
 // iOS Safari блокує speechSynthesis.speak() якщо виклик не з user gesture.
 // Цей трюк "розблоковує" аудіо: пустий utterance з обробника кліку.
-export function unlockTTS() {
+export function unlockTTS(): void {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   const utter = new SpeechSynthesisUtterance("");
   utter.volume = 0;
@@ -31,7 +31,7 @@ export function unlockTTS() {
   window.speechSynthesis.speak(utter);
 }
 
-export function speak(text) {
+export function speak(text: string): void {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   const clean = cleanTextForSpeech(text);
   if (!clean) return;
@@ -62,7 +62,7 @@ export function speak(text) {
   }
 }
 
-export function stopSpeaking() {
+export function stopSpeaking(): void {
   if (typeof window !== "undefined" && window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }
