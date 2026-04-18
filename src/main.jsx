@@ -6,7 +6,8 @@ import App from "./core/App";
 import "./index.css";
 import { storageManager } from "@shared/lib/storageManager.js";
 import { createAppQueryClient } from "@shared/lib/queryClient.js";
-import { initSentry, Sentry } from "./core/sentry.js";
+import { ErrorBoundary } from "./core/ErrorBoundary.jsx";
+import { initSentry } from "./core/sentry.js";
 
 const queryClient = createAppQueryClient();
 
@@ -21,7 +22,6 @@ const ReactQueryDevtools = import.meta.env.DEV
     )
   : null;
 
-initSentry();
 storageManager.runAll();
 
 function ErrorFallback({ error, resetError }) {
@@ -46,7 +46,7 @@ function ErrorFallback({ error, resetError }) {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <Sentry.ErrorBoundary fallback={ErrorFallback}>
+  <ErrorBoundary fallback={ErrorFallback}>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <App />
@@ -60,8 +60,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </Suspense>
       ) : null}
     </QueryClientProvider>
-  </Sentry.ErrorBoundary>,
+  </ErrorBoundary>,
 );
+
+// Sentry init відкладаємо до після hydration — SDK (~30–40 KB gzip) не
+// повинен блокувати TTI, а до його готовності `captureException` у
+// нашому локальному ErrorBoundary просто no-op.
+const scheduleInit = () => {
+  void initSentry();
+};
+if (typeof window !== "undefined") {
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(scheduleInit, { timeout: 2000 });
+  } else {
+    setTimeout(scheduleInit, 0);
+  }
+}
 
 if ("serviceWorker" in navigator) {
   import("virtual:pwa-register").then(({ registerSW }) => {
