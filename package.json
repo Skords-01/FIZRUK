@@ -27,6 +27,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@sentry/node": "^8.55.1",
     "@sentry/react": "^8.55.1",
+    "@tanstack/react-query": "^5.99.0",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "better-auth": "^1.6.4",

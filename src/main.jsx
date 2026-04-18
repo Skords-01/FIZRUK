@@ -1,9 +1,13 @@
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
 import App from "./core/App";
 import "./index.css";
 import { storageManager } from "@shared/lib/storageManager.js";
+import { createAppQueryClient } from "@shared/lib/queryClient.js";
 import { initSentry, Sentry } from "./core/sentry.js";
+
+const queryClient = createAppQueryClient();
 
 initSentry();
 storageManager.runAll();
@@ -31,9 +35,11 @@ function ErrorFallback({ error, resetError }) {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <Sentry.ErrorBoundary fallback={ErrorFallback}>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </QueryClientProvider>
   </Sentry.ErrorBoundary>,
 );
 
