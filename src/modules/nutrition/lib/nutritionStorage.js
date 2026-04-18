@@ -5,7 +5,7 @@ import {
   macrosToTotals,
   normalizeMacrosNullable,
 } from "./macros.js";
-import { safeJsonSet, safeSetItem } from "@shared/lib/storageQuota.js";
+import { nutritionStorage } from "./nutritionStorageInstance.js";
 import {
   isMealTypeId,
   labelForMealType,
@@ -50,12 +50,10 @@ export function defaultNutritionPrefs() {
 }
 
 export function loadNutritionPrefs(key = NUTRITION_PREFS_KEY) {
+  const p = nutritionStorage.readJSON(key, null);
+  if (!p || typeof p !== "object" || Array.isArray(p))
+    return defaultNutritionPrefs();
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return defaultNutritionPrefs();
-    const p = JSON.parse(raw);
-    if (!p || typeof p !== "object" || Array.isArray(p))
-      return defaultNutritionPrefs();
     return {
       ...defaultNutritionPrefs(),
       ...p,
@@ -91,7 +89,7 @@ export function loadNutritionPrefs(key = NUTRITION_PREFS_KEY) {
 }
 
 export function persistNutritionPrefs(prefs, key = NUTRITION_PREFS_KEY) {
-  return safeJsonSet(key, prefs || defaultNutritionPrefs()).ok;
+  return nutritionStorage.writeJSON(key, prefs || defaultNutritionPrefs());
 }
 
 export function makeDefaultPantry() {
@@ -99,30 +97,21 @@ export function makeDefaultPantry() {
 }
 
 export function loadActivePantryId(activeKey = NUTRITION_ACTIVE_PANTRY_KEY) {
-  try {
-    const v = localStorage.getItem(activeKey);
-    return v ? String(v) : "home";
-  } catch {
-    return "home";
-  }
+  const v = nutritionStorage.readRaw(activeKey, null);
+  return v ? String(v) : "home";
 }
 
 export function loadPantries(
   key = NUTRITION_PANTRIES_KEY,
   activeKey = NUTRITION_ACTIVE_PANTRY_KEY,
 ) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {}
+  const parsed = nutritionStorage.readJSON(key, null);
+  if (Array.isArray(parsed) && parsed.length > 0) return parsed;
 
   // Legacy v0 pantry migration is handled by storageManager (nutrition_001_migrate_legacy_pantry).
   // By the time this code runs after app boot, the v1 key already has data if any v0 data existed.
   const fallback = makeDefaultPantry();
-  safeSetItem(activeKey, fallback.id);
+  nutritionStorage.writeRaw(activeKey, fallback.id);
   return [fallback];
 }
 
@@ -132,9 +121,14 @@ export function persistPantries(
   pantries,
   activeId,
 ) {
-  const a = safeJsonSet(key, Array.isArray(pantries) ? pantries : []);
-  const b = activeId ? safeSetItem(activeKey, String(activeId)) : { ok: true };
-  return a.ok && b.ok;
+  const a = nutritionStorage.writeJSON(
+    key,
+    Array.isArray(pantries) ? pantries : [],
+  );
+  const b = activeId
+    ? nutritionStorage.writeRaw(activeKey, String(activeId))
+    : true;
+  return a && b;
 }
 
 export function updatePantry(pantries, activeId, fn) {
@@ -263,18 +257,12 @@ export function normalizeNutritionLog(raw) {
 // ─────────────────────────────────────────────
 
 export function loadNutritionLog(key = NUTRITION_LOG_KEY) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return normalizeNutritionLog(parsed);
-  } catch {
-    return {};
-  }
+  const parsed = nutritionStorage.readJSON(key, null);
+  return normalizeNutritionLog(parsed);
 }
 
 export function persistNutritionLog(log, key = NUTRITION_LOG_KEY) {
-  return safeJsonSet(key, log || {}).ok;
+  return nutritionStorage.writeJSON(key, log || {});
 }
 
 export function addLogEntry(log, date, meal) {
