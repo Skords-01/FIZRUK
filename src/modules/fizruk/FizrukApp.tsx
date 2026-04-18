@@ -111,8 +111,9 @@ const VALID_FIZRUK_PAGES = [
 ];
 
 function parseHash() {
-  const raw = (window.location.hash || "").replace(/^#/, "").trim();
-  if (!raw || raw.startsWith("/")) return { page: "dashboard" };
+  // Accept both `#page` (canonical) and legacy `#/page` so deep-links keep working.
+  const raw = (window.location.hash || "").replace(/^#\/?/, "").trim();
+  if (!raw) return { page: "dashboard" };
   const [page, ...rest] = raw.split("/").filter(Boolean);
   if (page === "exercise" && rest[0]) return { page, exerciseId: rest[0] };
   if (!VALID_FIZRUK_PAGES.includes(page)) return { page: "dashboard" };
@@ -173,6 +174,24 @@ export default function FizrukApp({
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  // Normalize URL on mount so an invalid/legacy hash (e.g. `#/foo`) that
+  // silently falls back to dashboard doesn't persist after refresh.
+  useEffect(() => {
+    const raw = (window.location.hash || "").replace(/^#\/?/, "").trim();
+    const canonical = route.page === "exercise" ? raw : route.page;
+    // Guard the empty-hash case: a clean URL without any fragment must stay
+    // clean. We only normalize legacy/invalid hashes like `#/foo`.
+    if (raw && raw !== canonical) {
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${window.location.search}#${canonical}`,
+      );
+    }
+    // Run only on mount — route changes after mount go through setHash().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (pwaAction === "start_workout") {
       setHash("workouts");
@@ -218,14 +237,14 @@ export default function FizrukApp({
         type: isCardio ? "distance" : "strength",
         sets: isCardio ? undefined : [{ weightKg: suggestedWeight, reps: 0 }],
         durationSec: 0,
-        distanceM: isCardio ? 0 : 0,
+        ...(isCardio ? { distanceM: 0 } : {}),
       });
     }
     try {
       localStorage.setItem(ACTIVE_WORKOUT_KEY, w.id);
       sessionStorage.setItem("fizruk_workouts_mode", "log");
     } catch {}
-    window.location.hash = "#workouts";
+    setHash("workouts");
   };
 
   const headerTitle = isAtlas

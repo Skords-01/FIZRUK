@@ -20,14 +20,33 @@ import {
   summarizeWorkoutForFinish,
 } from "../lib/workoutUi";
 
-function playRestCompletionSound() {
+// Shared AudioContext reused across beeps. Creating/closing one per call
+// races with quick successive rest-timer completions and fights iOS' audio
+// session. Lazily created on first call (after a user gesture) and kept open
+// for the lifetime of the page; browsers GC it on unload.
+let sharedAudioCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext | null {
   try {
-    const ctx = new (
+    if (sharedAudioCtx && sharedAudioCtx.state !== "closed")
+      return sharedAudioCtx;
+    const Ctor =
       window.AudioContext ||
       (window as unknown as { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext
-    )();
-    const playBeep = (freq, startTime, duration) => {
+        .webkitAudioContext;
+    sharedAudioCtx = new Ctor();
+    return sharedAudioCtx;
+  } catch {
+    return null;
+  }
+}
+
+function playRestCompletionSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  try {
+    // iOS can suspend the context between beeps; resume is a noop if running.
+    if (ctx.state === "suspended") void ctx.resume();
+    const playBeep = (freq: number, startTime: number, duration: number) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -43,11 +62,6 @@ function playRestCompletionSound() {
     playBeep(880, t, 0.15);
     playBeep(1100, t + 0.18, 0.15);
     playBeep(1320, t + 0.36, 0.3);
-    setTimeout(() => {
-      try {
-        ctx.close();
-      } catch {}
-    }, 1500);
   } catch {}
 }
 
