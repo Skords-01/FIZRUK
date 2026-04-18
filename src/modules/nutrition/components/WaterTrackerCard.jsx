@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { useWaterTracker } from "../hooks/useWaterTracker.js";
 
@@ -11,15 +11,29 @@ function fmt(ml) {
 export function WaterTrackerCard({ goalMl = 2000 }) {
   const { todayMl, add, reset } = useWaterTracker();
   const [resetPending, setResetPending] = useState(false);
+  const resetTimerRef = useRef(null);
 
   const pct = goalMl > 0 ? Math.min(100, (todayMl / goalMl) * 100) : 0;
   const done = todayMl >= goalMl && goalMl > 0;
+
+  useEffect(() => {
+    // Очищуємо pending-таймер при unmount, щоб не тригернути setState на
+    // розмонтованому компоненті.
+    return () => {
+      if (resetTimerRef.current !== null) {
+        clearTimeout(resetTimerRef.current);
+        resetTimerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="bg-panel border border-line/60 rounded-2xl p-4 shadow-card">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg leading-none">💧</span>
+          <span className="text-lg leading-none" aria-hidden="true">
+            💧
+          </span>
           <div>
             <div className="text-sm font-semibold text-text leading-none">
               Вода
@@ -27,7 +41,7 @@ export function WaterTrackerCard({ goalMl = 2000 }) {
             <div className="text-[11px] text-subtle mt-0.5">
               {fmt(todayMl)}
               {goalMl > 0 && ` / ${fmt(goalMl)}`}
-              {done && " ✓"}
+              {done && <span aria-hidden="true"> ✓</span>}
             </div>
           </div>
         </div>
@@ -36,17 +50,33 @@ export function WaterTrackerCard({ goalMl = 2000 }) {
             type="button"
             onClick={() => {
               if (resetPending) {
+                if (resetTimerRef.current !== null) {
+                  clearTimeout(resetTimerRef.current);
+                  resetTimerRef.current = null;
+                }
                 reset();
                 setResetPending(false);
               } else {
+                // Скидаємо попередній таймер, якщо користувач натиснув двічі
+                // поспіль — інакше перше повернення в idle зніматиме нове pending.
+                if (resetTimerRef.current !== null) {
+                  clearTimeout(resetTimerRef.current);
+                }
                 setResetPending(true);
-                setTimeout(() => setResetPending(false), 2500);
+                resetTimerRef.current = window.setTimeout(() => {
+                  setResetPending(false);
+                  resetTimerRef.current = null;
+                }, 2500);
               }
             }}
             className="text-[11px] text-subtle hover:text-danger transition-colors px-2 py-1 rounded-lg"
-            aria-label="Скинути воду за сьогодні"
+            aria-label={
+              resetPending
+                ? "Підтвердити скидання води за сьогодні"
+                : "Скинути воду за сьогодні"
+            }
           >
-            {resetPending ? "Скинути?" : "↺"}
+            {resetPending ? "Скинути?" : <span aria-hidden="true">↺</span>}
           </button>
         )}
       </div>
