@@ -35,8 +35,11 @@ export function safeReadLS<T = unknown>(
 /**
  * Read the raw string value from localStorage without JSON parsing.
  */
-export function safeReadStringLS(key: string, fallback?: string): string;
-export function safeReadStringLS(key: string, fallback: null): string | null;
+export function safeReadStringLS(key: string, fallback: string): string;
+export function safeReadStringLS(
+  key: string,
+  fallback?: string | null,
+): string | null;
 export function safeReadStringLS(
   key: string,
   fallback: string | null = null,
