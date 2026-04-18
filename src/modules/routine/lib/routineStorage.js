@@ -5,7 +5,9 @@ import {
   habitScheduledOnDate,
 } from "./hubCalendarAggregate.js";
 import { completionNoteKey } from "./completionNoteKey.js";
-import { safeJsonSet } from "@shared/lib/storageQuota.js";
+import { createModuleStorage } from "@shared/lib/createModuleStorage.js";
+
+const storage = createModuleStorage({ name: "routine" });
 
 export const ROUTINE_STORAGE_KEY = "hub_routine_v1";
 
@@ -106,35 +108,30 @@ function finalizeLoadedRoutineState(state) {
  * @returns {{ schemaVersion: number, habits: Array, completions: Record<string,Record<string,boolean>>, tags: Array, categories: Array, prefs: object, pushupsByDate: Record<string,number>, habitOrder: string[], completionNotes: object }}
  */
 export function loadRoutineState() {
-  try {
-    const raw = localStorage.getItem(ROUTINE_STORAGE_KEY);
-    if (!raw) {
-      return finalizeLoadedRoutineState(defaultState());
-    }
-    const p = JSON.parse(raw);
-    const merged = {
-      ...defaultState(),
-      ...p,
-      prefs: { ...defaultState().prefs, ...(p.prefs || {}) },
-      tags: Array.isArray(p.tags) ? p.tags : [],
-      categories: Array.isArray(p.categories) ? p.categories : [],
-      habits: Array.isArray(p.habits) ? p.habits.map(normalizeHabit) : [],
-      completions:
-        typeof p.completions === "object" && p.completions ? p.completions : {},
-      pushupsByDate:
-        typeof p.pushupsByDate === "object" && p.pushupsByDate
-          ? p.pushupsByDate
-          : {},
-      habitOrder: Array.isArray(p.habitOrder) ? p.habitOrder : [],
-      completionNotes:
-        typeof p.completionNotes === "object" && p.completionNotes
-          ? p.completionNotes
-          : {},
-    };
-    return finalizeLoadedRoutineState(merged);
-  } catch {
+  const p = storage.readJSON(ROUTINE_STORAGE_KEY, null);
+  if (!p || typeof p !== "object" || Array.isArray(p)) {
     return finalizeLoadedRoutineState(defaultState());
   }
+  const merged = {
+    ...defaultState(),
+    ...p,
+    prefs: { ...defaultState().prefs, ...(p.prefs || {}) },
+    tags: Array.isArray(p.tags) ? p.tags : [],
+    categories: Array.isArray(p.categories) ? p.categories : [],
+    habits: Array.isArray(p.habits) ? p.habits.map(normalizeHabit) : [],
+    completions:
+      typeof p.completions === "object" && p.completions ? p.completions : {},
+    pushupsByDate:
+      typeof p.pushupsByDate === "object" && p.pushupsByDate
+        ? p.pushupsByDate
+        : {},
+    habitOrder: Array.isArray(p.habitOrder) ? p.habitOrder : [],
+    completionNotes:
+      typeof p.completionNotes === "object" && p.completionNotes
+        ? p.completionNotes
+        : {},
+  };
+  return finalizeLoadedRoutineState(merged);
 }
 
 /**
@@ -143,26 +140,21 @@ export function loadRoutineState() {
  * @returns {boolean} `true` on success, `false` if localStorage threw (e.g. quota exceeded)
  */
 export function saveRoutineState(next) {
-  const res = safeJsonSet(ROUTINE_STORAGE_KEY, next);
-  if (res.ok) {
+  const ok = storage.writeJSON(ROUTINE_STORAGE_KEY, next);
+  if (ok) {
     emitRoutineStorage();
     return true;
   }
   try {
-    const e = res.error;
-    try {
-      window.dispatchEvent(
-        new CustomEvent(ROUTINE_STORAGE_ERROR, {
-          detail: { message: String(e?.message || e || "save failed") },
-        }),
-      );
-    } catch {
-      /* noop */
-    }
-    return false;
+    window.dispatchEvent(
+      new CustomEvent(ROUTINE_STORAGE_ERROR, {
+        detail: { message: "save failed" },
+      }),
+    );
   } catch {
-    return false;
+    /* noop */
   }
+  return false;
 }
 
 export function createTag(state, name) {

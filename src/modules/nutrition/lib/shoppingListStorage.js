@@ -1,24 +1,15 @@
+import { nutritionStorage } from "./nutritionStorageInstance.js";
+
 export const SHOPPING_LIST_KEY = "nutrition_shopping_list_v1";
 
 export function loadShoppingList(key = SHOPPING_LIST_KEY) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return { categories: [] };
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return { categories: [] };
-    return normalizeShoppingList(parsed);
-  } catch {
-    return { categories: [] };
-  }
+  const parsed = nutritionStorage.readJSON(key, null);
+  if (!parsed || typeof parsed !== "object") return { categories: [] };
+  return normalizeShoppingList(parsed);
 }
 
 export function persistShoppingList(list, key = SHOPPING_LIST_KEY) {
-  try {
-    localStorage.setItem(key, JSON.stringify(list || { categories: [] }));
-    return true;
-  } catch {
-    return false;
-  }
+  return nutritionStorage.writeJSON(key, list || { categories: [] });
 }
 
 export function normalizeShoppingList(raw) {

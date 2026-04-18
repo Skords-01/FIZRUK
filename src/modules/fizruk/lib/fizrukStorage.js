@@ -1,5 +1,9 @@
 /** Shared parsing/serialization for Fizruk localStorage (workouts + custom exercises). */
 
+import { createModuleStorage } from "@shared/lib/createModuleStorage.js";
+
+const storage = createModuleStorage({ name: "fizruk" });
+
 export const WORKOUTS_STORAGE_KEY = "fizruk_workouts_v1";
 export const CUSTOM_EXERCISES_KEY = "fizruk_custom_exercises_v1";
 export const MEASUREMENTS_STORAGE_KEY = "fizruk_measurements_v1";
@@ -36,7 +40,9 @@ export function parseWorkoutsFromStorage(raw) {
     const p = JSON.parse(raw);
     if (Array.isArray(p)) return p;
     if (p && Array.isArray(p.workouts)) return p.workouts;
-  } catch {}
+  } catch {
+    /* повертаємо [] на битий JSON */
+  }
   return [];
 }
 
@@ -54,7 +60,9 @@ export function parseCustomExercisesFromStorage(raw) {
     const p = JSON.parse(raw);
     if (Array.isArray(p)) return p;
     if (p && Array.isArray(p.exercises)) return p.exercises;
-  } catch {}
+  } catch {
+    /* повертаємо [] на битий JSON */
+  }
   return [];
 }
 
@@ -67,14 +75,8 @@ export function serializeCustomExercisesToStorage(exercises) {
 
 /** Full backup blob for export/import. */
 export function buildFizrukBackupPayload() {
-  const workoutsRaw =
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem(WORKOUTS_STORAGE_KEY)
-      : null;
-  const customRaw =
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem(CUSTOM_EXERCISES_KEY)
-      : null;
+  const workoutsRaw = storage.readRaw(WORKOUTS_STORAGE_KEY, null);
+  const customRaw = storage.readRaw(CUSTOM_EXERCISES_KEY, null);
   return {
     kind: "fizruk-backup",
     exportedAt: new Date().toISOString(),
@@ -90,26 +92,23 @@ export function applyFizrukBackupPayload(data, { replace = false } = {}) {
   const w = Array.isArray(data.workouts) ? data.workouts : [];
   const c = Array.isArray(data.customExercises) ? data.customExercises : [];
   if (replace) {
-    localStorage.setItem(WORKOUTS_STORAGE_KEY, serializeWorkoutsToStorage(w));
-    localStorage.setItem(
+    storage.writeRaw(WORKOUTS_STORAGE_KEY, serializeWorkoutsToStorage(w));
+    storage.writeRaw(
       CUSTOM_EXERCISES_KEY,
       serializeCustomExercisesToStorage(c),
     );
     return { workouts: w.length, customExercises: c.length };
   }
   const existingW = parseWorkoutsFromStorage(
-    localStorage.getItem(WORKOUTS_STORAGE_KEY),
+    storage.readRaw(WORKOUTS_STORAGE_KEY, null),
   );
   const existingC = parseCustomExercisesFromStorage(
-    localStorage.getItem(CUSTOM_EXERCISES_KEY),
+    storage.readRaw(CUSTOM_EXERCISES_KEY, null),
   );
   const mergedW = mergeWorkoutsById(existingW, w);
   const mergedC = mergeCustomById(existingC, c);
-  localStorage.setItem(
-    WORKOUTS_STORAGE_KEY,
-    serializeWorkoutsToStorage(mergedW),
-  );
-  localStorage.setItem(
+  storage.writeRaw(WORKOUTS_STORAGE_KEY, serializeWorkoutsToStorage(mergedW));
+  storage.writeRaw(
     CUSTOM_EXERCISES_KEY,
     serializeCustomExercisesToStorage(mergedC),
   );
@@ -139,12 +138,7 @@ function mergeCustomById(a, b) {
 export function buildFizrukFullBackupPayload() {
   const data = {};
   for (const k of FIZRUK_FULL_BACKUP_KEYS) {
-    try {
-      data[k] =
-        typeof localStorage !== "undefined" ? localStorage.getItem(k) : null;
-    } catch {
-      data[k] = null;
-    }
+    data[k] = storage.readRaw(k, null);
   }
   return {
     kind: "fizruk-full-backup",
@@ -162,6 +156,6 @@ export function applyFizrukFullBackupPayload(parsed) {
   if (!d || typeof d !== "object") throw new Error("Невірний формат файлу");
   for (const k of FIZRUK_FULL_BACKUP_KEYS) {
     const v = d[k];
-    if (typeof v === "string") localStorage.setItem(k, v);
+    if (typeof v === "string") storage.writeRaw(k, v);
   }
 }
