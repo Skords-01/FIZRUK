@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiUrl } from "@shared/lib/apiUrl.js";
+import { foodSearchApi, isApiError } from "@shared/api";
 import { searchFoods } from "../../lib/foodDb/foodDb.js";
 
 const LOCAL_DEBOUNCE_MS = 180;
@@ -13,17 +13,17 @@ const OFF_MIN_LEN = 2;
 // the built-in retry policy from the shared QueryClient handles flaky
 // mobile networks without the component having to know.
 async function fetchOpenFoodFacts(query, signal) {
-  const res = await fetch(
-    apiUrl(`/api/food-search?q=${encodeURIComponent(query)}`),
-    { signal },
-  );
-  if (!res.ok) {
-    const err = new Error(`food-search failed with ${res.status}`);
-    err.status = res.status;
-    throw err;
+  try {
+    const data = await foodSearchApi.search(query, { signal });
+    return Array.isArray(data?.products) ? data.products : [];
+  } catch (e) {
+    if (isApiError(e) && e.kind === "http") {
+      const err = new Error(`food-search failed with ${e.status}`);
+      err.status = e.status;
+      throw err;
+    }
+    throw e;
   }
-  const data = await res.json();
-  return Array.isArray(data?.products) ? data.products : [];
 }
 
 // Debounce user input separately from the queries themselves. We don't want

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiUrl } from "@shared/lib/apiUrl.js";
+import { coachApi, isApiError } from "@shared/api";
 
 const CACHE_KEY = "hub_coach_insight_cache_v1";
 
@@ -177,34 +177,25 @@ function aggregateCurrentSnapshot() {
 async function fetchCoachInsight() {
   let memory = null;
   try {
-    const memRes = await fetch(apiUrl("/api/coach/memory"), {
-      method: "GET",
-      credentials: "include",
-    });
-    if (memRes.ok) {
-      const memJson = await memRes.json();
-      memory = memJson.memory;
-    }
-  } catch {}
+    const memJson = await coachApi.getMemory();
+    memory = memJson.memory;
+  } catch {
+    // Пам’ять не обов’язкова — інсайт будуємо й без неї.
+  }
 
   const snapshot = aggregateCurrentSnapshot();
 
-  const insightRes = await fetch(apiUrl("/api/coach/insight"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ snapshot, memory }),
-  });
-
-  if (!insightRes.ok) {
-    const err = await insightRes.json().catch(() => ({}));
-    const error = new Error(err?.error || "Помилка генерації інсайту");
-    error.status = insightRes.status;
-    throw error;
+  try {
+    const insightJson = await coachApi.postInsight({ snapshot, memory });
+    return insightJson.insight ?? null;
+  } catch (e) {
+    if (isApiError(e) && e.kind === "http") {
+      const error = new Error(e.serverMessage || "Помилка генерації інсайту");
+      error.status = e.status;
+      throw error;
+    }
+    throw e;
   }
-
-  const insightJson = await insightRes.json();
-  return insightJson.insight ?? null;
 }
 
 // React Query key factory — exported so other callers (e.g. the weekly

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiUrl } from "@shared/lib/apiUrl.js";
+import { coachApi, weeklyDigestApi, isApiError } from "@shared/api";
 import { STORAGE_KEYS } from "@shared/lib/storageKeys.js";
 import { safeReadLS } from "@shared/lib/storage.js";
 import { MCC_CATEGORIES, INCOME_CATEGORIES } from "@finyk/constants.js";
@@ -295,24 +295,22 @@ async function generateWeeklyDigest(weekKey) {
   const nutrition = aggregateNutrition(weekKey);
   const routine = aggregateRoutine(weekKey);
 
-  const res = await fetch(apiUrl("/api/weekly-digest"), {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  let json;
+  try {
+    json = await weeklyDigestApi.generate({
       weekRange: currentWeekRange,
       finyk,
       fizruk,
       nutrition,
       routine,
-    }),
-  });
-
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const err = new Error(json?.error || "Помилка генерації звіту");
-    err.status = res.status;
-    throw err;
+    });
+  } catch (e) {
+    if (isApiError(e) && e.kind === "http") {
+      const err = new Error(e.serverMessage || "Помилка генерації звіту");
+      err.status = e.status;
+      throw err;
+    }
+    throw e;
   }
 
   return {
@@ -395,19 +393,16 @@ export function useWeeklyDigest(selectedWeekKey) {
       // Fire-and-forget push of digest into coach memory so /api/coach/insight
       // has richer context on the next call. Failures are non-fatal.
       try {
-        fetch(apiUrl("/api/coach/memory"), {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        coachApi
+          .postMemory({
             weeklyDigest: {
               weekKey: wk,
               weekRange: wr,
               generatedAt,
               ...(report || {}),
             },
-          }),
-        }).catch(() => {});
+          })
+          .catch(() => {});
       } catch {}
     },
   });
