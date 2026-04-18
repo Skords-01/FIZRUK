@@ -3,6 +3,9 @@
  * Reads data from localStorage and generates cross-module nudges.
  */
 
+import { getCategory } from "../../modules/finyk/utils";
+import { manualCategoryToCanonicalId } from "../../modules/finyk/domain/personalization";
+
 function safeLS(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
@@ -238,6 +241,101 @@ function buildFinanceRecs() {
         });
       }
     }
+  }
+
+  // Персоналізована підказка: найчастіша категорія без встановленого ліміту.
+  // Кількість використань — за ВСІ транзакції (банк + manual), а не лише за
+  // поточний місяць, щоб уникнути шуму на початку місяця.
+  try {
+    const limitCategoryIds = new Set(
+      limits.map((l) => l.categoryId).filter(Boolean),
+    );
+    const catCount = new Map();
+    // Паралельна мапа витрат за цей місяць у canonical id. Використовується
+    // нижче для `spendHint`: глобальний `categorySpend` ключований сирими
+    // overrides / manual-мітками і з `best.id` (canonical) не співпадав би.
+    const canonicalMonthSpend = new Map();
+    const monthStartMs = monthStart.getTime();
+    for (const tx of transactions) {
+      if (hiddenTxIds.has(tx.id) || transferIds.has(tx.id)) continue;
+      if ((tx.amount ?? 0) >= 0) continue;
+      // Використовуємо `getCategory` замість сирого `txCategories[tx.id]`:
+      // перший також резолвить автоматичні категорії з MCC / ключових слів
+      // опису, а не лише ручні overrides, інакше правило майже не тригериться
+      // для користувачів без кастомних категоризацій.
+      const override = txCategories[tx.id] || null;
+      const cat = getCategory(
+        tx.description || "",
+        tx.mcc || 0,
+        override,
+        customCategories,
+      );
+      const catId = cat?.id;
+      if (!catId || catId === "internal_transfer") continue;
+      catCount.set(catId, (catCount.get(catId) || 0) + 1);
+      if (txTimestamp(tx) >= monthStartMs) {
+        canonicalMonthSpend.set(
+          catId,
+          (canonicalMonthSpend.get(catId) || 0) + Math.abs(tx.amount / 100),
+        );
+      }
+    }
+    for (const me of manualExpenses) {
+      // Нормалізуємо manual-підпис ("їжа") у canonical id ("food"), щоб він
+      // співпадав з банківськими транзакціями та лімітами бюджету
+      // (інакше `food` і `їжа` рахувалися б окремо, а перевірка лімітів
+      // — які теж зберігаються за canonical id — промахувалась би повз ручні
+      // витрати).
+      const key = manualCategoryToCanonicalId(me.category) || "other";
+      if (key === "internal_transfer") continue;
+      catCount.set(key, (catCount.get(key) || 0) + 1);
+      if (new Date(me.date).getTime() >= monthStartMs) {
+        canonicalMonthSpend.set(
+          key,
+          (canonicalMonthSpend.get(key) || 0) +
+            Math.abs(Number(me.amount) || 0),
+        );
+      }
+    }
+    // Знаходимо топ-категорію без бюджету; поріг — ≥5 використань, щоб
+    // уникнути передчасних рекомендацій.
+    let best = null;
+    for (const [id, count] of catCount) {
+      if (limitCategoryIds.has(id)) continue;
+      if (count < 5) continue;
+      if (!best || count > best.count) best = { id, count };
+    }
+    if (best) {
+      const BUILTIN = {
+        food: "Продукти",
+        restaurant: "Кафе та ресторани",
+        transport: "Транспорт",
+        entertainment: "Розваги",
+        health: "Здоров'я",
+        shopping: "Покупки",
+        utilities: "Комунальні",
+        subscriptions: "Підписки",
+        other: "Інше",
+      };
+      const fromCustom = customCategories.find((c) => c.id === best.id);
+      const label = fromCustom?.label || BUILTIN[best.id] || best.id;
+      const thisMonthSpend = Math.round(canonicalMonthSpend.get(best.id) || 0);
+      const spendHint =
+        thisMonthSpend > 0
+          ? `Цього місяця вже ${thisMonthSpend.toLocaleString("uk-UA")} ₴ — поставте ліміт, щоб тримати руку на пульсі.`
+          : `Використано ${best.count} разів — встановіть ліміт, щоб тримати все під контролем.`;
+      recs.push({
+        id: `finyk_frequent_no_budget_${best.id}`,
+        module: "finyk",
+        priority: 55,
+        icon: "📌",
+        title: `"${label}" — ваша найчастіша категорія без ліміту`,
+        body: spendHint,
+        action: "finyk",
+      });
+    }
+  } catch {
+    // дефенсивно: рекомендація опціональна, не валимо ланцюжок інших правил.
   }
 
   // Прогрес фінансових цілей (>=80% — фінішна пряма)
