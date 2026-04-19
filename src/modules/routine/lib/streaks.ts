@@ -84,8 +84,6 @@ export function maxActiveStreak(habits, completions, todayKey) {
   return m;
 }
 
-export const currentMaxStreak = maxActiveStreak;
-
 export function completionRateForRange(habits, completions, startKey, endKey) {
   const days = [];
   const d = parseDateKey(startKey);
