@@ -1,7 +1,27 @@
 import { cn } from "@shared/lib/cn";
 import { stopSpeaking, unlockTTS } from "../lib/hubChatSpeech.js";
 import { useSpeech } from "../hooks/useSpeech.js";
-import { useRef, useCallback, useEffect } from "react";
+import {
+  useRef,
+  useCallback,
+  useEffect,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react";
+
+interface ChatInputProps {
+  input: string;
+  setInput: Dispatch<SetStateAction<string>>;
+  loading: boolean;
+  online: boolean;
+  speaking: boolean;
+  setSpeaking: Dispatch<SetStateAction<boolean>>;
+  onSend: () => void;
+  sendRef: MutableRefObject<
+    ((text?: string, fromVoice?: boolean) => void) | null
+  >;
+}
 
 export function ChatInput({
   input,
@@ -12,8 +32,8 @@ export function ChatInput({
   setSpeaking,
   onSend,
   sendRef,
-}) {
-  const inputRef = useRef(null);
+}: ChatInputProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 100);
