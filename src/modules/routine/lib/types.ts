@@ -127,6 +127,7 @@ export interface HubCalendarEvent {
   habitId?: string;
   completed?: boolean;
   note?: string;
+  timeOfDay?: string;
 }
 
 export interface RoutineBackupPayload {

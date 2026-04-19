@@ -23,7 +23,9 @@ export interface RoutineMonthCursor {
   m: number;
 }
 
-export type RoutineTimeMode = "day" | "week" | "month" | string;
+export type RoutineTimeMode = "today" | "tomorrow" | "day" | "week" | "month";
+
+export type RoutineMainTab = "calendar" | "stats" | "settings";
 
 export interface RoutineCalendarData {
   rangeLabel: string;
@@ -53,7 +55,7 @@ export interface RoutineCalendarData {
   listIsEmpty: boolean;
   hasListFilter: boolean;
   hasNoHabits: boolean;
-  grouped: Map<string, HubCalendarEvent[]>;
+  grouped: Array<[string, HubCalendarEvent[]]>;
   canBulkMark: boolean;
 }
 
@@ -61,7 +63,7 @@ export interface RoutineCalendarActions {
   applyTimeMode: (mode: RoutineTimeMode) => void;
   onToggleHabit: (habitId: string, dateKey: string) => void;
   setRoutine: Dispatch<SetStateAction<RoutineState>>;
-  setMainTab: (tab: string) => void;
+  setMainTab: Dispatch<SetStateAction<RoutineMainTab>>;
   onOpenModule?: (moduleId: string, opts?: { hash?: string }) => void;
   onBulkMarkDay: () => void;
 }
