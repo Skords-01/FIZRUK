@@ -15,7 +15,7 @@ import {
   requestIdMiddleware,
   requestLogMiddleware,
   withRequestContext,
-} from "./httpCommon.mjs";
+} from "./http/index.js";
 import { metricsHandler } from "./obs/metrics.js";
 import chatHandler from "./api/chat.js";
 import monoHandler from "./api/mono.js";

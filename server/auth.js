@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { fromNodeHeaders } from "better-auth/node";
 import pool from "./db.js";
 import {
   authAttemptsTotal,
@@ -89,7 +90,7 @@ export async function getSessionUser(req) {
   let outcome = "miss";
   try {
     const session = await auth.api.getSession({
-      headers: new Headers(req.headers),
+      headers: fromNodeHeaders(req.headers),
     });
     const user = session?.user ?? null;
     if (user?.id) {

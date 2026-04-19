@@ -37,6 +37,18 @@ function sweepBuckets(now, ttlMs) {
   }
 }
 
+/**
+ * Fixed-window rate-limit check (in-memory, per-process).
+ *
+ * @param {import("express").Request} req
+ * @param {{ key: string, limit: number, windowMs: number }} opts
+ * @returns {{
+ *   ok: boolean,
+ *   remaining: number,
+ *   resetMs: number,
+ *   retryAfterSec: number,
+ * }}
+ */
 export function checkRateLimit(req, { key, limit, windowMs }) {
   const ip = getIp(req);
   const now = Date.now();
@@ -46,22 +58,31 @@ export function checkRateLimit(req, { key, limit, windowMs }) {
   if (!cur || now - cur.startMs >= windowMs) {
     buckets.set(k, { startMs: now, count: 1 });
     recordRateLimit(key, "allowed");
-    return { ok: true, remaining: limit - 1, resetMs: windowMs };
+    return {
+      ok: true,
+      remaining: limit - 1,
+      resetMs: windowMs,
+      retryAfterSec: Math.max(1, Math.ceil(windowMs / 1000)),
+    };
   }
   if (cur.count >= limit) {
     recordRateLimit(key, "blocked");
+    const resetMs = Math.max(0, windowMs - (now - cur.startMs));
     return {
       ok: false,
       remaining: 0,
-      resetMs: Math.max(0, windowMs - (now - cur.startMs)),
+      resetMs,
+      retryAfterSec: Math.max(1, Math.ceil(resetMs / 1000)),
     };
   }
   cur.count += 1;
   recordRateLimit(key, "allowed");
+  const resetMs = Math.max(0, windowMs - (now - cur.startMs));
   return {
     ok: true,
     remaining: Math.max(0, limit - cur.count),
-    resetMs: Math.max(0, windowMs - (now - cur.startMs)),
+    resetMs,
+    retryAfterSec: Math.max(1, Math.ceil(resetMs / 1000)),
   };
 }
 
@@ -75,7 +96,7 @@ export function rateLimitExpress({ key, limit, windowMs }) {
     }
     if (!rl.ok) {
       try {
-        res.setHeader("Retry-After", String(Math.ceil(rl.resetMs / 1000)));
+        res.setHeader("Retry-After", String(rl.retryAfterSec));
       } catch {
         /* ignore */
       }
