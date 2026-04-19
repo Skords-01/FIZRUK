@@ -50,6 +50,10 @@ export const budgetLimitsRule: Rule<FinanceContext> = {
           title: `Бюджет "${catLabel}" перевищено на ${Math.round((pct - 1) * 100)}%`,
           body: `Витрачено ${Math.round(spent).toLocaleString("uk-UA")} ₴ з ${Math.round(limit.limit).toLocaleString("uk-UA")} ₴`,
           action: "finyk",
+          // Ліміт уже пробито — часто це означає, що є ще незафіксовані
+          // витрати, які б затягнули картину ще гірше. Одним тапом відкриваємо
+          // sheet, щоб дописати їх, поки деталі свіжі в пам'яті.
+          pwaAction: "add_expense" as const,
         });
       } else if (pct >= 0.9) {
         recs.push({

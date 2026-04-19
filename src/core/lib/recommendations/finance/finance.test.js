@@ -4,6 +4,8 @@ import { describe, it, expect } from "vitest";
 import { budgetLimitsRule } from "./budgetLimits.ts";
 import { frequentNoBudgetRule } from "./frequentNoBudget.ts";
 import { goalProgressRule } from "./goalProgress.ts";
+import { noTxRecentRule } from "./noTxRecent.ts";
+import { dailyVsWeeklyPaceRule } from "./dailyVsWeeklyPace.ts";
 
 function baseCtx(overrides = {}) {
   return {
@@ -34,6 +36,18 @@ describe("budgetLimitsRule", () => {
     const recs = budgetLimitsRule.evaluate(ctx);
     expect(recs[0]?.id).toBe("budget_over_food");
     expect(recs[0]?.priority).toBeGreaterThanOrEqual(80);
+    // Over-budget тягне pwaAction, щоб одним тапом дописати ще свіжі витрати.
+    expect(recs[0]?.pwaAction).toBe("add_expense");
+  });
+
+  it("warn-стадія НЕ тягне pwaAction (review-only)", () => {
+    const ctx = baseCtx({
+      limits: [{ id: "b", type: "limit", categoryId: "cafe", limit: 100 }],
+      categorySpend: { cafe: 95 },
+    });
+    const recs = budgetLimitsRule.evaluate(ctx);
+    expect(recs[0]?.id).toBe("budget_warn_cafe");
+    expect(recs[0]?.pwaAction).toBeUndefined();
   });
 
   it("генерує warn при 90..139%", () => {
@@ -132,5 +146,210 @@ describe("goalProgressRule", () => {
       ],
     });
     expect(goalProgressRule.evaluate(ctx)).toEqual([]);
+  });
+});
+
+describe("noTxRecentRule", () => {
+  // Допоміжні хелпери: tx (amount у копійках, time у секундах), manual expense.
+  const DAY = 86_400_000;
+  const now = new Date("2025-06-15T12:00:00Z");
+  const mkTx = (id, daysAgo) => ({
+    id,
+    amount: -10000, // 100 ₴ expense
+    time: Math.floor((now.getTime() - daysAgo * DAY) / 1000),
+  });
+  const mkManual = (daysAgo) => ({
+    date: new Date(now.getTime() - daysAgo * DAY).toISOString(),
+    amount: 120,
+  });
+
+  it("тригериться, якщо ≥5 записів і останній ≥3 дні тому", () => {
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("t1", 10),
+        mkTx("t2", 9),
+        mkTx("t3", 8),
+        mkTx("t4", 7),
+        mkTx("t5", 5),
+      ],
+    });
+    const recs = noTxRecentRule.evaluate(ctx);
+    expect(recs).toHaveLength(1);
+    expect(recs[0].id).toBe("finyk_no_tx_recent");
+    expect(recs[0].pwaAction).toBe("add_expense");
+    expect(recs[0].title).toMatch(/5 дні/);
+  });
+
+  it("не тригериться, якщо активність була сьогодні", () => {
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("t1", 10),
+        mkTx("t2", 9),
+        mkTx("t3", 8),
+        mkTx("t4", 7),
+        mkTx("t5", 0),
+      ],
+    });
+    expect(noTxRecentRule.evaluate(ctx)).toEqual([]);
+  });
+
+  it("не тригериться на новачків (<5 записів)", () => {
+    const ctx = baseCtx({
+      now,
+      transactions: [mkTx("t1", 10), mkTx("t2", 9)],
+    });
+    expect(noTxRecentRule.evaluate(ctx)).toEqual([]);
+  });
+
+  it("рахує manualExpenses як активність", () => {
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("t1", 10),
+        mkTx("t2", 9),
+        mkTx("t3", 8),
+        mkTx("t4", 7),
+      ],
+      // Разом 5 записів, але найсвіжіший — сьогодні → не тригеримось.
+      manualExpenses: [mkManual(0)],
+    });
+    expect(noTxRecentRule.evaluate(ctx)).toEqual([]);
+  });
+
+  it("ігнорує hidden/transfer-tx у підрахунку", () => {
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("t1", 10),
+        mkTx("t2", 9),
+        mkTx("t3", 8),
+        mkTx("t4", 7),
+        mkTx("h", 0), // найсвіжіший, але hidden — не має рятувати від тригеру
+      ],
+      hiddenTxIds: new Set(["h"]),
+    });
+    // 4 expense-tx видимі → <5, правило мовчить.
+    expect(noTxRecentRule.evaluate(ctx)).toEqual([]);
+  });
+});
+
+describe("dailyVsWeeklyPaceRule", () => {
+  const DAY = 86_400_000;
+  // 16:00 локального часу, щоб пройти MIN_HOUR=14.
+  const now = new Date("2025-06-15T16:00:00");
+  const mkTx = (id, daysAgo, uah) => ({
+    id,
+    amount: -Math.round(uah * 100),
+    time: Math.floor((now.getTime() - daysAgo * DAY) / 1000),
+  });
+
+  it("тригериться коли сьогодні > 1.5× середньої за 7 днів", () => {
+    // prev7 = 7 × 200 = 1400 ₴ (avg=200); today = 500 ₴ → ratio=2.5.
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("p1", 1, 200),
+        mkTx("p2", 2, 200),
+        mkTx("p3", 3, 200),
+        mkTx("p4", 4, 200),
+        mkTx("p5", 5, 200),
+        mkTx("p6", 6, 200),
+        mkTx("p7", 7, 200),
+        mkTx("t1", 0, 500),
+      ],
+    });
+    const recs = dailyVsWeeklyPaceRule.evaluate(ctx);
+    expect(recs).toHaveLength(1);
+    expect(recs[0].id).toBe("finyk_daily_vs_weekly_pace");
+    expect(recs[0].pwaAction).toBe("add_expense");
+    expect(recs[0].title).toMatch(/500.*₴/);
+  });
+
+  it("мовчить до 14:00", () => {
+    const early = new Date("2025-06-15T10:00:00");
+    const ctx = baseCtx({
+      now: early,
+      transactions: [
+        {
+          id: "p1",
+          amount: -140000,
+          time: Math.floor((early.getTime() - DAY) / 1000),
+        },
+        { id: "t1", amount: -50000, time: Math.floor(early.getTime() / 1000) },
+      ],
+    });
+    expect(dailyVsWeeklyPaceRule.evaluate(ctx)).toEqual([]);
+  });
+
+  it("мовчить під noise floor", () => {
+    // prev7 = 600 (<700) — занадто мало історії.
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("p1", 1, 100),
+        mkTx("p2", 2, 100),
+        mkTx("p3", 3, 100),
+        mkTx("p4", 4, 100),
+        mkTx("p5", 5, 100),
+        mkTx("p6", 6, 100),
+        mkTx("t1", 0, 500),
+      ],
+    });
+    expect(dailyVsWeeklyPaceRule.evaluate(ctx)).toEqual([]);
+  });
+
+  it("мовчить коли сьогодні < noise floor 200₴", () => {
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("p1", 1, 200),
+        mkTx("p2", 2, 200),
+        mkTx("p3", 3, 200),
+        mkTx("p4", 4, 200),
+        mkTx("p5", 5, 200),
+        mkTx("p6", 6, 200),
+        mkTx("p7", 7, 200),
+        mkTx("t1", 0, 150), // < 200
+      ],
+    });
+    expect(dailyVsWeeklyPaceRule.evaluate(ctx)).toEqual([]);
+  });
+
+  it("мовчить коли ratio < 1.5", () => {
+    // today = 250, avg = 200 → ratio=1.25.
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("p1", 1, 200),
+        mkTx("p2", 2, 200),
+        mkTx("p3", 3, 200),
+        mkTx("p4", 4, 200),
+        mkTx("p5", 5, 200),
+        mkTx("p6", 6, 200),
+        mkTx("p7", 7, 200),
+        mkTx("t1", 0, 250),
+      ],
+    });
+    expect(dailyVsWeeklyPaceRule.evaluate(ctx)).toEqual([]);
+  });
+
+  it("ігнорує hidden/transfer tx", () => {
+    const ctx = baseCtx({
+      now,
+      transactions: [
+        mkTx("p1", 1, 200),
+        mkTx("p2", 2, 200),
+        mkTx("p3", 3, 200),
+        mkTx("p4", 4, 200),
+        mkTx("p5", 5, 200),
+        mkTx("p6", 6, 200),
+        mkTx("p7", 7, 200),
+        mkTx("h", 0, 5000), // hidden — не має тригерити
+      ],
+      hiddenTxIds: new Set(["h"]),
+    });
+    expect(dailyVsWeeklyPaceRule.evaluate(ctx)).toEqual([]);
   });
 });

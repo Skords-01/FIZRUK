@@ -8,10 +8,14 @@ import { budgetLimitsRule } from "./budgetLimits";
 import { spendingVelocityRule } from "./spendingVelocity";
 import { frequentNoBudgetRule } from "./frequentNoBudget";
 import { goalProgressRule } from "./goalProgress";
+import { noTxRecentRule } from "./noTxRecent";
+import { dailyVsWeeklyPaceRule } from "./dailyVsWeeklyPace";
 
 export const FINANCE_RULES: readonly Rule<FinanceContext>[] = [
   budgetLimitsRule,
   spendingVelocityRule,
   frequentNoBudgetRule,
   goalProgressRule,
+  noTxRecentRule,
+  dailyVsWeeklyPaceRule,
 ];
