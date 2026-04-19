@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "node server/index.js",
-    "start:replit": "SERVER_MODE=replit node server/index.js",
+    "start": "node --import tsx server/index.js",
+    "start:replit": "SERVER_MODE=replit node --import tsx server/index.js",
     "dev": "vite --port 5173 --host 0.0.0.0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -80,6 +80,7 @@
     "prettier": "^3.8.2",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
     "vite": "^6.4.2",

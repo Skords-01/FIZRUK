@@ -8,7 +8,29 @@ import {
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
-function recordOutcome(outcome, { model, endpoint, ms }) {
+export interface AnthropicCallOptions {
+  timeoutMs?: number;
+  endpoint?: string;
+}
+
+export interface AnthropicMessagesResult {
+  response: Response | null;
+  data: Record<string, unknown>;
+}
+
+export interface AnthropicStreamResult {
+  response: Response;
+  recordStreamEnd: (outcome?: string) => void;
+}
+
+interface RecordOutcomeMeta {
+  model: string;
+  endpoint: string;
+  ms: number | null;
+}
+
+function recordOutcome(outcome: string, meta: RecordOutcomeMeta): void {
+  const { model, endpoint, ms } = meta;
   try {
     externalHttpRequestsTotal.inc({ upstream: "anthropic", outcome });
     if (ms != null) {
@@ -35,7 +57,18 @@ function recordOutcome(outcome, { model, endpoint, ms }) {
   }
 }
 
-function recordUsage(model, data) {
+interface AnthropicUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+}
+
+interface AnthropicResponseData {
+  usage?: AnthropicUsage;
+  content?: Array<{ type: string; text?: string }>;
+  [key: string]: unknown;
+}
+
+function recordUsage(model: string, data: AnthropicResponseData | null): void {
   try {
     const usage = data?.usage;
     if (!usage) return;
@@ -57,19 +90,17 @@ function recordUsage(model, data) {
 }
 
 export async function anthropicMessages(
-  apiKey,
-  payload,
-  { timeoutMs = 20000, endpoint = "unknown" } = {},
-) {
+  apiKey: string,
+  payload: Record<string, unknown>,
+  { timeoutMs = 20000, endpoint = "unknown" }: AnthropicCallOptions = {},
+): Promise<AnthropicMessagesResult> {
   const maxAttempts = 3;
   const retryDelayMs = [0, 250, 750];
-  const model = payload?.model || "unknown";
+  const model = (payload?.model as string) || "unknown";
   const overallStart = process.hrtime.bigint();
 
-  /** @type {Response|null} */
-  let lastResponse = null;
-  /** @type {any} */
-  let lastData = {};
+  let lastResponse: Response | null = null;
+  let lastData: Record<string, unknown> = {};
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const controller = new AbortController();
@@ -90,7 +121,9 @@ export async function anthropicMessages(
         signal: controller.signal,
       });
 
-      const data = await response.json().catch(() => ({}));
+      const data = (await response
+        .json()
+        .catch(() => ({}))) as AnthropicResponseData;
       lastResponse = response;
       lastData = data;
 
@@ -109,7 +142,7 @@ export async function anthropicMessages(
         });
       }
       return { response, data };
-    } catch (e) {
+    } catch (e: unknown) {
       // На явний timeout (AbortError) краще не "допалювати" запити.
       if (isAbortError(e) || attempt >= maxAttempts) {
         const ms = Number(process.hrtime.bigint() - overallStart) / 1e6;
@@ -141,16 +174,16 @@ export async function anthropicMessages(
  * мусить жити до виклику `recordStreamEnd`, щоб захистити stream від зависання.
  */
 export async function anthropicMessagesStream(
-  apiKey,
-  payload,
-  { endpoint = "unknown", timeoutMs = 60000 } = {},
-) {
-  const model = payload?.model || "unknown";
+  apiKey: string,
+  payload: Record<string, unknown>,
+  { endpoint = "unknown", timeoutMs = 60000 }: AnthropicCallOptions = {},
+): Promise<AnthropicStreamResult> {
+  const model = (payload?.model as string) || "unknown";
   const start = process.hrtime.bigint();
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
 
-  let response;
+  let response: Response;
   try {
     response = await fetch(ANTHROPIC_URL, {
       method: "POST",
@@ -162,7 +195,7 @@ export async function anthropicMessagesStream(
       body: JSON.stringify({ ...payload, stream: true }),
       signal: controller.signal,
     });
-  } catch (e) {
+  } catch (e: unknown) {
     clearTimeout(t);
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     recordOutcome(isAbortError(e) ? "timeout" : "error", {
@@ -185,7 +218,7 @@ export async function anthropicMessagesStream(
   }
 
   let settled = false;
-  const recordStreamEnd = (outcome = "ok") => {
+  const recordStreamEnd = (outcome: string = "ok"): void => {
     if (settled) return;
     settled = true;
     clearTimeout(t);
@@ -196,15 +229,17 @@ export async function anthropicMessagesStream(
   return { response, recordStreamEnd };
 }
 
-export function extractAnthropicText(data) {
+export function extractAnthropicText(
+  data: AnthropicResponseData | null | undefined,
+): string {
   return (data?.content || [])
     .filter((b) => b.type === "text")
-    .map((b) => b.text)
+    .map((b) => b.text ?? "")
     .join("\n")
     .trim();
 }
 
-function shouldRetryStatus(status) {
+function shouldRetryStatus(status: number): boolean {
   return (
     status === 429 ||
     status === 500 ||
@@ -214,12 +249,12 @@ function shouldRetryStatus(status) {
   );
 }
 
-function isAbortError(e) {
-  return (
-    !!e && (e.name === "AbortError" || /abort/i.test(String(e?.message || "")))
-  );
+function isAbortError(e: unknown): boolean {
+  if (!e || typeof e !== "object") return false;
+  const err = e as { name?: string; message?: string };
+  return err.name === "AbortError" || /abort/i.test(String(err.message || ""));
 }
 
-function sleep(ms) {
+function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
