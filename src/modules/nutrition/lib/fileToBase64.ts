@@ -1,4 +1,4 @@
-export function fileToBase64(file) {
+export function fileToBase64(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Не вдалося прочитати файл"));

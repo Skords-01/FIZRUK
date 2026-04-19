@@ -1,4 +1,16 @@
-export const FOOD_CATEGORIES = [
+export interface FoodCategory {
+  id: string;
+  label: string;
+  emoji: string;
+  keywords: readonly string[];
+}
+
+export interface GroupedCategoryBucket<T = unknown> {
+  cat: { id: string; label: string; emoji: string };
+  items: Array<{ item: T; idx: number }>;
+}
+
+export const FOOD_CATEGORIES: readonly FoodCategory[] = [
   {
     id: "vegetables",
     label: "Овочі",
@@ -170,9 +182,14 @@ export const FOOD_CATEGORIES = [
   },
 ];
 
-const OTHER = { id: "other", label: "Інше", emoji: "📦" };
+const OTHER: FoodCategory = {
+  id: "other",
+  label: "Інше",
+  emoji: "📦",
+  keywords: [],
+};
 
-export function categorizeFood(name) {
+export function categorizeFood(name: unknown): FoodCategory {
   const n = String(name || "")
     .toLowerCase()
     .trim();
@@ -185,14 +202,17 @@ export function categorizeFood(name) {
   return OTHER;
 }
 
-export function groupItemsByCategory(items) {
-  const buckets = new Map();
+export function groupItemsByCategory<T extends { name?: unknown }>(
+  items: readonly T[] | unknown,
+): Array<GroupedCategoryBucket<T>> {
+  const buckets = new Map<string, GroupedCategoryBucket<T>>();
   for (const cat of FOOD_CATEGORIES) buckets.set(cat.id, { cat, items: [] });
   buckets.set(OTHER.id, { cat: OTHER, items: [] });
 
-  (Array.isArray(items) ? items : []).forEach((it, idx) => {
+  const arr = (Array.isArray(items) ? items : []) as readonly T[];
+  arr.forEach((it, idx) => {
     const cat = categorizeFood(it?.name);
-    buckets.get(cat.id).items.push({ item: it, idx });
+    buckets.get(cat.id)?.items.push({ item: it, idx });
   });
 
   return [...buckets.values()].filter((b) => b.items.length > 0);

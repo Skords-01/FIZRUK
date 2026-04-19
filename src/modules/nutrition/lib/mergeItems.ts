@@ -2,9 +2,15 @@ import {
   canonicalFoodKey,
   normalizeFoodName,
   normalizeUnit,
+  type PantryItem,
 } from "./pantryTextParser.js";
 
-function toBaseUnit(qty, unit) {
+interface BaseUnit {
+  base: "г" | "мл" | "шт";
+  value: number;
+}
+
+function toBaseUnit(qty: unknown, unit: unknown): BaseUnit | null {
   const u = String(unit || "").toLowerCase();
   const q = Number(qty);
   if (!Number.isFinite(q)) return null;
@@ -16,7 +22,7 @@ function toBaseUnit(qty, unit) {
   return null;
 }
 
-function roundNice(n) {
+function roundNice(n: number): number {
   const x = Number(n);
   if (!Number.isFinite(x)) return n;
   // 1 знак після коми для невеликих дробів, інакше ціле
@@ -24,10 +30,13 @@ function roundNice(n) {
   return Math.round(x);
 }
 
-export function mergeItems(oldItems, newItems) {
-  const a = Array.isArray(oldItems) ? oldItems : [];
-  const b = Array.isArray(newItems) ? newItems : [];
-  const merged = [...a];
+export function mergeItems(
+  oldItems: readonly PantryItem[] | unknown,
+  newItems: readonly PantryItem[] | unknown,
+): PantryItem[] {
+  const a = (Array.isArray(oldItems) ? oldItems : []) as PantryItem[];
+  const b = (Array.isArray(newItems) ? newItems : []) as PantryItem[];
+  const merged: PantryItem[] = [...a];
 
   for (const it of b) {
     const n = normalizeFoodName(it?.name);
@@ -35,15 +44,18 @@ export function mergeItems(oldItems, newItems) {
     const key = canonicalFoodKey(n);
 
     const rawQty =
-      it?.qty != null && it.qty !== "" && Number.isFinite(Number(it.qty))
+      it?.qty != null &&
+      it.qty !== ("" as unknown) &&
+      Number.isFinite(Number(it.qty))
         ? Number(it.qty)
         : null;
     const rawUnit = it?.unit ? normalizeUnit(it.unit) : null;
 
     // Гола назва без кількості/одиниці трактується як "1 шт" — це дозволяє
     // сумувати "огірок" з існуючим "огірки 4 шт" так само, як "огірок 1".
-    const incomingQty = rawQty == null && !rawUnit ? 1 : rawQty;
-    const incomingUnit = rawQty == null && !rawUnit ? "шт" : rawUnit;
+    const incomingQty: number | null = rawQty == null && !rawUnit ? 1 : rawQty;
+    const incomingUnit: string | null =
+      rawQty == null && !rawUnit ? "шт" : rawUnit;
 
     // Гібрид: сумуємо лише якщо є qty+unit і одиниці сумісні (або однакові)
     if (incomingQty != null && incomingUnit) {
@@ -53,7 +65,9 @@ export function mergeItems(oldItems, newItems) {
           const nx = canonicalFoodKey(x?.name);
           if (nx !== key) return false;
           const qx =
-            x?.qty != null && x.qty !== "" && Number.isFinite(Number(x.qty))
+            x?.qty != null &&
+            (x.qty as unknown) !== "" &&
+            Number.isFinite(Number(x.qty))
               ? Number(x.qty)
               : null;
           const ux = x?.unit ? normalizeUnit(x.unit) : null;
@@ -67,12 +81,14 @@ export function mergeItems(oldItems, newItems) {
           const qx = Number(cur.qty);
           const ux = normalizeUnit(cur.unit);
           const baseX = toBaseUnit(qx, ux);
-          merged[idx] = {
-            ...cur,
-            qty: roundNice(baseX.value + baseIncoming.value),
-            unit: baseIncoming.base,
-          };
-          continue;
+          if (baseX) {
+            merged[idx] = {
+              ...cur,
+              qty: roundNice(baseX.value + baseIncoming.value),
+              unit: baseIncoming.base,
+            };
+            continue;
+          }
         }
       }
     }
@@ -85,7 +101,9 @@ export function mergeItems(oldItems, newItems) {
     if (sameNameIdx >= 0) {
       const cur = merged[sameNameIdx];
       const curQty =
-        cur?.qty != null && cur.qty !== "" && Number.isFinite(Number(cur.qty))
+        cur?.qty != null &&
+        (cur.qty as unknown) !== "" &&
+        Number.isFinite(Number(cur.qty))
           ? Number(cur.qty)
           : null;
       const curUnit = cur?.unit ? normalizeUnit(cur.unit) : null;

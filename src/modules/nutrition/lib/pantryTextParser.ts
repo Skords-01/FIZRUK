@@ -1,4 +1,11 @@
-export function normalizeFoodName(s) {
+export interface PantryItem {
+  name: string;
+  qty: number | null;
+  unit: string | null;
+  notes: string | null;
+}
+
+export function normalizeFoodName(s: unknown): string {
   return String(s || "")
     .trim()
     .toLowerCase()
@@ -7,7 +14,7 @@ export function normalizeFoodName(s) {
     .replace(/^[,;]+|[,;]+$/g, "");
 }
 
-export function normalizeUnit(u) {
+export function normalizeUnit(u: unknown): string | null {
   const s = String(u || "")
     .trim()
     .toLowerCase()
@@ -26,7 +33,7 @@ export function normalizeUnit(u) {
 // Мапа типових форм → канонічна форма продукту.
 // Використовується лише для зіставлення при злитті; відображуване ім'я
 // не змінюється.
-const FOOD_ALIASES = new Map([
+const FOOD_ALIASES = new Map<string, string>([
   // овочі
   ["огірки", "огірок"],
   ["огірків", "огірок"],
@@ -153,10 +160,11 @@ const FOOD_ALIASES = new Map([
 ]);
 
 // Канонічний ключ продукту для порівняння при злитті.
-export function canonicalFoodKey(name) {
+export function canonicalFoodKey(name: unknown): string {
   const n = normalizeFoodName(name);
   if (!n) return "";
-  if (FOOD_ALIASES.has(n)) return FOOD_ALIASES.get(n);
+  const alias = FOOD_ALIASES.get(n);
+  if (alias) return alias;
 
   // Легкий стемінг для окремих слів: відрізаємо типові укр. закінчення
   // множини/родового відмінка, якщо після них залишається ≥4 літер.
@@ -180,7 +188,7 @@ const TRAILING_QTY_RE = new RegExp(
   `^(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*(${UNIT_CHAR_RE})?$`,
 );
 
-function buildLeadingResult(m, raw) {
+function buildLeadingResult(m: RegExpMatchArray, raw: string): PantryItem {
   const qty = m[1] ? Number(String(m[1]).replace(",", ".")) : null;
   const unitRaw = normalizeFoodName(m[2] || "");
   const rest = normalizeFoodName(m[3] || "");
@@ -189,8 +197,8 @@ function buildLeadingResult(m, raw) {
   if (!rest && unitRaw) {
     return {
       name: normalizeFoodName(unitRaw),
-      qty: Number.isFinite(qty) ? qty : null,
-      unit: Number.isFinite(qty) ? "шт" : null,
+      qty: qty != null && Number.isFinite(qty) ? qty : null,
+      unit: qty != null && Number.isFinite(qty) ? "шт" : null,
       notes: null,
     };
   }
@@ -200,7 +208,7 @@ function buildLeadingResult(m, raw) {
     normalizeFoodName(raw.replace(m[0], "").trim()) ||
     normalizeFoodName(raw);
   const unit = unitRaw ? normalizeUnit(unitRaw) : null;
-  const resolvedQty = Number.isFinite(qty) ? qty : null;
+  const resolvedQty = qty != null && Number.isFinite(qty) ? qty : null;
   return {
     name: normalizeFoodName(name),
     qty: resolvedQty,
@@ -209,7 +217,7 @@ function buildLeadingResult(m, raw) {
   };
 }
 
-function buildTrailingResult(tm) {
+function buildTrailingResult(tm: RegExpMatchArray): PantryItem | null {
   const name = normalizeFoodName(tm[1]);
   if (!name) return null;
   const qty = Number(String(tm[2]).replace(",", "."));
@@ -224,7 +232,7 @@ function buildTrailingResult(tm) {
   };
 }
 
-export function parseLoosePantryText(raw) {
+export function parseLoosePantryText(raw: unknown): PantryItem[] {
   const parts = String(raw || "")
     .replace(/\n+/g, ",")
     .split(/[;,]/g)
@@ -232,7 +240,7 @@ export function parseLoosePantryText(raw) {
     .filter(Boolean);
 
   return parts
-    .map((p) => {
+    .map<PantryItem>((p) => {
       // кількість спереду: "2 яйця", "200 г курка", "0.5л молоко"
       const m = p.match(LEADING_QTY_RE);
       if (m) return buildLeadingResult(m, p);
