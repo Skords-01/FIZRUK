@@ -262,12 +262,14 @@ function Delta({ cur, prev, higherIsBetter = true }) {
 function StatCard({ title, icon, current, prev, unit, higherIsBetter, chart }) {
   return (
     <div className="bg-panel border border-line rounded-2xl p-4 space-y-3">
-      <div className="flex items-center gap-2">
+      <SectionHeading
+        as="div"
+        size="xs"
+        className="flex items-center gap-2 text-muted"
+      >
         <span className="text-lg">{icon}</span>
-        <span className="text-xs font-semibold text-muted uppercase tracking-wider">
-          {title}
-        </span>
-      </div>
+        <span>{title}</span>
+      </SectionHeading>
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-bold text-text">
           {typeof current === "number"
@@ -476,9 +478,9 @@ export function HubReports() {
       )}
 
       <div className="bg-panel border border-line rounded-2xl p-4">
-        <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+        <SectionHeading as="p" size="xs" className="mb-3">
           Підсумок
-        </p>
+        </SectionHeading>
         <div className="space-y-2 text-sm text-text">
           {data.workouts.cur.count > 0 && (
             <p>

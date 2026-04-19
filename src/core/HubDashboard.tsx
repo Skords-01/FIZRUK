@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
+import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { safeReadLS, safeWriteLS, safeRemoveLS } from "@shared/lib/storage.js";
 import { STORAGE_KEYS } from "@shared/lib/storageKeys.js";
 import { openHubModuleWithAction } from "@shared/lib/hubNav";
@@ -679,9 +680,9 @@ export function HubDashboard({
       {/* STATUS — тихий список модулів. Рядок, під який підʼїхала
           рекомендація, отримує inline `+` для quick-add. */}
       <section className="space-y-2">
-        <h2 className="px-0.5 text-xs font-semibold text-muted uppercase tracking-wider">
+        <SectionHeading as="h2" size="xs" className="px-0.5">
           Статус
-        </h2>
+        </SectionHeading>
 
         <DndContext
           sensors={sensors}

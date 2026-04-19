@@ -377,29 +377,29 @@ export function Progress() {
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-bg border border-line rounded-xl p-2.5 text-center">
-                <div className="text-2xs text-subtle uppercase tracking-wide">
-                  Сьогодні
-                </div>
-                <div className="text-lg font-black text-text tabular-nums">
-                  {pushupStats.todayCount}
-                </div>
+              <div className="bg-bg border border-line rounded-xl p-2.5">
+                <Stat
+                  label="Сьогодні"
+                  value={pushupStats.todayCount}
+                  size="sm"
+                  align="center"
+                />
               </div>
-              <div className="bg-bg border border-line rounded-xl p-2.5 text-center">
-                <div className="text-2xs text-subtle uppercase tracking-wide">
-                  Тиждень
-                </div>
-                <div className="text-lg font-black text-text tabular-nums">
-                  {pushupStats.week}
-                </div>
+              <div className="bg-bg border border-line rounded-xl p-2.5">
+                <Stat
+                  label="Тиждень"
+                  value={pushupStats.week}
+                  size="sm"
+                  align="center"
+                />
               </div>
-              <div className="bg-bg border border-line rounded-xl p-2.5 text-center">
-                <div className="text-2xs text-subtle uppercase tracking-wide">
-                  Місяць
-                </div>
-                <div className="text-lg font-black text-text tabular-nums">
-                  {pushupStats.month}
-                </div>
+              <div className="bg-bg border border-line rounded-xl p-2.5">
+                <Stat
+                  label="Місяць"
+                  value={pushupStats.month}
+                  size="sm"
+                  align="center"
+                />
               </div>
             </div>
           </Card>
