@@ -1,31 +1,12 @@
-import { setCorsHeaders } from "../http/cors.js";
-import { setRequestModule } from "../obs/requestContext.js";
 import { logger } from "../obs/logger.js";
-import {
-  externalHttpDurationMs,
-  externalHttpRequestsTotal,
-} from "../obs/metrics.js";
+import { recordExternalHttp } from "../lib/externalHttp.js";
 
-function recordPrivat(outcome, ms) {
-  try {
-    externalHttpRequestsTotal.inc({ upstream: "privatbank", outcome });
-    if (ms != null) {
-      externalHttpDurationMs.observe({ upstream: "privatbank", outcome }, ms);
-    }
-  } catch {
-    /* ignore */
-  }
-}
-
+/**
+ * `/api/privat` — проксі до PrivatBank merchant API. CORS/rate-limit/tag
+ * зроблені middleware-ами роутера; тут тільки upstream credentials,
+ * path-валідація і фільтрація заголовків від CRLF-injection.
+ */
 export default async function handler(req, res) {
-  setRequestModule("finyk");
-  setCorsHeaders(res, req, {
-    allowHeaders: "X-Privat-Id, X-Privat-Token, Content-Type",
-    methods: "GET, OPTIONS",
-  });
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-
   const merchantId = req.headers["x-privat-id"];
   const merchantToken = req.headers["x-privat-token"];
   const rawPath = req.query.path || "/statements/balance/final";
@@ -82,7 +63,11 @@ export default async function handler(req, res) {
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
 
     if (!response.ok) {
-      recordPrivat(response.status === 429 ? "rate_limited" : "error", ms);
+      recordExternalHttp(
+        "privatbank",
+        response.status === 429 ? "rate_limited" : "error",
+        ms,
+      );
       let errorText = "";
       try {
         errorText = await response.text();
@@ -97,12 +82,12 @@ export default async function handler(req, res) {
       });
     }
 
-    recordPrivat("ok", ms);
+    recordExternalHttp("privatbank", "ok", ms);
     const data = await response.json();
     res.status(200).json(data);
   } catch (e) {
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
-    recordPrivat("error", ms);
+    recordExternalHttp("privatbank", "error", ms);
     logger.error({
       msg: "privat_proxy_failed",
       err: { message: e?.message || String(e), code: e?.code },

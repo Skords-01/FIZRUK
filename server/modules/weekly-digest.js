@@ -1,6 +1,3 @@
-import { assertAiQuota } from "../aiQuota.js";
-import { setCorsHeaders } from "../http/cors.js";
-import { setRequestModule } from "../obs/requestContext.js";
 import { anthropicMessages, extractAnthropicText } from "../lib/anthropic.js";
 
 function extractJsonObject(raw) {
@@ -50,22 +47,13 @@ function extractJsonObject(raw) {
   }
 }
 
+/**
+ * POST /api/weekly-digest — згенерувати тижневий звіт. CORS/method/key/quota
+ * забезпечені middleware-ами роутера; тут лише бізнес-логіка. Ключ Anthropic
+ * читається з `req.anthropicKey`.
+ */
 export default async function handler(req, res) {
-  setRequestModule("weekly-digest");
-  setCorsHeaders(res, req, {
-    allowHeaders: "Content-Type",
-    methods: "POST, OPTIONS",
-  });
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Method not allowed" });
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey)
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
-
-  if (!(await assertAiQuota(req, res))) return;
+  const apiKey = req.anthropicKey;
 
   try {
     const { weekRange, finyk, fizruk, nutrition, routine } = req.body || {};

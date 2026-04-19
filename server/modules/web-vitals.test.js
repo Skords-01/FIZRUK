@@ -31,13 +31,8 @@ describe("webVitalsHandler", () => {
     webVitalsCls.reset();
   });
 
-  it("returns 405 on non-POST", async () => {
-    const req = { method: "GET", body: undefined };
-    const res = makeRes();
-    webVitalsHandler(req, res);
-    expect(res.statusCode).toBe(405);
-  });
-
+  // Method-guard перенесений у роутер (див. server/routes/web-vitals.js:
+  // router.post(...)), хендлер більше не відповідає 405.
   it("returns 204 on invalid payload and does not throw", async () => {
     const req = { method: "POST", body: { foo: "bar" } };
     const res = makeRes();

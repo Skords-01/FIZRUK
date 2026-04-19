@@ -1,16 +1,8 @@
-import { assertAiQuota } from "../../aiQuota.js";
-import { setCorsHeaders } from "../../http/cors.js";
-import { setRequestModule } from "../../obs/requestContext.js";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import {
   anthropicMessages,
   extractAnthropicText,
 } from "../../lib/anthropic.js";
-import {
-  checkRateLimit,
-  requireNutritionTokenIfConfigured,
-} from "./lib/nutritionSecurity.js";
-
 function normalizeWeekPlan(parsed) {
   const obj =
     parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -51,32 +43,12 @@ const SYSTEM = `Ти шеф-кухар і планувальник харчув�
 }
 Максимум 7 днів. Не вигадуй екзотичні інгредієнти поза списком — дозволено додати сіль, олію, базові спеції.`;
 
+/**
+ * POST /api/nutrition/week-plan — згенерувати план харчування на тиждень.
+ * CORS / token / quota / rate-limit виставляє роутер.
+ */
 export default async function handler(req, res) {
-  setRequestModule("nutrition");
-  setCorsHeaders(res, req, {
-    allowHeaders: "X-Token, Content-Type",
-    methods: "POST, OPTIONS",
-  });
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Method not allowed" });
-
-  if (!requireNutritionTokenIfConfigured(req, res)) return;
-  if (!(await assertAiQuota(req, res))) return;
-  const rl = checkRateLimit(req, {
-    key: "nutrition:week-plan",
-    limit: 10,
-    windowMs: 60_000,
-  });
-  if (!rl.ok)
-    return res
-      .status(429)
-      .json({ error: "Забагато запитів. Спробуй пізніше." });
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey)
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+  const apiKey = req.anthropicKey;
 
   try {
     const { items, preferences, locale } = req.body || {};

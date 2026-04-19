@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { asyncHandler, rateLimitExpress } from "../http/index.js";
+import {
+  asyncHandler,
+  rateLimitExpress,
+  requireApiSecret,
+  requireSession,
+  setModule,
+} from "../http/index.js";
 import {
   sendPush,
   subscribe as pushSubscribe,
@@ -9,18 +15,30 @@ import {
 
 /**
  * `/api/push/vapid-public` свідомо поза rate-limiter-ом: його смикає фронт
- * під час регіс трації сервіс-воркера і він має бути швидким/дешевим. Решта
+ * під час реєстрації сервіс-воркера і він має бути швидким/дешевим. Решта
  * endpoint-ів (subscribe/unsubscribe/send) лімітуються.
+ *
+ * subscribe/unsubscribe вимагають сесії; send — внутрішній API для
+ * cron/worker-ів, захищений `X-Api-Secret`.
  */
 export function createPushRouter() {
   const r = Router();
+  r.use("/api/push", setModule("push"));
   r.get("/api/push/vapid-public", asyncHandler(vapidPublic));
   r.use(
     "/api/push",
     rateLimitExpress({ key: "api:push", limit: 30, windowMs: 60_000 }),
   );
-  r.post("/api/push/subscribe", asyncHandler(pushSubscribe));
-  r.delete("/api/push/subscribe", asyncHandler(pushUnsubscribe));
-  r.post("/api/push/send", asyncHandler(sendPush));
+  r.post("/api/push/subscribe", requireSession(), asyncHandler(pushSubscribe));
+  r.delete(
+    "/api/push/subscribe",
+    requireSession(),
+    asyncHandler(pushUnsubscribe),
+  );
+  r.post(
+    "/api/push/send",
+    requireApiSecret("API_SECRET"),
+    asyncHandler(sendPush),
+  );
   return r;
 }
