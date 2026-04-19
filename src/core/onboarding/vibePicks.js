@@ -2,11 +2,11 @@
 // Everything here is synchronous localStorage access — the wizard runs
 // before React Query / cloud sync, so we keep it dependency-free.
 
-export const VIBE_PICKS_KEY = "hub_onboarding_vibes_v1";
-export const FIRST_ACTION_PENDING_KEY = "hub_first_action_pending_v1";
-export const FIRST_REAL_ENTRY_KEY = "hub_first_real_entry_done_v1";
-export const SOFT_AUTH_DISMISSED_KEY = "hub_soft_auth_dismissed_v1";
-export const DEMO_BANNER_DISMISSED_KEY = "hub_demo_banner_dismissed_v1";
+const VIBE_PICKS_KEY = "hub_onboarding_vibes_v1";
+const FIRST_ACTION_PENDING_KEY = "hub_first_action_pending_v1";
+const FIRST_REAL_ENTRY_KEY = "hub_first_real_entry_done_v1";
+const SOFT_AUTH_DISMISSED_KEY = "hub_soft_auth_dismissed_v1";
+const DEMO_BANNER_DISMISSED_KEY = "hub_demo_banner_dismissed_v1";
 
 /** @typedef {"finyk" | "fizruk" | "routine" | "nutrition"} HubModuleId */
 

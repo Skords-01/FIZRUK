@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { STORAGE_KEYS } from "@shared/lib/storageKeys.js";
 
-export const HUB_PREFS_KEY = STORAGE_KEYS.HUB_PREFS;
+const HUB_PREFS_KEY = STORAGE_KEYS.HUB_PREFS;
 
-export type HubPrefs = Record<string, unknown>;
+type HubPrefs = Record<string, unknown>;
 
-export function loadHubPrefs(): HubPrefs {
+function loadHubPrefs(): HubPrefs {
   try {
     const raw = localStorage.getItem(HUB_PREFS_KEY);
     if (!raw) return {};
@@ -16,7 +16,7 @@ export function loadHubPrefs(): HubPrefs {
   }
 }
 
-export function saveHubPref(key: string, value: unknown): void {
+function saveHubPref(key: string, value: unknown): void {
   try {
     const prefs = loadHubPrefs();
     localStorage.setItem(

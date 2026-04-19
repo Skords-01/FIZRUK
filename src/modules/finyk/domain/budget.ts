@@ -5,8 +5,6 @@
 import { getTxStatAmount, calcMonthlyNeeded } from "../utils";
 import type {
   Budget,
-  MonthBudgetSummary,
-  MonthlyPlan,
   RemainingBudget,
   Transaction,
   TxSplitsMap,
@@ -250,47 +248,6 @@ export function getMonthlyPlanUsage(
     isOver,
     safePerDay,
     daysLeft,
-  };
-}
-
-export interface MonthBudgetOptions {
-  excludedTxIds?: Set<string> | Iterable<string>;
-  txSplits?: TxSplitsMap;
-  monthlyPlan?: MonthlyPlan;
-}
-
-export function getMonthBudgetSummary(
-  transactions: readonly Transaction[] | null | undefined,
-  {
-    excludedTxIds = new Set<string>(),
-    txSplits = {},
-    monthlyPlan = {},
-  }: MonthBudgetOptions = {},
-): MonthBudgetSummary {
-  const excluded =
-    excludedTxIds instanceof Set
-      ? excludedTxIds
-      : new Set<string>(excludedTxIds || []);
-  const statTx = Array.isArray(transactions)
-    ? transactions.filter((t) => t && !excluded.has(t.id))
-    : [];
-  const totalFact = calculateTotalExpenseFact(statTx, txSplits);
-  const usage = getMonthlyPlanUsage(
-    {
-      planIncome: Number(monthlyPlan?.income || 0),
-      planExpense: Number(monthlyPlan?.expense || 0),
-      totalFact,
-    },
-    new Date(),
-  );
-  return {
-    totalPlan: usage.planExpense,
-    planIncome: usage.planIncome,
-    totalFact: usage.totalFact,
-    totalRemaining: usage.remaining,
-    safePerDay: usage.safePerDay,
-    isOverall: usage.isOver,
-    daysLeft: usage.daysLeft,
   };
 }
 

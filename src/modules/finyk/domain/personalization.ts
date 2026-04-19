@@ -71,7 +71,7 @@ export interface PersonalizationOptions {
 // Мапа manual-підписів (як у ManualExpenseSheet) на canonical id з MCC_CATEGORIES.
 // Якщо користувач вводить щось інше (custom manual-категорія) — зберігаємо
 // «як є» і використовуємо сам підпис як id.
-export const MANUAL_CATEGORY_ID_MAP: Record<string, string> = {
+const MANUAL_CATEGORY_ID_MAP: Record<string, string> = {
   їжа: "food",
   продукти: "food",
   "кафе та ресторани": "restaurant",
@@ -401,15 +401,4 @@ export function getFrequentMerchants(
   // Ховаємо випадкові одноразові мерчанти — персоналізація має сенс від 2-го
   // використання; limit лишаємо прозорим — виклик може взяти менше.
   return arr.filter((m) => m.count >= 2).slice(0, limit);
-}
-
-// Reuse: з customCategories робимо {id → label} для UI-сортування.
-export function buildCategoryLabelIndex(
-  customCategories: Category[] = [],
-): Record<string, string> {
-  const idx: Record<string, string> = {};
-  for (const c of customCategories) {
-    if (c && c.id) idx[c.id] = c.label;
-  }
-  return idx;
 }
