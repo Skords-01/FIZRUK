@@ -202,7 +202,7 @@ async function fetchCoachInsight() {
 // React Query key factory — re-exported from the centralized queryKeys
 // module so other callers (e.g. the weekly digest mutation) can invalidate
 // the insight when the underlying data signature changes.
-export const coachInsightQueryKey = (todayKey = localDateKey()) =>
+const coachInsightQueryKey = (todayKey = localDateKey()) =>
   coachKeys.insight(todayKey);
 
 // Seed the query from localStorage only when the cached date matches the

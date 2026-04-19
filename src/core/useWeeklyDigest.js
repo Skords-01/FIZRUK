@@ -40,7 +40,7 @@ export function getWeekKey(d = new Date()) {
   return localDateKey(monday);
 }
 
-export function getWeekRange(d = new Date()) {
+function getWeekRange(d = new Date()) {
   const monday = new Date(d);
   monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   const sunday = new Date(monday);
@@ -54,7 +54,7 @@ export function loadDigest(weekKey) {
   return safeReadLS(`${DIGEST_PREFIX}${weekKey}`, null);
 }
 
-export function listDigestHistory() {
+function listDigestHistory() {
   const results = [];
   try {
     for (let i = 0; i < localStorage.length; i++) {
@@ -333,8 +333,8 @@ async function generateWeeklyDigest(weekKey) {
 // Re-exported from the centralized queryKeys module — consumers may import
 // these names directly for historical reasons, but new code should import
 // `digestKeys` and `coachKeys` from "@shared/lib/queryKeys.js".
-export const weeklyDigestQueryKey = (weekKey) => digestKeys.byWeek(weekKey);
-export const weeklyDigestHistoryQueryKey = digestKeys.history;
+const weeklyDigestQueryKey = (weekKey) => digestKeys.byWeek(weekKey);
+const weeklyDigestHistoryQueryKey = digestKeys.history;
 
 export function useDigestHistory() {
   return useQuery({

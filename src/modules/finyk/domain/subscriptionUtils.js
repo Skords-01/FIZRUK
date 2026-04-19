@@ -30,9 +30,3 @@ export function getSubscriptionAmountMeta(sub, transactions) {
   const currency = lastTx.currencyCode === CURRENCY.USD ? "$" : "₴";
   return { amount, currency, lastTx };
 }
-
-/** День місяця з unix-часу транзакції Monobank (секунди). */
-export function billingDayFromTxTime(timeSec) {
-  if (!timeSec) return null;
-  return new Date(timeSec * 1000).getDate();
-}

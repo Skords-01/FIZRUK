@@ -209,7 +209,7 @@ function readAllData(): AllData {
   };
 }
 
-export function buildContext(): string {
+function buildContext(): string {
   const d = readAllData();
   const lines: string[] = [];
 

@@ -48,8 +48,6 @@ export const DASHBOARD_MODULE_LABELS = {
   nutrition: "Харчування",
 };
 
-export const DASHBOARD_DEFAULT_ORDER = DEFAULT_ORDER;
-
 export function loadDashboardOrder() {
   const saved = safeReadLS(DASHBOARD_ORDER_KEY, null);
   if (

@@ -3,7 +3,7 @@ import { SYNC_VERSION_KEY } from "../config";
 
 type VersionMap = Record<string, Record<string, number>>;
 
-export function getModuleVersions(): VersionMap {
+function getModuleVersions(): VersionMap {
   return safeReadLS<VersionMap>(SYNC_VERSION_KEY, {}) || {};
 }
 

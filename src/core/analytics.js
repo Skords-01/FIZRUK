@@ -44,43 +44,6 @@ export const ANALYTICS_EVENTS = Object.freeze({
 });
 
 /**
- * @typedef {{
- *   name: string,
- *   track: (event: AnalyticsEvent) => void,
- * }} AnalyticsProvider
- */
-
-/** @type {AnalyticsProvider[]} */
-const providers = [];
-
-/**
- * Register a transport (e.g. PostHog / Amplitude wrapper). Providers must
- * be resilient — any thrown error is swallowed so analytics can never
- * break the UI.
- * @param {AnalyticsProvider} provider
- */
-export function registerAnalyticsProvider(provider) {
-  if (!provider || typeof provider.track !== "function") return;
-  providers.push(provider);
-}
-
-/** Clear all registered providers. Primarily useful in tests. */
-export function resetAnalyticsProviders() {
-  providers.length = 0;
-}
-
-function safeDispatch(event) {
-  for (const p of providers) {
-    try {
-      p.track(event);
-    } catch (err) {
-      // Never let a misbehaving provider impact the UI.
-      console.warn(`[analytics] provider "${p.name}" failed`, err);
-    }
-  }
-}
-
-/**
  * Record a product event. Fire-and-forget — safe to call from any UI
  * handler without awaiting.
  *
@@ -95,9 +58,6 @@ export function trackEvent(eventName, payload = {}) {
     timestamp: new Date().toISOString(),
   };
   try {
-    // Stage 1: just log. Real transports will be registered via
-    // `registerAnalyticsProvider` once we pick a vendor.
     console.log("[analytics]", event);
   } catch {}
-  safeDispatch(event);
 }

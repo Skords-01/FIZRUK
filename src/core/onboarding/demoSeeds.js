@@ -15,7 +15,7 @@ import {
   enableFinykManualOnly,
 } from "../../modules/finyk/lib/demoData.js";
 
-export const DEMO_SEEDED_FLAG_KEY = "hub_demo_seeded_v1";
+const DEMO_SEEDED_FLAG_KEY = "hub_demo_seeded_v1";
 
 const FIZRUK_WORKOUTS_KEY = "fizruk_workouts_v1";
 const ROUTINE_STATE_KEY = "hub_routine_v1";

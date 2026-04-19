@@ -10,7 +10,7 @@ import {
 } from "./onboarding/vibePicks.js";
 import { seedDemoForModules } from "./onboarding/demoSeeds.js";
 
-export const ONBOARDING_DONE_KEY = "hub_onboarding_done_v1";
+const ONBOARDING_DONE_KEY = "hub_onboarding_done_v1";
 
 function hasExistingData() {
   try {

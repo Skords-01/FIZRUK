@@ -30,7 +30,7 @@ function hasNonDemoItem(list) {
  * Returns true if the user has at least one non-demo entry anywhere.
  * Called on every dashboard render; O(modules) and cheap (no reserialize).
  */
-export function hasAnyRealEntry() {
+function hasAnyRealEntry() {
   // Finyk — manual expenses.
   const manual = safeReadJSON("finyk_manual_expenses_v1");
   if (hasNonDemoItem(manual)) return true;

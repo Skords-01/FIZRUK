@@ -3,11 +3,11 @@ import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Card } from "@shared/components/ui/Card";
 
-export interface ChevronIconProps {
+interface ChevronIconProps {
   expanded: boolean;
 }
 
-export function ChevronIcon({ expanded }: ChevronIconProps) {
+function ChevronIcon({ expanded }: ChevronIconProps) {
   return (
     <Icon
       name="chevron-right"

@@ -1,6 +1,6 @@
 export const VOICE_KEYWORDS = /голосом|вголос|скажи|озвуч|прочитай/i;
 
-export function cleanTextForSpeech(text: string): string {
+function cleanTextForSpeech(text: string): string {
   return text
     .replace(/✅/g, "")
     .replace(/\[.*?\]/g, "")
