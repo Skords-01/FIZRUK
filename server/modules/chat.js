@@ -336,6 +336,20 @@ export default async function handler(req, res) {
 }
 
 /**
+ * Як часто слати SSE-коментар ": ping\n\n", коли upstream мовчить.
+ *
+ * Контекст: Vercel/Railway/Cloudflare закривають idle HTTP-з'єднання приблизно
+ * через 30-60с. Якщо Anthropic довго генерує першу токен-дельту (reasoning,
+ * великий prompt, rate-limit backoff), проксі обірве SSE-сокет раніше, ніж
+ * ми встигнемо щось записати — клієнт побачить "зависло" замість відповіді.
+ * Heartbeat тримає сокет активним, не засмічуючи потік видимими даними
+ * (коментарі `:` EventSource мовчки ігнорує).
+ *
+ * Env-override `SSE_HEARTBEAT_MS` — для тестів і тюнінгу під конкретний proxy.
+ */
+const SSE_HEARTBEAT_MS = Number(process.env.SSE_HEARTBEAT_MS) || 15_000;
+
+/**
  * Anthropic Messages API stream → SSE для клієнта (data: {"t":"фрагмент"}).
  */
 async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
@@ -373,6 +387,13 @@ async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
     return;
   }
 
+  // Heartbeat: чистий SSE-коментар кожні N мс, поки живе з'єднання.
+  // `res.writableEnded` — щоб не писати у вже закритий потік (клієнт відвалився).
+  const heartbeat = setInterval(() => {
+    if (!res.writableEnded) res.write(": ping\n\n");
+  }, SSE_HEARTBEAT_MS);
+  if (typeof heartbeat.unref === "function") heartbeat.unref();
+
   const decoder = new TextDecoder();
   let lineBuf = "";
   try {
@@ -407,6 +428,7 @@ async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
     streamOutcome = "error";
     res.write(`data: ${JSON.stringify({ err: String(e?.message || e) })}\n\n`);
   } finally {
+    clearInterval(heartbeat);
     recordStreamEnd(streamOutcome);
   }
   res.write("data: [DONE]\n\n");
