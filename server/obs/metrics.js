@@ -24,6 +24,19 @@ export const httpRequestDurationMs = new client.Histogram({
   registers: [register],
 });
 
+// Дедикований лічильник 4xx/5xx по route: інкрементуємо тільки коли
+// `status >= 400`, тож error-rate формулою стає
+//   sum by (path) (rate(http_errors_total[5m]))
+//   / sum by (path) (rate(http_request_duration_ms_count[5m]))
+// без фільтра регексом по `status`. `module` лейбл із ALS потрібен, щоб
+// алерти могли бути per-domain.
+export const httpErrorsTotal = new client.Counter({
+  name: "http_errors_total",
+  help: "HTTP responses with status >= 400 by route",
+  labelNames: ["method", "path", "status_class", "module"],
+  registers: [register],
+});
+
 export const httpInFlight = new client.Gauge({
   name: "http_in_flight",
   help: "In-flight HTTP requests",

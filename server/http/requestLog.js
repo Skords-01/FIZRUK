@@ -1,6 +1,7 @@
 import { logger } from "../obs/logger.js";
 import { als } from "../obs/requestContext.js";
 import {
+  httpErrorsTotal,
   httpInFlight,
   httpRequestDurationMs,
   httpRequestsTotal,
@@ -54,6 +55,7 @@ export function requestLogMiddleware(req, res, next) {
     });
 
     try {
+      const sc = statusClass(status);
       httpRequestsTotal.inc({
         method: req.method,
         path,
@@ -61,9 +63,20 @@ export function requestLogMiddleware(req, res, next) {
         module: mod,
       });
       httpRequestDurationMs.observe(
-        { method: req.method, path, status_class: statusClass(status) },
+        { method: req.method, path, status_class: sc },
         ms,
       );
+      // Дедикований лічильник помилок: інкрементуємо ТІЛЬКИ для 4xx/5xx,
+      // щоб PromQL для error-rate був `rate(http_errors_total[5m]) / rate(...count)`
+      // без регекс-фільтра по `status`.
+      if (status >= 400) {
+        httpErrorsTotal.inc({
+          method: req.method,
+          path,
+          status_class: sc,
+          module: mod,
+        });
+      }
     } catch {
       /* metrics must never break a request */
     }
