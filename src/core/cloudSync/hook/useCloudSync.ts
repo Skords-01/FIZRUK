@@ -4,7 +4,6 @@ import { initialSync } from "../engine/initialSync";
 import { pullAll, type PullArgs } from "../engine/pull";
 import { pushAll, pushDirty } from "../engine/push";
 import { replayOfflineQueue } from "../engine/replay";
-import { httpTransport } from "../engine/transport";
 import { uploadLocalData } from "../engine/upload";
 import { markMigrationDone } from "../state/migration";
 import { clearSyncManagedData } from "../state/moduleData";
@@ -44,7 +43,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     syncingRef.current = true;
     await pushDirty({
       user,
-      transport: httpTransport,
       onStart,
       onSuccess,
       onError,
@@ -57,7 +55,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     syncingRef.current = true;
     await pushAll({
       user,
-      transport: httpTransport,
       onStart,
       onSuccess,
       onError,
@@ -70,7 +67,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     syncingRef.current = true;
     const pullArgs: PullArgs = {
       user,
-      transport: httpTransport,
       onStart,
       onSuccess,
       onError,
@@ -84,7 +80,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     syncingRef.current = true;
     await uploadLocalData({
       user,
-      transport: httpTransport,
       onStart,
       onSuccess,
       onError,
@@ -98,7 +93,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     syncingRef.current = true;
     await initialSync({
       user,
-      transport: httpTransport,
       onStart,
       onSuccess,
       onError,
@@ -134,7 +128,7 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     if (!user) return;
 
     const onOnline = () => {
-      replayOfflineQueue(httpTransport).then(() => doPushDirty());
+      replayOfflineQueue().then(() => doPushDirty());
     };
     window.addEventListener("online", onOnline);
 

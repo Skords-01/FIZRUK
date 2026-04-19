@@ -1,13 +1,12 @@
+import { syncApi } from "@shared/api";
 import { SYNC_MODULES } from "../config";
 import { clearAllDirty, getModuleModifiedTimes } from "../state/dirtyModules";
 import { markMigrationDone } from "../state/migration";
 import { collectModuleData } from "../state/moduleData";
 import type { CurrentUser, ModulePayload } from "../types";
-import type { Transport } from "./transport";
 
 export interface UploadArgs {
   user: CurrentUser | null | undefined;
-  transport: Transport;
   onStart(): void;
   onSuccess(when: Date): void;
   onError(message: string): void;
@@ -20,15 +19,7 @@ export interface UploadArgs {
  * user. Used by the "upload local → cloud" branch of the first-run flow.
  */
 export async function uploadLocalData(args: UploadArgs): Promise<void> {
-  const {
-    user,
-    transport,
-    onStart,
-    onSuccess,
-    onError,
-    onMigrated,
-    onSettled,
-  } = args;
+  const { user, onStart, onSuccess, onError, onMigrated, onSettled } = args;
   if (!user?.id) return;
   onStart();
   try {
@@ -44,8 +35,7 @@ export async function uploadLocalData(args: UploadArgs): Promise<void> {
       }
     }
     if (Object.keys(modules).length > 0) {
-      const res = await transport.pushAll(modules);
-      if (!res.ok) throw new Error("Upload failed");
+      await syncApi.pushAll(modules);
     }
     markMigrationDone(user.id);
     clearAllDirty();
