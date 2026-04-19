@@ -63,8 +63,13 @@ function elapsedMs(start) {
   return Number(process.hrtime.bigint() - start) / 1e6;
 }
 
-const VALID_MODULES = new Set(["finyk", "fizruk", "routine", "nutrition"]);
-const MAX_BLOB_SIZE = 5 * 1024 * 1024;
+export const VALID_MODULES = new Set([
+  "finyk",
+  "fizruk",
+  "routine",
+  "nutrition",
+]);
+export const MAX_BLOB_SIZE = 5 * 1024 * 1024;
 
 export async function syncPush(req, res) {
   const start = process.hrtime.bigint();
@@ -217,11 +222,15 @@ export async function syncPullAll(req, res) {
   const user = req.user;
 
   try {
+    // Явно фільтруємо по `VALID_MODULES`. У `module_data` можуть лежати і
+    // не-sync записи (напр. `coach` memory, яка пишеться через окремий
+    // endpoint), і витягати їх сюди — це і зайві bytes на pull-all, і
+    // ламання інкапсуляції (клієнт sync-шару не повинен знати про coach).
     const result = await pool.query(
       `SELECT module, data, client_updated_at, server_updated_at, version
        FROM module_data
-       WHERE user_id = $1`,
-      [user.id],
+       WHERE user_id = $1 AND module = ANY($2::text[])`,
+      [user.id, Array.from(VALID_MODULES)],
     );
 
     const modules = {};

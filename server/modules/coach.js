@@ -1,5 +1,6 @@
 import pool from "../db.js";
 import { anthropicMessages, extractAnthropicText } from "../lib/anthropic.js";
+import { MAX_BLOB_SIZE } from "./sync.js";
 
 async function getMemory(userId) {
   const result = await pool.query(
@@ -15,8 +16,23 @@ async function getMemory(userId) {
   }
 }
 
+// Власний тип помилки, щоб handler міг відрізнити overflow від інших DB-фейлів
+// і повернути 413 замість 500.
+export class CoachMemoryTooLargeError extends Error {
+  constructor(bytes) {
+    super(`coach memory blob too large: ${bytes} bytes`);
+    this.name = "CoachMemoryTooLargeError";
+    this.bytes = bytes;
+  }
+}
+
 async function saveMemory(userId, memory) {
   const blob = JSON.stringify(memory);
+  // Ділимо той самий `MAX_BLOB_SIZE`, що й sync: це один стовпчик `module_data.data`
+  // і той самий пейлоад-транспорт, тож будь-яке різне ліміти-рішення буде сюрпризом.
+  if (blob.length > MAX_BLOB_SIZE) {
+    throw new CoachMemoryTooLargeError(blob.length);
+  }
   await pool.query(
     `INSERT INTO module_data (user_id, module, data, client_updated_at, version)
      VALUES ($1, 'coach', $2, NOW(), 1)
@@ -140,7 +156,14 @@ export async function coachMemoryPost(req, res) {
   const incoming = req.body || {};
   const existing = await getMemory(req.user.id);
   const merged = mergeMemory(existing, incoming);
-  await saveMemory(req.user.id, merged);
+  try {
+    await saveMemory(req.user.id, merged);
+  } catch (err) {
+    if (err instanceof CoachMemoryTooLargeError) {
+      return res.status(413).json({ error: "Coach memory blob too large" });
+    }
+    throw err;
+  }
   return res.json({ ok: true });
 }
 

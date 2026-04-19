@@ -38,7 +38,7 @@ import { getSessionUser } from "../auth.js";
 import pool from "../db.js";
 import { logger } from "../obs/logger.js";
 import { syncConflictsTotal, syncOperationsTotal } from "../obs/metrics.js";
-import { syncPushAll } from "./sync.js";
+import { syncPushAll, syncPullAll, VALID_MODULES } from "./sync.js";
 
 function makeRes() {
   return {
@@ -220,6 +220,23 @@ describe("syncPushAll metric correctness around transaction boundary", () => {
     expect(syncConflictsTotal.inc).toHaveBeenCalledWith({
       module: "nutrition",
     });
+  });
+});
+
+describe("syncPullAll module filtering", () => {
+  it("фільтрує по VALID_MODULES — 'coach' та інші не-sync рядки не потрапляють у відповідь", async () => {
+    pool.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = makeRes();
+    await syncPullAll(makeReq({}), res);
+
+    expect(pool.query).toHaveBeenCalledTimes(1);
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toMatch(/module = ANY\(\$2::text\[\]\)/);
+    expect(params[0]).toBe("user_1");
+    // Параметр $2 має бути рівно множиною VALID_MODULES (без coach).
+    expect(new Set(params[1])).toEqual(VALID_MODULES);
+    expect(params[1]).not.toContain("coach");
   });
 });
 
