@@ -1,6 +1,9 @@
 import { memo, useState } from "react";
 import { daysUntil, fmtDate } from "../utils";
 import { cn } from "@shared/lib/cn";
+import { Card } from "@shared/components/ui/Card";
+import { Button } from "@shared/components/ui/Button";
+import { Input } from "@shared/components/ui/Input";
 import {
   getLastTxForSubscription,
   getSubscriptionAmountMeta,
@@ -23,6 +26,13 @@ const EMOJI_OPTIONS = [
   "🌐",
   "📡",
 ];
+
+// Matches <Input size="md"> visual shell so the currency select sits flush
+// with the day-of-month input (proper <Select> comes in PR #4).
+const SELECT_CLASS =
+  "h-11 w-full px-4 text-base rounded-2xl text-text bg-panelHi " +
+  "border border-line outline-none transition-all duration-200 " +
+  "focus:border-brand-400 focus:ring-2 focus:ring-brand-100";
 
 // Картка підписки. Всередині тримає лише локальний стан редагування,
 // тож memo уникає перерендеру при змінах інших підписок/сторінки.
@@ -56,16 +66,20 @@ function SubCardComponent({
 
   if (editing) {
     return (
-      <div className="bg-panel border border-primary/30 rounded-xl p-4 mb-3 space-y-3">
+      <Card variant="finyk-soft" padding="md" className="mb-3 space-y-3">
         <div className="flex gap-2 flex-wrap">
           {EMOJI_OPTIONS.map((e) => (
             <button
               key={e}
+              type="button"
               onClick={() => setForm((f) => ({ ...f, emoji: e }))}
+              aria-label={`Вибрати ${e}`}
+              aria-pressed={form.emoji === e}
               className={cn(
-                "text-xl w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                "text-xl w-9 h-9 rounded-xl flex items-center justify-center transition-colors",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-panel",
                 form.emoji === e
-                  ? "bg-emerald-500/15 ring-1 ring-emerald-500/40"
+                  ? "bg-finyk-soft ring-1 ring-finyk-ring/50"
                   : "hover:bg-panelHi",
               )}
             >
@@ -73,50 +87,57 @@ function SubCardComponent({
             </button>
           ))}
         </div>
-        <input
-          className="w-full bg-bg border border-line rounded-xl px-3 py-2.5 text-sm text-text placeholder:text-subtle outline-none focus:border-primary/50"
+        <Input
           placeholder="Назва"
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         />
-        <input
-          className="w-full bg-bg border border-line rounded-xl px-3 py-2.5 text-sm text-text placeholder:text-subtle outline-none focus:border-primary/50"
+        <Input
           placeholder="Ключове слово з транзакції (якщо без ручної привʼязки)"
           value={form.keyword}
           onChange={(e) => setForm((f) => ({ ...f, keyword: e.target.value }))}
         />
         <div className="flex gap-2">
-          <input
-            className="flex-1 bg-bg border border-line rounded-xl px-3 py-2.5 text-sm text-text outline-none focus:border-primary/50"
-            placeholder="День (1-31)"
-            type="number"
-            min="1"
-            max="31"
-            value={form.billingDay}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, billingDay: e.target.value }))
-            }
-          />
-          <select
-            className="flex-1 bg-bg border border-line rounded-xl px-3 py-2.5 text-sm text-text outline-none focus:border-primary/50"
-            value={form.currency}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, currency: e.target.value }))
-            }
-          >
-            <option value="UAH">₴ UAH</option>
-            <option value="USD">$ USD</option>
-            <option value="EUR">€ EUR</option>
-          </select>
+          <div className="flex-1">
+            <Input
+              placeholder="День (1-31)"
+              type="number"
+              min="1"
+              max="31"
+              value={form.billingDay}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, billingDay: e.target.value }))
+              }
+            />
+          </div>
+          <div className="flex-1">
+            <select
+              className={SELECT_CLASS}
+              value={form.currency}
+              aria-label="Валюта"
+              onChange={(e) =>
+                setForm((f) => ({ ...f, currency: e.target.value }))
+              }
+            >
+              <option value="UAH">₴ UAH</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+            </select>
+          </div>
         </div>
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="finyk-soft"
+            size="md"
+            className="flex-1"
             onClick={saveEdit}
-            className="flex-1 py-2.5 text-sm font-semibold bg-emerald-500/12 text-emerald-700 border border-emerald-500/25 rounded-xl hover:bg-emerald-500/20 transition-colors"
           >
             Зберегти
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="md"
+            className="flex-1"
             onClick={() => {
               setForm({
                 name: sub.name,
@@ -127,24 +148,21 @@ function SubCardComponent({
               });
               setEditing(false);
             }}
-            className="flex-1 py-2.5 text-sm font-semibold text-muted border border-line rounded-xl hover:bg-panelHi transition-colors"
           >
             Скасувати
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div
+    <Card
+      variant="default"
+      padding="md"
       className={cn(
-        "bg-panel border rounded-xl p-4 mb-3 flex items-center gap-3",
-        veryClose
-          ? "border-danger/50"
-          : soon
-            ? "border-amber-500/40"
-            : "border-line",
+        "mb-3 flex items-center gap-3",
+        veryClose ? "border-danger/50" : soon ? "border-amber-500/40" : null,
       )}
     >
       <span className="text-2xl shrink-0 leading-none">{sub.emoji}</span>
@@ -164,7 +182,7 @@ function SubCardComponent({
           · {sub.billingDay}-го
         </div>
         {sub.linkedTxId && lastTx && (
-          <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+          <div className="text-xs text-finyk mt-0.5">
             Привʼязано до транзакції · оновлює суму та дату
           </div>
         )}
@@ -185,33 +203,40 @@ function SubCardComponent({
         )}
         <div className="flex flex-wrap justify-end gap-1.5 mt-1">
           {onLinkTransactions && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="xs"
+              className="px-1.5 h-auto py-0.5 text-xs text-primary hover:bg-transparent hover:underline hover:text-primary"
               onClick={onLinkTransactions}
-              className="text-xs font-medium text-primary hover:underline"
             >
               {sub.linkedTxId ? "Змінити транзакцію" : "Привʼязати транзакцію"}
-            </button>
+            </Button>
           )}
           {onEdit && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="xs"
+              iconOnly
+              aria-label="Редагувати підписку"
               onClick={() => setEditing(true)}
-              className="text-subtle hover:text-primary text-sm transition-colors"
+              className="text-subtle hover:text-primary"
             >
               ✏️
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="xs"
+            iconOnly
+            aria-label="Видалити підписку"
             onClick={onDelete}
-            className="text-subtle hover:text-danger text-sm transition-colors"
+            className="text-subtle hover:text-danger"
           >
             🗑
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
