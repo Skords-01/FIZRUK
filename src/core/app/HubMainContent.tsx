@@ -1,10 +1,30 @@
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
+import { ErrorBoundary } from "../ErrorBoundary";
 import { HubDashboard } from "../HubDashboard.jsx";
 import { HubReports } from "../HubReports.jsx";
 import { HubSettingsPage } from "../HubSettingsPage.jsx";
 import { IOSInstallBanner } from "./IOSInstallBanner.jsx";
+
+// Дешевий inline-fallback для секцій хаба: повідомляємо про збій і
+// даємо кнопку `reset`, щоб спробувати перемонтувати секцію без
+// перезавантаження вкладки. Шапка/таби лишаються робочими, бо
+// ErrorBoundary стоїть навколо окремого view, а не навколо `<main>`.
+function HubSectionFallback({ resetError }) {
+  return (
+    <div className="px-1 py-6 text-center">
+      <p className="text-sm text-muted mb-3">Щось пішло не так у цій секції.</p>
+      <button
+        type="button"
+        onClick={resetError}
+        className="px-4 py-2 rounded-xl bg-panel border border-line text-text text-sm font-medium hover:bg-panelHi transition-colors"
+      >
+        Спробувати ще раз
+      </button>
+    </div>
+  );
+}
 
 export function HubMainContent({
   updateAvailable,
@@ -133,31 +153,46 @@ export function HubMainContent({
 
       <main className="flex-1 px-5 pb-28 max-w-lg mx-auto w-full overflow-y-auto">
         {hubView === "dashboard" && (
-          <div className="flex flex-col gap-5 pt-2">
-            <HubDashboard
-              onOpenModule={onOpenModule}
-              onOpenChat={onOpenChat}
-              user={user}
-              onShowAuth={onShowAuth}
-            />
-          </div>
+          <ErrorBoundary
+            key="dashboard"
+            fallback={(props) => <HubSectionFallback {...props} />}
+          >
+            <div className="flex flex-col gap-5 pt-2">
+              <HubDashboard
+                onOpenModule={onOpenModule}
+                onOpenChat={onOpenChat}
+                user={user}
+                onShowAuth={onShowAuth}
+              />
+            </div>
+          </ErrorBoundary>
         )}
 
         {hubView === "reports" && (
-          <div className="pt-2">
-            <HubReports />
-          </div>
+          <ErrorBoundary
+            key="reports"
+            fallback={(props) => <HubSectionFallback {...props} />}
+          >
+            <div className="pt-2">
+              <HubReports />
+            </div>
+          </ErrorBoundary>
         )}
 
         {hubView === "settings" && (
-          <HubSettingsPage
-            dark={dark}
-            onToggleDark={onToggleDark}
-            syncing={syncing}
-            onSync={onSync}
-            onPull={onPull}
-            user={user}
-          />
+          <ErrorBoundary
+            key="settings"
+            fallback={(props) => <HubSectionFallback {...props} />}
+          >
+            <HubSettingsPage
+              dark={dark}
+              onToggleDark={onToggleDark}
+              syncing={syncing}
+              onSync={onSync}
+              onPull={onPull}
+              user={user}
+            />
+          </ErrorBoundary>
         )}
       </main>
     </>

@@ -34,7 +34,6 @@ import { useHubNavigation } from "./hooks/useHubNavigation.js";
 import { useHubUIState } from "./hooks/useHubUIState.js";
 import { usePwaActions, type PwaAction } from "./hooks/usePwaActions.js";
 
-import RoutineApp from "../modules/routine/RoutineApp.jsx";
 const AuthPage = lazy(() =>
   import("./AuthPage.jsx").then((m) => ({ default: m.AuthPage })),
 );
@@ -56,6 +55,13 @@ const FinykApp = lazy(
 const FizrukApp = lazy(() => import("../modules/fizruk/FizrukApp"));
 const NutritionApp = lazy(
   () => import("../modules/nutrition/NutritionApp"),
+) as unknown as ComponentType<ModuleAppProps>;
+// Routine раніше імпортувалось синхронно — це зобов'язувало тягнути
+// весь модуль у main chunk навіть для користувачів, що сидять у Фінікові.
+// Ліниве завантаження збігається з іншими модулями (Suspense fallback
+// та ModuleErrorBoundary уже огортають цей слот).
+const RoutineApp = lazy(
+  () => import("../modules/routine/RoutineApp"),
 ) as unknown as ComponentType<ModuleAppProps>;
 
 export default function App() {
