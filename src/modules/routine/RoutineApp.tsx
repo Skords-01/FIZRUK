@@ -10,7 +10,7 @@ import {
 } from "./lib/routineStorage.js";
 import { addDays, startOfIsoWeek } from "./lib/weekUtils.js";
 import { maxActiveStreak, completionRateForRange } from "./lib/streaks.js";
-import { useRoutineReminders } from "./hooks/useRoutineReminders.js";
+import { useRoutineReminders } from "./hooks/useRoutineReminders";
 import {
   buildHubCalendarEvents,
   countEventsByDate,
@@ -26,12 +26,33 @@ import {
 } from "../finyk/hubRoutineSync.js";
 import { ROUTINE_THEME as C } from "./lib/routineConstants.js";
 import { emptyHabitDraft } from "./lib/routineDraftUtils.js";
-import { RoutineBottomNav } from "./components/RoutineBottomNav.jsx";
-import { RoutineCalendarPanel } from "./components/RoutineCalendarPanel.jsx";
-import { RoutineSettingsSection } from "./components/RoutineSettingsSection.jsx";
-import { RoutineStatsPanel } from "./components/RoutineStatsPanel.jsx";
-import { RoutineCalendarProvider } from "./context/RoutineCalendarContext.jsx";
+import { RoutineBottomNav } from "./components/RoutineBottomNav";
+import { RoutineCalendarPanel } from "./components/RoutineCalendarPanel";
+import { RoutineSettingsSection } from "./components/RoutineSettingsSection";
+import { RoutineStatsPanel } from "./components/RoutineStatsPanel";
+import { RoutineCalendarProvider } from "./context/RoutineCalendarContext";
+import type {
+  RoutineMainTab,
+  RoutineTimeMode,
+} from "./context/RoutineCalendarContext";
 import { STORAGE_KEYS } from "@shared/lib/storageKeys";
+import type { Dispatch, SetStateAction } from "react";
+import type {
+  CategoryDraft,
+  HabitDraft,
+  HubCalendarEvent,
+  RoutineState,
+} from "./lib/types";
+
+interface MonthCursor {
+  y: number;
+  m: number;
+}
+
+interface DateRange {
+  startKey: string;
+  endKey: string;
+}
 
 const FIZRUK_PLAN_SYNC = "fizruk-storage-monthly-plan";
 
@@ -41,7 +62,7 @@ function todayDate() {
   return d;
 }
 
-function monthBounds(y, m0) {
+function monthBounds(y: number, m0: number): DateRange {
   const start = new Date(y, m0, 1);
   const end = new Date(y, m0 + 1, 0);
   return {
@@ -50,18 +71,24 @@ function monthBounds(y, m0) {
   };
 }
 
-function monthGrid(y, monthIndex) {
+function monthGrid(
+  y: number,
+  monthIndex: number,
+): { cells: Array<number | null> } {
   const last = new Date(y, monthIndex + 1, 0).getDate();
   const firstWd = (new Date(y, monthIndex, 1).getDay() + 6) % 7;
-  const cells = [];
+  const cells: Array<number | null> = [];
   for (let i = 0; i < firstWd; i++) cells.push(null);
   for (let d = 1; d <= last; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
   return { cells };
 }
 
-function useRoutineState() {
-  const [state, setState] = useState(() => loadRoutineState());
+function useRoutineState(): [
+  RoutineState,
+  Dispatch<SetStateAction<RoutineState>>,
+] {
+  const [state, setState] = useState<RoutineState>(() => loadRoutineState());
   useEffect(() => {
     const sync = () => setState(loadRoutineState());
     window.addEventListener("storage", sync);
@@ -84,7 +111,7 @@ const GROUP_ORDER = [
   FINYK_SUB_GROUP_LABEL,
 ];
 
-function timeOfDayBucket(hhmm) {
+function timeOfDayBucket(hhmm: string | null | undefined): string {
   const t = (hhmm || "").trim();
   if (!t) return "Будь-коли";
   const m = /^(\d{1,2}):(\d{2})$/.exec(t);
@@ -96,16 +123,19 @@ function timeOfDayBucket(hhmm) {
   return "Вечір";
 }
 
-function groupEventsForList(events) {
-  const map = new Map();
+function groupEventsForList(
+  events: HubCalendarEvent[],
+): Array<[string, HubCalendarEvent[]]> {
+  const map = new Map<string, HubCalendarEvent[]>();
   for (const e of events) {
-    let head;
+    let head: string;
     if (e.fizruk) head = FIZRUK_GROUP_LABEL;
     else if (e.finykSub) head = FINYK_SUB_GROUP_LABEL;
     else if (e.sourceKind === "habit") head = timeOfDayBucket(e.timeOfDay);
     else head = e.tagLabels[0] || "Інше";
-    if (!map.has(head)) map.set(head, []);
-    map.get(head).push(e);
+    const existing = map.get(head);
+    if (existing) existing.push(e);
+    else map.set(head, [e]);
   }
   return [...map.entries()].sort((a, b) => {
     const ai = GROUP_ORDER.indexOf(a[0]);
@@ -117,15 +147,22 @@ function groupEventsForList(events) {
   });
 }
 
+export interface RoutineAppProps {
+  onBackToHub?: () => void;
+  onOpenModule?: (moduleId: string, opts?: { hash?: string }) => void;
+  pwaAction?: string | null;
+  onPwaActionConsumed?: () => void;
+}
+
 export default function RoutineApp({
   onBackToHub,
   onOpenModule,
   pwaAction,
   onPwaActionConsumed,
-} = {}) {
+}: RoutineAppProps = {}) {
   const [routine, setRoutine] = useRoutineState();
   const toast = useToast();
-  const [finykCalendarTick, setFinykCalendarTick] = useState(0);
+  const [finykCalendarTick, setFinykCalendarTick] = useState<number>(0);
   useEffect(() => {
     const bump = () => setFinykCalendarTick((n) => n + 1);
     window.addEventListener(HUB_FINYK_ROUTINE_SYNC_EVENT, bump);
@@ -137,8 +174,9 @@ export default function RoutineApp({
   }, []);
 
   useEffect(() => {
-    const onErr = (ev) => {
-      const msg = ev.detail?.message || "невідома помилка";
+    const onErr = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ message?: string }>).detail;
+      const msg = detail?.message || "невідома помилка";
       toast.error(
         `Не вдалося зберегти дані Рутини (${msg}). Можливо, браузер переповнив сховище — звільни місце або експортуй резервну копію.`,
         7000,
@@ -150,7 +188,7 @@ export default function RoutineApp({
 
   useRoutineReminders(routine);
 
-  const [mainTab, setMainTab] = useState(() => {
+  const [mainTab, setMainTab] = useState<RoutineMainTab>(() => {
     try {
       const v = localStorage.getItem(STORAGE_KEYS.ROUTINE_MAIN_TAB);
       if (v === "calendar" || v === "stats" || v === "settings") return v;
@@ -162,22 +200,27 @@ export default function RoutineApp({
       localStorage.setItem(STORAGE_KEYS.ROUTINE_MAIN_TAB, mainTab);
     } catch {}
   }, [mainTab]);
-  const [timeMode, setTimeMode] = useState("today");
+  const [timeMode, setTimeMode] = useState<RoutineTimeMode>("today");
   const now = todayDate();
-  const [monthCursor, setMonthCursor] = useState(() => ({
+  const [monthCursor, setMonthCursor] = useState<MonthCursor>(() => ({
     y: now.getFullYear(),
     m: now.getMonth(),
   }));
-  const [selectedDay, setSelectedDay] = useState(() => dateKeyFromDate(now));
-  const [tagFilter, setTagFilter] = useState(null);
-  const [listQuery, setListQuery] = useState("");
-  const [habitDraft, setHabitDraft] = useState(emptyHabitDraft);
-  const [tagDraft, setTagDraft] = useState("");
-  const [catDraft, setCatDraft] = useState({ name: "", emoji: "" });
+  const [selectedDay, setSelectedDay] = useState<string>(() =>
+    dateKeyFromDate(now),
+  );
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [listQuery, setListQuery] = useState<string>("");
+  const [habitDraft, setHabitDraft] = useState<HabitDraft>(emptyHabitDraft);
+  const [tagDraft, setTagDraft] = useState<string>("");
+  const [catDraft, setCatDraft] = useState<CategoryDraft>({
+    name: "",
+    emoji: "",
+  });
   // Monotonic tick bumped whenever something asks us to focus the habit
   // form (e.g. the `add_habit` PWA action or the FTUX first-action
   // sheet). A tick — not a bool — so repeated triggers always fire.
-  const [habitFormFocusTick, setHabitFormFocusTick] = useState(0);
+  const [habitFormFocusTick, setHabitFormFocusTick] = useState<number>(0);
 
   // Handle the `add_habit` PWA action: switch to the Settings tab
   // (where the habit form lives) and bump the focus tick so the form
@@ -214,7 +257,7 @@ export default function RoutineApp({
     setSelectedDay((d) => (d < startKey || d > endKey ? startKey : d));
   }, [monthCursor.y, monthCursor.m, timeMode]);
 
-  const range = useMemo(() => {
+  const range = useMemo<DateRange>(() => {
     const t = todayDate();
     const tk = dateKeyFromDate(t);
     if (timeMode === "today") return { startKey: tk, endKey: tk };
@@ -263,16 +306,8 @@ export default function RoutineApp({
     return ev;
   }, [events, tagFilter, listQuery]);
 
-  const listEvents = useMemo(() => {
-    if (timeMode === "month")
-      return filtered.filter((e) => e.date === selectedDay);
-    return filtered;
-  }, [filtered, timeMode, selectedDay]);
-
-  const grouped = useMemo(() => groupEventsForList(listEvents), [listEvents]);
-
-  const tagChips = useMemo(() => {
-    const set = new Set();
+  const tagChips = useMemo<string[]>(() => {
+    const set = new Set<string>();
     for (const t of routine.tags) set.add(t.name);
     for (const e of events) {
       for (const x of e.tagLabels) {
@@ -282,9 +317,17 @@ export default function RoutineApp({
     return [...set].sort((a, b) => a.localeCompare(b, "uk"));
   }, [routine.tags, events]);
 
+  const listEvents = useMemo(() => {
+    if (timeMode === "month")
+      return filtered.filter((e) => e.date === selectedDay);
+    return filtered;
+  }, [filtered, timeMode, selectedDay]);
+
+  const grouped = useMemo(() => groupEventsForList(listEvents), [listEvents]);
+
   const dayCounts = useMemo(() => countEventsByDate(events), [events]);
 
-  const goMonth = useCallback((delta) => {
+  const goMonth = useCallback((delta: number) => {
     setMonthCursor((c) => {
       let m = c.m + delta;
       let y = c.y;
@@ -306,7 +349,7 @@ export default function RoutineApp({
     setSelectedDay(dateKeyFromDate(t));
   }, []);
 
-  const applyTimeMode = useCallback((id) => {
+  const applyTimeMode = useCallback((id: RoutineTimeMode) => {
     const t = todayDate();
     const tk = dateKeyFromDate(t);
     if (id === "today") {
@@ -325,7 +368,7 @@ export default function RoutineApp({
     }
   }, []);
 
-  const shiftWeekStrip = useCallback((deltaWeeks) => {
+  const shiftWeekStrip = useCallback((deltaWeeks: number) => {
     setSelectedDay((prev) => {
       const d = parseDateKey(prev);
       d.setDate(d.getDate() + 7 * deltaWeeks);
@@ -335,7 +378,7 @@ export default function RoutineApp({
   }, []);
 
   const onToggleHabit = useCallback(
-    (habitId, dateKey) => {
+    (habitId: string, dateKey: string) => {
       setRoutine((prev) => toggleHabitCompletion(prev, habitId, dateKey));
     },
     [setRoutine],
@@ -383,7 +426,7 @@ export default function RoutineApp({
     return monthTitle;
   }, [timeMode, monthTitle, selectedDay]);
 
-  const fmtUk = (key) =>
+  const fmtUk = (key: string) =>
     parseDateKey(key).toLocaleDateString("uk-UA", {
       weekday: "long",
       day: "numeric",
