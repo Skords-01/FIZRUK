@@ -1,7 +1,8 @@
 import * as Sentry from "@sentry/node";
+import type { Express } from "express";
 import { als } from "./obs/requestContext.js";
 
-function parseRate(val, fallback) {
+function parseRate(val: string | undefined, fallback: number): number {
   if (val == null || val === "") return fallback;
   const n = Number(val);
   return Number.isFinite(n) ? n : fallback;
@@ -69,7 +70,7 @@ if (dsn) {
  * Лишаємо функцію, щоб подальші міграції могли експортувати зі стану (перевірки
  * `initialized`), а зовнішні виклики не потрібно видаляти.
  */
-export function initSentry() {
+export function initSentry(): void {
   // Нічого — Sentry.init() виконався на рівні модуля.
 }
 
@@ -77,7 +78,7 @@ export function initSentry() {
  * Підключає Sentry-обробник помилок до Express-додатка.
  * Має викликатись *після* всіх роутерів і *перед* власним error handler-ом.
  */
-export function attachSentryErrorHandler(app) {
+export function attachSentryErrorHandler(app: Express): void {
   if (!dsn) return;
   Sentry.setupExpressErrorHandler(app);
 }

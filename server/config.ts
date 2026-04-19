@@ -14,7 +14,9 @@ import { dirname, join } from "path";
  *  2. Otherwise, presence of `REPLIT_DEV_DOMAIN` or `REPLIT_DOMAINS` → `replit`.
  *  3. Default → `railway`.
  */
-function detectMode() {
+type ServerMode = "railway" | "replit";
+
+function detectMode(): ServerMode {
   const raw = process.env.SERVER_MODE?.trim().toLowerCase();
   if (raw === "railway" || raw === "replit") return raw;
   if (process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS) {
@@ -28,6 +30,15 @@ const isReplit = mode === "replit";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+interface ServerConfig {
+  mode: ServerMode;
+  role: ServerMode;
+  port: number;
+  servesFrontend: boolean;
+  distPath: string | null;
+  trustProxy: number | undefined;
+}
+
 /**
  * Frozen runtime config consumed by `server/index.js` and `server/app.js`.
  * Preserves the exact behavior of the previous split entrypoints
@@ -35,7 +46,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  *  - Railway: port 3000, trust proxy level 1, API-only, strict CSP.
  *  - Replit:  port 5000, no trust proxy, serves built SPA from ../dist, CSP off.
  */
-export const config = Object.freeze({
+export const config: Readonly<ServerConfig> = Object.freeze({
   mode,
   role: mode,
   port: Number(process.env.PORT) || (isReplit ? 5000 : 3000),

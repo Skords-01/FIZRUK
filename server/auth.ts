@@ -1,12 +1,21 @@
 import { betterAuth } from "better-auth";
 import { fromNodeHeaders } from "better-auth/node";
+import type { Request } from "express";
 import pool from "./db.js";
 import {
   authAttemptsTotal,
   authSessionLookupDurationMs,
 } from "./obs/metrics.js";
 
-function getBaseURL() {
+interface AdvancedCookieOptions {
+  useSecureCookies: true;
+  defaultCookieAttributes: {
+    sameSite: "none";
+    secure: true;
+  };
+}
+
+function getBaseURL(): string {
   if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
   if (process.env.REPLIT_DEV_DOMAIN)
     return `https://${process.env.REPLIT_DEV_DOMAIN}`;
@@ -22,7 +31,7 @@ function getBaseURL() {
  * Увімкнено, коли base URL API — HTTPS (типово Railway), якщо не BETTER_AUTH_CROSS_SITE_COOKIES=0.
  * Локально http://localhost — без змін (Lax за замовчуванням у better-auth).
  */
-function getAdvancedCookieOptions() {
+function getAdvancedCookieOptions(): AdvancedCookieOptions | null {
   if (process.env.BETTER_AUTH_CROSS_SITE_COOKIES === "0") {
     return null;
   }
@@ -65,8 +74,8 @@ export const auth = betterAuth({
   ...(advancedCookies ? { advanced: advancedCookies } : {}),
 });
 
-function getTrustedOrigins() {
-  const origins = ["http://localhost:5000", "http://localhost:5173"];
+function getTrustedOrigins(): string[] {
+  const origins: string[] = ["http://localhost:5000", "http://localhost:5173"];
   if (process.env.REPLIT_DEV_DOMAIN) {
     origins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
   }
@@ -85,14 +94,21 @@ function getTrustedOrigins() {
   return origins;
 }
 
-export async function getSessionUser(req) {
+interface SessionUser {
+  id: string;
+  [key: string]: unknown;
+}
+
+export async function getSessionUser(
+  req: Request,
+): Promise<SessionUser | null> {
   const start = process.hrtime.bigint();
-  let outcome = "miss";
+  let outcome: "miss" | "hit" | "error" = "miss";
   try {
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
     });
-    const user = session?.user ?? null;
+    const user = (session?.user ?? null) as SessionUser | null;
     if (user?.id) {
       outcome = "hit";
       // Ліниво прив'язуємо сесію до request-context і Sentry-scope. Завдяки

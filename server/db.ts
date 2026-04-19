@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import pg from "pg";
+import type { PoolClient, QueryResult, QueryResultRow } from "pg";
 import { logger } from "./obs/logger.js";
 import {
   dbErrorsTotal,
@@ -26,13 +27,23 @@ const pool = new pg.Pool({
   idleTimeoutMillis: 30_000,
 });
 
-pool.on("error", (err) => {
+interface PgErrorLike {
+  message?: string;
+  code?: string;
+}
+
+function pgErr(err: unknown): PgErrorLike {
+  return (err && typeof err === "object" ? (err as PgErrorLike) : {}) ?? {};
+}
+
+pool.on("error", (err: Error) => {
+  const e = pgErr(err);
   logger.error({
     msg: "db_pool_error",
-    err: { message: err?.message || String(err), code: err?.code },
+    err: { message: e.message || String(err), code: e.code },
   });
   try {
-    dbErrorsTotal.inc({ code: err?.code || "unknown" });
+    dbErrorsTotal.inc({ code: e.code || "unknown" });
   } catch {
     /* ignore */
   }
@@ -40,8 +51,14 @@ pool.on("error", (err) => {
 
 const SLOW_MS = Number(process.env.DB_SLOW_MS) || 200;
 
+type QueryText = string | { text: string; values?: unknown[] };
+
+interface QueryMeta {
+  op?: string;
+}
+
 /** Коротке ім'я SQL для логів (перше слово + перші 120 символів, без параметрів). */
-function sqlSummary(text) {
+function sqlSummary(text: unknown): string | undefined {
   if (typeof text !== "string") return undefined;
   return text.replace(/\s+/g, " ").trim().slice(0, 120);
 }
@@ -50,16 +67,20 @@ function sqlSummary(text) {
  * Обгортка над `pool.query` з логуванням повільних запитів, метриками і
  * підрахунком помилок. Підпис збережено один-в-один з pg, щоб можна було
  * поступово переводити handler-и без зміни викликів.
- *
- * @param {string | { text: string, values?: unknown[] }} text
- * @param {unknown[]} [values]
- * @param {{ op?: string }} [meta]
  */
-export async function query(text, values, meta) {
+export async function query<R extends QueryResultRow = QueryResultRow>(
+  text: QueryText,
+  values?: unknown[],
+  meta?: QueryMeta,
+): Promise<QueryResult<R>> {
   const op = meta?.op ?? "query";
   const start = process.hrtime.bigint();
+  const sqlText = typeof text === "string" ? text : text.text;
   try {
-    const result = await pool.query(text, values);
+    const result = await pool.query<R>(
+      sqlText,
+      values as unknown[] | undefined,
+    );
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     try {
       dbQueryDurationMs.observe({ op }, ms);
@@ -75,23 +96,24 @@ export async function query(text, values, meta) {
       logger.warn({
         msg: "db_slow",
         op,
-        sql: sqlSummary(typeof text === "string" ? text : text?.text),
+        sql: sqlSummary(sqlText),
         ms: Math.round(ms),
         rows: result.rowCount,
       });
     }
     return result;
-  } catch (err) {
+  } catch (err: unknown) {
+    const e = pgErr(err);
     try {
-      dbErrorsTotal.inc({ code: err?.code || "unknown" });
+      dbErrorsTotal.inc({ code: e.code || "unknown" });
     } catch {
       /* ignore */
     }
     logger.error({
       msg: "db_error",
       op,
-      sql: sqlSummary(typeof text === "string" ? text : text?.text),
-      err: { message: err?.message || String(err), code: err?.code },
+      sql: sqlSummary(sqlText),
+      err: { message: e.message || String(err), code: e.code },
     });
     throw err;
   }
@@ -102,7 +124,7 @@ export async function query(text, values, meta) {
  * Tracked in schema_migrations. schema_migrations itself is the only table
  * created inline — everything else is defined in migration files.
  */
-async function runPendingSqlMigrations(client) {
+async function runPendingSqlMigrations(client: PoolClient): Promise<void> {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       name TEXT PRIMARY KEY,
@@ -111,11 +133,11 @@ async function runPendingSqlMigrations(client) {
   `);
 
   const migrationsDir = path.join(__dirname, "migrations");
-  let files;
+  let files: string[];
   try {
     files = await fs.readdir(migrationsDir);
-  } catch (e) {
-    if (e?.code === "ENOENT") return;
+  } catch (e: unknown) {
+    if (pgErr(e).code === "ENOENT") return;
     throw e;
   }
 
@@ -146,7 +168,7 @@ async function runPendingSqlMigrations(client) {
   }
 }
 
-export async function ensureSchema() {
+export async function ensureSchema(): Promise<void> {
   const client = await pool.connect();
   try {
     await runPendingSqlMigrations(client);
