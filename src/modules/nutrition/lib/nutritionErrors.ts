@@ -1,4 +1,7 @@
-export function friendlyApiError(status, message) {
+export function friendlyApiError(
+  status: number,
+  message?: string | null,
+): string {
   const m = message || "";
   if (status === 500 && /ANTHROPIC|not set|key/i.test(m)) {
     return "Сервер харчування не налаштовано (немає ключа AI).";

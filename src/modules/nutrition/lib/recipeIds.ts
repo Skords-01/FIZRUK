@@ -1,4 +1,4 @@
-function shortHash(str) {
+function shortHash(str: string): string {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
     h ^= str.charCodeAt(i);
@@ -7,8 +7,19 @@ function shortHash(str) {
   return (h >>> 0).toString(36);
 }
 
-export function stableRecipeId(r) {
-  const obj = r && typeof r === "object" ? r : {};
+export interface StableRecipeIdInput {
+  title?: unknown;
+  ingredients?: unknown;
+  steps?: unknown;
+  timeMinutes?: unknown;
+  servings?: unknown;
+}
+
+export function stableRecipeId(r: unknown): string {
+  const obj =
+    r && typeof r === "object"
+      ? (r as StableRecipeIdInput)
+      : ({} as StableRecipeIdInput);
   const title = String(obj.title || "").trim();
   const ingredients = Array.isArray(obj.ingredients)
     ? obj.ingredients.map((x) => String(x || "").trim()).filter(Boolean)
