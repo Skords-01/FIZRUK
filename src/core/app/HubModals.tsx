@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { ErrorBoundary } from "../ErrorBoundary";
 
 const HubSearch = lazy(() =>
@@ -6,11 +6,25 @@ const HubSearch = lazy(() =>
 );
 const HubChat = lazy(() => import("../HubChat"));
 
-// Модалки огортаємо в ErrorBoundary, щоб непередбачений збій у HubChat
-// або HubSearch не ламав увесь хаб — просто закриваємо модалку, а хаб
-// залишається робочим. `fallback={null}` = тихий no-op: користувач
-// ще має closeChat/closeSearch через зовнішні хендлери, а Sentry
-// отримає exception через lazy-forward у `captureException`.
+// Коли модалка крешиться, `ErrorBoundary` рендерить `null`, але стан
+// `chatOpen` / `searchOpen` у `useHubUIState` лишається `true` — усі
+// хендлери закриття (Esc, click-outside, X) живуть усередині самої
+// модалки і після збою вже не рендеряться. Без явного виклику
+// `onClose` користувач опиняється у "невидимій" модалці, яку не
+// можна ні закрити, ні перевідкрити (React ігнорує `setChatOpen(true)`,
+// бо значення вже `true`).
+//
+// `CloseOnError` — крихітний side-effect-only компонент: після mount
+// кличе `onClose`, що очищує стан у батьківському хуку. Рендер
+// `null` зберігає попередню поведінку (користувач не бачить
+// поламаної модалки), але тепер без "залиплого" стану.
+function CloseOnError({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    onClose();
+  }, [onClose]);
+  return null;
+}
+
 export function HubModals({
   chatOpen,
   onCloseChat,
@@ -22,7 +36,7 @@ export function HubModals({
   return (
     <>
       {chatOpen && (
-        <ErrorBoundary fallback={null}>
+        <ErrorBoundary fallback={<CloseOnError onClose={onCloseChat} />}>
           <Suspense fallback={null}>
             <HubChat
               onClose={onCloseChat}
@@ -33,7 +47,7 @@ export function HubModals({
       )}
 
       {searchOpen && (
-        <ErrorBoundary fallback={null}>
+        <ErrorBoundary fallback={<CloseOnError onClose={onCloseSearch} />}>
           <Suspense fallback={null}>
             <HubSearch onClose={onCloseSearch} onOpenModule={onOpenModule} />
           </Suspense>

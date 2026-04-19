@@ -153,10 +153,7 @@ export function HubMainContent({
 
       <main className="flex-1 px-5 pb-28 max-w-lg mx-auto w-full overflow-y-auto">
         {hubView === "dashboard" && (
-          <ErrorBoundary
-            key="dashboard"
-            fallback={(props) => <HubSectionFallback {...props} />}
-          >
+          <ErrorBoundary key="dashboard" fallback={HubSectionFallback}>
             <div className="flex flex-col gap-5 pt-2">
               <HubDashboard
                 onOpenModule={onOpenModule}
@@ -169,10 +166,7 @@ export function HubMainContent({
         )}
 
         {hubView === "reports" && (
-          <ErrorBoundary
-            key="reports"
-            fallback={(props) => <HubSectionFallback {...props} />}
-          >
+          <ErrorBoundary key="reports" fallback={HubSectionFallback}>
             <div className="pt-2">
               <HubReports />
             </div>
@@ -180,10 +174,7 @@ export function HubMainContent({
         )}
 
         {hubView === "settings" && (
-          <ErrorBoundary
-            key="settings"
-            fallback={(props) => <HubSectionFallback {...props} />}
-          >
+          <ErrorBoundary key="settings" fallback={HubSectionFallback}>
             <HubSettingsPage
               dark={dark}
               onToggleDark={onToggleDark}
