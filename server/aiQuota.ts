@@ -1,8 +1,41 @@
+import type { Request, Response } from "express";
 import { getSessionUser } from "./auth.js";
 import pool from "./db.js";
 import { getIp } from "./http/rateLimit.js";
 import { logger } from "./obs/logger.js";
 import { aiQuotaBlocksTotal, aiQuotaFailOpenTotal } from "./obs/metrics.js";
+
+type SessionUser = { id: string } | null;
+
+interface QuotaResult {
+  ok: boolean;
+  remaining: number | null;
+  limit: number | null;
+  reason?: "disabled" | "limit" | "store_unavailable";
+}
+
+interface EffectiveLimits {
+  user: number | null;
+  anon: number | null;
+}
+
+interface ConsumeQuotaOpts {
+  subject: string;
+  day: string;
+  limit: number;
+  cost: number;
+  bucket: string;
+}
+
+interface ConsumeQuotaRow {
+  request_count: number;
+}
+
+interface ConsumeQuotaReturn {
+  ok: boolean;
+  remaining: number;
+  limit: number;
+}
 
 /**
  * Денна AI-квота. Зберігається в `ai_usage_daily` як лічильник по (subject, day,
@@ -24,18 +57,21 @@ const DEFAULT_BUCKET = "default";
 const TOOL_BUCKET_PREFIX = "tool:";
 const DEFAULT_TOOL_COST = 3;
 
-function parseLimit(name, fallback) {
+function parseLimit<F extends number | null>(
+  name: string,
+  fallback: F,
+): number | F {
   const v = process.env[name];
   if (v === undefined || v === "") return fallback;
   const n = parseInt(v, 10);
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
-export function isAiQuotaDisabled() {
+export function isAiQuotaDisabled(): boolean {
   return process.env.AI_QUOTA_DISABLED === "1";
 }
 
-function effectiveLimits() {
+function effectiveLimits(): EffectiveLimits {
   if (isAiQuotaDisabled()) return { user: null, anon: null };
   return {
     user: parseLimit("AI_DAILY_USER_LIMIT", 120),
@@ -43,7 +79,7 @@ function effectiveLimits() {
   };
 }
 
-function toolCost() {
+function toolCost(): number {
   return parseLimit("AI_QUOTA_TOOL_COST", DEFAULT_TOOL_COST);
 }
 
@@ -52,43 +88,43 @@ function toolCost() {
  * Повертає ліміт для конкретного tool-а, або null (unlimited). На битому
  * JSON-і — null + лог-попередження (advisory-фіча не повинна блокувати запити).
  */
-function toolLimit(toolName) {
+function toolLimit(toolName: string): number | null {
   const raw = process.env.AI_QUOTA_TOOL_LIMITS;
   if (!raw) {
     return parseLimit("AI_QUOTA_TOOL_DEFAULT_LIMIT", null);
   }
   try {
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as Record<string, unknown> | null;
     if (parsed && typeof parsed === "object" && toolName in parsed) {
       const v = parsed[toolName];
       if (typeof v === "number" && Number.isFinite(v) && v >= 0) return v;
     }
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn({
       msg: "ai_quota_tool_limits_parse_failed",
-      err: { message: e?.message || String(e) },
+      err: { message: (e as Error)?.message || String(e) },
     });
   }
   return parseLimit("AI_QUOTA_TOOL_DEFAULT_LIMIT", null);
 }
 
-async function safeSessionUser(req) {
+async function safeSessionUser(req: Request): Promise<SessionUser> {
   try {
-    return await getSessionUser(req);
-  } catch (e) {
+    return (await getSessionUser(req)) as SessionUser;
+  } catch (e: unknown) {
     logger.warn({
       msg: "ai_quota_session_lookup_failed",
-      err: { message: e?.message || String(e) },
+      err: { message: (e as Error)?.message || String(e) },
     });
     return null;
   }
 }
 
-function subjectFor(sessionUser, req) {
+function subjectFor(sessionUser: SessionUser, req: Request): string {
   return sessionUser ? `u:${sessionUser.id}` : `ip:${getIp(req)}`;
 }
 
-function today() {
+function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
@@ -96,7 +132,10 @@ function today() {
  * Default-bucket (plain chat) quota check. Shape збережено (backwards compat):
  * повертає true/false; при вичерпанні сама відправляє 429 у `res`.
  */
-export async function assertAiQuota(req, res) {
+export async function assertAiQuota(
+  req: Request,
+  res: Response,
+): Promise<boolean> {
   if (isAiQuotaDisabled()) return true;
 
   const { user: userLimit, anon: anonLimit } = effectiveLimits();
@@ -167,7 +206,10 @@ export async function assertAiQuota(req, res) {
  * @param {import("express").Request} req
  * @param {string} toolName
  */
-export async function consumeToolQuota(req, toolName) {
+export async function consumeToolQuota(
+  req: Request,
+  toolName: string,
+): Promise<QuotaResult> {
   if (isAiQuotaDisabled()) {
     return { ok: true, remaining: null, limit: null };
   }
@@ -214,7 +256,7 @@ export async function consumeToolQuota(req, toolName) {
   }
 }
 
-function setRemainingHeader(res, value) {
+function setRemainingHeader(res: Response, value: string): void {
   try {
     res.setHeader("X-AI-Quota-Remaining", value);
   } catch {
@@ -222,16 +264,19 @@ function setRemainingHeader(res, value) {
   }
 }
 
-function logQuotaStoreUnavailable(reason, e) {
+function logQuotaStoreUnavailable(reason: string, e?: unknown): void {
   try {
     aiQuotaFailOpenTotal.inc({ reason });
   } catch {
     /* ignore */
   }
+  const err = e as { message?: string; code?: string } | undefined;
   logger.error({
     msg: "ai_quota_store_unavailable",
     reason,
-    err: e ? { message: e?.message || String(e), code: e?.code } : undefined,
+    err: e
+      ? { message: err?.message || String(e), code: err?.code }
+      : undefined,
   });
 }
 
@@ -247,10 +292,14 @@ function logQuotaStoreUnavailable(reason, e) {
  * NOTE: pre-check `cost > limit` покриває крайовий випадок: коли рядка ще
  * немає, ON CONFLICT WHERE не спрацьовує, і ми б вставили count=cost > limit.
  *
- * @param {{subject:string, day:string, limit:number, cost:number, bucket:string}} opts
- * @returns {Promise<{ok:boolean, remaining:number, limit:number}>}
  */
-async function consumeQuota({ subject, day, limit, cost, bucket }) {
+async function consumeQuota({
+  subject,
+  day,
+  limit,
+  cost,
+  bucket,
+}: ConsumeQuotaOpts): Promise<ConsumeQuotaReturn> {
   if (cost > limit) {
     return { ok: false, remaining: 0, limit };
   }
@@ -263,7 +312,13 @@ async function consumeQuota({ subject, day, limit, cost, bucket }) {
       WHERE t.request_count + EXCLUDED.request_count <= $5
     RETURNING request_count
   `;
-  const r = await pool.query(sql, [subject, day, bucket, cost, limit]);
+  const r = await pool.query<ConsumeQuotaRow>(sql, [
+    subject,
+    day,
+    bucket,
+    cost,
+    limit,
+  ]);
   if (r.rows.length === 0) {
     return { ok: false, remaining: 0, limit };
   }

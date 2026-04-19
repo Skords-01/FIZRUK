@@ -16,6 +16,7 @@
  */
 import "./sentry.js";
 
+import type { Server } from "http";
 import { createApp } from "./app.js";
 import { config } from "./config.js";
 import { pool } from "./db.js";
@@ -63,10 +64,10 @@ const SHUTDOWN_GRACE_MS = Number(process.env.SHUTDOWN_GRACE_MS) || 15_000;
 const SHUTDOWN_HARD_TIMEOUT_MS =
   Number(process.env.SHUTDOWN_HARD_TIMEOUT_MS) || 25_000;
 
-let httpServer = null;
+let httpServer: Server | null = null;
 let shuttingDown = false;
 
-async function shutdown(reason, exitCode) {
+async function shutdown(reason: string, exitCode: number): Promise<void> {
   if (shuttingDown) return;
   shuttingDown = true;
 
@@ -87,7 +88,8 @@ async function shutdown(reason, exitCode) {
 
   try {
     if (httpServer) {
-      await new Promise((resolve) => {
+      const server = httpServer;
+      await new Promise<void>((resolve) => {
         // `server.close` чекає, поки всі активні з'єднання завершаться. Якщо
         // у нас довгі SSE-стріми (AI chat), grace-період обмежує це зверху.
         const graceTimer = setTimeout(() => {
@@ -99,7 +101,7 @@ async function shutdown(reason, exitCode) {
         }, SHUTDOWN_GRACE_MS);
         graceTimer.unref();
 
-        httpServer.close((err) => {
+        server.close((err) => {
           clearTimeout(graceTimer);
           if (err) {
             logger.warn({
@@ -142,7 +144,7 @@ async function shutdown(reason, exitCode) {
 // error-handling pipeline. Sentry instruments this on its own too, but we
 // also bump a counter + emit a structured log so Grafana sees spikes even
 // independently of Sentry retention/sampling.
-process.on("unhandledRejection", (reason) => {
+process.on("unhandledRejection", (reason: unknown) => {
   try {
     unhandledRejectionsTotal.inc();
   } catch {
@@ -158,7 +160,7 @@ process.on("unhandledRejection", (reason) => {
   // AI-респонс = рестарт процесу. uncaughtException — інша історія.
 });
 
-process.on("uncaughtException", (err) => {
+process.on("uncaughtException", (err: Error) => {
   try {
     uncaughtExceptionsTotal.inc();
   } catch {
