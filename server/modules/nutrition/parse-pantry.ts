@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import { validateBody } from "../../http/validate.js";
 import { ParsePantrySchema } from "../../http/schemas.js";
@@ -7,6 +8,10 @@ import {
   extractAnthropicText,
 } from "../../lib/anthropic.js";
 import { normalizePantryItems } from "../../lib/nutritionResponse.js";
+
+type AnthropicErrorPayload = { error?: { message?: string } };
+type WithAnthropicKey = Request & { anthropicKey?: string };
+
 const SYSTEM = `Ти помічник з харчування. Відповідай ТІЛЬКИ українською.
 Поверни ТІЛЬКИ валідний JSON без markdown і без додаткового тексту.
 
@@ -34,8 +39,11 @@ const SYSTEM = `Ти помічник з харчування. Відповід�
  * POST /api/nutrition/parse-pantry — розпарсити сирий список продуктів.
  * CORS / token / quota / rate-limit виставляє роутер.
  */
-export default async function handler(req, res) {
-  const apiKey = req.anthropicKey;
+export default async function handler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const apiKey = (req as WithAnthropicKey).anthropicKey as string;
 
   const parsed = validateBody(ParsePantrySchema, req, res);
   if (!parsed.ok) return;
@@ -58,16 +66,19 @@ export default async function handler(req, res) {
     timeoutMs: 20000,
     endpoint: "parse-pantry",
   });
-  if (!response.ok) {
-    throw new ExternalServiceError(data?.error?.message || "AI error", {
-      status: response.status,
-      code: "ANTHROPIC_ERROR",
-    });
+  if (!response || !response.ok) {
+    throw new ExternalServiceError(
+      (data as AnthropicErrorPayload)?.error?.message || "AI error",
+      {
+        status: response?.status,
+        code: "ANTHROPIC_ERROR",
+      },
+    );
   }
 
   const out = extractAnthropicText(data);
 
   const jsonParsed = extractJsonFromText(out);
   const items = normalizePantryItems(jsonParsed);
-  return res.status(200).json({ items, rawText: out || null });
+  res.status(200).json({ items, rawText: out || null });
 }

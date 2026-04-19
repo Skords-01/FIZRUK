@@ -1,10 +1,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import type { Request, Response } from "express";
 import { validateBody } from "../../http/validate.js";
 import { BackupUploadSchema } from "../../http/schemas.js";
 import { AppError } from "../../obs/errors.js";
 
-function safeKeyFromToken(req) {
+function safeKeyFromToken(req: Request): string {
   const tok = req?.headers?.["x-token"];
   const raw = tok ? String(tok) : "public";
   // tiny stable key; not a security boundary (token check happens separately)
@@ -20,7 +21,10 @@ function safeKeyFromToken(req) {
  * POST /api/nutrition/backup-upload — залити шифрований бекап.
  * CORS / token / rate-limit виставляє роутер.
  */
-export default async function handler(req, res) {
+export default async function handler(
+  req: Request,
+  res: Response,
+): Promise<void> {
   const parsed = validateBody(BackupUploadSchema, req, res);
   if (!parsed.ok) return;
   const { blob } = parsed.data;
@@ -41,5 +45,5 @@ export default async function handler(req, res) {
   const file = path.join(dir, `nutrition-backup-${key}.json`);
   await fs.writeFile(file, raw, "utf8");
 
-  return res.status(200).json({ ok: true, savedAt: Date.now() });
+  res.status(200).json({ ok: true, savedAt: Date.now() });
 }

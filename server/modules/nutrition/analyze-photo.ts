@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import { validateBody } from "../../http/validate.js";
 import { AnalyzePhotoSchema } from "../../http/schemas.js";
@@ -7,6 +8,10 @@ import {
   extractAnthropicText,
 } from "../../lib/anthropic.js";
 import { normalizePhotoResult } from "../../lib/nutritionResponse.js";
+
+type AnthropicErrorPayload = { error?: { message?: string } };
+type WithAnthropicKey = Request & { anthropicKey?: string };
+
 const SYSTEM = `Ти нутріціолог-помічник. Відповідай ТІЛЬКИ українською.
 Поверни ТІЛЬКИ валідний JSON без markdown і без додаткового тексту.
 
@@ -33,8 +38,11 @@ const SYSTEM = `Ти нутріціолог-помічник. Відповіда
  * Anthropic, мережа) — теж піднімаємо наверх, щоб Sentry/логи отримали
  * повноцінний контекст, а не замаскований `{ error: e.message }`.
  */
-export default async function handler(req, res) {
-  const apiKey = req.anthropicKey;
+export default async function handler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const apiKey = (req as WithAnthropicKey).anthropicKey as string;
 
   const parsed = validateBody(AnalyzePhotoSchema, req, res);
   if (!parsed.ok) return;
@@ -69,11 +77,14 @@ export default async function handler(req, res) {
     timeoutMs: 20000,
     endpoint: "analyze-photo",
   });
-  if (!response.ok) {
-    throw new ExternalServiceError(data?.error?.message || "AI error", {
-      status: response.status,
-      code: "ANTHROPIC_ERROR",
-    });
+  if (!response || !response.ok) {
+    throw new ExternalServiceError(
+      (data as AnthropicErrorPayload)?.error?.message || "AI error",
+      {
+        status: response?.status,
+        code: "ANTHROPIC_ERROR",
+      },
+    );
   }
 
   const text = extractAnthropicText(data);
@@ -81,5 +92,5 @@ export default async function handler(req, res) {
   const jsonParsed = extractJsonFromText(text);
   const result = normalizePhotoResult(jsonParsed);
 
-  return res.status(200).json({ result, rawText: text || null });
+  res.status(200).json({ result, rawText: text || null });
 }
