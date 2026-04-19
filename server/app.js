@@ -17,31 +17,36 @@ import {
   withRequestContext,
 } from "./http/index.js";
 import { metricsHandler } from "./obs/metrics.js";
-import chatHandler from "./api/chat.js";
-import monoHandler from "./api/mono.js";
-import privatHandler from "./api/privat.js";
-import { syncPull, syncPullAll, syncPush, syncPushAll } from "./api/sync.js";
-import barcodeHandler from "./api/barcode.js";
-import analyzePhoto from "./api/nutrition/analyze-photo.js";
-import parsePantry from "./api/nutrition/parse-pantry.js";
-import refinePhoto from "./api/nutrition/refine-photo.js";
-import recommendRecipes from "./api/nutrition/recommend-recipes.js";
-import dayHint from "./api/nutrition/day-hint.js";
-import weekPlan from "./api/nutrition/week-plan.js";
-import backupUpload from "./api/nutrition/backup-upload.js";
-import backupDownload from "./api/nutrition/backup-download.js";
-import dayPlan from "./api/nutrition/day-plan.js";
-import shoppingList from "./api/nutrition/shopping-list.js";
-import weeklyDigest from "./api/weekly-digest.js";
-import coachHandler from "./api/coach.js";
+import chatHandler from "./modules/chat.js";
+import monoHandler from "./modules/mono.js";
+import privatHandler from "./modules/privat.js";
+import {
+  syncPull,
+  syncPullAll,
+  syncPush,
+  syncPushAll,
+} from "./modules/sync.js";
+import barcodeHandler from "./modules/barcode.js";
+import analyzePhoto from "./modules/nutrition/analyze-photo.js";
+import parsePantry from "./modules/nutrition/parse-pantry.js";
+import refinePhoto from "./modules/nutrition/refine-photo.js";
+import recommendRecipes from "./modules/nutrition/recommend-recipes.js";
+import dayHint from "./modules/nutrition/day-hint.js";
+import weekPlan from "./modules/nutrition/week-plan.js";
+import backupUpload from "./modules/nutrition/backup-upload.js";
+import backupDownload from "./modules/nutrition/backup-download.js";
+import dayPlan from "./modules/nutrition/day-plan.js";
+import shoppingList from "./modules/nutrition/shopping-list.js";
+import weeklyDigest from "./modules/weekly-digest.js";
+import coachHandler from "./modules/coach.js";
 import {
   sendPush,
   subscribe as pushSubscribe,
   unsubscribe as pushUnsubscribe,
   vapidPublic,
-} from "./api/push.js";
-import foodSearchHandler from "./api/food-search.js";
-import webVitalsHandler from "./api/web-vitals.js";
+} from "./modules/push.js";
+import foodSearchHandler from "./modules/food-search.js";
+import webVitalsHandler from "./modules/web-vitals.js";
 import { setCorsHeaders } from "./http/cors.js";
 import { rateLimitExpress } from "./http/rateLimit.js";
 import { attachSentryErrorHandler } from "./sentry.js";

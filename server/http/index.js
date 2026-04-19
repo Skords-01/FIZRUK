@@ -24,7 +24,7 @@ export {
 export { errorHandler } from "./errorHandler.js";
 
 // CORS / rate-limit / validation / schemas / json-extract — перенесено з
-// `server/api/lib/` у `server/http/` (PR 1), тепер реекспортимо з одного місця.
+// `server/http/` у `server/http/` (PR 1), тепер реекспортимо з одного місця.
 export { setCorsHeaders, getAllowedOrigins } from "./cors.js";
 export { checkRateLimit, getIp, rateLimitExpress } from "./rateLimit.js";
 export { validateBody, validateQuery } from "./validate.js";
