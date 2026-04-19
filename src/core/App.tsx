@@ -396,49 +396,60 @@ function AppInner() {
       )}
 
       <Suspense fallback={<PageLoader />}>
-        {/* Skip-link target — deliberately a `<div>` (not `<main>`) because
-            some modules (e.g. Routine) render their own `<main>` landmark
-            internally. Having two visible `<main>` elements violates the
-            HTML spec and confuses AT landmark navigation. The SkipLink only
-            needs an `id` + focusability to do its job. */}
-        <div
-          key={activeModule}
-          id="main"
-          tabIndex={-1}
-          className={cn(moduleAnimClass, "h-full flex flex-col outline-none")}
-        >
-          <ModuleErrorBoundary onBackToHub={goToHub}>
-            {activeModule === "finyk" && (
-              <FinykApp
-                onBackToHub={goToHub}
-                pwaAction={pwaAction}
-                onPwaActionConsumed={clearPwaAction}
-              />
-            )}
-            {activeModule === "fizruk" && (
-              <FizrukApp
-                onBackToHub={goToHub}
-                pwaAction={pwaAction}
-                onPwaActionConsumed={clearPwaAction}
-              />
-            )}
-            {activeModule === "routine" && (
-              <RoutineApp
-                onBackToHub={goToHub}
-                onOpenModule={openModule}
-                pwaAction={pwaAction}
-                onPwaActionConsumed={clearPwaAction}
-              />
-            )}
-            {activeModule === "nutrition" && (
-              <NutritionApp
-                onBackToHub={goToHub}
-                pwaAction={pwaAction}
-                onPwaActionConsumed={clearPwaAction}
-              />
-            )}
-          </ModuleErrorBoundary>
-        </div>
+        {/* Skip-link target. We render `<main>` by default so every screen
+            exposes a `main` landmark for AT users. One exception: the
+            Routine module renders its own `<main id="routine-main">`
+            internally (src/modules/routine/RoutineApp.tsx) — in that case
+            we fall back to `<div>` here so the DOM never has two visible
+            `<main>` elements (HTML spec violation, confuses AT landmark
+            navigation). Either way, the SkipLink's target contract
+            (`id="main"` + focusability) is preserved. */}
+        {(() => {
+          const Tag = activeModule === "routine" ? "div" : "main";
+          return (
+            <Tag
+              key={activeModule}
+              id="main"
+              tabIndex={-1}
+              className={cn(
+                moduleAnimClass,
+                "h-full flex flex-col outline-none",
+              )}
+            >
+              <ModuleErrorBoundary onBackToHub={goToHub}>
+                {activeModule === "finyk" && (
+                  <FinykApp
+                    onBackToHub={goToHub}
+                    pwaAction={pwaAction}
+                    onPwaActionConsumed={clearPwaAction}
+                  />
+                )}
+                {activeModule === "fizruk" && (
+                  <FizrukApp
+                    onBackToHub={goToHub}
+                    pwaAction={pwaAction}
+                    onPwaActionConsumed={clearPwaAction}
+                  />
+                )}
+                {activeModule === "routine" && (
+                  <RoutineApp
+                    onBackToHub={goToHub}
+                    onOpenModule={openModule}
+                    pwaAction={pwaAction}
+                    onPwaActionConsumed={clearPwaAction}
+                  />
+                )}
+                {activeModule === "nutrition" && (
+                  <NutritionApp
+                    onBackToHub={goToHub}
+                    pwaAction={pwaAction}
+                    onPwaActionConsumed={clearPwaAction}
+                  />
+                )}
+              </ModuleErrorBoundary>
+            </Tag>
+          );
+        })()}
       </Suspense>
     </div>
   );
