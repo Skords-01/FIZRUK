@@ -193,7 +193,7 @@ export function LogCard({
         </div>
 
         <Card
-          variant="default"
+          variant="flat"
           radius="lg"
           padding="none"
           className="bg-panel/40 px-3 py-3 space-y-2"

@@ -35,7 +35,7 @@ const NetworthSectionImpl = function NetworthSection({ networthHistory }) {
     <Card
       variant="default"
       radius="lg"
-      padding="lg"
+      padding="xl"
       className="border-dashed text-center"
     >
       <p className="text-sm text-subtle">
