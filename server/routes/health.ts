@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { Pool } from "pg";
 import { createReadyzHandler, livezHandler } from "../http/index.js";
 import { metricsHandler } from "../obs/metrics.js";
 
@@ -7,10 +8,8 @@ import { metricsHandler } from "../obs/metrics.js";
  *
  * `/health` лишається аліасом для `/readyz` через історичні platform-probe-и
  * (Railway, старі Replit-пайплайни). Не видаляти без координації з деплоєм.
- *
- * @param {{ pool: import("pg").Pool }} deps
  */
-export function createHealthRouter({ pool }) {
+export function createHealthRouter({ pool }: { pool: Pool }): Router {
   const r = Router();
   r.get("/livez", livezHandler);
   r.get("/readyz", createReadyzHandler(pool));

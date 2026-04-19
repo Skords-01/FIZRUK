@@ -17,7 +17,7 @@ import {
  * `requireSession` унесені з handler-ів сюди: handler тепер просто читає
  * `req.user` і виконує бізнес-логіку.
  */
-export function createSyncRouter() {
+export function createSyncRouter(): Router {
   const r = Router();
   r.use("/api/sync", setModule("sync"));
   r.use(

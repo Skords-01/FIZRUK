@@ -1,3 +1,5 @@
+import type { Express } from "express";
+import type { Pool } from "pg";
 import { createAuthRouter } from "./auth.js";
 import { createBanksRouter } from "./banks.js";
 import { createBarcodeRouter } from "./barcode.js";
@@ -20,11 +22,8 @@ import { createWeeklyDigestRouter } from "./weekly-digest.js";
  * Порядок реєстрації відповідає тому, що був inline у `server/app.js`: спочатку
  * health/metrics, потім auth (перед глобальним CORS на /api — див. коментар у
  * `app.js`), потім решта доменних роутерів.
- *
- * @param {import("express").Express} app
- * @param {{ pool: import("pg").Pool }} deps
  */
-export function registerRoutes(app, { pool }) {
+export function registerRoutes(app: Express, { pool }: { pool: Pool }): void {
   app.use(createHealthRouter({ pool }));
   app.use(createAuthRouter());
   app.use(createSyncRouter());

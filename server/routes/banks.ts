@@ -12,7 +12,7 @@ import privatHandler from "../modules/privat.js";
  * і так треба прочитати з заголовка, щоб передати далі в `fetch(...)`. Тому
  * middleware тут тільки тегує домен і rate-limit-ить.
  */
-export function createBanksRouter() {
+export function createBanksRouter(): Router {
   const r = Router();
   r.use("/api/mono", setModule("finyk"));
   r.use("/api/privat", setModule("finyk"));

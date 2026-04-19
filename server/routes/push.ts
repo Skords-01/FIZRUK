@@ -25,7 +25,7 @@ import {
  * "server error" на фронті. `send` — внутрішній API cron/worker-ів,
  * захищений `X-Api-Secret`.
  */
-export function createPushRouter() {
+export function createPushRouter(): Router {
   const r = Router();
   r.use("/api/push", setModule("push"));
   r.get("/api/push/vapid-public", asyncHandler(vapidPublic));

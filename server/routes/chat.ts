@@ -8,7 +8,7 @@ import {
 } from "../http/index.js";
 import chatHandler from "../modules/chat.js";
 
-export function createChatRouter() {
+export function createChatRouter(): Router {
   const r = Router();
   r.post(
     "/api/chat",
