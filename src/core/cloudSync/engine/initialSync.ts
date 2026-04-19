@@ -1,3 +1,4 @@
+import { syncApi } from "@shared/api";
 import { SYNC_MODULES } from "../config";
 import { resolveInitialSync } from "../conflict/resolver";
 import {
@@ -12,13 +13,16 @@ import {
   hasLocalData,
 } from "../state/moduleData";
 import { getModuleVersion, setModuleVersion } from "../state/versions";
-import type { CurrentUser, ModulePayload, PullAllModuleBody } from "../types";
+import type {
+  CurrentUser,
+  ModulePayload,
+  PullAllModuleBody,
+  PullAllResponse,
+} from "../types";
 import { replayOfflineQueue } from "./replay";
-import type { Transport } from "./transport";
 
 export interface InitialSyncArgs {
   user: CurrentUser | null | undefined;
-  transport: Transport;
   onStart(): void;
   onSuccess(when: Date): void;
   onError(message: string): void;
@@ -32,22 +36,14 @@ export interface InitialSyncArgs {
  * original `initialSync` in `useCloudSync.js` 1:1.
  */
 export async function initialSync(args: InitialSyncArgs): Promise<void> {
-  const {
-    user,
-    transport,
-    onStart,
-    onSuccess,
-    onError,
-    onNeedMigration,
-    onSettled,
-  } = args;
+  const { user, onStart, onSuccess, onError, onNeedMigration, onSettled } =
+    args;
   onStart();
   try {
-    await replayOfflineQueue(transport);
+    await replayOfflineQueue();
 
-    const res = await transport.pullAll();
-    if (!res.ok) throw new Error("Initial sync failed");
-    const { modules: cloudModules } = await res.json();
+    const { modules: cloudModules } =
+      (await syncApi.pullAll()) as PullAllResponse;
 
     const plan = resolveInitialSync({
       cloud: cloudModules as
@@ -98,8 +94,13 @@ export async function initialSync(args: InitialSyncArgs): Promise<void> {
             }
           }
           if (Object.keys(modules).length > 0) {
-            const pushRes = await transport.pushAll(modules);
-            if (pushRes.ok) clearAllDirty();
+            try {
+              await syncApi.pushAll(modules);
+              clearAllDirty();
+            } catch {
+              // Keep dirty flags so the next push attempt retries. Same
+              // contract as pre-refactor: only clear on a successful push.
+            }
           }
         }
         if (!isMigrationDone(user?.id)) markMigrationDone(user?.id);

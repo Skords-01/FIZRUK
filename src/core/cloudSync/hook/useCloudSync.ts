@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { initialSync } from "../engine/initialSync";
 import { pullAll, type PullArgs } from "../engine/pull";
 import { pushAll, pushDirty } from "../engine/push";
-import { httpTransport } from "../engine/transport";
 import { uploadLocalData } from "../engine/upload";
 import { markMigrationDone } from "../state/migration";
 import { clearSyncManagedData } from "../state/moduleData";
@@ -35,7 +34,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
       () =>
         pushDirty({
           user,
-          transport: httpTransport,
           onStart,
           onSuccess,
           onError,
@@ -50,7 +48,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
       () =>
         pushAll({
           user,
-          transport: httpTransport,
           onStart,
           onSuccess,
           onError,
@@ -63,7 +60,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
   const doPullAll = useCallback(async () => {
     const pullArgs: PullArgs = {
       user,
-      transport: httpTransport,
       onStart,
       onSuccess,
       onError,
@@ -80,7 +76,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     claimBusy();
     await uploadLocalData({
       user,
-      transport: httpTransport,
       onStart,
       onSuccess,
       onError,
@@ -94,7 +89,6 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
       () =>
         initialSync({
           user,
-          transport: httpTransport,
           onStart,
           onSuccess,
           onError,

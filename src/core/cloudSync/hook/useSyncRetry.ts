@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { SYNC_EVENT } from "../config";
 import { replayOfflineQueue } from "../engine/replay";
-import { httpTransport } from "../engine/transport";
 import { getDirtyModules } from "../state/dirtyModules";
 
 const DEBOUNCE_MS = 5000;
@@ -22,7 +21,7 @@ export function useSyncRetry(enabled: boolean, onTrigger: () => void): void {
     if (!enabled) return;
 
     const onOnline = () => {
-      replayOfflineQueue(httpTransport).then(onTrigger);
+      replayOfflineQueue().then(onTrigger);
     };
 
     let debounceId: ReturnType<typeof setTimeout> | null = null;

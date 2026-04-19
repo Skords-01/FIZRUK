@@ -1,6 +1,6 @@
+import { syncApi } from "@shared/api";
 import { collectQueuedModules } from "../queue/collectQueued";
 import { clearOfflineQueue, getOfflineQueue } from "../queue/offlineQueue";
-import type { Transport } from "./transport";
 
 // Module-scoped re-entry guard. The original hook used a `replayingRef`; for
 // a singleton hook instance (the app mounts `useCloudSync` once) a module-
@@ -12,7 +12,7 @@ let replaying = false;
  * success the queue is cleared; on failure the queue is kept for later.
  * Re-entry during an already-in-flight replay is a no-op.
  */
-export async function replayOfflineQueue(transport: Transport): Promise<void> {
+export async function replayOfflineQueue(): Promise<void> {
   // Guard against re-entry: if an "online" event fires twice in quick
   // succession, or replay is triggered concurrently from initialSync and
   // pushDirty, we must not fire duplicate push requests for the same queue.
@@ -30,10 +30,8 @@ export async function replayOfflineQueue(transport: Transport): Promise<void> {
 
   replaying = true;
   try {
-    const res = await transport.pushAll(modulesToPush);
-    if (res.ok) {
-      clearOfflineQueue();
-    }
+    await syncApi.pushAll(modulesToPush);
+    clearOfflineQueue();
   } catch {
     // Network/transport failure during replay must not break callers
     // (onOnline chains pushDirty afterwards). Keep the queue for later.

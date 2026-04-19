@@ -1,4 +1,4 @@
-import { http, request } from "../httpClient";
+import { http } from "../httpClient";
 
 export interface ChatMessage {
   role: "user" | "assistant" | string;
@@ -29,9 +29,5 @@ export const chatApi = {
    * `ReadableStream` (напр. через `consumeHubChatSse`).
    */
   stream: (payload: ChatRequestPayload) =>
-    request<Response>("/api/chat", {
-      method: "POST",
-      body: payload,
-      parse: "raw",
-    }),
+    http.raw("/api/chat", { method: "POST", body: payload }),
 };

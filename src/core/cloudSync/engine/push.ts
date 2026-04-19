@@ -1,3 +1,4 @@
+import { syncApi } from "@shared/api";
 import { SYNC_MODULES } from "../config";
 import { isModulePushSuccess } from "../conflict/pushSuccess";
 import { addToOfflineQueue } from "../queue/offlineQueue";
@@ -9,13 +10,11 @@ import {
 } from "../state/dirtyModules";
 import { collectModuleData } from "../state/moduleData";
 import { setModuleVersion } from "../state/versions";
-import type { CurrentUser, ModulePayload } from "../types";
+import type { CurrentUser, ModulePayload, PushAllResponse } from "../types";
 import { replayOfflineQueue } from "./replay";
-import type { Transport } from "./transport";
 
 export interface PushArgs {
   user: CurrentUser | null | undefined;
-  transport: Transport;
   onStart(): void;
   onSuccess(when: Date): void;
   onError(message: string): void;
@@ -32,7 +31,7 @@ export interface PushArgs {
  *   - failure → re-queue the exact payload we attempted to push
  */
 export async function pushDirty(args: PushArgs): Promise<void> {
-  const { user, transport, onStart, onSuccess, onError, onSettled } = args;
+  const { user, onStart, onSuccess, onError, onSettled } = args;
   const dirty = getDirtyModules();
   const dirtyMods = Object.keys(dirty);
   if (dirtyMods.length === 0) return;
@@ -63,12 +62,9 @@ export async function pushDirty(args: PushArgs): Promise<void> {
       return;
     }
 
-    await replayOfflineQueue(transport);
+    await replayOfflineQueue();
 
-    const res = await transport.pushAll(modules);
-    if (!res.ok) throw new Error("Push failed");
-
-    const result = await res.json();
+    const result = (await syncApi.pushAll(modules)) as PushAllResponse;
     const currentModified = getModuleModifiedTimes();
     if (result?.results) {
       for (const [mod, r] of Object.entries(result.results)) {
@@ -101,7 +97,7 @@ export async function pushDirty(args: PushArgs): Promise<void> {
  * success all dirty flags are cleared (not just those matching the snapshot).
  */
 export async function pushAll(args: PushArgs): Promise<void> {
-  const { user, transport, onStart, onSuccess, onError, onSettled } = args;
+  const { user, onStart, onSuccess, onError, onSettled } = args;
   onStart();
   try {
     const modifiedTimes = getModuleModifiedTimes();
@@ -122,10 +118,7 @@ export async function pushAll(args: PushArgs): Promise<void> {
       return;
     }
 
-    const res = await transport.pushAll(modules);
-    if (!res.ok) throw new Error("Push failed");
-
-    const result = await res.json();
+    const result = (await syncApi.pushAll(modules)) as PushAllResponse;
     if (user?.id && result?.results) {
       for (const [mod, r] of Object.entries(result.results)) {
         if (r?.version) setModuleVersion(user.id, mod, r.version);
