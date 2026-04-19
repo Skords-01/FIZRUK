@@ -103,6 +103,7 @@ export function PushupsWidget() {
         onClose={() => setOpen(false)}
         title="Додати відтискання"
         kbInsetPx={keyboardInset}
+        panelClassName="routine-sheet"
         zIndex={200}
       >
         <div className="mb-4 grid grid-cols-5 gap-1.5 sm:gap-2">

@@ -46,6 +46,7 @@ export function ExerciseDetailSheet({
       onClose={onClose}
       title={selected?.name?.uk || selected?.name?.en}
       description={description}
+      panelClassName="fizruk-sheet"
       zIndex={100}
     >
       {cf?.hasWarning && (

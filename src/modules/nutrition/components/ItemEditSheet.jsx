@@ -11,6 +11,7 @@ export function ItemEditSheet({ itemEdit, setItemEdit, onClose, onSave }) {
       onClose={onClose}
       title={itemEdit.name}
       description="Кількість і одиниці (порожньо — прибрати)"
+      panelClassName="nutrition-sheet"
       zIndex={120}
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

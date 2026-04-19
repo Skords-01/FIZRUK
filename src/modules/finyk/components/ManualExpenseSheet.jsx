@@ -236,6 +236,7 @@ export function ManualExpenseSheet({
       onClose={onClose}
       title={isEditing ? "Редагувати витрату" : "Додати витрату"}
       kbInsetPx={kbInsetPx}
+      panelClassName="finyk-sheet"
       bodyClassName="space-y-4"
       footer={
         <div className="flex gap-3">

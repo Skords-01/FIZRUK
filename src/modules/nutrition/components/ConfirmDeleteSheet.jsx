@@ -18,6 +18,7 @@ export function ConfirmDeleteSheet({
       onClose={onClose}
       title="Видалити склад?"
       description="Це прибере всі продукти в ньому. Дію не можна відмінити."
+      panelClassName="nutrition-sheet"
       zIndex={110}
       footer={
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

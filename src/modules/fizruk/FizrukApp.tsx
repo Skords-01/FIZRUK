@@ -409,7 +409,7 @@ export default function FizrukApp({
               <button
                 type="button"
                 onClick={() => setSettingsOpen(false)}
-                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
                 aria-label="Закрити"
               >
                 <Icon name="close" size={22} />

@@ -251,7 +251,7 @@ export function PlanCalendar() {
               })
             : ""
         }
-        panelClassName="max-w-md"
+        panelClassName="fizruk-sheet max-w-md"
         zIndex={100}
         footer={
           <Button

@@ -226,6 +226,7 @@ export function AddMealSheet({
         open={open}
         onClose={onClose}
         title={title}
+        panelClassName="nutrition-sheet"
         zIndex={120}
         kbInsetPx={kbInsetPx}
       >

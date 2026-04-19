@@ -34,6 +34,7 @@ export function DayReportSheet({
       onClose={onClose}
       title="Денний звіт"
       description={dayLabel}
+      panelClassName="routine-sheet"
       zIndex={200}
     >
       {scheduledHabits.length === 0 && (
