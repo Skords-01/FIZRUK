@@ -16,9 +16,15 @@ export function useWorkoutTemplates() {
     if (Array.isArray(parsed)) setTemplates(parsed);
   }, []);
 
-  const persist = useCallback((next) => {
-    setTemplates(next);
-    safeWriteLS(KEY, next);
+  // Функціональний updater через setTemplates, щоб уникнути stale closure:
+  // колбеки в undo-toast можуть викликатись після того, як state оновився
+  // (див. AGENTS.md §5.11).
+  const persist = useCallback((updater) => {
+    setTemplates((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      safeWriteLS(KEY, next);
+      return next;
+    });
   }, []);
 
   const addTemplate = useCallback(
@@ -37,56 +43,58 @@ export function useWorkoutTemplates() {
         groups: Array.isArray(groups) ? groups : [],
         updatedAt: new Date().toISOString(),
       };
-      persist([t, ...templates]);
+      persist((prev) => [t, ...prev]);
       return t;
     },
-    [persist, templates],
+    [persist],
   );
 
   const updateTemplate = useCallback(
     (id, patch) => {
-      persist(
-        templates.map((t) =>
+      persist((prev) =>
+        prev.map((t) =>
           t.id === id
             ? { ...t, ...patch, updatedAt: new Date().toISOString() }
             : t,
         ),
       );
     },
-    [persist, templates],
+    [persist],
   );
 
   const removeTemplate = useCallback(
     (id) => {
-      persist(templates.filter((t) => t.id !== id));
+      persist((prev) => prev.filter((t) => t.id !== id));
     },
-    [persist, templates],
+    [persist],
   );
 
   const restoreTemplate = useCallback(
     (template, atIndex) => {
       if (!template || !template.id) return;
-      if (templates.some((t) => t.id === template.id)) return;
-      const next = [...templates];
-      const idx =
-        typeof atIndex === "number" && atIndex >= 0
-          ? Math.min(atIndex, next.length)
-          : next.length;
-      next.splice(idx, 0, template);
-      persist(next);
+      persist((prev) => {
+        if (prev.some((t) => t.id === template.id)) return prev;
+        const next = [...prev];
+        const idx =
+          typeof atIndex === "number" && atIndex >= 0
+            ? Math.min(atIndex, next.length)
+            : next.length;
+        next.splice(idx, 0, template);
+        return next;
+      });
     },
-    [persist, templates],
+    [persist],
   );
 
   const markTemplateUsed = useCallback(
     (id) => {
-      persist(
-        templates.map((t) =>
+      persist((prev) =>
+        prev.map((t) =>
           t.id === id ? { ...t, lastUsedAt: new Date().toISOString() } : t,
         ),
       );
     },
-    [persist, templates],
+    [persist],
   );
 
   const sorted = useMemo(
