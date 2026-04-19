@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { cn } from "@shared/lib/cn";
 import { Button } from "./Button";
@@ -30,18 +30,36 @@ export function ConfirmDialog({
   const ref = useRef<HTMLDivElement>(null);
   useDialogFocusTrap(open, ref, { onEscape: onCancel });
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   if (!open) return null;
+
+  const handleScrimKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onCancel?.();
+    }
+  };
 
   return (
     <div
       className="fixed inset-0 z-[200] flex items-end justify-center sm:items-center"
       role="presentation"
     >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-text/40 backdrop-blur-sm motion-safe:animate-fade-in"
+      {/* Scrim — real <button> keeps dismiss reachable by keyboard & AT. */}
+      <button
+        type="button"
+        aria-label={cancelLabel}
         onClick={onCancel}
-        aria-hidden
+        onKeyDown={handleScrimKey}
+        className="absolute inset-0 bg-text/40 backdrop-blur-sm motion-safe:animate-fade-in"
       />
 
       {/* Sheet */}
@@ -50,8 +68,9 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
+        onPointerDown={(e) => e.stopPropagation()}
         className={cn(
-          "relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0",
+          "relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0 overscroll-contain",
           "bg-panel rounded-3xl shadow-float border border-line p-6",
           "animate-in slide-in-from-bottom-4 duration-200",
         )}
