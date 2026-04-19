@@ -19,7 +19,7 @@ import {
  *   - `GET/POST /memory` — читання/запис пам'яті; тільки session.
  *   - `POST /insight`   — генерація пораду через Anthropic; session + ключ + квота.
  */
-export function createCoachRouter() {
+export function createCoachRouter(): Router {
   const r = Router();
   r.use("/api/coach", setModule("coach"));
   r.use(

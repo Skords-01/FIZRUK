@@ -28,7 +28,7 @@ import shoppingList from "../modules/nutrition/shopping-list.js";
  * ходять у Anthropic і не мають тратити квоту, тому `requireAnthropicKey` /
  * `requireAiQuota` до них не застосовуємо.
  */
-export function createNutritionRouter() {
+export function createNutritionRouter(): Router {
   const r = Router();
   r.use("/api/nutrition", setModule("nutrition"));
   r.use(

@@ -8,7 +8,7 @@ import {
 } from "../http/index.js";
 import weeklyDigest from "../modules/weekly-digest.js";
 
-export function createWeeklyDigestRouter() {
+export function createWeeklyDigestRouter(): Router {
   const r = Router();
   r.post(
     "/api/weekly-digest",

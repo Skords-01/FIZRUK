@@ -1,17 +1,29 @@
 import express from "express";
 import { existsSync } from "fs";
 import { join } from "path";
+import type { Handler, RequestHandler } from "express";
+
+interface FrontendMiddlewareBundle {
+  assetsStatic: Handler;
+  rootStatic: Handler;
+  sendIndex: RequestHandler;
+}
+
+type FrontendMiddleware = RequestHandler | FrontendMiddlewareBundle;
 
 /**
  * SPA-serving для Replit-режиму (той самий процес хостить і API, і фронт).
- * Повертає middleware-функцію, яку `app.js` просто прикладає наприкінці.
+ * Повертає або одну 503-middleware-функцію (коли build відсутній), або
+ * пакет із трьох handler-ів, які app.js окремо монтує.
  *
  * Якщо `distPath` не існує — віддаємо 503 з підказкою, щоб не збити з пантелику
  * розробника, який запустив сервер без попереднього `npm run build`.
- *
- * @param {{ distPath: string }} opts
  */
-export function createFrontendMiddleware({ distPath }) {
+export function createFrontendMiddleware({
+  distPath,
+}: {
+  distPath: string;
+}): FrontendMiddleware {
   if (!existsSync(distPath)) {
     return (_req, res) => {
       res
@@ -24,7 +36,7 @@ export function createFrontendMiddleware({ distPath }) {
     immutable: true,
   });
   const rootStatic = express.static(distPath, { maxAge: 0 });
-  const sendIndex = (_req, res) => {
+  const sendIndex: RequestHandler = (_req, res) => {
     res.sendFile(join(distPath, "index.html"));
   };
   return { assetsStatic, rootStatic, sendIndex };

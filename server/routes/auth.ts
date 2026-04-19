@@ -17,7 +17,7 @@ import {
  * `res.on("finish")` і кличе `next()`, тож навіть якщо лімітер відстрілить
  * 429, finish-listener все одно спрацює і метрика інкрементнеться коректно.
  */
-export function createAuthRouter() {
+export function createAuthRouter(): Router {
   const r = Router();
   r.use("/api/auth", authMetricsMiddleware);
   r.use("/api/auth", authSensitiveRateLimit);
