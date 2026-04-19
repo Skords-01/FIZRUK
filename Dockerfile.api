@@ -11,4 +11,7 @@ COPY server ./server
 COPY scripts ./scripts
 
 ENV NODE_ENV=production
-CMD ["node", "server/index.js"]
+# `server/lib/*` is TypeScript (see PR #311). We need the tsx loader at
+# runtime to resolve `.ts` files imported via `.js` specifiers. `tsx` is
+# now a regular dependency so it survives `npm ci --omit=dev`.
+CMD ["node", "--import", "tsx", "server/index.js"]
