@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildApiCspDirectives, apiHelmetMiddleware } from "./httpCommon.mjs";
+import { buildApiCspDirectives, apiHelmetMiddleware } from "./security.js";
 
 describe("buildApiCspDirectives", () => {
   const d = buildApiCspDirectives();

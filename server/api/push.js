@@ -1,7 +1,6 @@
 import webpush from "web-push";
 import pool from "../db.js";
-import { auth } from "../auth.js";
-import { fromNodeHeaders } from "better-auth/node";
+import { getSessionUser } from "../auth.js";
 import { setRequestModule } from "../obs/requestContext.js";
 import { logger } from "../obs/logger.js";
 import { pushSendsTotal } from "../obs/metrics.js";
@@ -22,12 +21,15 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
 }
 
+/**
+ * Лукап сесії з проковтуванням помилок: push-ендпоінти історично трактують
+ * будь-яку невдачу better-auth як "не залогінений" і повертають 401, а не 500.
+ * Для інших API використовуй `getSessionUser` напряму — там помилки мають
+ * підніматись до `errorHandler`.
+ */
 async function getSession(req) {
   try {
-    const session = await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    });
-    return session?.user ?? null;
+    return await getSessionUser(req);
   } catch {
     return null;
   }
