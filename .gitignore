@@ -8,3 +8,7 @@ dist
 # Playwright (a11y tests)
 playwright-report/
 test-results/
+
+# Session-only artifacts from the DS visual-QA harness
+.agents/ds-qa/
+.agents/test-plans/
