@@ -1,8 +1,14 @@
 import { cn } from "@shared/lib/cn";
 import { AssistantMessageBody } from "./AssistantMessageBody.jsx";
 import { speak } from "../lib/hubChatSpeech.js";
+import type { ChatMessage as ChatMessageData } from "../lib/hubChatUtils.js";
 
-export function ChatMessage({ message, onSpeak }) {
+interface ChatMessageProps {
+  message: ChatMessageData;
+  onSpeak?: () => void;
+}
+
+export function ChatMessage({ message, onSpeak }: ChatMessageProps) {
   const { role, text } = message;
   const isAssistant = role === "assistant";
 

@@ -1,7 +1,13 @@
 import { usePushNotifications } from "@shared/hooks/usePushNotifications.js";
 import { cn } from "@shared/lib/cn";
 
-export function PushNotificationToggle({ className }) {
+interface PushNotificationToggleProps {
+  className?: string;
+}
+
+export function PushNotificationToggle({
+  className,
+}: PushNotificationToggleProps) {
   const { supported, permission, subscribed, loading, subscribe, unsubscribe } =
     usePushNotifications();
 
