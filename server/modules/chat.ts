@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { validateBody } from "../http/validate.js";
 import { ChatRequestSchema } from "../http/schemas.js";
 import {
@@ -6,7 +7,45 @@ import {
   extractAnthropicText,
 } from "../lib/anthropic.js";
 
-const TOOLS = [
+type WithAnthropicKey = Request & { anthropicKey?: string };
+
+/**
+ * Форма content-блоків Anthropic Messages API (Claude 4 sonnet, tool-use).
+ * `text` для `type="text"`, `id/name/input` для `type="tool_use"`. Решту полів
+ * лишаємо як index signature — SDK додає нові типи (`thinking`, `citations` тощо).
+ */
+interface AnthropicContentBlock {
+  type: string;
+  text?: string;
+  id?: string;
+  name?: string;
+  input?: unknown;
+  [key: string]: unknown;
+}
+
+interface AnthropicMessagesResponseData {
+  content?: AnthropicContentBlock[];
+  error?: { message?: string };
+  [key: string]: unknown;
+}
+
+interface AnthropicTool {
+  name: string;
+  description: string;
+  input_schema: Record<string, unknown>;
+}
+
+interface ClientChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+interface StreamEventBlockDelta {
+  type: string;
+  delta?: { type?: string; text?: string };
+}
+
+const TOOLS: AnthropicTool[] = [
   {
     name: "change_category",
     description:
@@ -680,8 +719,11 @@ const SYSTEM_PREFIX = `Ти персональний асистент додат
  * POST /api/chat — основний чат з AI-асистентом з tool-calling та SSE-стрімом.
  * Middleware-и роутера гарантують ключ у `req.anthropicKey` і валідну квоту.
  */
-export default async function handler(req, res) {
-  const apiKey = req.anthropicKey;
+export default async function handler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const apiKey = (req as WithAnthropicKey).anthropicKey as string;
 
   const parsed = validateBody(ChatRequestSchema, req, res);
   if (!parsed.ok) return;
@@ -697,9 +739,9 @@ export default async function handler(req, res) {
   // Другий крок: клієнт виконав tool calls і повертає результати
   if (tool_results && tool_calls_raw) {
     const toolResultMessages = tool_results.map((r) => ({
-      type: "tool_result",
+      type: "tool_result" as const,
       tool_use_id: r.tool_use_id,
-      content: String(r.content || "ok"),
+      content: String(r.content ?? "ok"),
     }));
 
     // Беремо лише останнє user-повідомлення (питання що спричинило tool call)
@@ -737,19 +779,23 @@ export default async function handler(req, res) {
     });
 
     if (!response?.ok) {
-      return res
+      const errData = data as AnthropicMessagesResponseData;
+      res
         .status(response?.status || 500)
-        .json({ error: data?.error?.message || "AI error" });
+        .json({ error: errData?.error?.message || "AI error" });
+      return;
     }
 
-    const text = extractAnthropicText(data);
-    return res.status(200).json({ text: text || "Готово." });
+    const text = extractAnthropicText(data as AnthropicMessagesResponseData);
+    res.status(200).json({ text: text || "Готово." });
+    return;
   }
 
   // Перший запит — може повернути tool_use або текст
   const cleaned = sanitizeMessages(messages);
   if (cleaned.length === 0) {
-    return res.status(400).json({ error: "Немає повідомлень" });
+    res.status(400).json({ error: "Немає повідомлень" });
+    return;
   }
 
   const { response, data } = await anthropicMessages(
@@ -765,20 +811,23 @@ export default async function handler(req, res) {
   );
 
   if (!response?.ok) {
-    return res
+    const errData = data as AnthropicMessagesResponseData;
+    res
       .status(response?.status || 500)
-      .json({ error: data?.error?.message || "AI error" });
+      .json({ error: errData?.error?.message || "AI error" });
+    return;
   }
 
-  const content = data?.content || [];
+  const content: AnthropicContentBlock[] =
+    (data as AnthropicMessagesResponseData)?.content || [];
   const toolUses = content.filter((b) => b.type === "tool_use");
   const textParts = content
     .filter((b) => b.type === "text")
-    .map((b) => b.text)
+    .map((b) => b.text ?? "")
     .join("\n");
 
   if (toolUses.length > 0) {
-    return res.status(200).json({
+    res.status(200).json({
       text: textParts || null,
       tool_calls: toolUses.map((t) => ({
         id: t.id,
@@ -787,9 +836,10 @@ export default async function handler(req, res) {
       })),
       tool_calls_raw: content,
     });
+    return;
   }
 
-  return res.status(200).json({ text: textParts || "Немає відповіді від AI." });
+  res.status(200).json({ text: textParts || "Немає відповіді від AI." });
 }
 
 /**
@@ -809,7 +859,12 @@ const SSE_HEARTBEAT_MS = Number(process.env.SSE_HEARTBEAT_MS) || 15_000;
 /**
  * Anthropic Messages API stream → SSE для клієнта (data: {"t":"фрагмент"}).
  */
-async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
+async function streamAnthropicToSse(
+  res: Response,
+  apiKey: string,
+  payload: Record<string, unknown>,
+  endpoint: string = "chat",
+): Promise<void> {
   const { response, recordStreamEnd } = await anthropicMessagesStream(
     apiKey,
     payload,
@@ -819,7 +874,7 @@ async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
   if (!response.ok) {
     let errMsg = "AI error";
     try {
-      const j = await response.json();
+      const j = (await response.json()) as AnthropicMessagesResponseData;
       errMsg = j?.error?.message || errMsg;
     } catch {
       try {
@@ -866,9 +921,9 @@ async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
         if (!line.startsWith("data: ")) continue;
         const raw = line.slice(6).trim();
         if (raw === "[DONE]") continue;
-        let ev;
+        let ev: StreamEventBlockDelta;
         try {
-          ev = JSON.parse(raw);
+          ev = JSON.parse(raw) as StreamEventBlockDelta;
         } catch {
           continue;
         }
@@ -881,9 +936,10 @@ async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
         }
       }
     }
-  } catch (e) {
+  } catch (e: unknown) {
     streamOutcome = "error";
-    res.write(`data: ${JSON.stringify({ err: String(e?.message || e) })}\n\n`);
+    const message = e instanceof Error ? e.message : String(e);
+    res.write(`data: ${JSON.stringify({ err: message })}\n\n`);
   } finally {
     clearInterval(heartbeat);
     recordStreamEnd(streamOutcome);
@@ -892,18 +948,19 @@ async function streamAnthropicToSse(res, apiKey, payload, endpoint = "chat") {
   res.end();
 }
 
-function sanitizeMessages(messages) {
+function sanitizeMessages(messages: unknown): ClientChatMessage[] {
   const cleaned = (Array.isArray(messages) ? messages : [])
     .filter(
-      (m) =>
-        (m?.role === "user" || m?.role === "assistant") &&
-        typeof m?.content === "string" &&
-        m.content.trim(),
+      (m): m is ClientChatMessage =>
+        !!m &&
+        (m.role === "user" || m.role === "assistant") &&
+        typeof m.content === "string" &&
+        m.content.trim().length > 0,
     )
     .slice(-12);
 
   // Anthropic вимагає чергування user/assistant і початок з user
-  const result = [];
+  const result: ClientChatMessage[] = [];
   for (const m of cleaned) {
     if (result.length > 0 && result[result.length - 1].role === m.role)
       continue;
