@@ -57,7 +57,7 @@ export function FoodPickerSection({
         </SectionHeading>
         {(foodBusy || offBusy) && (
           <span className="text-2xs text-subtle flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 border border-nutrition/40 border-t-nutrition rounded-full animate-spin" />
+            <span className="inline-block w-3 h-3 border border-nutrition/40 border-t-nutrition rounded-full motion-safe:animate-spin" />
             пошук…
           </span>
         )}

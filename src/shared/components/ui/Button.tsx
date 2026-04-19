@@ -138,7 +138,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <>
-            <LoadingSpinner className="animate-spin" />
+            <LoadingSpinner className="motion-safe:animate-spin" />
             {!iconOnly && (
               <span className="opacity-0" aria-hidden="true">
                 {children}

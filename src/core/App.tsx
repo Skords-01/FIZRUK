@@ -165,6 +165,28 @@ function AppInner() {
     return () => window.removeEventListener(HUB_OPEN_MODULE_EVENT, onHubOpen);
   }, [openModule, setPwaAction, validActions]);
 
+  // Глобальний shortcut ⌘K / Ctrl+K → відкрити HubSearch. Ставимо
+  // `preventDefault`, щоб не спрацював нативний focus-address-bar у
+  // браузера. Не реагуємо, якщо пошук вже відкритий або фокус у
+  // input/textarea — тоді ⌘K не має перехоплювати typing.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod || (e.key !== "k" && e.key !== "K")) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const inEditable =
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        (target && target.isContentEditable);
+      if (inEditable) return;
+      e.preventDefault();
+      ui.setSearchOpen(true);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [ui]);
+
   if (sync.migrationPending) {
     return (
       <MigrationPrompt

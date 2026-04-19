@@ -472,7 +472,7 @@ export function Transactions({
                     strokeWidth="2.2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={activeLoading ? "animate-spin" : ""}
+                    className={activeLoading ? "motion-safe:animate-spin" : ""}
                     aria-hidden
                   >
                     <polyline points="23 4 23 10 17 10" />

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@shared/lib/cn";
+import { hapticTap } from "@shared/lib/haptic";
 
 type SpeechRecognitionLike = {
   lang: string;
@@ -171,10 +172,15 @@ export function VoiceMicButton({
   };
   const iconSize = size === "sm" ? 14 : size === "lg" ? 20 : 16;
 
+  const handleClick = () => {
+    hapticTap();
+    toggle();
+  };
+
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={handleClick}
       disabled={disabled}
       aria-label={listening ? "Зупинити запис" : label || "Голосовий ввід"}
       title={listening ? "Зупинити запис" : label || "Голосовий ввід"}
@@ -182,7 +188,7 @@ export function VoiceMicButton({
         "relative flex items-center justify-center rounded-2xl shrink-0 transition-all",
         sizeMap[size] || sizeMap.md,
         listening
-          ? "bg-error/15 text-error border border-error/30 animate-pulse"
+          ? "bg-error/15 text-error border border-error/30 motion-safe:animate-pulse"
           : "bg-panelHi text-muted hover:text-text hover:bg-line/40 border border-line",
         disabled && "opacity-40 pointer-events-none",
         className,

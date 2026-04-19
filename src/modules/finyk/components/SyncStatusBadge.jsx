@@ -26,7 +26,7 @@ function SyncStatusBadgeComponent({
   const isSuccess = status === "success";
 
   const dotClass = isLoading
-    ? "bg-amber-400 animate-pulse"
+    ? "bg-amber-400 motion-safe:animate-pulse"
     : isError
       ? "bg-danger"
       : isPartial
