@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { useToast } from "@shared/hooks/useToast";
 import {
@@ -16,13 +16,38 @@ import {
   routineTodayDate,
   normalizeReminderTimes,
 } from "../lib/routineDraftUtils.js";
-import { HabitDetailSheet } from "./HabitDetailSheet.jsx";
-import { RoutineBackupSection } from "./RoutineBackupSection.jsx";
-import { HabitForm } from "./settings/HabitForm.jsx";
-import { TagsSection } from "./settings/TagsSection.jsx";
-import { CategoriesSection } from "./settings/CategoriesSection.jsx";
-import { ActiveHabitsSection } from "./settings/ActiveHabitsSection.jsx";
-import { ArchivedHabitsSection } from "./settings/ArchivedHabitsSection.jsx";
+import { HabitDetailSheet } from "./HabitDetailSheet";
+import { RoutineBackupSection } from "./RoutineBackupSection";
+import { HabitForm } from "./settings/HabitForm";
+import { TagsSection } from "./settings/TagsSection";
+import { CategoriesSection } from "./settings/CategoriesSection";
+import { ActiveHabitsSection } from "./settings/ActiveHabitsSection";
+import { ArchivedHabitsSection } from "./settings/ArchivedHabitsSection";
+import type {
+  CategoryDraft,
+  Habit,
+  HabitDraft,
+  PendingHabitDeletion,
+  RoutineState,
+} from "../lib/types";
+
+interface ImportConfirmState {
+  parsed: unknown;
+}
+
+export interface RoutineSettingsSectionProps {
+  routine: RoutineState;
+  setRoutine: Dispatch<SetStateAction<RoutineState>>;
+  habitDraft: HabitDraft;
+  setHabitDraft: Dispatch<SetStateAction<HabitDraft>>;
+  tagDraft: string;
+  setTagDraft: Dispatch<SetStateAction<string>>;
+  catDraft: CategoryDraft;
+  setCatDraft: Dispatch<SetStateAction<CategoryDraft>>;
+  onOpenCalendar?: () => void;
+  habitFormFocusTick?: number;
+  hidden?: boolean;
+}
 
 export function RoutineSettingsSection({
   routine,
@@ -36,14 +61,17 @@ export function RoutineSettingsSection({
   onOpenCalendar,
   habitFormFocusTick,
   hidden: panelHidden,
-}) {
+}: RoutineSettingsSectionProps) {
   const toast = useToast();
-  const [editingId, setEditingId] = useState(null);
-  const [detailHabitId, setDetailHabitId] = useState(null);
-  const [deleteHabitPending, setDeleteHabitPending] = useState(null);
-  const [importConfirm, setImportConfirm] = useState(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [detailHabitId, setDetailHabitId] = useState<string | null>(null);
+  const [deleteHabitPending, setDeleteHabitPending] =
+    useState<PendingHabitDeletion | null>(null);
+  const [importConfirm, setImportConfirm] = useState<ImportConfirmState | null>(
+    null,
+  );
 
-  const loadHabitIntoDraft = (h) => {
+  const loadHabitIntoDraft = (h: Habit) => {
     const times = normalizeReminderTimes(h);
     setHabitDraft({
       name: h.name || "",

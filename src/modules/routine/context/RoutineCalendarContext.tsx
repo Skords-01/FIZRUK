@@ -1,7 +1,70 @@
-import { createContext, useContext, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
+import type { HubCalendarEvent, RoutineState } from "../lib/types";
 
-export type RoutineCalendarData = Record<string, unknown>;
-export type RoutineCalendarActions = Record<string, unknown>;
+export interface RoutineCompletionRate {
+  completed: number;
+  scheduled: number;
+  rate: number;
+}
+
+export interface RoutineDayProgress {
+  completed: number;
+  scheduled: number;
+}
+
+export interface RoutineMonthCursor {
+  y: number;
+  m: number;
+}
+
+export type RoutineTimeMode = "day" | "week" | "month" | string;
+
+export interface RoutineCalendarData {
+  rangeLabel: string;
+  headlineDate: string;
+  filtered: HubCalendarEvent[];
+  routine: RoutineState;
+  currentStreak: number;
+  completionRate: RoutineCompletionRate;
+  dayProgress: RoutineDayProgress;
+  timeMode: RoutineTimeMode;
+  selectedDay: string;
+  todayKey: string;
+  shiftWeekStrip: (delta: number) => void;
+  setSelectedDay: Dispatch<SetStateAction<string>>;
+  setTimeMode: Dispatch<SetStateAction<RoutineTimeMode>>;
+  listQuery: string;
+  setListQuery: Dispatch<SetStateAction<string>>;
+  tagFilter: string | null;
+  setTagFilter: Dispatch<SetStateAction<string | null>>;
+  tagChips: string[];
+  monthCursor: RoutineMonthCursor;
+  monthTitle: string;
+  goMonth: (delta: number) => void;
+  goToToday: () => void;
+  cells: Array<number | null>;
+  dayCounts: Map<string, number>;
+  listIsEmpty: boolean;
+  hasListFilter: boolean;
+  hasNoHabits: boolean;
+  grouped: Map<string, HubCalendarEvent[]>;
+  canBulkMark: boolean;
+}
+
+export interface RoutineCalendarActions {
+  applyTimeMode: (mode: RoutineTimeMode) => void;
+  onToggleHabit: (habitId: string, dateKey: string) => void;
+  setRoutine: Dispatch<SetStateAction<RoutineState>>;
+  setMainTab: (tab: string) => void;
+  onOpenModule?: (moduleId: string, opts?: { hash?: string }) => void;
+  onBulkMarkDay: () => void;
+}
 
 const RoutineCalendarDataContext = createContext<RoutineCalendarData | null>(
   null,

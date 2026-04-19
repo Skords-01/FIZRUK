@@ -2,6 +2,20 @@ import { useRef } from "react";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { cn } from "@shared/lib/cn";
 import { ROUTINE_THEME as C } from "../lib/routineConstants.js";
+import type { Habit } from "../lib/types";
+
+export interface ScheduledHabitForReport extends Habit {
+  completed: boolean;
+}
+
+export interface DayReportSheetProps {
+  open: boolean;
+  onClose: () => void;
+  dayLabel: string;
+  scheduledHabits: ScheduledHabitForReport[];
+  onToggleHabit: (habitId: string, dateKey: string) => void;
+  dateKey: string;
+}
 
 export function DayReportSheet({
   open,
@@ -10,8 +24,8 @@ export function DayReportSheet({
   scheduledHabits,
   onToggleHabit,
   dateKey,
-}) {
-  const ref = useRef(null);
+}: DayReportSheetProps) {
+  const ref = useRef<HTMLDivElement | null>(null);
   useDialogFocusTrap(open, ref, { onEscape: onClose });
 
   if (!open) return null;

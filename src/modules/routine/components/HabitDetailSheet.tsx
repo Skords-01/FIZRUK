@@ -13,24 +13,29 @@ import {
   RECURRENCE_OPTIONS,
   WEEKDAY_LABELS,
 } from "../lib/routineConstants.js";
+import type { Habit, RoutineState } from "../lib/types";
 
-function todayKey() {
+function todayKey(): string {
   const d = new Date();
   d.setHours(12, 0, 0, 0);
   return dateKeyFromDate(d);
 }
 
-function monthGrid(y, m) {
+function monthGrid(y: number, m: number): Array<number | null> {
   const last = new Date(y, m + 1, 0).getDate();
   const firstWd = (new Date(y, m, 1).getDay() + 6) % 7;
-  const cells = [];
+  const cells: Array<number | null> = [];
   for (let i = 0; i < firstWd; i++) cells.push(null);
   for (let d = 1; d <= last; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
   return cells;
 }
 
-function completionPct(habit, completions, days) {
+function completionPct(
+  habit: Habit,
+  completions: string[],
+  days: number,
+): number | null {
   const tk = todayKey();
   let scheduled = 0;
   let done = 0;
@@ -48,8 +53,28 @@ function completionPct(habit, completions, days) {
   return Math.round((done / scheduled) * 100);
 }
 
-export function HabitDetailSheet({ habitId, routine, onClose }) {
-  const ref = useRef(null);
+export interface HabitDetailSheetProps {
+  habitId: string;
+  routine: RoutineState;
+  onClose: () => void;
+}
+
+interface MonthCursor {
+  y: number;
+  m: number;
+}
+
+interface NoteEntry {
+  date: string;
+  text: string;
+}
+
+export function HabitDetailSheet({
+  habitId,
+  routine,
+  onClose,
+}: HabitDetailSheetProps) {
+  const ref = useRef<HTMLDivElement | null>(null);
   useDialogFocusTrap(true, ref, { onEscape: onClose });
 
   const habit = routine.habits.find((h) => h.id === habitId);
@@ -60,17 +85,17 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
   const tk = todayKey();
 
   const now = new Date();
-  const [calMonth, setCalMonth] = useState({
+  const [calMonth, setCalMonth] = useState<MonthCursor>({
     y: now.getFullYear(),
     m: now.getMonth(),
   });
 
-  const tag = useMemo(() => {
+  const tag = useMemo<string[]>(() => {
     if (!habit) return [];
     const ids = habit.tagIds || [];
     return ids
       .map((id) => routine.tags.find((t) => t.id === id)?.name)
-      .filter(Boolean);
+      .filter((n): n is string => Boolean(n));
   }, [habit, routine.tags]);
 
   const category = useMemo(() => {
@@ -122,7 +147,7 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
     },
   );
 
-  const goCalMonth = (delta) => {
+  const goCalMonth = (delta: number) => {
     setCalMonth((c) => {
       let m = c.m + delta;
       let y = c.y;
@@ -138,9 +163,9 @@ export function HabitDetailSheet({ habitId, routine, onClose }) {
     });
   };
 
-  const notes = useMemo(() => {
+  const notes = useMemo<NoteEntry[]>(() => {
     const notesObj = routine.completionNotes || {};
-    const items = [];
+    const items: NoteEntry[] = [];
     const sorted = [...completions].sort().reverse();
     for (const dk of sorted) {
       const k = completionNoteKey(habitId, dk);
