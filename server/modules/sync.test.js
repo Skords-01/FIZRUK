@@ -11,6 +11,9 @@ vi.mock("../db.js", () => {
 
 vi.mock("../obs/requestContext.js", () => ({
   setRequestModule: vi.fn(),
+  setUserId: vi.fn(),
+  getRequestContext: () => null,
+  als: { getStore: () => null, run: (_s, fn) => fn() },
 }));
 
 vi.mock("../obs/metrics.js", () => ({

@@ -3,6 +3,44 @@ import { anthropicMessages, extractAnthropicText } from "../lib/anthropic.js";
 import { validateBody } from "../http/validate.js";
 import { WeeklyDigestSchema } from "../http/schemas.js";
 import { ExternalServiceError, ValidationError } from "../obs/errors.js";
+import { logger } from "../obs/logger.js";
+
+/**
+ * Мапа «секція → чи прийшов непустий об'єкт у payload-і». Логуємо лише
+ * присутність і розмір, без PII (числа/категорії/звички залишаються в body
+ * і не йдуть у логи). Потрібна для діагностики клієнтських `{}` / частково
+ * заповнених payload-ів, які інакше проходять zod, але падають у 400
+ * «Немає даних».
+ */
+interface DigestPayloadShape {
+  hasFinyk: boolean;
+  hasFizruk: boolean;
+  hasNutrition: boolean;
+  hasRoutine: boolean;
+  hasWeekRange: boolean;
+  payloadBytes: number;
+}
+
+function digestPayloadShape(body: unknown): DigestPayloadShape {
+  const b =
+    body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  const isNonEmpty = (v: unknown) =>
+    !!v && typeof v === "object" && Object.keys(v as object).length > 0;
+  let bytes = 0;
+  try {
+    bytes = Buffer.byteLength(JSON.stringify(body ?? null), "utf8");
+  } catch {
+    /* non-fatal — не блокуємо основний потік через лог */
+  }
+  return {
+    hasFinyk: isNonEmpty(b.finyk),
+    hasFizruk: isNonEmpty(b.fizruk),
+    hasNutrition: isNonEmpty(b.nutrition),
+    hasRoutine: isNonEmpty(b.routine),
+    hasWeekRange: typeof b.weekRange === "string" && b.weekRange.length > 0,
+    payloadBytes: bytes,
+  };
+}
 
 type WithAnthropicKey = Request & { anthropicKey?: string };
 
@@ -67,6 +105,11 @@ export default async function handler(
   res: Response,
 ): Promise<void> {
   const apiKey = (req as WithAnthropicKey).anthropicKey as string;
+
+  // Форма payload-у потрібна і для успіху, і для 400 — логуємо один раз.
+  // ALS-контекст додасть `module="weekly-digest"` і `requestId` автоматично.
+  const shape = digestPayloadShape(req.body);
+  logger.debug({ msg: "weekly_digest_payload", ...shape });
 
   const parsed = validateBody(WeeklyDigestSchema, req, res);
   if (!parsed.ok) return;
@@ -139,7 +182,24 @@ ${habitsInfo}`);
   }
 
   if (!sections.length) {
-    throw new ValidationError("Немає даних для генерації звіту");
+    const present = [
+      shape.hasFinyk && "finyk",
+      shape.hasFizruk && "fizruk",
+      shape.hasNutrition && "nutrition",
+      shape.hasRoutine && "routine",
+    ].filter(Boolean) as string[];
+    logger.warn({
+      msg: "weekly_digest_empty_sections",
+      ...shape,
+      expectedNonEmpty: ["finyk", "fizruk", "nutrition", "routine"],
+      nonEmptyInPayload: present,
+    });
+    throw new ValidationError(
+      present.length === 0
+        ? "Немає даних для генерації звіту: жоден з модулів (finyk/fizruk/nutrition/routine) не містить даних."
+        : `Немає даних для генерації звіту: у payload-і лише ${present.join(", ")}, але після валідації секції порожні.`,
+      { code: "WEEKLY_DIGEST_EMPTY" },
+    );
   }
 
   const dataContext = sections.join("\n\n");

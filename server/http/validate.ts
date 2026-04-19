@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import type { ZodTypeAny } from "zod";
+import { logger } from "../obs/logger.js";
+import { als } from "../obs/requestContext.js";
 
 export type ValidationResult<T> = { ok: true; data: T } | { ok: false };
 
@@ -32,8 +34,18 @@ export function validateBody<S extends ZodTypeAny>(
     path: i.path.join("."),
     message: i.message,
   }));
+  // Warn-level: аби в проді бачити, які саме поля клієнт відправляє некоректно.
+  // Метадані `module`/`requestId` додаються через ALS-mixin у logger.ts.
+  // Публікуємо лише path+message (без оригінального value, щоб PII не просочиться).
+  logger.warn({
+    msg: "request_validation_failed",
+    target: "body",
+    module: als.getStore()?.module,
+    issues,
+  });
   res.status(400).json({
     error: "Некоректні дані запиту",
+    code: "VALIDATION",
     details: issues,
   });
   return { ok: false };
@@ -56,8 +68,15 @@ export function validateQuery<S extends ZodTypeAny>(
     path: i.path.join("."),
     message: i.message,
   }));
+  logger.warn({
+    msg: "request_validation_failed",
+    target: "query",
+    module: als.getStore()?.module,
+    issues,
+  });
   res.status(400).json({
     error: "Некоректні параметри запиту",
+    code: "VALIDATION",
     details: issues,
   });
   return { ok: false };

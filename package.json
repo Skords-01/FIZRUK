@@ -21,6 +21,7 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:migrate": "node scripts/migrate.mjs",
+    "db:diagnose": "node scripts/diagnose-db.mjs",
     "prepare": "husky"
   },
   "dependencies": {
