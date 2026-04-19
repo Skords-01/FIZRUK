@@ -42,8 +42,8 @@ import {
 } from "./api/push.js";
 import foodSearchHandler from "./api/food-search.js";
 import webVitalsHandler from "./api/web-vitals.js";
-import { setCorsHeaders } from "./api/lib/cors.js";
-import { rateLimitExpress } from "./api/lib/rateLimit.js";
+import { setCorsHeaders } from "./http/cors.js";
+import { rateLimitExpress } from "./http/rateLimit.js";
 import { attachSentryErrorHandler } from "./sentry.js";
 
 /**

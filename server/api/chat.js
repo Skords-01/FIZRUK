@@ -1,13 +1,13 @@
 import { assertAiQuota } from "../aiQuota.js";
-import { setCorsHeaders } from "./lib/cors.js";
-import { validateBody } from "./lib/validate.js";
-import { ChatRequestSchema } from "./lib/schemas.js";
+import { setCorsHeaders } from "../http/cors.js";
+import { validateBody } from "../http/validate.js";
+import { ChatRequestSchema } from "../http/schemas.js";
 import { setRequestModule } from "../obs/requestContext.js";
 import {
   anthropicMessages,
   anthropicMessagesStream,
   extractAnthropicText,
-} from "./nutrition/lib/anthropicFetch.js";
+} from "../lib/anthropic.js";
 
 const TOOLS = [
   {

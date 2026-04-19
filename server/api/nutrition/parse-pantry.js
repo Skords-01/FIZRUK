@@ -1,14 +1,14 @@
 import { assertAiQuota } from "../../aiQuota.js";
-import { setCorsHeaders } from "../lib/cors.js";
+import { setCorsHeaders } from "../../http/cors.js";
 import { setRequestModule } from "../../obs/requestContext.js";
-import { extractJsonFromText } from "../lib/jsonSafe.js";
-import { validateBody } from "../lib/validate.js";
-import { ParsePantrySchema } from "../lib/schemas.js";
+import { extractJsonFromText } from "../../http/jsonSafe.js";
+import { validateBody } from "../../http/validate.js";
+import { ParsePantrySchema } from "../../http/schemas.js";
 import {
   anthropicMessages,
   extractAnthropicText,
-} from "./lib/anthropicFetch.js";
-import { normalizePantryItems } from "./lib/nutritionResponse.js";
+} from "../../lib/anthropic.js";
+import { normalizePantryItems } from "../../lib/nutritionResponse.js";
 import {
   checkRateLimit,
   requireNutritionTokenIfConfigured,

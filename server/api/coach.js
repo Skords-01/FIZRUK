@@ -1,12 +1,9 @@
 import pool from "../db.js";
 import { getSessionUser } from "../auth.js";
 import { assertAiQuota } from "../aiQuota.js";
-import { setCorsHeaders } from "./lib/cors.js";
+import { setCorsHeaders } from "../http/cors.js";
 import { setRequestModule } from "../obs/requestContext.js";
-import {
-  anthropicMessages,
-  extractAnthropicText,
-} from "./nutrition/lib/anthropicFetch.js";
+import { anthropicMessages, extractAnthropicText } from "../lib/anthropic.js";
 
 async function getMemory(userId) {
   const result = await pool.query(

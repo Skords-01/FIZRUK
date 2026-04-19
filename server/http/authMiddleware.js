@@ -1,4 +1,4 @@
-import { rateLimitExpress } from "../api/lib/rateLimit.js";
+import { rateLimitExpress } from "./rateLimit.js";
 import { authAttemptsTotal } from "../obs/metrics.js";
 
 /** Жорсткіший ліміт на sign-in / sign-up / reset (POST). */

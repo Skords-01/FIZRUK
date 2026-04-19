@@ -1,6 +1,6 @@
-import { setCorsHeaders } from "./lib/cors.js";
+import { setCorsHeaders } from "../http/cors.js";
 import { setRequestModule } from "../obs/requestContext.js";
-import { checkRateLimit } from "./lib/rateLimit.js";
+import { checkRateLimit } from "../http/rateLimit.js";
 
 const OFF_SEARCH = "https://world.openfoodfacts.org/api/v2/search";
 const OFF_FIELDS =

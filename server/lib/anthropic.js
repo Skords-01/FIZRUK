@@ -4,7 +4,7 @@ import {
   aiTokensTotal,
   externalHttpDurationMs,
   externalHttpRequestsTotal,
-} from "../../../obs/metrics.js";
+} from "../obs/metrics.js";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 

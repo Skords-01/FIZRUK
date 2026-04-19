@@ -1,4 +1,4 @@
-import { setCorsHeaders } from "./lib/cors.js";
+import { setCorsHeaders } from "../http/cors.js";
 import { setRequestModule } from "../obs/requestContext.js";
 import { logger } from "../obs/logger.js";
 import {

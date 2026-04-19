@@ -1,4 +1,4 @@
-import { rateLimitHitsTotal } from "../../obs/metrics.js";
+import { rateLimitHitsTotal } from "../obs/metrics.js";
 
 function recordRateLimit(key, outcome) {
   try {

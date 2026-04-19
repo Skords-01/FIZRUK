@@ -1,5 +1,5 @@
-import { setCorsHeaders } from "./lib/cors.js";
-import { checkRateLimit } from "./lib/rateLimit.js";
+import { setCorsHeaders } from "../http/cors.js";
+import { checkRateLimit } from "../http/rateLimit.js";
 import { setRequestModule } from "../obs/requestContext.js";
 import {
   barcodeLookupsTotal,
