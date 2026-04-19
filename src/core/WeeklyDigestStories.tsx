@@ -668,25 +668,34 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
     };
   }, [next, prev, onClose]);
 
+  // Single unified pointer pipeline (mouse + touch + pen). Binding both
+  // onMouse* and onTouch* on the same element used to double-fire every tap:
+  // real browsers dispatch `touchend` first, then synthesize `mouseup`
+  // ~300 ms later, which made a single right-tap advance two slides.
+  // Pointer events collapse all three input sources into one stream, so each
+  // physical tap triggers exactly one press-start / press-end pair.
   const handlePressStart = (e) => {
+    // Capture the pointer so `pointermove`/`pointerup` keep arriving even if
+    // the finger slides off the element — required for the swipe-to-close
+    // gesture below. Try/catch because capture can throw in old WebKit.
+    try {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    } catch {
+      /* best-effort */
+    }
     // Press-and-hold pauses progress after ~180ms — a quick tap still
     // registers as a navigation click.
     holdTimerRef.current = setTimeout(() => {
       setPaused(true);
       holdTimerRef.current = null;
     }, 180);
-    const touch = e.touches?.[0];
-    if (touch) {
-      touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-      dragYRef.current = 0;
-    }
+    touchStartRef.current = { x: e.clientX, y: e.clientY };
+    dragYRef.current = 0;
   };
 
-  const handleTouchMove = (e) => {
+  const handlePointerMove = (e) => {
     if (!touchStartRef.current) return;
-    const touch = e.touches?.[0];
-    if (!touch) return;
-    const dy = touch.clientY - touchStartRef.current.y;
+    const dy = e.clientY - touchStartRef.current.y;
     if (dy > 0) {
       dragYRef.current = dy;
       if (containerRef.current) {
@@ -708,6 +717,11 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
   };
 
   const handlePressEnd = (e) => {
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+    } catch {
+      /* best-effort */
+    }
     const wasHeld = holdTimerRef.current === null;
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
@@ -735,10 +749,18 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
     const target = e.target;
     if (target?.closest?.("[data-story-ui]")) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const x =
-      (e.changedTouches?.[0]?.clientX ?? e.clientX ?? rect.left) - rect.left;
+    const x = e.clientX - rect.left;
     if (x < rect.width / 3) prev();
     else next();
+  };
+
+  const handlePointerCancel = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    setPaused(false);
+    resetDrag();
   };
 
   if (!slides.length) return null;
@@ -763,42 +785,27 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
       aria-label="Щотижневий дайджест — сторіс"
     >
       <div className="absolute inset-0 bg-black/90" />
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions --
-          Mouse/touch handlers provide tap-to-navigate and press-to-pause on
-          this fullscreen surface. Keyboard navigation (Arrow keys, Space,
-          Escape) is wired up at the window level via the effect above, and a
-          visible close button supplies the focus-reachable escape hatch. */}
+      {/* Pointer handlers provide tap-to-navigate and press-to-pause on this
+          fullscreen surface. Keyboard nav (Arrow keys, Space, Escape) is
+          wired up at the window level via the effect above, and a visible
+          close button supplies the focus-reachable escape hatch. */}
       <div
         ref={containerRef}
-        className="absolute inset-0 transition-[transform,opacity] duration-150 ease-out"
-        onMouseDown={handlePressStart}
-        onMouseUp={handlePressEnd}
-        onMouseLeave={() => {
-          if (holdTimerRef.current) {
-            clearTimeout(holdTimerRef.current);
-            holdTimerRef.current = null;
-          }
-          // Unconditional — `paused` may be stale in this closure if the
-          // hold-timer just fired, and we must not leave the stories stuck.
-          setPaused(false);
-          resetDrag();
-        }}
-        onTouchStart={handlePressStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handlePressEnd}
+        className="absolute inset-0 transition-[transform,opacity] duration-150 ease-out touch-none"
+        onPointerDown={handlePressStart}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePressEnd}
+        onPointerCancel={handlePointerCancel}
       >
         {renderSlide(slide)}
 
-        {/* Top chrome: progress bars + header */}
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions --
-            Stops pointer events from bubbling to the parent navigation surface
-            so that interactions with the progress bar / close button don't
-            trigger tap-to-advance. */}
+        {/* Top chrome: progress bars + header. `stopPropagation` prevents
+            taps on the progress bar / close button from bubbling to the
+            parent navigation surface and triggering tap-to-advance. */}
         <div
           data-story-ui
           className="absolute inset-x-0 top-0 px-3 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-2"
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-1">
             {slides.map((s, i) => {
