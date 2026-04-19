@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import helmet from "helmet";
+import { logger } from "../obs/logger.js";
 
 export type ApiCspDirectives = Record<string, string[]>;
 
@@ -52,8 +53,24 @@ export function buildApiCspDirectives(): ApiCspDirectives {
 export function apiHelmetMiddleware({
   servesFrontend = false,
 }: ApiHelmetOptions = {}): RequestHandler {
-  const cspDisabled = process.env.CSP_DISABLE === "1" || servesFrontend;
+  const cspEnvDisabled = process.env.CSP_DISABLE === "1";
+  const cspDisabled = cspEnvDisabled || servesFrontend;
   const reportOnly = process.env.CSP_REPORT_ONLY === "1";
+
+  // Без явного лога CSP_DISABLE=1 став би тихою деградацією — ревʼю
+  // security-headers легко пропускає факт, що CSP взагалі не застосована.
+  // Логуємо один раз на boot з рівнем warn у проді і info у дев-режимі.
+  if (cspEnvDisabled) {
+    const isProd = process.env.NODE_ENV === "production";
+    const log = isProd ? logger.warn : logger.info;
+    log({
+      msg: "csp_disabled",
+      reason: "CSP_DISABLE=1",
+      env: process.env.NODE_ENV || "unknown",
+    });
+  } else if (reportOnly) {
+    logger.info({ msg: "csp_report_only" });
+  }
 
   return helmet({
     contentSecurityPolicy: cspDisabled
