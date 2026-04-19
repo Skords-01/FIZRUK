@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
-import { WeekDayStrip } from "./WeekDayStrip.jsx";
-import { HabitDetailSheet } from "./HabitDetailSheet.jsx";
+import { WeekDayStrip } from "./WeekDayStrip";
+import { HabitDetailSheet } from "./HabitDetailSheet";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 import { completionNoteKey } from "../lib/completionNoteKey.js";
-import { DayProgressRing } from "./DayProgressRing.jsx";
-import { DayReportSheet } from "./DayReportSheet.jsx";
+import { DayProgressRing } from "./DayProgressRing";
+import { DayReportSheet } from "./DayReportSheet";
 import {
   FIZRUK_GROUP_LABEL,
   parseDateKey,
@@ -23,9 +23,20 @@ import { setCompletionNote } from "../lib/routineStorage.js";
 import {
   useRoutineCalendarActions,
   useRoutineCalendarData,
-} from "../context/RoutineCalendarContext.jsx";
+} from "../context/RoutineCalendarContext";
+import type { HubCalendarEvent } from "../lib/types";
 
-export function RoutineCalendarPanel({ hidden: panelHidden }) {
+type GroupedListItem =
+  | { kind: "header"; label: string }
+  | { kind: "event"; e: HubCalendarEvent };
+
+export interface RoutineCalendarPanelProps {
+  hidden?: boolean;
+}
+
+export function RoutineCalendarPanel({
+  hidden: panelHidden,
+}: RoutineCalendarPanelProps) {
   const {
     rangeLabel,
     headlineDate,
@@ -75,10 +86,10 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
     return () => clearTimeout(id);
   }, [listQueryDraft, setListQuery]);
   const [dayReportOpen, setDayReportOpen] = useState(false);
-  const [detailHabitId, setDetailHabitId] = useState(null);
+  const [detailHabitId, setDetailHabitId] = useState<string | null>(null);
 
-  const flatGroupedItems = useMemo(() => {
-    const items = [];
+  const flatGroupedItems = useMemo<GroupedListItem[]>(() => {
+    const items: GroupedListItem[] = [];
     for (const [label, rows] of grouped || []) {
       items.push({ kind: "header", label });
       for (const e of rows || []) items.push({ kind: "event", e });
@@ -231,7 +242,9 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
         className="routine-touch-field w-full max-w-md"
         placeholder="Пошук у стрічці…"
         value={listQueryDraft}
-        onChange={(e) => setListQueryDraft(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          setListQueryDraft(e.target.value)
+        }
         aria-label="Пошук подій"
       />
 
@@ -456,9 +469,9 @@ export function RoutineCalendarPanel({ hidden: panelHidden }) {
           </div>
         )}
         {flatGroupedItems.length > 0 && (
-          <Virtuoso
+          <Virtuoso<GroupedListItem>
             data={flatGroupedItems}
-            itemKey={(_, item) =>
+            computeItemKey={(_, item) =>
               item.kind === "header" ? `h_${item.label}` : `e_${item.e?.id}`
             }
             itemContent={(_, item) => {

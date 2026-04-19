@@ -1,26 +1,37 @@
 import { useMemo } from "react";
 import { cn } from "@shared/lib/cn";
-import { PushupsWidget } from "./PushupsWidget.jsx";
-import { HabitHeatmap } from "./HabitHeatmap.jsx";
-import { HabitLeadersBlock } from "./HabitLeadersBlock.jsx";
+import { PushupsWidget } from "./PushupsWidget";
+import { HabitHeatmap } from "./HabitHeatmap";
+import { HabitLeadersBlock } from "./HabitLeadersBlock";
 import { completionRateForRange, maxStreakAllTime } from "../lib/streaks.js";
 import { dateKeyFromDate, parseDateKey } from "../lib/hubCalendarAggregate.js";
 import { ROUTINE_THEME as C } from "../lib/routineConstants.js";
+import type { RoutineState } from "../lib/types";
 
-function dateKeyMinusDays(baseKey, daysBack) {
+function dateKeyMinusDays(baseKey: string, daysBack: number): string {
   const d = parseDateKey(baseKey);
   d.setDate(d.getDate() - daysBack);
   d.setHours(12, 0, 0, 0);
   return dateKeyFromDate(d);
 }
 
-export function RoutineStatsPanel({ routine, currentStreak, hidden }) {
+export interface RoutineStatsPanelProps {
+  routine: RoutineState;
+  currentStreak: number;
+  hidden?: boolean;
+}
+
+export function RoutineStatsPanel({
+  routine,
+  currentStreak,
+  hidden,
+}: RoutineStatsPanelProps) {
   const todayKey = dateKeyFromDate(new Date());
 
   const summary = useMemo(() => {
     const habits = routine.habits || [];
     const completions = routine.completions || {};
-    const maxAllTime = habits.reduce((acc, h) => {
+    const maxAllTime = habits.reduce((acc: number, h) => {
       if (h.archived) return acc;
       const m = maxStreakAllTime(h, completions[h.id] || []);
       return m > acc ? m : acc;
