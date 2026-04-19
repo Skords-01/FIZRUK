@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import {
@@ -137,12 +138,23 @@ function buildSlides(digest, weekKey, weekRange) {
 }
 
 function StoryShell({ slide, children }) {
+  // Top padding has to clear the progress bars + header row + the iOS safe
+  // area (~47px on notch devices). Bottom padding clears the home-indicator.
+  // Without `env(safe-area-inset-*)` the first card's label rendered *behind*
+  // the chrome on iPhone, leaving only the big number visible — see the bug
+  // that triggered this file's last refactor.
   return (
     <div
       className={cn("absolute inset-0 bg-gradient-to-br text-white", slide.bg)}
     >
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.25),transparent_60%)]" />
-      <div className="relative h-full w-full flex flex-col px-6 pt-24 pb-16 overflow-y-auto">
+      <div
+        className="relative h-full w-full flex flex-col px-6 overflow-y-auto"
+        style={{
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 5.5rem)",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2.5rem)",
+        }}
+      >
         {children}
       </div>
     </div>
@@ -721,7 +733,18 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
   if (!slides.length) return null;
   const slide = slides[clampedIndex];
 
-  return (
+  // Portal to <body> so the modal escapes every ancestor stacking context.
+  // Without this, the `page-enter` animation on the hub root (which keeps
+  // `transform: translateY(0)` via `animation-fill-mode: both`) and the
+  // `overflow-hidden` + shadow wrapper on `WeeklyDigestCard` both promote
+  // themselves to independent stacking contexts — and the primary FAB
+  // (`HubFloatingActions`, z-40) ends up painted *above* this overlay
+  // (z-[600]) because the 600 is scoped to a context whose parent
+  // z-index is lower than the FAB's. Rendering into `document.body`
+  // short-circuits all of that and makes z-index globally meaningful again.
+  if (typeof document === "undefined") return null;
+
+  const overlay = (
     <div
       className="fixed inset-0 z-[600] select-none"
       role="dialog"
@@ -818,6 +841,7 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
         {/* Invisible nav hints on sides for clarity on first view. */}
         <div
           className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-black/10 to-transparent"
+          data-nav-hint="prev"
           aria-hidden
         />
         <div
@@ -827,4 +851,6 @@ export function WeeklyDigestStories({ digest, weekKey, weekRange, onClose }) {
       </div>
     </div>
   );
+
+  return createPortal(overlay, document.body);
 }
