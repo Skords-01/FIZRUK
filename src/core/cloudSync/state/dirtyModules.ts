@@ -29,5 +29,9 @@ export function clearDirtyModule(moduleName: string): void {
 
 export function clearAllDirty(): void {
   safeWriteLS(DIRTY_MODULES_KEY, {});
+  // Reset the modified-times map too. Otherwise it grows unbounded across
+  // every module that was ever dirtied on this device, wasting localStorage
+  // and keeping stale snapshots for `pushDirty`'s mid-flight change check.
+  safeWriteLS(MODULE_MODIFIED_KEY, {});
   emitStatusEvent();
 }

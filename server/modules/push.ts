@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import webpush from "web-push";
 import pool from "../db.js";
 import { sendWebPush } from "../lib/webpushSend.js";
+import { logger } from "../obs/logger.js";
 import { pushSendsTotal } from "../obs/metrics.js";
 import { validateBody } from "../http/validate.js";
 import {
@@ -28,9 +29,30 @@ function recordDomainOutcome(outcome: string): void {
 
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
-const VAPID_EMAIL = process.env.VAPID_EMAIL || "mailto:admin@example.com";
 
-if (VAPID_PUBLIC && VAPID_PRIVATE) {
+/**
+ * Resolve the VAPID contact. Some push services downgrade or drop requests
+ * from unroutable addresses (example.com), so in production we require a
+ * real `VAPID_EMAIL` rather than silently shipping a bogus default. In
+ * non-prod we keep the placeholder to avoid breaking local dev when only
+ * the keys are configured.
+ */
+function resolveVapidEmail(): string | null {
+  const raw = process.env.VAPID_EMAIL?.trim();
+  if (raw) return raw.startsWith("mailto:") ? raw : `mailto:${raw}`;
+  if (process.env.NODE_ENV === "production") {
+    logger.error({
+      msg: "vapid_email_missing",
+      hint: "Set VAPID_EMAIL (e.g. mailto:admin@your-domain) to avoid push deliverability issues",
+    });
+    return null;
+  }
+  return "mailto:admin@example.com";
+}
+
+const VAPID_EMAIL = resolveVapidEmail();
+
+if (VAPID_PUBLIC && VAPID_PRIVATE && VAPID_EMAIL) {
   webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
 }
 

@@ -108,10 +108,26 @@ function habitScheduledOnDateSW(h, dk) {
 }
 
 const notifiedKeys = new Set();
+let lastPrunedDk = null;
 let routineData = null;
 let fizrukData = null;
 let nutritionData = null;
 let scheduledTimerId = null;
+
+/**
+ * Drop dedupe keys tied to past days so the Set does not grow without bound
+ * across the SW lifetime. All keys end with a `YYYY-MM-DD` suffix (see the
+ * three `*_notify_*_<dk>` emit sites above), so we keep only entries ending
+ * in the current `dk`.
+ */
+function pruneOldNotifiedKeys(currentDk) {
+  if (lastPrunedDk === currentDk) return;
+  lastPrunedDk = currentDk;
+  const suffix = `_${currentDk}`;
+  for (const k of notifiedKeys) {
+    if (!k.endsWith(suffix)) notifiedKeys.delete(k);
+  }
+}
 
 function normalizeReminderTimesSW(h) {
   if (Array.isArray(h.reminderTimes) && h.reminderTimes.length > 0) {
@@ -223,6 +239,7 @@ function checkNutritionReminders() {
 }
 
 function checkReminders() {
+  pruneOldNotifiedKeys(todayKey());
   checkRoutineReminders();
   checkFizrukReminders();
   checkNutritionReminders();

@@ -11,9 +11,27 @@ function recordRateLimit(key: string, outcome: Outcome): void {
   }
 }
 
+/**
+ * Resolves the client's originating IP. Prefer Express's `req.ip`, which
+ * respects `app.set('trust proxy', …)` and correctly peels off hops from
+ * X-Forwarded-For — taking the first entry of a raw X-Forwarded-For is a
+ * trivial rate-limit / quota bypass (a client can prepend any value and the
+ * proxy only appends the real IP after it).
+ *
+ * We only fall back to parsing headers directly when Express did not surface
+ * an IP (no trust-proxy configured AND no socket.remoteAddress), and even
+ * then we pick the LAST entry — that's the one closest to our infra.
+ */
 export function getIp(req: Request): string {
+  const fromExpress = req?.ip;
+  if (typeof fromExpress === "string" && fromExpress.trim()) {
+    return fromExpress.trim();
+  }
   const xf = req?.headers?.["x-forwarded-for"];
-  if (typeof xf === "string" && xf.trim()) return xf.split(",")[0].trim();
+  if (typeof xf === "string" && xf.trim()) {
+    const parts = xf.split(",");
+    return parts[parts.length - 1].trim();
+  }
   const real = req?.headers?.["x-real-ip"];
   if (typeof real === "string" && real.trim()) return real.trim();
   return "unknown";
@@ -22,6 +40,10 @@ export function getIp(req: Request): string {
 interface Bucket {
   startMs: number;
   count: number;
+  // Per-bucket window so the global sweep never evicts a long-window
+  // bucket based on another route's short window. Stored with the entry
+  // rather than inferred from the current request.
+  windowMs: number;
 }
 
 export interface RateLimitOptions {
@@ -42,19 +64,22 @@ export interface RateLimitResult {
 const buckets = new Map<string, Bucket>();
 let lastSweepMs = 0;
 
-function sweepBuckets(now: number, ttlMs: number): void {
+function sweepBuckets(now: number): void {
   if (now - lastSweepMs < 30_000) return;
   lastSweepMs = now;
 
   if (buckets.size === 0) return;
-  const max = Math.max(60_000, Number(ttlMs) || 0);
   for (const [k, v] of buckets.entries()) {
     const start = v?.startMs;
     if (typeof start !== "number") {
       buckets.delete(k);
       continue;
     }
-    if (now - start > max) buckets.delete(k);
+    // Each bucket carries its own window; we only evict once the window
+    // has elapsed with some slack, so a sweep triggered by a short-window
+    // route cannot wipe still-valid state for a long-window route.
+    const bucketWindow = Math.max(60_000, Number(v.windowMs) || 0);
+    if (now - start > bucketWindow) buckets.delete(k);
   }
 }
 
@@ -67,11 +92,11 @@ export function checkRateLimit(
 ): RateLimitResult {
   const ip = getIp(req);
   const now = Date.now();
-  sweepBuckets(now, Math.max(5 * (Number(windowMs) || 0), 10 * 60_000));
+  sweepBuckets(now);
   const k = `${key}:${ip}`;
   const cur = buckets.get(k);
   if (!cur || now - cur.startMs >= windowMs) {
-    buckets.set(k, { startMs: now, count: 1 });
+    buckets.set(k, { startMs: now, count: 1, windowMs });
     recordRateLimit(key, "allowed");
     return {
       ok: true,

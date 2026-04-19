@@ -39,6 +39,7 @@ export async function pushDirty(args: PushArgs): Promise<void> {
   try {
     if (Object.keys(modules).length === 0) {
       clearAllDirty();
+      onSuccess(new Date());
       return;
     }
 
@@ -89,7 +90,10 @@ export async function pushAll(args: PushArgs): Promise<void> {
       Object.keys(SYNC_MODULES),
       getModuleModifiedTimes(),
     );
-    if (Object.keys(modules).length === 0) return;
+    if (Object.keys(modules).length === 0) {
+      onSuccess(new Date());
+      return;
+    }
 
     if (!navigator.onLine) {
       addToOfflineQueue({ type: "push", modules });
