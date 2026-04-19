@@ -43,6 +43,9 @@ const ResetPasswordPage = lazy(() =>
     default: m.ResetPasswordPage,
   })),
 );
+const DesignShowcase = lazy(() =>
+  import("./DesignShowcase").then((m) => ({ default: m.DesignShowcase })),
+);
 interface ModuleAppProps {
   onBackToHub: () => void;
   pwaAction?: PwaAction;
@@ -226,6 +229,14 @@ function AppInner() {
         <div className="page-enter">
           <ResetPasswordPage />
         </div>
+      </Suspense>
+    );
+  }
+
+  if (location.pathname === "/design") {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <DesignShowcase />
       </Suspense>
     );
   }
