@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SYNC_EVENT } from "../config";
 import { initialSync } from "../engine/initialSync";
 import { pullAll, type PullArgs } from "../engine/pull";
 import { pushAll, pushDirty } from "../engine/push";
-import { replayOfflineQueue } from "../engine/replay";
 import { uploadLocalData } from "../engine/upload";
 import { markMigrationDone } from "../state/migration";
 import { clearSyncManagedData } from "../state/moduleData";
-import { getDirtyModules } from "../state/dirtyModules";
 import { rawRemoveItem } from "../storagePatch";
 import type { CurrentUser } from "../types";
+import { useSyncCallbacks } from "./useSyncCallbacks";
+import { useSyncRetry } from "./useSyncRetry";
 
 /**
  * React hook that orchestrates the cloud-sync engine. Owns React state
@@ -17,54 +16,48 @@ import type { CurrentUser } from "../types";
  * retry policy (online listener, 5s debounce on SYNC_EVENT, 2min periodic).
  */
 export function useCloudSync(user: CurrentUser | null | undefined) {
-  const [syncing, setSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [syncError, setSyncError] = useState<string | null>(null);
   const [migrationPending, setMigrationPending] = useState(false);
-  const syncingRef = useRef(false);
-
-  const onStart = useCallback(() => {
-    setSyncing(true);
-    setSyncError(null);
-  }, []);
-  const onSettled = useCallback(() => {
-    setSyncing(false);
-    syncingRef.current = false;
-  }, []);
-  const onSuccess = useCallback((when: Date) => {
-    setLastSync(when);
-  }, []);
-  const onError = useCallback((message: string) => {
-    setSyncError(message);
-  }, []);
+  const {
+    syncing,
+    lastSync,
+    syncError,
+    onStart,
+    onSuccess,
+    onError,
+    onSettled,
+    runExclusive,
+    claimBusy,
+  } = useSyncCallbacks();
 
   const doPushDirty = useCallback(async () => {
-    if (syncingRef.current) return;
-    syncingRef.current = true;
-    await pushDirty({
-      user,
-      onStart,
-      onSuccess,
-      onError,
-      onSettled,
-    });
-  }, [user, onStart, onSuccess, onError, onSettled]);
+    await runExclusive(
+      () =>
+        pushDirty({
+          user,
+          onStart,
+          onSuccess,
+          onError,
+          onSettled,
+        }),
+      undefined,
+    );
+  }, [user, onStart, onSuccess, onError, onSettled, runExclusive]);
 
   const doPushAll = useCallback(async () => {
-    if (syncingRef.current) return;
-    syncingRef.current = true;
-    await pushAll({
-      user,
-      onStart,
-      onSuccess,
-      onError,
-      onSettled,
-    });
-  }, [user, onStart, onSuccess, onError, onSettled]);
+    await runExclusive(
+      () =>
+        pushAll({
+          user,
+          onStart,
+          onSuccess,
+          onError,
+          onSettled,
+        }),
+      undefined,
+    );
+  }, [user, onStart, onSuccess, onError, onSettled, runExclusive]);
 
   const doPullAll = useCallback(async () => {
-    if (syncingRef.current) return false;
-    syncingRef.current = true;
     const pullArgs: PullArgs = {
       user,
       onStart,
@@ -72,12 +65,15 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
       onError,
       onSettled,
     };
-    return pullAll(pullArgs);
-  }, [user, onStart, onSuccess, onError, onSettled]);
+    return runExclusive(() => pullAll(pullArgs), false);
+  }, [user, onStart, onSuccess, onError, onSettled, runExclusive]);
 
   const doUploadLocalData = useCallback(async () => {
     if (!user?.id) return;
-    syncingRef.current = true;
+    // Intentionally bypasses the in-flight guard: this is user-initiated
+    // from the migration modal and must proceed even if a background retry
+    // is mid-flight.
+    claimBusy();
     await uploadLocalData({
       user,
       onStart,
@@ -86,20 +82,22 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
       onMigrated: () => setMigrationPending(false),
       onSettled,
     });
-  }, [user, onStart, onSuccess, onError, onSettled]);
+  }, [user, onStart, onSuccess, onError, onSettled, claimBusy]);
 
   const doInitialSync = useCallback(async () => {
-    if (syncingRef.current) return;
-    syncingRef.current = true;
-    await initialSync({
-      user,
-      onStart,
-      onSuccess,
-      onError,
-      onNeedMigration: () => setMigrationPending(true),
-      onSettled,
-    });
-  }, [user, onStart, onSuccess, onError, onSettled]);
+    await runExclusive(
+      () =>
+        initialSync({
+          user,
+          onStart,
+          onSuccess,
+          onError,
+          onNeedMigration: () => setMigrationPending(true),
+          onSettled,
+        }),
+      undefined,
+    );
+  }, [user, onStart, onSuccess, onError, onSettled, runExclusive]);
 
   const skipMigration = useCallback(() => {
     if (!user?.id) return;
@@ -124,46 +122,7 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     doInitialSync();
   }, [user, doInitialSync]);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const onOnline = () => {
-      replayOfflineQueue().then(() => doPushDirty());
-    };
-    window.addEventListener("online", onOnline);
-
-    const debounceTimer: { id: ReturnType<typeof setTimeout> | null } = {
-      id: null,
-    };
-
-    const schedulePush = () => {
-      if (debounceTimer.id) clearTimeout(debounceTimer.id);
-      debounceTimer.id = setTimeout(() => {
-        doPushDirty();
-      }, 5000);
-    };
-
-    const onSyncDirty = () => schedulePush();
-
-    window.addEventListener(SYNC_EVENT, onSyncDirty);
-
-    const periodicInterval = setInterval(
-      () => {
-        const dirty = getDirtyModules();
-        if (Object.keys(dirty).length > 0) {
-          doPushDirty();
-        }
-      },
-      2 * 60 * 1000,
-    );
-
-    return () => {
-      window.removeEventListener("online", onOnline);
-      window.removeEventListener(SYNC_EVENT, onSyncDirty);
-      if (debounceTimer.id) clearTimeout(debounceTimer.id);
-      clearInterval(periodicInterval);
-    };
-  }, [user, doPushDirty]);
+  useSyncRetry(!!user, doPushDirty);
 
   return {
     syncing,
