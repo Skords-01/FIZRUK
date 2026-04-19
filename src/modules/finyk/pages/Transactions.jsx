@@ -714,6 +714,7 @@ export function Transactions({
         onClose={() => setBatchCatPicker(false)}
         title="Вибрати категорію"
         description={`Застосується до ${selectedIds.size} транзакц${selectedIds.size === 1 ? "ії" : "ій"}`}
+        panelClassName="finyk-sheet"
         zIndex={70}
         bodyClassName="px-4 pb-6 flex flex-col gap-1"
       >

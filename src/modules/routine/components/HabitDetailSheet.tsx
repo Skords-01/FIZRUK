@@ -206,7 +206,7 @@ export function HabitDetailSheet({
         </span>
       }
       description={chips}
-      panelClassName="max-w-4xl"
+      panelClassName="routine-sheet max-w-4xl"
       zIndex={200}
     >
       <div className="text-xs text-subtle space-y-0.5 mb-5">

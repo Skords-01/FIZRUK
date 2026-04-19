@@ -59,6 +59,7 @@ export function AddExerciseSheet({
       description="Збережеться локально на цьому пристрої"
       closeLabel="Закрити форму"
       kbInsetPx={kbInsetPx}
+      panelClassName="fizruk-sheet"
       zIndex={100}
     >
       <div className="space-y-3">

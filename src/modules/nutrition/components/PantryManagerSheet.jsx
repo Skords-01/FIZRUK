@@ -24,6 +24,7 @@ export function PantryManagerSheet({
       onClose={onClose}
       title="Склади продуктів"
       description="Створи окремо для Дім / Робота або по дієті"
+      panelClassName="nutrition-sheet"
       zIndex={100}
     >
       <div className="rounded-2xl border border-line bg-bg overflow-hidden mb-4">

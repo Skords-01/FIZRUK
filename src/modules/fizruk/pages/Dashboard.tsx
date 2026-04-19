@@ -683,7 +683,7 @@ export function Dashboard({
         open={planConfirmOpen}
         onClose={closePlanConfirm}
         title="Увага"
-        panelClassName="max-w-4xl"
+        panelClassName="fizruk-sheet max-w-4xl"
         zIndex={100}
         footer={
           <div className="flex gap-2">
