@@ -5,6 +5,7 @@ import {
   useId,
   type FormEvent,
   type HTMLInputTypeAttribute,
+  type KeyboardEvent,
   type ReactNode,
 } from "react";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
@@ -51,6 +52,15 @@ export function InputDialog({
     }
   }, [open, defaultValue]);
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -58,15 +68,24 @@ export function InputDialog({
     onConfirm?.(value);
   };
 
+  const handleScrimKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onCancel?.();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[200] flex items-end justify-center sm:items-center"
       role="presentation"
     >
-      <div
-        className="absolute inset-0 bg-text/40 backdrop-blur-sm"
+      <button
+        type="button"
+        aria-label={cancelLabel}
         onClick={onCancel}
-        aria-hidden
+        onKeyDown={handleScrimKey}
+        className="absolute inset-0 bg-text/40 backdrop-blur-sm"
       />
 
       <form
@@ -75,8 +94,9 @@ export function InputDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         onSubmit={handleSubmit}
+        onPointerDown={(e) => e.stopPropagation()}
         className={cn(
-          "relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0",
+          "relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0 overscroll-contain",
           "bg-panel rounded-3xl shadow-float border border-line p-6",
           "animate-in slide-in-from-bottom-4 duration-200",
         )}
@@ -98,7 +118,12 @@ export function InputDialog({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
-          className="w-full h-12 rounded-xl bg-bg border border-line px-4 text-sm text-text placeholder:text-subtle outline-none focus:border-primary/60 transition-colors mb-4"
+          className={cn(
+            "w-full h-12 rounded-xl bg-bg border border-line px-4 text-sm text-text placeholder:text-subtle mb-4",
+            "transition-colors",
+            "focus:outline-none focus:border-brand-400",
+            "focus-visible:outline-none focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30",
+          )}
           autoComplete="off"
         />
         <div className="flex flex-col gap-2">

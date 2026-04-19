@@ -180,7 +180,7 @@ export function Modal({
 
         <div
           className={cn(
-            "overflow-y-auto px-5 pb-5",
+            "overflow-y-auto overscroll-contain px-5 pb-5",
             title || !hideClose ? "pt-0" : "pt-5",
             bodyClassName,
           )}
