@@ -5,10 +5,32 @@ import { readJSON, writeJSON } from "./finykStorage.js";
 /** Версія формату експорту JSON (бекап). */
 export const FINYK_BACKUP_VERSION = 3;
 
+/**
+ * Shape of the JSON backup written/read by Finyk. Fields are intentionally
+ * loose — the backup covers untyped legacy persisted data.
+ */
+export interface FinykBackup {
+  version?: number;
+  budgets?: unknown[];
+  subscriptions?: unknown[];
+  manualAssets?: unknown[];
+  manualDebts?: unknown[];
+  receivables?: unknown[];
+  hiddenAccounts?: unknown[];
+  hiddenTxIds?: unknown[];
+  monthlyPlan?: Record<string, unknown>;
+  txCategories?: Record<string, unknown>;
+  txSplits?: Record<string, unknown>;
+  monoDebtLinkedTxIds?: Record<string, unknown>;
+  networthHistory?: unknown[];
+  customCategories?: unknown[];
+  dismissedRecurring?: unknown[];
+}
+
 const DEFAULT_MONTHLY_PLAN = { income: "", expense: "", savings: "" };
 
-function readJsonFromLocalStorage(key, fallback) {
-  return readJSON(key, fallback);
+function readJsonFromLocalStorage<T>(key: string, fallback: T): T {
+  return readJSON(key, fallback) as T;
 }
 
 /**
@@ -60,12 +82,13 @@ const FINYK_FIELD_TO_STORAGE_KEY = {
 /**
  * Записує нормалізований бекап Фініка в localStorage (після normalizeFinykBackup).
  */
-export function persistFinykNormalizedToStorage(normalized) {
+export function persistFinykNormalizedToStorage(normalized: FinykBackup): void {
   for (const [field, storageKey] of Object.entries(
     FINYK_FIELD_TO_STORAGE_KEY,
   )) {
-    if (normalized[field] !== undefined) {
-      writeJSON(storageKey, normalized[field]);
+    const value = (normalized as Record<string, unknown>)[field];
+    if (value !== undefined) {
+      writeJSON(storageKey, value);
     }
   }
   notifyFinykRoutineCalendarSync();
@@ -74,73 +97,76 @@ export function persistFinykNormalizedToStorage(normalized) {
 /**
  * Перевіряє та нормалізує об'єкт бекапу для застосування в сховище.
  * Підтримує version 1 (без категорій/сплітів) і 2 (повний набір).
- * @param {unknown} parsed — результат JSON.parse
- * @returns {object} поля для applyData
  */
-export function normalizeFinykBackup(parsed) {
+export function normalizeFinykBackup(parsed: unknown): FinykBackup {
   if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error("Файл має містити JSON-об'єкт");
   }
-  if (Object.keys(parsed).length === 0) {
+  const obj = parsed as Record<string, unknown>;
+  if (Object.keys(obj).length === 0) {
     throw new Error("Порожній об'єкт у файлі");
   }
 
-  const version = typeof parsed.version === "number" ? parsed.version : 1;
+  const version = typeof obj.version === "number" ? obj.version : 1;
   if (version < 1 || version > 999) {
     throw new Error("Невідома версія бекапу");
   }
 
-  const out = {};
+  const out: FinykBackup = {};
 
-  const needArr = (v, name) => {
-    if (v === undefined || v === null) return;
+  const needArr = (v: unknown, name: string): unknown[] | undefined => {
+    if (v === undefined || v === null) return undefined;
     if (!Array.isArray(v)) throw new Error(`Поле «${name}» має бути масивом`);
     return v;
   };
-  const needObj = (v, name) => {
-    if (v === undefined || v === null) return;
+  const needObj = (
+    v: unknown,
+    name: string,
+  ): Record<string, unknown> | undefined => {
+    if (v === undefined || v === null) return undefined;
     if (typeof v !== "object" || Array.isArray(v))
       throw new Error(`Поле «${name}» має бути об'єктом`);
-    return v;
+    return v as Record<string, unknown>;
   };
 
-  const b = needArr(parsed.budgets, "budgets");
+  const b = needArr(obj.budgets, "budgets");
   if (b) out.budgets = b;
-  const s = needArr(parsed.subscriptions, "subscriptions");
+  const s = needArr(obj.subscriptions, "subscriptions");
   if (s) out.subscriptions = s;
-  const ma = needArr(parsed.manualAssets, "manualAssets");
+  const ma = needArr(obj.manualAssets, "manualAssets");
   if (ma) out.manualAssets = ma;
-  const md = needArr(parsed.manualDebts, "manualDebts");
+  const md = needArr(obj.manualDebts, "manualDebts");
   if (md) out.manualDebts = md;
-  const r = needArr(parsed.receivables, "receivables");
+  const r = needArr(obj.receivables, "receivables");
   if (r) out.receivables = r;
-  const ha = needArr(parsed.hiddenAccounts, "hiddenAccounts");
+  const ha = needArr(obj.hiddenAccounts, "hiddenAccounts");
   if (ha) out.hiddenAccounts = ha;
-  const ht = needArr(parsed.hiddenTxIds, "hiddenTxIds");
+  const ht = needArr(obj.hiddenTxIds, "hiddenTxIds");
   if (ht) out.hiddenTxIds = ht;
 
-  if (parsed.monthlyPlan !== undefined && parsed.monthlyPlan !== null) {
-    if (
-      typeof parsed.monthlyPlan !== "object" ||
-      Array.isArray(parsed.monthlyPlan)
-    ) {
+  if (obj.monthlyPlan !== undefined && obj.monthlyPlan !== null) {
+    if (typeof obj.monthlyPlan !== "object" || Array.isArray(obj.monthlyPlan)) {
       throw new Error("Поле «monthlyPlan» має бути об'єктом");
     }
-    out.monthlyPlan = parsed.monthlyPlan;
+    out.monthlyPlan = obj.monthlyPlan as Record<string, unknown>;
   }
 
-  const tc = needObj(parsed.txCategories, "txCategories");
+  const tc = needObj(obj.txCategories, "txCategories");
   if (tc) out.txCategories = tc;
-  const ts = needObj(parsed.txSplits, "txSplits");
+  const ts = needObj(obj.txSplits, "txSplits");
   if (ts) out.txSplits = ts;
-  const mdl = needObj(parsed.monoDebtLinkedTxIds, "monoDebtLinkedTxIds");
+  const mdl = needObj(obj.monoDebtLinkedTxIds, "monoDebtLinkedTxIds");
   if (mdl) out.monoDebtLinkedTxIds = mdl;
 
-  if (parsed.networthHistory !== undefined && parsed.networthHistory !== null) {
-    const nh = needArr(parsed.networthHistory, "networthHistory");
+  if (obj.networthHistory !== undefined && obj.networthHistory !== null) {
+    const nh = needArr(obj.networthHistory, "networthHistory");
     if (nh) {
       for (const row of nh) {
-        if (!row || typeof row !== "object" || typeof row.month !== "string") {
+        if (
+          !row ||
+          typeof row !== "object" ||
+          typeof (row as { month?: unknown }).month !== "string"
+        ) {
           throw new Error("Некоректний запис у networthHistory");
         }
       }
@@ -148,14 +174,15 @@ export function normalizeFinykBackup(parsed) {
     }
   }
 
-  const cc = needArr(parsed.customCategories, "customCategories");
+  const cc = needArr(obj.customCategories, "customCategories");
   if (cc) {
     for (const row of cc) {
+      const r = row as { id?: unknown; label?: unknown } | null;
       if (
-        !row ||
-        typeof row !== "object" ||
-        typeof row.id !== "string" ||
-        typeof row.label !== "string"
+        !r ||
+        typeof r !== "object" ||
+        typeof r.id !== "string" ||
+        typeof r.label !== "string"
       ) {
         throw new Error("Некоректний запис у customCategories");
       }
@@ -163,7 +190,7 @@ export function normalizeFinykBackup(parsed) {
     out.customCategories = cc;
   }
 
-  const dr = needArr(parsed.dismissedRecurring, "dismissedRecurring");
+  const dr = needArr(obj.dismissedRecurring, "dismissedRecurring");
   if (dr) {
     for (const item of dr) {
       if (typeof item !== "string") {
@@ -184,15 +211,15 @@ export function normalizeFinykBackup(parsed) {
 
 /**
  * Дані з ?sync= (компактні ключі b,s,a… або повний JSON бекапу).
- * @param {unknown} data — об'єкт після JSON.parse з URL
- * @returns {object} те саме, що normalizeFinykBackup, для applyData
+ * Повертає те саме, що normalizeFinykBackup, для applyData.
  */
-export function normalizeFinykSyncPayload(data) {
+export function normalizeFinykSyncPayload(data: unknown): FinykBackup {
   if (data == null || typeof data !== "object" || Array.isArray(data)) {
     throw new Error("Некоректні дані синку");
   }
+  const d = data as Record<string, unknown>;
 
-  const has = (k) => Object.prototype.hasOwnProperty.call(data, k);
+  const has = (k: string) => Object.prototype.hasOwnProperty.call(d, k);
   const looksLikeFullBackup =
     has("version") ||
     has("budgets") ||
@@ -211,29 +238,29 @@ export function normalizeFinykSyncPayload(data) {
     has("dismissedRecurring");
 
   if (looksLikeFullBackup) {
-    const withVer = has("version") ? data : { ...data, version: 1 };
+    const withVer = has("version") ? d : { ...d, version: 1 };
     return normalizeFinykBackup(withVer);
   }
 
-  const v = typeof data.v === "number" ? data.v : 1;
+  const v = typeof d.v === "number" ? d.v : 1;
   if (v < 1 || v > 99) {
     throw new Error("Невідома версія синку");
   }
 
-  const full = { version: FINYK_BACKUP_VERSION };
-  if (has("b")) full.budgets = data.b;
-  if (has("s")) full.subscriptions = data.s;
-  if (has("a")) full.manualAssets = data.a;
-  if (has("d")) full.manualDebts = data.d;
-  if (has("r")) full.receivables = data.r;
-  if (has("h")) full.hiddenAccounts = data.h;
-  if (has("mp")) full.monthlyPlan = data.mp;
-  if (has("tc")) full.txCategories = data.tc;
-  if (has("ts")) full.txSplits = data.ts;
-  if (has("md")) full.monoDebtLinkedTxIds = data.md;
-  if (has("nh")) full.networthHistory = data.nh;
-  if (has("cc")) full.customCategories = data.cc;
-  if (has("dr")) full.dismissedRecurring = data.dr;
+  const full: FinykBackup = { version: FINYK_BACKUP_VERSION };
+  if (has("b")) full.budgets = d.b as unknown[];
+  if (has("s")) full.subscriptions = d.s as unknown[];
+  if (has("a")) full.manualAssets = d.a as unknown[];
+  if (has("d")) full.manualDebts = d.d as unknown[];
+  if (has("r")) full.receivables = d.r as unknown[];
+  if (has("h")) full.hiddenAccounts = d.h as unknown[];
+  if (has("mp")) full.monthlyPlan = d.mp as Record<string, unknown>;
+  if (has("tc")) full.txCategories = d.tc as Record<string, unknown>;
+  if (has("ts")) full.txSplits = d.ts as Record<string, unknown>;
+  if (has("md")) full.monoDebtLinkedTxIds = d.md as Record<string, unknown>;
+  if (has("nh")) full.networthHistory = d.nh as unknown[];
+  if (has("cc")) full.customCategories = d.cc as unknown[];
+  if (has("dr")) full.dismissedRecurring = d.dr as unknown[];
 
   return normalizeFinykBackup(full);
 }

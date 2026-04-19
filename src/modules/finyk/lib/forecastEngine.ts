@@ -1,19 +1,55 @@
 import { getCategory } from "../utils";
 import { toLocalISODate } from "@shared/lib/date";
+import type { Category, TxCategoriesMap, TxSplitsMap } from "../domain/types";
+
+/** Мінімальний набір полів транзакції, потрібних прогнозу. */
+export interface ForecastTransaction {
+  id: string;
+  time: number;
+  amount: number;
+  description?: string;
+  mcc?: number;
+}
+
+export interface ForecastBudget {
+  categoryId: string;
+  limit: number;
+}
+
+export interface ForecastDailyPoint {
+  day: number;
+  dayKey: string;
+  actual: number | null;
+  forecast: number | null;
+}
+
+export interface ForecastResult {
+  categoryId: string;
+  limit: number;
+  spent: number;
+  forecast: number;
+  overLimit: boolean;
+  overPercent: number;
+  avgPerDay: number;
+  daysRemaining: number;
+  dailyData: ForecastDailyPoint[];
+}
+
+type DailySpendingMap = Record<string, Record<string, number>>;
 
 /**
  * Calculates daily spending per category for the current month.
  * Returns an array of { day: Date, amounts: { [categoryId]: number } }.
  */
 function buildDailySpending(
-  transactions,
-  txCategories,
-  txSplits,
-  customCategories,
-  monthStart,
-  today,
-) {
-  const dayMap = {};
+  transactions: ForecastTransaction[],
+  txCategories: TxCategoriesMap,
+  txSplits: TxSplitsMap,
+  customCategories: Category[],
+  monthStart: Date,
+  today: Date,
+): DailySpendingMap {
+  const dayMap: DailySpendingMap = {};
 
   for (const tx of transactions) {
     if (tx.amount >= 0) continue;
@@ -49,25 +85,16 @@ function buildDailySpending(
 /**
  * calcForecast(transactions, categoryLimits, today, txCategories, txSplits, customCategories)
  *
- * Returns an array of forecast results per category:
- * {
- *   categoryId: string,
- *   limit: number,
- *   spent: number,           // actual spent so far
- *   forecast: number,        // projected by end of month
- *   overLimit: boolean,
- *   overPercent: number,     // percentage over limit (0 if not over)
- *   dailyData: { day: string, actual: number|null, forecast: number|null }[],
- * }
+ * Returns an array of forecast results per category.
  */
 export function calcForecast(
-  transactions,
-  categoryLimits,
-  today,
-  txCategories = {},
-  txSplits = {},
-  customCategories = [],
-) {
+  transactions: ForecastTransaction[],
+  categoryLimits: ForecastBudget[],
+  today?: Date,
+  txCategories: TxCategoriesMap = {},
+  txSplits: TxSplitsMap = {},
+  customCategories: Category[] = [],
+): ForecastResult[] {
   const now = today || new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const daysInMonth = new Date(
@@ -93,7 +120,7 @@ export function calcForecast(
 
     // Sum actual spent per day for this category
     let spent = 0;
-    const dailyActuals = {};
+    const dailyActuals: Record<string, number> = {};
     for (const [dayKey, cats] of Object.entries(dailySpending)) {
       const amt = cats[categoryId] || 0;
       dailyActuals[dayKey] = amt;
@@ -110,7 +137,7 @@ export function calcForecast(
       : 0;
 
     // Build day-by-day chart data for the full month
-    const dailyData = [];
+    const dailyData: ForecastDailyPoint[] = [];
     // Running cumulative for actual
     let cumActual = 0;
     for (let d = 1; d <= daysInMonth; d++) {

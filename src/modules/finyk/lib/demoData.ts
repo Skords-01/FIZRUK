@@ -24,7 +24,7 @@ export const FINYK_MANUAL_ONLY_KEY = "finyk_manual_only_v1";
  * login screen. Used by the onboarding "Додати першу витрату" path
  * and by the "Далі без банку" button on the login screen itself.
  */
-export function enableFinykManualOnly() {
+export function enableFinykManualOnly(): void {
   try {
     writeRaw(FINYK_MANUAL_ONLY_KEY, "1");
   } catch {

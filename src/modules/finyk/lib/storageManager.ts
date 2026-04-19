@@ -2,23 +2,23 @@ import { storageManager as baseStorageManager } from "@shared/lib/storageManager
 
 const STORAGE_PREFIX = "finyk_";
 
-function key(name) {
+function key(name: string): string {
   const normalized = String(name || "").trim();
   return normalized.startsWith(STORAGE_PREFIX)
     ? normalized
     : `${STORAGE_PREFIX}${normalized}`;
 }
 
-function getJSON(storageKey, fallback) {
+function getJSON<T>(storageKey: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(storageKey);
-    return raw ? JSON.parse(raw) : fallback;
+    return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
   }
 }
 
-function setJSON(storageKey, value) {
+function setJSON(storageKey: string, value: unknown): boolean {
   try {
     localStorage.setItem(storageKey, JSON.stringify(value));
     return true;
