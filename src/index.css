@@ -105,7 +105,7 @@
        AA for small tertiary copy (eyebrow headings, captions, meta). */
     --c-text: 250 247 241; /* #faf7f1 — warm white */
     --c-muted: 180 174 169; /* #b4aea9 — medium warm gray (brightened) */
-    --c-subtle: 135 128 121; /* #87807a — readable tertiary (was #57534e) */
+    --c-subtle: 135 128 121; /* #878079 — readable tertiary (was #57534e) */
     --c-primary: 250 247 241; /* reversed */
 
     --shadow-card:
