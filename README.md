@@ -82,7 +82,7 @@ src/
 │   │   │                         # normalizeTransaction), selectors (чисті аналітичні
 │   │   │                         # проєкції), budget, debtEngine, subscriptionUtils
 │   │   ├── lib/                  # finykStorage (централізований storage-шар),
-│   │   │                         # storageManager, finykStats, finykBackup, forecastEngine
+│   │   │                         # storageManager, finykBackup, forecastEngine
 │   │   ├── constants/            # chartPalette
 │   │   └── hubRoutineSync.js     # Синхронізація Фінік → Рутина (підписки в календар)
 │   ├── fizruk/                   # Спорт

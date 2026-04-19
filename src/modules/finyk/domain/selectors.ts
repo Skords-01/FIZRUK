@@ -518,3 +518,43 @@ export function getTopMerchants(
     .sort((a, b) => b.total - a.total)
     .slice(0, limit);
 }
+
+export interface MonthlyHistoryEntry {
+  month: string;
+  transactions: readonly Transaction[];
+  excludedTxIds?: Set<string> | Iterable<string>;
+  txSplits?: TxSplitsMap;
+}
+
+export interface MonthlySpendPoint {
+  month: string;
+  label: string;
+  spent: number;
+  income: number;
+}
+
+// Reshapes a history of (month, transactions) pairs into the
+// [{ month, label, spent, income }] series consumed by the spend chart.
+// Uses `getMonthlySummary` so totals stay consistent with the summary card.
+export function getMonthlySpendSeries(
+  monthlyData: readonly MonthlyHistoryEntry[] | null | undefined,
+): MonthlySpendPoint[] {
+  if (!Array.isArray(monthlyData)) return [];
+  return monthlyData.map(({ month, transactions, excludedTxIds, txSplits }) => {
+    const txList = Array.isArray(transactions) ? transactions : [];
+    const excluded = toExcludedSet(excludedTxIds);
+    const { spent, income } = getMonthlySummary(txList, {
+      excludedTxIds: excluded,
+      txSplits: txSplits || {},
+    });
+    const [year, mon] = (month || "").split("-");
+    const label =
+      year && mon
+        ? new Date(Number(year), Number(mon) - 1, 1).toLocaleDateString(
+            "uk-UA",
+            { month: "short" },
+          )
+        : month;
+    return { month, label, spent, income };
+  });
+}
