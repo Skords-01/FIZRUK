@@ -40,9 +40,23 @@ const ACTIONS = [
   },
 ];
 
-export function HubFloatingActions() {
+/**
+ * @param {object} props
+ * @param {boolean} [props.hidden=false] - When true the FAB is not rendered
+ *   at all. Used during the FTUX session so the only add-surface in view is
+ *   `FirstActionHeroCard` → `PresetSheet` (the one-tap "real entry" path).
+ *   The generic FAB would otherwise bypass that flow and drop the user into
+ *   a full manual AddSheet, defeating the 30-second promise.
+ */
+export function HubFloatingActions({ hidden = false }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
+
+  // Collapse the speed-dial the moment we're hidden so reopening after FTUX
+  // doesn't flash a stale open state.
+  useEffect(() => {
+    if (hidden) setOpen(false);
+  }, [hidden]);
 
   // Click-outside + Escape close. Matches the ambient dismissal pattern
   // used by the rest of the hub's popovers.
@@ -70,6 +84,8 @@ export function HubFloatingActions() {
     setOpen(false);
     action.run();
   };
+
+  if (hidden) return null;
 
   return (
     <div

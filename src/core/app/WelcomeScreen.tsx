@@ -118,16 +118,24 @@ export function WelcomeScreen({ onDone, onOpenAuth }) {
       <div className="relative min-h-dvh flex items-end sm:items-center justify-center p-4 pb-safe">
         <div className="w-full max-w-sm space-y-3">
           <OnboardingWizard onDone={onDone} variant="fullPage" />
+          {/* Returning-user entry. The previous text-xs muted underline was
+              almost invisible on a fresh device — users who already had an
+              account were dropped into onboarding. Promoted to a secondary
+              button so the "у мене є акаунт" path is visible without
+              competing with the primary splash CTA. */}
           <button
             type="button"
             onClick={onOpenAuth}
             className={cn(
-              "w-full text-center text-xs font-medium text-muted",
-              "hover:text-text underline-offset-2 hover:underline",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 rounded-md py-1",
+              "w-full flex items-center justify-center gap-2",
+              "h-11 min-h-[44px] rounded-2xl border border-line bg-panel/60",
+              "text-sm font-semibold text-text",
+              "hover:bg-panelHi hover:border-brand-500/40 transition-colors",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
             )}
           >
-            У мене вже є акаунт
+            <Icon name="user" size={16} strokeWidth={2} aria-hidden />
+            <span>У мене вже є акаунт</span>
           </button>
         </div>
       </div>

@@ -271,8 +271,11 @@ function AppInner() {
         />
 
         {/* Primary quick-add surface for the hub. AI chat moved to the
-            header — see `HubHeader` / `HubHeaderWithProps` (`onOpenChat`). */}
-        <HubFloatingActions />
+            header — see `HubHeader` / `HubHeaderWithProps` (`onOpenChat`).
+            Hidden during the FTUX session so the only add-surface in view is
+            the `FirstActionHeroCard` → `PresetSheet` one-tap path; the FAB
+            returns the moment the first real entry lands. */}
+        <HubFloatingActions hidden={inFtuxSession} />
 
         <HubModals
           chatOpen={ui.chatOpen}
