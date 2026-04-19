@@ -4,10 +4,11 @@ import { validateQuery } from "../http/validate.js";
 
 const OFF_SEARCH = "https://world.openfoodfacts.org/api/v2/search";
 const OFF_FIELDS =
-  "product_name,product_name_uk,brands,nutriments,serving_quantity";
+  "code,product_name,product_name_uk,brands,nutriments,serving_quantity";
 const USDA_SEARCH = "https://api.nal.usda.gov/fdc/v1/foods/search";
 
 interface OFFSearchProduct {
+  code?: string;
   product_name?: string;
   product_name_uk?: string;
   brands?: string;
@@ -16,8 +17,24 @@ interface OFFSearchProduct {
 }
 
 interface USDASearchFood {
+  fdcId?: number;
   description?: string;
   foodNutrients?: Array<{ nutrientId?: number; value?: number }>;
+}
+
+// Deterministic fallback id based on product content — used when the upstream
+// record has no stable code (OFF `code` / USDA `fdcId`). Avoids embedding
+// request-time `Date.now()` into search-result ids, which would cause React
+// to churn keys and break any client-side dedup/caching across searches.
+function stableId(prefix: string, parts: Array<string | null | undefined>) {
+  const canonical = parts
+    .map((p) => (p ? String(p).trim().toLowerCase() : ""))
+    .join("|");
+  let hash = 0;
+  for (let i = 0; i < canonical.length; i++) {
+    hash = ((hash << 5) - hash + canonical.charCodeAt(i)) | 0;
+  }
+  return `${prefix}_${(hash >>> 0).toString(36)}`;
 }
 
 interface NormalizedSearchProduct {
@@ -148,7 +165,6 @@ function translateFirstToken(query: string): string | null {
 
 function normalizeOFFProduct(
   product: OFFSearchProduct | null | undefined,
-  idx: number,
 ): NormalizedSearchProduct | null {
   const n = (product?.nutriments || {}) as Record<string, unknown>;
 
@@ -157,11 +173,13 @@ function normalizeOFFProduct(
       ? Math.round(Number(v) * 10) / 10
       : null;
 
-  // Дозволяємо друковані символи латиниці + кирилиця (без керуючих символів)
+  // Дозволяємо друковані символи латиниці + кирилиця (без керуючих символів).
+  // \u0020-\u024F вже охоплює ASCII-цифри та пунктуацію, тож окремих
+  // \d.,()\-/ у діапазоні не треба.
   const name =
     product?.product_name_uk ||
     (product?.product_name &&
-    /^[\u0020-\u024F\u0400-\u04FF\d.,()\-/]+$/.test(product.product_name)
+    /^[\u0020-\u024F\u0400-\u04FF]+$/.test(product.product_name)
       ? product.product_name
       : null) ||
     null;
@@ -181,7 +199,9 @@ function normalizeOFFProduct(
   }
 
   return {
-    id: `off_${idx}_${Date.now()}`,
+    id: product?.code
+      ? `off_${String(product.code).replace(/^0+/, "") || "0"}`
+      : stableId("off", [name, brand]),
     name,
     brand,
     source: "off",
@@ -200,7 +220,6 @@ function normalizeOFFProduct(
 // USDA nutrient IDs: 1008=Energy(kcal), 1003=Protein, 1004=Fat, 1005=Carbs
 function normalizeUSDAProduct(
   food: USDASearchFood | null | undefined,
-  idx: number,
 ): NormalizedSearchProduct | null {
   const name = food?.description;
   if (!name) return null;
@@ -228,7 +247,10 @@ function normalizeUSDAProduct(
   }
 
   return {
-    id: `usda_${idx}_${Date.now()}`,
+    id:
+      food?.fdcId != null
+        ? `usda_${String(food.fdcId)}`
+        : stableId("usda", [name]),
     name,
     brand: null,
     source: "usda",
@@ -312,11 +334,11 @@ export default async function handler(
     ]);
 
     const offProducts = [...ukOff, ...enOff]
-      .map((p, i) => normalizeOFFProduct(p, i))
+      .map((p) => normalizeOFFProduct(p))
       .filter((p): p is NormalizedSearchProduct => p != null);
 
     const usdaProducts = usdaRaw
-      .map((p, i) => normalizeUSDAProduct(p, i))
+      .map((p) => normalizeUSDAProduct(p))
       .filter((p): p is NormalizedSearchProduct => p != null);
 
     // OFF (з українськими назвами) йде першим, USDA — як fallback

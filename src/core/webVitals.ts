@@ -31,6 +31,11 @@ function flush() {
   if (buffer.length === 0) return;
 
   const batch = buffer.splice(0, MAX_BATCH);
+  // If enqueue() pushed more than one batch worth of metrics in a single
+  // tick, the leftover would sit in the buffer until the next report or
+  // pagehide — on fast unload that means data loss. Reschedule the next
+  // flush on the same microtask boundary so the buffer drains in order.
+  if (buffer.length > 0) scheduleFlush();
   const payload = JSON.stringify({ metrics: batch });
   const url = apiUrl(ENDPOINT_PATH);
 
