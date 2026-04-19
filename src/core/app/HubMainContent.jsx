@@ -97,7 +97,7 @@ export function HubMainContent({
                 Встановити додаток
               </p>
               <p className="text-xs text-muted">
-                Працює офлайн, як рідний додаток
+                Офлайн · пуш-нагадування · ярлик на екрані
               </p>
             </div>
             <button

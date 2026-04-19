@@ -177,6 +177,9 @@ function VibeChipRow({ picks, togglePick }) {
 // module is picked; all four default to active so the lazy path is
 // "tap → done".
 function SplashStep({ picks, togglePick, onContinue }) {
+  // Zero-picks used to disable the CTA. That gate punished users who deselected
+  // every chip to see what happens — `finish()` already falls back to
+  // ALL_MODULES, so we let the tap through and surface a gentle hint instead.
   const hasPicks = picks.length > 0;
   return (
     <div className="flex flex-col items-center text-center space-y-5">
@@ -200,13 +203,14 @@ function SplashStep({ picks, togglePick, onContinue }) {
           variant="primary"
           size="lg"
           className="w-full"
-          disabled={!hasPicks}
         >
           Заповни мій хаб
           <Icon name="chevron-right" size={16} />
         </Button>
         {!hasPicks && (
-          <p className="text-[11px] text-muted">Обери хоч один модуль.</p>
+          <p className="text-[11px] text-muted">
+            Без вибору — всі 4 модулі. Налаштуєш потім.
+          </p>
         )}
       </div>
       <p className="text-[11px] text-subtle leading-relaxed">

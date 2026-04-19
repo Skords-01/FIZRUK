@@ -266,10 +266,13 @@ function DateHeader() {
 // module's color shows only as a 1px leading accent, so four rows read as a
 // single list rather than four competing heroes.
 // ═══════════════════════════════════════════════════════════════════════════
-function ModuleRow({ config, onClick, dragProps, isDragging }) {
+function ModuleRow({ config, onClick, dragProps, isDragging, isDemo }) {
   const preview = config.getPreview();
   const showProgress =
     config.hasGoal && preview.progress !== undefined && preview.progress > 0;
+  // Show the pill only when the module has a real preview number to label —
+  // an empty row's "tracking…" copy is self-evidently not demo data.
+  const showDemoPill = isDemo && Boolean(preview.main);
 
   return (
     <button
@@ -306,6 +309,14 @@ function ModuleRow({ config, onClick, dragProps, isDragging }) {
       </span>
 
       <div className="ml-auto flex items-center gap-2 min-w-0">
+        {showDemoPill && (
+          <span
+            className="shrink-0 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider text-brand-600 bg-brand-500/10 border border-brand-500/20"
+            title="Це приклад — заміниться на твої дані після першого запису"
+          >
+            Демо
+          </span>
+        )}
         {showProgress && (
           <div
             className="w-12 sm:w-16 h-1 rounded-full bg-line/40 dark:bg-white/10 overflow-hidden shrink-0"
@@ -343,7 +354,7 @@ function ModuleRow({ config, onClick, dragProps, isDragging }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // SORTABLE CARD WRAPPER
 // ═══════════════════════════════════════════════════════════════════════════
-function SortableCard({ id, onOpenModule }) {
+function SortableCard({ id, onOpenModule, isDemo }) {
   const {
     attributes,
     listeners,
@@ -367,6 +378,7 @@ function SortableCard({ id, onOpenModule }) {
         config={cfg}
         onClick={() => onOpenModule(id)}
         isDragging={isDragging}
+        isDemo={isDemo}
         dragProps={{ ...attributes, ...listeners }}
       />
     </div>
@@ -467,6 +479,12 @@ export function HubDashboard({ onOpenModule, onOpenChat, user, onShowAuth }) {
   const showDemoBanner =
     !hasRealEntry && !demoBannerDismissed && wasDemoSeeded();
 
+  // The banner is one-shot dismissible, but the underlying fact that the
+  // numbers in "Сьогодні" are seeded demo data persists until the first real
+  // entry. A per-row "Демо" pill stays visible after the banner is closed so
+  // the user never mistakes the preview for their own data.
+  const modulePreviewsAreDemo = !hasRealEntry && wasDemoSeeded();
+
   const { focus, rest, dismiss } = useDashboardFocus();
 
   const sensors = useSensors(
@@ -538,7 +556,12 @@ export function HubDashboard({ onOpenModule, onOpenChat, user, onShowAuth }) {
           <SortableContext items={order} strategy={verticalListSortingStrategy}>
             <div className="rounded-2xl border border-line bg-panel overflow-hidden divide-y divide-line/60">
               {order.map((id) => (
-                <SortableCard key={id} id={id} onOpenModule={onOpenModule} />
+                <SortableCard
+                  key={id}
+                  id={id}
+                  onOpenModule={onOpenModule}
+                  isDemo={modulePreviewsAreDemo}
+                />
               ))}
             </div>
           </SortableContext>
