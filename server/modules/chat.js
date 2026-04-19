@@ -1,8 +1,5 @@
-import { assertAiQuota } from "../aiQuota.js";
-import { setCorsHeaders } from "../http/cors.js";
 import { validateBody } from "../http/validate.js";
 import { ChatRequestSchema } from "../http/schemas.js";
-import { setRequestModule } from "../obs/requestContext.js";
 import {
   anthropicMessages,
   anthropicMessagesStream,
@@ -214,22 +211,12 @@ const SYSTEM_PREFIX = `Ти персональний асистент додат
 ДАНІ:
 `;
 
+/**
+ * POST /api/chat — основний чат з AI-асистентом з tool-calling та SSE-стрімом.
+ * Middleware-и роутера гарантують ключ у `req.anthropicKey` і валідну квоту.
+ */
 export default async function handler(req, res) {
-  setRequestModule("chat");
-  setCorsHeaders(res, req, {
-    allowHeaders: "Content-Type",
-    methods: "POST, OPTIONS",
-  });
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Method not allowed" });
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey)
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
-
-  if (!(await assertAiQuota(req, res))) return;
+  const apiKey = req.anthropicKey;
 
   const parsed = validateBody(ChatRequestSchema, req, res);
   if (!parsed.ok) return;

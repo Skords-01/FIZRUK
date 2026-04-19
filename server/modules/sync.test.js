@@ -40,8 +40,10 @@ function makeRes() {
   };
 }
 
+// `req.user` проставляє `requireSession` middleware у роутері; у юніт-тестах
+// викликаємо хендлер напряму, тож імітуємо його тут.
 function makeReq(body) {
-  return { method: "POST", body };
+  return { method: "POST", body, user: { id: "user_1" } };
 }
 
 /** Збирає всі виклики `.inc(labels)` у масив для зручних assert-ів. */

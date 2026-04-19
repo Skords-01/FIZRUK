@@ -1,8 +1,4 @@
 import pool from "../db.js";
-import { getSessionUser } from "../auth.js";
-import { assertAiQuota } from "../aiQuota.js";
-import { setCorsHeaders } from "../http/cors.js";
-import { setRequestModule } from "../obs/requestContext.js";
 import { anthropicMessages, extractAnthropicText } from "../lib/anthropic.js";
 
 async function getMemory(userId) {
@@ -127,87 +123,72 @@ function buildMemorySummary(memory) {
   return lines.join("\n");
 }
 
-export default async function coachHandler(req, res) {
-  setRequestModule("coach");
-  setCorsHeaders(res, req, {
-    allowHeaders: "Content-Type",
-    methods: "GET, POST, OPTIONS",
-  });
+/**
+ * GET /api/coach/memory — віддати поточну coach-пам'ять користувача.
+ * `req.user` гарантовано заповнений middleware-ом `requireSession`.
+ */
+export async function coachMemoryGet(req, res) {
+  const memory = await getMemory(req.user.id);
+  return res.json({ ok: true, memory: memory || null });
+}
 
-  if (req.method === "OPTIONS") return res.status(200).end();
+/**
+ * POST /api/coach/memory — merge incoming digest у збережену пам'ять.
+ * `req.user` гарантовано заповнений middleware-ом `requireSession`.
+ */
+export async function coachMemoryPost(req, res) {
+  const incoming = req.body || {};
+  const existing = await getMemory(req.user.id);
+  const merged = mergeMemory(existing, incoming);
+  await saveMemory(req.user.id, merged);
+  return res.json({ ok: true });
+}
 
-  const path = req.url.replace(/\?.*$/, "");
+/**
+ * POST /api/coach/insight — згенерувати AI-повідомлення дня.
+ * `req.user`, `req.anthropicKey` і квота гарантуються middleware-ами роутера.
+ */
+export async function coachInsight(req, res) {
+  const apiKey = req.anthropicKey;
+  const { snapshot, memory } = req.body || {};
 
-  if (path.endsWith("/memory")) {
-    if (req.method === "GET") {
-      const user = await getSessionUser(req);
-      if (!user) return res.status(401).json({ error: "Unauthorized" });
-      const memory = await getMemory(user.id);
-      return res.json({ ok: true, memory: memory || null });
+  const memorySummary = buildMemorySummary(memory);
+
+  const snapshotLines = [];
+  if (snapshot?.finyk) {
+    snapshotLines.push(
+      `[ФІНАНСИ ЦЬОГО ТИЖНЯ] Витрати: ${snapshot.finyk.totalSpent ?? 0} грн, Надходження: ${snapshot.finyk.totalIncome ?? 0} грн, Транзакцій: ${snapshot.finyk.txCount ?? 0}`,
+    );
+    if (snapshot.finyk.topCategories?.length) {
+      snapshotLines.push(
+        "Топ витрат: " +
+          snapshot.finyk.topCategories
+            .map((c) => `${c.name} ${c.amount} грн`)
+            .join(", "),
+      );
     }
-
-    if (req.method === "POST") {
-      const user = await getSessionUser(req);
-      if (!user) return res.status(401).json({ error: "Unauthorized" });
-      const incoming = req.body || {};
-      const existing = await getMemory(user.id);
-      const merged = mergeMemory(existing, incoming);
-      await saveMemory(user.id, merged);
-      return res.json({ ok: true });
-    }
-
-    return res.status(405).json({ error: "Method not allowed" });
+  }
+  if (snapshot?.fizruk) {
+    snapshotLines.push(
+      `[ТРЕНУВАННЯ ЦЬОГО ТИЖНЯ] Тренувань: ${snapshot.fizruk.workoutsCount ?? 0}, Об'єм: ${snapshot.fizruk.totalVolume ?? 0} кг, Відновлення: ${snapshot.fizruk.recoveryLabel ?? "?"}`,
+    );
+  }
+  if (snapshot?.nutrition) {
+    snapshotLines.push(
+      `[ХАРЧУВАННЯ ЦЬОГО ТИЖНЯ] Середньо: ${snapshot.nutrition.avgKcal ?? 0} ккал/день (ціль ${snapshot.nutrition.targetKcal ?? 2000}), Білок: ${snapshot.nutrition.avgProtein ?? 0}г/день, Днів: ${snapshot.nutrition.daysLogged ?? 0}/7`,
+    );
+  }
+  if (snapshot?.routine) {
+    snapshotLines.push(
+      `[ЗВИЧКИ ЦЬОГО ТИЖНЯ] Виконання: ${snapshot.routine.overallRate ?? 0}%, Активних звичок: ${snapshot.routine.habitCount ?? 0}`,
+    );
   }
 
-  if (path.endsWith("/insight")) {
-    if (req.method !== "POST")
-      return res.status(405).json({ error: "Method not allowed" });
+  const snapshotText = snapshotLines.length
+    ? snapshotLines.join("\n")
+    : "Даних за поточний тиждень ще немає.";
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey)
-      return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
-
-    if (!(await assertAiQuota(req, res))) return;
-
-    const { snapshot, memory } = req.body || {};
-
-    const memorySummary = buildMemorySummary(memory);
-
-    const snapshotLines = [];
-    if (snapshot?.finyk) {
-      snapshotLines.push(
-        `[ФІНАНСИ ЦЬОГО ТИЖНЯ] Витрати: ${snapshot.finyk.totalSpent ?? 0} грн, Надходження: ${snapshot.finyk.totalIncome ?? 0} грн, Транзакцій: ${snapshot.finyk.txCount ?? 0}`,
-      );
-      if (snapshot.finyk.topCategories?.length) {
-        snapshotLines.push(
-          "Топ витрат: " +
-            snapshot.finyk.topCategories
-              .map((c) => `${c.name} ${c.amount} грн`)
-              .join(", "),
-        );
-      }
-    }
-    if (snapshot?.fizruk) {
-      snapshotLines.push(
-        `[ТРЕНУВАННЯ ЦЬОГО ТИЖНЯ] Тренувань: ${snapshot.fizruk.workoutsCount ?? 0}, Об'єм: ${snapshot.fizruk.totalVolume ?? 0} кг, Відновлення: ${snapshot.fizruk.recoveryLabel ?? "?"}`,
-      );
-    }
-    if (snapshot?.nutrition) {
-      snapshotLines.push(
-        `[ХАРЧУВАННЯ ЦЬОГО ТИЖНЯ] Середньо: ${snapshot.nutrition.avgKcal ?? 0} ккал/день (ціль ${snapshot.nutrition.targetKcal ?? 2000}), Білок: ${snapshot.nutrition.avgProtein ?? 0}г/день, Днів: ${snapshot.nutrition.daysLogged ?? 0}/7`,
-      );
-    }
-    if (snapshot?.routine) {
-      snapshotLines.push(
-        `[ЗВИЧКИ ЦЬОГО ТИЖНЯ] Виконання: ${snapshot.routine.overallRate ?? 0}%, Активних звичок: ${snapshot.routine.habitCount ?? 0}`,
-      );
-    }
-
-    const snapshotText = snapshotLines.length
-      ? snapshotLines.join("\n")
-      : "Даних за поточний тиждень ще немає.";
-
-    const systemPrompt = `Ти персональний AI-коуч у додатку "Мій простір". Ти знаєш цю людину по місяцях даних і говориш з нею як довірений коуч — тепло, але конкретно.
+  const systemPrompt = `Ти персональний AI-коуч у додатку "Мій простір". Ти знаєш цю людину по місяцях даних і говориш з нею як довірений коуч — тепло, але конкретно.
 
 ПАМ'ЯТЬ (попередні тижні):
 ${memorySummary}
@@ -222,26 +203,23 @@ ${snapshotText}
 
 Відповідай ТІЛЬКИ текстом повідомлення, без вітань, без підписів, без лапок.`;
 
-    const { response: aiRes, data: aiData } = await anthropicMessages(
-      apiKey,
-      {
-        model: "claude-sonnet-4-6",
-        max_tokens: 300,
-        messages: [{ role: "user", content: systemPrompt }],
-      },
-      { timeoutMs: 20000, endpoint: "coach-insight" },
-    );
+  const { response: aiRes, data: aiData } = await anthropicMessages(
+    apiKey,
+    {
+      model: "claude-sonnet-4-6",
+      max_tokens: 300,
+      messages: [{ role: "user", content: systemPrompt }],
+    },
+    { timeoutMs: 20000, endpoint: "coach-insight" },
+  );
 
-    if (!aiRes?.ok) {
-      return res
-        .status(aiRes?.status || 500)
-        .json({ error: aiData?.error?.message || "AI error" });
-    }
-
-    const text = extractAnthropicText(aiData);
-
-    return res.json({ ok: true, insight: text });
+  if (!aiRes?.ok) {
+    return res
+      .status(aiRes?.status || 500)
+      .json({ error: aiData?.error?.message || "AI error" });
   }
 
-  return res.status(404).json({ error: "Not found" });
+  const text = extractAnthropicText(aiData);
+
+  return res.json({ ok: true, insight: text });
 }

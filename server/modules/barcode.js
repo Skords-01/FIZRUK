@@ -1,23 +1,19 @@
-import { setCorsHeaders } from "../http/cors.js";
-import { checkRateLimit } from "../http/rateLimit.js";
-import { setRequestModule } from "../obs/requestContext.js";
-import {
-  barcodeLookupsTotal,
-  externalHttpDurationMs,
-  externalHttpRequestsTotal,
-} from "../obs/metrics.js";
+import { recordExternalHttp } from "../lib/externalHttp.js";
+import { barcodeLookupsTotal } from "../obs/metrics.js";
 
-/** Емітить і барcode-domain метрику, і загальний outbound HTTP. */
+/**
+ * Record-helper одночасно емітить і domain-specific метрику
+ * `barcode_lookups_total{source,outcome}` (читають існуючі дашборди), і
+ * уніфіковану `external_http_requests_total{upstream=source,outcome}`.
+ * Свідоме дублювання — знести domain-метрику лише після оновлення дашбордів.
+ */
 function recordLookup(source, outcome, ms) {
   try {
     barcodeLookupsTotal.inc({ source, outcome });
-    externalHttpRequestsTotal.inc({ upstream: source, outcome });
-    if (ms != null) {
-      externalHttpDurationMs.observe({ upstream: source, outcome }, ms);
-    }
   } catch {
-    /* metrics must never break a request */
+    /* ignore */
   }
+  recordExternalHttp(source, outcome, ms);
 }
 
 function elapsedMs(start) {
@@ -268,26 +264,12 @@ async function lookupUPCitemdb(barcode) {
 // ──────────────────────────────────────────────────────────────────────────────
 // Handler
 // ──────────────────────────────────────────────────────────────────────────────
+/**
+ * GET /api/barcode?barcode=... — каскадний lookup через OFF → USDA → UPCitemdb.
+ * Middleware-и роутера (`setModule`, `rateLimitExpress`) забезпечують
+ * module-tag і rate-limit; тут лише бізнес-логіка.
+ */
 export default async function handler(req, res) {
-  setRequestModule("barcode");
-  setCorsHeaders(res, req, {
-    methods: "GET, OPTIONS",
-    allowHeaders: "Content-Type",
-  });
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "GET")
-    return res.status(405).json({ error: "Method not allowed" });
-
-  const rl = checkRateLimit(req, {
-    key: "api:barcode",
-    limit: 30,
-    windowMs: 60_000,
-  });
-  if (!rl.ok)
-    return res
-      .status(429)
-      .json({ error: "Забагато запитів. Спробуй пізніше." });
-
   const barcode = String(req.query.barcode || "")
     .trim()
     .replace(/\D/g, "");

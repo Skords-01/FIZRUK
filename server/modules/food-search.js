@@ -1,7 +1,3 @@
-import { setCorsHeaders } from "../http/cors.js";
-import { setRequestModule } from "../obs/requestContext.js";
-import { checkRateLimit } from "../http/rateLimit.js";
-
 const OFF_SEARCH = "https://world.openfoodfacts.org/api/v2/search";
 const OFF_FIELDS =
   "product_name,product_name_uk,brands,nutriments,serving_quantity";
@@ -240,26 +236,11 @@ async function fetchUSDA(query, signal) {
   return data?.foods || [];
 }
 
+/**
+ * GET /api/food-search?q=… — каскадний пошук через Open Food Facts + USDA.
+ * CORS і rate-limit виставляє роутер.
+ */
 export default async function handler(req, res) {
-  setRequestModule("nutrition");
-  setCorsHeaders(res, req, {
-    methods: "GET, OPTIONS",
-    allowHeaders: "Content-Type",
-  });
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "GET")
-    return res.status(405).json({ error: "Method not allowed" });
-
-  const rl = checkRateLimit(req, {
-    key: "api:food-search",
-    limit: 40,
-    windowMs: 60_000,
-  });
-  if (!rl.ok)
-    return res
-      .status(429)
-      .json({ error: "Забагато запитів. Спробуй пізніше." });
-
   const query = String(req.query.q || "").trim();
   if (!query || query.length < 2) {
     return res.status(400).json({ error: "Запит занадто короткий" });

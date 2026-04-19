@@ -1,6 +1,3 @@
-import { assertAiQuota } from "../../aiQuota.js";
-import { setCorsHeaders } from "../../http/cors.js";
-import { setRequestModule } from "../../obs/requestContext.js";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import { validateBody } from "../../http/validate.js";
 import { ParsePantrySchema } from "../../http/schemas.js";
@@ -9,11 +6,6 @@ import {
   extractAnthropicText,
 } from "../../lib/anthropic.js";
 import { normalizePantryItems } from "../../lib/nutritionResponse.js";
-import {
-  checkRateLimit,
-  requireNutritionTokenIfConfigured,
-} from "./lib/nutritionSecurity.js";
-
 const SYSTEM = `Ти помічник з харчування. Відповідай ТІЛЬКИ українською.
 Поверни ТІЛЬКИ валідний JSON без markdown і без додаткового тексту.
 
@@ -37,32 +29,12 @@ const SYSTEM = `Ти помічник з харчування. Відповід�
 }
 `;
 
+/**
+ * POST /api/nutrition/parse-pantry — розпарсити сирий список продуктів.
+ * CORS / token / quota / rate-limit виставляє роутер.
+ */
 export default async function handler(req, res) {
-  setRequestModule("nutrition");
-  setCorsHeaders(res, req, {
-    allowHeaders: "X-Token, Content-Type",
-    methods: "POST, OPTIONS",
-  });
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Method not allowed" });
-
-  if (!requireNutritionTokenIfConfigured(req, res)) return;
-  if (!(await assertAiQuota(req, res))) return;
-  const rl = checkRateLimit(req, {
-    key: "nutrition:parse-pantry",
-    limit: 60,
-    windowMs: 60_000,
-  });
-  if (!rl.ok)
-    return res
-      .status(429)
-      .json({ error: "Забагато запитів. Спробуй пізніше." });
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey)
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+  const apiKey = req.anthropicKey;
 
   const parsed = validateBody(ParsePantrySchema, req, res);
   if (!parsed.ok) return;

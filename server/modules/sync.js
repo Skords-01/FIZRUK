@@ -1,6 +1,4 @@
 import pool from "../db.js";
-import { getSessionUser } from "../auth.js";
-import { setRequestModule } from "../obs/requestContext.js";
 import {
   syncConflictsTotal,
   syncDurationMs,
@@ -34,17 +32,8 @@ const VALID_MODULES = new Set(["finyk", "fizruk", "routine", "nutrition"]);
 const MAX_BLOB_SIZE = 5 * 1024 * 1024;
 
 export async function syncPush(req, res) {
-  setRequestModule("sync");
   const start = process.hrtime.bigint();
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const user = await getSessionUser(req);
-  if (!user) {
-    recordSync("push", "unknown", "unauthorized", { ms: elapsedMs(start) });
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  const user = req.user;
 
   const { module, data, clientUpdatedAt } = req.body || {};
 
@@ -122,17 +111,8 @@ export async function syncPush(req, res) {
 }
 
 export async function syncPull(req, res) {
-  setRequestModule("sync");
   const start = process.hrtime.bigint();
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const user = await getSessionUser(req);
-  if (!user) {
-    recordSync("pull", "unknown", "unauthorized", { ms: elapsedMs(start) });
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  const user = req.user;
 
   const { module } = req.body || {};
 
@@ -193,17 +173,8 @@ export async function syncPull(req, res) {
 }
 
 export async function syncPullAll(req, res) {
-  setRequestModule("sync");
   const start = process.hrtime.bigint();
-  if (req.method !== "POST" && req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const user = await getSessionUser(req);
-  if (!user) {
-    recordSync("pull_all", "all", "unauthorized", { ms: elapsedMs(start) });
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  const user = req.user;
 
   try {
     const result = await pool.query(
@@ -238,17 +209,8 @@ export async function syncPullAll(req, res) {
 }
 
 export async function syncPushAll(req, res) {
-  setRequestModule("sync");
   const start = process.hrtime.bigint();
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const user = await getSessionUser(req);
-  if (!user) {
-    recordSync("push_all", "all", "unauthorized", { ms: elapsedMs(start) });
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  const user = req.user;
 
   const { modules } = req.body || {};
   if (!modules || typeof modules !== "object") {

@@ -1,16 +1,22 @@
 import webpush from "web-push";
 import pool from "../db.js";
-import { getSessionUser } from "../auth.js";
-import { setRequestModule } from "../obs/requestContext.js";
 import { logger } from "../obs/logger.js";
+import { recordExternalHttp } from "../lib/externalHttp.js";
 import { pushSendsTotal } from "../obs/metrics.js";
 
+/**
+ * Дублюємо два лейбли для одного outcome: історичну domain-метрику
+ * `push_sends_total` (яку можуть читати старі дашборди/алерти) та уніфіковану
+ * `external_http_requests_total{upstream="push"}`. Це свідома тимчасова
+ * дуплікація — якщо й зносити, то окремим PR зі знесенням дашборду.
+ */
 function recordSend(outcome) {
   try {
     pushSendsTotal.inc({ outcome });
   } catch {
     /* ignore */
   }
+  recordExternalHttp("push", outcome);
 }
 
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
@@ -21,37 +27,20 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC, VAPID_PRIVATE);
 }
 
-/**
- * Лукап сесії з проковтуванням помилок: push-ендпоінти історично трактують
- * будь-яку невдачу better-auth як "не залогінений" і повертають 401, а не 500.
- * Для інших API використовуй `getSessionUser` напряму — там помилки мають
- * підніматись до `errorHandler`.
- */
-async function getSession(req) {
-  try {
-    return await getSessionUser(req);
-  } catch {
-    return null;
-  }
-}
-
-/** GET /api/push/vapid-public — повертає публічний VAPID ключ для підписки */
-export async function vapidPublic(req, res) {
-  setRequestModule("push");
+/** GET /api/push/vapid-public — повертає публічний VAPID ключ для підписки. */
+export async function vapidPublic(_req, res) {
   if (!VAPID_PUBLIC) {
     return res.status(503).json({ error: "Push not configured" });
   }
   res.json({ publicKey: VAPID_PUBLIC });
 }
 
-/** POST /api/push/subscribe — зберегти підписку */
+/** POST /api/push/subscribe — зберегти підписку. Session в `req.user`. */
 export async function subscribe(req, res) {
-  setRequestModule("push");
   if (!VAPID_PUBLIC)
     return res.status(503).json({ error: "Push not configured" });
-  const user = await getSession(req);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
 
+  const user = req.user;
   const { endpoint, keys } = req.body || {};
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return res.status(400).json({ error: "Invalid subscription" });
@@ -74,12 +63,9 @@ export async function subscribe(req, res) {
   }
 }
 
-/** DELETE /api/push/subscribe — видалити підписку */
+/** DELETE /api/push/subscribe — видалити підписку. Session в `req.user`. */
 export async function unsubscribe(req, res) {
-  setRequestModule("push");
-  const user = await getSession(req);
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
-
+  const user = req.user;
   const { endpoint } = req.body || {};
   if (!endpoint) return res.status(400).json({ error: "Missing endpoint" });
 
@@ -100,15 +86,12 @@ export async function unsubscribe(req, res) {
 
 /**
  * POST /api/push/send — надіслати push конкретному користувачу (внутрішній API).
- * Body: { userId, title, body, module }
- * Захищений API_SECRET щоб не дозволяти довільні запити.
+ * Body: { userId, title, body, module, tag }
+ *
+ * Auth через `X-Api-Secret` зроблено в `requireApiSecret("API_SECRET")` на
+ * рівні роутера; handler вже отримує запит з перевіреним секретом.
  */
 export async function sendPush(req, res) {
-  setRequestModule("push");
-  const secret = req.headers["x-api-secret"];
-  if (!secret || secret !== process.env.API_SECRET) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
   if (!VAPID_PUBLIC)
     return res.status(503).json({ error: "Push not configured" });
 

@@ -43,10 +43,6 @@ const PayloadSchema = z.object({
 });
 
 export default function webVitalsHandler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
-
   // sendBeacon з `type: "application/json"` приходить як Buffer/string залежно
   // від middleware-а — Express `express.json()` уже парсить у req.body, але
   // якщо клієнт помилиться з content-type, body може бути undefined.

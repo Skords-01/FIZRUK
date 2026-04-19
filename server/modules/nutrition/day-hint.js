@@ -1,16 +1,8 @@
-import { assertAiQuota } from "../../aiQuota.js";
-import { setCorsHeaders } from "../../http/cors.js";
-import { setRequestModule } from "../../obs/requestContext.js";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import {
   anthropicMessages,
   extractAnthropicText,
 } from "../../lib/anthropic.js";
-import {
-  checkRateLimit,
-  requireNutritionTokenIfConfigured,
-} from "./lib/nutritionSecurity.js";
-
 function safeNonNegOrNull(x) {
   if (x == null || x === "") return null;
   const n = Number(x);
@@ -22,34 +14,12 @@ function normalizeHint(text) {
   return t.slice(0, 1200);
 }
 
+/**
+ * POST /api/nutrition/day-hint — коротка порада по денних макросах.
+ * CORS / token / quota / rate-limit виставляє роутер.
+ */
 export default async function handler(req, res) {
-  setRequestModule("nutrition");
-  setCorsHeaders(res, req, {
-    allowHeaders: "X-Token, Content-Type",
-    methods: "POST, OPTIONS",
-  });
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Method not allowed" });
-
-  if (!requireNutritionTokenIfConfigured(req, res)) return;
-  if (!(await assertAiQuota(req, res))) return;
-  const rl = checkRateLimit(req, {
-    key: "nutrition:day-hint",
-    limit: 30,
-    windowMs: 60_000,
-  });
-  if (!rl.ok) {
-    res.setHeader("Retry-After", String(rl.retryAfterSec || 60));
-    return res
-      .status(429)
-      .json({ error: "Забагато запитів. Спробуй пізніше." });
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey)
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+  const apiKey = req.anthropicKey;
 
   try {
     const { macros, targets, locale, hasMeals, hasAnyMacros, macroSources } =
