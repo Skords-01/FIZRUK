@@ -120,11 +120,30 @@ export async function query<R extends QueryResultRow = QueryResultRow>(
 }
 
 /**
+ * Стабільний 64-бітний id для advisory-lock міграцій. Значення — статичне,
+ * довільне, ключ — щоб два процеси `scripts/migrate.mjs` (паралельний
+ * release-stage на різних репліках, ручний `npm run db:migrate` під час
+ * деплою тощо) не стартували міграції одночасно й не зловили race на
+ * `INSERT schema_migrations` або DDL-колізію. Lock session-scoped —
+ * звільниться автоматично, якщо процес упаде.
+ */
+const MIGRATIONS_ADVISORY_LOCK_KEY = 7317483629462015n;
+
+/**
  * Incremental SQL migrations from server/migrations/*.sql (lexicographic order).
  * Tracked in schema_migrations. schema_migrations itself is the only table
  * created inline — everything else is defined in migration files.
+ *
+ * `pg_advisory_lock` серіалізує паралельні виклики: другий claim буде
+ * спати доти, доки перший не відпустить lock (у `ensureSchema.finally`).
+ * Після розблокування другий увійде, побачить уже застосовані файли у
+ * `schema_migrations` і тихо no-op-не.
  */
 async function runPendingSqlMigrations(client: PoolClient): Promise<void> {
+  await client.query("SELECT pg_advisory_lock($1)", [
+    MIGRATIONS_ADVISORY_LOCK_KEY.toString(),
+  ]);
+
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       name TEXT PRIMARY KEY,
@@ -173,6 +192,17 @@ export async function ensureSchema(): Promise<void> {
   try {
     await runPendingSqlMigrations(client);
   } finally {
+    // Best-effort відпускання advisory-lock. Якщо pg_advisory_lock ніколи
+    // не викликався (наприклад, connect впав), unlock поверне false і не
+    // кине. Release клієнта — окремо у finally, щоб lock не "зависнув"
+    // поки pg не задетектить дропнуту сесію.
+    try {
+      await client.query("SELECT pg_advisory_unlock($1)", [
+        MIGRATIONS_ADVISORY_LOCK_KEY.toString(),
+      ]);
+    } catch {
+      /* сесія однаково release-ається нижче */
+    }
     client.release();
   }
 }
