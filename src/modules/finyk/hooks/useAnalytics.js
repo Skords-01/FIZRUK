@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { getMonthlySpendSeries } from "../lib/finykStats";
 import {
   getMonthlySummary,
+  getMonthlySpendSeries,
   getTopMerchants,
   getTrendComparison,
   computeCategorySpendIndex,
