@@ -1,5 +1,21 @@
 import { getTxStatAmount } from "./transactions.js";
 
+interface Tx {
+  id: string;
+  amount: number;
+  time?: number;
+}
+
+interface SpendingOptions {
+  excludedTxIds?: Set<string> | string[];
+  txSplits?: Record<string, unknown[]>;
+}
+
+interface SpendingByDateOptions extends SpendingOptions {
+  dateSet: Set<string>;
+  localDateKeyFn: (date: Date) => string;
+}
+
 /**
  * Сумарні витрати ФІНІК за списком транзакцій, з урахуванням excludedTxIds та
  * txSplits (через getTxStatAmount). Ця функція — єдине джерело правди для
@@ -7,9 +23,9 @@ import { getTxStatAmount } from "./transactions.js";
  * виконується викликачем при виводі.
  */
 export function calcFinykSpendingTotal(
-  transactions,
-  { excludedTxIds, txSplits = {} } = {},
-) {
+  transactions: Tx[],
+  { excludedTxIds, txSplits = {} }: SpendingOptions = {},
+): number {
   const list = Array.isArray(transactions) ? transactions : [];
   const excluded =
     excludedTxIds instanceof Set
@@ -31,10 +47,15 @@ export function calcFinykSpendingTotal(
  * це гарантує, що сума стовпчиків на графіку дорівнює числу в картці.
  */
 export function calcFinykSpendingByDate(
-  transactions,
-  { excludedTxIds, txSplits = {}, dateSet, localDateKeyFn },
-) {
-  const daily = {};
+  transactions: Tx[],
+  {
+    excludedTxIds,
+    txSplits = {},
+    dateSet,
+    localDateKeyFn,
+  }: SpendingByDateOptions,
+): { total: number; daily: Record<string, number> } {
+  const daily: Record<string, number> = {};
   const list = Array.isArray(transactions) ? transactions : [];
   const excluded =
     excludedTxIds instanceof Set
@@ -44,7 +65,7 @@ export function calcFinykSpendingByDate(
   for (const tx of list) {
     if (!tx || excluded.has(tx.id)) continue;
     if (!(tx.amount < 0)) continue;
-    const ts = tx.time > 1e10 ? tx.time : tx.time * 1000;
+    const ts = (tx.time ?? 0) > 1e10 ? (tx.time ?? 0) : (tx.time ?? 0) * 1000;
     const dk = localDateKeyFn(new Date(ts));
     if (!dateSet.has(dk)) continue;
     const amt = getTxStatAmount(tx, txSplits);
@@ -52,7 +73,7 @@ export function calcFinykSpendingByDate(
     daily[dk] = (daily[dk] || 0) + amt;
   }
 
-  const dailyRounded = {};
+  const dailyRounded: Record<string, number> = {};
   let total = 0;
   for (const k of Object.keys(daily)) {
     const r = Math.round(daily[k]);
