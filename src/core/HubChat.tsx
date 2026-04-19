@@ -43,6 +43,36 @@ const QUICK_NO_MONO = [
   "Порадь щось",
 ];
 
+// Контекстні підказки, що залежать від модуля, з якого користувач
+// відкрив чат (якщо знаємо). Робимо підказки більш actionable, щоб
+// перший тап одразу вів до дії, а не до generic small-talk.
+const QUICK_BY_CONTEXT: Record<string, string[]> = {
+  finyk: [
+    "Додай витрату 120 грн на каву",
+    "Скільки витратив за тиждень?",
+    "Які мої активні підписки?",
+    "Склади короткий звіт по тижню",
+  ],
+  fizruk: [
+    "Почни тренування ноги",
+    "Порадь розминку перед залом",
+    "Скільки я тренувався цього тижня?",
+    "Додай сет присідання 5 повторів 40 кг",
+  ],
+  routine: [
+    "Познач звичку «вода» на сьогодні",
+    "Яка моя серія за цей тиждень?",
+    "Додай звичку читати 20 хв щодня",
+    "Що я пропустив цього тижня?",
+  ],
+  nutrition: [
+    "Залогай сніданок: вівсянка 100г + яблуко",
+    "Скільки ккал я з'їв сьогодні?",
+    "Порадь високобілкову вечерю",
+    "Склади короткий звіт по калоріях",
+  ],
+};
+
 function HubChat({ onClose, initialMessage }) {
   const [messages, setMessages] = useState(() => {
     try {
@@ -94,6 +124,11 @@ function HubChat({ onClose, initialMessage }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  // AbortController для скасування активного запиту (кнопка "Скасувати").
+  // Живе у ref, бо не впливає на рендер — лише даємо можливість
+  // натисненням перервати `chatApi.send`/`.stream`, і цим одразу
+  // повернути UI у стан готовності (loading=false).
+  const abortRef = useRef<AbortController | null>(null);
   const chatRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastWasVoice = useRef(false);
@@ -161,10 +196,26 @@ function HubChat({ onClose, initialMessage }) {
     scheduleContextBuild("finyk-cache", true);
   }, [finykPreviewUpdatedAt, scheduleContextBuild]);
 
-  const quickPrompts = useMemo(
-    () => (hasData ? QUICK_WITH_MONO : QUICK_NO_MONO),
-    [hasData],
-  );
+  // Якщо чат відкрився з-під модуля (через URL hash або подію), беремо
+  // контекстні підказки; інакше — генеричні mono/no-mono.
+  const activeModule = (() => {
+    try {
+      const hash = (window.location.hash || "")
+        .replace(/^#\/?/, "")
+        .toLowerCase();
+      const first = hash.split(/[/?#]/)[0];
+      if (["finyk", "fizruk", "routine", "nutrition"].includes(first))
+        return first;
+    } catch {
+      /* noop */
+    }
+    return null;
+  })();
+  const quickPrompts = useMemo(() => {
+    if (activeModule && QUICK_BY_CONTEXT[activeModule])
+      return QUICK_BY_CONTEXT[activeModule];
+    return hasData ? QUICK_WITH_MONO : QUICK_NO_MONO;
+  }, [hasData, activeModule]);
 
   useEffect(() => {
     if (chatRef.current)
@@ -229,6 +280,14 @@ function HubChat({ onClose, initialMessage }) {
       .slice(-10)
       .map((m) => ({ role: m.role, content: m.text }));
 
+    // Створюємо новий AbortController для цієї відправки. Якщо раптом
+    // попередній ще живий (не мало б бути — send гардить `loading`), то
+    // акуратно abort-имо його. Signal пробрасуємо у chatApi.send/stream.
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    const signal = ac.signal;
+
     try {
       const context = contextRef.current.text || buildContextMeasured();
       if (!contextRef.current.text) {
@@ -238,7 +297,7 @@ function HubChat({ onClose, initialMessage }) {
 
       let data;
       try {
-        data = await chatApi.send({ context, messages: history });
+        data = await chatApi.send({ context, messages: history }, { signal });
       } catch (err) {
         // Переписуємо `message` на юзер-френдлі, але лишаємося в межах
         // `ApiError` — щоб зовнішній `friendlyChatError` бачив ту саму
@@ -286,13 +345,16 @@ function HubChat({ onClose, initialMessage }) {
 
         let followUpText = "";
         try {
-          const res2 = await chatApi.stream({
-            context: contextRef.current.text || context,
-            messages: history,
-            tool_results: toolResults,
-            tool_calls_raw: data.tool_calls_raw,
-            stream: true,
-          });
+          const res2 = await chatApi.stream(
+            {
+              context: contextRef.current.text || context,
+              messages: history,
+              tool_results: toolResults,
+              tool_calls_raw: data.tool_calls_raw,
+              stream: true,
+            },
+            { signal },
+          );
 
           const ct = res2.headers.get("content-type") || "";
           if (res2.ok && ct.includes("text/event-stream")) {
@@ -358,11 +420,33 @@ function HubChat({ onClose, initialMessage }) {
         if (shouldSpeak) maybeSpeak(reply);
       }
     } catch (e) {
-      setMessages((m) => [...m, makeAssistantMsg(friendlyChatError(e))]);
+      // Явне скасування (кнопка "Скасувати" або закриття чату) не
+      // показуємо як помилку — додаємо тихий маркер.
+      if (isApiError(e) && e.kind === "aborted") {
+        setMessages((m) => [...m, makeAssistantMsg("⏹ Запит скасовано.")]);
+      } else if ((e as { name?: string } | null)?.name === "AbortError") {
+        setMessages((m) => [...m, makeAssistantMsg("⏹ Запит скасовано.")]);
+      } else {
+        setMessages((m) => [...m, makeAssistantMsg(friendlyChatError(e))]);
+      }
     } finally {
+      if (abortRef.current === ac) abortRef.current = null;
       setLoading(false);
     }
   };
+
+  const cancelInFlight = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
+  // Скасовуємо живий запит, якщо чат закривають прямо під час стріму —
+  // інакше fetch продовжує "ганяти" токени у фоні і finally-хендлер
+  // спрацьовує вже після unmount (лог у консоль + потенційна race).
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
   sendRef.current = send;
 
   const clearChat = () => {
@@ -496,7 +580,21 @@ function HubChat({ onClose, initialMessage }) {
               onSpeak={() => setSpeaking(true)}
             />
           ))}
-          {loading && <TypingIndicator />}
+          {loading && (
+            <div className="flex items-center gap-2">
+              <TypingIndicator />
+              <button
+                type="button"
+                onClick={cancelInFlight}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-panelHi hover:bg-line/40 text-muted hover:text-text text-2xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45"
+                aria-label="Скасувати поточний запит"
+                title="Скасувати (Esc)"
+              >
+                <Icon name="close" size={12} />
+                Скасувати
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Quick prompts */}

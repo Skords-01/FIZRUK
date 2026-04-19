@@ -150,7 +150,7 @@ function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center gap-2 py-6">
       <svg
-        className="animate-spin w-4 h-4 text-primary"
+        className="motion-safe:animate-spin w-4 h-4 text-primary"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

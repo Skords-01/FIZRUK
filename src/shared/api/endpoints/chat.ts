@@ -20,14 +20,24 @@ export interface ChatResponse {
   error?: string;
 }
 
+export interface ChatCallOpts {
+  /** Скасувати активний запит (AbortController у HubChat). */
+  signal?: AbortSignal;
+}
+
 export const chatApi = {
   /** Звичайний non-streaming JSON-запит. */
-  send: (payload: ChatRequestPayload) =>
-    http.post<ChatResponse>("/api/chat", payload),
+  send: (payload: ChatRequestPayload, opts: ChatCallOpts = {}) =>
+    http.post<ChatResponse>("/api/chat", payload, { signal: opts.signal }),
   /**
    * SSE-стрім. Повертає сирий `Response`, щоб викликач сам керував
-   * `ReadableStream` (напр. через `consumeHubChatSse`).
+   * `ReadableStream` (напр. через `consumeHubChatSse`). `signal` прокидуємо
+   * у fetch, щоб скасування з UI перериває read loop.
    */
-  stream: (payload: ChatRequestPayload) =>
-    http.raw("/api/chat", { method: "POST", body: payload }),
+  stream: (payload: ChatRequestPayload, opts: ChatCallOpts = {}) =>
+    http.raw("/api/chat", {
+      method: "POST",
+      body: payload,
+      signal: opts.signal,
+    }),
 };

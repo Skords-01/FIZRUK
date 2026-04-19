@@ -59,7 +59,7 @@ export function ChatInput({
             stopSpeaking();
             setSpeaking(false);
           }}
-          className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all border bg-warning/15 border-warning text-warning animate-pulse"
+          className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all border bg-warning/15 border-warning text-warning motion-safe:animate-pulse"
           title="Зупинити озвучення"
           aria-label="Зупинити озвучення"
         >
@@ -80,7 +80,7 @@ export function ChatInput({
           className={cn(
             "w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all border",
             listening
-              ? "bg-danger text-white border-danger animate-pulse"
+              ? "bg-danger text-white border-danger motion-safe:animate-pulse"
               : "bg-panel border-line text-muted hover:text-text hover:border-muted",
           )}
           title={listening ? "Зупинити запис" : "Голосовий ввід"}

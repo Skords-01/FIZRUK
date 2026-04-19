@@ -15,7 +15,7 @@ function SyncBadge({ user, syncing }) {
   if (!tone) return null;
   const toneCls =
     tone === "syncing"
-      ? "bg-primary animate-pulse"
+      ? "bg-primary motion-safe:animate-pulse"
       : tone === "offline"
         ? "bg-muted"
         : "bg-warning";
@@ -66,7 +66,7 @@ export function UserMenuButton({
           "relative w-11 h-11 flex items-center justify-center rounded-2xl text-sm font-bold transition-colors",
           "bg-brand-500/15 text-brand-600 dark:text-brand-400 hover:bg-brand-500/25",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-          syncing && "animate-pulse",
+          syncing && "motion-safe:animate-pulse",
         )}
       >
         {initial}
