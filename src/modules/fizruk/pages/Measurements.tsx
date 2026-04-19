@@ -4,6 +4,7 @@ import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { MEASURE_FIELDS, useMeasurements } from "../hooks/useMeasurements";
 import { Card } from "@shared/components/ui/Card";
+import { Stat } from "@shared/components/ui/Stat";
 
 const inp =
   "w-full h-11 rounded-2xl border border-line bg-panelHi px-4 text-text outline-none focus:border-muted transition-colors";
@@ -81,29 +82,31 @@ export function Measurements() {
         </a>
 
         <div className="grid grid-cols-3 gap-2">
-          <Card radius="lg" padding="sm" className="text-center">
-            <div className="text-2xs font-semibold text-subtle uppercase tracking-widest">
-              Записів
-            </div>
-            <div className="text-lg font-extrabold text-text tabular-nums mt-1">
-              {stats.total}
-            </div>
+          <Card radius="lg" padding="sm">
+            <Stat
+              label="Записів"
+              value={stats.total}
+              size="sm"
+              align="center"
+            />
           </Card>
-          <Card radius="lg" padding="sm" className="text-center">
-            <div className="text-2xs font-semibold text-subtle uppercase tracking-widest">
-              Останній
-            </div>
-            <div className="text-sm font-bold text-text mt-1">
-              {stats.latestAt}
-            </div>
+          <Card radius="lg" padding="sm">
+            <Stat
+              label="Останній"
+              value={
+                <span className="text-sm font-bold">{stats.latestAt}</span>
+              }
+              size="sm"
+              align="center"
+            />
           </Card>
-          <Card radius="lg" padding="sm" className="text-center">
-            <div className="text-2xs font-semibold text-subtle uppercase tracking-widest">
-              Полів
-            </div>
-            <div className="text-lg font-extrabold text-text tabular-nums mt-1">
-              {stats.filledLatest}
-            </div>
+          <Card radius="lg" padding="sm">
+            <Stat
+              label="Полів"
+              value={stats.filledLatest}
+              size="sm"
+              align="center"
+            />
           </Card>
         </div>
 

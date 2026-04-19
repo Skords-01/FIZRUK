@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { cn } from "@shared/lib/cn";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Card } from "@shared/components/ui/Card";
+import { Stat } from "@shared/components/ui/Stat";
 import { PushupsWidget } from "./PushupsWidget";
 import { HabitHeatmap } from "./HabitHeatmap";
 import { HabitLeadersBlock } from "./HabitLeadersBlock";
@@ -73,53 +74,34 @@ export function RoutineStatsPanel({
         </SectionHeading>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <div className={C.statCard}>
-            <p className="text-2xs uppercase tracking-wide text-subtle">
-              Серія сьогодні
-            </p>
-            <p className="text-2xl font-black text-text tabular-nums mt-0.5">
-              {currentStreak}
-            </p>
+            <Stat label="Серія сьогодні" value={currentStreak} size="md" />
           </div>
           <div className={C.statCard}>
-            <p className="text-2xs uppercase tracking-wide text-subtle">
-              Макс. серія
-            </p>
-            <p className="text-2xl font-black text-text tabular-nums mt-0.5">
-              {summary.maxAllTime}
-            </p>
+            <Stat label="Макс. серія" value={summary.maxAllTime} size="md" />
           </div>
           <div className={C.statCard}>
-            <p className="text-2xs uppercase tracking-wide text-subtle">
-              7 днів
-            </p>
-            <p className="text-2xl font-black text-text tabular-nums mt-0.5">
-              {Math.round(summary.r7.rate * 100)}%
-            </p>
-            <p className="text-3xs text-subtle tabular-nums">
-              {summary.r7.completed}/{summary.r7.scheduled}
-            </p>
+            <Stat
+              label="7 днів"
+              value={`${Math.round(summary.r7.rate * 100)}%`}
+              sublabel={`${summary.r7.completed}/${summary.r7.scheduled}`}
+              size="md"
+            />
           </div>
           <div className={C.statCard}>
-            <p className="text-2xs uppercase tracking-wide text-subtle">
-              30 днів
-            </p>
-            <p className="text-2xl font-black text-text tabular-nums mt-0.5">
-              {Math.round(summary.r30.rate * 100)}%
-            </p>
-            <p className="text-3xs text-subtle tabular-nums">
-              {summary.r30.completed}/{summary.r30.scheduled}
-            </p>
+            <Stat
+              label="30 днів"
+              value={`${Math.round(summary.r30.rate * 100)}%`}
+              sublabel={`${summary.r30.completed}/${summary.r30.scheduled}`}
+              size="md"
+            />
           </div>
           <div className={cn(C.statCard, "col-span-2 sm:col-span-1")}>
-            <p className="text-2xs uppercase tracking-wide text-subtle">
-              90 днів
-            </p>
-            <p className="text-2xl font-black text-text tabular-nums mt-0.5">
-              {Math.round(summary.r90.rate * 100)}%
-            </p>
-            <p className="text-3xs text-subtle tabular-nums">
-              {summary.r90.completed}/{summary.r90.scheduled}
-            </p>
+            <Stat
+              label="90 днів"
+              value={`${Math.round(summary.r90.rate * 100)}%`}
+              sublabel={`${summary.r90.completed}/${summary.r90.scheduled}`}
+              size="md"
+            />
           </div>
         </div>
       </Card>
