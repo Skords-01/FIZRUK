@@ -110,6 +110,39 @@ describe("webVitalsHandler", () => {
     expect(text).not.toMatch(/web_vitals_duration_ms_count\{metric="LCP"/);
   });
 
+  it("rejects CLS with timing-sized value (separate upper-bound)", async () => {
+    // CLS — безрозмірний (0..1+). Зловмисник міг би надіслати value=100000
+    // якби max був спільний з таймінгами (120_000ms) — це знищило б
+    // `web_vitals_cls_sum` і зробило baseline марним.
+    const req = {
+      method: "POST",
+      body: {
+        metrics: [{ name: "CLS", value: 100000, rating: "poor" }],
+      },
+    };
+    const res = makeRes();
+    webVitalsHandler(req, res);
+
+    expect(res.statusCode).toBe(204);
+    const text = await getMetricText();
+    expect(text).not.toMatch(/web_vitals_cls_count\{rating="poor"\}/);
+  });
+
+  it("accepts CLS at realistic upper-bound (value=5)", async () => {
+    const req = {
+      method: "POST",
+      body: {
+        metrics: [{ name: "CLS", value: 5, rating: "poor" }],
+      },
+    };
+    const res = makeRes();
+    webVitalsHandler(req, res);
+
+    expect(res.statusCode).toBe(204);
+    const text = await getMetricText();
+    expect(text).toMatch(/web_vitals_cls_count\{rating="poor"\} 1/);
+  });
+
   it("rejects batch of 11 metrics (enforces max=10)", async () => {
     const metrics = Array.from({ length: 11 }, () => ({
       name: "LCP",
