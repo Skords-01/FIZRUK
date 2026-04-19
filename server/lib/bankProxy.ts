@@ -15,7 +15,17 @@ import { ExternalServiceError } from "../obs/errors.js";
  * для unit-тестів (скидання стану, конфіг retry-затримок/TTL).
  */
 
-const DEFAULTS = Object.freeze({
+interface BankProxyConfig {
+  retryDelaysMs: number[];
+  retryJitterMs: number;
+  timeoutMs: number;
+  breakerFailThreshold: number;
+  breakerOpenMs: number;
+  cacheTtlMs: number;
+  cacheMaxEntries: number;
+}
+
+const DEFAULTS: Readonly<BankProxyConfig> = Object.freeze({
   retryDelaysMs: [0, 250, 750],
   retryJitterMs: 100,
   timeoutMs: 15_000,
@@ -25,7 +35,24 @@ const DEFAULTS = Object.freeze({
   cacheMaxEntries: 500,
 });
 
-const state = {
+interface BreakerState {
+  failures: number;
+  openUntil: number;
+}
+
+interface CacheEntry {
+  expires: number;
+  status: number;
+  body: string;
+  contentType: string | null;
+}
+
+interface BankProxyMutableState extends BankProxyConfig {
+  breakers: Map<string, BreakerState>;
+  cache: Map<string, CacheEntry>;
+}
+
+const state: BankProxyMutableState = {
   retryDelaysMs: [...DEFAULTS.retryDelaysMs],
   retryJitterMs: DEFAULTS.retryJitterMs,
   timeoutMs: DEFAULTS.timeoutMs,
@@ -33,38 +60,38 @@ const state = {
   breakerOpenMs: DEFAULTS.breakerOpenMs,
   cacheTtlMs: DEFAULTS.cacheTtlMs,
   cacheMaxEntries: DEFAULTS.cacheMaxEntries,
-  /** @type {Map<string, {failures:number, openUntil:number}>} */
   breakers: new Map(),
-  /** @type {Map<string, {expires:number, status:number, body:string, contentType:string|null}>} */
   cache: new Map(),
 };
 
-function sleep(ms) {
+function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-function isRetryableStatus(s) {
+function isRetryableStatus(s: number): boolean {
   return s >= 500 && s <= 599;
 }
 
-function isAbortError(e) {
-  return Boolean(
-    e && (e.name === "AbortError" || e.code === "ABORT_ERR" || e.code === 20),
+function isAbortError(e: unknown): boolean {
+  if (!e || typeof e !== "object") return false;
+  const err = e as { name?: string; code?: string | number };
+  return (
+    err.name === "AbortError" || err.code === "ABORT_ERR" || err.code === 20
   );
 }
 
-function jitteredDelay(base) {
+function jitteredDelay(base: number): number {
   if (base <= 0) return 0;
   return base + Math.floor(Math.random() * state.retryJitterMs);
 }
 
-function hashForCache(...parts) {
+function hashForCache(...parts: unknown[]): string {
   const h = crypto.createHash("sha256");
   for (const p of parts) h.update(String(p ?? "") + "\x1f");
   return h.digest("hex").slice(0, 16);
 }
 
-function getBreaker(upstream) {
+function getBreaker(upstream: string): BreakerState {
   let s = state.breakers.get(upstream);
   if (!s) {
     s = { failures: 0, openUntil: 0 };
@@ -73,7 +100,7 @@ function getBreaker(upstream) {
   return s;
 }
 
-function onBreakerFailure(upstream) {
+function onBreakerFailure(upstream: string): void {
   const s = getBreaker(upstream);
   s.failures += 1;
   if (s.failures >= state.breakerFailThreshold) {
@@ -81,13 +108,13 @@ function onBreakerFailure(upstream) {
   }
 }
 
-function onBreakerSuccess(upstream) {
+function onBreakerSuccess(upstream: string): void {
   const s = getBreaker(upstream);
   s.failures = 0;
   s.openUntil = 0;
 }
 
-function isBreakerOpen(upstream) {
+function isBreakerOpen(upstream: string): boolean {
   const s = getBreaker(upstream);
   if (!s.openUntil) return false;
   if (Date.now() < s.openUntil) return true;
@@ -97,7 +124,7 @@ function isBreakerOpen(upstream) {
   return false;
 }
 
-function cacheGet(key) {
+function cacheGet(key: string): CacheEntry | null {
   const entry = state.cache.get(key);
   if (!entry) return null;
   if (entry.expires < Date.now()) {
@@ -110,7 +137,7 @@ function cacheGet(key) {
   return entry;
 }
 
-function cacheSet(key, entry) {
+function cacheSet(key: string, entry: CacheEntry): void {
   if (state.cache.size >= state.cacheMaxEntries) {
     const oldest = state.cache.keys().next().value;
     if (oldest !== undefined) state.cache.delete(oldest);
@@ -118,28 +145,37 @@ function cacheSet(key, entry) {
   state.cache.set(key, entry);
 }
 
-/**
- * @typedef {Object} BankProxyResult
- * @property {number} status
- * @property {string} body                — сирий текст відповіді upstream-а
- * @property {string|null} contentType
- * @property {boolean} fromCache
- * @property {number} attempts            — скільки HTTP-спроб було зроблено (1..3)
- */
+export interface BankProxyResult {
+  status: number;
+  /** Сирий текст відповіді upstream-а. */
+  body: string;
+  contentType: string | null;
+  fromCache: boolean;
+  /** Скільки HTTP-спроб було зроблено (1..3); 0 — cache hit. */
+  attempts: number;
+}
 
-/**
- * @param {Object} opts
- * @param {string} opts.upstream          — стабільний label (monobank|privatbank|...)
- * @param {string} opts.baseUrl           — напр. "https://api.monobank.ua"
- * @param {string} opts.path              — уже провалідований whitelist-шлях
- * @param {Record<string,string>} [opts.query]    — query-параметри без `path`
- * @param {Record<string,string>} opts.headers    — sanitized outbound headers
- * @param {string} [opts.cacheKeySecret]  — client-secret для shard-у cache-ключа (hash-ується)
- * @param {string} [opts.method]          — default "GET". Не-GET не кешуються.
- * @param {number} [opts.timeoutMs]
- * @returns {Promise<BankProxyResult>}
- */
-export async function bankProxyFetch(opts) {
+export interface BankProxyFetchOptions {
+  /** Стабільний label (monobank|privatbank|...). */
+  upstream: string;
+  /** Напр. "https://api.monobank.ua". */
+  baseUrl: string;
+  /** Уже провалідований whitelist-шлях. */
+  path: string;
+  /** Query-параметри без `path`. */
+  query?: Record<string, string>;
+  /** Sanitized outbound headers. */
+  headers: Record<string, string>;
+  /** Client-secret для shard-у cache-ключа (hash-ується). */
+  cacheKeySecret?: string;
+  /** Default "GET". Не-GET не кешуються. */
+  method?: string;
+  timeoutMs?: number;
+}
+
+export async function bankProxyFetch(
+  opts: BankProxyFetchOptions,
+): Promise<BankProxyResult> {
   const {
     upstream,
     baseUrl,
@@ -238,7 +274,7 @@ export async function bankProxyFetch(opts) {
         fromCache: false,
         attempts: attempt + 1,
       };
-    } catch (e) {
+    } catch (e: unknown) {
       // Мережева помилка або AbortError (timeout). Ретраїмо до вичерпання.
       if (attempt < maxAttempts - 1) {
         continue;
@@ -246,9 +282,13 @@ export async function bankProxyFetch(opts) {
       const ms = Number(process.hrtime.bigint() - start) / 1e6;
       onBreakerFailure(upstream);
       recordExternalHttp(upstream, isAbortError(e) ? "timeout" : "error", ms);
+      const err = (e && typeof e === "object" ? e : {}) as {
+        message?: string;
+        code?: string | number;
+      };
       logger.error({
         msg: `${upstream}_proxy_failed`,
-        err: { message: e?.message || String(e), code: e?.code },
+        err: { message: err.message || String(e), code: err.code },
         attempts: attempt + 1,
       });
       throw new ExternalServiceError("Помилка сервера", {
@@ -267,14 +307,25 @@ export async function bankProxyFetch(opts) {
   });
 }
 
+export interface BankProxyTestHooks {
+  configure(overrides: Partial<BankProxyConfig>): void;
+  reset(): void;
+  state: BankProxyMutableState;
+}
+
 /**
  * Test-only hooks. Не використовуй у прод-коді.
  */
-export function __bankProxyTestHooks() {
+export function __bankProxyTestHooks(): BankProxyTestHooks {
   return {
     configure(overrides) {
       for (const [k, v] of Object.entries(overrides)) {
-        if (k in state) state[k] = v;
+        if (k in state) {
+          // Поля BankProxyConfig мають різні типи (number vs number[]) —
+          // інтерфейс `Partial<BankProxyConfig>` уже гарантує, що ключ і
+          // тип значення сумісні, тож точкова cast-ка тут безпечна.
+          (state as unknown as Record<string, unknown>)[k] = v as unknown;
+        }
       }
     },
     reset() {

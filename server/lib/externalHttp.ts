@@ -13,11 +13,19 @@ import {
  * рахуємо «логічний» outcome, не кожну HTTP-спробу окремо). Всі throw-и
  * всередині блоку metrics перехоплюються: metrics не мають ламати handler.
  *
- * @param {string} upstream  — стабільне ім'я upstream-а для Prometheus-label
- * @param {string} outcome   — "ok" | "error" | "timeout" | "rate_limited" | ...
- * @param {number|null} [ms] — тривалість у мс (опціонально)
+ * `outcome` — вільний рядок, але на практиці одне з:
+ * `"ok" | "error" | "timeout" | "rate_limited" | "hit" | "circuit_open"`.
+ * Типізуємо як `string`, а не union: нові outcome-и додаються регулярно,
+ * а card-множина Prometheus-лейбла і так контрольована cardinality-перевіркою
+ * у `server/obs/metrics.js`.
  */
-export function recordExternalHttp(upstream, outcome, ms) {
+export type ExternalHttpOutcome = string;
+
+export function recordExternalHttp(
+  upstream: string,
+  outcome: ExternalHttpOutcome,
+  ms?: number | null,
+): void {
   try {
     externalHttpRequestsTotal.inc({ upstream, outcome });
     if (ms != null) {
