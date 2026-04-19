@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import { validateBody } from "../../http/validate.js";
 import { ShoppingListSchema } from "../../http/schemas.js";
@@ -6,6 +7,23 @@ import {
   anthropicMessages,
   extractAnthropicText,
 } from "../../lib/anthropic.js";
+
+type AnthropicErrorPayload = { error?: { message?: string } };
+type WithAnthropicKey = Request & { anthropicKey?: string };
+
+interface ShoppingItem {
+  id: string;
+  name: string;
+  quantity: string;
+  note: string;
+  checked: false;
+}
+
+interface ShoppingCategory {
+  name: string;
+  items: ShoppingItem[];
+}
+
 const SYSTEM = `Ти помічник з планування покупок і харчування. Відповідай ТІЛЬКИ українською.
 Поверни ТІЛЬКИ валідний JSON без markdown і без додаткового тексту.
 
@@ -42,8 +60,11 @@ const SYSTEM = `Ти помічник з планування покупок і 
  * POST /api/nutrition/shopping-list — скласти список покупок з рецептів.
  * CORS / token / quota / rate-limit виставляє роутер.
  */
-export default async function handler(req, res) {
-  const apiKey = req.anthropicKey;
+export default async function handler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const apiKey = (req as WithAnthropicKey).anthropicKey as string;
 
   const parsed = validateBody(ShoppingListSchema, req, res);
   if (!parsed.ok) return;
@@ -73,7 +94,11 @@ export default async function handler(req, res) {
         return `• ${title}: ${ings || "без деталей"}`;
       })
       .join("\n");
-  } else if (weekPlan?.days?.length > 0) {
+  } else if (
+    weekPlan &&
+    Array.isArray(weekPlan.days) &&
+    weekPlan.days.length > 0
+  ) {
     ingredientsList = weekPlan.days
       .map((d) => {
         const day = d?.label || "День";
@@ -109,55 +134,64 @@ ${ingredientsList}
     timeoutMs: 25000,
     endpoint: "shopping-list",
   });
-  if (!response.ok) {
-    throw new ExternalServiceError(data?.error?.message || "AI error", {
-      status: response.status,
-      code: "ANTHROPIC_ERROR",
-    });
+  if (!response || !response.ok) {
+    throw new ExternalServiceError(
+      (data as AnthropicErrorPayload)?.error?.message || "AI error",
+      {
+        status: response?.status,
+        code: "ANTHROPIC_ERROR",
+      },
+    );
   }
 
   const out = extractAnthropicText(data);
   const jsonParsed = extractJsonFromText(out);
 
-  const obj =
+  const obj: Record<string, unknown> =
     jsonParsed && typeof jsonParsed === "object" && !Array.isArray(jsonParsed)
-      ? jsonParsed
+      ? (jsonParsed as Record<string, unknown>)
       : {};
 
-  const seenNames = new Set();
-  const normalize = (s) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  const seenNames = new Set<string>();
+  const normalize = (s: string): string =>
+    s.toLowerCase().replace(/\s+/g, " ").trim();
 
-  const categories = Array.isArray(obj.categories)
-    ? obj.categories
-        .map((cat) => {
-          if (!cat || typeof cat !== "object") return null;
-          const name = String(cat.name || "Інше").trim();
-          const items = Array.isArray(cat.items)
-            ? cat.items
-                .map((item) => {
-                  if (!item || typeof item !== "object") return null;
-                  const itemName = String(item.name || "").trim();
-                  if (!itemName) return null;
-                  const key = normalize(itemName);
-                  if (seenNames.has(key)) return null;
-                  seenNames.add(key);
-                  return {
-                    id: `si_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-                    name: itemName,
-                    quantity: String(item.quantity || "").trim(),
-                    note: String(item.note || "").trim(),
-                    checked: false,
-                  };
-                })
-                .filter(Boolean)
-            : [];
-          if (items.length === 0) return null;
-          return { name, items };
-        })
-        .filter(Boolean)
+  const rawCategories = Array.isArray(obj.categories)
+    ? (obj.categories as unknown[])
     : [];
 
-  return res.status(200).json({
+  const categories: ShoppingCategory[] = rawCategories
+    .map((cat): ShoppingCategory | null => {
+      if (!cat || typeof cat !== "object") return null;
+      const catRec = cat as Record<string, unknown>;
+      const name = String(catRec.name || "Інше").trim();
+      const rawItems = Array.isArray(catRec.items)
+        ? (catRec.items as unknown[])
+        : [];
+      const items = rawItems
+        .map((item): ShoppingItem | null => {
+          if (!item || typeof item !== "object") return null;
+          const itemRec = item as Record<string, unknown>;
+          const itemName = String(itemRec.name || "").trim();
+          if (!itemName) return null;
+          const key = normalize(itemName);
+          if (seenNames.has(key)) return null;
+          seenNames.add(key);
+          return {
+            id: `si_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            name: itemName,
+            quantity: String(itemRec.quantity || "").trim(),
+            note: String(itemRec.note || "").trim(),
+            checked: false,
+          };
+        })
+        .filter((v): v is ShoppingItem => Boolean(v));
+      if (items.length === 0) return null;
+      return { name, items };
+    })
+    .filter((v): v is ShoppingCategory => Boolean(v));
+
+  res.status(200).json({
     categories,
     rawText: categories.length === 0 ? out || null : null,
   });

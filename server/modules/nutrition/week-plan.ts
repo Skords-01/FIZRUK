@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import { validateBody } from "../../http/validate.js";
 import { WeekPlanSchema } from "../../http/schemas.js";
@@ -6,21 +7,39 @@ import {
   anthropicMessages,
   extractAnthropicText,
 } from "../../lib/anthropic.js";
-function normalizeWeekPlan(parsed) {
+
+type AnthropicErrorPayload = { error?: { message?: string } };
+type WithAnthropicKey = Request & { anthropicKey?: string };
+
+interface WeekDay {
+  label: string;
+  note: string;
+  meals: string[];
+}
+
+interface NormalizedWeekPlan {
+  days: WeekDay[];
+  shoppingList: string[];
+}
+
+function normalizeWeekPlan(parsed: unknown): NormalizedWeekPlan {
   const obj =
     parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed
-      : {};
-  const days = Array.isArray(obj.days) ? obj.days : [];
-  const shoppingList = Array.isArray(obj.shoppingList) ? obj.shoppingList : [];
+      ? (parsed as Record<string, unknown>)
+      : ({} as Record<string, unknown>);
+  const days = Array.isArray(obj.days) ? (obj.days as unknown[]) : [];
+  const shoppingList = Array.isArray(obj.shoppingList)
+    ? (obj.shoppingList as unknown[])
+    : [];
   return {
-    days: days.slice(0, 7).map((d, i) => {
+    days: days.slice(0, 7).map((d, i): WeekDay => {
       if (!d || typeof d !== "object")
         return { label: `День ${i + 1}`, note: "", meals: [] };
-      const label = String(d.label || `День ${i + 1}`).slice(0, 40);
-      const note = String(d.note || "").slice(0, 500);
-      const meals = Array.isArray(d.meals)
-        ? d.meals
+      const rec = d as Record<string, unknown>;
+      const label = String(rec.label || `День ${i + 1}`).slice(0, 40);
+      const note = String(rec.note || "").slice(0, 500);
+      const meals = Array.isArray(rec.meals)
+        ? (rec.meals as unknown[])
             .slice(0, 8)
             .map((x) => String(x || "").trim())
             .filter(Boolean)
@@ -50,8 +69,11 @@ const SYSTEM = `Ти шеф-кухар і планувальник харчув�
  * POST /api/nutrition/week-plan — згенерувати план харчування на тиждень.
  * CORS / token / quota / rate-limit виставляє роутер.
  */
-export default async function handler(req, res) {
-  const apiKey = req.anthropicKey;
+export default async function handler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const apiKey = (req as WithAnthropicKey).anthropicKey as string;
 
   const parsed = validateBody(WeekPlanSchema, req, res);
   if (!parsed.ok) return;
@@ -86,22 +108,23 @@ export default async function handler(req, res) {
     timeoutMs: 35000,
     endpoint: "week-plan",
   });
-  if (!response.ok) {
-    throw new ExternalServiceError(data?.error?.message || "AI error", {
-      status: response.status,
-      code: "ANTHROPIC_ERROR",
-    });
+  if (!response || !response.ok) {
+    throw new ExternalServiceError(
+      (data as AnthropicErrorPayload)?.error?.message || "AI error",
+      {
+        status: response?.status,
+        code: "ANTHROPIC_ERROR",
+      },
+    );
   }
 
   const out = extractAnthropicText(data);
-  let plan = { days: [], shoppingList: [] };
+  let plan: NormalizedWeekPlan = { days: [], shoppingList: [] };
   try {
     const jsonParsed = extractJsonFromText(out);
     plan = normalizeWeekPlan(jsonParsed);
   } catch {
     plan = { days: [], shoppingList: [] };
   }
-  return res
-    .status(200)
-    .json({ plan, rawText: plan.days.length === 0 ? out : null });
+  res.status(200).json({ plan, rawText: plan.days.length === 0 ? out : null });
 }

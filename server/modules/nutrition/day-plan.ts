@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import { validateBody } from "../../http/validate.js";
 import { DayPlanSchema } from "../../http/schemas.js";
@@ -6,6 +7,33 @@ import {
   anthropicMessages,
   extractAnthropicText,
 } from "../../lib/anthropic.js";
+
+type AnthropicErrorPayload = { error?: { message?: string } };
+type WithAnthropicKey = Request & { anthropicKey?: string };
+
+type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+
+interface PlanMeal {
+  type: MealType;
+  label: string;
+  name: string;
+  description: string;
+  ingredients: string[];
+  kcal: number | null;
+  protein_g: number | null;
+  fat_g: number | null;
+  carbs_g: number | null;
+}
+
+interface NormalizedDayPlan {
+  meals: PlanMeal[];
+  totalKcal: number | null;
+  totalProtein_g: number | null;
+  totalFat_g: number | null;
+  totalCarbs_g: number | null;
+  note: string;
+}
+
 const SYSTEM = `Ти нутріціолог і шеф-кухар. Відповідай ТІЛЬКИ українською.
 Поверни ТІЛЬКИ валідний JSON без markdown і без додаткового тексту.
 
@@ -39,68 +67,53 @@ const SYSTEM = `Ти нутріціолог і шеф-кухар. Відпові
 - ingredients — список ключових інгредієнтів з кількостями
 - Якщо цільові макроси не задані — пропонуй збалансоване харчування ~2000 ккал`;
 
-function normalizeDayPlan(parsed) {
+function numOrNull(v: unknown): number | null {
+  return v != null && Number.isFinite(Number(v)) ? Number(v) : null;
+}
+
+function normalizeDayPlan(parsed: unknown): NormalizedDayPlan {
   const obj =
     parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed
-      : {};
-  const meals = Array.isArray(obj.meals) ? obj.meals : [];
-  const validTypes = ["breakfast", "lunch", "dinner", "snack"];
+      ? (parsed as Record<string, unknown>)
+      : ({} as Record<string, unknown>);
+  const meals = Array.isArray(obj.meals) ? (obj.meals as unknown[]) : [];
+  const validTypes: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
+  const typeLabels: Record<MealType, string> = {
+    breakfast: "Сніданок",
+    lunch: "Обід",
+    dinner: "Вечеря",
+    snack: "Перекус",
+  };
   return {
     meals: meals
-      .map((m) => {
+      .map((m): PlanMeal | null => {
         if (!m || typeof m !== "object") return null;
-        const type = validTypes.includes(m.type) ? m.type : "snack";
-        const typeLabels = {
-          breakfast: "Сніданок",
-          lunch: "Обід",
-          dinner: "Вечеря",
-          snack: "Перекус",
-        };
+        const rec = m as Record<string, unknown>;
+        const type: MealType = validTypes.includes(rec.type as MealType)
+          ? (rec.type as MealType)
+          : "snack";
         return {
           type,
-          label: String(m.label || typeLabels[type]),
-          name: String(m.name || "").trim(),
-          description: String(m.description || "").trim(),
-          ingredients: Array.isArray(m.ingredients)
-            ? m.ingredients.map((x) => String(x).trim()).filter(Boolean)
+          label: String(rec.label || typeLabels[type]),
+          name: String(rec.name || "").trim(),
+          description: String(rec.description || "").trim(),
+          ingredients: Array.isArray(rec.ingredients)
+            ? (rec.ingredients as unknown[])
+                .map((x) => String(x).trim())
+                .filter(Boolean)
             : [],
-          kcal:
-            m.kcal != null && Number.isFinite(Number(m.kcal))
-              ? Number(m.kcal)
-              : null,
-          protein_g:
-            m.protein_g != null && Number.isFinite(Number(m.protein_g))
-              ? Number(m.protein_g)
-              : null,
-          fat_g:
-            m.fat_g != null && Number.isFinite(Number(m.fat_g))
-              ? Number(m.fat_g)
-              : null,
-          carbs_g:
-            m.carbs_g != null && Number.isFinite(Number(m.carbs_g))
-              ? Number(m.carbs_g)
-              : null,
+          kcal: numOrNull(rec.kcal),
+          protein_g: numOrNull(rec.protein_g),
+          fat_g: numOrNull(rec.fat_g),
+          carbs_g: numOrNull(rec.carbs_g),
         };
       })
-      .filter(Boolean)
+      .filter((v): v is PlanMeal => Boolean(v))
       .slice(0, 6),
-    totalKcal:
-      obj.totalKcal != null && Number.isFinite(Number(obj.totalKcal))
-        ? Number(obj.totalKcal)
-        : null,
-    totalProtein_g:
-      obj.totalProtein_g != null && Number.isFinite(Number(obj.totalProtein_g))
-        ? Number(obj.totalProtein_g)
-        : null,
-    totalFat_g:
-      obj.totalFat_g != null && Number.isFinite(Number(obj.totalFat_g))
-        ? Number(obj.totalFat_g)
-        : null,
-    totalCarbs_g:
-      obj.totalCarbs_g != null && Number.isFinite(Number(obj.totalCarbs_g))
-        ? Number(obj.totalCarbs_g)
-        : null,
+    totalKcal: numOrNull(obj.totalKcal),
+    totalProtein_g: numOrNull(obj.totalProtein_g),
+    totalFat_g: numOrNull(obj.totalFat_g),
+    totalCarbs_g: numOrNull(obj.totalCarbs_g),
     note: String(obj.note || "").trim(),
   };
 }
@@ -109,8 +122,11 @@ function normalizeDayPlan(parsed) {
  * POST /api/nutrition/day-plan — згенерувати план харчування на день.
  * CORS / token / quota / rate-limit виставляє роутер.
  */
-export default async function handler(req, res) {
-  const apiKey = req.anthropicKey;
+export default async function handler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const apiKey = (req as WithAnthropicKey).anthropicKey as string;
 
   const parsed = validateBody(DayPlanSchema, req, res);
   if (!parsed.ok) return;
@@ -170,18 +186,21 @@ ${regenStr}`;
     timeoutMs: 30000,
     endpoint: "day-plan",
   });
-  if (!response.ok) {
-    throw new ExternalServiceError(data?.error?.message || "AI error", {
-      status: response.status,
-      code: "ANTHROPIC_ERROR",
-    });
+  if (!response || !response.ok) {
+    throw new ExternalServiceError(
+      (data as AnthropicErrorPayload)?.error?.message || "AI error",
+      {
+        status: response?.status,
+        code: "ANTHROPIC_ERROR",
+      },
+    );
   }
 
   const out = extractAnthropicText(data);
   const jsonParsed = extractJsonFromText(out);
   const plan = normalizeDayPlan(jsonParsed);
 
-  return res.status(200).json({
+  res.status(200).json({
     plan,
     rawText: plan.meals.length === 0 ? out || null : null,
   });

@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { extractJsonFromText } from "../../http/jsonSafe.js";
 import { validateBody } from "../../http/validate.js";
 import { DayHintSchema } from "../../http/schemas.js";
@@ -6,13 +7,17 @@ import {
   anthropicMessages,
   extractAnthropicText,
 } from "../../lib/anthropic.js";
-function safeNonNegOrNull(x) {
+
+type AnthropicErrorPayload = { error?: { message?: string } };
+type WithAnthropicKey = Request & { anthropicKey?: string };
+
+function safeNonNegOrNull(x: unknown): number | null {
   if (x == null || x === "") return null;
   const n = Number(x);
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-function normalizeHint(text) {
+function normalizeHint(text: unknown): string {
   const t = String(text || "").trim();
   return t.slice(0, 1200);
 }
@@ -21,8 +26,11 @@ function normalizeHint(text) {
  * POST /api/nutrition/day-hint — коротка порада по денних макросах.
  * CORS / token / quota / rate-limit виставляє роутер.
  */
-export default async function handler(req, res) {
-  const apiKey = req.anthropicKey;
+export default async function handler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const apiKey = (req as WithAnthropicKey).anthropicKey as string;
 
   const parsed = validateBody(DayHintSchema, req, res);
   if (!parsed.ok) return;
@@ -66,21 +74,24 @@ ${contextNote}${sourcesNote}Факт за день: ккал ${m.kcal ?? "—"},
     timeoutMs: 20000,
     endpoint: "day-hint",
   });
-  if (!response.ok) {
-    throw new ExternalServiceError(data?.error?.message || "AI error", {
-      status: response.status,
-      code: "ANTHROPIC_ERROR",
-    });
+  if (!response || !response.ok) {
+    throw new ExternalServiceError(
+      (data as AnthropicErrorPayload)?.error?.message || "AI error",
+      {
+        status: response?.status,
+        code: "ANTHROPIC_ERROR",
+      },
+    );
   }
 
   const out = extractAnthropicText(data);
   let hint = "";
   try {
     const jsonParsed = extractJsonFromText(out);
-    hint = normalizeHint(jsonParsed?.hint);
+    hint = normalizeHint((jsonParsed as { hint?: unknown } | null)?.hint);
   } catch {
     hint = normalizeHint(out);
   }
   if (!hint) hint = "Не вдалося сформувати підказку.";
-  return res.status(200).json({ hint });
+  res.status(200).json({ hint });
 }
