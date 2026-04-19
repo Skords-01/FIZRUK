@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@shared/components/ui/Button";
+import { Input } from "@shared/components/ui/Input";
 import { useAuth } from "./AuthContext.jsx";
 
 export function AuthPage({ onContinueWithoutAccount }) {
@@ -49,9 +50,6 @@ export function AuthPage({ onContinueWithoutAccount }) {
     setLoading(false);
   };
 
-  const INPUT_CLS =
-    "w-full min-h-[44px] px-4 py-3 rounded-xl bg-panel border border-line text-text text-[16px] md:text-sm placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-colors";
-
   return (
     <div
       className="min-h-dvh bg-bg flex flex-col items-center justify-center px-5"
@@ -79,12 +77,11 @@ export function AuthPage({ onContinueWithoutAccount }) {
               >
                 Ім{"'"}я
               </label>
-              <input
+              <Input
                 id="auth-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={INPUT_CLS}
                 placeholder={"Ваше ім'я"}
                 autoComplete="name"
               />
@@ -98,13 +95,12 @@ export function AuthPage({ onContinueWithoutAccount }) {
             >
               Email
             </label>
-            <input
+            <Input
               id="auth-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={INPUT_CLS}
               placeholder="email@example.com"
               autoComplete="email"
             />
@@ -133,14 +129,13 @@ export function AuthPage({ onContinueWithoutAccount }) {
                 </button>
               )}
             </div>
-            <input
+            <Input
               id="auth-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className={INPUT_CLS}
               placeholder="Мінімум 6 символів"
               autoComplete={
                 mode === "login" ? "current-password" : "new-password"
@@ -172,12 +167,11 @@ export function AuthPage({ onContinueWithoutAccount }) {
                   >
                     Email для скидання
                   </label>
-                  <input
+                  <Input
                     id="auth-forgot-email"
                     type="email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    className={INPUT_CLS}
                     placeholder="email@example.com"
                     autoComplete="email"
                   />

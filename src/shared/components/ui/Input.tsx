@@ -1,10 +1,42 @@
 import {
   forwardRef,
+  type HTMLInputTypeAttribute,
   type InputHTMLAttributes,
   type ReactNode,
   type TextareaHTMLAttributes,
 } from "react";
 import { cn } from "../../lib/cn";
+
+/**
+ * Opinionated per-`type` defaults for `spellCheck`, `inputMode`, and
+ * `autoComplete`. Per the Web Interface Guidelines, non-prose inputs
+ * (email / url / password / numeric / code fields) should disable
+ * spellcheck so the browser does not red-underline legitimate values
+ * and should hint the right software keyboard / autofill category on
+ * mobile. Consumers can always override by passing the prop explicitly
+ * — the Input only fills in a default when the caller did not.
+ */
+const NON_PROSE_TYPES = new Set<HTMLInputTypeAttribute>([
+  "email",
+  "password",
+  "url",
+  "tel",
+  "number",
+  "search",
+]);
+
+const DEFAULT_INPUT_MODE: Partial<
+  Record<
+    HTMLInputTypeAttribute,
+    InputHTMLAttributes<HTMLInputElement>["inputMode"]
+  >
+> = {
+  email: "email",
+  tel: "tel",
+  url: "url",
+  number: "decimal",
+  search: "search",
+};
 
 /**
  * Sergeant Design System — Input Component
@@ -60,6 +92,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     success,
     icon,
     suffix,
+    type,
+    spellCheck,
+    inputMode,
     ...props
   },
   ref,
@@ -70,6 +105,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       ? "border-brand-400 focus-visible:border-brand-500 focus-visible:ring-brand-500/25 focus:border-brand-500"
       : "";
 
+  // Type-aware defaults. The caller's explicit prop always wins — these
+  // only fill in when `undefined` so existing call sites don't change.
+  const resolvedSpellCheck =
+    spellCheck ?? (type && NON_PROSE_TYPES.has(type) ? false : undefined);
+  const resolvedInputMode =
+    inputMode ?? (type ? DEFAULT_INPUT_MODE[type] : undefined);
+
   return (
     <div className="relative">
       {icon && (
@@ -79,6 +121,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
       <input
         ref={ref}
+        type={type}
+        spellCheck={resolvedSpellCheck}
+        inputMode={resolvedInputMode}
         aria-invalid={error ? true : undefined}
         className={cn(
           "w-full text-text placeholder:text-subtle/70",
