@@ -565,19 +565,25 @@ Web використовує кастомні компоненти + canvas/SVG.
     UI-примітиви, `apps/web/*`) імпортують хелпери з `@sergeant/shared` без
     знання про платформу.
 - **R8.** 🔵 In progress (PR [#432](https://github.com/Skords-01/Sergeant/pull/432)
-  — web-адаптер + перші 3 споживача; mobile-адаптер = TODO-заглушка до Фази 4+).
-  Pure-контракт `FileDownloadAdapter` + `downloadJson(filename, payload)`
-  живе у `@sergeant/shared/lib/fileDownload` із безпечним no-op-дефолтом
-  (dev-warn, прод-тиша). Web-імплементація `Blob` + `URL.createObjectURL`
-  - `<a download>` у `apps/web/src/shared/lib/fileDownload.ts`, реєструється
-    у `apps/web/src/main.jsx`. Мігровано з inline-Blob-дублікатів:
+  - follow-up PR [#XXX](https://github.com/Skords-01/Sergeant/pull/XXX)
+    — web-адаптер + усі JSON-download-споживачі мігровано; mobile-адаптер
+    = TODO-заглушка до Фази 4+). Pure-контракт `FileDownloadAdapter` +
+    `downloadJson(filename, payload)` живе у `@sergeant/shared/lib/fileDownload`
+    із безпечним no-op-дефолтом (dev-warn, прод-тиша). Web-імплементація
+    `Blob` + `URL.createObjectURL` + `<a download>` у
+    `apps/web/src/shared/lib/fileDownload.ts`, реєструється у
+    `apps/web/src/main.jsx`. УСІ web-споживачі JSON-бекапу мігровано:
     `core/HubBackupPanel.tsx`, `modules/routine/components/RoutineBackupSection.tsx`,
-    `modules/fizruk/components/workouts/WorkoutBackupBar.tsx`. **Залишилось:**
-    решту 5 споживачів (`mealPhotoStorage`, `usePhotoAnalysis`, `LogCard`,
-    `useStorage`, `fizruk/pages/Progress`) мігрувати окремим PR. Mobile-адаптер
-    зараз — warn-stub у `apps/mobile/src/lib/fileDownload.ts`; Фаза 4+
-    замінить його на `expo-file-system.writeAsStringAsync`
-    (`cacheDirectory`) + `expo-sharing.shareAsync` без змін у споживачах.
+    `modules/fizruk/components/workouts/WorkoutBackupBar.tsx` (PR #432) +
+    `modules/fizruk/pages/Progress.tsx`, `modules/finyk/hooks/useStorage.ts`
+    (цей PR #XXX). Nutrition-модуль (`mealPhotoStorage`, `usePhotoAnalysis`,
+    `LogCard`) використовує `URL.createObjectURL` виключно для image-preview
+    (мініатюри страв, попередній перегляд фото перед аналізом) — це окремий
+    пайплайн `expo-image-picker`/`expo-image-manipulator` з §10 таблиці, не
+    JSON-download-контракт. Mobile-адаптер зараз — warn-stub у
+    `apps/mobile/src/lib/fileDownload.ts`; Фаза 4+ замінить його на
+    `expo-file-system.writeAsStringAsync` (`cacheDirectory`) +
+    `expo-sharing.shareAsync` без змін у споживачах.
 - **R9.** 🔵 In progress (PR [#433](https://github.com/Skords-01/Sergeant/pull/433) — shared hook + web/mobile адаптери + 5 споживачів
   мігровано + видалено дублікат у `routine/hooks`). Pure-контракт
   `VisualKeyboardInsetAdapter` + `useVisualKeyboardInset(active)` живе у
