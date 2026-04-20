@@ -252,6 +252,32 @@ isReduceMotionEnabled()` (WCAG 2.3.3 parity).
   `description`/`emoji`/`href`) централізує мапу сторінок для
   майбутнього nav-UI та тестів. Jest smoke-test на `FinykApp.test.tsx`
   покриває hero + 4 drill-down cards. Без нових залежностей.
+- `apps/mobile/src/modules/routine/` — перший зріз модуля Рутина
+  (Phase 5 / PR 1 — shell + routing). Містить `RoutineApp.tsx`
+  (root-компонент, обгорнутий у `ModuleErrorBoundary`
+  `moduleName="Рутина"`, з `router.replace("/")` як `onBackToHub`),
+  `components/RoutineBottomNav.tsx` (3-tab segmented switcher —
+  `calendar` / `stats` / `settings`, дзеркало
+  `apps/web/src/modules/routine/components/RoutineBottomNav.tsx`,
+  без shared `ModuleBottomNav`-примітиву, з emoji-іконками доки
+  react-native-svg не зайде у Phase 5 PR 5) та
+  `components/RoutineTabPlaceholder.tsx` (стоковий "Скоро —
+  буде портовано" `Card` для трьох sub-табів). Активний таб
+  персистить у спільний `STORAGE_KEYS.ROUTINE_MAIN_TAB` MMKV-слот
+  як raw-string (web-парі до `localStorage.getItem/setItem`
+  без JSON-обгортки) через `safeReadStringLS` / `safeWriteLS`;
+  `useLocalStorage`-хук не використовується, бо його JSON-round-trip
+  асиметричний для плоских рядків (`JSON.parse("stats")` кидає).
+  Маршрут — `apps/mobile/app/(tabs)/routine.tsx` рендерить
+  `<RoutineApp />` замість `ModuleStub` (auth-guard уже в
+  `(tabs)/_layout.tsx` через `useUser` + `<Redirect>`). Jest-тести
+  покривають default-таб, перемикання між трьома табами, запис
+  у MMKV, підхоплення persisted-таба, та fallback на `calendar`
+  при malformed-значенні. Без нових залежностей. `jest.setup.js`
+  отримав мок `expo-router` (імперативний `router` + `useRouter` +
+  `Link` + `Redirect` + `Stack/Tabs`) бо `@react-navigation/native`
+  ESM-entry не трансформується дефолтним `jest-expo` transform-list.
+  Наповнення трьох sub-табів — Phase 5 PR 2–7.
 - `apps/mobile/src/sync/` — CloudSync + offline-черга (Фаза 3). Дзеркало
   `apps/web/src/core/cloudSync/*` з RN-специфічними адаптерами: MMKV
   замість `localStorage`, `@react-native-community/netinfo` замість
