@@ -25,6 +25,7 @@ import { onSyncEvent, SYNC_EVENT } from "../events";
 import { onOnlineChange, startOnlineTracker } from "../net/online";
 import { getOfflineQueue } from "../queue/offlineQueue";
 import { getDirtyModules } from "../state/dirtyModules";
+import { clearSyncManagedData } from "../state/moduleData";
 import type { CurrentUser, SyncCallbacks } from "../types";
 import { useSyncCallbacks } from "./useSyncCallbacks";
 
@@ -139,10 +140,21 @@ export function useCloudSync(
 
   // (4) Initial sync on user-id change: drain queue + pull fresh
   // cloud state so a just-signed-in device adopts server data.
+  //
+  // When the previous user was non-null, wipe every sync-managed MMKV
+  // slice (module data + dirty map + offline queue + modified-times)
+  // BEFORE replaying, mirroring the web `useInitialSyncOnUser` in
+  // apps/web/src/core/cloudSync/hook/useInitialSyncOnUser.ts. Without
+  // this, user A's queued offline changes would be replayed under user
+  // B's session on the same device, corrupting user B's cloud state.
   const lastUserRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     const id = user?.id ?? null;
-    if (lastUserRef.current === id) return;
+    const previousId = lastUserRef.current;
+    if (previousId === id) return;
+    if (previousId !== undefined && previousId !== null) {
+      clearSyncManagedData();
+    }
     lastUserRef.current = id;
     if (!id) return;
     void runExclusive(async (cb) => {

@@ -30,7 +30,15 @@ import NetInfo, { type NetInfoState } from "@react-native-community/netinfo";
 
 type Listener = () => void;
 
-let started = false;
+// Reference-count tracker subscriptions rather than using a boolean
+// `started` flag: `startOnlineTracker()` is called from multiple hooks
+// (`useCloudSync`, `useSyncStatus`), and React runs child effect
+// cleanups before parent cleanups. A boolean flag would let the first
+// unmounting caller tear down the NetInfo subscription for the entire
+// app, silently disabling offline→online replay. The counter only
+// removes the NetInfo listener when the last consumer unsubscribes.
+let subscriberCount = 0;
+let netInfoUnsubscribe: (() => void) | null = null;
 // Default to `true` so first-render engines don't see a spurious
 // "offline" before NetInfo delivers its first snapshot. NetInfo's own
 // `fetch()` below corrects this immediately on mount.
@@ -60,23 +68,31 @@ function applyState(state: NetInfoState): void {
 
 /**
  * Install the single NetInfo subscription. Safe to call multiple
- * times — subsequent calls are no-ops.
+ * times — each caller gets its own cleanup and the underlying
+ * listener is only torn down when the final subscriber unmounts.
  */
 export function startOnlineTracker(): () => void {
-  if (started) return () => {};
-  started = true;
-  // Seed synchronously-ish: NetInfo.fetch is async, but the
-  // subscription fires its current state almost immediately on most
-  // platforms.
-  NetInfo.fetch()
-    .then(applyState)
-    .catch(() => {
-      /* swallow — default `online = true` stays */
-    });
-  const unsubscribe = NetInfo.addEventListener(applyState);
+  subscriberCount += 1;
+  if (subscriberCount === 1) {
+    // Seed synchronously-ish: NetInfo.fetch is async, but the
+    // subscription fires its current state almost immediately on most
+    // platforms.
+    NetInfo.fetch()
+      .then(applyState)
+      .catch(() => {
+        /* swallow — default `online = true` stays */
+      });
+    netInfoUnsubscribe = NetInfo.addEventListener(applyState);
+  }
+  let released = false;
   return () => {
-    unsubscribe();
-    started = false;
+    if (released) return;
+    released = true;
+    subscriberCount = Math.max(0, subscriberCount - 1);
+    if (subscriberCount === 0 && netInfoUnsubscribe) {
+      netInfoUnsubscribe();
+      netInfoUnsubscribe = null;
+    }
   };
 }
 
@@ -91,7 +107,11 @@ export function onOnlineChange(listener: Listener): () => void {
 
 /** Test-only: reset module state between suites. */
 export function _resetOnlineForTest(initial = true): void {
-  started = false;
+  subscriberCount = 0;
+  if (netInfoUnsubscribe) {
+    netInfoUnsubscribe();
+    netInfoUnsubscribe = null;
+  }
   online = initial;
   listeners.clear();
 }
