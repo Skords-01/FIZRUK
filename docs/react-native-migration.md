@@ -539,11 +539,20 @@ Web використовує кастомні компоненти + canvas/SVG.
     `apps/mobile/app/_layout.tsx`. Консьюмери (`@sergeant/finyk-domain`,
     UI-примітиви, `apps/web/*`) імпортують хелпери з `@sergeant/shared` без
     знання про платформу.
-- **R8.** Винести `downloadJson(filename, payload)` у адаптер:
-  web — `Blob` + `URL.createObjectURL` + `a.download`; mobile —
-  `expo-file-system.writeAsStringAsync` у `cacheDirectory` +
-  `expo-sharing.shareAsync`. Усуне дублікати у `routine/components/RoutineBackupSection`,
-  `fizruk/pages/Progress`, `nutrition/hooks/useNutritionCloudBackup`.
+- **R8.** 🔵 In progress (PR [#432](https://github.com/Skords-01/Sergeant/pull/432)
+  — web-адаптер + перші 3 споживача; mobile-адаптер = TODO-заглушка до Фази 4+).
+  Pure-контракт `FileDownloadAdapter` + `downloadJson(filename, payload)`
+  живе у `@sergeant/shared/lib/fileDownload` із безпечним no-op-дефолтом
+  (dev-warn, прод-тиша). Web-імплементація `Blob` + `URL.createObjectURL`
+  - `<a download>` у `apps/web/src/shared/lib/fileDownload.ts`, реєструється
+    у `apps/web/src/main.jsx`. Мігровано з inline-Blob-дублікатів:
+    `core/HubBackupPanel.tsx`, `modules/routine/components/RoutineBackupSection.tsx`,
+    `modules/fizruk/components/workouts/WorkoutBackupBar.tsx`. **Залишилось:**
+    решту 5 споживачів (`mealPhotoStorage`, `usePhotoAnalysis`, `LogCard`,
+    `useStorage`, `fizruk/pages/Progress`) мігрувати окремим PR. Mobile-адаптер
+    зараз — warn-stub у `apps/mobile/src/lib/fileDownload.ts`; Фаза 4+
+    замінить його на `expo-file-system.writeAsStringAsync`
+    (`cacheDirectory`) + `expo-sharing.shareAsync` без змін у споживачах.
 - **R9.** Винести `useVisualKeyboardInset` у платформенний хук:
   web — `window.visualViewport.resize/scroll`; mobile — `Keyboard.addListener`
   або `useAnimatedKeyboard` з `react-native-keyboard-controller`. Усуне

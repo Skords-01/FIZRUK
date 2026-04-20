@@ -1,4 +1,5 @@
 import { useRef, type ChangeEvent } from "react";
+import { downloadJson } from "@sergeant/shared";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
@@ -38,16 +39,11 @@ export function RoutineBackupSection({
         <Button
           type="button"
           className={cn("font-bold", theme?.primary)}
-          onClick={() => {
-            const blob = new Blob(
-              [JSON.stringify(buildRoutineBackupPayload(), null, 2)],
-              { type: "application/json" },
+          onClick={async () => {
+            await downloadJson(
+              `hub-routine-backup-${new Date().toISOString().slice(0, 10)}.json`,
+              buildRoutineBackupPayload(),
             );
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = `hub-routine-backup-${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(a.href), 1500);
           }}
         >
           Експорт JSON

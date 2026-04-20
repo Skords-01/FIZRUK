@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { downloadJson } from "@sergeant/shared";
 import { Button } from "@shared/components/ui/Button";
 import { useToast } from "@shared/hooks/useToast";
 import { cn } from "@shared/lib/cn";
@@ -8,16 +9,12 @@ export function HubBackupPanel({ className }) {
   const fileRef = useRef(null);
   const toast = useToast();
 
-  const exportJson = () => {
+  const exportJson = async () => {
     const payload = buildHubBackupPayload({ includeChat: false });
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `hub-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    await downloadJson(
+      `hub-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      payload,
+    );
   };
 
   const runImport = (e) => {

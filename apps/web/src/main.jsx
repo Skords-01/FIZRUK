@@ -9,6 +9,9 @@ import { createAppQueryClient } from "@shared/lib/queryClient.js";
 // Registers the web `navigator.vibrate`-based adapter on the shared
 // haptic contract (`@sergeant/shared`). Import for side effects only.
 import "@shared/lib/haptic";
+// Registers the web Blob + <a download>-based adapter on the shared
+// file-download contract (`@sergeant/shared`). Import for side effects only.
+import "@shared/lib/fileDownload";
 import { ErrorBoundary } from "./core/ErrorBoundary.jsx";
 import { initSentry } from "./core/sentry.js";
 import { initWebVitals } from "./core/webVitals.js";
