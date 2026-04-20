@@ -39,10 +39,13 @@ export function createMeRouter(): Router {
       // що веб і майбутній мобільний клієнт отримають ідентичну форму, і
       // не дає випадково просочити новому полю в response без оновлення
       // схеми.
+      // `email` має валідацію `.email()` у схемі — тож порожній рядок ""
+      // валитиме parse. Використовуємо `||` замість `??`, щоб і falsy-рядки
+      // (якщо колись прийшов "") нормалізувались до `null`.
       const payload: MeResponse = MeResponseSchema.parse({
         user: {
           id: user.id,
-          email: user.email ?? null,
+          email: user.email || null,
           name: user.name ?? null,
           image: user.image ?? null,
           emailVerified: Boolean(user.emailVerified),
