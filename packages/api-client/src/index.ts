@@ -20,6 +20,13 @@ export type {
 
 // Endpoint factories and their response shapes
 export {
+  createMeEndpoints,
+  type MeEndpoints,
+  type MeResponse,
+  type User,
+} from "./endpoints/me";
+
+export {
   createSyncEndpoints,
   type SyncEndpoints,
   type ModulePullPayload,

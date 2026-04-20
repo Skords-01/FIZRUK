@@ -1,5 +1,6 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
+import { MeResponseSchema, type MeResponse } from "@sergeant/shared";
 import { asyncHandler, requireSession, setModule } from "../http/index.js";
 
 type AuthedUser = {
@@ -33,7 +34,12 @@ export function createMeRouter(): Router {
     requireSession(),
     asyncHandler(async (req: Request, res: Response) => {
       const user = (req as Request & { user: AuthedUser }).user;
-      res.json({
+      // Прогоняємо відповідь через канонічну Zod-схему з `@sergeant/shared`
+      // (те саме, що валідує `@sergeant/api-client` на клієнті). Це гарантує,
+      // що веб і майбутній мобільний клієнт отримають ідентичну форму, і
+      // не дає випадково просочити новому полю в response без оновлення
+      // схеми.
+      const payload: MeResponse = MeResponseSchema.parse({
         user: {
           id: user.id,
           email: user.email ?? null,
@@ -42,6 +48,7 @@ export function createMeRouter(): Router {
           emailVerified: Boolean(user.emailVerified),
         },
       });
+      res.json(payload);
     }),
   );
   return r;

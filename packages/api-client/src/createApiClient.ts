@@ -4,6 +4,7 @@ import {
   type HttpClientConfig,
 } from "./httpClient";
 import { createSyncEndpoints, type SyncEndpoints } from "./endpoints/sync";
+import { createMeEndpoints, type MeEndpoints } from "./endpoints/me";
 import { createCoachEndpoints, type CoachEndpoints } from "./endpoints/coach";
 import { createChatEndpoints, type ChatEndpoints } from "./endpoints/chat";
 import { createPushEndpoints, type PushEndpoints } from "./endpoints/push";
@@ -50,6 +51,7 @@ export interface ApiClientConfig extends HttpClientConfig {
  */
 export interface ApiClient {
   http: HttpClient;
+  me: MeEndpoints;
   sync: SyncEndpoints;
   coach: CoachEndpoints;
   chat: ChatEndpoints;
@@ -67,6 +69,7 @@ export function createApiClient(config: ApiClientConfig = {}): ApiClient {
   const http = createHttpClient(httpConfig);
   return {
     http,
+    me: createMeEndpoints(http),
     sync: createSyncEndpoints(http),
     coach: createCoachEndpoints(http),
     chat: createChatEndpoints(http),
