@@ -58,7 +58,9 @@ const config = (): ExpoConfig => ({
   },
   extra: {
     apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
-    easProjectId: process.env.EAS_PROJECT_ID,
+    eas: {
+      projectId: process.env.EAS_PROJECT_ID,
+    },
   },
 });
 
