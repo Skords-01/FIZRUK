@@ -1,13 +1,21 @@
 node_modules
+**/node_modules
 dist
+**/dist
 .env
 .env.local
 .vercel
 .vitest-localstorage.json*
 
+# Turborepo
+.turbo
+**/.turbo
+
 # Playwright (a11y tests)
 playwright-report/
+**/playwright-report
 test-results/
+**/test-results
 
 # Session-only artifacts from the DS visual-QA harness
 .agents/ds-qa/

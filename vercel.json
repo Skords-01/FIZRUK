@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "corepack enable && pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm turbo run build --filter=@sergeant/web",
+  "outputDirectory": "apps/web/dist",
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet -- apps/web packages/config pnpm-lock.yaml pnpm-workspace.yaml turbo.json package.json vercel.json",
   "headers": [
     {
       "source": "/index.html",

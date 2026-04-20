@@ -1,0 +1,42 @@
+{
+  "name": "@sergeant/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx server/index.js",
+    "start:replit": "SERVER_MODE=replit node --import tsx server/index.js",
+    "dev": "node --import tsx --watch server/index.js",
+    "build": "echo 'server runs via tsx; no build step'",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "node --import tsx scripts/migrate.mjs"
+  },
+  "dependencies": {
+    "@sentry/node": "^8.55.1",
+    "better-auth": "^1.6.4",
+    "express": "^4.22.1",
+    "helmet": "^8.1.0",
+    "pg": "^8.20.0",
+    "pino": "^10.3.1",
+    "prom-client": "^15.1.3",
+    "tsx": "^4.21.0",
+    "web-push": "^3.6.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@sergeant/config": "workspace:*",
+    "@types/express": "^4.17.25",
+    "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
+    "@types/supertest": "^7.2.0",
+    "@types/web-push": "^3.6.4",
+    "pino-pretty": "^13.1.3",
+    "supertest": "^7.2.2",
+    "vitest": "^3.0.0"
+  }
+}

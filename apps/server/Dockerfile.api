@@ -1,0 +1,28 @@
+# Мінімальний образ лише для Hub API (Railway / Docker).
+# Build context — корінь моноріпи.
+# Збірка: docker build -f apps/server/Dockerfile.api -t hub-api .
+FROM node:20-alpine
+WORKDIR /app
+
+# Активуємо pnpm через corepack (версія береться з root packageManager).
+RUN corepack enable
+
+# Копіюємо workspace-метадані, щоб pnpm міг вирішити workspace deps.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
+COPY apps/server/package.json ./apps/server/
+COPY packages/config/package.json ./packages/config/
+COPY packages/config/eslint-plugins/sergeant-design/package.json ./packages/config/eslint-plugins/sergeant-design/
+
+# Production-only, без скриптів (prepare/husky не мають сенсу в контейнері).
+RUN pnpm install --frozen-lockfile --prod --filter "@sergeant/server..." --ignore-scripts
+
+# Копіюємо сам код сервера + міграції + спільні пакети (для workspace: лінків).
+COPY apps/server ./apps/server
+COPY packages/config ./packages/config
+
+ENV NODE_ENV=production
+WORKDIR /app/apps/server
+
+# tsx loader потрібен тому, що server/lib/* — .ts (див. PR #311);
+# імпорти з .js-модулів виду `from "./foo.js"` tsx резолвить на .ts.
+CMD ["node", "--import", "tsx", "server/index.js"]

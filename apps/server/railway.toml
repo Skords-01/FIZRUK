@@ -1,0 +1,6 @@
+# Деплой API на Railway через apps/server/Dockerfile.api (без зайвого vite build).
+# Build context — корінь моноріпи, щоб pnpm-workspace та packages/config
+# були доступні для pnpm install --filter.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/server/Dockerfile.api"

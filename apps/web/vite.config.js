@@ -157,10 +157,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     test: {
-      environmentMatchGlobs: [
-        ["server/**", "node"],
-        ["src/**", "jsdom"],
-      ],
+      environmentMatchGlobs: [["src/**", "jsdom"]],
     },
   };
 });

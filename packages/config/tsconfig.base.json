@@ -1,9 +1,10 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022", "WebWorker"],
+    "lib": ["ES2022"],
     "allowJs": true,
     "checkJs": false,
     "strict": false,
@@ -13,9 +14,6 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
-    "types": []
-  },
-  "include": ["src/sw.js"],
-  "exclude": ["node_modules", "dist"]
+    "forceConsistentCasingInFileNames": true
+  }
 }

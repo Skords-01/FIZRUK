@@ -1,0 +1,31 @@
+{
+  "name": "@sergeant/config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint.base": "./eslint.base.js",
+    "./prettier": "./prettier.config.cjs",
+    "./tsconfig.base.json": "./tsconfig.base.json"
+  },
+  "files": [
+    "eslint.base.js",
+    "prettier.config.cjs",
+    "tsconfig.base.json"
+  ],
+  "dependencies": {
+    "eslint-plugin-sergeant-design": "workspace:*"
+  },
+  "peerDependencies": {
+    "@eslint/js": "*",
+    "eslint": "*",
+    "eslint-config-prettier": "*",
+    "eslint-plugin-jsx-a11y": "*",
+    "eslint-plugin-react": "*",
+    "eslint-plugin-react-hooks": "*",
+    "globals": "*",
+    "prettier": "*",
+    "typescript": "*",
+    "typescript-eslint": "*"
+  }
+}
