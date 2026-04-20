@@ -2,6 +2,7 @@ import { memo } from "react";
 import { cn } from "@shared/lib/cn";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
 import { Icon } from "@shared/components/ui/Icon";
+import { hapticTap, hapticWarning } from "@shared/lib/haptic";
 import { TxRow } from "./TxRow";
 
 function TxListItemImpl({
@@ -68,8 +69,14 @@ function TxListItemImpl({
           onSwipeLeft={
             canSwipeLeft
               ? isManual
-                ? () => onSwipeDeleteManual(tx)
-                : () => onSwipeHideTx(tx.id)
+                ? () => {
+                    hapticTap();
+                    onSwipeDeleteManual(tx);
+                  }
+                : () => {
+                    hapticWarning();
+                    onSwipeHideTx(tx.id);
+                  }
               : undefined
           }
           onSwipeRight={undefined}

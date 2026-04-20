@@ -55,7 +55,12 @@ export default function NutritionApp({
   const [pantrySubTab, setPantrySubTab] = useState("items");
   const [menuSubTab, setMenuSubTab] = useState("plan");
 
-  const pantry = useNutritionPantries({ setBusy, setErr, setStatusText });
+  const pantry = useNutritionPantries({
+    setBusy,
+    setErr,
+    setStatusText,
+    toast,
+  });
   const log = useNutritionLog();
   const ui = useNutritionUiState();
   const photo = usePhotoAnalysis({ setBusy, setErr, setStatusText });
@@ -324,7 +329,11 @@ export default function NutritionApp({
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       <NutritionHeader busy={busy} onBackToHub={onBackToHub} />
 
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className="flex-1 overflow-y-auto"
+        aria-live="polite"
+        aria-atomic="false"
+      >
         <div className="max-w-2xl mx-auto px-4 pt-4 pb-6 w-full">
           <NutritionPantrySelector pantry={pantry} busy={busy} />
 

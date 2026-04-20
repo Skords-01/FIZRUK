@@ -16,7 +16,12 @@ import {
   parseLoosePantryText,
 } from "../lib/pantryTextParser.js";
 
-export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
+export function useNutritionPantries({
+  setBusy,
+  setErr,
+  setStatusText,
+  toast,
+}) {
   const [pantries, setPantries] = useState(() =>
     loadPantries(NUTRITION_PANTRIES_KEY, NUTRITION_ACTIVE_PANTRY_KEY),
   );
@@ -175,6 +180,7 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
       setPantries((cur) =>
         updatePantry(cur, activePantryId, (p) => ({ ...p, name })),
       );
+      toast?.success?.(`Склад «${name}» перейменовано.`);
     } else {
       const id = `p_${Date.now()}`;
       setPantries((cur) => [
@@ -182,6 +188,7 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
         { id, name, items: [], text: "" },
       ]);
       setActivePantryId(id);
+      toast?.success?.(`Склад «${name}» створено.`);
     }
     setPantryManagerOpen(false);
   };
@@ -189,11 +196,13 @@ export function useNutritionPantries({ setBusy, setErr, setStatusText }) {
   const onConfirmDeletePantry = () => {
     const arr = Array.isArray(pantries) ? pantries : [];
     if (arr.length <= 1) return;
+    const removed = arr.find((p) => p.id === activePantryId);
     const next = arr.filter((p) => p.id !== activePantryId);
     setPantries(next);
     setActivePantryId(next[0]?.id || "home");
     setConfirmDeleteOpen(false);
     setPantryManagerOpen(false);
+    if (removed?.name) toast?.success?.(`Склад «${removed.name}» видалено.`);
   };
 
   const onSaveItemEdit = (idx, qty, unit) => {

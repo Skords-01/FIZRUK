@@ -7,6 +7,7 @@ import { Input } from "@shared/components/ui/Input";
 import { cn } from "@shared/lib/cn";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { SwipeToAction } from "@shared/components/ui/SwipeToAction";
+import { hapticTap } from "@shared/lib/haptic";
 import { Icon } from "@shared/components/ui/Icon";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import {
@@ -211,7 +212,9 @@ export function LogCard({
           {searchQuery.trim() && (
             <ul className="max-h-48 overflow-y-auto text-sm space-y-1">
               {searchHits.length === 0 && (
-                <li className="text-muted text-xs">Нічого не знайдено</li>
+                <li>
+                  <EmptyState compact title="Нічого не знайдено" />
+                </li>
               )}
               {searchHits.map(({ date, meal }) => {
                 const mac = meal.macros || {};
@@ -382,7 +385,7 @@ export function LogCard({
               Калорії по днях (останні {Math.min(statsRange, statsRows.length)})
             </SectionHeading>
             {statsRows.length === 0 ? (
-              <div className="text-xs text-muted">Поки що порожньо</div>
+              <EmptyState compact title="Поки що порожньо" />
             ) : (
               (() => {
                 const kcals = statsRows.map((r) => Number(r.kcal) || 0);
@@ -411,7 +414,7 @@ export function LogCard({
                 Топ страв
               </SectionHeading>
               {statsTop.length === 0 ? (
-                <div className="text-xs text-muted">Поки що порожньо</div>
+                <EmptyState compact title="Поки що порожньо" />
               ) : (
                 <ol className="space-y-1">
                   {statsTop.map((x) => (
@@ -435,7 +438,7 @@ export function LogCard({
                 Розподіл прийомів
               </SectionHeading>
               {Object.keys(statsMealTypes).length === 0 ? (
-                <div className="text-xs text-muted">Поки що порожньо</div>
+                <EmptyState compact title="Поки що порожньо" />
               ) : (
                 <ul className="space-y-1">
                   {MEAL_ORDER.filter((t) => statsMealTypes[t]?.count > 0).map(
@@ -480,7 +483,18 @@ export function LogCard({
               </svg>
             }
             title="Поки немає записів"
-            description="Додайте перший прийом їжі, щоб почати вести журнал."
+            description="Додай перший прийом їжі, щоб почати вести журнал."
+            action={
+              onAddMeal ? (
+                <button
+                  type="button"
+                  onClick={onAddMeal}
+                  className="px-4 h-10 rounded-xl bg-nutrition text-white font-semibold text-sm hover:bg-nutrition/90 transition-colors"
+                >
+                  Додати перший прийом їжі
+                </button>
+              ) : undefined
+            }
           />
         ) : (
           <VirtualMealList
@@ -564,7 +578,10 @@ function VirtualMealList({
         return (
           <div className="mb-1.5">
             <SwipeToAction
-              onSwipeLeft={() => onRemoveMeal(selectedDate, item.meal)}
+              onSwipeLeft={() => {
+                hapticTap();
+                onRemoveMeal(selectedDate, item.meal);
+              }}
               rightLabel="🗑 Видалити"
               rightColor="bg-danger"
             >

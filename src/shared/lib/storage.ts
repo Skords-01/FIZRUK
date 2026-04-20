@@ -46,7 +46,42 @@ export function safeReadStringLS(
 }
 
 /**
+ * Window event fired whenever `safeWriteLS` / `safeRemoveLS` trap a storage
+ * error (quota exceeded, Safari private mode, disabled storage). Listeners
+ * can surface a persistent `<Banner variant="danger">` so users know their
+ * data is no longer persisting, instead of silently losing writes.
+ *
+ * `detail.key` is the storage key that failed so listeners can filter by
+ * module prefix (e.g. `finyk.` / `nutrition.`) and avoid cross-module noise.
+ */
+export const STORAGE_WRITE_ERROR_EVENT = "app-storage-write-error";
+
+export interface StorageWriteErrorDetail {
+  key: string;
+  op: "write" | "remove";
+  message: string;
+}
+
+function emitStorageWriteError(
+  key: string,
+  op: "write" | "remove",
+  err: unknown,
+): void {
+  try {
+    const message = err instanceof Error ? err.message : "unknown";
+    window.dispatchEvent(
+      new CustomEvent<StorageWriteErrorDetail>(STORAGE_WRITE_ERROR_EVENT, {
+        detail: { key, op, message },
+      }),
+    );
+  } catch {
+    /* dispatchEvent can throw in exotic embeddings — ignore */
+  }
+}
+
+/**
  * Write a JSON-serialized value to localStorage. Returns true on success.
+ * On failure, dispatches `STORAGE_WRITE_ERROR_EVENT` so UI can surface it.
  */
 export function safeWriteLS(key: string, value: unknown): boolean {
   try {
@@ -54,7 +89,8 @@ export function safeWriteLS(key: string, value: unknown): boolean {
       typeof value === "string" ? value : JSON.stringify(value);
     localStorage.setItem(key, serialized);
     return true;
-  } catch {
+  } catch (err) {
+    emitStorageWriteError(key, "write", err);
     return false;
   }
 }
@@ -66,7 +102,8 @@ export function safeRemoveLS(key: string): boolean {
   try {
     localStorage.removeItem(key);
     return true;
-  } catch {
+  } catch (err) {
+    emitStorageWriteError(key, "remove", err);
     return false;
   }
 }

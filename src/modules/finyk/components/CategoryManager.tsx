@@ -7,6 +7,7 @@ import { cn } from "@shared/lib/cn";
 import { Card } from "@shared/components/ui/Card";
 import { useToast } from "@shared/hooks/useToast";
 import { showUndoToast } from "@shared/lib/undoToast";
+import { hapticTap, hapticSuccess } from "@shared/lib/haptic";
 
 const PRESET_COLORS = [
   "#10b981",
@@ -374,15 +375,18 @@ export function CategoryManager({
           // inside `removeCustomCategory`).
           const snapshot = customCategories.find((c) => c.id === deletingId);
           onRemove(deletingId);
+          hapticTap();
           if (snapshot) {
             showUndoToast(toast, {
               msg: `Категорію «${snapshot.label}» видалено`,
-              onUndo: () =>
+              onUndo: () => {
                 onAdd?.(snapshot.label, {
                   color: snapshot.color,
                   icon: snapshot.icon,
                   parentId: snapshot.parentId,
-                }),
+                });
+                hapticSuccess();
+              },
             });
           }
           setDeletingId(null);

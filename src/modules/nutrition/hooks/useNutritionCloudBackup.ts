@@ -12,6 +12,7 @@ import {
   decryptBlobToJson,
   encryptJsonToBlob,
 } from "../lib/nutritionCloudBackup.js";
+import { hapticSuccess } from "@shared/lib/haptic";
 import type {
   BackupPasswordDialogState,
   RestoreConfirmState,
@@ -79,6 +80,7 @@ export function useNutritionCloudBackup({
       setErr("");
     },
     onSuccess: () => {
+      hapticSuccess();
       toast.success("Бекап завантажено.");
     },
     onError: (err: unknown) => {

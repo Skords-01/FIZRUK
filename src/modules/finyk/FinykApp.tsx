@@ -14,6 +14,11 @@ import { ModuleBottomNav } from "@shared/components/ui/ModuleBottomNav";
 import { SectionErrorBoundary } from "@shared/components/ui/SectionErrorBoundary.jsx";
 import { cn } from "@shared/lib/cn";
 import { useToast } from "@shared/hooks/useToast";
+import { Banner } from "@shared/components/ui/Banner";
+import {
+  STORAGE_WRITE_ERROR_EVENT,
+  type StorageWriteErrorDetail,
+} from "@shared/lib/storage";
 import { Overview } from "./pages/Overview.jsx";
 import { Transactions } from "./pages/Transactions.jsx";
 import { Budgets } from "./pages/Budgets.jsx";
@@ -204,6 +209,22 @@ export default function App({
   useEffect(() => {
     writeRaw("finyk_show_balance_v1", showBalance ? "1" : "0");
   }, [showBalance]);
+
+  // Persistent storage-error banner. Finyk writes go through
+  // `safeJsonSet` / `safeWriteLS` which swallow quota/private-mode errors and
+  // return `false` — without this listener the user would silently lose data.
+  // Matches the pattern in Routine/Fizruk/Nutrition. Filter by the `finyk_`
+  // prefix so shared events from other modules don't show up here.
+  const [storageErrorMsg, setStorageErrorMsg] = useState<string | null>(null);
+  useEffect(() => {
+    const onErr = (ev: Event) => {
+      const detail = (ev as CustomEvent<StorageWriteErrorDetail>).detail;
+      if (!detail?.key || !detail.key.startsWith("finyk_")) return;
+      setStorageErrorMsg(detail.message || "невідома помилка");
+    };
+    window.addEventListener(STORAGE_WRITE_ERROR_EVENT, onErr);
+    return () => window.removeEventListener(STORAGE_WRITE_ERROR_EVENT, onErr);
+  }, []);
 
   useEffect(() => {
     if (window.location.search.includes("sync=")) {
@@ -619,9 +640,33 @@ export default function App({
         </div>
       </div>
 
+      {storageErrorMsg && (
+        <Banner
+          variant="danger"
+          role="alert"
+          className="mx-4 mt-3 flex items-start justify-between gap-3"
+        >
+          <span>
+            Не вдалося зберегти дані Фініка ({storageErrorMsg}). Можливо,
+            браузер переповнив сховище — звільни місце або експортуй резервну
+            копію.
+          </span>
+          <button
+            type="button"
+            onClick={() => setStorageErrorMsg(null)}
+            className="shrink-0 text-xs font-semibold text-danger/80 hover:text-danger"
+            aria-label="Закрити повідомлення"
+          >
+            Закрити
+          </button>
+        </Banner>
+      )}
+
       {/* Page content */}
       <div
         className="flex-1 overflow-hidden flex flex-col min-h-0 touch-pan-y"
+        aria-live="polite"
+        aria-atomic="false"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
