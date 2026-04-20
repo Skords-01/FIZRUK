@@ -169,7 +169,14 @@ export function useNutritionLog() {
       clearTimeout(t);
       pendingThumbDeletesRef.current.delete(id);
     }
-    setNutritionLog((log) => addLogEntry(log, date, meal));
+    setNutritionLog((log) => {
+      // Idempotent undo — double-click на «Повернути» не повинен створювати
+      // дублікат у логу. Реальна скарга: користувач тапав 2 рази, бо перший
+      // тап здавалося «не спрацював», і отримував два ідентичні meal-и.
+      const dayMeals = Array.isArray(log?.[date]?.meals) ? log[date].meals : [];
+      if (dayMeals.some((m) => String(m?.id ?? "") === id)) return log;
+      return addLogEntry(log, date, meal);
+    });
   };
 
   /**
