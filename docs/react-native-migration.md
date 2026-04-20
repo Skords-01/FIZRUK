@@ -115,22 +115,22 @@ sergeant/
 регресій на web. Порядок може перетасовуватись по ходу, але залежності
 позначені.
 
-| #   | Фаза                                           | Статус  | Залежить від | Опис                                                                                                                                                                                                                                             |
-| --- | ---------------------------------------------- | ------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0   | Скафолд `apps/mobile`                          | ✅ Done | —            | Expo + Expo Router + Better Auth + metro monorepo (секція 2.1).                                                                                                                                                                                  |
-| 1   | Спільна UI-основа для RN                       | ⏳ Next | 0            | Theme tokens, базові компоненти (`Button`, `Card`, `Input`, `Banner`, `Toast`, `Skeleton`, `ConfirmDialog`, `Sheet`) у RN варіанті, дзеркалять `apps/web/src/shared/components/ui`. Design-tokens централізовано (див. `docs/design-system.md`). |
-| 2   | Hub-ядро                                       | ⏸       | 1            | Dashboard, OnboardingWizard, HubSettings, SyncStatusIndicator, ErrorBoundary, ModuleErrorBoundary. Поки без HubChat / HubSearch / HubReports.                                                                                                    |
-| 3   | CloudSync + офлайн-черга                       | ⏸       | 2            | Нативний аналог `core/useCloudSync.ts`: AsyncStorage + NetInfo + React Query persist; LWW-резолвер незмінний (живе в server).                                                                                                                    |
-| 4   | Порт модуля Фінік                              | ⏸       | 1, 3         | `FinykApp.tsx` (792 LOC), всі сторінки (`Overview`, `Transactions`, `Budgets`, `Analytics`, `Assets`) і компоненти. Monobank API — без змін (server-side).                                                                                       |
-| 5   | Порт модуля Рутина                             | ⏸       | 1, 3         | `RoutineApp.tsx` (728 LOC): календар, звички, heatmap, reminders. Reminders → `expo-notifications` scheduled.                                                                                                                                    |
-| 6   | Порт модуля Фізрук                             | ⏸       | 1, 3         | `FizrukApp.tsx` + сторінки. `BodyAtlas` (`body-highlighter`) — див. секцію 7.8.                                                                                                                                                                  |
-| 7   | Порт модуля Харчування                         | ⏸       | 1, 3, 6      | `NutritionApp.tsx` + фото-аналіз (reuse server) + barcode scanner (`expo-camera` + `expo-barcode-scanner`) + water tracker.                                                                                                                      |
-| 8   | AI-шар (HubChat / CoachInsight / WeeklyDigest) | ⏸       | 2, 4-7       | `react-native`-сумісний стримінг (fetch ReadableStream у RN 0.76 працює). Speech-ввід → `expo-speech-recognition` або fallback на server-side transcription.                                                                                     |
-| 9   | Hub-пошук + звіти                              | ⏸       | 2, 4-7       | `HubSearch` + `HubReports` (агрегації мають бути pure — живуть у `packages/*`, див. п.11).                                                                                                                                                       |
-| 10  | Deep links + PWA shortcuts                     | ⏸       | 4-7          | Реалізувати всі `sergeant://...` маршрути з `docs/mobile.md`. Android-shortcuts через `app.config.ts → shortcuts`.                                                                                                                               |
-| 11  | EAS build + App Store / Play Store             | ⏸       | 4-7 (MVP)    | EAS profiles (dev/preview/prod), App Store Connect + Google Play Console setup, signing, privacy labels, first TestFlight/Internal Testing.                                                                                                      |
-| 12  | Monitoring + Analytics                         | ⏸       | 11           | `@sentry/react-native` замість `@sentry/react`, Web Vitals aналоги не потрібні (нативні метрики через Sentry + expo-perf).                                                                                                                       |
-| 13  | Sunset-план для `apps/web`                     | ⏸       | 11           | Рішення: чи залишаємо PWA назавжди (реюз через `react-native-web`), чи консервуємо. Див. відкрите питання **Q1**.                                                                                                                                |
+| #   | Фаза                                                        | Статус  | Залежить від                 | Опис                                                                                                                                                                                                                          |
+| --- | ----------------------------------------------------------- | ------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | Скафолд `apps/mobile`                                       | ✅ Done | —                            | Expo + Expo Router + Better Auth + metro monorepo (секція 2.1).                                                                                                                                                               |
+| 1   | Спільна UI-основа для RN (+ NativeWind + MMKV + Dev Client) | ⏳ Next | 0                            | NativeWind (Q5), MMKV-сховище (Q3), Expo Dev Client через EAS (Q4), базові компоненти (`Button`, `Card`, `Input`, `Banner`, `Toast`, `Skeleton`, `ConfirmDialog`, `Sheet`), дизайн-токени з `@sergeant/config/tailwind` (R6). |
+| 2   | Hub-ядро + BRANDBOOK native-оновлення                       | ⏸       | 1                            | Dashboard, OnboardingWizard, HubSettings, SyncStatusIndicator, ErrorBoundary, ModuleErrorBoundary. `docs/BRANDBOOK.md` оновлюється під native-patterns (Q9). Поки без HubChat / HubSearch / HubReports.                       |
+| 3   | CloudSync + офлайн-черга                                    | ⏸       | 2                            | Нативний аналог `core/useCloudSync.ts`: MMKV + NetInfo + React Query persist; LWW-резолвер незмінний (живе в server).                                                                                                         |
+| 4   | Порт модуля Фінік + перші Detox E2E                         | ⏸       | 1, 3                         | `FinykApp.tsx` (792 LOC), всі сторінки (`Overview`, `Transactions`, `Budgets`, `Analytics`, `Assets`) і компоненти. Monobank API — без змін. Паралельно — Detox setup + перший E2E-сьют (Q8).                                 |
+| 5   | Порт модуля Рутина                                          | ⏸       | 1, 3                         | `RoutineApp.tsx` (728 LOC): календар, звички, heatmap, reminders. Reminders → `expo-notifications` scheduled.                                                                                                                 |
+| 6   | Порт модуля Фізрук                                          | ⏸       | 1, 3                         | `FizrukApp.tsx` + сторінки. `BodyAtlas` (`body-highlighter`) — див. секцію 7.8.                                                                                                                                               |
+| 7   | Порт модуля Харчування                                      | ⏸       | 1, 3, 6                      | `NutritionApp.tsx` + фото-аналіз (reuse server) + barcode scanner (`expo-camera` + `expo-barcode-scanner`) + water tracker.                                                                                                   |
+| 8   | AI-шар (HubChat / CoachInsight / WeeklyDigest)              | ⏸       | 2, 4-7                       | `react-native`-сумісний стримінг (fetch ReadableStream у RN 0.76 працює). Speech-ввід → `expo-speech-recognition` або fallback на server-side transcription.                                                                  |
+| 9   | Hub-пошук + звіти                                           | ⏸       | 2, 4-7                       | `HubSearch` + `HubReports` (агрегації мають бути pure — живуть у `packages/*`, див. п.11).                                                                                                                                    |
+| 10  | Deep links + PWA shortcuts                                  | ⏸       | 4-7                          | Реалізувати всі `sergeant://...` маршрути з `docs/mobile.md`. Android-shortcuts через `app.config.ts → shortcuts`.                                                                                                            |
+| 11  | EAS prod + App Store / Play Store                           | ⏸       | 4-7 (MVP), Developer-акаунти | EAS prod-профайл, App Store Connect + Google Play Console setup, signing, privacy labels, first TestFlight/Internal Testing. **Блокер:** оформлення Apple Developer Program + Google Play Console (Q2).                       |
+| 12  | Monitoring + Analytics                                      | ⏸       | 11                           | `@sentry/react-native` замість `@sentry/react`, Web Vitals aналоги не потрібні (нативні метрики через Sentry + expo-perf).                                                                                                    |
+| 13  | Sunset-план для `apps/web`                                  | ⏸       | 11                           | Рішення: чи залишаємо PWA назавжди (реюз через `react-native-web`), чи консервуємо. Див. відкрите питання **Q1**.                                                                                                             |
 
 ## 5. Мапування фіч web → mobile
 
@@ -409,63 +409,73 @@ mobile PR був маленький і тільки про UI).
   Потрібен чіткий privacy policy і пояснення, що дані Monobank
   користувача ніколи не виходять за межі його сесії.
 
-## 13. Відкриті питання (треба рішення юзера)
+## 13. Прийняті рішення (Q1–Q10)
 
-> Ці питання не блокують роботу над скафолдом/core, але блокують
-> рішення по конкретних фазах. Позначені номером для зручних
-> посилань у issue-трекері.
+> Закриті рішення — так, ці питання колись були відкритими. Якщо треба
+> переглянути — окремий PR з мотивацією у "Нотатки".
 
-- **Q1. Доля `apps/web` після міграції.**
-  Варіанти: (a) залишити як окремий продуктивний PWA назавжди,
-  (b) заморозити після досягнення feature-parity з mobile,
-  (c) реалізувати через `react-native-web` зі спільною code-base.
-  Рекомендація: **(a)** — PWA закриває desktop use-case, де мобілки
-  немає.
+- **Q1. Доля `apps/web` після міграції.** ✅ **(a) — залишаємо PWA + mobile паралельно.**
+  Сайт продовжує розвиватись як окремий продуктивний клієнт для
+  desktop-юзкейсу. Mobile — додатковий канал, не заміна.
 
-- **Q2. Публікація в магазинах як MVP-ціль.**
-  Чи ми хочемо після Фази 4-5 уже мати Internal Testing у TestFlight /
-  Google Play, чи публікуємось лише після повного порту всіх модулів?
-  Рекомендація: **Internal Testing після Фази 4** (Фінік), щоб
-  обкатати EAS-pipeline рано.
+- **Q2. Публікація в магазинах як MVP-ціль.** ✅ **Internal Testing після Фази 4 (Фінік).**
+  Уточнення від юзера: **у юзера ще немає Apple Developer Program і
+  Google Play Developer підписок.** Тож фактичний старт Internal
+  Testing відкладається до моменту оформлення акаунтів.
+  До того часу тестуємо на фізичному пристрої через Expo Dev Client
+  (див. Q4). Задача "оформити Developer-акаунти" додається у Фазу 11
+  як blocker.
 
-- **Q3. Sync-стек на мобілці: AsyncStorage чи MMKV/SQLite?**
-  Залежить від розміру JSON-блобів модулів. Треба заміряти.
-  Пропозиція — почати з AsyncStorage, якщо >200 KB на модуль —
-  перейти на MMKV.
+- **Q3. Sync-стек на мобілці.** ✅ **`react-native-mmkv`** з самого початку.
+  Пропустили проміжний етап AsyncStorage — одразу йдемо в швидкий
+  sync-стор. Адаптер сховища (`@sergeant/shared/storage` або локальний
+  у `apps/mobile/src/lib/storage.ts`) має той самий shape, що й
+  web `shared/lib/storage.ts`, щоб хуки/утиліти були платформо-агностичні.
 
-- **Q4. Чи мігруємо на Expo Dev Client одразу?**
-  Так → треба EAS Build ранній setup, але повна свобода нативних
-  модулів. Ні → Expo Go до Фази 11, але обмеженість у виборі
-  нативних залежностей (наприклад, `@react-native-voice/voice`
-  не працює в Expo Go).
+- **Q4. Dev Client vs Expo Go.** ✅ **Expo Dev Client з Фази 1.**
+  Одразу налаштовуємо EAS-збірку dev-профайлу. Плюси: свобода вибору
+  нативних бібліотек (voice, MMKV на new arch без обмежень).
+  Мінуси: перший раз треба 1-2 год на EAS setup.
 
-- **Q5. Стильова система.**
-  StyleSheet (що зараз) / NativeWind (Tailwind-like) / Tamagui /
-  Gluestack. Рекомендація: **NativeWind** — 1:1 з web-Tailwind,
-  найменший cognitive overhead при порту.
+- **Q5. Стильова система.** ✅ **NativeWind.**
+  Класова Tailwind-like API. Дозволяє копіювати `className=...` з web
+  компонентів із мінімальними правками. `tailwind.config` розшарити
+  між web і mobile, щоб токени (кольори, spacing, font scale) жили в
+  одному місці — див. **R6** (новий техборг).
 
-- **Q6. Speech-to-text на мобілці.**
-  `@react-native-voice/voice` (потребує Dev Client) /
-  `expo-speech-recognition` (community, Expo Go OK) / server-side
-  Whisper. Рекомендація: **`expo-speech-recognition`** як MVP,
-  потім сервер-сайд Whisper як uniform fallback.
+- **Q6. Speech-to-text на мобілці.** ✅ **`expo-speech-recognition` як
+  primary, сервер-сайд Whisper як fallback.**
+  MVP — `expo-speech-recognition` (працює з Dev Client). Паралельно
+  додаємо фолбек-ендпоінт `POST /api/v1/speech/transcribe` (Whisper)
+  для пристроїв без on-device STT або для невдалих фолбеків.
 
-- **Q7. Бібліотека графіків.**
-  `victory-native` / `react-native-gifted-charts` /
-  `react-native-reanimated-charts`. Рекомендація: **`victory-native`**
-  (найближче до існуючих web-компонентів).
+- **Q7. Бібліотека графіків.** ✅ **`victory-native`.**
+  Використовуємо в Фазі 4 (Фінік: `BudgetTrendChart`, `CategoryChart`,
+  `NetworthChart`). Обгортка-адаптер у `apps/mobile/src/components/charts/*`
+  щоб пізніше можна було безболісно замінити.
 
-- **Q8. E2E тестування.**
-  `maestro` (простий YAML) / `detox` (більше можливостей, складніший
-  setup). Рекомендація: **`maestro`** для MVP.
+- **Q8. E2E тестування.** ✅ **Detox.**
+  Відступили від рекомендації maestro — беремо Detox через ширші
+  можливості. Setup додає сесійних витрат, але в довгостроковій
+  перспективі окупиться. Перший E2E-сьют пишемо паралельно з Фазою 4
+  (щоб не писати тести пост-фактум).
 
-- **Q9. Brand / design consistency.**
-  Чи треба апдейтити BRANDBOOK.md під native patterns (haptics,
-  platform-specific adjustments), чи тримаємо ідентичний look?
+- **Q9. Brand / design consistency.** ✅ **Оновлюємо BRANDBOOK.md.**
+  Додаємо native-секції: haptics (Light/Medium/Heavy для різних
+  взаємодій), safe-area правила, native-gesture-паттерни (swipe-back,
+  pull-to-refresh), тип-скейл адаптації під iOS HIG / Material. Робиться
+  окремим PR перед Фазою 2.
 
-- **Q10. Monobank OAuth на мобілці.**
-  На web Monobank зв'язується через token paste; перевірити, чи нічого
-  не зломане на мобілці (має працювати, бо токен іде серверно).
+- **Q10. Monobank OAuth на мобілці.** Технічна перевірка в рамках
+  Фази 4 — без блокування. Очікуємо, що токен-флоу через
+  `apps/server` працює без змін (клієнт лише вставляє токен).
+
+### Техборг R6 (випливає з Q5)
+
+Винести `tailwind.config.js` і дизайн-токени (кольори, spacing,
+typography scale) у спільний пакет `@sergeant/config/tailwind` (або
+`@sergeant/design-tokens`), щоб web (`apps/web/tailwind.config.js`) і
+mobile (NativeWind config) імпортували одне й те саме джерело правди.
 
 ## 14. Як читати цей документ
 
