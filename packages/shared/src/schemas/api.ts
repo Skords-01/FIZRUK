@@ -9,6 +9,28 @@ import { z } from "zod";
 /** Локаль — вільний рядок, але не надто довгий (наприклад 'uk-UA'). */
 const Locale = z.string().trim().min(2).max(16).optional();
 
+// ────────────────────── User / /api/me ──────────────────────
+/**
+ * Публічний профіль користувача — повертається з `/api/me` і описує
+ * мінімум, що бачить клієнт (web cookie-сесія або мобільний bearer-токен).
+ *
+ * Форма навмисно обрізана: без internal timestamps, id сесії чи інших
+ * полів, що не повинні потрапляти в UI. Це єдине джерело правди для
+ * `@sergeant/shared`, `@sergeant/api-client` та `apps/server`.
+ */
+export const UserSchema = z.object({
+  id: z.string().min(1),
+  email: z.string().email().nullable(),
+  name: z.string().nullable(),
+  image: z.string().nullable(),
+  emailVerified: z.boolean(),
+});
+export type User = z.infer<typeof UserSchema>;
+
+/** Response shape for `/api/me` (і `/api/v1/me`). */
+export const MeResponseSchema = z.object({ user: UserSchema });
+export type MeResponse = z.infer<typeof MeResponseSchema>;
+
 /** Модерація: чат-повідомлення. */
 export const ChatMessage = z.object({
   role: z.enum(["user", "assistant"]),

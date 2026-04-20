@@ -5,6 +5,7 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 
+import type { MeResponse } from "../endpoints/me";
 import type { CoachInsightPayload } from "../endpoints/coach";
 import type { ChatRequestPayload, ChatResponse } from "../endpoints/chat";
 import type { BarcodeLookupResponse } from "../endpoints/barcode";
@@ -32,6 +33,24 @@ type QueryOpts<TData> = Omit<
   "queryKey" | "queryFn"
 >;
 type MutationOpts<TData, TVars> = UseMutationOptions<TData, Error, TVars>;
+
+// ── Me (current user) ────────────────────────────────────────────────────
+
+/**
+ * `GET /api/me` — поточний користувач. Відповідь прогоняється через
+ * `MeResponseSchema` у `createMeEndpoints`, тому дані, що приходять сюди,
+ * вже провалідовані. Використовуйте для hub-шапки, drawer-профілю і
+ * будь-якої logged-in поверхні, що не полагається лише на better-auth
+ * cookie-сесію (щоб на мобілці той самий хук працював через bearer-токен).
+ */
+export function useUser(opts?: QueryOpts<MeResponse>) {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: apiQueryKeys.me.current(),
+    queryFn: ({ signal }) => api.me.get({ signal }),
+    ...opts,
+  });
+}
 
 // ── Coach ────────────────────────────────────────────────────────────────
 

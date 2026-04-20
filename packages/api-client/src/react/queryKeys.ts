@@ -7,6 +7,10 @@
  * для інвалідації цілого підпростору.
  */
 export const apiQueryKeys = {
+  me: {
+    all: ["me"] as const,
+    current: () => ["me", "current"] as const,
+  },
   coach: {
     all: ["coach"] as const,
     memory: () => ["coach", "memory"] as const,
