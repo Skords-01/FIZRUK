@@ -11,6 +11,8 @@
  * localStorage disabled, SSR).
  */
 
+import type { SyncError, SyncState } from "./types";
+
 type LogPayload = Record<string, unknown> | undefined;
 
 function isEnabled(): boolean {
@@ -48,8 +50,18 @@ export const syncLog = {
     write("enqueue", info),
   scheduleSync: (info: { reason: "online" | "change" | "periodic" }) =>
     write("schedule", info),
-  syncStart: () => write("sync:start"),
-  syncSuccess: (info: { at: Date }) =>
-    write("sync:success", { at: info.at.toISOString() }),
-  syncError: (info: { message: string }) => write("sync:error", info),
+  syncStart: (info?: { syncId?: number }) => write("sync:start", info),
+  syncSuccess: (info: { at: Date; syncId?: number }) =>
+    write("sync:success", { at: info.at.toISOString(), syncId: info.syncId }),
+  syncError: (info: { message: string; error?: SyncError; syncId?: number }) =>
+    write("sync:error", info),
+  stateChange: (info: { from: SyncState; to: SyncState; syncId?: number }) =>
+    write("state", info),
+  retry: (info: { attempt: number; delay: number; label?: string }) =>
+    write("retry", info),
+  supersededCallback: (info: {
+    kind: "onStart" | "onSuccess" | "onError" | "onSettled";
+    staleSyncId: number;
+    activeSyncId: number;
+  }) => write("superseded", info),
 };

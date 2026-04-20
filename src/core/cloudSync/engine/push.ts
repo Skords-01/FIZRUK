@@ -12,6 +12,7 @@ import { setModuleVersion } from "../state/versions";
 import type { EngineArgs, PushAllResponse } from "../types";
 import { buildModulesPayload } from "./buildPayload";
 import { replayOfflineQueue } from "./replay";
+import { retryAsync } from "./retryAsync";
 
 export type PushArgs = EngineArgs;
 
@@ -50,7 +51,9 @@ export async function pushDirty(args: PushArgs): Promise<void> {
 
     await replayOfflineQueue();
 
-    const result = (await syncApi.pushAll(modules)) as PushAllResponse;
+    const result = (await retryAsync(() => syncApi.pushAll(modules), {
+      label: "pushDirty",
+    })) as PushAllResponse;
     const currentModified = getModuleModifiedTimes();
     if (result?.results) {
       for (const [mod, r] of Object.entries(result.results)) {
@@ -71,6 +74,7 @@ export async function pushDirty(args: PushArgs): Promise<void> {
     if (Object.keys(modules).length > 0) {
       addToOfflineQueue({ type: "push", modules });
     }
+    args.onErrorRaw?.(err);
     onError(err instanceof Error ? err.message : String(err));
   } finally {
     onSettled();
@@ -100,7 +104,9 @@ export async function pushAll(args: PushArgs): Promise<void> {
       return;
     }
 
-    const result = (await syncApi.pushAll(modules)) as PushAllResponse;
+    const result = (await retryAsync(() => syncApi.pushAll(modules), {
+      label: "pushAll",
+    })) as PushAllResponse;
     if (user?.id && result?.results) {
       for (const [mod, r] of Object.entries(result.results)) {
         if (r?.version) setModuleVersion(user.id, mod, r.version);
@@ -109,6 +115,7 @@ export async function pushAll(args: PushArgs): Promise<void> {
     clearAllDirty();
     onSuccess(new Date());
   } catch (err) {
+    args.onErrorRaw?.(err);
     onError(err instanceof Error ? err.message : String(err));
   } finally {
     onSettled();

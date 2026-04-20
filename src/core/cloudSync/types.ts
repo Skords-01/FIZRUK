@@ -1,14 +1,64 @@
 import type { ModuleName } from "./config";
 
 /**
+ * Explicit state machine for the cloud-sync lifecycle. Historically the
+ * hook exposed a handful of booleans (`syncing`, `syncError`, …) that had
+ * to be read together to reason about what the sync subsystem was doing.
+ * A single `SyncState` value makes transitions auditable and avoids the
+ * "two bools disagree" class of bugs. The legacy booleans are kept as
+ * derived getters on the hook return value so existing consumers compile
+ * unchanged.
+ *
+ * Transitions (intent):
+ *   idle   → dirty            (local write marked a module dirty)
+ *   dirty  → queued           (offline enqueue before server reached)
+ *   *      → syncing          (onStart)
+ *   syncing → success         (onSuccess)
+ *   syncing → error           (onError)
+ *   success|error → idle      (onSettled, if nothing new is queued)
+ */
+export type SyncState =
+  | "idle"
+  | "dirty"
+  | "queued"
+  | "syncing"
+  | "success"
+  | "error";
+
+/**
+ * Normalized error shape exposed to the UI and debug hook. Engines emit raw
+ * errors (typically `ApiError` from the transport layer) and the lifecycle
+ * layer maps them into this shape via `toSyncError`.
+ *
+ * `retryable` is `true` for transport failures (network) and 5xx HTTP
+ * statuses; it is `false` for 4xx (auth / validation) and `parse` errors,
+ * so callers never loop on an unrecoverable state.
+ */
+export interface SyncError {
+  message: string;
+  type: "network" | "server" | "unknown";
+  retryable: boolean;
+}
+
+/**
  * Lifecycle callbacks every engine entry point (pushDirty, pushAll,
  * pullAll, initialSync, uploadLocalData) accepts. The React hook owns
  * the implementations via `useSyncCallbacks`; engines only invoke them.
+ *
+ * `onError` keeps its historical single-argument string shape so existing
+ * engines and tests compile and match unchanged. The optional
+ * `onErrorRaw` sidecar is invoked immediately before `onError` by the
+ * engines and carries the original thrown value so the lifecycle layer
+ * can classify it (network vs. 5xx vs. unknown) without parsing message
+ * text. Consumers that don't care about structured errors (e.g. unit
+ * tests that mock only `onError`) can simply leave `onErrorRaw`
+ * undefined — engines invoke it via optional chaining.
  */
 export interface SyncCallbacks {
   onStart(): void;
   onSuccess(when: Date): void;
   onError(message: string): void;
+  onErrorRaw?(err: unknown): void;
   onSettled(): void;
 }
 

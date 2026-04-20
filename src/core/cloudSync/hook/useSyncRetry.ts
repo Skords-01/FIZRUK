@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { SYNC_EVENT } from "../config";
+import { updateDebugSnapshot } from "../debugState";
 import { replayOfflineQueue } from "../engine/replay";
 import { syncLog } from "../logger";
 import { getDirtyModules } from "../state/dirtyModules";
@@ -36,17 +37,20 @@ export function useSyncRetry(enabled: boolean, runSync: () => void): void {
 
     const scheduleFromOnline = () => {
       syncLog.scheduleSync({ reason: "online" });
+      updateDebugSnapshot({ lastAction: "schedule" });
       replayOfflineQueue().then(runSync);
     };
 
     const scheduleFromChange = () => {
       syncLog.scheduleSync({ reason: "change" });
+      updateDebugSnapshot({ lastAction: "schedule" });
       debouncer.schedule(runSync);
     };
 
     const scheduleFromTimer = () => {
       if (Object.keys(getDirtyModules()).length === 0) return;
       syncLog.scheduleSync({ reason: "periodic" });
+      updateDebugSnapshot({ lastAction: "schedule" });
       runSync();
     };
 

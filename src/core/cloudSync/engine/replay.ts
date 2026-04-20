@@ -1,6 +1,7 @@
 import { syncApi } from "@shared/api";
 import { collectQueuedModules } from "../queue/collectQueued";
 import { clearOfflineQueue, getOfflineQueue } from "../queue/offlineQueue";
+import { retryAsync } from "./retryAsync";
 
 // Module-scoped re-entry guard. The original hook used a `replayingRef`; for
 // a singleton hook instance (the app mounts `useCloudSync` once) a module-
@@ -30,7 +31,9 @@ export async function replayOfflineQueue(): Promise<void> {
 
   replaying = true;
   try {
-    await syncApi.pushAll(modulesToPush);
+    await retryAsync(() => syncApi.pushAll(modulesToPush), {
+      label: "replayOfflineQueue",
+    });
     clearOfflineQueue();
   } catch {
     // Network/transport failure during replay must not break callers

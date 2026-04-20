@@ -16,7 +16,13 @@ export { getOfflineQueue } from "./queue/offlineQueue";
 export { enqueueChange, notifySyncDirty } from "./storagePatch";
 
 export { useCloudSync } from "./hook/useCloudSync";
+export { useCloudSyncDebug } from "./hook/useCloudSyncDebug";
+export type { CloudSyncDebugView } from "./hook/useCloudSyncDebug";
 export { useSyncStatus } from "./hook/useSyncStatus";
+export type { CloudSyncDebugSnapshot, SyncDebugAction } from "./debugState";
+export type { SyncError, SyncState } from "./types";
+export { toSyncError, isRetryableError } from "./errorNormalizer";
+export { retryAsync } from "./engine/retryAsync";
 
 // Internal exports kept for existing tests — see useCloudSync.hardening.test.js
 export { parseDateSafe as __internal_parseDateSafe } from "./conflict/parseDate";

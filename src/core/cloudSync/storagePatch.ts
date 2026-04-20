@@ -4,6 +4,7 @@
 import "./state/dirtyModules";
 
 import { ALL_TRACKED_KEYS, keyToModule } from "./config";
+import { updateDebugSnapshot } from "./debugState";
 import { syncLog } from "./logger";
 import { markModuleDirty } from "./state/dirtyModules";
 import { emitSyncEvent } from "./state/events";
@@ -38,6 +39,7 @@ export function enqueueChange(changedKey?: string): void {
     if (module) markModuleDirty(module);
   }
   syncLog.enqueue({ key: changedKey, module });
+  updateDebugSnapshot({ lastAction: "enqueue" });
   emitSyncEvent();
 }
 

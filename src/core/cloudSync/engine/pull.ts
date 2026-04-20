@@ -2,6 +2,7 @@ import { syncApi } from "@shared/api";
 import { applyModuleData } from "../state/moduleData";
 import { setModuleVersion } from "../state/versions";
 import type { EngineArgs, PullAllResponse } from "../types";
+import { retryAsync } from "./retryAsync";
 
 export type PullArgs = EngineArgs;
 
@@ -9,7 +10,9 @@ export async function pullAll(args: PullArgs): Promise<boolean> {
   const { user, onStart, onSuccess, onError, onSettled } = args;
   onStart();
   try {
-    const { modules } = (await syncApi.pullAll()) as PullAllResponse;
+    const { modules } = (await retryAsync(() => syncApi.pullAll(), {
+      label: "pullAll",
+    })) as PullAllResponse;
     if (modules) {
       for (const [mod, payload] of Object.entries(modules)) {
         if (payload?.data) {
@@ -23,6 +26,7 @@ export async function pullAll(args: PullArgs): Promise<boolean> {
     onSuccess(new Date());
     return true;
   } catch (err) {
+    args.onErrorRaw?.(err);
     onError(err instanceof Error ? err.message : String(err));
     return false;
   } finally {
