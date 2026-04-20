@@ -65,6 +65,28 @@ Content-Type: application/json
 реєстрація того самого токена просто оновлює `updated_at` (див.
 `server/migrations/006_push_devices.sql`).
 
+### Клієнтський виклик (Expo)
+
+Мобільний клієнт НЕ шле прямий `fetch` — усі виклики йдуть через
+`@sergeant/api-client`. Після логіну `PushRegistrar`
+(`apps/mobile/src/features/push/PushRegistrar.tsx`) автоматично:
+
+1. питає дозвіл через `expo-notifications`;
+2. бере native APNs/FCM токен (`getDevicePushTokenAsync()`); у Expo Go
+   — fallback на `getExpoPushTokenAsync()` з попередженням у консолі;
+3. кладе його у `AsyncStorage` ключ `push:lastToken` і шле:
+
+```ts
+import { useApiClient } from "@sergeant/api-client/react";
+
+const api = useApiClient();
+await api.push.register({ platform: "ios", token: devicePushToken });
+// → POST /api/v1/push/register, валідовано PushRegisterResponseSchema
+```
+
+Повторні логіни з тим самим токеном не тригерять повторний запит —
+`registerPush` перевіряє `AsyncStorage`-кеш.
+
 ### Сервер → пристрій
 
 - **Web** — існуючий flow `POST /api/push/send` через `web-push` + VAPID.

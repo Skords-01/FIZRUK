@@ -26,5 +26,11 @@ const authClient = createAuthClient({
   ],
 });
 
-export const { useSession, signIn, signUp, signOut, getSession } = authClient;
+// Публічний API мобільного Better Auth клієнта навмисно обмежений
+// actions-ендпоінтами. `useSession` з `better-auth/react` НЕ
+// реекспортується — замість нього у продакшн-коді використовуй
+// `useUser()` з `@sergeant/api-client/react` (GET `/api/v1/me`), щоб
+// mobile і web читали ту саму ідентичність. Див. `docs/mobile.md` і
+// `app/_layout.tsx`, де піднято `ApiClientProvider`.
+export const { signIn, signUp, signOut, getSession } = authClient;
 export { authClient };

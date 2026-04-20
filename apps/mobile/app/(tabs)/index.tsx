@@ -1,17 +1,19 @@
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSession, signOut } from "@/auth/authClient";
+import { useUser } from "@sergeant/api-client/react";
+import { signOut } from "@/auth/authClient";
 import { Pressable } from "react-native";
 import { colors, radius, spacing } from "@/theme";
 
 export default function HubScreen() {
-  const { data: session } = useSession();
+  const { data } = useUser();
+  const user = data?.user;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Text style={styles.title}>Sergeant</Text>
       <Text style={styles.subtitle}>
-        Привіт, {session?.user?.name ?? session?.user?.email ?? "друже"}
+        Привіт, {user?.name ?? user?.email ?? "друже"}
       </Text>
 
       <View style={styles.card}>

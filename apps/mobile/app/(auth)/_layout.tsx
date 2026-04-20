@@ -1,11 +1,11 @@
 import { Redirect, Stack } from "expo-router";
-import { useSession } from "@/auth/authClient";
+import { useUser } from "@sergeant/api-client/react";
 import { colors } from "@/theme";
 
 export default function AuthLayout() {
-  const { data: session, isPending } = useSession();
+  const { data, isLoading } = useUser();
 
-  if (!isPending && session) {
+  if (!isLoading && data?.user) {
     return <Redirect href="/" />;
   }
 
