@@ -10,8 +10,6 @@ import type {
   TxSplitsMap,
 } from "./types";
 
-export type { Budget, MonthBudgetSummary, RemainingBudget } from "./types";
-
 // Поріг, з якого картка бюджету позначається як «увага/попередження»
 // (показ проактивних порад у Budgets, alert-бейдж в Overview).
 export const BUDGET_WARN_THRESHOLD = 0.8;

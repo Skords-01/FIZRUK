@@ -24,17 +24,6 @@ import type {
 } from "./types";
 import { getCatColor } from "./categories";
 
-export type {
-  AnalyticsResult,
-  CategorySpendIndex,
-  MerchantStat,
-  MonthlySummary,
-  PeriodComparison,
-  SelectorOptions,
-  TopCategory,
-  TrendComparison,
-} from "./types";
-
 type MonthPredicate = (tx: Transaction | null | undefined) => boolean;
 
 // Turn a "YYYY-MM" string or a {year, month} object into a predicate

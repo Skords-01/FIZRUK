@@ -13,10 +13,6 @@
 import { INTERNAL_TRANSFER_ID } from "../constants";
 import type { Transaction, TransactionSource, TransactionType } from "./types";
 
-// Re-export types for back-compat (domain consumers можуть імпортувати з
-// transactions так само, як раніше користувалися @typedef-ами).
-export type { Transaction, TransactionSource, TransactionType } from "./types";
-
 interface NormalizeDefaults {
   source?: TransactionSource | string;
   accountId?: string | null;
