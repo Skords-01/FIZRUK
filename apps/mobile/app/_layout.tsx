@@ -12,6 +12,9 @@ import { PushRegistrar } from "@/features/push/PushRegistrar";
 // Registers the mobile `expo-haptics`-based adapter on the shared
 // haptic contract (`@sergeant/shared`). Import for side effects only.
 import "@/lib/haptic";
+// Registers the mobile file-download stub on the shared contract.
+// Replaced with an `expo-file-system` + `expo-sharing` adapter in Phase 4+.
+import "@/lib/fileDownload";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { CloudSyncProvider } from "@/sync";
 

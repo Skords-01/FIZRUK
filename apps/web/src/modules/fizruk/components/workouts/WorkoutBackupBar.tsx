@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { downloadJson } from "@sergeant/shared";
 import { Button } from "@shared/components/ui/Button";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { useToast } from "@shared/hooks/useToast";
@@ -14,16 +15,12 @@ export function WorkoutBackupBar({ className }) {
   const toast = useToast();
   const [confirmReplace, setConfirmReplace] = useState(false);
 
-  const exportJson = () => {
+  const exportJson = async () => {
     const payload = buildFizrukBackupPayload();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `fizruk-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    await downloadJson(
+      `fizruk-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      payload,
+    );
   };
 
   const runImport = (e, replace) => {
