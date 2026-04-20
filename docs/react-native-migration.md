@@ -539,7 +539,7 @@ Web використовує кастомні компоненти + canvas/SVG.
     `apps/mobile/app/_layout.tsx`. Консьюмери (`@sergeant/finyk-domain`,
     UI-примітиви, `apps/web/*`) імпортують хелпери з `@sergeant/shared` без
     знання про платформу.
-- **R8.** 🔵 In progress (PR [#XXX](https://github.com/Skords-01/Sergeant/pull/XXX)
+- **R8.** 🔵 In progress (PR [#432](https://github.com/Skords-01/Sergeant/pull/432)
   — web-адаптер + перші 3 споживача; mobile-адаптер = TODO-заглушка до Фази 4+).
   Pure-контракт `FileDownloadAdapter` + `downloadJson(filename, payload)`
   живе у `@sergeant/shared/lib/fileDownload` із безпечним no-op-дефолтом
