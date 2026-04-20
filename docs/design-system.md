@@ -87,8 +87,8 @@ Back-compat: старі токени `panel` / `panelHi` / `line` продовж
 - `chartSeries.finyk / .fizruk / .routine / .nutrition` — бренд-акценти
   серій для модуля (primary + secondary + surface).
 - `chartPaletteList` — 8-кольорова гармонійна палітра для pie/категорій.
-- `chartAxis` / `chartGrid` / `chartTick` / `chartTooltip` — спільні
-  Tailwind-класи для осей, сітки, тіків, тултіпів.
+- `chartAxis` / `chartGrid` / `chartTick` — спільні Tailwind-класи
+  для осей, сітки, тіків.
 - `chartGradients.finyk` тощо — пари stop'ів для area-fill градієнтів.
 
 > Не імпортуй hex із chartPalette.js напряму в компонент — бери через

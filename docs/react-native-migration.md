@@ -609,6 +609,14 @@ Web використовує кастомні компоненти + canvas/SVG.
 Кожен R-пункт робиться окремим PR перед відповідною Фазою (щоб
 mobile PR був маленький і тільки про UI).
 
+**Post-R-track cleanup.** Після закриття R1–R9 виконано точкове
+прибирання мертвих експортів у `apps/web/src` (PR
+[#439](https://github.com/Skords-01/Sergeant/pull/439)): ~18
+символів у 7 секціях (constants, types, runtime helpers, pantry
+CRUD, foodDb export/import, UI). Жодних змін у публічному API
+`@sergeant/*` пакетів чи в `apps/mobile` — чисто зачистка
+наслідків R-рефакторингів.
+
 ## 12. Ризики
 
 - **Expo SDK upgrade cadence** — ми на SDK 52 (остання LTS на
