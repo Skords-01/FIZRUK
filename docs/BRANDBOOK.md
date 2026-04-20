@@ -441,4 +441,121 @@ Full dark mode support with warm undertones:
 
 ---
 
+## Native Patterns (iOS / Android)
+
+> Scope: `apps/mobile` only. This section **extends** the existing brand
+> identity with native-specific guidance; web look & feel is unchanged —
+> same tokens, same palette, same voice. See
+> [`react-native-migration.md` §13, Q9](./react-native-migration.md#13-прийняті-рішення-q1q10)
+> for the decision that produced this section.
+
+### Safe area & layout
+
+Use `react-native-safe-area-context` (`useSafeAreaInsets()` /
+`SafeAreaView`) on every screen. Never hardcode status-bar or home-indicator
+paddings.
+
+- **Top inset:** respect on all content screens. Hero gradients and
+  full-bleed media may extend under the status bar, but interactive
+  content must start below `insets.top`.
+- **Bottom inset:** always respect on scroll containers, modals, bottom
+  sheets, and sticky CTAs. Primary actions stay above the home indicator.
+- **Side insets:** apply on landscape / notched devices; standard page
+  padding otherwise.
+- **Tab bar / keyboard:** combine `insets.bottom` with the active tab-bar
+  height; use `KeyboardAvoidingView` (`padding` on iOS, `height` on Android)
+  for forms.
+
+### Native gestures
+
+Gestures are the mobile equivalent of web hover — they are the main way
+users signal intent. Enable them deliberately, document them when they
+carry destructive meaning.
+
+| Gesture          | Where                                              | Notes                                                              |
+| ---------------- | -------------------------------------------------- | ------------------------------------------------------------------ |
+| Swipe-back (iOS) | All stack screens by default                       | Disable only on destructive flows (delete wizard, unsaved edits).  |
+| Pull-to-refresh  | Finyk `Transactions`, Routine calendar, Hub feed   | Use native `RefreshControl`; tie to the module's React Query sync. |
+| Long-press       | Transaction row, habit cell, workout item          | Opens contextual menu (edit / duplicate / delete).                 |
+| Swipe-to-delete  | Finyk `Transactions`, Routine habits, pantry items | Requires confirm step for items older than today.                  |
+
+See [`hub-modules-roadmap.md`](./hub-modules-roadmap.md) for the per-module
+screen list these map onto.
+
+### Haptics
+
+Use `expo-haptics`. Haptics fire on **intent**, not on every touch — no
+haptic spam, no haptic on scroll, no haptic on hover-equivalents.
+
+| Feedback                     | When                                                |
+| ---------------------------- | --------------------------------------------------- |
+| `ImpactFeedbackStyle.Light`  | Selection, toggle, tab switch, segmented control    |
+| `ImpactFeedbackStyle.Medium` | Successful save / submit / sync                     |
+| `ImpactFeedbackStyle.Heavy`  | Destructive confirm (delete, reset, disconnect)     |
+| `NotificationFeedbackType.*` | Toast with semantic meaning (success/warning/error) |
+
+```tsx
+// On a save button press handler:
+await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+await saveTransaction();
+```
+
+### Platform-adaptive typography
+
+Mobile inherits the type scale from `@sergeant/design-tokens` (same DM Sans,
+same sizes). Platform differences stay at the OS-accessibility layer:
+
+- Respect OS `Dynamic Type` (iOS) and `Font scale` (Android) **up to 1.3×**.
+  Above that we clamp to preserve layout of cards, rings, and tables.
+- Set `maxFontSizeMultiplier={1.3}` on `Text` primitives; expose it as the
+  default on the mobile `Text` component.
+- Do **not** branch font sizes by `Platform.OS`. Web typography is unchanged.
+
+### Dark mode
+
+Palette from the [Dark Mode](#dark-mode) section above is canonical.
+Mobile simply resolves it from the OS theme:
+
+- Read `useColorScheme()` from React Native; follow system by default.
+- Same token names as web (`--c-bg`, `--c-panel`, `--c-text`, …) — only the
+  resolved values differ, handled inside `@sergeant/design-tokens`.
+- Allow a per-user override in `HubSettings` (system / light / dark), stored
+  in MMKV.
+
+### Motion
+
+Use `react-native-reanimated` v3 for all non-trivial animation. Keep
+durations aligned with the web scale:
+
+- **150 ms** — micro (toggle, press-in, tab switch). Matches web "fast".
+- **250 ms** — page / screen transitions. Matches web "default".
+- **400 ms** — modals and bottom sheets (enter); dismiss is ~250 ms.
+- Default easing is `easeOutQuad`-like (`Easing.out(Easing.quad)`); the
+  Duolingo-style "bounce" pop stays reserved for celebratory moments.
+- Respect OS **Reduce Motion** via `useReducedMotion()` — disable
+  non-essential animation (parallax, stagger, success pulse), keep only
+  functional transitions (e.g. sheet open/close) at reduced amplitude.
+
+### Icons
+
+- **Navigation & tabs:** platform-idiomatic set via `@expo/vector-icons`
+  (Apple HIG on iOS, Material on Android) so tab bars feel native.
+- **Content icons:** Lucide (matches web) to keep module surfaces visually
+  consistent across platforms.
+- Keep the stroke/size rules from the [Icons](#icons) section above.
+
+### Forbidden on mobile
+
+Web patterns that don't translate — do not port them to `apps/mobile`:
+
+- **Hover states** — use press-in / focus states instead.
+- **Desktop keyboard shortcuts** — no `⌘K`, no global hotkeys.
+- **Right-click / context menus** — replace with long-press contextual menu.
+- **`position: fixed` floating panels** — replace with bottom sheets
+  (`@gorhom/bottom-sheet` or native `Modal`).
+- **Tooltips on hover** — if the info is important, make it a tap-target
+  with an inline hint; otherwise drop it.
+
+---
+
 _This brandbook is a living document. Update as the design system evolves._
