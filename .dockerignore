@@ -1,9 +1,16 @@
+# Файл читається build context-ом Dockerfile.api. Виключаємо лише артефакти
+# і речі, які точно не потрібні в API-образі. Під монорепо-layout образ
+# явно COPY-ить apps/server + packages/shared + packages/config — ніколи
+# не виключати ці шляхи тут, інакше buildkit падає на
+# `failed to compute cache key: "/apps/server": not found`.
 node_modules
 dist
 .git
-apps
-src
-docs
-*.md
-.env*
+.github
+.husky
 .vercel
+.env*
+artifacts
+attached_assets
+apps/web
+apps/mobile
