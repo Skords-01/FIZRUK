@@ -36,6 +36,10 @@ export default function RootLayout() {
                   name="(auth)"
                   options={{ presentation: "modal" }}
                 />
+                <Stack.Screen
+                  name="settings"
+                  options={{ presentation: "modal" }}
+                />
                 <Stack.Screen name="+not-found" />
               </Stack>
               <PushRegistrar />
