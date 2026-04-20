@@ -29,7 +29,7 @@
 | Фаза | Статус         | Ключові PR-и / артефакти                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ---- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0    | ✅ Done        | Скафолд `apps/mobile` (до [PR #401](https://github.com/Skords-01/Sergeant/pull/401)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| 1    | 🔵 In progress | [#403](https://github.com/Skords-01/Sergeant/pull/403) NativeWind, [#404](https://github.com/Skords-01/Sergeant/pull/404) MMKV + storage-адаптер, [#405](https://github.com/Skords-01/Sergeant/pull/405) **R1** (`storageKeys` → `@sergeant/shared`), [#406](https://github.com/Skords-01/Sergeant/pull/406) **R6** (`@sergeant/design-tokens`), [#407](https://github.com/Skords-01/Sergeant/pull/407) `Button` UI-примітив, [#408](https://github.com/Skords-01/Sergeant/pull/408) + [#410](https://github.com/Skords-01/Sergeant/pull/410) EAS dev-client профайли + README, [#413](https://github.com/Skords-01/Sergeant/pull/413) `Card` UI-примітив + jest-expo setup, [#417](https://github.com/Skords-01/Sergeant/pull/417) `Input` / `Textarea`, [#419](https://github.com/Skords-01/Sergeant/pull/419) `Banner`, `<PR-TOAST>` `Toast` + `ToastProvider` / `useToast`. **Залишилось:** `Skeleton`, `ConfirmDialog`, `Sheet` — кожен окремим малим PR-ом по шаблону #407. |
+| 1    | 🔵 In progress | [#403](https://github.com/Skords-01/Sergeant/pull/403) NativeWind, [#404](https://github.com/Skords-01/Sergeant/pull/404) MMKV + storage-адаптер, [#405](https://github.com/Skords-01/Sergeant/pull/405) **R1** (`storageKeys` → `@sergeant/shared`), [#406](https://github.com/Skords-01/Sergeant/pull/406) **R6** (`@sergeant/design-tokens`), [#407](https://github.com/Skords-01/Sergeant/pull/407) `Button` UI-примітив, [#408](https://github.com/Skords-01/Sergeant/pull/408) + [#410](https://github.com/Skords-01/Sergeant/pull/410) EAS dev-client профайли + README, [#413](https://github.com/Skords-01/Sergeant/pull/413) `Card` UI-примітив + jest-expo setup, [#417](https://github.com/Skords-01/Sergeant/pull/417) `Input` / `Textarea`, [#419](https://github.com/Skords-01/Sergeant/pull/419) `Banner`, [#421](https://github.com/Skords-01/Sergeant/pull/421) `Toast` + `ToastProvider` / `useToast`. **In flight (handoff):** [#423](https://github.com/Skords-01/Sergeant/pull/423) `Skeleton` / `SkeletonText` (open, ще не мерджнутий — див. §2.6). **Залишилось:** `ConfirmDialog`, `Sheet` — кожен окремим малим PR-ом по шаблону #407. |
 | 2–13 | ⏸ Not started  | Підготовка до Фази 2 частково зроблена: [#409](https://github.com/Skords-01/Sergeant/pull/409) додав секцію "Native Patterns" у `docs/BRANDBOOK.md` (Q9).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 Рішення по **Q1–Q10** зафіксовані в [PR #402](https://github.com/Skords-01/Sergeant/pull/402) (секція 13 нижче).
@@ -120,7 +120,7 @@ ApiClientProvider`. `QueryProvider` дзеркалить `apps/web/src/main.tsx`
   Дзеркалить `BannerVariant` (`info` / `success` / `warning` /
   `danger`), rounded-2xl border + bg токени.
 - `apps/mobile/src/components/ui/Toast.tsx` — `ToastProvider` +
-  `useToast` + `ToastContainer` (PR `<PR-TOAST>`). Порт web-хука
+  `useToast` + `ToastContainer` (PR [#421](https://github.com/Skords-01/Sergeant/pull/421)). Порт web-хука
   1:1 (API-контракт, черга, дефолтні тривалості), візуальний
   контейнер на RN-примітивах + `Animated`. Без
   `react-native-toast-message` (чужий імперативний API) і без
@@ -145,6 +145,64 @@ ApiClientProvider`. `QueryProvider` дзеркалить `apps/web/src/main.tsx`
   та Android runtime-permissions.
 - **Секція 12 (Ризики)** — додано нотатку про Hermes/`Intl.*`
   та OTA-стратегію `expo-updates`.
+
+### 2.6 Session handoff — 2026-04-20
+
+Батч із 5 паралельних child-сесій (2 large + 3 medium) по плану міграції
+був запущений і зупинений раніше, ніж усі виходи дозріли до мерджу.
+Нижче — що встигло зайти в `main`, що лишилось у відкритих PR-ах,
+і конкретні наступні кроки для наступної ітерації.
+
+#### Вже зайшло в `main` з цього батчу
+
+- **R2 (`@sergeant/insights`)** — PR [#414](https://github.com/Skords-01/Sergeant/pull/414) + docs-follow-up [#416](https://github.com/Skords-01/Sergeant/pull/416).
+- **R3 (`@sergeant/finyk-domain` 100 % реюз)** — PR [#415](https://github.com/Skords-01/Sergeant/pull/415).
+- **Фаза 1 UI-примітиви:** Card [#413](https://github.com/Skords-01/Sergeant/pull/413), Input/Textarea [#417](https://github.com/Skords-01/Sergeant/pull/417), Banner [#419](https://github.com/Skords-01/Sergeant/pull/419), Toast [#421](https://github.com/Skords-01/Sergeant/pull/421).
+- **Аудит плану + R7/R8/R9** — PR [#412](https://github.com/Skords-01/Sergeant/pull/412) (див. §2.5).
+- **Railway security-gate unblock** (`pnpm overrides` на `react-server-dom-webpack^19.0.2`) — PR [#422](https://github.com/Skords-01/Sergeant/pull/422).
+
+#### Що лишилось у відкритих PR-ах (handoff наступній команді)
+
+| Скоуп | PR | Mergeable? | CI | Що треба зробити |
+| ---- | --- | --- | --- | --- |
+| **Фаза 3 CloudSync + offline queue** | [#420](https://github.com/Skords-01/Sergeant/pull/420) | ⚠️ **Merge conflict vs main** | 0 passed / 1 failed / 3 pending | Вирішити merge-conflict (ймовірно `pnpm-lock.yaml` + `eslint.config.js` + `docs/react-native-migration.md` — цей файл паралельно правлять #412/#419/#421/#423 і поточний PR handoff-апдейту). Довести CI до зеленого. PR локально зелений (`turbo run lint typecheck test` = 24/0, `jest` mobile = 14/14). Код — дзеркало web `core/cloudSync/*`, MMKV + NetInfo + RQ-persist, `<CloudSyncProvider>` змонтований у `apps/mobile/app/_layout.tsx`. Нічого не ламає на web (0 web-файлів). |
+| **Фаза 1 `Skeleton` / `SkeletonText`** | [#423](https://github.com/Skords-01/Sergeant/pull/423) | ✅ mergeable | 0 passed / 1 failed / 3 pending | Допинати CI (1 падіння — треба перевірити `ci_job_logs`). Код готовий: `Animated.loop` замість `motion-safe:animate-pulse`, `AccessibilityInfo.isReduceMotionEnabled` для reduced-motion, render-тести на місці. |
+| **R4 `@sergeant/fizruk-domain`** | [#418](https://github.com/Skords-01/Sergeant/pull/418) | ✅ mergeable | 0 passed / 1 failed / 3 pending | Допинати CI. PR великий (data + domain + lib + тести + 20+ консьюмерів у `apps/web`), але без DOM-залежностей у пакеті. Ручний smoke-тест Fizruk у `apps/web` (Workouts/Programs/Progress/BodyAtlas) — критично, бо багато імпортів переписано. |
+
+#### Що з плану **не почате** в цьому батчі
+
+- **Фаза 1, `ConfirmDialog` + `Sheet`** — не бралися (остання планова пара
+  Phase 1 UI-примітивів за шаблоном #407).
+- **Фаза 2 Hub-ядро** — взагалі не бралося.
+- **R5 / R7 / R8 / R9** — не бралися.
+
+#### Конфлікти-поле-бою (що зустрінуться при мерджі open PR-ів)
+
+Усі три відкриті PR-и торкаються або цього документа
+(`docs/react-native-migration.md`) або `pnpm-lock.yaml`. Після мерджу
+цього handoff-апдейту та поточних merged PR-ів з main, найімовірніші
+колізії — саме у цих двох файлах:
+
+- `docs/react-native-migration.md` — секція 2.0 (Snapshot прогресу),
+  секція 2.4 (нові артефакти `apps/mobile`), секція 4 (фазований план),
+  секція 11 (R-план). При ресолві брати **об'єднання** (ніяке правило
+  не переписує одне одного, лише додає нові рядки/нотатки).
+- `pnpm-lock.yaml` — після #422 увімкнено `pnpm.overrides`, тож
+  ресолв простий: прийняти main-версію, потім зробити
+  `pnpm install` і закомітити оновлений лок.
+- `apps/mobile/package.json` — #420 додає новi runtime-deps
+  (`react-native-mmkv`, `@react-native-community/netinfo`,
+  `@tanstack/react-query-persist-client`); ресолв — об'єднати списки
+  дeps + перегенерувати lock.
+- `apps/mobile/eslint.config.js` — #420 додає блок з `jest` globals;
+  якщо main встиг отримати інший eslint-патч, об'єднати обидва блоки.
+
+#### Рекомендований порядок підбору (дорожня карта для наступної команди)
+
+1. **Першим мерджити #423 (`Skeleton`)** — найменший, жодних конфліктів, тільки допинати CI.
+2. **Потім #418 (R4 `fizruk-domain`)** — середній, mergeable, після smoke-тесту web-Fizruk.
+3. **Останнім #420 (CloudSync)** — найбільший, з merge-conflict'ом; robити його після того як #423/#418 зайшли, щоб конфлікт-surface звузився.
+4. Далі — добрати `ConfirmDialog` + `Sheet` (закрити Фазу 1) і переходити до Фази 2.
 
 ## 3. Цільова архітектура
 
@@ -185,9 +243,9 @@ sergeant/
 | #   | Фаза                                                        | Статус         | Залежить від                 | Опис                                                                                                                                                                                                                                                                                                                                                     |
 | --- | ----------------------------------------------------------- | -------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0   | Скафолд `apps/mobile`                                       | ✅ Done        | —                            | Expo + Expo Router + Better Auth + metro monorepo (секція 2.1).                                                                                                                                                                                                                                                                                          |
-| 1   | Спільна UI-основа для RN (+ NativeWind + MMKV + Dev Client) | 🔵 In progress | 0                            | NativeWind (Q5) ✅ #403, MMKV-сховище (Q3) ✅ #404, `@sergeant/design-tokens` (R6) ✅ #406, Expo Dev Client через EAS (Q4) ✅ #408/#410, `Button` ✅ #407, `Card` ✅ #413 (+ jest-expo setup), `Input` ✅ #417, `Banner` ✅ #419, `Toast` ✅ `<PR-TOAST>`. Залишилось: `Skeleton`, `ConfirmDialog`, `Sheet` — кожен окремим малим PR-ом по шаблону #407. |
+| 1   | Спільна UI-основа для RN (+ NativeWind + MMKV + Dev Client) | 🔵 In progress | 0                            | NativeWind (Q5) ✅ #403, MMKV-сховище (Q3) ✅ #404, `@sergeant/design-tokens` (R6) ✅ #406, Expo Dev Client через EAS (Q4) ✅ #408/#410, `Button` ✅ #407, `Card` ✅ #413 (+ jest-expo setup), `Input` ✅ #417, `Banner` ✅ #419, `Toast` ✅ #421. In flight: `Skeleton` / `SkeletonText` — PR [#423](https://github.com/Skords-01/Sergeant/pull/423) (open, handoff, §2.6). Залишилось: `ConfirmDialog`, `Sheet` — кожен окремим малим PR-ом по шаблону #407. |
 | 2   | Hub-ядро                                                    | ⏸              | 1                            | Dashboard, OnboardingWizard, HubSettings, SyncStatusIndicator, ErrorBoundary, ModuleErrorBoundary. BRANDBOOK native-patterns (Q9) ✅ #409 — підготовка зроблена. Поки без HubChat / HubSearch / HubReports.                                                                                                                                              |
-| 3   | CloudSync + офлайн-черга                                    | ⏸              | 2                            | Нативний аналог `core/useCloudSync.ts`: MMKV + NetInfo + React Query persist; LWW-резолвер незмінний (живе в server).                                                                                                                                                                                                                                    |
+| 3   | CloudSync + офлайн-черга                                    | 🟡 In flight   | 2                            | Нативний аналог `core/useCloudSync.ts`: MMKV + NetInfo + React Query persist; LWW-резолвер незмінний (живе в server). **Handoff:** PR [#420](https://github.com/Skords-01/Sergeant/pull/420) відкритий — engine + MMKV persist + offline queue + jest + `<CloudSyncProvider>` у `_layout.tsx`; потрібно **вирішити merge-conflict** vs main і допинати CI (див. §2.6).                                                                                                                                                                                                                                    |
 | 4   | Порт модуля Фінік + перші Detox E2E                         | ⏸              | 1, 3                         | `FinykApp.tsx` (792 LOC), всі сторінки (`Overview`, `Transactions`, `Budgets`, `Analytics`, `Assets`) і компоненти. Monobank API — без змін. Паралельно — Detox setup + перший E2E-сьют (Q8).                                                                                                                                                            |
 | 5   | Порт модуля Рутина                                          | ⏸              | 1, 3                         | `RoutineApp.tsx` (728 LOC): календар, звички, heatmap, reminders. Reminders → `expo-notifications` scheduled.                                                                                                                                                                                                                                            |
 | 6   | Порт модуля Фізрук                                          | ⏸              | 1, 3                         | `FizrukApp.tsx` + сторінки. `BodyAtlas` (`body-highlighter`) — див. секцію 7.8.                                                                                                                                                                                                                                                                          |
@@ -493,8 +551,7 @@ Web використовує кастомні компоненти + canvas/SVG.
   recents для пошуку, orchestrator `generateRecommendations`) лишились у
   `apps/web` і тепер імпортують pure-ядро з пакета.
 - **R3.** ✅ Done (PR [#415](https://github.com/Skords-01/Sergeant/pull/415)). `modules/finyk/lib/*`, `domain/*`, `constants.ts`, `utils.ts` повністю реюзаються з `@sergeant/finyk-domain`; web-шіми у `apps/web/src/modules/finyk/{domain,lib}/*.ts` видалено, імпорти у `apps/web` переведено на `@sergeant/finyk-domain/*`, pure-юніт-тести перенесені у пакет. У `apps/web` лишились тільки DOM/localStorage-залежні артефакти (`lib/{demoData,finykBackup,finykStorage,lsStats,storageManager}.ts`, `hubRoutineSync.ts`, `hooks/*`, `constants/chartPalette.js`).
-- **R4.** `modules/fizruk/data/*` (exercise library) — винести у
-  доменний пакет `@sergeant/fizruk-domain` (новий).
+- **R4.** 🟡 In flight (handoff). PR [#418](https://github.com/Skords-01/Sergeant/pull/418) відкритий — новий DOM-free пакет `@sergeant/fizruk-domain` (`constants`, `domain/types`, `data/exercises.gymup.json` + lookup helpers, `lib/{recoveryCompute,recoveryConflict,recoveryForecast,workoutStats,workoutUi,trainingPrograms,restSettings,backupSerialization}`), 20+ файлів-споживачів у `apps/web` переведені на `@sergeant/fizruk-domain/*`, pure-юніт-тести перенесені у пакет. **Не переїхали** (залишаються у `apps/web`): `BodyAtlas`/`body-highlighter` (SVG, Фаза 6), React hooks/components/pages, LS-специфічна частина `fizrukStorage.ts` (`buildFizruk*BackupPayload` / `applyFizruk*BackupPayload`). Потрібно: прогнати smoke-тест Fizruk-модуля у web + допинати CI перед мерджем (див. §2.6).
 - **R5.** Централізувати Zod-schemas `shared/schemas` → уже у
   `@sergeant/shared/schemas`, перевірити, щоб `apps/mobile` тягнув
   звідти, а не дублював.
