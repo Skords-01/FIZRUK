@@ -33,7 +33,12 @@ function applyVersion(path: string): string {
   if (!path.startsWith("/api/")) return path;
   if (path === "/api" || path === "/api/") return `/api/${version}`;
   // Auth plugin-и Better Auth client зашиті під `/api/auth/*` — не чіпаємо.
-  if (path.startsWith("/api/auth") || path.startsWith("/api/auth/")) {
+  // Жорстка перевірка сегмента (а не `startsWith("/api/auth")`), щоб
+  // `/api/authorize`, `/api/authentication` та інші майбутні endpoint-и з
+  // таким префіксом не провалилися повз версіонування. Консистентно з
+  // `src/sw.js` (пошук "api/auth"), де auth-шляхи теж виключаються
+  // точним сегментом.
+  if (path === "/api/auth" || path.startsWith("/api/auth/")) {
     return path;
   }
   // Уже явно версіонований шлях (напр. сторонній код, що вказав `/api/v1/...`)
