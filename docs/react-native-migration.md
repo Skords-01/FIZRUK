@@ -246,6 +246,28 @@ isReduceMotionEnabled()` (WCAG 2.3.3 parity).
   (`jest` + `ts-jest`) покривають enqueue / dedup / replay-after-online
   / serialization-roundtrip. Ключі префіксуються `mobile:` у
   `@sergeant/shared/storageKeys` (див. 6.1).
+- `apps/mobile/app/(tabs)/fizruk/*` + `apps/mobile/src/modules/fizruk/*`
+  — shell-каркас модуля Фізрук (Phase 6 · PR-A, `devin/…-fizruk-shell-stack`).
+  Tab `fizruk` переведено з одно-файлового `fizruk.tsx` у вкладений
+  Expo Router `Stack` (`app/(tabs)/fizruk/_layout.tsx` + 9 route-файлів:
+  `index`, `workouts`, `exercise`, `programs`, `progress`, `measurements`,
+  `body`, `atlas`, `plan`). Tab-header вимкнено, кожен screen малює власний
+  заголовок усередині сторінки. Route-каталог винесено у
+  `src/modules/fizruk/shell/fizrukRoute.ts` (масив `FIZRUK_PAGES`,
+  `fizrukRouteFor` — 1:1 імена web-версії); nav-каталог — у
+  `shell/fizrukNav.ts`. Страницi-компоненти у `src/modules/fizruk/pages/*`:
+  `Dashboard` — перший функціональний екран (дата, «Швидкий старт» CTA
+  на `/fizruk/workouts`, сітка нав-карток на всі 8 не-dashboard
+  сторінок через `router.push(fizrukRouteFor(page))`), решта вісім —
+  `PagePlaceholder`-cards з списком запланованого скоупу і посиланням
+  на наступний PR серії. Додано `@sergeant/fizruk-domain` у
+  `apps/mobile/package.json` для наступних PR-ів, який тягнутиме
+  `constants` / `domain` / `lib` без DOM. Render-тести:
+  `Dashboard.test.tsx` (coverage-guard на `NAV_CARDS` + CTA-routing)
+  та `fizrukRoute.test.ts` (парітет `FIZRUK_PAGES` + `fizrukRouteFor`
+  сегменти). Функціональні сторінки (BodyAtlas, графіки, фотопрогрес,
+  active-workout таймер, PlanCalendar, Programs, Measurements) —
+  у наступних PR-ах Фази 6 (PR-B…PR-G).
 
 ### 2.5 Аудит міграційного плану (прохід по `apps/web/src`)
 
