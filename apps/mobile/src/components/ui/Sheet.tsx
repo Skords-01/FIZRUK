@@ -31,6 +31,12 @@
  * - Respects `AccessibilityInfo.isReduceMotionEnabled()` — when enabled
  *   we drop the slide animation to `animationType="none"` per WCAG
  *   2.3.3 / Apple HIG. Same approach as `Skeleton` (PR #423).
+ * - `maxHeight` is computed as an absolute pixel value off
+ *   `useWindowDimensions()` (mirroring web's `max-h-[90vh]`) — RN's
+ *   percentage `maxHeight` resolves against the parent's resolved
+ *   height, and our wrapping `KeyboardAvoidingView` wraps content, so
+ *   a `"90%"` string would cap the panel at 90% of its own height
+ *   rather than the viewport.
  * - `role="dialog"` is applied via the RN ≥0.71 ARIA-role prop on the
  *   panel wrapper; the legacy `accessibilityRole` union has no
  *   `"dialog"` member.
@@ -51,6 +57,7 @@ import {
   SafeAreaView,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -88,6 +95,7 @@ export function Sheet({
   maxHeight = 0.9,
 }: SheetProps) {
   const [reduceMotion, setReduceMotion] = useState(false);
+  const { height: windowHeight } = useWindowDimensions();
 
   useEffect(() => {
     let mounted = true;
@@ -114,7 +122,14 @@ export function Sheet({
   // null;`) and avoids keeping child state alive between opens.
   if (!open) return null;
 
+  // Percentage `maxHeight` on a RN View resolves against its parent's
+  // height. Our panel sits inside a `KeyboardAvoidingView` that wraps
+  // its content (no flex:1 / explicit height), so a `"90%"` string
+  // would resolve against the panel's own content — not the viewport.
+  // Mirror the web `max-h-[90vh]` by computing an absolute pixel value
+  // off `useWindowDimensions()`.
   const heightFraction = Math.max(0.1, Math.min(1, maxHeight));
+  const maxPanelHeight = Math.round(windowHeight * heightFraction);
 
   return (
     <Modal
@@ -146,7 +161,7 @@ export function Sheet({
             className={cx(
               "bg-cream-50 border-t border-cream-300 rounded-t-3xl shadow-lg",
             )}
-            style={{ maxHeight: `${heightFraction * 100}%` }}
+            style={{ maxHeight: maxPanelHeight }}
           >
             <View className="flex items-center pt-3 pb-1">
               <View
