@@ -28,10 +28,10 @@ export function useEngineArgs(
   user: CurrentUser | null | undefined,
 ): UseEngineArgsResult {
   const lifecycle = useSyncCallbacks();
-  const { onStart, onSuccess, onError, onSettled } = lifecycle;
+  const { onStart, onSuccess, onError, onErrorRaw, onSettled } = lifecycle;
   const engineArgs: EngineArgs = useMemo(
-    () => ({ user, onStart, onSuccess, onError, onSettled }),
-    [user, onStart, onSuccess, onError, onSettled],
+    () => ({ user, onStart, onSuccess, onError, onErrorRaw, onSettled }),
+    [user, onStart, onSuccess, onError, onErrorRaw, onSettled],
   );
   return { engineArgs, lifecycle };
 }

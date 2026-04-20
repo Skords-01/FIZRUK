@@ -4,7 +4,7 @@ import { pullAll } from "../engine/pull";
 import { pushAll, pushDirty } from "../engine/push";
 import { uploadLocalData } from "../engine/upload";
 import { markMigrationDone } from "../state/migration";
-import type { CurrentUser } from "../types";
+import type { CurrentUser, EngineArgs, SyncCallbacks } from "../types";
 import { useEngineArgs } from "./useEngineArgs";
 import { useInitialSyncOnUser } from "./useInitialSyncOnUser";
 import { useSyncRetry } from "./useSyncRetry";
@@ -22,14 +22,19 @@ import { useSyncRetry } from "./useSyncRetry";
  *      periodic timer — to the executor below.
  *
  *   3. Executor (how to actually call the API)
- *      The `run*` callbacks below each wrap one engine entry point in the
- *      in-flight guard (`runExclusive`) so we never fire concurrent syncs.
+ *      The `run*` callbacks below each wrap one engine entry point in
+ *      `runExclusive`, which combines the in-flight guard with freshly
+ *      sync-id-bound lifecycle callbacks. This is what prevents a
+ *      preempted engine (see `runUploadLocal`) from overwriting state
+ *      belonging to a newer sync.
  *
  * Public state surface:
- *   - `isSyncing`   (legacy alias: `syncing`)
+ *   - `state`       new explicit state-machine value
+ *   - `isSyncing`   (legacy alias: `syncing`) — derived from `state`
  *   - `lastSyncAt`  (legacy alias: `lastSync`)
- *   - `hasError`    derived from the underlying error message; legacy alias
- *                   `syncError` still exposes the raw message.
+ *   - `hasError`    derived from `state`; legacy alias `syncError` still
+ *                   exposes the raw message and `syncErrorDetail` exposes
+ *                   the structured { type, retryable } shape.
  *   - `migrationPending` drives the first-run migration modal.
  */
 export function useCloudSync(user: CurrentUser | null | undefined) {
@@ -42,51 +47,63 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     syncing,
     lastSync,
     syncError,
+    state,
+    syncErrorDetail,
     runExclusive,
-    claimBusy,
+    runBypassed,
   } = lifecycle;
 
-  // --- 3. Executor: API calls, each serialized through the in-flight guard.
+  // --- 3. Executor: API calls, each serialized through the in-flight
+  // guard and invoked with sync-id-bound callbacks that no-op if a newer
+  // sync supersedes this one.
+
+  const withCb = useCallback(
+    (cb: SyncCallbacks): EngineArgs => ({ ...engineArgs, ...cb }),
+    [engineArgs],
+  );
 
   const runSync = useCallback(
-    () => runExclusive(() => pushDirty(engineArgs), undefined),
-    [engineArgs, runExclusive],
+    () => runExclusive((cb) => pushDirty(withCb(cb)), undefined),
+    [withCb, runExclusive],
   );
 
   const runPushAll = useCallback(
-    () => runExclusive(() => pushAll(engineArgs), undefined),
-    [engineArgs, runExclusive],
+    () => runExclusive((cb) => pushAll(withCb(cb)), undefined),
+    [withCb, runExclusive],
   );
 
   const runPullAll = useCallback(
-    () => runExclusive(() => pullAll(engineArgs), false),
-    [engineArgs, runExclusive],
+    () => runExclusive((cb) => pullAll(withCb(cb)), false),
+    [withCb, runExclusive],
   );
 
   const runInitialSync = useCallback(
     (): Promise<boolean> =>
       runExclusive(
-        () =>
+        (cb) =>
           initialSync({
-            ...engineArgs,
+            ...withCb(cb),
             onNeedMigration: () => setMigrationPending(true),
           }),
         false,
       ),
-    [engineArgs, runExclusive],
+    [withCb, runExclusive],
   );
 
   const runUploadLocal = useCallback(async () => {
     if (!user?.id) return;
     // Intentionally bypasses the in-flight guard: this is user-initiated
-    // from the migration modal and must proceed even if a background retry
-    // is mid-flight.
-    claimBusy();
-    await uploadLocalData({
-      ...engineArgs,
-      onMigrated: () => setMigrationPending(false),
-    });
-  }, [user, engineArgs, claimBusy]);
+    // from the migration modal and must proceed even if a background
+    // retry is mid-flight. `runBypassed` pairs the force-claim with a
+    // fresh sync-id so stale callbacks from the preempted retry can't
+    // overwrite the upload's lifecycle state.
+    await runBypassed((cb) =>
+      uploadLocalData({
+        ...withCb(cb),
+        onMigrated: () => setMigrationPending(false),
+      }),
+    );
+  }, [user, withCb, runBypassed]);
 
   const skipMigration = useCallback(() => {
     if (!user?.id) return;
@@ -109,6 +126,8 @@ export function useCloudSync(user: CurrentUser | null | undefined) {
     isSyncing,
     lastSyncAt,
     hasError,
+    state,
+    syncErrorDetail,
     // Legacy aliases kept so existing consumers (App.tsx, tests) compile.
     syncing,
     lastSync,

@@ -4,6 +4,7 @@ import { clearAllDirty, getModuleModifiedTimes } from "../state/dirtyModules";
 import { markMigrationDone } from "../state/migration";
 import type { EngineArgs } from "../types";
 import { buildModulesPayload } from "./buildPayload";
+import { retryAsync } from "./retryAsync";
 
 export type UploadArgs = EngineArgs & {
   onMigrated(): void;
@@ -23,13 +24,16 @@ export async function uploadLocalData(args: UploadArgs): Promise<void> {
       getModuleModifiedTimes(),
     );
     if (Object.keys(modules).length > 0) {
-      await syncApi.pushAll(modules);
+      await retryAsync(() => syncApi.pushAll(modules), {
+        label: "uploadLocalData",
+      });
     }
     markMigrationDone(user.id);
     clearAllDirty();
     onSuccess(new Date());
     onMigrated();
   } catch (err) {
+    args.onErrorRaw?.(err);
     onError(err instanceof Error ? err.message : String(err));
   } finally {
     onSettled();

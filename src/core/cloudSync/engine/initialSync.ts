@@ -12,6 +12,7 @@ import { getModuleVersion, setModuleVersion } from "../state/versions";
 import type { EngineArgs, PullAllModuleBody, PullAllResponse } from "../types";
 import { buildModulesPayload } from "./buildPayload";
 import { replayOfflineQueue } from "./replay";
+import { retryAsync } from "./retryAsync";
 
 export type InitialSyncArgs = EngineArgs & {
   onNeedMigration(): void;
@@ -58,7 +59,9 @@ async function applyMerge(
   // markMigrationDone is skipped — matches pre-refactor behavior where
   // `if (pushRes.ok) clearAllDirty()` combined with the syncApi-throwing
   // transport meant a push failure aborted the whole initialSync.
-  await syncApi.pushAll(modules);
+  await retryAsync(() => syncApi.pushAll(modules), {
+    label: "initialSync.merge",
+  });
   clearAllDirty();
 }
 
@@ -80,8 +83,10 @@ export async function initialSync(args: InitialSyncArgs): Promise<boolean> {
   try {
     await replayOfflineQueue();
 
-    const { modules: cloudModules } =
-      (await syncApi.pullAll()) as PullAllResponse;
+    const { modules: cloudModules } = (await retryAsync(
+      () => syncApi.pullAll(),
+      { label: "initialSync.pull" },
+    )) as PullAllResponse;
 
     const plan = resolveInitialSync({
       cloud: cloudModules as
@@ -115,6 +120,7 @@ export async function initialSync(args: InitialSyncArgs): Promise<boolean> {
     onSuccess(new Date());
     return true;
   } catch (err) {
+    args.onErrorRaw?.(err);
     onError(err instanceof Error ? err.message : String(err));
     return false;
   } finally {
