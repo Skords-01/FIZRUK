@@ -222,6 +222,36 @@ isReduceMotionEnabled()` (WCAG 2.3.3 parity).
   `@gorhom/bottom-sheet` / `react-native-modal` / Reanimated.
 - `apps/mobile/eas.json` з профайлами `development` / `preview` /
   `production` + `.easignore` (PR #408).
+- `packages/finyk-domain/src/storageKeys.ts` і
+  `packages/finyk-domain/src/backup.ts` — PR2 Фази 4 (pure domain
+  extract). `FINYK_STORAGE_KEYS`, `FINYK_MANUAL_ONLY_KEY` та мапа
+  `FINYK_BACKUP_STORAGE_KEYS` переїхали з
+  `apps/web/src/modules/finyk/lib/*` у DOM-free пакет, щоб і
+  mobile-адаптер (MMKV), і web (localStorage) брали одні й ті самі
+  рядки. Paired із `FINYK_BACKUP_VERSION`, `DEFAULT_FINYK_MONTHLY_PLAN`,
+  `FinykBackup` типом та чистими `normalizeFinykBackup` /
+  `normalizeFinykSyncPayload` — усі тестуються `vitest`-ом у
+  `backup.test.ts` (23 нові тест-кейси на шляхи невалідного версіонінгу,
+  компактні/повні payload-и, malformed rows). Web-файли
+  `lib/finykStorage.ts`, `lib/finykBackup.ts`, `lib/demoData.ts`
+  тонко реекспортять ці символи під історичними іменами — жоден
+  call-site в `apps/web` не змінюється. Нові entry-points у
+  `package.json` exports: `@sergeant/finyk-domain/storage-keys` +
+  `@sergeant/finyk-domain/backup`.
+- `apps/mobile/app/(tabs)/finyk/` + `apps/mobile/src/modules/finyk/` —
+  перший зріз Фази 4, PR1 (shell + stack-роутинг). `finyk.tsx`-стаб
+  замінено на директорію-роут з `_layout.tsx` (native `Stack`
+  обгорнутий у `ModuleErrorBoundary` з `moduleName="Фінік"` і
+  `onBackToHub → router.replace('/')`) + 5 screen-файлів:
+  `index.tsx` (Overview, `headerShown: false`), `transactions.tsx`,
+  `budgets.tsx`, `analytics.tsx`, `assets.tsx` — кожен із нативним
+  header-titles з `@/theme`. Оверлі Overview — `src/modules/finyk/FinykApp.tsx`
+  (хірогард + 2×2 nav-grid `FinykNavGrid` з `router.push` на
+  drill-down-и); решта 4 скрини — `FinykPageStub` з plan-фічами
+  наступних PR-ів. `FINYK_PAGES` (DOM-free реєстр з `id`/`label`/
+  `description`/`emoji`/`href`) централізує мапу сторінок для
+  майбутнього nav-UI та тестів. Jest smoke-test на `FinykApp.test.tsx`
+  покриває hero + 4 drill-down cards. Без нових залежностей.
 - `apps/mobile/src/modules/routine/` — перший зріз модуля Рутина
   (Phase 5 / PR 1 — shell + routing). Містить `RoutineApp.tsx`
   (root-компонент, обгорнутий у `ModuleErrorBoundary`
@@ -258,6 +288,28 @@ isReduceMotionEnabled()` (WCAG 2.3.3 parity).
   (`jest` + `ts-jest`) покривають enqueue / dedup / replay-after-online
   / serialization-roundtrip. Ключі префіксуються `mobile:` у
   `@sergeant/shared/storageKeys` (див. 6.1).
+- `apps/mobile/app/(tabs)/fizruk/*` + `apps/mobile/src/modules/fizruk/*`
+  — shell-каркас модуля Фізрук (Phase 6 · PR-A, `devin/…-fizruk-shell-stack`).
+  Tab `fizruk` переведено з одно-файлового `fizruk.tsx` у вкладений
+  Expo Router `Stack` (`app/(tabs)/fizruk/_layout.tsx` + 9 route-файлів:
+  `index`, `workouts`, `exercise`, `programs`, `progress`, `measurements`,
+  `body`, `atlas`, `plan`). Tab-header вимкнено, кожен screen малює власний
+  заголовок усередині сторінки. Route-каталог винесено у
+  `src/modules/fizruk/shell/fizrukRoute.ts` (масив `FIZRUK_PAGES`,
+  `fizrukRouteFor` — 1:1 імена web-версії); nav-каталог — у
+  `shell/fizrukNav.ts`. Страницi-компоненти у `src/modules/fizruk/pages/*`:
+  `Dashboard` — перший функціональний екран (дата, «Швидкий старт» CTA
+  на `/fizruk/workouts`, сітка нав-карток на всі 8 не-dashboard
+  сторінок через `router.push(fizrukRouteFor(page))`), решта вісім —
+  `PagePlaceholder`-cards з списком запланованого скоупу і посиланням
+  на наступний PR серії. Додано `@sergeant/fizruk-domain` у
+  `apps/mobile/package.json` для наступних PR-ів, який тягнутиме
+  `constants` / `domain` / `lib` без DOM. Render-тести:
+  `Dashboard.test.tsx` (coverage-guard на `NAV_CARDS` + CTA-routing)
+  та `fizrukRoute.test.ts` (парітет `FIZRUK_PAGES` + `fizrukRouteFor`
+  сегменти). Функціональні сторінки (BodyAtlas, графіки, фотопрогрес,
+  active-workout таймер, PlanCalendar, Programs, Measurements) —
+  у наступних PR-ах Фази 6 (PR-B…PR-G).
 
 ### 2.5 Аудит міграційного плану (прохід по `apps/web/src`)
 
