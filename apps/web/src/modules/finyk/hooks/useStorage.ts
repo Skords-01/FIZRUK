@@ -7,7 +7,7 @@ import {
   normalizeFinykSyncPayload,
   FINYK_BACKUP_VERSION,
 } from "../lib/finykBackup.js";
-import { toLocalISODate } from "@sergeant/shared";
+import { downloadJson, toLocalISODate } from "@sergeant/shared";
 import {
   readJSON,
   writeJSON,
@@ -383,7 +383,7 @@ export function useStorage({
     notifyFinykRoutineCalendarSync();
   };
 
-  const exportData = () => {
+  const exportData = async () => {
     const data = {
       version: FINYK_BACKUP_VERSION,
       budgets,
@@ -401,13 +401,7 @@ export function useStorage({
       customCategories,
       dismissedRecurring,
     };
-    const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `finyk-backup-${toLocalISODate()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadJson(`finyk-backup-${toLocalISODate()}.json`, data);
   };
 
   /** @returns {Promise<boolean>} */

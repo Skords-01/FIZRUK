@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { downloadJson } from "@sergeant/shared";
 import { Button } from "@shared/components/ui/Button";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { EmptyState } from "@shared/components/ui/EmptyState";
@@ -217,16 +218,12 @@ export function Progress() {
       }));
   }, [workouts]);
 
-  const exportJson = () => {
+  const exportJson = async () => {
     const payload = buildFizrukFullBackupPayload();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `fizruk-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    await downloadJson(
+      `fizruk-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      payload,
+    );
   };
 
   const importJson = async (file) => {
