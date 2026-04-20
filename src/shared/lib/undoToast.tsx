@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { ToastApi } from "@shared/hooks/useToast";
-import { hapticTap, hapticWarning } from "./haptic";
+import { hapticError, hapticTap, hapticWarning } from "./haptic";
 
 export interface UndoToastOptions {
   /** Текст, який бачить користувач ("Видалено звичку «Вода»"). */
@@ -11,6 +11,13 @@ export interface UndoToastOptions {
   undoLabel?: string;
   /** Викликається, коли юзер натиснув undo — ти відновлюєш локальний state / БД. */
   onUndo: () => void;
+  /**
+   * Повідомлення, яке показується окремим error-toast-ом, якщо `onUndo` кидає
+   * помилку. Без цього користувач раніше ніколи не дізнавався, що відновлення
+   * не спрацювало — toast зникав без сліду і дані залишались видаленими.
+   * Default: "Не вдалось повернути. Спробуй ще раз.".
+   */
+  onUndoErrorMsg?: ReactNode;
 }
 
 /**
@@ -30,10 +37,21 @@ export interface UndoToastOptions {
  * Haptic: викликається `hapticWarning()` на появу toast, і `hapticTap()`
  * на натискання undo — щоб користувач фізично відчув і небезпечну дію,
  * і виправлення.
+ *
+ * Error handling: якщо `onUndo` кидає, показуємо error-toast замість
+ * беззвучного ковтання винятку. Історично `catch {}` тут ховав реальні
+ * помилки (наприклад, коли restore не міг поставити запис через квоту
+ * localStorage) — юзер думав, що дані повернулись, а їх насправді не було.
  */
 export function showUndoToast(
   toast: ToastApi,
-  { msg, duration = 5000, undoLabel = "Повернути", onUndo }: UndoToastOptions,
+  {
+    msg,
+    duration = 5000,
+    undoLabel = "Повернути",
+    onUndo,
+    onUndoErrorMsg = "Не вдалось повернути. Спробуй ще раз.",
+  }: UndoToastOptions,
 ): number {
   hapticWarning();
   return toast.show(msg, "info", duration, {
@@ -43,7 +61,8 @@ export function showUndoToast(
       try {
         onUndo();
       } catch {
-        /* caller повинен сам лапати помилки — undo ідемпотентне */
+        hapticError();
+        toast.error(onUndoErrorMsg);
       }
     },
   });

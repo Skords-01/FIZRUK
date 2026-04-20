@@ -38,6 +38,10 @@ function SwipeToActionImpl({
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
   const isHorizontal = useRef<boolean | null>(null);
+  // Synchronous guard against a second touchStart landing inside the 200ms
+  // commit animation — setCommitted() is async, so we cannot read the state
+  // back in onTouchStart to ignore the duplicate.
+  const committingRef = useRef<boolean>(false);
 
   const reset = useCallback(() => {
     setOffset(0);
@@ -50,6 +54,14 @@ function SwipeToActionImpl({
   const onTouchStart = useCallback(
     (e: TouchEvent<HTMLDivElement>) => {
       if (disabled) return;
+      // A previous swipe is still inside its 200ms commit animation. If we
+      // accept a new touch now the commit timeout will fire twice (same
+      // action, same row) — a real regression reported by users on fast
+      // double-swipes of list items.
+      if (committingRef.current) return;
+      // Multi-touch (pinch-zoom, two-finger scroll) should never be
+      // interpreted as a horizontal swipe — ignore entirely.
+      if (e.touches.length !== 1) return;
       setCommitted(false);
       startX.current = e.touches[0].clientX;
       startY.current = e.touches[0].clientY;
@@ -89,23 +101,35 @@ function SwipeToActionImpl({
     if (!isDragging) return;
     if (offset < -SWIPE_THRESHOLD && onSwipeLeft) {
       setCommitted(true);
+      committingRef.current = true;
       setTimeout(() => {
         onSwipeLeft();
         reset();
         setCommitted(false);
+        committingRef.current = false;
       }, 200);
     } else if (offset > SWIPE_THRESHOLD && onSwipeRight) {
       setCommitted(true);
+      committingRef.current = true;
       setTimeout(() => {
         onSwipeRight();
         reset();
         setCommitted(false);
+        committingRef.current = false;
       }, 200);
     } else {
       reset();
     }
     setIsDragging(false);
   }, [isDragging, offset, onSwipeLeft, onSwipeRight, reset]);
+
+  const onTouchCancel = useCallback(() => {
+    // System cancel (iOS bounce / app switcher / pinch) — abandon the drag
+    // without firing the action. Without this handler the row would stay
+    // translated until the next touch.
+    if (committingRef.current) return;
+    reset();
+  }, [reset]);
 
   const showLeft = offset < 0 && onSwipeLeft;
   const showRight = offset > 0 && onSwipeRight;
@@ -160,6 +184,7 @@ function SwipeToActionImpl({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
       >
         {children}
       </div>
