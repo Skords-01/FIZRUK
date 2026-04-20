@@ -297,12 +297,11 @@ export function useNutritionRemoteActions({
       setDayPlanBusy(true);
       setErr("");
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSuccess: ({
       plan,
       regenerateMealType,
     }: {
-      plan: any;
+      plan: { meals?: unknown[] } & Record<string, unknown>;
       regenerateMealType: string | null | undefined;
     }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
