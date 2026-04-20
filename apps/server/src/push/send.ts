@@ -353,8 +353,7 @@ export async function sendFCM(
       statusName ??
       detailCode ??
       parsed?.error?.message ??
-      bodyText.slice(0, 200) ??
-      String(resp.status);
+      (bodyText.slice(0, 200) || String(resp.status));
 
     const effectiveCode = statusName ?? detailCode;
     const dead =

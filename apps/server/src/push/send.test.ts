@@ -392,6 +392,16 @@ describe("sendFCM", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("falls back to HTTP status when error body is empty", async () => {
+    // Регресія: пусте тіло при 400 не мусить давати `error: ""` у логах —
+    // чекаємо stringified status code як fallback.
+    fetchMock.mockResolvedValueOnce(resp(400, ""));
+    const r = await sendFCM("u1", "tok", { title: "hi" });
+    expect(r.delivered).toBe(false);
+    expect(r.dead).toBe(false);
+    expect(r.error).toBe("400");
+  });
+
   it("returns disabled when projectId is null", async () => {
     fcmProjectIdMock.mockReturnValueOnce(null);
     const r = await sendFCM("u1", "tok", { title: "hi" });
