@@ -9,6 +9,7 @@
 module.exports = {
   preset: "jest-expo",
   testMatch: ["<rootDir>/src/**/*.test.{ts,tsx}"],
+  setupFiles: ["<rootDir>/jest.setup.js"],
   transformIgnorePatterns: [
     // Keep the default `node_modules/` ignore but punch holes for the RN
     // / Expo / NativeWind ecosystem, whose published artefacts still
