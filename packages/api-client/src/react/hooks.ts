@@ -11,6 +11,8 @@ import type { ChatRequestPayload, ChatResponse } from "../endpoints/chat";
 import type {
   PushRegisterRequest,
   PushRegisterResponse,
+  PushUnregisterRequest,
+  PushUnregisterResponse,
 } from "../endpoints/push";
 import type { BarcodeLookupResponse } from "../endpoints/barcode";
 import type { FoodSearchResponse } from "../endpoints/foodSearch";
@@ -137,6 +139,25 @@ export function usePushRegister(
   return useMutation({
     mutationKey: apiMutationKeys.push.register(),
     mutationFn: (payload: PushRegisterRequest) => api.push.register(payload),
+    ...opts,
+  });
+}
+
+/**
+ * `POST /api/push/unregister` — уніфікований анрег push-пристрою.
+ *
+ * Симетричний до `usePushRegister`. Web-клієнт шле
+ * `{ platform: "web", endpoint }`, native — `{ platform, token }`.
+ * Ключ мутації `apiMutationKeys.push.unregister()`.
+ */
+export function usePushUnregister(
+  opts?: MutationOpts<PushUnregisterResponse, PushUnregisterRequest>,
+) {
+  const api = useApiClient();
+  return useMutation({
+    mutationKey: apiMutationKeys.push.unregister(),
+    mutationFn: (payload: PushUnregisterRequest) =>
+      api.push.unregister(payload),
     ...opts,
   });
 }
