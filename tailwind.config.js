@@ -3,7 +3,7 @@ import {
   brandColors,
   moduleColors,
   statusColors,
-} from "./src/modules/finyk/constants/chartPalette.js";
+} from "./src/modules/finyk/constants/chartPalette.ts";
 
 /** @type {import('tailwindcss').Config} */
 export default {
