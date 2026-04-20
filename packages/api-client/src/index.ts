@@ -59,10 +59,14 @@ export {
   createPushEndpoints,
   PushRegisterRequestSchema,
   PushRegisterResponseSchema,
+  PushUnregisterRequestSchema,
+  PushUnregisterResponseSchema,
   type PushEndpoints,
   type PushPlatform,
   type PushRegisterRequest,
   type PushRegisterResponse,
+  type PushUnregisterRequest,
+  type PushUnregisterResponse,
 } from "./endpoints/push";
 
 export {

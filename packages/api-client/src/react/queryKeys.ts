@@ -50,5 +50,6 @@ export const apiMutationKeys = {
   push: {
     all: ["push"] as const,
     register: () => ["push", "register"] as const,
+    unregister: () => ["push", "unregister"] as const,
   },
 } as const;

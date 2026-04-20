@@ -11,6 +11,7 @@ import {
   register as pushRegister,
   sendPush,
   subscribe as pushSubscribe,
+  unregister as pushUnregister,
   unsubscribe as pushUnsubscribe,
   vapidPublic,
 } from "../modules/push.js";
@@ -51,6 +52,14 @@ export function createPushRouter(): Router {
   // а не silently 200 з пустою сесією. Доступний також як `/api/v1/push/register`
   // через `apiVersionRewrite`.
   r.post("/api/push/register", requireSession(), asyncHandler(pushRegister));
+  // `/api/push/unregister` — симетричний анрег. Web шле
+  // `{ platform: "web", endpoint }`, native — `{ platform, token }`.
+  // Сесія обов'язкова з тих самих причин, що й у register.
+  r.post(
+    "/api/push/unregister",
+    requireSession(),
+    asyncHandler(pushUnregister),
+  );
   r.post(
     "/api/push/send",
     requireApiSecret("API_SECRET"),
