@@ -38,7 +38,9 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
   для debug-режиму.
 - `motion-safe:` префікс у 8 файлах для `animate-pulse` / `animate-spin`.
 - Новий `SkeletonList` компонент — уніфікована заміна спінерам у
-  списках (transactions / workouts / habits / meals).
+  списках (transactions / workouts / habits / meals). _Прибраний як
+  невикористаний у PR [#439](https://github.com/Skords-01/Sergeant/pull/439);
+  усі місця використовують `Skeleton`-примітив напряму._
 
 ## 3. Мікровзаємодії
 
@@ -160,7 +162,8 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
 
 - `src/shared/lib/haptic.ts`
 - `src/shared/lib/undoToast.tsx`
-- `src/shared/components/ui/SkeletonList.tsx`
+- `src/shared/components/ui/SkeletonList.tsx` _(видалено в
+  PR [#439](https://github.com/Skords-01/Sergeant/pull/439) — dead code)_
 - `src/core/hubSearchEngine.ts`
 - `docs/ux-audit-2025.md`
 
