@@ -41,8 +41,10 @@ export default function HubScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <Text style={styles.title}>Sergeant</Text>
+    <SafeAreaView className="flex-1 bg-[#0b0d10] p-4" edges={["top"]}>
+      <Text className="mb-1 text-[28px] font-bold text-[#f2f4f7]">
+        Sergeant
+      </Text>
       <Text style={styles.subtitle}>
         Привіт, {user?.name ?? user?.email ?? "друже"}
       </Text>
