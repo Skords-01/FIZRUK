@@ -147,7 +147,11 @@ export type UseLocalStorageReturn<T> = [
  *
  * - Reads the initial value synchronously (MMKV is sync) so there is no
  *   flash of fallback.
- * - Subscribes to MMKV value changes to stay in sync with sibling writers.
+ * - Subscribes to MMKV value changes so writes from *other* consumers of
+ *   the same key are picked up — mirroring the web adapter's
+ *   cross-tab `storage` semantics. Writes initiated by this hook are
+ *   suppressed so we do not re-render with a freshly `JSON.parse`'d
+ *   copy and break reference equality for the caller.
  * - Supports the `(prev) => next` updater signature, like `useState`.
  */
 export function useLocalStorage<T>(
@@ -156,6 +160,12 @@ export function useLocalStorage<T>(
 ): UseLocalStorageReturn<T> {
   const fallbackRef = useRef(fallback);
   fallbackRef.current = fallback;
+
+  // Guard against our own writes re-entering the value-changed listener.
+  // On web, `StorageEvent` only fires for cross-tab writes, so the
+  // equivalent listener is a no-op for same-tab writes; MMKV has no such
+  // filter, so we simulate it with this ref.
+  const selfWriteRef = useRef(false);
 
   const [value, setValue] = useState<T>(
     () => (safeReadLS<T>(key, fallback) as T) ?? fallback,
@@ -170,6 +180,7 @@ export function useLocalStorage<T>(
   useEffect(() => {
     const sub = mmkv.addOnValueChangedListener((changedKey) => {
       if (changedKey !== key) return;
+      if (selfWriteRef.current) return;
       setValue(
         (safeReadLS<T>(key, fallbackRef.current) as T) ?? fallbackRef.current,
       );
@@ -182,7 +193,12 @@ export function useLocalStorage<T>(
       setValue((prev) => {
         const resolved =
           typeof next === "function" ? (next as (prev: T) => T)(prev) : next;
-        safeWriteLS(key, resolved);
+        selfWriteRef.current = true;
+        try {
+          safeWriteLS(key, resolved);
+        } finally {
+          selfWriteRef.current = false;
+        }
         return resolved;
       });
     },
@@ -190,7 +206,12 @@ export function useLocalStorage<T>(
   );
 
   const remove: UseLocalStorageRemove = useCallback(() => {
-    safeRemoveLS(key);
+    selfWriteRef.current = true;
+    try {
+      safeRemoveLS(key);
+    } finally {
+      selfWriteRef.current = false;
+    }
     setValue(fallbackRef.current);
   }, [key]);
 
