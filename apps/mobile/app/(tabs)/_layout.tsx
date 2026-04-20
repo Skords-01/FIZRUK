@@ -1,6 +1,6 @@
 import { Redirect, Tabs } from "expo-router";
 import { Text } from "react-native";
-import { useSession } from "@/auth/authClient";
+import { useUser } from "@sergeant/api-client/react";
 import { colors } from "@/theme";
 
 type TabIconProps = {
@@ -25,9 +25,9 @@ function TabIcon({ emoji }: { emoji: string }) {
 }
 
 export default function TabsLayout() {
-  const { data: session, isPending } = useSession();
+  const { data, isLoading } = useUser();
 
-  if (!isPending && !session) {
+  if (!isLoading && !data?.user) {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
@@ -54,7 +54,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="fizruk"
-        options={{ title: "ФІЗРУК", tabBarIcon: TabIcon({ emoji: "🏋️" }) }}
+        options={{ title: "ФІЗРУК", tabBarIcon: TabIcon({ emoji: "🏋" }) }}
       />
       <Tabs.Screen
         name="routine"
@@ -62,7 +62,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="nutrition"
-        options={{ title: "Їжа", tabBarIcon: TabIcon({ emoji: "🍽️" }) }}
+        options={{ title: "Їжа", tabBarIcon: TabIcon({ emoji: "🍽" }) }}
       />
     </Tabs>
   );

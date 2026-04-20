@@ -63,8 +63,10 @@ apps/mobile
 │       └── nutrition.tsx         # stub → порт apps/web/src/modules/nutrition
 ├── src/
 │   ├── api/apiUrl.ts             # /api/v1/* префіксатор (дзеркало web)
-│   ├── auth/authClient.ts        # Better Auth Expo + SecureStore
+│   ├── api/apiClient.ts          # createApiClient + bearer getToken (SecureStore)
+│   ├── auth/authClient.ts        # Better Auth Expo actions (signIn/signUp/signOut)
 │   ├── components/ModuleStub.tsx
+│   ├── features/push/            # registerPush + PushRegistrar (no-UI)
 │   ├── providers/QueryProvider.tsx
 │   └── theme.ts
 ├── app.json                      # scheme=sergeant, plugins
@@ -82,10 +84,51 @@ apps/mobile
 
 ## API
 
-Усі запити — у `/api/v1/*`, як описано в `docs/api-v1.md`. Використовуй
-`apiUrl("/api/<endpoint>")` з `@/api/apiUrl` — він автоматично додає
-версійний префікс, окрім `/api/auth/*`, який Better Auth тримає на
-фіксованому `basePath`.
+Усі запити — у `/api/v1/*`, як описано в `docs/api-v1.md`. У
+продакшн-коді ходи у сервер через `@sergeant/api-client`:
+
+- `useApiClient()` + хуки з `@sergeant/api-client/react` (`useUser`,
+  `usePushRegister` тощо) — для React-екранів;
+- `apiClient` з `src/api/apiClient.ts` — для імперативних викликів
+  (напр. `src/features/push/registerPush.ts`).
+
+`authClient.ts` залишено лише для actions-ендпоінтів Better Auth
+(`signIn.email`, `signUp.email`, `signOut`). Ідентичність
+користувача читай через `useUser()` (GET `/api/v1/me`), а НЕ
+`useSession()` — ці дані джерелом правди — сервер, а не локальне
+SecureStore.
+
+## Push notifications
+
+Push-флоу на mobile закриває `PushRegistrar`
+(`src/features/push/PushRegistrar.tsx`). Після логіну він:
+
+1. запитує дозвіл через `expo-notifications`;
+2. бере native APNs/FCM токен (`getDevicePushTokenAsync`) у dev-client
+   / standalone-білді;
+3. шле `api.push.register({ platform, token })` →
+   `POST /api/v1/push/register`;
+4. зберігає токен у `AsyncStorage` під ключем
+   `push:lastToken:<userId>`, щоб не шарашити сервер повторно, і
+   водночас гарантовано перереєструвати пристрій на іншого юзера
+   (native push-токени пер-девайс, а не пер-акаунт).
+
+> **Expo Go не підтримує native APNs/FCM.** У Go ми падаємо на
+> `getExpoPushTokenAsync()` тільки для dev-дебагу — продакшн-пуші
+> через APNs/FCM потребують dev-client (`eas build --profile
+development`) або standalone збірку.
+
+Тестування з dev-build:
+
+```sh
+pnpm --filter @sergeant/mobile start --dev-client
+# на фізичному пристрої або симуляторі залогінься
+# перевір у Network logs POST /api/v1/push/register один раз
+# повторний запуск з тим самим токеном не шле запит
+```
+
+Серверний контракт і приклади payload-ів — у `docs/mobile.md`
+(секція «Push notifications»).
 
 ## Монорепо-правила
 
