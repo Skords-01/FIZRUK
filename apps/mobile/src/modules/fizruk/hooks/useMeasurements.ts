@@ -31,6 +31,7 @@ import {
 import { STORAGE_KEYS } from "@sergeant/shared";
 
 import { useLocalStorage } from "@/lib/storage";
+import { enqueueChange } from "@/sync/enqueue";
 
 const STORAGE_KEY = STORAGE_KEYS.FIZRUK_MEASUREMENTS;
 
@@ -85,6 +86,7 @@ export function useMeasurements(): UseMeasurementsResult {
       setRaw((prev) =>
         upsertMeasurement(Array.isArray(prev) ? prev : [], entry),
       );
+      enqueueChange(STORAGE_KEY);
       return entry;
     },
     [setRaw],
@@ -99,6 +101,7 @@ export function useMeasurements(): UseMeasurementsResult {
       setRaw((current) =>
         upsertMeasurement(Array.isArray(current) ? current : [], nextEntry),
       );
+      enqueueChange(STORAGE_KEY);
       return nextEntry;
     },
     [raw, setRaw],
@@ -106,13 +109,17 @@ export function useMeasurements(): UseMeasurementsResult {
 
   const remove = useCallback<UseMeasurementsResult["remove"]>(
     (id) => {
+      const current = Array.isArray(raw) ? raw : [];
+      if (!current.some((e) => e.id === id)) return;
       setRaw((prev) => removeInList(Array.isArray(prev) ? prev : [], id));
+      enqueueChange(STORAGE_KEY);
     },
-    [setRaw],
+    [raw, setRaw],
   );
 
   const clear = useCallback<UseMeasurementsResult["clear"]>(() => {
     removeRaw();
+    enqueueChange(STORAGE_KEY);
   }, [removeRaw]);
 
   return { entries, add, update, remove, clear };
