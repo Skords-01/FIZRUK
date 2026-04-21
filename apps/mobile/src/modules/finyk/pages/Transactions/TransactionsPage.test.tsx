@@ -319,6 +319,41 @@ describe("TransactionsPage — filters", () => {
     ).toBeTruthy();
   });
 
+  it("filters by MCC-derived category for non-overridden bank transactions", async () => {
+    const foodTx = makeRealTx({
+      id: "tx-food",
+      time: Math.floor(new Date("2026-04-15T10:00:00.000Z").getTime() / 1000),
+      amount: -25000,
+      description: "Сільпо",
+      mcc: 5411, // food
+    });
+    const transportTx = makeRealTx({
+      id: "tx-bus",
+      time: Math.floor(new Date("2026-04-15T11:00:00.000Z").getTime() / 1000),
+      amount: -3000,
+      description: "Метро",
+      mcc: 4111, // transport
+    });
+    render(
+      <TransactionsPage
+        now={FIXED_NOW}
+        seed={{ realTx: [foodTx, transportTx] }}
+      />,
+    );
+    expect(screen.getByText("Сільпо")).toBeTruthy();
+    expect(screen.getByText("Метро")).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId("finyk-transactions-filter-category"));
+    fireEvent.press(
+      await screen.findByTestId("finyk-transactions-filter-cat-opt-food"),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Сільпо")).toBeTruthy();
+      expect(screen.queryByText("Метро")).toBeNull();
+    });
+  });
+
   it("hydrates the filter from MMKV across remounts", () => {
     safeWriteLS(FILTERS_KEY, {
       filter: "income",

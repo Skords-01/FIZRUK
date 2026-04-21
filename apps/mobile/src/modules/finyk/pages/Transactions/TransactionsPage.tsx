@@ -33,6 +33,7 @@ import { useCallback, useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -40,7 +41,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList, type ListRenderItem } from "@shopify/flash-list";
 
-import { fmtAmt, CURRENCY } from "@sergeant/finyk-domain";
+import {
+  fmtAmt,
+  CURRENCY,
+  getCategory,
+  getIncomeCategory,
+  mergeExpenseCategoryDefinitions,
+  INCOME_CATEGORIES,
+} from "@sergeant/finyk-domain";
 import {
   manualExpenseToTransaction,
   type Transaction,
@@ -169,6 +177,7 @@ export function TransactionsPage({
     | { open: true; editing: ManualExpenseRecord | null }
   >({ open: false });
   const [catPicker, setCatPicker] = useState<{ tx: Transaction } | null>(null);
+  const [filterCatSheet, setFilterCatSheet] = useState(false);
   const [accountPicker, setAccountPicker] = useState(false);
   const [datePicker, setDatePicker] = useState(false);
   const [bankEditTx, setBankEditTx] = useState<Transaction | null>(null);
@@ -239,6 +248,52 @@ export function TransactionsPage({
 
   const searchLower = search.trim().toLowerCase();
 
+  // Full list of expense categories (built-ins + user customs) used by
+  // the category-filter picker. Mirrors the same merger the web feed
+  // uses, so the chip set on mobile and the filter the user picks below
+  // refer to the exact same `id` space.
+  const allExpenseCategories = useMemo<{ id: string; label: string }[]>(() => {
+    const merged = mergeExpenseCategoryDefinitions(
+      customCategories.map((c) => ({ id: c.id, label: c.label })),
+    ) as { id: string; label: string }[];
+    return merged.filter((c) => c.id !== "income");
+  }, [customCategories]);
+
+  const allIncomeCategories = useMemo<{ id: string; label: string }[]>(
+    () =>
+      INCOME_CATEGORIES.map((c) => ({ id: c.id, label: c.label })),
+    [],
+  );
+
+  const activeCategoryLabel = useMemo<string | null>(() => {
+    const id = filters.filter;
+    if (id === "all" || id === "expense" || id === "income" || id === "credit") {
+      return null;
+    }
+    const hit =
+      allExpenseCategories.find((c) => c.id === id) ??
+      allIncomeCategories.find((c) => c.id === id);
+    return hit ? hit.label : null;
+  }, [filters.filter, allExpenseCategories, allIncomeCategories]);
+
+  const getEffectiveCat = useCallback(
+    (t: Transaction): { id: string; label: string } => {
+      if (t.amount > 0) {
+        return getIncomeCategory(t.description, txCategories[t.id]) as {
+          id: string;
+          label: string;
+        };
+      }
+      return getCategory(
+        t.description,
+        t.mcc,
+        txCategories[t.id],
+        customCategories,
+      ) as { id: string; label: string };
+    },
+    [txCategories, customCategories],
+  );
+
   const filtered = useMemo<Transaction[]>(() => {
     const base = [...activeTx]
       .filter((t) => !hiddenTxIdSet.has(t.id))
@@ -266,7 +321,7 @@ export function TransactionsPage({
               ? t.amount < 0
               : filters.filter === "credit"
                 ? creditAccIds.has(t._accountId ?? "")
-                : (txCategories[t.id] ?? "") === filters.filter;
+                : getEffectiveCat(t).id === filters.filter;
       return matchSearch && matchFilter;
     });
   }, [
@@ -278,7 +333,7 @@ export function TransactionsPage({
     filters.range.endMs,
     accountFilterSet,
     creditAccIds,
-    txCategories,
+    getEffectiveCat,
   ]);
 
   // Build the day-grouped flat array consumed by FlashList: each day
@@ -651,6 +706,28 @@ export function TransactionsPage({
             );
           })}
           <Pressable
+            onPress={() => setFilterCatSheet(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Фільтр по категорії"
+            testID={`${testID}-filter-category`}
+            className={
+              activeCategoryLabel
+                ? "bg-brand-500 border border-brand-500 rounded-full px-3 h-9 justify-center"
+                : "bg-cream-50 border border-cream-300 rounded-full px-3 h-9 justify-center"
+            }
+          >
+            <Text
+              className={
+                activeCategoryLabel
+                  ? "text-white text-xs font-semibold"
+                  : "text-stone-700 text-xs font-medium"
+              }
+              numberOfLines={1}
+            >
+              🏷 {activeCategoryLabel ?? "Категорія"}
+            </Text>
+          </Pressable>
+          <Pressable
             onPress={openDateRangeSheet}
             accessibilityRole="button"
             accessibilityLabel="Фільтр по даті"
@@ -922,6 +999,90 @@ export function TransactionsPage({
             <Text className="text-sm text-stone-900">🙈 Приховати</Text>
           </Pressable>
         </View>
+      </Sheet>
+
+      <Sheet
+        open={filterCatSheet}
+        onClose={() => setFilterCatSheet(false)}
+        title="Фільтр по категорії"
+        description="Оберіть категорію (включно з MCC-категоріями за замовчуванням), щоб показати лише транзакції з нею."
+      >
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 16, gap: 4 }}
+          testID={`${testID}-filter-cat-sheet`}
+        >
+          <Text className="text-[11px] uppercase tracking-wide text-stone-400 px-3 pt-2 pb-1">
+            Витрати
+          </Text>
+          {allExpenseCategories.map((c) => {
+            const checked = filters.filter === c.id;
+            return (
+              <Pressable
+                key={`exp-${c.id}`}
+                onPress={() => {
+                  setFilter(c.id);
+                  setFilterCatSheet(false);
+                }}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked }}
+                testID={`${testID}-filter-cat-opt-${c.id}`}
+                className="flex-row items-center px-3 py-3 rounded-xl active:opacity-70"
+              >
+                <Text className="text-sm text-stone-900 flex-1">
+                  {c.label}
+                </Text>
+                <Text
+                  className={checked ? "text-brand-500" : "text-stone-300"}
+                >
+                  {checked ? "☑" : "☐"}
+                </Text>
+              </Pressable>
+            );
+          })}
+          <Text className="text-[11px] uppercase tracking-wide text-stone-400 px-3 pt-3 pb-1">
+            Доходи
+          </Text>
+          {allIncomeCategories.map((c) => {
+            const checked = filters.filter === c.id;
+            return (
+              <Pressable
+                key={`inc-${c.id}`}
+                onPress={() => {
+                  setFilter(c.id);
+                  setFilterCatSheet(false);
+                }}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked }}
+                testID={`${testID}-filter-cat-opt-${c.id}`}
+                className="flex-row items-center px-3 py-3 rounded-xl active:opacity-70"
+              >
+                <Text className="text-sm text-stone-900 flex-1">
+                  {c.label}
+                </Text>
+                <Text
+                  className={checked ? "text-brand-500" : "text-stone-300"}
+                >
+                  {checked ? "☑" : "☐"}
+                </Text>
+              </Pressable>
+            );
+          })}
+          {activeCategoryLabel && (
+            <Pressable
+              onPress={() => {
+                setFilter("all");
+                setFilterCatSheet(false);
+              }}
+              accessibilityRole="button"
+              testID={`${testID}-filter-cat-clear`}
+              className="mt-2 px-3 py-3 rounded-xl bg-cream-100 active:opacity-70"
+            >
+              <Text className="text-sm text-stone-600 text-center">
+                Скинути категорію
+              </Text>
+            </Pressable>
+          )}
+        </ScrollView>
       </Sheet>
     </SafeAreaView>
   );
