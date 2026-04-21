@@ -68,6 +68,7 @@ export const STORAGE_KEYS = {
   FIZRUK_MEASUREMENTS: "fizruk_measurements_v1",
   FIZRUK_SELECTED_TEMPLATE: "fizruk_selected_template_id_v1",
   FIZRUK_ACTIVE_WORKOUT: "fizruk_active_workout_id_v1",
+  FIZRUK_ACTIVE_PROGRAM: "fizruk_active_program_id_v1",
   FIZRUK_DAILY_LOG: "fizruk_daily_log_v1",
   FIZRUK_REST_SETTINGS: "fizruk_rest_settings_v1",
 
