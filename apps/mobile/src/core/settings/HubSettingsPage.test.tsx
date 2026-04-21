@@ -8,6 +8,7 @@
  */
 
 import { render } from "@testing-library/react-native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { _getMMKVInstance } from "@/lib/storage";
 
@@ -36,9 +37,23 @@ beforeEach(() => {
   _getMMKVInstance().clearAll();
 });
 
+function renderPage() {
+  // AccountSection calls `useQueryClient()`, so the shell needs a
+  // QueryClientProvider in scope. A fresh client per render keeps the
+  // smoke tests isolated.
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={client}>
+      <HubSettingsPage />
+    </QueryClientProvider>,
+  );
+}
+
 describe("HubSettingsPage", () => {
-  it("renders the screen title and all seven section headers", () => {
-    const { getByText } = render(<HubSettingsPage />);
+  it("renders the screen title and all section headers", () => {
+    const { getByText } = renderPage();
 
     expect(getByText("Налаштування")).toBeTruthy();
     expect(getByText("Загальні")).toBeTruthy();
@@ -48,5 +63,6 @@ describe("HubSettingsPage", () => {
     expect(getByText("Фізрук")).toBeTruthy();
     expect(getByText("AI Звіт тижня")).toBeTruthy();
     expect(getByText("Експериментальне")).toBeTruthy();
+    expect(getByText("Акаунт")).toBeTruthy();
   });
 });

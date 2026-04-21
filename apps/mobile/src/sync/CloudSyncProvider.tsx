@@ -28,6 +28,8 @@ import { useUser } from "@sergeant/api-client/react";
 
 import { useCloudSync, type UseCloudSyncReturn } from "./hook/useCloudSync";
 
+export type { UseCloudSyncReturn };
+
 export const CloudSyncContext = createContext<UseCloudSyncReturn | null>(null);
 
 export function CloudSyncProvider({ children }: PropsWithChildren) {

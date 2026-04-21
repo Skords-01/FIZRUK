@@ -10,6 +10,9 @@ export * from "./types";
 // Shared, DOM-free constants (storage keys, etc.)
 export * from "./lib/storageKeys";
 
+// Hub dashboard module ordering (pure helpers; storage I/O is per-platform).
+export * from "./lib/dashboard";
+
 // DOM-free haptic contract (platform adapters register at app bootstrap).
 export * from "./lib/haptic";
 
