@@ -26,6 +26,7 @@ import type {
 } from "@sergeant/finyk-domain/domain";
 
 import { _getMMKVInstance, safeReadLS, safeWriteLS } from "@/lib/storage";
+import { enqueueChange } from "@/sync/enqueue";
 
 const KEY_ASSETS = FINYK_BACKUP_STORAGE_KEYS.manualAssets;
 const KEY_DEBTS = FINYK_BACKUP_STORAGE_KEYS.manualDebts;
@@ -126,18 +127,22 @@ export function useFinykAssetsStore(
   const setManualAssets = useCallback((next: ManualAsset[]) => {
     setAssetsState(next);
     safeWriteLS(KEY_ASSETS, next);
+    enqueueChange(KEY_ASSETS);
   }, []);
   const setManualDebts = useCallback((next: AssetsDebt[]) => {
     setDebtsState(next);
     safeWriteLS(KEY_DEBTS, next);
+    enqueueChange(KEY_DEBTS);
   }, []);
   const setReceivables = useCallback((next: AssetsReceivable[]) => {
     setRecvState(next);
     safeWriteLS(KEY_RECV, next);
+    enqueueChange(KEY_RECV);
   }, []);
   const setHiddenAccounts = useCallback((next: string[]) => {
     setHiddenState(next);
     safeWriteLS(KEY_HIDDEN, next);
+    enqueueChange(KEY_HIDDEN);
   }, []);
 
   // Mono accounts + transactions are not persisted here — they come

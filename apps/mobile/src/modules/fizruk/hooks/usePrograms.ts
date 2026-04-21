@@ -31,6 +31,7 @@ import {
 import { STORAGE_KEYS } from "@sergeant/shared";
 
 import { _getMMKVInstance, safeReadLS, safeWriteLS } from "@/lib/storage";
+import { enqueueChange } from "@/sync/enqueue";
 
 const STORAGE_KEY = STORAGE_KEYS.FIZRUK_ACTIVE_PROGRAM;
 
@@ -91,6 +92,7 @@ export function usePrograms(
   const persist = useCallback((next: ActiveProgramState) => {
     setState(next);
     safeWriteLS(STORAGE_KEY, next);
+    enqueueChange(STORAGE_KEY);
   }, []);
 
   const activateProgram = useCallback(

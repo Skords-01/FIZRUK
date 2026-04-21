@@ -38,6 +38,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { STORAGE_KEYS } from "@sergeant/shared";
 
 import { safeReadStringLS, safeRemoveLS, safeWriteLS } from "@/lib/storage";
+import { enqueueChange } from "@/sync/enqueue";
 
 const FIZRUK_ACTIVE_WORKOUT = STORAGE_KEYS.FIZRUK_ACTIVE_WORKOUT;
 
@@ -252,6 +253,7 @@ export function useActiveFizrukWorkout(
     } else {
       safeWriteLS(FIZRUK_ACTIVE_WORKOUT, id);
     }
+    enqueueChange(FIZRUK_ACTIVE_WORKOUT);
   }, []);
 
   const clearActiveWorkout = useCallback(() => {

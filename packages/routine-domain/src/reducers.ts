@@ -107,17 +107,21 @@ export function applyCreateHabit(
 
 /**
  * Часткове оновлення звички за id (нормалізуємо після мерджу).
+ * Повертає той самий `state` якщо звичка з таким `id` не існує
+ * або якщо нормалізований результат ідентичний поточній звичці.
  */
 export function applyUpdateHabit(
   state: RoutineState,
   id: string,
   patch: Partial<Habit>,
 ): RoutineState {
+  const current = state.habits.find((h) => h.id === id);
+  if (!current) return state;
+  const updated = normalizeHabit({ ...current, ...patch });
+  if (JSON.stringify(updated) === JSON.stringify(current)) return state;
   return {
     ...state,
-    habits: state.habits.map((h) =>
-      h.id === id ? normalizeHabit({ ...h, ...patch }) : h,
-    ),
+    habits: state.habits.map((h) => (h.id === id ? updated : h)),
   };
 }
 
@@ -179,6 +183,9 @@ export function applySetHabitArchived(
   id: string,
   archived: boolean,
 ): RoutineState {
+  const habit = state.habits.find((h) => h.id === id);
+  if (!habit) return state;
+  if (habit.archived === !!archived) return state;
   return applyUpdateHabit(state, id, { archived: !!archived });
 }
 
@@ -186,6 +193,7 @@ export function applyDeleteHabit(
   state: RoutineState,
   id: string,
 ): RoutineState {
+  if (!state.habits.some((h) => h.id === id)) return state;
   const completions = { ...state.completions };
   delete completions[id];
   const notes = { ...(state.completionNotes || {}) };
@@ -318,6 +326,13 @@ export function applySetHabitOrder(
   }
   for (const id of active) {
     if (!seen.has(id)) order.push(id);
+  }
+  const prev = state.habitOrder || [];
+  if (
+    order.length === prev.length &&
+    order.every((id, i) => id === prev[i])
+  ) {
+    return state;
   }
   return { ...state, habitOrder: order };
 }

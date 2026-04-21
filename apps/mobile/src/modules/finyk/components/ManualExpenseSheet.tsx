@@ -103,6 +103,12 @@ export interface ManualExpenseSheetProps {
   open: boolean;
   onClose: () => void;
   onSave?: (payload: ManualExpensePayload) => void;
+  /**
+   * Surfaced as a "Видалити" action when editing an existing manual
+   * expense. Receives the existing id; caller is responsible for
+   * confirming the destructive action.
+   */
+  onDelete?: (id: string) => void;
   initialExpense?: ManualExpenseInput | null;
   initialCategory?: string;
   initialDescription?: string;
@@ -117,6 +123,7 @@ export function ManualExpenseSheet({
   open,
   onClose,
   onSave,
+  onDelete,
   initialExpense,
   initialCategory,
   initialDescription,
@@ -194,23 +201,40 @@ export function ManualExpenseSheet({
       onClose={onClose}
       title={isEditing ? "Редагувати витрату" : "Додати витрату"}
       footer={
-        <View className="flex-row gap-3">
-          <Button
-            variant="ghost"
-            className="flex-1"
-            onPress={onClose}
-            testID={testID ? `${testID}-cancel` : undefined}
-          >
-            Скасувати
-          </Button>
-          <Button
-            variant="finyk"
-            className="flex-1"
-            onPress={handleSubmit}
-            testID={testID ? `${testID}-submit` : undefined}
-          >
-            {isEditing ? "Зберегти" : "Додати"}
-          </Button>
+        <View className="gap-2">
+          <View className="flex-row gap-3">
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onPress={onClose}
+              testID={testID ? `${testID}-cancel` : undefined}
+            >
+              Скасувати
+            </Button>
+            <Button
+              variant="finyk"
+              className="flex-1"
+              onPress={handleSubmit}
+              testID={testID ? `${testID}-submit` : undefined}
+            >
+              {isEditing ? "Зберегти" : "Додати"}
+            </Button>
+          </View>
+          {isEditing && onDelete && initialExpense?.id ? (
+            <Button
+              variant="ghost"
+              className="self-stretch"
+              onPress={() => {
+                onDelete(String(initialExpense.id));
+                onClose();
+              }}
+              testID={testID ? `${testID}-delete` : undefined}
+            >
+              <Text className="text-danger text-sm font-semibold">
+                🗑 Видалити
+              </Text>
+            </Button>
+          ) : null}
         </View>
       }
     >

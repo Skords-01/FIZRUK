@@ -1,6 +1,7 @@
 import "../global.css";
 
 import { useEffect } from "react";
+import { View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -9,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ApiClientProvider } from "@sergeant/api-client/react";
 
 import { apiClient } from "@/api/apiClient";
+import { SyncStatusOverlay } from "@/core/SyncStatusOverlay";
 import { PushRegistrar } from "@/features/push/PushRegistrar";
 // Registers the mobile `expo-haptics`-based adapter on the shared
 // haptic contract (`@sergeant/shared`). Import for side effects only.
@@ -36,18 +38,21 @@ export default function RootLayout() {
           <ApiClientProvider client={apiClient}>
             <CloudSyncProvider>
               <StatusBar style="light" />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="(auth)"
-                  options={{ presentation: "modal" }}
-                />
-                <Stack.Screen
-                  name="settings"
-                  options={{ presentation: "modal" }}
-                />
-                <Stack.Screen name="+not-found" />
-              </Stack>
+              <View style={{ flex: 1 }}>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="(auth)"
+                    options={{ presentation: "modal" }}
+                  />
+                  <Stack.Screen
+                    name="settings"
+                    options={{ presentation: "modal" }}
+                  />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <SyncStatusOverlay />
+              </View>
               <PushRegistrar />
             </CloudSyncProvider>
           </ApiClientProvider>

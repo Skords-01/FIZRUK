@@ -55,6 +55,8 @@ export const STORAGE_KEYS = {
   FINYK_MONO_DEBT_LINKED: "finyk_mono_debt_linked",
   FINYK_NETWORTH_HISTORY: "finyk_networth_history",
   FINYK_CUSTOM_CATS: "finyk_custom_cats_v1",
+  FINYK_MANUAL_EXPENSES: "finyk_manual_expenses_v1",
+  FINYK_TX_FILTERS: "finyk_tx_filters_v1",
 
   // ─── Fizruk ───────────────────────────────────────────────────────────
   FIZRUK_WORKOUTS: "fizruk_workouts_v1",

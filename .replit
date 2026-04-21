@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "postgresql-16"]
+modules = ["nodejs-20", "python-3.12", "web"]
 [agent]
 expertMode = true
 
@@ -48,6 +48,8 @@ externalPort = 3002
 [userenv]
 
 [userenv.shared]
+BETTER_AUTH_CROSS_SITE_COOKIES = "0"
+NODE_ENV = "production"
 
 [userenv.development]
 
