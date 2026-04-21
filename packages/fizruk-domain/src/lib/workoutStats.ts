@@ -3,18 +3,21 @@
 interface StatsSet {
   weightKg?: number | null;
   reps?: number | null;
+  [key: string]: unknown;
 }
 
 interface StatsItem {
   exerciseId?: string | null;
   type?: string | null;
   sets?: StatsSet[] | null;
+  [key: string]: unknown;
 }
 
 interface StatsWorkout {
   startedAt?: string | null;
   endedAt?: string | null;
   items?: StatsItem[] | null;
+  [key: string]: unknown;
 }
 
 /**
