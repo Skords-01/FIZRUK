@@ -216,9 +216,20 @@ export function TransactionsPage({
       .map((e) => manualExpenseToTransaction(e));
   }, [manualExpenses, selMonth.year, selMonth.month]);
 
+  // Bank tx coming out of MMKV cache may span several months — filter
+  // to the selected month so prev-month navigation surfaces cached
+  // history (web parity), instead of being limited to "current month".
+  const realTxThisMonth = useMemo<Transaction[]>(() => {
+    const { start, end } = getMonthBounds(selMonth.year, selMonth.month);
+    return realTx.filter((t) => {
+      const ms = (t.time || 0) * 1000;
+      return ms >= start && ms < end;
+    });
+  }, [realTx, selMonth.year, selMonth.month]);
+
   const activeTx = useMemo<Transaction[]>(
-    () => [...(isCurrentMonth ? realTx : []), ...manualTxsThisMonth],
-    [isCurrentMonth, realTx, manualTxsThisMonth],
+    () => [...realTxThisMonth, ...manualTxsThisMonth],
+    [realTxThisMonth, manualTxsThisMonth],
   );
 
   const hiddenTxIdSet = useMemo(() => new Set(hiddenTxIds), [hiddenTxIds]);
@@ -494,7 +505,7 @@ export function TransactionsPage({
         <SwipeToAction
           onSwipeLeft={() => handleSwipeLeft(tx)}
           onSwipeRight={() => handleSwipeRight(tx)}
-          leftLabel="✎ Редагувати"
+          leftLabel={isManual ? "✎ Редагувати" : "⋯ Дії"}
           leftColor="bg-brand-500"
           rightLabel="🏷 Категорія"
           rightColor="bg-warning"
