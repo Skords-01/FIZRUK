@@ -264,10 +264,14 @@ isReduceMotionEnabled()` (WCAG 2.3.3 parity).
     доступний у наступному релізі» (Better Auth sheet на mobile ще не
     зведено в навігацію — TODO). Тести: 64 vitest-кейси для shared
     (>=80% branch); 22 jest-expo кейси на картки + one-hero rule в
-    `HubDashboard.test.tsx`. Не входить у PR-2 (плановано окремо):
-    quick-stats preview у `StatusRow` (`*_quick_stats` LocalStorage
-    readers — PR-3), `HubInsightsPanel` (colapse з Coach-рекомендаціями —
-    PR-3), `WeeklyDigestFooter` — PR-3.
+    `HubDashboard.test.tsx`. Продовження серії (приземлилося окремо у
+    PR-3 ✅ PR [#482](https://github.com/Skords-01/Sergeant/pull/482)):
+    quick-stats preview у `StatusRow` (`*_quick_stats` MMKV readers),
+    `HubInsightsPanel` (collapsible панель із Coach-рекомендаціями) і
+    `WeeklyDigestFooter`. `rest`-рекомендації з `useDashboardFocus`
+    тепер фідять `HubInsightsPanel` (спільна dismiss-мапа
+    `hub_recs_dismissed_v1`), тож one-hero правило та secondary-панель
+    працюють від одного джерела recs.
 - `apps/mobile/src/core/dashboard/{HubDashboard,DraggableDashboard,StatusRow,useDashboardOrder,dashboardModuleConfig}.tsx`
   - `packages/shared/src/lib/dashboard.ts`
     — `HubDashboard` PR-1 (Phase 2 / Hub-core, PR [#480](https://github.com/Skords-01/Sergeant/pull/480)).
@@ -309,12 +313,15 @@ isReduceMotionEnabled()` (WCAG 2.3.3 parity).
     через яку `pnpm/action-setup` падав). `pnpm-lock.yaml` додано у
     `.prettierignore`. Без нових runtime-deps поверх уже наявних
     `react-native-gesture-handler` + `react-native-reanimated` +
-    `expo-haptics`. Не входить у PR-1 (плановано окремо):
-    `TodayFocusCard` / `FirstActionHeroCard` / `SoftAuthPromptCard`
-    (hero-шар — PR-2), quick-stats preview у `StatusRow`
-    (`*_quick_stats` LocalStorage readers — PR-3), `HubInsightsPanel`
-    (colapse з Coach-рекомендаціями — PR-3), `WeeklyDigestFooter` —
-    PR-3.
+    `expo-haptics`. Продовження серії (приземлилося окремо):
+    `TodayFocusCard` / `FirstActionHeroCard` / `SoftAuthPromptCard` —
+    hero-шар, PR-2 ✅ PR [#483](https://github.com/Skords-01/Sergeant/pull/483);
+    quick-stats preview у `StatusRow` (`*_quick_stats` MMKV readers),
+    `HubInsightsPanel` (collapsible панель із Coach-рекомендаціями) і
+    `WeeklyDigestFooter` — PR-3 ✅ PR [#482](https://github.com/Skords-01/Sergeant/pull/482).
+    Трьома PR-ами серія `HubDashboard` на mobile закрита — далі по Hub-
+    core Phase 2 йдуть `OnboardingWizard`, `HubChat`, `HubSearch`,
+    `HubReports`.
 - `packages/finyk-domain/src/storageKeys.ts` і
   `packages/finyk-domain/src/backup.ts` — PR2 Фази 4 (pure domain
   extract). `FINYK_STORAGE_KEYS`, `FINYK_MANUAL_ONLY_KEY` та мапа
