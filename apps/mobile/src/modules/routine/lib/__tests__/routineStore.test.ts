@@ -176,18 +176,14 @@ describe("routineStore — enqueueChange wiring", () => {
     expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
   });
 
-  // Documents current reducer behaviour: `applyUpdateHabit` rebuilds
-  // the habits array unconditionally (no `next === prev` short-
-  // circuit for unknown ids), so the wiring fires even on a no-op
-  // edit. Tracked as follow-up tech-debt.
-  it("updateHabit fires enqueueChange even for an unknown id (reducer always returns new state)", () => {
+  it("updateHabit is a no-op for an unknown id (next === prev)", () => {
     const { result } = renderHook(() => useRoutineStore());
     mockEnqueueChange.mockClear();
 
     act(() => {
       result.current.updateHabit("unknown", { name: "x" });
     });
-    expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
+    expect(mockEnqueueChange).not.toHaveBeenCalled();
   });
 
   it("setHabitArchived fires enqueueChange", () => {
@@ -204,11 +200,7 @@ describe("routineStore — enqueueChange wiring", () => {
     expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
   });
 
-  // Documents current reducer behaviour: `applySetHabitArchived`
-  // delegates to `applyUpdateHabit`, which always allocates a new
-  // habits array, so re-archiving an already-archived habit still
-  // fires the wiring. Tracked as follow-up tech-debt.
-  it("setHabitArchived fires enqueueChange even when the flag is unchanged", () => {
+  it("setHabitArchived is a no-op when the flag is unchanged (next === prev)", () => {
     const { result } = renderHook(() => useRoutineStore());
     act(() => {
       result.current.createHabit({ name: "Stretch" });
@@ -222,7 +214,7 @@ describe("routineStore — enqueueChange wiring", () => {
     act(() => {
       result.current.setHabitArchived(id, true);
     });
-    expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
+    expect(mockEnqueueChange).not.toHaveBeenCalled();
   });
 
   it("deleteHabit fires enqueueChange", () => {
@@ -239,18 +231,14 @@ describe("routineStore — enqueueChange wiring", () => {
     expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
   });
 
-  // Documents current reducer behaviour: `applyDeleteHabit` rebuilds
-  // habits / completions / order objects unconditionally, so deleting
-  // an unknown id still fires the wiring. Tracked as follow-up
-  // tech-debt.
-  it("deleteHabit fires enqueueChange even for an unknown id", () => {
+  it("deleteHabit is a no-op for an unknown id (next === prev)", () => {
     const { result } = renderHook(() => useRoutineStore());
     mockEnqueueChange.mockClear();
 
     act(() => {
       result.current.deleteHabit("unknown");
     });
-    expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
+    expect(mockEnqueueChange).not.toHaveBeenCalled();
   });
 
   it("moveHabitInOrder is a no-op when the habit is not in the order (next === prev)", () => {
@@ -281,7 +269,7 @@ describe("routineStore — enqueueChange wiring", () => {
     expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
   });
 
-  it("setHabitOrder fires enqueueChange after reordering", () => {
+  it("setHabitOrder is a no-op when the order is identical (next === prev)", () => {
     const { result } = renderHook(() => useRoutineStore());
     act(() => {
       result.current.createHabit({ name: "Solo" });
@@ -292,11 +280,24 @@ describe("routineStore — enqueueChange wiring", () => {
     act(() => {
       result.current.setHabitOrder([...order]);
     });
-    // `applySetHabitOrder` always returns a fresh state object (no
-    // identity-based no-op short-circuit), so the wiring fires here
-    // even though the resulting order is identical. Documenting this
-    // so future reducer changes either preserve the wiring or add a
-    // `next === prev` guard upstream.
+    expect(mockEnqueueChange).not.toHaveBeenCalled();
+  });
+
+  it("setHabitOrder fires enqueueChange when the order actually changes", () => {
+    const { result } = renderHook(() => useRoutineStore());
+    act(() => {
+      result.current.createHabit({ name: "Alpha" });
+    });
+    act(() => {
+      result.current.createHabit({ name: "Beta" });
+    });
+    const order = result.current.routine.habitOrder;
+    expect(order.length).toBeGreaterThanOrEqual(2);
+    mockEnqueueChange.mockClear();
+
+    act(() => {
+      result.current.setHabitOrder([...order].reverse());
+    });
     expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
   });
 });
