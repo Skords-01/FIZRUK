@@ -102,6 +102,8 @@ export default defineConfig(({ mode }) => {
         }),
     ].filter(Boolean),
     build: {
+      outDir: "../server/dist",
+      emptyOutDir: true,
       rollupOptions: {
         output: {
           manualChunks(id) {
