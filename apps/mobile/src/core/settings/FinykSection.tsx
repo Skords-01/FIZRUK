@@ -37,6 +37,7 @@ import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import { useLocalStorage } from "@/lib/storage";
+import { enqueueChange } from "@/sync/enqueue";
 
 import { SettingsGroup, SettingsSubGroup } from "./SettingsPrimitives";
 
@@ -83,6 +84,7 @@ export function FinykSection() {
       const list = Array.isArray(prev) ? prev : [];
       return [...list, { id: makeCategoryId(), label }];
     });
+    enqueueChange(CUSTOM_CATS_KEY);
     setNewCategoryLabel("");
   };
 
@@ -93,6 +95,7 @@ export function FinykSection() {
       const list = Array.isArray(prev) ? prev : [];
       return list.filter((c) => c.id !== id);
     });
+    enqueueChange(CUSTOM_CATS_KEY);
     setPendingDeleteId(null);
   };
 
