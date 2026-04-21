@@ -4,9 +4,13 @@ import {
   REMINDER_PRESETS,
   emptyHabitDraft,
   habitDraftToPatch,
+  habitToDraft,
+  isHabitDraftValid,
   normalizeReminderTimes,
   routineTodayDate,
+  validateHabitDraft,
 } from "./drafts.js";
+import type { Habit } from "./types.js";
 
 describe("routine-domain/drafts", () => {
   it("normalizeReminderTimes uses reminderTimes if valid", () => {
@@ -65,5 +69,91 @@ describe("routine-domain/drafts", () => {
     for (const p of REMINDER_PRESETS) {
       expect(p.times.every((t) => /^\d{2}:\d{2}$/.test(t))).toBe(true);
     }
+  });
+
+  describe("habitToDraft", () => {
+    it("populates every field from an existing habit", () => {
+      const habit: Habit = {
+        id: "h1",
+        name: "Пити воду",
+        emoji: "💧",
+        tagIds: ["t1", "t2"],
+        categoryId: "c1",
+        recurrence: "weekly",
+        startDate: "2026-01-01",
+        endDate: "2026-02-01",
+        timeOfDay: "08:00",
+        reminderTimes: ["08:00", "13:00"],
+        weekdays: [1, 3, 5],
+      };
+      const draft = habitToDraft(habit);
+      expect(draft.name).toBe("Пити воду");
+      expect(draft.emoji).toBe("💧");
+      expect(draft.tagIds).toEqual(["t1", "t2"]);
+      expect(draft.categoryId).toBe("c1");
+      expect(draft.recurrence).toBe("weekly");
+      expect(draft.startDate).toBe("2026-01-01");
+      expect(draft.endDate).toBe("2026-02-01");
+      expect(draft.reminderTimes).toEqual(["08:00", "13:00"]);
+      expect(draft.weekdays).toEqual([1, 3, 5]);
+    });
+
+    it("fills sensible defaults when the habit is sparse", () => {
+      const draft = habitToDraft({ id: "h2", name: "" });
+      expect(draft.name).toBe("");
+      expect(draft.emoji).toBe("✓");
+      expect(draft.tagIds).toEqual([]);
+      expect(draft.categoryId).toBe(null);
+      expect(draft.recurrence).toBe("daily");
+      expect(draft.endDate).toBe("");
+      expect(draft.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(draft.reminderTimes).toEqual([]);
+      expect(draft.weekdays).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    });
+
+    it("falls back to legacy timeOfDay when reminderTimes is empty", () => {
+      const draft = habitToDraft({
+        id: "h3",
+        name: "Йога",
+        timeOfDay: "07:30",
+      });
+      expect(draft.reminderTimes).toEqual(["07:30"]);
+    });
+  });
+
+  describe("validateHabitDraft", () => {
+    it("returns empty errors for a valid draft", () => {
+      const draft = emptyHabitDraft();
+      draft.name = "Пити воду";
+      expect(validateHabitDraft(draft)).toEqual({});
+      expect(isHabitDraftValid(draft)).toBe(true);
+    });
+
+    it("flags an empty name", () => {
+      const draft = emptyHabitDraft();
+      draft.name = "   ";
+      const errors = validateHabitDraft(draft);
+      expect(errors.name).toBe("Додай назву звички.");
+      expect(errors.weekdays).toBeUndefined();
+      expect(isHabitDraftValid(draft)).toBe(false);
+    });
+
+    it("flags weekly recurrence without any selected weekdays", () => {
+      const draft = emptyHabitDraft();
+      draft.name = "Спорт";
+      draft.recurrence = "weekly";
+      draft.weekdays = [];
+      const errors = validateHabitDraft(draft);
+      expect(errors.weekdays).toBe("Обери хоча б один день тижня.");
+      expect(errors.name).toBeUndefined();
+    });
+
+    it("ignores empty weekdays for non-weekly recurrence", () => {
+      const draft = emptyHabitDraft();
+      draft.name = "Читати";
+      draft.recurrence = "daily";
+      draft.weekdays = [];
+      expect(validateHabitDraft(draft)).toEqual({});
+    });
   });
 });

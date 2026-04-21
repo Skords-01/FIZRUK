@@ -19,12 +19,20 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ROUTINE_STORAGE_KEY,
+  applyCreateHabit,
+  applyDeleteHabit,
   applyMarkAllScheduledHabitsComplete,
+  applyMoveHabitInOrder,
   applySetCompletionNote,
+  applySetHabitArchived,
   applyToggleHabitCompletion,
+  applyUpdateHabit,
   defaultRoutineState,
   ensureHabitOrder,
   normalizeRoutineState,
+  type CreateHabitOptions,
+  type Habit,
+  type HabitDraftPatch,
   type RoutineState,
 } from "@sergeant/routine-domain";
 import { _getMMKVInstance, safeReadLS, safeWriteLS } from "@/lib/storage";
@@ -57,6 +65,16 @@ export interface UseRoutineStoreReturn {
   bulkMarkDay: (dateKey: string) => void;
   /** Зберегти / стерти нотатку до відмітки. */
   setCompletionNote: (habitId: string, dateKey: string, text: string) => void;
+  /** Створити нову звичку з patch-ем форми. */
+  createHabit: (patch: Partial<CreateHabitOptions>) => void;
+  /** Часткове оновлення звички за id. */
+  updateHabit: (id: string, patch: HabitDraftPatch | Partial<Habit>) => void;
+  /** В архів / з архіву. */
+  setHabitArchived: (id: string, archived: boolean) => void;
+  /** Остаточне видалення звички разом із completions / order / notes. */
+  deleteHabit: (id: string) => void;
+  /** Перемістити звичку в списку на `delta` позицій (-1 = вгору). */
+  moveHabitInOrder: (id: string, delta: number) => void;
 }
 
 /**
@@ -113,6 +131,54 @@ export function useRoutineStore(): UseRoutineStoreReturn {
     [],
   );
 
+  const createHabit = useCallback((patch: Partial<CreateHabitOptions>) => {
+    setRoutineState((prev) => {
+      const next = applyCreateHabit(prev, patch);
+      if (next === prev) return prev;
+      saveRoutineState(next);
+      return next;
+    });
+  }, []);
+
+  const updateHabit = useCallback(
+    (id: string, patch: HabitDraftPatch | Partial<Habit>) => {
+      setRoutineState((prev) => {
+        const next = applyUpdateHabit(prev, id, patch);
+        if (next === prev) return prev;
+        saveRoutineState(next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const setHabitArchived = useCallback((id: string, archived: boolean) => {
+    setRoutineState((prev) => {
+      const next = applySetHabitArchived(prev, id, archived);
+      if (next === prev) return prev;
+      saveRoutineState(next);
+      return next;
+    });
+  }, []);
+
+  const deleteHabit = useCallback((id: string) => {
+    setRoutineState((prev) => {
+      const next = applyDeleteHabit(prev, id);
+      if (next === prev) return prev;
+      saveRoutineState(next);
+      return next;
+    });
+  }, []);
+
+  const moveHabitInOrder = useCallback((id: string, delta: number) => {
+    setRoutineState((prev) => {
+      const next = applyMoveHabitInOrder(prev, id, delta);
+      if (next === prev) return prev;
+      saveRoutineState(next);
+      return next;
+    });
+  }, []);
+
   return {
     routine,
     refresh,
@@ -120,6 +186,11 @@ export function useRoutineStore(): UseRoutineStoreReturn {
     toggleHabit,
     bulkMarkDay,
     setCompletionNote,
+    createHabit,
+    updateHabit,
+    setHabitArchived,
+    deleteHabit,
+    moveHabitInOrder,
   };
 }
 

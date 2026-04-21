@@ -15,6 +15,20 @@ import type {
   ReminderPreset,
 } from "./types.js";
 
+/**
+ * Inline validation errors surfaced by `HabitForm` next to the offending
+ * field (red border + message).
+ *
+ * Extracted from `apps/web/src/modules/routine/components/settings/
+ * HabitForm.tsx` (Phase 5 / PR 3 — Habits editor on mobile). Kept in
+ * the domain package so both `apps/web` and `apps/mobile` share the
+ * exact same validation contract and error copy.
+ */
+export interface HabitFormErrors {
+  name?: string;
+  weekdays?: string;
+}
+
 export function routineTodayDate(): Date {
   const d = new Date();
   d.setHours(12, 0, 0, 0);
@@ -95,4 +109,63 @@ export function habitDraftToPatch(draft: HabitDraft): HabitDraftPatch {
       ? draft.weekdays
       : [0, 1, 2, 3, 4, 5, 6],
   };
+}
+
+/**
+ * Load an existing habit into a fully-populated `HabitDraft` so the
+ * form renders controlled inputs.
+ *
+ * Mirrors `loadHabitIntoDraft` from the web
+ * `RoutineSettingsSection` so switching between "new" and "edit" modes
+ * is platform-agnostic.
+ */
+export function habitToDraft(h: Habit): HabitDraft {
+  const reminderTimes = normalizeReminderTimes(h);
+  const weekdays =
+    Array.isArray(h.weekdays) && h.weekdays.length > 0
+      ? [...h.weekdays]
+      : [0, 1, 2, 3, 4, 5, 6];
+  return {
+    name: h.name || "",
+    emoji: h.emoji || "✓",
+    tagIds: Array.isArray(h.tagIds) ? [...h.tagIds] : [],
+    categoryId: h.categoryId || null,
+    recurrence: h.recurrence || "daily",
+    startDate: h.startDate || dateKeyFromDate(routineTodayDate()),
+    endDate: h.endDate || "",
+    timeOfDay: h.timeOfDay || "",
+    reminderTimes,
+    weekdays,
+  };
+}
+
+/**
+ * Inline validator for `HabitForm`. Returns a `HabitFormErrors` object
+ * — empty when the draft is valid. Callers decide whether to render
+ * the errors, re-focus the offending field, etc.
+ *
+ * Rules (mirror web `HabitForm` inline validation):
+ *   - `name` must be non-empty after trim.
+ *   - When `recurrence === "weekly"`, at least one weekday must be
+ *     selected.
+ */
+export function validateHabitDraft(draft: HabitDraft): HabitFormErrors {
+  const errors: HabitFormErrors = {};
+  const patch = habitDraftToPatch(draft);
+  if (!patch.name) {
+    errors.name = "Додай назву звички.";
+  }
+  if (
+    patch.recurrence === "weekly" &&
+    (!patch.weekdays || patch.weekdays.length === 0)
+  ) {
+    errors.weekdays = "Обери хоча б один день тижня.";
+  }
+  return errors;
+}
+
+/** Convenience: `true` if there are no validation errors. */
+export function isHabitDraftValid(draft: HabitDraft): boolean {
+  const errors = validateHabitDraft(draft);
+  return !errors.name && !errors.weekdays;
 }
