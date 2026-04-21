@@ -130,23 +130,15 @@ export function HubDashboard() {
   // Hero-layer visibility gates. Read synchronously on every render
   // (MMKV is sync + cheap) so CTAs that flip these flags trigger a
   // one-frame re-eval without needing an event bus. Local state
-  // ticks re-run the reads after inline dismissals.
+  // ticks re-run the reads after inline dismissals. Booleans are
+  // computed inline rather than via useMemo — per AGENTS.md rule 5.3
+  // the memo overhead outweighs a single sync MMKV read.
   const [heroTick, setHeroTick] = useState(0);
-  const firstActionPending = useMemo(
-    () => isFirstActionPending(mmkvStore),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [heroTick],
-  );
-  const softAuthDismissed = useMemo(
-    () => isSoftAuthDismissed(mmkvStore),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [heroTick],
-  );
-  const hasFirstRealEntry = useMemo(
-    () => isFirstRealEntryDone(mmkvStore),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [heroTick],
-  );
+  // Reference heroTick so React re-runs these reads after a bump.
+  void heroTick;
+  const firstActionPending = isFirstActionPending(mmkvStore);
+  const softAuthDismissed = isSoftAuthDismissed(mmkvStore);
+  const hasFirstRealEntry = isFirstRealEntryDone(mmkvStore);
 
   const openModule = useCallback((id: DashboardModuleId) => {
     // `DASHBOARD_MODULE_ROUTES` holds validated Expo-Router hrefs. We
