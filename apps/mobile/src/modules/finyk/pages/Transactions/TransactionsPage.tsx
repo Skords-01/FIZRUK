@@ -29,12 +29,7 @@
  *  - Date-range bottom-sheet picker beyond the month nav (covered by
  *    `setRange` on the filter hook — UI can be added later).
  */
-import {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -160,7 +155,7 @@ export function TransactionsPage({
     refresh,
   } = store;
 
-  const { filters, setFilter, setAccountIds, clearAll } =
+  const { filters, setFilter, setAccountIds, setRange, clearAll } =
     useFinykTxFilters(filtersSeed);
 
   const now = useMemo(() => nowOverride ?? new Date(), [nowOverride]);
@@ -175,6 +170,12 @@ export function TransactionsPage({
   >({ open: false });
   const [catPicker, setCatPicker] = useState<{ tx: Transaction } | null>(null);
   const [accountPicker, setAccountPicker] = useState(false);
+  const [datePicker, setDatePicker] = useState(false);
+  const [bankEditTx, setBankEditTx] = useState<Transaction | null>(null);
+  const [draftRange, setDraftRange] = useState<{ start: string; end: string }>({
+    start: "",
+    end: "",
+  });
 
   const isCurrentMonth =
     selMonth.year === now.getFullYear() && selMonth.month === now.getMonth();
@@ -242,9 +243,16 @@ export function TransactionsPage({
     const base = [...activeTx]
       .filter((t) => !hiddenTxIdSet.has(t.id))
       .sort((a, b) => (b.time || 0) - (a.time || 0));
+    const startMs = filters.range.startMs;
+    const endMs = filters.range.endMs;
     return base.filter((t) => {
       if (accountFilterSet && !accountFilterSet.has(t._accountId ?? "")) {
         return false;
+      }
+      if (startMs != null || endMs != null) {
+        const ms = (t.time || 0) * 1000;
+        if (startMs != null && ms < startMs) return false;
+        if (endMs != null && ms > endMs) return false;
       }
       const matchSearch =
         !searchLower ||
@@ -266,6 +274,8 @@ export function TransactionsPage({
     hiddenTxIdSet,
     searchLower,
     filters.filter,
+    filters.range.startMs,
+    filters.range.endMs,
     accountFilterSet,
     creditAccIds,
     txCategories,
@@ -354,29 +364,22 @@ export function TransactionsPage({
 
   const handleSwipeLeft = useCallback(
     (tx: Transaction) => {
-      // Manual rows are editable in-place — open the prefilled sheet.
-      // Bank rows aren't editable, so fall back to the long-standing
-      // "swipe left to hide" semantics from the previous PR.
+      // Manual rows open the prefilled `ManualExpenseSheet`. Bank rows
+      // aren't editable in-place, so we surface an "Edit" actions sheet
+      // (Categorize / Hide) — same affordance the user can reach from a
+      // tap-and-hold on web.
       if (tx._manual) {
         openEditSheet(tx);
       } else {
-        hideTx(tx.id);
+        setBankEditTx(tx);
       }
     },
-    [openEditSheet, hideTx],
+    [openEditSheet],
   );
 
   const handleSwipeRight = useCallback((tx: Transaction) => {
     setCatPicker({ tx });
   }, []);
-
-  const handleSwipeDelete = useCallback(
-    (tx: Transaction) => {
-      const id = tx._manualId != null ? String(tx._manualId) : null;
-      if (id) removeManualExpense(id);
-    },
-    [removeManualExpense],
-  );
 
   const handleCategorySelect = useCallback(
     (categoryId: string | null) => {
@@ -398,14 +401,6 @@ export function TransactionsPage({
   }, [refresh]);
 
   // ── Renderers ───────────────────────────────────────────────────────
-  const accountsById = useMemo(() => {
-    const m = new Map<string, (typeof accounts)[number]>();
-    for (const a of accounts) {
-      if (a.id) m.set(a.id, a);
-    }
-    return m;
-  }, [accounts]);
-
   const renderItem = useCallback<ListRenderItem<FeedItem>>(
     ({ item }) => {
       if (item.kind === "header") {
@@ -440,50 +435,32 @@ export function TransactionsPage({
       const tx = item.tx;
       const isManual = !!tx._manual;
       const overrideId = txCategories[tx.id] ?? null;
-      const direction: "income" | "expense" =
-        tx.amount > 0 ? "income" : "expense";
-      const swipeLeftLabel = isManual ? "✎ Редагувати" : "🙈 Приховати";
-      const swipeLeftColor = isManual ? "bg-brand-500" : "bg-stone-500";
       return (
-        <View>
-          <SwipeToAction
-            onSwipeLeft={() => handleSwipeLeft(tx)}
-            onSwipeRight={() => handleSwipeRight(tx)}
-            leftLabel={swipeLeftLabel}
-            leftColor={swipeLeftColor}
-            rightLabel="🏷 Категорія"
-            rightColor="bg-warning"
-          >
-            <TxRow
-              tx={tx}
-              accounts={accounts}
-              txSplits={txSplits}
-              customCategories={customCategories}
-              overrideCatId={overrideId}
-              hidden={hiddenTxIdSet.has(tx.id)}
-              onPress={isManual ? () => openEditSheet(tx) : undefined}
-            />
-          </SwipeToAction>
-          {/* hidden helper for swipe-delete on manual rows — long-press
-              currently unwired; consumers can call it via Detox. */}
-          <Pressable
-            onLongPress={() => isManual && handleSwipeDelete(tx)}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-            style={{ position: "absolute", width: 0, height: 0 }}
+        <SwipeToAction
+          onSwipeLeft={() => handleSwipeLeft(tx)}
+          onSwipeRight={() => handleSwipeRight(tx)}
+          leftLabel="✎ Редагувати"
+          leftColor="bg-brand-500"
+          rightLabel="🏷 Категорія"
+          rightColor="bg-warning"
+        >
+          <TxRow
+            tx={tx}
+            accounts={accounts}
+            txSplits={txSplits}
+            customCategories={customCategories}
+            overrideCatId={overrideId}
+            hidden={hiddenTxIdSet.has(tx.id)}
+            onPress={
+              isManual ? () => openEditSheet(tx) : () => setBankEditTx(tx)
+            }
           />
-          {/* Reference variables that aren't otherwise read so TS doesn't
-              flag them when bank rows skip the manual-only branches. */}
-          {accountsById.has(tx._accountId ?? "") ? null : null}
-          {direction === "income" ? null : null}
-        </View>
+        </SwipeToAction>
       );
     },
     [
       accounts,
-      accountsById,
       customCategories,
-      handleSwipeDelete,
       handleSwipeLeft,
       handleSwipeRight,
       hiddenTxIdSet,
@@ -502,11 +479,51 @@ export function TransactionsPage({
   const hasActiveFilter =
     filters.filter !== "all" ||
     filters.accountIds.length > 0 ||
+    filters.range.startMs != null ||
+    filters.range.endMs != null ||
     !!searchLower;
 
   // Direction passed to the picker — `+` shows income categories.
   const pickerDirection: "income" | "expense" =
     catPicker?.tx && catPicker.tx.amount > 0 ? "income" : "expense";
+
+  const rangeLabel = useMemo(() => {
+    const fmt = (ms: number) =>
+      new Date(ms).toLocaleDateString("uk-UA", {
+        day: "2-digit",
+        month: "short",
+      });
+    if (filters.range.startMs && filters.range.endMs) {
+      return `${fmt(filters.range.startMs)}–${fmt(filters.range.endMs)}`;
+    }
+    if (filters.range.startMs) return `від ${fmt(filters.range.startMs)}`;
+    if (filters.range.endMs) return `до ${fmt(filters.range.endMs)}`;
+    return null;
+  }, [filters.range.startMs, filters.range.endMs]);
+
+  const openDateRangeSheet = useCallback(() => {
+    const toISO = (ms: number | null) =>
+      ms == null ? "" : new Date(ms).toISOString().slice(0, 10);
+    setDraftRange({
+      start: toISO(filters.range.startMs),
+      end: toISO(filters.range.endMs),
+    });
+    setDatePicker(true);
+  }, [filters.range.startMs, filters.range.endMs]);
+
+  const applyDateRange = useCallback(() => {
+    const parse = (s: string): number | null => {
+      if (!s) return null;
+      const ms = new Date(`${s}T00:00:00`).getTime();
+      return Number.isNaN(ms) ? null : ms;
+    };
+    const startMs = parse(draftRange.start);
+    const rawEnd = parse(draftRange.end);
+    // End-of-day on the chosen `end` date so the comparison is inclusive.
+    const endMs = rawEnd != null ? rawEnd + 86_399_000 : null;
+    setRange({ startMs, endMs });
+    setDatePicker(false);
+  }, [draftRange.start, draftRange.end, setRange]);
 
   // ── Render ──────────────────────────────────────────────────────────
   return (
@@ -633,6 +650,27 @@ export function TransactionsPage({
               </Pressable>
             );
           })}
+          <Pressable
+            onPress={openDateRangeSheet}
+            accessibilityRole="button"
+            accessibilityLabel="Фільтр по даті"
+            testID={`${testID}-filter-range`}
+            className={
+              filters.range.startMs != null || filters.range.endMs != null
+                ? "bg-brand-500 border border-brand-500 rounded-full px-3 h-9 justify-center"
+                : "bg-cream-50 border border-cream-300 rounded-full px-3 h-9 justify-center"
+            }
+          >
+            <Text
+              className={
+                filters.range.startMs != null || filters.range.endMs != null
+                  ? "text-white text-xs font-semibold"
+                  : "text-stone-700 text-xs font-medium"
+              }
+            >
+              📅 {rangeLabel ?? "Період"}
+            </Text>
+          </Pressable>
           {accounts.length > 0 && (
             <Pressable
               onPress={() => setAccountPicker(true)}
@@ -714,6 +752,7 @@ export function TransactionsPage({
         open={sheetState.open}
         onClose={closeSheet}
         onSave={handleSave}
+        onDelete={removeManualExpense}
         initialExpense={
           sheetState.open && sheetState.editing
             ? sheetState.editing
@@ -785,10 +824,105 @@ export function TransactionsPage({
           )}
         </View>
       </Sheet>
+
+      <Sheet
+        open={datePicker}
+        onClose={() => setDatePicker(false)}
+        title="Період"
+        description="YYYY-MM-DD. Залиште поле порожнім, щоб не обмежувати."
+        footer={
+          <View className="flex-row gap-3">
+            <Pressable
+              onPress={() => {
+                setRange({ startMs: null, endMs: null });
+                setDatePicker(false);
+              }}
+              accessibilityRole="button"
+              testID={`${testID}-range-clear`}
+              className="flex-1 h-11 rounded-xl bg-cream-100 items-center justify-center active:opacity-70"
+            >
+              <Text className="text-sm text-stone-700 font-medium">
+                Скинути
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={applyDateRange}
+              accessibilityRole="button"
+              testID={`${testID}-range-apply`}
+              className="flex-1 h-11 rounded-xl bg-brand-500 items-center justify-center active:opacity-80"
+            >
+              <Text className="text-sm text-white font-semibold">
+                Застосувати
+              </Text>
+            </Pressable>
+          </View>
+        }
+      >
+        <View className="px-4 pb-4 gap-3" testID={`${testID}-range-sheet`}>
+          <View>
+            <Text className="text-xs text-stone-500 mb-1">Від</Text>
+            <TextInput
+              value={draftRange.start}
+              onChangeText={(v) => setDraftRange((r) => ({ ...r, start: v }))}
+              placeholder="2026-04-01"
+              placeholderTextColor="#a8a29e"
+              autoCapitalize="none"
+              autoCorrect={false}
+              className="bg-cream-100 border border-cream-300 rounded-xl px-3 py-2.5 text-sm text-stone-900"
+              testID={`${testID}-range-start`}
+            />
+          </View>
+          <View>
+            <Text className="text-xs text-stone-500 mb-1">До</Text>
+            <TextInput
+              value={draftRange.end}
+              onChangeText={(v) => setDraftRange((r) => ({ ...r, end: v }))}
+              placeholder="2026-04-30"
+              placeholderTextColor="#a8a29e"
+              autoCapitalize="none"
+              autoCorrect={false}
+              className="bg-cream-100 border border-cream-300 rounded-xl px-3 py-2.5 text-sm text-stone-900"
+              testID={`${testID}-range-end`}
+            />
+          </View>
+        </View>
+      </Sheet>
+
+      <Sheet
+        open={!!bankEditTx}
+        onClose={() => setBankEditTx(null)}
+        title="Дії над транзакцією"
+        description={
+          bankEditTx?.description
+            ? `«${bankEditTx.description}» — банківська транзакція не редагується напряму.`
+            : undefined
+        }
+      >
+        <View className="px-2 pb-2" testID={`${testID}-bank-edit-sheet`}>
+          <Pressable
+            onPress={() => {
+              if (bankEditTx) setCatPicker({ tx: bankEditTx });
+              setBankEditTx(null);
+            }}
+            accessibilityRole="button"
+            testID={`${testID}-bank-edit-categorize`}
+            className="px-3 py-3 rounded-xl active:opacity-70"
+          >
+            <Text className="text-sm text-stone-900">🏷 Змінити категорію</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              if (bankEditTx) hideTx(bankEditTx.id);
+              setBankEditTx(null);
+            }}
+            accessibilityRole="button"
+            testID={`${testID}-bank-edit-hide`}
+            className="px-3 py-3 rounded-xl active:opacity-70"
+          >
+            <Text className="text-sm text-stone-900">🙈 Приховати</Text>
+          </Pressable>
+        </View>
+      </Sheet>
     </SafeAreaView>
   );
 }
-
-// Suppress an unused-import lint warning on the rare path where the
-// CURRENCY constant isn't referenced by the renderer.
-void useRef;

@@ -274,6 +274,51 @@ describe("TransactionsPage — filters", () => {
     unmount();
   });
 
+  it("filters by a date range when the user picks a window", async () => {
+    render(
+      <TransactionsPage
+        now={FIXED_NOW}
+        seed={{
+          manualExpenses: [
+            {
+              id: "me-1",
+              description: "обід",
+              amount: 250,
+              category: "🍴 їжа",
+              date: "2026-04-15T12:00:00.000Z",
+            },
+            {
+              id: "me-2",
+              description: "проїзд",
+              amount: 30,
+              category: "🚖 транспорт",
+              date: "2026-04-05T09:00:00.000Z",
+            },
+          ],
+        }}
+      />,
+    );
+    fireEvent.press(screen.getByTestId("finyk-transactions-filter-range"));
+    fireEvent.changeText(
+      screen.getByTestId("finyk-transactions-range-start"),
+      "2026-04-10",
+    );
+    fireEvent.changeText(
+      screen.getByTestId("finyk-transactions-range-end"),
+      "2026-04-20",
+    );
+    fireEvent.press(screen.getByTestId("finyk-transactions-range-apply"));
+
+    await waitFor(() => {
+      expect(screen.getByText("обід")).toBeTruthy();
+      expect(screen.queryByText("проїзд")).toBeNull();
+    });
+    // The chip switches to its "active" label.
+    expect(
+      screen.getByTestId("finyk-transactions-filter-range"),
+    ).toBeTruthy();
+  });
+
   it("hydrates the filter from MMKV across remounts", () => {
     safeWriteLS(FILTERS_KEY, {
       filter: "income",
@@ -379,7 +424,34 @@ describe("TransactionsPage — swipe actions", () => {
     });
   });
 
-  it("hides bank rows on left-swipe (non-editable fallback)", () => {
+  it("removes a manual expense when the user taps Delete in the edit sheet", async () => {
+    render(
+      <TransactionsPage
+        now={FIXED_NOW}
+        seed={{
+          manualExpenses: [
+            {
+              id: "me-del",
+              description: "стара витрата",
+              amount: 99,
+              category: "🍴 їжа",
+              date: "2026-04-15T12:00:00.000Z",
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("стара витрата")).toBeTruthy();
+    const swipeLeft = screen.getAllByTestId(/swipe-left-/i)[0]!;
+    fireEvent.press(swipeLeft);
+    const del = await screen.findByTestId("finyk-transactions-sheet-delete");
+    fireEvent.press(del);
+    await waitFor(() => {
+      expect(screen.queryByText("стара витрата")).toBeNull();
+    });
+  });
+
+  it("opens an edit options sheet when a bank row is swiped left and lets the user hide it", async () => {
     const realTx: Transaction = makeRealTx({
       id: "tx-bank",
       time: Math.floor(new Date("2026-04-15T10:00:00.000Z").getTime() / 1000),
@@ -387,16 +459,23 @@ describe("TransactionsPage — swipe actions", () => {
       description: "ATB",
       mcc: 5411,
     });
-    render(
-      <TransactionsPage
-        now={FIXED_NOW}
-        seed={{ realTx: [realTx] }}
-      />,
-    );
+    render(<TransactionsPage now={FIXED_NOW} seed={{ realTx: [realTx] }} />);
     expect(screen.getByText("ATB")).toBeTruthy();
+
     const swipeLeft = screen.getAllByTestId(/swipe-left-/i)[0]!;
     fireEvent.press(swipeLeft);
-    expect(screen.queryByText("ATB")).toBeNull();
+
+    const sheet = await screen.findByTestId(
+      "finyk-transactions-bank-edit-sheet",
+    );
+    expect(sheet).toBeTruthy();
+
+    fireEvent.press(
+      screen.getByTestId("finyk-transactions-bank-edit-hide"),
+    );
+    await waitFor(() => {
+      expect(screen.queryByText("ATB")).toBeNull();
+    });
   });
 
   it("opens the prefilled edit sheet when a manual row is swiped left", async () => {
