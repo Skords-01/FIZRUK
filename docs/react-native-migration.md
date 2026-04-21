@@ -81,7 +81,7 @@ ApiClientProvider`. `QueryProvider` дзеркалить `apps/web/src/main.tsx`
   (`server/migrations/006_push_devices.sql`).
 - Scheme `sergeant://` і `exp://` / `localhost:8081` у
   `trustedOrigins` Better Auth.
-- Daily AI-quota (`server/aiQuota.js`, таблиця `ai_usage_daily`) —
+- Daily AI-quota (`apps/server/src/aiQuota.ts`, таблиця `ai_usage_daily`) —
   спільна з web.
 
 ### 2.3 Контракти і документи, що вже існують
@@ -97,8 +97,12 @@ ApiClientProvider`. `QueryProvider` дзеркалить `apps/web/src/main.tsx`
   "Native Patterns (iOS / Android)" для мобільних паттернів (PR #409).
 - `packages/api-client/` — HTTP-клієнт і React-хуки (`useUser`,
   `usePushRegister`, …), працюють в обох середовищах.
-- `packages/shared/` і `packages/finyk-domain/` — чиста доменна логіка
-  без DOM-залежностей (schemas, utils). `storageKeys` тепер тут (R1).
+- `packages/shared/`, `packages/finyk-domain/`, `packages/fizruk-domain/`,
+  `packages/routine-domain/`, `packages/insights/` — чиста доменна логіка
+  без DOM-залежностей (schemas, utils, аналітичні ядра, реюз web+mobile).
+  `storageKeys` тепер у `@sergeant/shared` (R1); finyk/fizruk/routine
+  домени винесено окремими пакетами (R3 / R4 / Фаза 5 PR 2);
+  `@sergeant/insights` тримає pure Hub-search + recommendation rules (R2).
 - `packages/design-tokens/` — Tailwind-preset + raw tokens, спільні
   для `apps/web` і `apps/mobile` (R6).
 
@@ -471,9 +475,14 @@ sergeant/
 │   └── server/      ← Express, Better Auth, Postgres, Anthropic  [спільний]
 └── packages/
     ├── api-client/      ← HTTP + React Query хуки (web + mobile)
-    ├── shared/          ← domain types, schemas (Zod), pure utils, storageKeys
-    ├── finyk-domain/    ← чиста доменна логіка фінансів
-    ├── design-tokens/   ← Tailwind preset + raw tokens (web + mobile)
+    ├── shared/          ← domain types, schemas (Zod), pure utils, storageKeys,
+    │                      haptic/fileDownload/visualKeyboardInset контракти,
+    │                      HubDashboard + onboarding pure-домен
+    ├── finyk-domain/    ← чиста доменна логіка фінансів (R3)
+    ├── fizruk-domain/   ← чиста доменна логіка Фізрука (R4 + Phase 6 domains)
+    ├── routine-domain/  ← чиста доменна логіка Рутини (Phase 5 PR 2)
+    ├── insights/        ← Hub-search scorер + recommendation rules (R2)
+    ├── design-tokens/   ← Tailwind preset + raw tokens (web + mobile) (R6)
     └── config/          ← ESLint, TS, Prettier базові конфіги
 ```
 
@@ -485,8 +494,12 @@ sergeant/
 2. **Нуль DOM-залежностей у спільних пакетах.** Якщо зустрічаємо
    `window.*` / `localStorage` / `document` у `packages/*` — це баг
    для мобілки, закриваємо окремим PR. Наразі перевірено:
-   `packages/shared/src/utils` і `packages/finyk-domain/src/*`
-   чисті; `packages/api-client` залежить лише від `fetch` (є в RN).
+   `packages/shared/src/{utils,lib,hooks}`, `packages/finyk-domain/src/*`,
+   `packages/fizruk-domain/src/*`, `packages/routine-domain/src/*` та
+   `packages/insights/src/*` чисті (всі DOM-залежні шіми живуть у
+   `apps/web` і реєструють адаптери на shared-контракти — haptic/R7,
+   fileDownload/R8, visualKeyboardInset/R9, KVStore для HubDashboard
+   hero-шару); `packages/api-client` залежить лише від `fetch` (є в RN).
 3. **Дві точки входу — один бекенд.** Увесь state-синк через
    `/api/v1/*`; локальна персистенція — опційний кеш, не source of
    truth (див. секцію 6 про sync-модель).
@@ -652,6 +665,29 @@ Mobile: `expo-router` v4 (file-based, зверху React Navigation).
 Мапування URL-ів на deep links — у `docs/mobile.md`. Shell-рівень
 вже піднятий (auth-модалка + tabs). Всередині кожного табу —
 Stack-навігатор, файли під `app/(tabs)/<module>/*`.
+
+**Phase 10 (deep links) — PR-A, 🔵 In progress.** Pure-хелпер
+`apps/mobile/src/lib/deepLinks.ts` парсить/будує всі `sergeant://…`
+схеми з таблиці у `docs/mobile.md` і повертає `Href` для
+expo-router через discriminated-union `SergeantDeepLink`. Runtime-шар —
+`useDeepLinks()` (в `src/lib/useDeepLinks.ts`), який монтує
+cold-start (`Linking.getInitialURL()` → `router.replace`) і
+warm-start (`Linking.addEventListener("url")` → `router.push`),
+дедупує однаковий URL, і пропускає `sergeant://auth/callback` через
+себе (цим листенером володіє `@better-auth/expo/client`). Хук
+викликається всередині `RootShell` у `app/_layout.tsx`, після того
+як `Stack` із навігаційним контекстом уже змонтований. Android
+`intentFilters` для scheme `sergeant` додано в `app.config.ts`;
+universal links (`https://sergeant.2dmanager.com.ua` +
+`applinks:` на iOS) відкладені як TODO до публікації
+`.well-known/assetlinks.json` на прод-домен. Скафолди роутів
+(`routine/habit/[id]`, `fizruk/workout/[id]`, `fizruk/workout/new`,
+`finyk/tx/[id]`, `nutrition/scan`, `nutrition/recipe/[id]`,
+`auth/callback`) рендерять спільний `DeepLinkPlaceholder`
+(«Скоро» + primary-CTA + повернення на хаб), доки відповідні фази
+(Phase 6 Fizruk, Phase 7 Nutrition) не підтягнуть реальні екрани.
+Android shortcuts + iOS quick actions — окремий PR-B; smoke-test
+скрипт для deep links — PR-C.
 
 ### 6.4 Push-нотифікації
 
