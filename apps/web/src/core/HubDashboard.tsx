@@ -3,7 +3,11 @@ import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { safeReadLS, safeWriteLS, safeRemoveLS } from "@shared/lib/storage.js";
-import { STORAGE_KEYS } from "@sergeant/shared";
+import {
+  DASHBOARD_MODULE_LABELS as SHARED_DASHBOARD_MODULE_LABELS,
+  STORAGE_KEYS,
+  normalizeDashboardOrder,
+} from "@sergeant/shared";
 import { openHubModuleWithAction } from "@shared/lib/hubNav";
 import { getModulePrimaryAction } from "@shared/lib/moduleQuickActions";
 import { TodayFocusCard, useDashboardFocus } from "./TodayFocusCard.jsx";
@@ -38,28 +42,14 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 const DASHBOARD_ORDER_KEY = STORAGE_KEYS.DASHBOARD_ORDER;
-const DEFAULT_ORDER = ["finyk", "fizruk", "routine", "nutrition"];
 
 // Public labels for each module, surfaced in Settings → "Упорядкувати модулі".
-// Kept here (not in MODULE_CONFIGS) so consumers can import labels without
-// pulling the full config (icons, localStorage readers, etc.).
-export const DASHBOARD_MODULE_LABELS = {
-  finyk: "Фінік",
-  fizruk: "Фізрук",
-  routine: "Рутина",
-  nutrition: "Харчування",
-};
+// The source of truth lives in `@sergeant/shared` so the mobile dashboard
+// and the web dashboard cannot drift out of sync on copy.
+export const DASHBOARD_MODULE_LABELS = SHARED_DASHBOARD_MODULE_LABELS;
 
 export function loadDashboardOrder() {
-  const saved = safeReadLS(DASHBOARD_ORDER_KEY, null);
-  if (
-    Array.isArray(saved) &&
-    saved.length === DEFAULT_ORDER.length &&
-    DEFAULT_ORDER.every((id) => saved.includes(id))
-  ) {
-    return saved;
-  }
-  return [...DEFAULT_ORDER];
+  return normalizeDashboardOrder(safeReadLS(DASHBOARD_ORDER_KEY, null));
 }
 
 export function saveDashboardOrder(order) {

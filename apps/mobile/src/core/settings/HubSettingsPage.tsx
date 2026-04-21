@@ -28,6 +28,7 @@
 import { ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AccountSection } from "./AccountSection";
 import { AIDigestSection } from "./AIDigestSection";
 import { ExperimentalSection } from "./ExperimentalSection";
 import { FinykSection } from "./FinykSection";
@@ -55,6 +56,7 @@ export function HubSettingsPage() {
         <FizrukSection />
         <AIDigestSection />
         <ExperimentalSection />
+        <AccountSection />
       </ScrollView>
     </SafeAreaView>
   );

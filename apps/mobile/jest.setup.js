@@ -16,6 +16,35 @@
 
 require("react-native-gesture-handler/jestSetup");
 
+// `@/auth/authClient` re-exports Better Auth's React client, which is
+// shipped as an ESM-only bundle. jest-expo's default transform list
+// does not include `better-auth/*`, so any test that indirectly
+// imports the auth client blows up with "Cannot use import statement
+// outside a module". Tests that care about sign-out / session state
+// mock this module explicitly; the default stub below just keeps
+// render-smoke tests (e.g. `HubSettingsPage.test.tsx`) green when
+// they sweep a screen that contains `AccountSection`.
+jest.mock("@/auth/authClient", () => {
+  const signIn = {
+    email: jest.fn(() => Promise.resolve({ data: null, error: null })),
+  };
+  const signUp = {
+    email: jest.fn(() => Promise.resolve({ data: null, error: null })),
+  };
+  const signOut = jest.fn(() => Promise.resolve());
+  const getSession = jest.fn(() =>
+    Promise.resolve({ data: null, error: null }),
+  );
+  return {
+    __esModule: true,
+    signIn,
+    signUp,
+    signOut,
+    getSession,
+    authClient: { signIn, signUp, signOut, getSession },
+  };
+});
+
 jest.mock("react-native-mmkv", () => {
   class MMKV {
     constructor() {

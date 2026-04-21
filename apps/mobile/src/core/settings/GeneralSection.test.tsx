@@ -4,12 +4,15 @@
  * Covers:
  *  - collapsed-by-default header with the "Загальні" title;
  *  - expanding reveals the two active toggles ("Темна тема" +
- *    "Показувати AI-коуч") plus the three deferred sub-group
- *    placeholders (Dashboard reorder / Cloud sync / Backup);
+ *    "Показувати AI-коуч"), the dashboard reorder list with the
+ *    visible-module labels, and the two still-deferred sub-group
+ *    placeholders (Cloud sync / Backup);
  *  - toggling "Темна тема" persists `darkMode` into the shared
  *    `hub_prefs_v1` MMKV slice;
  *  - toggling "Показувати AI-коуч" persists `showCoach` with the
- *    web-compatible default-on semantics (`prefs.showCoach !== false`).
+ *    web-compatible default-on semantics (`prefs.showCoach !== false`);
+ *  - the ▲ / ▼ buttons on the dashboard reorder list rewrite
+ *    `STORAGE_KEYS.DASHBOARD_ORDER` via `useDashboardOrder`.
  */
 
 import { fireEvent, render } from "@testing-library/react-native";
@@ -32,24 +35,44 @@ describe("GeneralSection", () => {
     expect(queryByText("Показувати AI-коуч")).toBeNull();
   });
 
-  it("expands to reveal active toggles and deferred sub-group notices", () => {
-    const { getByText, getAllByText } = render(<GeneralSection />);
+  it("expands to reveal active toggles, dashboard reorder list, and deferred sub-group notices", () => {
+    const { getByText, getByTestId } = render(<GeneralSection />);
 
     fireEvent.press(getByText("Загальні"));
 
     expect(getByText("Темна тема")).toBeTruthy();
     expect(getByText("Показувати AI-коуч")).toBeTruthy();
 
-    // Three deferred sub-groups render their Ukrainian-language titles.
     expect(getByText("Дашборд")).toBeTruthy();
     expect(getByText("Упорядкувати модулі")).toBeTruthy();
     expect(getByText("Хмарна синхронізація")).toBeTruthy();
     expect(getByText("Резервна копія Hub")).toBeTruthy();
 
-    // Sanity: at least one deferred notice is visible.
-    expect(
-      getAllByText("Перенесення доступне після порту Dashboard.").length,
-    ).toBeGreaterThan(0);
+    // Dashboard reorder list renders the three visible module labels
+    // (Nutrition is hidden until Phase 7) and the ↑/↓ controls.
+    expect(getByText("Фінік")).toBeTruthy();
+    expect(getByText("Фізрук")).toBeTruthy();
+    expect(getByText("Рутина")).toBeTruthy();
+    expect(getByTestId("dashboard-reorder-down-finyk")).toBeTruthy();
+    expect(getByTestId("dashboard-reorder-up-routine")).toBeTruthy();
+  });
+
+  it("rewrites the dashboard order when the reorder ▼ button is pressed", () => {
+    const { getByText, getByTestId } = render(<GeneralSection />);
+    fireEvent.press(getByText("Загальні"));
+
+    // Move Фінік one slot down — Fizruk moves to the top, Nutrition
+    // keeps its hidden slot at the tail of the persisted array.
+    fireEvent.press(getByTestId("dashboard-reorder-down-finyk"));
+
+    const stored = _getMMKVInstance().getString(STORAGE_KEYS.DASHBOARD_ORDER);
+    expect(stored).toBeTruthy();
+    expect(JSON.parse(stored as string)).toEqual([
+      "fizruk",
+      "finyk",
+      "routine",
+      "nutrition",
+    ]);
   });
 
   it("persists the dark-mode pref into the shared hub_prefs_v1 slice", () => {

@@ -11,13 +11,15 @@
  *    `useHubPref("showCoach", true)` semantics (default on;
  *    `prefs.showCoach !== false`).
  *
+ * Dashboard reorder list:
+ *  - Renders the visible subset of Hub modules (Nutrition is hidden
+ *    until Phase 7) with ↑/↓ buttons as the accessibility fallback
+ *    for the long-press drag on the dashboard itself. State is shared
+ *    with the dashboard via `useDashboardOrder` and persisted through
+ *    the same `STORAGE_KEYS.DASHBOARD_ORDER` slice used by web.
+ *
  * Deferred (tracked in `docs/react-native-migration.md` Phase 2 /
  * Hub-core, section 2.4):
- *  - **Dashboard reorder list.** Depends on `HubDashboard` which is
- *    not yet ported. Rendered here as a short `Card` notice
- *    ("Перенесення доступне після порту Dashboard") so the sub-group
- *    layout stays in place and lands automatically once the mobile
- *    dashboard ships.
  *  - **Cloud sync push / pull buttons.** Web passes `user` +
  *    `useCloudSync(user)` handlers from a screen wrapper.
  *    `CloudSyncProvider` already owns the scheduler on mobile, so
@@ -39,10 +41,11 @@
  *    `colorScheme` is wired through the app root.
  */
 
-import { Text, View } from "react-native";
-import { STORAGE_KEYS } from "@sergeant/shared";
+import { Pressable, Text, View } from "react-native";
+import { DASHBOARD_MODULE_LABELS, STORAGE_KEYS } from "@sergeant/shared";
 
 import { Card } from "@/components/ui/Card";
+import { useDashboardOrder } from "@/core/dashboard/useDashboardOrder";
 import { useLocalStorage } from "@/lib/storage";
 
 import {
@@ -66,6 +69,69 @@ function DeferredNotice({ children }: { children: string }) {
     <Card variant="flat" radius="md" padding="md" className="border-dashed">
       <Text className="text-xs text-stone-500 leading-snug">{children}</Text>
     </Card>
+  );
+}
+
+function ModuleReorderList() {
+  const { visibleOrder, reorderVisible } = useDashboardOrder();
+
+  if (visibleOrder.length === 0) {
+    return (
+      <DeferredNotice>
+        Поки що жоден модуль не відображається на дашборді.
+      </DeferredNotice>
+    );
+  }
+
+  return (
+    <View className="overflow-hidden rounded-xl border border-cream-300">
+      {visibleOrder.map((id, index) => {
+        const isFirst = index === 0;
+        const isLast = index === visibleOrder.length - 1;
+        const label = DASHBOARD_MODULE_LABELS[id];
+        return (
+          <View
+            key={id}
+            className={`flex-row items-center gap-2 bg-cream-50 px-3 py-2 ${
+              isFirst ? "" : "border-t border-cream-300"
+            }`}
+          >
+            <Text className="w-4 text-xs font-semibold text-stone-500 tabular-nums">
+              {index + 1}
+            </Text>
+            <Text className="flex-1 text-sm text-stone-900" numberOfLines={1}>
+              {label}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Підняти ${label} вище`}
+              accessibilityState={{ disabled: isFirst }}
+              disabled={isFirst}
+              onPress={() => reorderVisible(index, index - 1)}
+              className={`h-8 w-8 items-center justify-center rounded-lg ${
+                isFirst ? "opacity-30" : "active:bg-cream-200"
+              }`}
+              testID={`dashboard-reorder-up-${id}`}
+            >
+              <Text className="text-sm text-stone-600">▲</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Опустити ${label} нижче`}
+              accessibilityState={{ disabled: isLast }}
+              disabled={isLast}
+              onPress={() => reorderVisible(index, index + 1)}
+              className={`h-8 w-8 items-center justify-center rounded-lg ${
+                isLast ? "opacity-30" : "active:bg-cream-200"
+              }`}
+              testID={`dashboard-reorder-down-${id}`}
+            >
+              <Text className="text-sm text-stone-600">▼</Text>
+            </Pressable>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -98,9 +164,7 @@ export function GeneralSection() {
         />
       </SettingsSubGroup>
       <SettingsSubGroup title="Упорядкувати модулі">
-        <DeferredNotice>
-          Перенесення доступне після порту Dashboard.
-        </DeferredNotice>
+        <ModuleReorderList />
       </SettingsSubGroup>
       <SettingsSubGroup title="Хмарна синхронізація">
         <DeferredNotice>
@@ -116,15 +180,11 @@ export function GeneralSection() {
           сьогодні у коді є тільки warn-only заглушка.
         </DeferredNotice>
       </SettingsSubGroup>
-      {/* Module-reorder-list state lives on web via `loadDashboardOrder`
-          from HubDashboard.jsx. Ми навмисно не порт-імо його тут, щоб
-          не прив'язати mobile GeneralSection до ще не портованого
-          dashboard store. Повернемось сюди у PR з HubDashboard. */}
       <View className="gap-1">
         <Text className="text-[11px] text-stone-400 leading-snug">
-          Решта опцій цього блоку (push/pull хмари, backup, порядок модулів)
-          портується разом із відповідними інфраструктурними кроками — див.
-          примітки у кожній під-групі вище.
+          Решта опцій цього блоку (push/pull хмари, backup) портується разом із
+          відповідними інфраструктурними кроками — див. примітки у кожній
+          під-групі вище.
         </Text>
       </View>
     </SettingsGroup>
