@@ -107,19 +107,21 @@ export function applyCreateHabit(
 
 /**
  * Часткове оновлення звички за id (нормалізуємо після мерджу).
- * Повертає той самий `state` якщо звичка з таким `id` не існує.
+ * Повертає той самий `state` якщо звичка з таким `id` не існує
+ * або якщо нормалізований результат ідентичний поточній звичці.
  */
 export function applyUpdateHabit(
   state: RoutineState,
   id: string,
   patch: Partial<Habit>,
 ): RoutineState {
-  if (!state.habits.some((h) => h.id === id)) return state;
+  const current = state.habits.find((h) => h.id === id);
+  if (!current) return state;
+  const updated = normalizeHabit({ ...current, ...patch });
+  if (JSON.stringify(updated) === JSON.stringify(current)) return state;
   return {
     ...state,
-    habits: state.habits.map((h) =>
-      h.id === id ? normalizeHabit({ ...h, ...patch }) : h,
-    ),
+    habits: state.habits.map((h) => (h.id === id ? updated : h)),
   };
 }
 

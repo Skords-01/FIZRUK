@@ -186,6 +186,20 @@ describe("routineStore — enqueueChange wiring", () => {
     expect(mockEnqueueChange).not.toHaveBeenCalled();
   });
 
+  it("updateHabit is a no-op when the patch doesn't change any values (next === prev)", () => {
+    const { result } = renderHook(() => useRoutineStore());
+    act(() => {
+      result.current.createHabit({ name: "Stretch" });
+    });
+    const id = firstHabitId(result.current.routine);
+    mockEnqueueChange.mockClear();
+
+    act(() => {
+      result.current.updateHabit(id, { name: "Stretch" });
+    });
+    expect(mockEnqueueChange).not.toHaveBeenCalled();
+  });
+
   it("setHabitArchived fires enqueueChange", () => {
     const { result } = renderHook(() => useRoutineStore());
     act(() => {
