@@ -15,7 +15,11 @@ export type { UseCloudSyncReturn } from "./hook/useCloudSync";
 export { useSyncStatus } from "./hook/useSyncStatus";
 export type { SyncStatusState } from "./hook/useSyncStatus";
 
-export { CloudSyncProvider, useCloudSyncContext } from "./CloudSyncProvider";
+export {
+  CloudSyncContext,
+  CloudSyncProvider,
+  useCloudSyncContext,
+} from "./CloudSyncProvider";
 
 export type {
   CurrentUser,

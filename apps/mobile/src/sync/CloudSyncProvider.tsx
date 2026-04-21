@@ -28,7 +28,7 @@ import { useUser } from "@sergeant/api-client/react";
 
 import { useCloudSync, type UseCloudSyncReturn } from "./hook/useCloudSync";
 
-const CloudSyncContext = createContext<UseCloudSyncReturn | null>(null);
+export const CloudSyncContext = createContext<UseCloudSyncReturn | null>(null);
 
 export function CloudSyncProvider({ children }: PropsWithChildren) {
   const { data: user } = useUser({
