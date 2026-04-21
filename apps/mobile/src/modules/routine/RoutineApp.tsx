@@ -57,6 +57,7 @@ import {
 } from "./components/RoutineBottomNav";
 import { RoutineTabPlaceholder } from "./components/RoutineTabPlaceholder";
 import { Calendar } from "./pages/Calendar";
+import { HabitsPage } from "./pages/Habits/HabitsPage";
 
 const TAB_PERSIST_KEY = STORAGE_KEYS.ROUTINE_MAIN_TAB;
 
@@ -105,20 +106,7 @@ function RoutineShell() {
             ]}
           />
         ) : null}
-        {mainTab === "settings" ? (
-          <RoutineTabPlaceholder
-            title="Налаштування"
-            emoji="⚙️"
-            description="Керування звичками, категоріями, тегами та нагадуваннями. Повний порт у наступних PR-ах Фази 5."
-            plannedFeatures={[
-              "Список активних звичок з reorder + swipe-dismiss",
-              "Форма створення/редагування звички (розклад, час, теги)",
-              "Категорії та теги (CRUD)",
-              "Архів звичок",
-              "Пресети нагадувань через expo-notifications",
-            ]}
-          />
-        ) : null}
+        {mainTab === "settings" ? <HabitsPage /> : null}
       </View>
 
       <RoutineBottomNav mainTab={mainTab} onSelectTab={handleSelectTab} />

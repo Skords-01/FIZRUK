@@ -25,8 +25,10 @@ import { RoutineApp } from "./RoutineApp";
 const CALENDAR_EYEBROW = "Hub календар";
 const STATS_DESCRIPTION =
   "Хітмеп виконання, стріки та топ-звички. Порт у наступних PR-ах Фази 5.";
-const SETTINGS_DESCRIPTION =
-  "Керування звичками, категоріями, тегами та нагадуваннями. Повний порт у наступних PR-ах Фази 5.";
+// The Settings tab hosts the live `HabitsPage` (Phase 5 PR 3) instead
+// of the placeholder card; the unique headline copy inside that page
+// anchors the render check.
+const SETTINGS_HEADLINE = "Звички";
 
 beforeEach(() => {
   _getMMKVInstance().clearAll();
@@ -48,12 +50,13 @@ describe("RoutineApp shell", () => {
     expect(queryByText(CALENDAR_EYEBROW)).toBeNull();
   });
 
-  it("switches to the Settings placeholder when the Settings tab is pressed", () => {
+  it("switches to the Habits page when the Settings tab is pressed", () => {
     const { getAllByText, getByText } = render(<RoutineApp />);
 
     fireEvent.press(getAllByText("Налаштування")[0]);
 
-    expect(getByText(SETTINGS_DESCRIPTION)).toBeTruthy();
+    // `HabitsPage` renders its own «Звички» headline with the ⚙️ emoji.
+    expect(getByText(SETTINGS_HEADLINE)).toBeTruthy();
   });
 
   it("writes the selected tab to MMKV under the shared ROUTINE_MAIN_TAB key", () => {
@@ -72,7 +75,7 @@ describe("RoutineApp shell", () => {
 
     const { getByText } = render(<RoutineApp />);
 
-    expect(getByText(SETTINGS_DESCRIPTION)).toBeTruthy();
+    expect(getByText(SETTINGS_HEADLINE)).toBeTruthy();
   });
 
   it("falls back to the Calendar tab when the persisted value is malformed", () => {
