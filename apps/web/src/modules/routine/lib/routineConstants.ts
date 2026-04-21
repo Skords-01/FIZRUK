@@ -75,50 +75,19 @@ export const ROUTINE_THEME = {
   successPulse: "rgba(249, 112, 102, 0.4)",
 };
 
-// Time mode options
-export type RoutineTimeModeId = "today" | "tomorrow" | "week" | "month";
-export interface RoutineTimeMode {
-  id: RoutineTimeModeId;
-  label: string;
-}
-export const ROUTINE_TIME_MODES: readonly RoutineTimeMode[] = [
-  { id: "today", label: "Сьогодні" },
-  { id: "tomorrow", label: "Завтра" },
-  { id: "week", label: "Тиждень" },
-  { id: "month", label: "Місяць" },
-];
-
-// Recurrence patterns
-export interface RecurrenceOption {
-  value: "daily" | "weekdays" | "weekly" | "monthly" | "once";
-  label: string;
-  /**
-   * Compact label used by the segmented chip row in `HabitForm`.
-   * Falls back to `label` when omitted. Full `label` is still used in
-   * any remaining `<option>` contexts so existing selects don't lose
-   * their clarifying copy.
-   */
-  shortLabel?: string;
-}
-export const RECURRENCE_OPTIONS: readonly RecurrenceOption[] = [
-  { value: "daily", label: "Щодня" },
-  { value: "weekdays", label: "Будні (пн-пт)", shortLabel: "Будні" },
-  { value: "weekly", label: "Обрані дні тижня", shortLabel: "По тижню" },
-  {
-    value: "monthly",
-    label: "Щомісяця (число; лютий - останній день)",
-    shortLabel: "Щомісяця",
-  },
-  { value: "once", label: "Одноразово (одна дата)", shortLabel: "Одноразово" },
-];
-
-// Weekday labels (Ukrainian, Monday first)
-export const WEEKDAY_LABELS: readonly string[] = [
-  "Пн",
-  "Вт",
-  "Ср",
-  "Чт",
-  "Пт",
-  "Сб",
-  "Нд",
-];
+// Pure time-mode / recurrence / weekday constants moved into the
+// `@sergeant/routine-domain` package (Phase 5 / PR 2). Re-exported here
+// under the historical import path so existing web call-sites keep
+// compiling unchanged. The Tailwind-class `ROUTINE_THEME` above stays
+// in web because its class strings are tightly coupled to the web
+// design-token layer.
+export type {
+  RecurrenceOption,
+  RoutineTimeMode,
+  RoutineTimeModeId,
+} from "@sergeant/routine-domain";
+export {
+  RECURRENCE_OPTIONS,
+  ROUTINE_TIME_MODES,
+  WEEKDAY_LABELS,
+} from "@sergeant/routine-domain";
