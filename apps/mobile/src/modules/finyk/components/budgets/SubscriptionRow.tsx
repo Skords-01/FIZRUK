@@ -5,8 +5,14 @@ import type { Subscription } from "@/modules/finyk/lib/budgetsStore";
 
 export interface SubscriptionRowProps {
   subscription: Subscription;
-  /** Days until the next billing day. Negative = already passed this month. */
+  /**
+   * Whole days until the **next** charge. Always >= 0 — callers must
+   * roll the billing day forward to next month when it has already
+   * passed in the current one.
+   */
   daysToNext: number | null;
+  /** Date string for the next charge (locale-formatted). */
+  nextChargeLabel: string | null;
   amountLabel: string | null;
   onPress: () => void;
   testID?: string;
@@ -15,6 +21,7 @@ export interface SubscriptionRowProps {
 function SubscriptionRowImpl({
   subscription,
   daysToNext,
+  nextChargeLabel,
   amountLabel,
   onPress,
   testID,
@@ -39,8 +46,17 @@ function SubscriptionRowImpl({
           {amountLabel ?? `${subscription.currency || "UAH"}`} · день{" "}
           {subscription.billingDay}
         </Text>
+        {nextChargeLabel ? (
+          <Text
+            className="text-[11px] text-stone-400"
+            numberOfLines={1}
+            testID={testID ? `${testID}-next-date` : undefined}
+          >
+            наступне списання · {nextChargeLabel}
+          </Text>
+        ) : null}
       </View>
-      {daysToNext !== null ? (
+      {daysToNext !== null && daysToNext >= 0 ? (
         <View
           className={
             daysToNext <= 3
@@ -55,11 +71,7 @@ function SubscriptionRowImpl({
                 : "text-[11px] font-medium text-stone-600"
             }
           >
-            {daysToNext === 0
-              ? "сьогодні"
-              : daysToNext > 0
-                ? `за ${daysToNext} дн.`
-                : `${-daysToNext} дн. тому`}
+            {daysToNext === 0 ? "сьогодні" : `за ${daysToNext} дн.`}
           </Text>
         </View>
       ) : null}

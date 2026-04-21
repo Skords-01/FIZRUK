@@ -156,6 +156,28 @@ export function BudgetsPage({ seed, now, testID }: BudgetsPageProps) {
     txStore.customCategories,
   ]);
 
+  /**
+   * Map of `categoryId → daily actual spend (current month)` derived
+   * from the forecast result. Used to render per-row sparklines on
+   * `LimitBudgetRow` so each limit shows its own trend.
+   */
+  const limitTrends = useMemo(() => {
+    const out = new Map<string, number[]>();
+    for (const fc of forecasts) {
+      const series = (fc.dailyData ?? [])
+        .map((d) =>
+          typeof d.actual === "number"
+            ? d.actual
+            : typeof d.forecast === "number"
+              ? d.forecast
+              : 0,
+        )
+        .filter((v): v is number => Number.isFinite(v));
+      out.set(fc.categoryId, series);
+    }
+    return out;
+  }, [forecasts]);
+
   const calcSpent = useCallback(
     (categoryId: string) =>
       calcCategorySpent(
@@ -208,11 +230,26 @@ export function BudgetsPage({ seed, now, testID }: BudgetsPageProps) {
     [budgetsStore],
   );
 
-  function daysToBilling(billingDay: number): number {
+  /**
+   * Compute the **next** billing Date for a recurring subscription,
+   * rolling forward to the following month when the billing day has
+   * already passed in the current one. Caps the day to the last day
+   * of the target month to handle 31 → February correctly.
+   */
+  function nextBillingDate(billingDay: number): Date {
+    const day = Math.max(1, Math.min(31, Math.round(billingDay) || 1));
     const dom = today.getDate();
-    if (billingDay >= dom) return billingDay - dom;
-    // already passed this month — show negative days
-    return billingDay - dom;
+    const inThisMonth = day >= dom;
+    const year = today.getFullYear();
+    const monthIdx = today.getMonth() + (inThisMonth ? 0 : 1);
+    const lastDay = new Date(year, monthIdx + 1, 0).getDate();
+    const safeDay = Math.min(day, lastDay);
+    return new Date(year, monthIdx, safeDay);
+  }
+  function daysToBilling(billingDay: number): number {
+    const next = nextBillingDate(billingDay);
+    const ms = next.getTime() - today.getTime();
+    return Math.round(ms / (24 * 60 * 60 * 1000));
   }
 
   const planMonthlyValue = budgetsStore.monthlyPlan;
@@ -295,6 +332,7 @@ export function BudgetsPage({ seed, now, testID }: BudgetsPageProps) {
                     remaining={usage.remaining}
                     overLimit={usage.overLimit}
                     warnLimit={usage.warnLimit}
+                    trend={limitTrends.get(b.categoryId ?? "") ?? []}
                     onEdit={() => setSheet({ kind: "limit", budget: b })}
                     testID={`finyk-budgets-limit-${b.id}`}
                   />
@@ -405,11 +443,17 @@ export function BudgetsPage({ seed, now, testID }: BudgetsPageProps) {
                   meta.amount != null
                     ? `${meta.amount.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ${meta.currency}`
                     : null;
+                const nextDate = nextBillingDate(s.billingDay);
+                const nextChargeLabel = nextDate.toLocaleDateString("uk-UA", {
+                  day: "numeric",
+                  month: "short",
+                });
                 return (
                   <SubscriptionRow
                     key={s.id}
                     subscription={s}
                     daysToNext={daysToBilling(s.billingDay)}
+                    nextChargeLabel={nextChargeLabel}
                     amountLabel={explicit ?? fromTx}
                     onPress={() =>
                       setSheet({ kind: "subscription", subscription: s })

@@ -195,4 +195,60 @@ describe("BudgetsPage — subscriptions", () => {
     expect(screen.getByTestId("finyk-budgets-sub-s-1")).toBeTruthy();
     expect(screen.getByText("Netflix")).toBeTruthy();
   });
+
+  it("rolls billing day forward to next month when it has already passed", () => {
+    // FIXED_NOW = 2026-04-21 → billing day 5 has passed → next charge = May 5
+    render(
+      <BudgetsPage
+        now={FIXED_NOW}
+        seed={{
+          budgets: [],
+          monthlyPlan: {},
+          subscriptions: [
+            {
+              id: "s-2",
+              name: "Spotify",
+              emoji: "🎧",
+              keyword: "spotify",
+              billingDay: 5,
+              currency: "UAH",
+              monthlyCost: 159,
+            },
+          ],
+        }}
+      />,
+    );
+    const nextDateNode = screen.getByTestId("finyk-budgets-sub-s-2-next-date");
+    const text = Array.isArray(nextDateNode.props.children)
+      ? nextDateNode.props.children.flat(Infinity).join("")
+      : String(nextDateNode.props.children);
+    // Should mention May (трав), not April (квіт), because day 5 already
+    // passed in April (today = 21).
+    expect(text).toMatch(/трав|тра/);
+  });
+});
+
+describe("BudgetsPage — limit sparkline", () => {
+  it("renders a per-row sparkline for limit budgets", () => {
+    render(
+      <BudgetsPage
+        now={FIXED_NOW}
+        seed={{
+          subscriptions: [],
+          monthlyPlan: {},
+          budgets: [
+            {
+              id: "b-spk",
+              type: "limit",
+              limit: 1500,
+              categoryId: "food",
+            },
+          ],
+        }}
+      />,
+    );
+    expect(
+      screen.getByTestId("finyk-budgets-limit-b-spk-sparkline"),
+    ).toBeTruthy();
+  });
 });

@@ -3,6 +3,8 @@ import { Pressable, Text, View } from "react-native";
 
 import type { Budget } from "@sergeant/finyk-domain/domain";
 
+import { Sparkline } from "./Sparkline";
+
 export interface GoalBudgetRowProps {
   budget: Budget & {
     name?: string;
@@ -16,6 +18,16 @@ export interface GoalBudgetRowProps {
   monthlyLabel: string | null;
   onEdit: () => void;
   testID?: string;
+}
+
+/**
+ * Build a discrete progress sparkline (10 segments) so the goal row
+ * has a per-row trend visualization parallel to the limit row even
+ * when no per-day savings history is recorded.
+ */
+function progressTrend(pct: number): number[] {
+  const filled = Math.max(0, Math.min(10, Math.round(pct / 10)));
+  return Array.from({ length: 10 }, (_, i) => (i < filled ? 1 : 0.15));
 }
 
 function fmt(n: number): string {
@@ -52,6 +64,9 @@ function GoalBudgetRowImpl({
         >
           {fmt(saved)} / {fmt(target)} ₴
         </Text>
+      </View>
+      <View className="mb-2" testID={testID ? `${testID}-sparkline` : undefined}>
+        <Sparkline values={progressTrend(pct)} tone="positive" height={14} />
       </View>
       <View className="h-2 bg-cream-200 rounded-full overflow-hidden">
         <View

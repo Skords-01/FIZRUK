@@ -3,6 +3,8 @@ import { Pressable, Text, View } from "react-native";
 
 import type { Budget } from "@sergeant/finyk-domain/domain";
 
+import { Sparkline } from "./Sparkline";
+
 export interface LimitBudgetRowProps {
   budget: Budget;
   categoryLabel: string;
@@ -12,6 +14,8 @@ export interface LimitBudgetRowProps {
   remaining: number;
   overLimit: boolean;
   warnLimit: boolean;
+  /** Per-day spend in the current month, used for the row sparkline. */
+  trend?: readonly number[];
   onEdit: () => void;
   testID?: string;
 }
@@ -29,6 +33,7 @@ function LimitBudgetRowImpl({
   remaining,
   overLimit,
   warnLimit,
+  trend,
   onEdit,
   testID,
 }: LimitBudgetRowProps) {
@@ -58,6 +63,15 @@ function LimitBudgetRowImpl({
           {fmt(spent)} / {fmt(Number(budget.limit) || 0)} ₴
         </Text>
       </View>
+      {trend && trend.length > 0 ? (
+        <View className="mb-2" testID={testID ? `${testID}-sparkline` : undefined}>
+          <Sparkline
+            values={trend}
+            tone={overLimit ? "danger" : warnLimit ? "warn" : "positive"}
+            height={16}
+          />
+        </View>
+      ) : null}
       <View className="h-2 bg-cream-200 rounded-full overflow-hidden">
         <View
           style={{ width: barWidth }}
