@@ -5,6 +5,7 @@
  * `apps/mobile` (React Native).
  */
 
+export const BODY_PHOTOS_STORAGE_KEY = "fizruk_body_photos_v1";
 export const WORKOUTS_STORAGE_KEY = "fizruk_workouts_v1";
 export const CUSTOM_EXERCISES_KEY = "fizruk_custom_exercises_v1";
 export const MEASUREMENTS_STORAGE_KEY = "fizruk_measurements_v1";
