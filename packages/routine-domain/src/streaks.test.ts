@@ -1,13 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
-  streakForHabit,
-  maxStreakAllTime,
   completionRateForRange,
+  maxStreakAllTime,
+  streakForHabit,
 } from "./streaks.js";
+import type { Habit } from "./types.js";
 
-function dailyHabit(id = "h1") {
+function dailyHabit(id = "h1"): Habit {
   return {
     id,
+    name: id,
     archived: false,
     recurrence: "daily",
     startDate: "2026-01-01",
@@ -16,13 +18,19 @@ function dailyHabit(id = "h1") {
   };
 }
 
-describe("routine/streaks", () => {
+describe("routine-domain/streaks", () => {
   it("streakForHabit counts consecutive scheduled completions backwards", () => {
     const h = dailyHabit("h");
     const todayKey = "2026-01-10";
     const completions = ["2026-01-10", "2026-01-09", "2026-01-08"];
     expect(streakForHabit(h, completions, todayKey)).toBe(3);
     expect(streakForHabit(h, ["2026-01-10", "2026-01-08"], todayKey)).toBe(1);
+  });
+
+  it("streakForHabit returns 0 for no completions", () => {
+    const h = dailyHabit("h");
+    expect(streakForHabit(h, [], "2026-01-10")).toBe(0);
+    expect(streakForHabit(h, undefined, "2026-01-10")).toBe(0);
   });
 
   it("maxStreakAllTime finds best streak", () => {
@@ -40,8 +48,9 @@ describe("routine/streaks", () => {
   it("maxStreakAllTime keeps historical completions after schedule narrowing", () => {
     // Звичка зараз weekly (пн/ср/пт), але раніше була daily і користувач
     // виконував її щодня. Історичний best streak не має зникати.
-    const h = {
+    const h: Habit = {
       id: "h",
+      name: "h",
       archived: false,
       recurrence: "weekly",
       startDate: "2026-01-01",
@@ -60,14 +69,15 @@ describe("routine/streaks", () => {
 
   it("streakForHabit terminates for monthly habits with long history", () => {
     // Раніше магічний ліміт 500 ітерацій обривав multi-year monthly-стрік.
-    const h = {
+    const h: Habit = {
       id: "h",
+      name: "h",
       archived: false,
       recurrence: "monthly",
       startDate: "2023-01-15",
       endDate: null,
     };
-    const completions = [];
+    const completions: string[] = [];
     for (let y = 2023; y <= 2026; y++) {
       for (let m = 1; m <= 12; m++) {
         if (y === 2026 && m > 1) break;
@@ -94,5 +104,12 @@ describe("routine/streaks", () => {
     expect(r.scheduled).toBe(4);
     expect(r.completed).toBe(3);
     expect(r.rate).toBeCloseTo(0.75);
+  });
+
+  it("completionRateForRange returns 0-rate for empty scheduled set", () => {
+    const r = completionRateForRange([], {}, "2026-01-01", "2026-01-02");
+    expect(r.scheduled).toBe(0);
+    expect(r.completed).toBe(0);
+    expect(r.rate).toBe(0);
   });
 });

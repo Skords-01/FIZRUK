@@ -3,9 +3,25 @@ import {
   MONTHLY_PLAN_STORAGE_KEY,
   TEMPLATES_STORAGE_KEY,
 } from "@sergeant/fizruk-domain";
-import { sortHabitsByOrder } from "./habitOrder.js";
-import { completionNoteKey } from "./completionNoteKey.js";
+import {
+  completionNoteKey,
+  dateKeyFromDate,
+  enumerateDateKeys,
+  habitScheduledOnDate,
+  parseDateKey,
+  sortHabitsByOrder,
+} from "@sergeant/routine-domain";
 import { buildFinykSubscriptionEvents } from "./finykSubscriptionCalendar.js";
+
+// Re-export pure helpers under their historical names so the web
+// call-sites that `import { dateKeyFromDate } from "./hubCalendarAggregate.js"`
+// keep compiling unchanged after the Phase 5 / PR 2 extraction.
+export {
+  dateKeyFromDate,
+  parseDateKey,
+  enumerateDateKeys,
+  habitScheduledOnDate,
+};
 
 export const FIZRUK_GROUP_LABEL = "Фізрук";
 
@@ -29,69 +45,6 @@ export function loadTemplateNameById() {
     }
   }
   return map;
-}
-
-export function dateKeyFromDate(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-export function parseDateKey(key) {
-  const [y, m, day] = key.split("-").map(Number);
-  return new Date(y, (m || 1) - 1, day || 1);
-}
-
-export function enumerateDateKeys(startKey, endKey) {
-  const out = [];
-  const d = parseDateKey(startKey);
-  const end = parseDateKey(endKey);
-  d.setHours(12, 0, 0, 0);
-  end.setHours(12, 0, 0, 0);
-  while (d <= end) {
-    out.push(dateKeyFromDate(d));
-    d.setDate(d.getDate() + 1);
-  }
-  return out;
-}
-
-/** Пн=0 … Нд=6 */
-function isoWeekdayFromDateKey(dateKey) {
-  const d = parseDateKey(dateKey);
-  return (d.getDay() + 6) % 7;
-}
-
-/** Чи потрапляє звичка на цей день згідно з датами та регулярністю */
-export function habitScheduledOnDate(habit, dateKey) {
-  if (habit.archived) return false;
-  const start =
-    habit.startDate ||
-    (habit.createdAt ? String(habit.createdAt).slice(0, 10) : dateKey);
-  const end = habit.endDate || null;
-  if (dateKey < start) return false;
-  if (end && dateKey > end) return false;
-  const r = habit.recurrence || "daily";
-  if (r === "once") return dateKey === start;
-  if (r === "daily") return true;
-  if (r === "weekdays") {
-    const wd = isoWeekdayFromDateKey(dateKey);
-    return wd >= 0 && wd <= 4;
-  }
-  if (r === "weekly") {
-    const days =
-      Array.isArray(habit.weekdays) && habit.weekdays.length > 0
-        ? habit.weekdays
-        : [0, 1, 2, 3, 4, 5, 6];
-    return days.includes(isoWeekdayFromDateKey(dateKey));
-  }
-  if (r === "monthly") {
-    const anchorDom = parseDateKey(start).getDate();
-    const d = parseDateKey(dateKey);
-    const y = d.getFullYear();
-    const m = d.getMonth();
-    const daysInMonth = new Date(y, m + 1, 0).getDate();
-    const scheduledDay = Math.min(anchorDom, daysInMonth);
-    return d.getDate() === scheduledDay;
-  }
-  return true;
 }
 
 function tagLabelsForHabit(state, habit) {

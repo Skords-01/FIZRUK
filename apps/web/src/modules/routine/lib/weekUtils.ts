@@ -1,17 +1,12 @@
-import { dateKeyFromDate, parseDateKey } from "./hubCalendarAggregate.js";
+/**
+ * Week / date-key helpers — moved into `@sergeant/routine-domain`
+ * (Phase 5 / PR 2). Re-exported here so existing call-sites in
+ * `apps/web` don't need to update their import paths.
+ */
 
-export { dateKeyFromDate, parseDateKey };
-
-export function addDays(base, n) {
-  const d = new Date(base);
-  d.setDate(d.getDate() + n);
-  return d;
-}
-
-export function startOfIsoWeek(d) {
-  const x = new Date(d);
-  const wd = (x.getDay() + 6) % 7;
-  x.setDate(x.getDate() - wd);
-  x.setHours(12, 0, 0, 0);
-  return x;
-}
+export {
+  addDays,
+  dateKeyFromDate,
+  parseDateKey,
+  startOfIsoWeek,
+} from "@sergeant/routine-domain";

@@ -22,6 +22,7 @@
     "@sergeant/api-client": "workspace:*",
     "@sergeant/design-tokens": "workspace:*",
     "@sergeant/fizruk-domain": "workspace:*",
+    "@sergeant/routine-domain": "workspace:*",
     "@sergeant/shared": "workspace:*",
     "@tanstack/query-sync-storage-persister": "5.99.0",
     "@tanstack/react-query": "^5.99.0",

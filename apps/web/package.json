@@ -23,6 +23,7 @@
     "@sergeant/design-tokens": "workspace:*",
     "@sergeant/finyk-domain": "workspace:*",
     "@sergeant/fizruk-domain": "workspace:*",
+    "@sergeant/routine-domain": "workspace:*",
     "@sergeant/insights": "workspace:*",
     "@sergeant/shared": "workspace:*",
     "@tanstack/react-query": "^5.99.0",
