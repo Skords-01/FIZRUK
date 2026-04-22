@@ -37,6 +37,16 @@ const ROUTINE_STATE_KEY = "hub_routine_v1";
 const NUTRITION_LOG_KEY = "nutrition_log_v1";
 const NUTRITION_PREFS_KEY = "nutrition_prefs_v1";
 
+// Hub-dashboard quick-stats previews rendered on the Status row of
+// each module card. Separate from the module's own storage — the hub
+// reads these directly so each module typically writes them as a
+// side-effect of its own state updates. The seeder needs to populate
+// them itself so `?demo=1` immediately shows non-empty module rows.
+const FINYK_QUICK_STATS_KEY = "finyk_quick_stats";
+const FIZRUK_QUICK_STATS_KEY = "fizruk_quick_stats";
+const ROUTINE_QUICK_STATS_KEY = "routine_quick_stats";
+const NUTRITION_QUICK_STATS_KEY = "nutrition_quick_stats";
+
 // ──────────────────────────────────────────────────────────────────
 // helpers
 // ──────────────────────────────────────────────────────────────────
@@ -771,6 +781,42 @@ function seedNutrition(): void {
   });
 }
 
+// Hub-dashboard quick-stats payloads. Shape matches `selectModulePreview`
+// in `@sergeant/shared`:
+//   - finyk:     { todaySpent, budgetLeft } — both numbers in UAH
+//   - fizruk:    { weekWorkouts, streak }
+//   - routine:   { todayDone, todayTotal, streak }
+//   - nutrition: { todayCal, calGoal }
+// Numeric zero is rendered as "no value" (the selector treats it
+// falsy-ish), so all figures here are non-zero by design.
+function seedHubQuickStats(): void {
+  // Finyk: today's expenses = 145 + 220 + 85 = 450 UAH, budget 28k minus
+  // rough month-to-date spend ≈ 9 200 → ~18 800 left.
+  writeJSON(FINYK_QUICK_STATS_KEY, {
+    todaySpent: 450,
+    budgetLeft: 18800,
+  });
+  // Fizruk: two workouts seeded in the last 7 days; a modest rolling
+  // streak feels natural without looking unrealistic.
+  writeJSON(FIZRUK_QUICK_STATS_KEY, {
+    weekWorkouts: 2,
+    streak: 5,
+  });
+  // Routine: all 5 habits completed today (seeder marks `today` for
+  // every habit) and the longest continuous streak in the seed is 14d.
+  writeJSON(ROUTINE_QUICK_STATS_KEY, {
+    todayDone: 5,
+    todayTotal: 5,
+    streak: 14,
+  });
+  // Nutrition: today's meals sum to 420 + 640 + 190 = 1 250 kcal
+  // against a 2 200 kcal target (matches NUTRITION_PREFS_KEY).
+  writeJSON(NUTRITION_QUICK_STATS_KEY, {
+    todayCal: 1250,
+    calGoal: 2200,
+  });
+}
+
 // ──────────────────────────────────────────────────────────────────
 // public API
 // ──────────────────────────────────────────────────────────────────
@@ -789,6 +835,10 @@ const SEEDED_KEYS = [
   NUTRITION_LOG_KEY,
   NUTRITION_PREFS_KEY,
   "nutrition_water_v1",
+  FINYK_QUICK_STATS_KEY,
+  FIZRUK_QUICK_STATS_KEY,
+  ROUTINE_QUICK_STATS_KEY,
+  NUTRITION_QUICK_STATS_KEY,
   ONBOARDING_DONE_KEY,
   FIRST_REAL_ENTRY_KEY,
   DEMO_CLEANUP_DONE_KEY,
@@ -808,6 +858,7 @@ export function seedDemoData(): void {
   seedFizruk();
   seedRoutine();
   seedNutrition();
+  seedHubQuickStats();
 
   writeRaw(DEMO_FLAG_KEY, "1");
 }
