@@ -50,7 +50,7 @@ const variants: Record<ButtonVariant, string> = {
   destructive:
     "bg-danger text-white shadow-sm hover:brightness-110 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.15)] active:scale-[0.98]",
   success:
-    "bg-brand-50 text-brand-700 border border-brand-200/50 hover:bg-brand-100 active:scale-[0.98]",
+    "bg-brand-50 text-brand-700 border border-brand-200/50 hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:border-brand-500/30 dark:hover:bg-brand-500/25 active:scale-[0.98]",
 
   // Module-specific branded buttons
   finyk:

@@ -91,7 +91,9 @@ function MonthlyPlanCardComponent({
               <div
                 className={cn(
                   "text-sm font-semibold tabular-nums",
-                  isOver ? "text-danger" : "text-emerald-600",
+                  isOver
+                    ? "text-danger"
+                    : "text-emerald-600 dark:text-emerald-400",
                 )}
               >
                 {isOver
@@ -131,7 +133,7 @@ function MonthlyPlanCardComponent({
                   ? "bg-danger/10 text-danger"
                   : pctExpense >= 85
                     ? "bg-warning/10 text-warning"
-                    : "bg-emerald-500/10 text-emerald-700",
+                    : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
               )}
             >
               <span className="font-semibold">

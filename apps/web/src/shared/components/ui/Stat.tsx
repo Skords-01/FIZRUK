@@ -37,7 +37,7 @@ const toneClass: Record<StatTone, string> = {
   finyk: "text-finyk",
   fizruk: "text-fizruk",
   routine: "text-coral-500",
-  nutrition: "text-lime-600",
+  nutrition: "text-lime-600 dark:text-lime-400",
 };
 
 const valueSize: Record<StatSize, string> = {

@@ -12,7 +12,7 @@ export function MigrationPrompt({ onUpload, onSkip, syncing }) {
         className="max-w-sm w-full space-y-5"
       >
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 mx-auto bg-brand-500/10 rounded-2xl flex items-center justify-center text-brand-600">
+          <div className="w-14 h-14 mx-auto bg-brand-500/10 rounded-2xl flex items-center justify-center text-brand-600 dark:text-brand-400">
             <Icon name="upload" size={28} strokeWidth={1.8} />
           </div>
           <h2 className="text-xl font-bold text-text">

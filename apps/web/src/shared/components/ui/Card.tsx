@@ -80,13 +80,13 @@ const variants: Record<CardVariant, string> = {
 
   // Soft module cards (less prominent)
   "finyk-soft":
-    "rounded-2xl border border-brand-100 bg-brand-50/50 backdrop-blur-sm",
+    "rounded-2xl border border-brand-100 bg-brand-50/50 backdrop-blur-sm dark:border-brand-500/20 dark:bg-brand-500/10",
   "fizruk-soft":
-    "rounded-2xl border border-teal-100 bg-teal-50/50 backdrop-blur-sm",
+    "rounded-2xl border border-teal-100 bg-teal-50/50 backdrop-blur-sm dark:border-teal-500/20 dark:bg-teal-500/10",
   "routine-soft":
-    "rounded-2xl border border-coral-100 bg-coral-50/50 backdrop-blur-sm",
+    "rounded-2xl border border-coral-100 bg-coral-50/50 backdrop-blur-sm dark:border-coral-500/20 dark:bg-coral-500/10",
   "nutrition-soft":
-    "rounded-2xl border border-lime-100 bg-lime-50/50 backdrop-blur-sm",
+    "rounded-2xl border border-lime-100 bg-lime-50/50 backdrop-blur-sm dark:border-lime-500/20 dark:bg-lime-500/10",
 };
 
 const paddings: Record<CardPadding, string> = {
