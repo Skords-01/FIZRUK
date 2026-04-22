@@ -488,6 +488,18 @@ export const PushTestRequestSchema = z.object({
   title: z.string().min(1).max(200),
   body: z.string().min(1).max(2000),
   data: z.record(z.string().max(200), z.string().max(2000)).optional(),
+  /**
+   * Deep-link, що клієнт відкриє по тапу. Сервер прокине у `data.url` для
+   * всіх трьох каналів; native/web handler читають з одного ключа.
+   * URL-валідацію навмисно робимо м'якою (`.url()` без `.startsWith`), щоб
+   * поза-HTTPS кастом-схеми (`sergeant://finyk/tx/123`) теж проходили.
+   */
+  url: z.string().trim().min(1).max(2048).optional(),
+  /**
+   * Background/silent push. `true` → iOS `content-available=1` без banner,
+   * Android/FCM data-only. Web-push гілка ігнорує (див. `PushPayload`).
+   */
+  silent: z.boolean().optional(),
 });
 
 /**

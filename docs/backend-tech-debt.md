@@ -579,6 +579,90 @@
 
 ---
 
+## Push credentials
+
+Native push-send pipeline (`apps/server/src/push/send.ts::sendToUser` →
+APNs через `@parse/node-apn`, FCM HTTP v1 через `google-auth-library`)
+реалізовано у commit `36de093` і доставляє payload на iOS / Android / web
+паралельно. Цей розділ — операційний чек-ліст для провізії credentials,
+щоб native-гілка перестала бути no-op (`apns_disabled` / `fcm_disabled`).
+
+### APNs (iOS)
+
+1. Apple Developer → [Keys](https://developer.apple.com/account/resources/authkeys/list) →
+   «+» → назва «Sergeant APNs» → галочка «Apple Push Notifications service (APNs)»
+   → Register. Завантаж `AuthKey_XXXXXXXX.p8` (одноразово — повторно не дають!).
+2. На тій самій сторінці скопіюй `Key ID` (10-символьний) і `Team ID`
+   (у правому верхньому кутку будь-якої сторінки Apple Developer).
+3. У Railway → `apps/server` service → Variables додай:
+
+   | Env var           | Значення                                                                                                                                                       |
+   | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `APNS_P8_KEY`     | Вміст `.p8` файлу як є (з `-----BEGIN PRIVATE KEY-----`). Railway приймає багаторядкові значення.                                                              |
+   | `APNS_KEY_ID`     | 10-символьний Key ID з кроку 2.                                                                                                                                |
+   | `APNS_TEAM_ID`    | 10-символьний Team ID з кроку 2.                                                                                                                               |
+   | `APNS_BUNDLE_ID`  | `com.sergeant.shell` (Capacitor) або `com.sergeant.app` (Expo RN) — має співпадати з bundle-id-ом клієнта, що реєструється через `POST /api/v1/push/register`. |
+   | `APNS_PRODUCTION` | `true` для App Store / TestFlight, `false` або unset для debug-build-ів на локальному девайсі.                                                                 |
+
+   Якщо PEM потрапив у single-line env-змінну з `\n`-escape-ами
+   (наприклад, через `railway env set`), сервер нормалізує їх автоматично
+   (див. `loadApnsKey` у `apnsClient.ts`).
+
+### FCM (Android)
+
+1. [Firebase Console](https://console.firebase.google.com/) → твій проєкт
+   (той самий, що в `google-services.json` клієнта) → Project Settings →
+   Service accounts → **Generate new private key**. Завантажиться JSON з
+   полями `project_id`, `client_email`, `private_key`.
+2. Закодуй JSON у base64 одним рядком:
+
+   ```bash
+   base64 -w0 firebase-adminsdk-XXXXX.json
+   # або на macOS:
+   base64 -i firebase-adminsdk-XXXXX.json | tr -d '\n'
+   ```
+
+3. Railway → `apps/server` service → Variables:
+
+   | Env var                    | Значення                                         |
+   | -------------------------- | ------------------------------------------------ |
+   | `FCM_SERVICE_ACCOUNT_JSON` | Base64-рядок з кроку 2 (вся JSON, без newlines). |
+
+   Сервер декодує base64 на boot, парсить JSON і кешує OAuth2 access-token
+   (margin 60 с до expiry — див. `getFcmAccessToken` у `fcmClient.ts`).
+   Невалідний JSON → warn-log `"fcm_init_failed"` + FCM sender disabled;
+   APNs / web-push продовжать працювати.
+
+### Перевірка
+
+Після деплою з усіма env-ами:
+
+```bash
+# локально або через Railway CLI
+curl -X POST https://<server>/api/v1/push/test \
+  -H "authorization: Bearer <session-token>" \
+  -H "content-type: application/json" \
+  -d '{"title":"Test","body":"Hello from server","silent":false}'
+```
+
+Відповідь — `PushSendSummarySchema` з
+`{ delivered: { ios, android, web }, cleaned, errors }`. `delivered.*`
+повинні бути > 0 для платформ, на яких у юзера є зареєстровані пристрої.
+Якщо `errors[]` містить `"apns_disabled"` / `"fcm_disabled"` — відповідний
+env-набір не підхопився; переглянь Railway logs на `apns_disabled_log` /
+`fcm_init_failed` на boot-і.
+
+### Rotation
+
+- APNs `.p8`: Apple дозволяє до 2 активних Keys на team. Для ротації —
+  створи новий Key, задеплой з новим `APNS_P8_KEY`/`APNS_KEY_ID`, і
+  revoke старий через Apple Developer Console. Сервер на boot створить
+  новий `apn.Provider` з актуальними кредами.
+- FCM service-account: те саме — згенеруй нову приватку у Firebase
+  Console → Service accounts → **Manage service account permissions** →
+  новий key, задеплой, видали старий. Кеш OAuth-токена очиститься на
+  рестарті.
+
 ## Конвенції для майбутніх PR
 
 - **Жодних mass-rewrite**. Кожен PR — тематичний, reviewable за один присід (≤ 600 рядків diff там, де це можливо).

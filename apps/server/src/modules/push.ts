@@ -354,6 +354,8 @@ export async function pushTest(req: Request, res: Response): Promise<void> {
     title: payload.title,
     body: payload.body,
     data: payload.data,
+    url: payload.url,
+    silent: payload.silent,
   });
 
   res.json(summary);
