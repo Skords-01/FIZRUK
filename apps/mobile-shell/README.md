@@ -88,16 +88,26 @@ pnpm --filter @sergeant/mobile-shell open:android
 `build:web` → `pnpm --filter @sergeant/mobile-shell sync ios` →
 `open:ios`. Той самий флоу крутиться на `macos-latest` у
 `.github/workflows/mobile-shell-ios.yml` (build-only,
-`CODE_SIGNING_ALLOWED=NO`). Release pipeline на iOS (TestFlight) ще
-не налаштований — потрібні підпис-секрети, які поза скоупом цього
-build-only workflow-а.
+`CODE_SIGNING_ALLOWED=NO`). Release lane живе в
+`.github/workflows/mobile-shell-ios-release.yml` (триггери `push tag
+'v*'` + `workflow_dispatch`): сам робить `cap add ios` на `macos-latest`,
+архівує, експортує `.ipa` і заливає у TestFlight. Контракт секретів і
+інструкції для першого запуску — у [`MOBILE.md` → Release — iOS](../../MOBILE.md#release--ios).
 
 ## Що НЕ зроблено
 
 - **iOS native project, закомічений у repo** — `cap add ios` все ще
-  чекає на Mac; зараз iOS-проект генерується при кожному запуску CI
-  у `mobile-shell-ios.yml`. Для TestFlight pipeline треба або
-  закомітити `ios/`, або додати macOS-крок з кешем Pods.
+  чекає на Mac; iOS-проект регенерується кожним CI-запуском
+  (`mobile-shell-ios.yml` для PR-лайну і
+  `mobile-shell-ios-release.yml` для tag-push/`workflow_dispatch`).
+  Release-воркфлоу кешує Pods через `actions/cache`, тож пейн
+  тільки на першому запуску.
+- ~~**Release pipeline на iOS не налаштований**~~ — зроблено
+  сканфолдом у `.github/workflows/mobile-shell-ios-release.yml`. Для
+  першого запуску потрібні всі Apple-секрети з контракту у
+  [`MOBILE.md` → Release — iOS](../../MOBILE.md#release--ios);
+  без них job логить `::warning::iOS release secrets not configured`
+  і падає у unsigned-Simulator-фолбек.
 - ~~**Native push notifications.** `usePushNotifications` у web тримає
   Web Push через Service Worker + VAPID. На iOS у WebView воно
   працює лише з 16.4+ і тільки якщо web уже установлено як PWA на

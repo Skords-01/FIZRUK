@@ -1,0 +1,261 @@
+name: Mobile Shell (iOS Release)
+
+# iOS release lane for the Capacitor shell in `apps/mobile-shell/**`.
+# Produces a signed `.ipa` and uploads it to TestFlight on tag pushes
+# (`v*`) or manual `workflow_dispatch`. Sibling of the PR-time
+# `mobile-shell-ios.yml` (Simulator-only, unsigned) — that workflow
+# stays untouched so per-PR signal is unaffected.
+#
+# Pipeline (signed path, all secrets configured):
+#   1. `pnpm build:web`                — Vite bundle into `apps/server/dist`
+#   2. `cap add ios` / `cap sync ios`  — scaffold or refresh `ios/`
+#                                         (`ios/` is intentionally uncommitted;
+#                                         see apps/mobile-shell/README.md)
+#   3. import p12 + provisioning profile via apple-actions
+#   4. `xcodebuild archive` → `build/App.xcarchive`
+#   5. `xcodebuild -exportArchive` → `build/*.ipa` (ExportOptions from
+#                                         apps/mobile-shell/ci/ExportOptions.plist,
+#                                         rendered through `envsubst` on the runner)
+#   6. upload .ipa as GitHub artifact (14 days retention) for manual grab
+#   7. upload to TestFlight via apple-actions/upload-testflight-build@v1
+#      (App Store Connect API key — no session-token juggling)
+#
+# Secret-absent fallback:
+#   If `APPLE_BUILD_CERTIFICATE_BASE64` is empty the job logs a
+#   `::warning::` and falls back to the same unsigned Simulator build
+#   the PR-time workflow does. This lets the workflow itself merge
+#   and live in `main` before secrets are provisioned in the repo.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      upload_testflight:
+        description: "Upload the resulting .ipa to TestFlight (requires ASC API secrets)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  # Tag pushes and manual dispatch should not cancel each other mid-upload.
+  group: mobile-shell-ios-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-ios:
+    name: Archive + TestFlight
+    runs-on: macos-latest
+    timeout-minutes: 90
+    env:
+      # Code signing / keychain
+      APPLE_BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_BUILD_CERTIFICATE_BASE64 }}
+      APPLE_P12_PASSWORD: ${{ secrets.APPLE_P12_PASSWORD }}
+      APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+      APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+      # App Store Connect API (for provisioning profile download + TestFlight upload)
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+      # Identifiers
+      IOS_BUNDLE_ID: ${{ vars.IOS_BUNDLE_ID || 'com.sergeant.shell' }}
+      IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+      # ExportOptions.plist rendering — `provisioningProfiles` dict key
+      # matches the bundle id and the value is the *name* (not UUID) of
+      # the App Store profile downloaded by apple-actions/download-provisioning-profiles.
+      # Override via `vars.IOS_PROVISIONING_PROFILE_NAME` if the profile
+      # is named differently in the Apple Developer portal.
+      IOS_PROVISIONING_PROFILE_NAME: ${{ vars.IOS_PROVISIONING_PROFILE_NAME || 'Sergeant Shell App Store' }}
+    steps:
+      # actions/checkout v4.3.1 (SHA-pinned for supply-chain hardening)
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Detect whether iOS release secrets are configured
+        id: secrets
+        shell: bash
+        # Single gate for the signed path. Any one of the four code-sign
+        # secrets missing flips the job into unsigned-fallback mode and
+        # emits a GitHub `::warning::` so the tag-push run surfaces it
+        # in the Actions UI without failing.
+        run: |
+          set -euo pipefail
+          if [ -z "${APPLE_BUILD_CERTIFICATE_BASE64:-}" ] \
+            || [ -z "${APPLE_P12_PASSWORD:-}" ] \
+            || [ -z "${APPLE_KEYCHAIN_PASSWORD:-}" ] \
+            || [ -z "${IOS_TEAM_ID:-}" ]; then
+            echo "::warning::iOS release secrets not configured, skipping signed build"
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # pnpm/action-setup v4.1.0 (SHA-pinned)
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2
+
+      # actions/setup-node v4.4.0 (SHA-pinned)
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install JS deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web bundle (Capacitor variant)
+        # `mobile-shell#build:web` delegates to `@sergeant/web build:capacitor`
+        # (`VITE_TARGET=capacitor`), which strips `vite-plugin-pwa` out of
+        # the bundle — see apps/mobile-shell/README.md.
+        run: pnpm --filter @sergeant/mobile-shell build:web
+
+      - name: Scaffold or sync iOS project
+        # `apps/mobile-shell/ios/` is intentionally uncommitted (needs a
+        # Mac + Xcode for the first `cap add ios`). Fresh CI runs pay
+        # the scaffold cost once; follow-up runs hit the CocoaPods cache
+        # below and only re-run `cap sync ios`.
+        working-directory: apps/mobile-shell
+        run: |
+          set -euo pipefail
+          if [ ! -d ios ]; then
+            pnpm exec cap add ios
+          else
+            pnpm exec cap sync ios
+          fi
+
+      - name: Cache CocoaPods
+        # actions/cache v4.2.0 (SHA-pinned)
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: |
+            ~/.cocoapods
+            apps/mobile-shell/ios/App/Pods
+          # If `cap add ios` was re-run above the Podfile.lock will be
+          # fresh and the cache key misses; that's fine — `pod install`
+          # already ran as part of `cap add ios`.
+          key: ios-pods-${{ hashFiles('apps/mobile-shell/ios/App/Podfile.lock') }}
+          restore-keys: |
+            ios-pods-
+
+      # ─────────────────────────── Unsigned fallback ──────────────────────
+      - name: Build App for iOS Simulator (unsigned fallback)
+        if: steps.secrets.outputs.configured != 'true'
+        working-directory: apps/mobile-shell/ios/App
+        # Mirrors the PR-time workflow (`mobile-shell-ios.yml`) so the
+        # job still proves the shell compiles even when the repo has
+        # no Apple secrets yet.
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      # ─────────────────────────── Signed release path ────────────────────
+      - name: Import code signing certificates
+        if: steps.secrets.outputs.configured == 'true'
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ env.APPLE_BUILD_CERTIFICATE_BASE64 }}
+          p12-password: ${{ env.APPLE_P12_PASSWORD }}
+          keychain-password: ${{ env.APPLE_KEYCHAIN_PASSWORD }}
+
+      - name: Install provisioning profile (from APPLE_PROVISIONING_PROFILE_BASE64)
+        if: steps.secrets.outputs.configured == 'true' && env.APPLE_PROVISIONING_PROFILE_BASE64 != ''
+        shell: bash
+        # Manual fallback when `apple-actions/download-provisioning-profiles`
+        # isn't viable (e.g. ASC API key missing but a pre-baked profile
+        # is still in a repo secret). macOS expects the profile at
+        # `~/Library/MobileDevice/Provisioning Profiles/` — xcodebuild
+        # auto-discovers it from there.
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "${APPLE_PROVISIONING_PROFILE_BASE64}" \
+            | base64 --decode \
+            > "$HOME/Library/MobileDevice/Provisioning Profiles/sergeant-shell.mobileprovision"
+
+      - name: Download provisioning profiles (App Store Connect API)
+        if: steps.secrets.outputs.configured == 'true' && env.APP_STORE_CONNECT_API_KEY_ID != ''
+        uses: apple-actions/download-provisioning-profiles@v2
+        with:
+          bundle-id: ${{ env.IOS_BUNDLE_ID }}
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ env.APP_STORE_CONNECT_API_ISSUER_ID }}
+          api-key-id: ${{ env.APP_STORE_CONNECT_API_KEY_ID }}
+          api-private-key: ${{ env.APP_STORE_CONNECT_API_KEY_BASE64 }}
+
+      - name: Render ExportOptions.plist
+        if: steps.secrets.outputs.configured == 'true'
+        working-directory: apps/mobile-shell/ios/App
+        env:
+          IOS_BUNDLE_ID: ${{ env.IOS_BUNDLE_ID }}
+          IOS_TEAM_ID: ${{ env.IOS_TEAM_ID }}
+          IOS_PROVISIONING_PROFILE_NAME: ${{ env.IOS_PROVISIONING_PROFILE_NAME }}
+        # Keep `envsubst` allow-list explicit — any un-substituted
+        # placeholders stay as `${VAR}` in the plist, which xcodebuild
+        # would reject loudly rather than silently picking the wrong
+        # profile.
+        run: |
+          set -euo pipefail
+          envsubst '$IOS_BUNDLE_ID $IOS_TEAM_ID $IOS_PROVISIONING_PROFILE_NAME' \
+            < ../../ci/ExportOptions.plist \
+            > ExportOptions.plist
+          echo "--- Rendered ExportOptions.plist ---"
+          cat ExportOptions.plist
+
+      - name: xcodebuild archive
+        if: steps.secrets.outputs.configured == 'true'
+        working-directory: apps/mobile-shell/ios/App
+        run: |
+          set -euo pipefail
+          xcodebuild archive \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath build/App.xcarchive \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="${IOS_TEAM_ID}" \
+            PRODUCT_BUNDLE_IDENTIFIER="${IOS_BUNDLE_ID}"
+
+      - name: xcodebuild -exportArchive
+        if: steps.secrets.outputs.configured == 'true'
+        working-directory: apps/mobile-shell/ios/App
+        run: |
+          set -euo pipefail
+          xcodebuild -exportArchive \
+            -archivePath build/App.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/
+
+      - name: Upload .ipa artifact
+        if: steps.secrets.outputs.configured == 'true'
+        # actions/upload-artifact v4.4.3 (SHA-pinned)
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
+        with:
+          name: sergeant-shell-ipa
+          path: apps/mobile-shell/ios/App/build/*.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload to TestFlight
+        # Skipped when manual dispatch explicitly disables upload
+        # (`inputs.upload_testflight == false`). Tag pushes always upload
+        # provided the ASC API secrets are present.
+        if: |
+          steps.secrets.outputs.configured == 'true'
+          && env.APP_STORE_CONNECT_API_KEY_ID != ''
+          && (github.event_name != 'workflow_dispatch' || inputs.upload_testflight)
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: apps/mobile-shell/ios/App/build/App.ipa
+          issuer-id: ${{ env.APP_STORE_CONNECT_API_ISSUER_ID }}
+          api-key-id: ${{ env.APP_STORE_CONNECT_API_KEY_ID }}
+          api-private-key: ${{ env.APP_STORE_CONNECT_API_KEY_BASE64 }}
