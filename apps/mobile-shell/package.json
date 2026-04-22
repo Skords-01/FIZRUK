@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "Capacitor shell that wraps @sergeant/web into a native Android/iOS app.",
+  "exports": {
+    "./auth-storage": "./src/auth-storage.ts",
+    "./platform": "./src/platform.ts"
+  },
   "scripts": {
     "sync": "cap sync",
     "copy": "cap copy",
@@ -18,7 +22,8 @@
   "dependencies": {
     "@capacitor/android": "^7.4.3",
     "@capacitor/core": "^7.4.3",
-    "@capacitor/ios": "^7.4.3"
+    "@capacitor/ios": "^7.4.3",
+    "@capacitor/preferences": "^7.0.4"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.3",

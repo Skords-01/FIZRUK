@@ -133,6 +133,16 @@ export default defineConfig(({ mode }) => {
               // `requestIdleCallback`, тож не повинен тягнутись у main.
               if (id.includes("/node_modules/web-vitals/"))
                 return "vendor-web-vitals";
+              // `@capacitor/*` потрібен лише у shell-середовищі і
+              // підтягується через `await import(...)` (див.
+              // `apps/web/src/shared/lib/bearerToken.ts` → `@sergeant/mobile-shell/auth-storage`).
+              // Якщо дати йому впасти у спільний `vendor`, rollup
+              // витягне весь vendor chunk у eager-граф AuthPage/FinykApp
+              // і браузерні юзери завантажать Capacitor-рантайм
+              // дарма. Повертаємо `undefined`, щоб rollup лишив
+              // Capacitor-модулі тільки в async-chunk-у поруч з
+              // `auth-storage`.
+              if (id.includes("/node_modules/@capacitor/")) return;
               return "vendor";
             }
           },
