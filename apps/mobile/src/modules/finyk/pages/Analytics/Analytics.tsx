@@ -165,8 +165,8 @@ export function Analytics({ data, now, testID }: AnalyticsProps) {
   );
 
   const topMerchants = useMemo(
-    () => getTopMerchants(currTx, { excludedTxIds }),
-    [currTx, excludedTxIds],
+    () => getTopMerchants(currTx, { excludedTxIds, txSplits }),
+    [currTx, excludedTxIds, txSplits],
   );
 
   const comparison = useMemo(() => {

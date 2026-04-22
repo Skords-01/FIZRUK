@@ -55,10 +55,13 @@ export function useAnalytics({ mono, storage, monthlyHistory = [] }) {
     [categorySpendIndex, customCategories],
   );
 
-  // Cache: top merchants by total spend. Depends on tx list + excludedTxIds.
+  // Cache: top merchants by total spend. Depends on tx list + excludedTxIds
+  // + txSplits — сплітовані транзакції (напр. оренда з поверненнями) вже
+  // нормалізуються до чистої частки користувача, щоб цифри збігалися з
+  // "Підсумком місяця" та "Категоріями".
   const topMerchants = useMemo(
-    () => getTopMerchants(realTx, { excludedTxIds }),
-    [realTx, excludedTxIds],
+    () => getTopMerchants(realTx, { excludedTxIds, txSplits }),
+    [realTx, excludedTxIds, txSplits],
   );
 
   // Cache: monthly spend/income series for sparkline-style charts.
