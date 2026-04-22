@@ -683,7 +683,14 @@ export default function RoutineApp({
         </main>
       </div>
 
-      <RoutineBottomNav mainTab={mainTab} onSelectTab={setMainTab} />
+      <RoutineBottomNav
+        mainTab={mainTab}
+        onSelectTab={setMainTab}
+        onAddHabit={() => {
+          setQuickAddHabitOpen(true);
+          setQuickAddFocusTick((t) => t + 1);
+        }}
+      />
 
       <HabitQuickCreateDialog
         open={quickAddHabitOpen}

@@ -1,40 +1,25 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { useToast } from "@shared/hooks/useToast";
-import { hapticSuccess } from "@shared/lib/haptic";
 import { showUndoToast } from "@shared/lib/undoToast";
 import { useRoutineState } from "../../modules/routine/hooks/useRoutineState.js";
 import {
   applyRoutineBackupPayload,
-  createHabit,
   deleteHabit,
   loadRoutineState,
   restoreHabit,
   snapshotHabit,
-  updateHabit,
 } from "../../modules/routine/lib/routineStorage.js";
-import { dateKeyFromDate } from "../../modules/routine/lib/hubCalendarAggregate.js";
 import { ROUTINE_THEME as C } from "../../modules/routine/lib/routineConstants.js";
-import {
-  emptyHabitDraft,
-  habitDraftToPatch,
-  normalizeReminderTimes,
-  routineTodayDate,
-} from "../../modules/routine/lib/routineDraftUtils.js";
 import { HabitDetailSheet } from "../../modules/routine/components/HabitDetailSheet";
+import { HabitQuickCreateDialog } from "../../modules/routine/components/HabitQuickCreateDialog";
 import { RoutineBackupSection } from "../../modules/routine/components/RoutineBackupSection";
-import {
-  HabitForm,
-  type HabitFormErrors,
-} from "../../modules/routine/components/settings/HabitForm";
 import { TagsSection } from "../../modules/routine/components/settings/TagsSection";
 import { CategoriesSection } from "../../modules/routine/components/settings/CategoriesSection";
 import { ActiveHabitsSection } from "../../modules/routine/components/settings/ActiveHabitsSection";
 import { ArchivedHabitsSection } from "../../modules/routine/components/settings/ArchivedHabitsSection";
 import type {
   CategoryDraft,
-  Habit,
-  HabitDraft,
   PendingHabitDeletion,
 } from "../../modules/routine/lib/types";
 import {
@@ -51,7 +36,6 @@ export function RoutineSection() {
   const toast = useToast();
   const { routine, setRoutine, updatePref } = useRoutineState();
 
-  const [habitDraft, setHabitDraft] = useState<HabitDraft>(emptyHabitDraft);
   const [tagDraft, setTagDraft] = useState<string>("");
   const [catDraft, setCatDraft] = useState<CategoryDraft>({
     name: "",
@@ -59,87 +43,15 @@ export function RoutineSection() {
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDialogFocusTick, setEditDialogFocusTick] = useState(0);
   const [detailHabitId, setDetailHabitId] = useState<string | null>(null);
   const [deleteHabitPending, setDeleteHabitPending] =
     useState<PendingHabitDeletion | null>(null);
   const [importConfirm, setImportConfirm] = useState<ImportConfirmState | null>(
     null,
   );
-  const [habitErrors, setHabitErrors] = useState<HabitFormErrors>({});
 
-  // Clear field errors as soon as the user edits the relevant field so the
-  // red border doesn't linger once they start fixing the input. Mirrors
-  // behaviour in `HabitQuickCreateDialog` — keeps validation feedback
-  // consistent between the two hosts of `HabitForm`.
-  useEffect(() => {
-    if (habitErrors.name && habitDraft.name.trim()) {
-      setHabitErrors((e) => ({ ...e, name: undefined }));
-    }
-  }, [habitDraft.name, habitErrors.name]);
-  useEffect(() => {
-    if (
-      habitErrors.weekdays &&
-      Array.isArray(habitDraft.weekdays) &&
-      habitDraft.weekdays.length > 0
-    ) {
-      setHabitErrors((e) => ({ ...e, weekdays: undefined }));
-    }
-  }, [habitDraft.weekdays, habitErrors.weekdays]);
-
-  const loadHabitIntoDraft = (h: Habit) => {
-    const times = normalizeReminderTimes(h);
-    setHabitDraft({
-      name: h.name || "",
-      emoji: h.emoji || "✓",
-      tagIds: h.tagIds || [],
-      categoryId: h.categoryId || null,
-      recurrence: h.recurrence || "daily",
-      startDate: h.startDate || dateKeyFromDate(routineTodayDate()),
-      endDate: h.endDate || "",
-      timeOfDay: h.timeOfDay || "",
-      reminderTimes: times,
-      weekdays:
-        Array.isArray(h.weekdays) && h.weekdays.length
-          ? h.weekdays
-          : [0, 1, 2, 3, 4, 5, 6],
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setHabitDraft(emptyHabitDraft());
-    setHabitErrors({});
-  };
-
-  const saveHabit = () => {
-    const patch = habitDraftToPatch(habitDraft);
-    const nextErrors: HabitFormErrors = {};
-    if (!patch.name) {
-      nextErrors.name = "Додай назву звички.";
-    }
-    if (
-      patch.recurrence === "weekly" &&
-      (!patch.weekdays || patch.weekdays.length === 0)
-    ) {
-      nextErrors.weekdays = "Обери хоча б один день тижня.";
-    }
-    if (nextErrors.name || nextErrors.weekdays) {
-      setHabitErrors(nextErrors);
-      return;
-    }
-    setHabitErrors({});
-    if (editingId) {
-      setRoutine((s) => updateHabit(s, editingId, patch));
-      hapticSuccess();
-      toast.success("Звичку оновлено.");
-      cancelEdit();
-    } else {
-      setRoutine((s) => createHabit(s, patch));
-      hapticSuccess();
-      toast.success("Звичку створено.");
-      setHabitDraft(emptyHabitDraft());
-    }
-  };
+  const closeEditDialog = () => setEditingId(null);
 
   return (
     <SettingsGroup title="Рутина" emoji="✅">
@@ -160,15 +72,10 @@ export function RoutineSection() {
 
       <SettingsSubGroup title="Звички">
         <div className="space-y-4">
-          <HabitForm
-            routine={routine}
-            habitDraft={habitDraft}
-            setHabitDraft={setHabitDraft}
-            editingId={editingId}
-            onSave={saveHabit}
-            onCancel={cancelEdit}
-            errors={habitErrors}
-          />
+          <p className="text-xs text-muted">
+            Нові звички додаються через кнопку «+» в центрі нижньої навігації
+            «Рутини». Тут можна редагувати, архівувати й видаляти наявні.
+          </p>
 
           <ActiveHabitsSection
             routine={routine}
@@ -176,10 +83,10 @@ export function RoutineSection() {
             editingId={editingId}
             onEdit={(h) => {
               setEditingId(h.id);
-              loadHabitIntoDraft(h);
+              setEditDialogFocusTick((t) => t + 1);
             }}
             onCancelEditIf={(id) => {
-              if (editingId === id) cancelEdit();
+              if (editingId === id) closeEditDialog();
             }}
             onOpenDetails={(id) => setDetailHabitId(id)}
             onRequestDelete={(pending) => setDeleteHabitPending(pending)}
@@ -218,6 +125,15 @@ export function RoutineSection() {
         />
       </SettingsSubGroup>
 
+      <HabitQuickCreateDialog
+        open={!!editingId}
+        routine={routine}
+        setRoutine={setRoutine}
+        onClose={closeEditDialog}
+        editingId={editingId}
+        focusTick={editDialogFocusTick}
+      />
+
       <ConfirmDialog
         open={!!deleteHabitPending}
         title={
@@ -239,7 +155,9 @@ export function RoutineSection() {
               snapshot = snapshotHabit(s, pending.id);
               return deleteHabit(s, pending.id);
             });
-            if (!pending.archived && editingId === pending.id) cancelEdit();
+            if (!pending.archived && editingId === pending.id) {
+              closeEditDialog();
+            }
             if (snapshot) {
               showUndoToast(toast, {
                 msg: `Видалено звичку «${pending.name}»`,
