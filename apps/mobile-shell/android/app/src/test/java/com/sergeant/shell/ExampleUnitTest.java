@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package com.sergeant.shell;
 
 import static org.junit.Assert.*;
 
