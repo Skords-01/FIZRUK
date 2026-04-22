@@ -5,6 +5,7 @@ import {
   getCategoryDistribution,
   getCurrentVsPreviousComparison,
   getMonthlySummary,
+  getTopMerchants,
 } from "./selectors";
 import type { Transaction } from "./types";
 import { INTERNAL_TRANSFER_ID } from "../constants";
@@ -228,5 +229,91 @@ describe("computeCategorySpendIndex — internal transfers", () => {
     expect(
       distribution.some((c) => c.categoryId === INTERNAL_TRANSFER_ID),
     ).toBe(false);
+  });
+});
+
+describe("getTopMerchants", () => {
+  it("без сплітів агрегує повну суму транзакції по мерчанту", () => {
+    const txs = [
+      tx("a1", "2025-03-05T10:00:00Z", -50000, { description: "АТБ" }),
+      tx("a2", "2025-03-15T10:00:00Z", -30000, { description: "атб  " }),
+      tx("r1", "2025-03-20T10:00:00Z", -100000, { description: "Ранчо" }),
+    ];
+    const merchants = getTopMerchants(txs);
+    expect(merchants[0]).toMatchObject({
+      name: "Ранчо",
+      total: 1000,
+      count: 1,
+    });
+    expect(merchants[1]).toMatchObject({ name: "АТБ", total: 800, count: 2 });
+  });
+
+  it("для сплітованих транзакцій рахує лише чисту частку користувача", () => {
+    // 14 000 ₴ оренда з карти — своя частка 6 000 ₴, повернення від хлопців
+    // трактуються як internal_transfer. У Топ мерчантах має показатись 6 000 ₴,
+    // а не 14 000, щоб цифри збігалися з «Підсумком місяця» та «Категоріями».
+    const txs = [
+      tx("rent", "2025-03-01T10:00:00Z", -1400000, {
+        description: "536354****8294",
+      }),
+      tx("food", "2025-03-05T10:00:00Z", -50000, { description: "АТБ" }),
+    ];
+    const splits = {
+      rent: [
+        { amount: 6000, categoryId: "housing" },
+        { amount: 8000, categoryId: INTERNAL_TRANSFER_ID },
+      ],
+    };
+    const merchants = getTopMerchants(txs, { txSplits: splits });
+    expect(merchants[0]).toMatchObject({
+      name: "536354****8294",
+      total: 6000,
+      count: 1,
+    });
+    expect(merchants[1]).toMatchObject({ name: "АТБ", total: 500, count: 1 });
+  });
+
+  it("пропускає мерчанта, якщо після сплітів чиста частка = 0", () => {
+    // Вся сума транзакції — внутрішній переказ (повністю повернули),
+    // тож такий «мерчант» не має потрапляти в топ.
+    const txs = [
+      tx("t1", "2025-03-01T10:00:00Z", -500000, { description: "Monobank" }),
+      tx("t2", "2025-03-05T10:00:00Z", -10000, { description: "АТБ" }),
+    ];
+    const splits = {
+      t1: [{ amount: 5000, categoryId: INTERNAL_TRANSFER_ID }],
+    };
+    const merchants = getTopMerchants(txs, { txSplits: splits });
+    expect(merchants).toHaveLength(1);
+    expect(merchants[0]?.name).toBe("АТБ");
+  });
+
+  it("сума топ-мерчантів узгоджена з витратами 'Підсумку місяця' для сплітованих витрат", () => {
+    const txs = [
+      tx("rent", "2025-03-01T10:00:00Z", -1400000, { description: "Оренда" }),
+      tx("food", "2025-03-05T10:00:00Z", -50000, { description: "АТБ" }),
+    ];
+    const splits = {
+      rent: [
+        { amount: 6000, categoryId: "housing" },
+        { amount: 8000, categoryId: INTERNAL_TRANSFER_ID },
+      ],
+    };
+    const summary = getMonthlySummary(txs, { txSplits: splits });
+    const merchants = getTopMerchants(txs, { txSplits: splits });
+    const merchantsTotal = merchants.reduce((s, m) => s + m.total, 0);
+    expect(merchantsTotal).toBe(summary.spent);
+  });
+
+  it("поважає excludedTxIds", () => {
+    const txs = [
+      tx("a", "2025-03-01T10:00:00Z", -10000, { description: "АТБ" }),
+      tx("b", "2025-03-02T10:00:00Z", -20000, { description: "Ранчо" }),
+    ];
+    const merchants = getTopMerchants(txs, {
+      excludedTxIds: new Set(["b"]),
+    });
+    expect(merchants).toHaveLength(1);
+    expect(merchants[0]?.name).toBe("АТБ");
   });
 });

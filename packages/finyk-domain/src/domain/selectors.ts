@@ -484,6 +484,7 @@ export function getTopMerchants(
 ): MerchantStat[] {
   const {
     excludedTxIds = new Set<string>(),
+    txSplits = {} as TxSplitsMap,
     month = null,
     limit: optsLimit,
   } = typeof opts === "number"
@@ -502,9 +503,16 @@ export function getTopMerchants(
     if (!raw) continue;
     const key = merchantGroupKey(raw);
     if (!key) continue;
+    // Враховуємо лише чисту частку користувача: якщо транзакція сплітована
+    // (напр. оренда з поверненнями від співмешканців), беремо суму не-
+    // internal_transfer частин — узгоджено з `getMonthlySummary` /
+    // `computeCategorySpendIndex`, щоб цифри у "Топ мерчантах" збігалися з
+    // рештою аналітики.
+    const amount = getTxStatAmount(tx, txSplits);
+    if (!(amount > 0)) continue;
     if (!merchants[key]) merchants[key] = { name: raw, count: 0, total: 0 };
     merchants[key].count++;
-    merchants[key].total += Math.abs(tx.amount / 100);
+    merchants[key].total += amount;
   }
 
   return Object.values(merchants)
