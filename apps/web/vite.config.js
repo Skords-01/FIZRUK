@@ -14,84 +14,106 @@ export default defineConfig(({ mode }) => {
   // don't litter dist/ with the report in CI.
   const analyze = env.ANALYZE === "1" || process.env.ANALYZE === "1";
 
+  // `VITE_TARGET=capacitor` вмикає build-варіант для Capacitor-shell-а
+  // (`apps/mobile-shell`): native WebView і без того ігнорує
+  // `navigator.serviceWorker.register`, тому `vite-plugin-pwa`,
+  // згенерований `sw.js` і `manifest.webmanifest` — dead weight у
+  // shell-бандлі. Відключаємо плагін повністю, а `main.jsx` під
+  // build-time прапором викидає динамічний `import("virtual:pwa-register")`
+  // через DCE — щоб Rollup не намагався резолвити virtual-модуль, якого
+  // тепер немає у graph-і. Веб-деплой (Vercel) продовжує білдитись як
+  // раніше: без прапора плагін активний, PWA для браузерних юзерів
+  // лишається.
+  const isCapacitorBuild =
+    env.VITE_TARGET === "capacitor" || process.env.VITE_TARGET === "capacitor";
+
   return {
+    define: {
+      // Пробрасуємо значення у клієнтський бандл як статичний літерал,
+      // щоб `main.jsx` міг DCE-вирізати SW-гілку у capacitor-білді.
+      "import.meta.env.VITE_TARGET": JSON.stringify(
+        isCapacitorBuild ? "capacitor" : "web",
+      ),
+    },
     plugins: [
       react(),
-      VitePWA({
-        strategies: "injectManifest",
-        srcDir: "src",
-        filename: "sw.js",
-        registerType: "prompt",
-        includeAssets: [
-          "icon.svg",
-          "icon-192.png",
-          "icon-512.png",
-          "apple-touch-icon.png",
-        ],
-        manifest: {
-          name: "Sergeant — Твій персональний хаб життя",
-          short_name: "Sergeant",
-          description: "Персональний хаб: фінанси, спорт, звички та харчування",
-          start_url: "/",
-          display: "standalone",
-          orientation: "portrait",
-          background_color: "#fdf9f3",
-          theme_color: "#fdf9f3",
-          lang: "uk",
-          shortcuts: [
-            {
-              name: "Додати витрату",
-              short_name: "Витрата",
-              description: "Швидко додати нову витрату у Фінік",
-              url: "/?module=finyk&action=add_expense",
-              icons: [
-                { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-              ],
-            },
-            {
-              name: "Розпочати тренування",
-              short_name: "Тренування",
-              description: "Розпочати нове тренування у Фізрук",
-              url: "/?module=fizruk&action=start_workout",
-              icons: [
-                { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-              ],
-            },
-            {
-              name: "Додати прийом їжі",
-              short_name: "Їжа",
-              description: "Записати прийом їжі у Харчування",
-              url: "/?module=nutrition&action=add_meal",
-              icons: [
-                { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-              ],
-            },
+      !isCapacitorBuild &&
+        VitePWA({
+          strategies: "injectManifest",
+          srcDir: "src",
+          filename: "sw.js",
+          registerType: "prompt",
+          includeAssets: [
+            "icon.svg",
+            "icon-192.png",
+            "icon-512.png",
+            "apple-touch-icon.png",
           ],
-          icons: [
-            {
-              src: "/icon-192.png",
-              sizes: "192x192",
-              type: "image/png",
-              purpose: "any",
-            },
-            {
-              src: "/icon-512.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "any maskable",
-            },
-            {
-              src: "/icon.svg",
-              sizes: "any",
-              type: "image/svg+xml",
-              purpose: "any",
-            },
-          ],
-        },
-        injectManifest: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        },
-      }),
+          manifest: {
+            name: "Sergeant — Твій персональний хаб життя",
+            short_name: "Sergeant",
+            description:
+              "Персональний хаб: фінанси, спорт, звички та харчування",
+            start_url: "/",
+            display: "standalone",
+            orientation: "portrait",
+            background_color: "#fdf9f3",
+            theme_color: "#fdf9f3",
+            lang: "uk",
+            shortcuts: [
+              {
+                name: "Додати витрату",
+                short_name: "Витрата",
+                description: "Швидко додати нову витрату у Фінік",
+                url: "/?module=finyk&action=add_expense",
+                icons: [
+                  { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+                ],
+              },
+              {
+                name: "Розпочати тренування",
+                short_name: "Тренування",
+                description: "Розпочати нове тренування у Фізрук",
+                url: "/?module=fizruk&action=start_workout",
+                icons: [
+                  { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+                ],
+              },
+              {
+                name: "Додати прийом їжі",
+                short_name: "Їжа",
+                description: "Записати прийом їжі у Харчування",
+                url: "/?module=nutrition&action=add_meal",
+                icons: [
+                  { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+                ],
+              },
+            ],
+            icons: [
+              {
+                src: "/icon-192.png",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "any",
+              },
+              {
+                src: "/icon-512.png",
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "any maskable",
+              },
+              {
+                src: "/icon.svg",
+                sizes: "any",
+                type: "image/svg+xml",
+                purpose: "any",
+              },
+            ],
+          },
+          injectManifest: {
+            globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          },
+        }),
       analyze &&
         visualizer({
           filename: "dist/bundle-report.html",

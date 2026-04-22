@@ -27,6 +27,12 @@ const config: CapacitorConfig = {
     // тримати не можна — вони б ефективно робили cleartext-режим і
     // ламали б `android:usesCleartextTraffic="false"` у маніфесті.
     androidScheme: "https",
+    // Явне `cleartext: false` — belt-and-braces поруч з
+    // `androidScheme: "https"` і `android.allowMixedContent: false`
+    // нижче. Default у Capacitor 7 і так `false`, але фіксуємо явно,
+    // щоб випадкова зміна default-у у мажорному апгрейді Capacitor
+    // не перемкнула shell у cleartext-режим.
+    cleartext: false,
   },
   android: {
     // Паралельно до `android:usesCleartextTraffic="false"` та

@@ -13,6 +13,14 @@ native Android/iOS app. The web bundle lands in `apps/server/dist` — the
 shell reads it from there via `webDir: "../server/dist"` in
 [`apps/mobile-shell/capacitor.config.ts`](apps/mobile-shell/capacitor.config.ts).
 
+> Shell білдить web-бандл через
+> `pnpm --filter @sergeant/mobile-shell build:web`, який делегує до
+> `@sergeant/web build:capacitor` (`VITE_TARGET=capacitor`). Цей варіант
+> вимикає `vite-plugin-pwa`, тому `sw.js`, `manifest.webmanifest` і
+> `virtual:pwa-register` chunk **не** потрапляють у `apps/server/dist`
+> — native WebView їх все одно ігнорує. Для web-деплою (Vercel) і далі
+> використовується root `pnpm build:web`, PWA поведінка без змін.
+
 ## Prerequisites
 
 | Tool              | Version           | Notes                                                         |
@@ -30,7 +38,11 @@ The `android/` folder is already committed, so no scaffolding is needed.
 ```bash
 # from repo root
 pnpm install --frozen-lockfile
-pnpm build:web                                 # → apps/server/dist
+# `mobile-shell#build:web` делегує до `@sergeant/web build:capacitor`
+# (`VITE_TARGET=capacitor`), який вимикає `vite-plugin-pwa` — shell не
+# тягне `sw.js` / `manifest.webmanifest` / `virtual:pwa-register` chunk.
+# Для чистого web-деплою все ще використовується root `pnpm build:web`.
+pnpm --filter @sergeant/mobile-shell build:web # → apps/server/dist
 pnpm --filter @sergeant/mobile-shell exec cap sync android
 cd apps/mobile-shell/android
 ./gradlew assembleDebug                        # → app/build/outputs/apk/debug/
@@ -60,7 +72,8 @@ under the hood). Requires macOS + Xcode + CocoaPods.
 ```bash
 # from repo root
 pnpm install --frozen-lockfile
-pnpm build:web                                 # → apps/server/dist
+# Capacitor-варіант web-бандла (без `vite-plugin-pwa`).
+pnpm --filter @sergeant/mobile-shell build:web # → apps/server/dist
 
 cd apps/mobile-shell
 pnpm exec cap add ios                          # first time only — scaffolds ios/
