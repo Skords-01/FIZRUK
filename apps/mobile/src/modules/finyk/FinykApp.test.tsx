@@ -3,7 +3,7 @@
  *
  * After Phase 4 / "Overview page" PR, `FinykApp` is a thin wrapper that
  * renders the full Overview screen. We assert on a few stable Overview
- * surfaces (hero + planning copy, nav buttons) so this test is a
+ * surfaces (hero + planning copy, in-module nav grid) so this test is a
  * regression fence for the composition itself, not for individual card
  * internals (those have their own tests).
  */
@@ -23,10 +23,12 @@ describe("FinykApp shell", () => {
     expect(screen.getByText("Загальний нетворс")).toBeTruthy();
   });
 
-  it("renders the in-module navigation buttons", () => {
+  it("renders the in-module navigation grid", () => {
     render(<FinykApp />);
-    expect(screen.getByText("Операції →")).toBeTruthy();
-    expect(screen.getByText("Бюджети →")).toBeTruthy();
+    expect(screen.getByTestId("finyk-nav-grid-transactions")).toBeTruthy();
+    expect(screen.getByTestId("finyk-nav-grid-budgets")).toBeTruthy();
+    expect(screen.getByTestId("finyk-nav-grid-analytics")).toBeTruthy();
+    expect(screen.getByTestId("finyk-nav-grid-assets")).toBeTruthy();
   });
 
   it("renders the networth empty-state on first-run data", () => {

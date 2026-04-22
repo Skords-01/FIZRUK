@@ -8,7 +8,7 @@
  *   1. App launches with `EXPO_PUBLIC_E2E=1` so the tabs layout skips
  *      the Better Auth gate (`app/(tabs)/_layout.tsx`).
  *   2. User taps the **Фінік** tab → Overview.
- *   3. Navigates to **Transactions** via the `NavButtons` shortcut.
+ *   3. Navigates to **Transactions** via the `FinykNavGrid` shortcut.
  *   4. Opens the **+** add-expense button → `ManualExpenseSheet`.
  *   5. Fills amount + picks the first canonical category + saves.
  *   6. Confirms the newly-created transaction row is visible in the
@@ -35,8 +35,8 @@ describe("Фінік — manual expense", () => {
     await tapWhenVisible("tab-finyk");
     await waitForVisibleById("finyk-overview-scroll");
 
-    // 2. Drill into Transactions through the shared NavButtons shortcut.
-    await tapWhenVisible("finyk-overview-nav-transactions");
+    // 2. Drill into Transactions through the in-module FinykNavGrid card.
+    await tapWhenVisible("finyk-nav-grid-transactions");
     await waitForVisibleById("finyk-transactions");
 
     // 3. Open the add-expense sheet. The root sheet testID comes from

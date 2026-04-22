@@ -40,13 +40,12 @@ import {
   filterStatTransactions,
 } from "@sergeant/finyk-domain/domain";
 
+import { FinykNavGrid } from "../../components/FinykNavGrid";
 import { BudgetAlertsList } from "./BudgetAlertsList";
 import { CategoryChartSection } from "./CategoryChartSection";
 import { FirstInsightBanner } from "./FirstInsightBanner";
 import { HeroCard } from "./HeroCard";
-import { IncomeExpensePills } from "./IncomeExpensePills";
 import { MonthPulseCard } from "./MonthPulseCard";
-import { NavButtons } from "./NavButtons";
 import { NetworthSection } from "./NetworthSection";
 import { PlanFactCard } from "./PlanFactCard";
 import { PlannedFlowsCard } from "./PlannedFlowsCard";
@@ -318,13 +317,7 @@ export function Overview({
         валюти рахунків у загальному балансі не конвертуються автоматично.
       </Text>
 
-      <IncomeExpensePills
-        income={income}
-        spent={spent}
-        showBalance={showBalance}
-      />
-
-      <NavButtons onNavigate={handleOverviewNavigate} />
+      <FinykNavGrid />
 
       <MonthPulseCard
         dateLabel={dateLabel}

@@ -22,8 +22,6 @@ import { SyncStatusBadge } from "../components/SyncStatusBadge";
 
 import { FirstInsightBanner } from "./overview/FirstInsightBanner.jsx";
 import { HeroCard } from "./overview/HeroCard.jsx";
-import { IncomeExpensePills } from "./overview/IncomeExpensePills.jsx";
-import { NavButtons } from "./overview/NavButtons.jsx";
 import { MonthPulseCard } from "./overview/MonthPulseCard.jsx";
 import { NetworthSection } from "./overview/NetworthSection.jsx";
 import { BudgetAlertsList } from "./overview/BudgetAlertsList.jsx";
@@ -429,14 +427,6 @@ export function Overview({
           Огляд, категорії та бюджети на цій сторінці — у гривні (UAH). Інші
           валюти рахунків у загальному балансі не конвертуються автоматично.
         </p>
-
-        <IncomeExpensePills
-          income={income}
-          spent={spent}
-          showBalance={showBalance}
-        />
-
-        <NavButtons onNavigate={onNavigate} />
 
         <MonthPulseCard
           dateLabel={dateLabel}
