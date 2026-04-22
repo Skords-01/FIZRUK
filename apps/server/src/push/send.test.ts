@@ -97,6 +97,9 @@ vi.mock("@parse/node-apn", () => {
     badge: unknown = undefined;
     threadId: unknown = undefined;
     payload: unknown = undefined;
+    pushType: unknown = undefined;
+    priority: unknown = undefined;
+    contentAvailable: unknown = undefined;
   }
   return {
     default: { Notification: FakeNotification },
@@ -279,6 +282,60 @@ describe("sendAPNs", () => {
     expect(r.delivered).toBe(false);
     expect(r.error).toBe("apns_disabled");
   });
+
+  it("silent=true → background push-type, priority 5, content-available, no alert", async () => {
+    apnsProviderSendMock.mockResolvedValueOnce({
+      sent: [{ device: "tok1" }],
+      failed: [],
+    });
+    await sendAPNs("u1", "tok1", {
+      title: "ignored",
+      body: "ignored",
+      silent: true,
+      data: { kind: "sync" },
+    });
+    const [note, token] = apnsProviderSendMock.mock.calls[0];
+    expect(token).toBe("tok1");
+    expect(note.pushType).toBe("background");
+    expect(note.priority).toBe(5);
+    expect(note.contentAvailable).toBe(true);
+    // alert/sound навмисно НЕ виставлені у silent-гілці — інакше iOS покаже
+    // banner замість background-delivery.
+    expect(note.alert).toBeUndefined();
+    expect(note.sound).toBeUndefined();
+    // data прокидається у top-level payload як і у non-silent.
+    expect(note.payload).toEqual({ kind: "sync" });
+  });
+
+  it("non-silent → alert+sound, no background headers", async () => {
+    apnsProviderSendMock.mockResolvedValueOnce({
+      sent: [{ device: "tok1" }],
+      failed: [],
+    });
+    await sendAPNs("u1", "tok1", { title: "hi", body: "world" });
+    const [note] = apnsProviderSendMock.mock.calls[0];
+    expect(note.alert).toEqual({ title: "hi", body: "world" });
+    expect(note.sound).toBe("default");
+    expect(note.pushType).toBeUndefined();
+    expect(note.contentAvailable).toBeUndefined();
+  });
+
+  it("top-level url is merged into note.payload (and wins over data.url)", async () => {
+    apnsProviderSendMock.mockResolvedValueOnce({
+      sent: [{ device: "tok1" }],
+      failed: [],
+    });
+    await sendAPNs("u1", "tok1", {
+      title: "hi",
+      url: "sergeant://finyk/tx/42",
+      data: { url: "ignored-inner", kind: "navigate" },
+    });
+    const [note] = apnsProviderSendMock.mock.calls[0];
+    expect(note.payload).toEqual({
+      kind: "navigate",
+      url: "sergeant://finyk/tx/42",
+    });
+  });
 });
 
 // ─────────────────────────── sendFCM ─────────────────────────────
@@ -429,6 +486,56 @@ describe("sendFCM", () => {
     fcmProjectIdMock.mockReturnValueOnce(null);
     const r = await sendFCM("u1", "tok", { title: "hi" });
     expect(r.error).toBe("fcm_disabled");
+  });
+
+  it("silent=true → data-only (no notification), android priority high, apns background headers", async () => {
+    fetchMock.mockResolvedValueOnce(resp(200, { name: "n" }));
+    await sendFCM("u1", "and-tok", {
+      title: "ignored",
+      body: "ignored",
+      silent: true,
+      data: { kind: "sync", count: 3 },
+    });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.message.notification).toBeUndefined();
+    expect(body.message.data).toEqual({ kind: "sync", count: "3" });
+    expect(body.message.android).toEqual({ priority: "high" });
+    expect(body.message.apns).toEqual({
+      headers: {
+        "apns-push-type": "background",
+        "apns-priority": "5",
+      },
+      payload: { aps: { "content-available": 1 } },
+    });
+  });
+
+  it("non-silent → notification block present, no background headers", async () => {
+    fetchMock.mockResolvedValueOnce(resp(200, { name: "n" }));
+    await sendFCM("u1", "and-tok", { title: "hi", body: "world" });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.message.notification).toEqual({ title: "hi", body: "world" });
+    expect(body.message.android).toBeUndefined();
+    expect(body.message.apns).toBeUndefined();
+  });
+
+  it("top-level url is propagated into data.url (and wins over data.url)", async () => {
+    fetchMock.mockResolvedValueOnce(resp(200, { name: "n" }));
+    await sendFCM("u1", "and-tok", {
+      title: "hi",
+      url: "sergeant://finyk/tx/42",
+      data: { url: "ignored-inner", kind: "navigate" },
+    });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.message.data).toEqual({
+      kind: "navigate",
+      url: "sergeant://finyk/tx/42",
+    });
   });
 });
 
@@ -594,5 +701,78 @@ describe("sendToUser", () => {
       String(c[0]).includes("DELETE FROM push_devices"),
     );
     expect(deleteCall).toBeUndefined();
+  });
+
+  it("propagates top-level url into web-push data.url", async () => {
+    poolMock.query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({
+      rows: [{ endpoint: "https://fcm/x", p256dh: "p", auth: "a" }],
+    });
+    sendWebPushMock.mockResolvedValueOnce({
+      outcome: "ok",
+      durationMs: 1,
+      attempts: 1,
+    });
+
+    await sendToUser("u1", {
+      title: "hi",
+      body: "b",
+      url: "sergeant://routine/habit/42",
+    });
+
+    expect(sendWebPushMock).toHaveBeenCalledTimes(1);
+    const payloadJson = sendWebPushMock.mock.calls[0][1] as string;
+    const parsed = JSON.parse(payloadJson);
+    expect(parsed.data).toEqual({ url: "sergeant://routine/habit/42" });
+  });
+
+  it("silent+url fan-out: all three platforms receive the same deep-link", async () => {
+    poolMock.query
+      .mockResolvedValueOnce({
+        rows: [
+          { token: "ios-tok", platform: "ios" },
+          { token: "and-tok", platform: "android" },
+        ],
+      })
+      .mockResolvedValueOnce({
+        rows: [{ endpoint: "https://fcm/x", p256dh: "p", auth: "a" }],
+      });
+
+    apnsProviderSendMock.mockResolvedValueOnce({
+      sent: [{ device: "ios-tok" }],
+      failed: [],
+    });
+    fetchMock.mockResolvedValueOnce({
+      status: 200,
+      ok: true,
+      text: async () => "{}",
+    } as unknown as Response);
+    sendWebPushMock.mockResolvedValueOnce({
+      outcome: "ok",
+      durationMs: 1,
+      attempts: 1,
+    });
+
+    const r = await sendToUser("u1", {
+      title: "sync",
+      silent: true,
+      url: "sergeant://finyk/tx/42",
+    });
+    expect(r.delivered).toEqual({ ios: 1, android: 1, web: 1 });
+
+    // APNs — silent-гілка з url у top-level payload
+    const [note] = apnsProviderSendMock.mock.calls[0];
+    expect(note.pushType).toBe("background");
+    expect(note.payload).toEqual({ url: "sergeant://finyk/tx/42" });
+
+    // FCM — silent (data-only) з url у data map
+    const fcmBody = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(fcmBody.message.notification).toBeUndefined();
+    expect(fcmBody.message.data).toEqual({ url: "sergeant://finyk/tx/42" });
+
+    // Web — url у data, без зміни поведінки service-worker-а
+    const webPayload = JSON.parse(sendWebPushMock.mock.calls[0][1] as string);
+    expect(webPayload.data).toEqual({ url: "sergeant://finyk/tx/42" });
   });
 });

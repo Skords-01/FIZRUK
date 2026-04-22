@@ -158,14 +158,36 @@ export async function sendAPNs(
 
   const note = new apn.Notification();
   note.topic = bundleId;
-  note.alert = { title: payload.title, body: payload.body ?? "" };
-  note.sound = "default";
+  if (payload.silent) {
+    // Background/silent push. Apple вимагає ВСІ три одночасно, інакше APNs
+    // або віддасть `BadDeviceToken` (без push-type header), або доставить
+    // як alert-push з пустим title (content-available без відповідного
+    // priority 5 → «low-priority data delivery»; з priority 10 + no alert
+    // APNs повертає 400 InvalidPushType).
+    //   https://developer.apple.com/documentation/usernotifications/
+    //     setting-up-a-remote-notification-server/
+    //     sending-notification-requests-to-apns
+    note.pushType = "background";
+    note.priority = 5;
+    note.contentAvailable = true;
+    // alert/sound навмисно не ставимо — inline banner у silent-push поламає
+    // семантику (iOS не має показувати UI, лише збудити додаток у бекграунді).
+  } else {
+    note.alert = { title: payload.title, body: payload.body ?? "" };
+    note.sound = "default";
+  }
   if (typeof payload.badge === "number") note.badge = payload.badge;
   if (payload.threadId) note.threadId = payload.threadId;
-  if (payload.data) {
-    // APNs дозволяє довільні top-level поля поруч з `aps`. Мокаємо це через
-    // `note.payload`, щоб клієнт отримав payload.data як частину notification.
-    note.payload = { ...payload.data };
+  // APNs дозволяє довільні top-level поля поруч з `aps`. Мокаємо це через
+  // `note.payload`, щоб клієнт отримав payload.data як частину notification.
+  // Top-level `payload.url` має пріоритет над `data.url` — вирівнюємо з
+  // FCM-гілкою та з комментарем у `PushPayload`.
+  const rootPayload: Record<string, unknown> = { ...(payload.data ?? {}) };
+  if (typeof payload.url === "string" && payload.url.length > 0) {
+    rootPayload.url = payload.url;
+  }
+  if (Object.keys(rootPayload).length > 0) {
+    note.payload = rootPayload;
   }
 
   let lastReason = "unknown";
@@ -282,21 +304,49 @@ export async function sendFCM(
     return { delivered: false, dead: false, error: "fcm_disabled" };
   }
 
-  const body = {
-    message: {
-      token,
-      notification: {
-        title: payload.title,
-        body: payload.body ?? "",
-      },
-      // FCM v1 vимагає `data` як map<string,string> — number/bool кидають
-      // INVALID_ARGUMENT. Stringify усього, хай клієнт сам JSON.parse-ить.
-      ...(payload.data ? { data: stringifyDataMap(payload.data) } : {}),
-      ...(typeof payload.badge === "number"
-        ? { apns: { payload: { aps: { badge: payload.badge } } } }
-        : {}),
-    },
+  // Формуємо `data` заздалегідь: payload.data → map<string,string> + опційно
+  // `url`. Top-level `payload.url` має пріоритет — якщо юзер передав обидва
+  // (не повинен, але буває), top-level перезаписує поле у data, щоб контракт
+  // з APNs (де url завжди з top-level) збігався.
+  const dataMap: Record<string, string> = payload.data
+    ? stringifyDataMap(payload.data)
+    : {};
+  if (typeof payload.url === "string" && payload.url.length > 0) {
+    dataMap.url = payload.url;
+  }
+
+  // silent — data-only повідомлення. FCM v1:
+  //   - НЕ додаємо `message.notification` (інакше Android покаже banner;
+  //     iOS теж покаже alert, навіть з apns.payload.aps.content-available=1,
+  //     бо `notification` block мапиться у aps.alert на upstream-стороні).
+  //   - `android.priority=high` — інакше FCM доставляє data-only як «normal»,
+  //     що може затриматись або не збудити додаток з Doze.
+  //   - `apns.headers.apns-push-type=background` + `apns-priority=5` +
+  //     `apns.payload.aps.content-available=1` — дублюємо те саме, що APNs-
+  //     гілка робить для iOS напряму. Без цих заголовків FCM-проксі до APNs
+  //     відхиляє background push з 400 (див. коментар у `sendAPNs`).
+  //
+  // non-silent: звична `notification`-гілка з опційним `apns.payload.aps.badge`.
+  const messageCore: Record<string, unknown> = {
+    token,
+    ...(Object.keys(dataMap).length > 0 ? { data: dataMap } : {}),
   };
+  if (payload.silent) {
+    messageCore.android = { priority: "high" };
+    messageCore.apns = {
+      headers: { "apns-push-type": "background", "apns-priority": "5" },
+      payload: { aps: { "content-available": 1 } },
+    };
+  } else {
+    messageCore.notification = {
+      title: payload.title,
+      body: payload.body ?? "",
+    };
+    if (typeof payload.badge === "number") {
+      messageCore.apns = { payload: { aps: { badge: payload.badge } } };
+    }
+  }
+  const body = { message: messageCore };
   const url = `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(
     projectId,
   )}/messages:send`;
@@ -443,10 +493,21 @@ export async function sendToUser(
     return result;
   }
 
+  // Web-push service-worker читає `payload.data.url` для deep-link-routing-у;
+  // тримаємо форму узгодженою з APNs/FCM (`data.url` — єдине джерело правди).
+  // `silent` на web навмисно НЕ прокидаємо — service-worker сам вирішує, чи
+  // показувати banner; зміна поведінки тут — окремий PR.
+  const webData: Record<string, unknown> | null = (() => {
+    const url = typeof payload.url === "string" ? payload.url : undefined;
+    if (payload.data && Object.keys(payload.data).length > 0) {
+      return url ? { ...payload.data, url } : { ...payload.data };
+    }
+    return url ? { url } : (payload.data ?? null);
+  })();
   const webPayloadJson = JSON.stringify({
     title: payload.title,
     body: payload.body ?? "",
-    data: payload.data ?? null,
+    data: webData,
   });
 
   // Per-device Promise.all. Одна впала не рве fan-out: кожен sender-ок
