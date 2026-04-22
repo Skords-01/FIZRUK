@@ -130,4 +130,25 @@ export async function initNativeShell(
   } catch (err) {
     console.warn("[mobile-shell] App.addListener('appUrlOpen') failed", err);
   }
+
+  try {
+    // Апаратна кнопка "Назад" на Android: Capacitor default — `App.exitApp()`
+    // на першому ж натисканні, що для SPA виглядає як «апка раптом закрилась».
+    // Очікувана Android UX — пройтись назад по web-history, і лише коли
+    // стек порожній — вийти. Свідомо використовуємо `window.history.back()`,
+    // а не `options.navigate` хук: back-button — це pure history traversal
+    // (React Router сам слухає `popstate`), тоді як `navigate()` робить
+    // `push` і плутає з deep-link кейсом, де URL «прибігає збоку» ззовні.
+    await App.addListener("backButton", ({ canGoBack }) => {
+      if (canGoBack) {
+        if (typeof window !== "undefined") {
+          window.history.back();
+        }
+      } else {
+        void App.exitApp();
+      }
+    });
+  } catch (err) {
+    console.warn("[mobile-shell] App.addListener('backButton') failed", err);
+  }
 }

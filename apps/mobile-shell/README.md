@@ -18,6 +18,7 @@ React Native). Співіснують навмисно: `applicationId` у shell
 | Bearer-auth (Keychain / EncryptedSharedPrefs) | `@capacitor/preferences` — [#505](https://github.com/Skords-01/Sergeant/pull/505)                             |
 | Native barcode scanner                        | `@capacitor-mlkit/barcode-scanning` — [#504](https://github.com/Skords-01/Sergeant/pull/504)                  |
 | Status bar + splash + keyboard + deep links   | `@capacitor/{status-bar,splash-screen,keyboard,app}` — [#506](https://github.com/Skords-01/Sergeant/pull/506) |
+| Android hardware Back → web-history traversal | `@capacitor/app#backButton` — `canGoBack` → `window.history.back()`, інакше `App.exitApp()`                   |
 | Android native проєкт (закомічено)            | `android/` (з `cap add android`)                                                                              |
 
 Точка входу native-side — `src/index.ts → initNativeShell()`. Вона
