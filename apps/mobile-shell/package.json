@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./platform": "./src/platform.ts",
     "./barcodeNative": "./src/barcodeNative.ts",
-    "./auth-storage": "./src/auth-storage.ts"
+    "./auth-storage": "./src/auth-storage.ts",
+    "./pushNative": "./src/pushNative.ts"
   },
   "scripts": {
     "sync": "cap sync",
@@ -32,6 +33,7 @@
     "@capacitor/ios": "^7.4.3",
     "@capacitor/keyboard": "^7.0.3",
     "@capacitor/preferences": "^7.0.4",
+    "@capacitor/push-notifications": "^7.0.3",
     "@capacitor/splash-screen": "^7.0.3",
     "@capacitor/status-bar": "^7.0.3"
   },

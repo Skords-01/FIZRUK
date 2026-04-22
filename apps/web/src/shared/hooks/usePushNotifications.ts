@@ -2,8 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePushRegister, usePushUnregister } from "@sergeant/api-client/react";
 import type { PushRegisterRequest } from "@sergeant/api-client";
+import { getPlatform, isCapacitor } from "@sergeant/shared";
 import { isApiError, pushApi } from "@shared/api";
 import { pushKeys } from "@shared/lib/queryKeys";
+import {
+  getStoredNativePushToken,
+  subscribeNativePush,
+  unsubscribeNativePush,
+} from "@shared/lib/pushNative";
 
 const PUSH_SUB_KEY = "hub_push_subscribed";
 
@@ -16,13 +22,34 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
-function isPushSupported(): boolean {
+function isWebPushSupported(): boolean {
   return (
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
     "PushManager" in window &&
     "Notification" in window
   );
+}
+
+/**
+ * Високорівневий feature-detect для UI-тоглу: на native WebView (Capacitor)
+ * ми завжди показуємо перемикач — дозволи й токен отримуються через
+ * `@capacitor/push-notifications` незалежно від наявності Web Push API.
+ * На вебі тримаємо старий detect (SW + PushManager + Notification).
+ */
+function isPushSupported(): boolean {
+  return isCapacitor() || isWebPushSupported();
+}
+
+/**
+ * Читає `Notification.permission` лише коли Notification API справді
+ * доступне. На Capacitor-only WebView глобалу може не бути — у такому
+ * разі `"default"` сигналізує UI, що реальний стан буде відомий у
+ * мідл-процесі `subscribe()` (native permission prompt плагіна).
+ */
+function readInitialPermission(): NotificationPermission {
+  if (typeof Notification === "undefined") return "default";
+  return Notification.permission;
 }
 
 export interface UsePushNotificationsResult {
@@ -53,6 +80,7 @@ export interface UsePushNotificationsResult {
  */
 export function usePushNotifications(): UsePushNotificationsResult {
   const supported = isPushSupported();
+  const native = isCapacitor();
   const queryClient = useQueryClient();
   // `usePushRegister`/`usePushUnregister` — канонічні хуки уніфікованого
   // push-API (`@sergeant/api-client`). Вони задають `mutationKey`
@@ -61,9 +89,10 @@ export function usePushNotifications(): UsePushNotificationsResult {
   const pushRegister = usePushRegister();
   const pushUnregister = usePushUnregister();
 
-  const [permission, setPermission] = useState<NotificationPermission>(
-    supported ? Notification.permission : "denied",
-  );
+  const [permission, setPermission] = useState<NotificationPermission>(() => {
+    if (!supported) return "denied";
+    return readInitialPermission();
+  });
   const [subscribed, setSubscribed] = useState<boolean>(() => {
     try {
       return localStorage.getItem(PUSH_SUB_KEY) === "1";
@@ -73,16 +102,22 @@ export function usePushNotifications(): UsePushNotificationsResult {
   });
 
   useEffect(() => {
-    if (!supported) return;
+    // Native-гілка тримає permission-стан всередині плагіна — читати
+    // `Notification.permission` у WebView некоректно (web API тут може
+    // взагалі не відображати APNs/FCM-дозвіл).
+    if (!supported || native) return;
+    if (typeof Notification === "undefined") return;
     setPermission(Notification.permission);
-  }, [supported]);
+  }, [supported, native]);
 
   // Prefetch VAPID на маунт — коли користувач натисне "увімкнути",
   // ключ вже буде в кеші й ми одразу підемо у pushManager.subscribe.
+  // Native-гілка VAPID не використовує (FCM/APNs token-и opaque), тож
+  // ранній похід за ключем був би зайвим мережевим трафіком у shell-і.
   const vapidQuery = useQuery({
     queryKey: pushKeys.vapid,
     queryFn: () => pushApi.getVapidPublic(),
-    enabled: supported,
+    enabled: supported && !native,
     staleTime: Infinity,
     gcTime: Infinity,
   });
@@ -90,6 +125,24 @@ export function usePushNotifications(): UsePushNotificationsResult {
   const subscribeMutation = useMutation({
     mutationFn: async (): Promise<void> => {
       if (!supported) return;
+
+      // Native-гілка: `@capacitor/push-notifications` сам керує
+      // дозволом/реєстрацією у FCM/APNs, Web Push API (SW + VAPID) тут
+      // не чіпаємо.
+      if (native) {
+        const result = await subscribeNativePush();
+        if (!result) return;
+        setPermission("granted");
+        const payload: PushRegisterRequest = {
+          platform: result.platform,
+          token: result.token,
+        };
+        await pushRegister.mutateAsync(payload);
+        localStorage.setItem(PUSH_SUB_KEY, "1");
+        setSubscribed(true);
+        queryClient.invalidateQueries({ queryKey: pushKeys.status });
+        return;
+      }
 
       const perm = await Notification.requestPermission();
       setPermission(perm);
@@ -145,6 +198,29 @@ export function usePushNotifications(): UsePushNotificationsResult {
   const unsubscribeMutation = useMutation({
     mutationFn: async (): Promise<void> => {
       if (!supported) return;
+
+      // Native-гілка: беремо кешований токен (якщо користувач уже
+      // реєструвався у попередній сесії — `pushManager` у WebView
+      // до нього не дотягнеться), прибираємо listener-и + викликаємо
+      // `unregister()` через native gate, потім шлемо серверний
+      // анрег. Web Push гілку сюди не тягнемо.
+      if (native) {
+        const cachedBefore = await getStoredNativePushToken();
+        const cleared = await unsubscribeNativePush();
+        const token = cleared ?? cachedBefore;
+        // `getPlatform()` з `@sergeant/shared` повертає `"ios"`|`"android"`|`"web"`;
+        // ми вже у `native`-гілці, тож web тут не трапляється, але підстраховуємось
+        // fallback-ом на `android` (основний target FCM-реєстрацій).
+        const detected = getPlatform();
+        const platform = detected === "ios" ? "ios" : "android";
+        if (token) {
+          await pushUnregister.mutateAsync({ platform, token }).catch(() => {});
+        }
+        localStorage.removeItem(PUSH_SUB_KEY);
+        setSubscribed(false);
+        queryClient.invalidateQueries({ queryKey: pushKeys.status });
+        return;
+      }
 
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
