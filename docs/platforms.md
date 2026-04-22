@@ -4,11 +4,11 @@
 варіантах Sergeant-а. Живе поруч з `docs/mobile.md` (API-контракт) і
 `docs/react-native-migration.md` (роадмап порту web → RN).
 
-| Поверхня                       | Де живе             | Технології                 | Реліз-готовність                             |
-| ------------------------------ | ------------------- | -------------------------- | -------------------------------------------- |
-| **Web / PWA** (канонічна апка) | `apps/web`          | React 19 + Vite + PWA      | **Production** (live)                        |
-| **Native RN** (iOS / Android)  | `apps/mobile`       | Expo SDK 52 + Expo Router  | **Internal dev-client**                      |
-| **Capacitor shell** (WebView)  | `apps/mobile-shell` | Capacitor 7 + Android Java | **MVP** (Android closer, iOS blocked on Mac) |
+| Поверхня                       | Де живе             | Технології                 | Реліз-готовність                                                             |
+| ------------------------------ | ------------------- | -------------------------- | ---------------------------------------------------------------------------- |
+| **Web / PWA** (канонічна апка) | `apps/web`          | React 19 + Vite + PWA      | **Production** (live)                                                        |
+| **Native RN** (iOS / Android)  | `apps/mobile`       | Expo SDK 52 + Expo Router  | **Internal dev-client**                                                      |
+| **Capacitor shell** (WebView)  | `apps/mobile-shell` | Capacitor 7 + Android Java | **MVP** (Android closer; iOS release scaffold landed, pending Apple secrets) |
 
 Сервер (`apps/server`) — спільний для всіх трьох, деплой на Railway,
 `/api/v1/*` з Better Auth (cookies для web, bearer для native/shell).
@@ -154,9 +154,17 @@ Android-частина (`android/`) закомічена, `applicationId`
   уже стоїть; автоматичний upload через `google-github-actions/upload-google-play`
   - service-account JSON (новий secret `ANDROID_PLAY_SERVICE_ACCOUNT_JSON`)
     — окрема задача.
-- **iOS.** `ios/` НЕ закомічено — потрібен Mac + Xcode + CocoaPods для
-  `pnpm --filter @sergeant/mobile-shell add:ios`. Release pipeline на iOS
-  зараз немає.
+- **iOS.** `ios/` НЕ закомічено — `cap add ios` тепер робить сам CI на
+  `macos-latest` (і PR-лайн `mobile-shell-ios.yml`, і release-лайн
+  `mobile-shell-ios-release.yml` через `actions/cache` для Pods). Локально
+  все ще треба Mac + Xcode + CocoaPods для повторення флоу.
+  Release-scaffold є у
+  `.github/workflows/mobile-shell-ios-release.yml` (tag-push `v*` +
+  `workflow_dispatch`): архів → `.ipa` → TestFlight через
+  `apple-actions/upload-testflight-build@v1`. Для першого реального
+  запуску потрібні Apple-секрети (контракт у
+  [`MOBILE.md` → Release — iOS](../MOBILE.md#release--ios)). Без них
+  job падає в unsigned-Simulator-фолбек і не ламається.
 - ~~**Native push.** `usePushNotifications` у web користується Service
   Worker-ом + VAPID — у WebView це працює кульгаво (iOS тільки 16.4+,
   Android — лише якщо PWA установлено). Повний fix — окремий PR з
@@ -228,7 +236,8 @@ Android-частина (`android/`) закомічена, `applicationId`
 
 **Blocking для релізу:** Play Store upload workflow (internal track
 через service account — release-signing + AAB/APK pipeline вже
-готовий), iOS `cap add ios` з Mac.
+готовий), Apple-секрети для iOS release-воркфлоу (сам `cap add ios`
+на Mac уже не блокер — CI його робить).
 
 ---
 
