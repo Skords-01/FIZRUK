@@ -3,13 +3,16 @@ import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { useToast } from "@shared/hooks/useToast";
 import { hapticSuccess } from "@shared/lib/haptic";
 import { cn } from "@shared/lib/cn";
-import { createHabit } from "../lib/routineStorage.js";
+import { createHabit, updateHabit } from "../lib/routineStorage.js";
 import {
   emptyHabitDraft,
   habitDraftToPatch,
+  normalizeReminderTimes,
+  routineTodayDate,
 } from "../lib/routineDraftUtils.js";
+import { dateKeyFromDate } from "../lib/hubCalendarAggregate.js";
 import { HabitForm, type HabitFormErrors } from "./settings/HabitForm";
-import type { HabitDraft, RoutineState } from "../lib/types";
+import type { Habit, HabitDraft, RoutineState } from "../lib/types";
 import type { Dispatch, SetStateAction } from "react";
 
 export interface HabitQuickCreateDialogProps {
@@ -18,29 +21,50 @@ export interface HabitQuickCreateDialogProps {
   setRoutine: Dispatch<SetStateAction<RoutineState>>;
   onClose: () => void;
   /**
+   * When set, the dialog is in edit mode for the given habit:
+   * the draft is seeded from the habit, the title switches to
+   * "Редагувати звичку", and save calls `updateHabit`.
+   */
+  editingId?: string | null;
+  /**
    * Bumped by the parent every time the dialog is opened via an external
-   * trigger (PWA `add_habit` action, FTUX hero CTA, etc.) so the habit
-   * form re-focuses its name input even if the user reopens the dialog
-   * after closing it.
+   * trigger (central FAB, PWA `add_habit` action, FTUX hero CTA, etc.)
+   * so the habit form re-focuses its name input even if the user
+   * reopens the dialog after closing it.
    */
   focusTick?: number;
 }
 
+function habitToDraft(habit: Habit): HabitDraft {
+  return {
+    name: habit.name || "",
+    emoji: habit.emoji || "✓",
+    tagIds: habit.tagIds || [],
+    categoryId: habit.categoryId || null,
+    recurrence: habit.recurrence || "daily",
+    startDate: habit.startDate || dateKeyFromDate(routineTodayDate()),
+    endDate: habit.endDate || "",
+    timeOfDay: habit.timeOfDay || "",
+    reminderTimes: normalizeReminderTimes(habit),
+    weekdays:
+      Array.isArray(habit.weekdays) && habit.weekdays.length
+        ? habit.weekdays
+        : [0, 1, 2, 3, 4, 5, 6],
+  };
+}
+
 /**
- * Lightweight "quick-create" sheet for a habit. Rendered on top of the
- * current Routine view (usually the Calendar) so that hitting the
- * `add_habit` PWA shortcut no longer yanks the user into the Settings
- * tab — see audit note S0.2.
- *
- * The dialog owns its own draft state; when the user saves we hand the
- * patch off to `createHabit` and close. Editing an existing habit is
- * still done inside the Settings tab's richer `HabitForm` host.
+ * Bottom-sheet dialog for creating or editing a habit. Rendered on top
+ * of the current view so that adding / editing a habit never yanks the
+ * user into a different tab. Uses the same rich `HabitForm` as the
+ * settings surface, so fields and validation stay in sync.
  */
 export function HabitQuickCreateDialog({
   open,
   routine,
   setRoutine,
   onClose,
+  editingId,
   focusTick,
 }: HabitQuickCreateDialogProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -50,15 +74,23 @@ export function HabitQuickCreateDialog({
   const [internalFocusTick, setInternalFocusTick] = useState(0);
   const [errors, setErrors] = useState<HabitFormErrors>({});
 
-  // Reset the draft and re-fire the focus tick each time the dialog
-  // opens. Keeps reopens feeling like a fresh entry point instead of
-  // carrying stale input.
+  // Seed the draft every time the dialog opens. In create mode we reset
+  // to an empty draft so reopens feel fresh; in edit mode we load the
+  // current habit so the form reflects its latest persisted state.
   useEffect(() => {
     if (!open) return;
-    setDraft(emptyHabitDraft());
+    if (editingId) {
+      const habit = routine.habits.find((h) => h.id === editingId);
+      setDraft(habit ? habitToDraft(habit) : emptyHabitDraft());
+    } else {
+      setDraft(emptyHabitDraft());
+    }
     setErrors({});
     setInternalFocusTick((t) => t + 1);
-  }, [open, focusTick]);
+    // Depend on `editingId` + `focusTick` — not `routine`, otherwise the
+    // draft resets on every keystroke-driven routine update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editingId, focusTick]);
 
   // Clear field errors as soon as the user touches the relevant field
   // so the red border doesn't linger once they start fixing the input.
@@ -96,11 +128,19 @@ export function HabitQuickCreateDialog({
       return;
     }
     setErrors({});
-    setRoutine((s) => createHabit(s, patch));
-    hapticSuccess();
-    toast.success("Звичку створено.");
+    if (editingId) {
+      setRoutine((s) => updateHabit(s, editingId, patch));
+      hapticSuccess();
+      toast.success("Звичку оновлено.");
+    } else {
+      setRoutine((s) => createHabit(s, patch));
+      hapticSuccess();
+      toast.success("Звичку створено.");
+    }
     onClose();
   };
+
+  const title = editingId ? "Редагувати звичку" : "Нова звичка";
 
   return (
     <div
@@ -129,7 +169,7 @@ export function HabitQuickCreateDialog({
             id="habit-quick-create-title"
             className="text-base font-bold text-text"
           >
-            Нова звичка
+            {title}
           </h2>
           <button
             type="button"
@@ -157,7 +197,7 @@ export function HabitQuickCreateDialog({
             routine={routine}
             habitDraft={draft}
             setHabitDraft={setDraft}
-            editingId={null}
+            editingId={editingId ?? null}
             onSave={handleSave}
             onCancel={onClose}
             focusTick={internalFocusTick}
