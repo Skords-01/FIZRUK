@@ -20,10 +20,14 @@ type CapacitorMocks = {
   };
   SplashScreen: { hide: ReturnType<typeof vi.fn> };
   Keyboard: { setResizeMode: ReturnType<typeof vi.fn> };
-  App: { addListener: ReturnType<typeof vi.fn> };
+  App: {
+    addListener: ReturnType<typeof vi.fn>;
+    exitApp: ReturnType<typeof vi.fn>;
+  };
 };
 
 type UrlOpenCallback = (event: { url: string }) => void;
+type BackButtonCallback = (event: { canGoBack: boolean }) => void;
 
 function installCapacitorMocks(): CapacitorMocks {
   const StatusBar = {
@@ -34,6 +38,7 @@ function installCapacitorMocks(): CapacitorMocks {
   const Keyboard = { setResizeMode: vi.fn().mockResolvedValue(undefined) };
   const App = {
     addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
+    exitApp: vi.fn().mockResolvedValue(undefined),
   };
 
   vi.doMock("@capacitor/status-bar", () => ({
@@ -120,9 +125,13 @@ describe("initNativeShell — композиція плагінів", () => {
     });
     expect(mocks.Keyboard.setResizeMode).toHaveBeenCalledTimes(1);
     expect(mocks.Keyboard.setResizeMode).toHaveBeenCalledWith({ mode: "body" });
-    expect(mocks.App.addListener).toHaveBeenCalledTimes(1);
+    expect(mocks.App.addListener).toHaveBeenCalledTimes(2);
     expect(mocks.App.addListener).toHaveBeenCalledWith(
       "appUrlOpen",
+      expect.any(Function),
+    );
+    expect(mocks.App.addListener).toHaveBeenCalledWith(
+      "backButton",
       expect.any(Function),
     );
   });
@@ -154,7 +163,7 @@ describe("initNativeShell — ідемпотентність", () => {
     expect(mocks.StatusBar.setBackgroundColor).toHaveBeenCalledTimes(1);
     expect(mocks.SplashScreen.hide).toHaveBeenCalledTimes(1);
     expect(mocks.Keyboard.setResizeMode).toHaveBeenCalledTimes(1);
-    expect(mocks.App.addListener).toHaveBeenCalledTimes(1);
+    expect(mocks.App.addListener).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -169,7 +178,7 @@ describe("initNativeShell — ізоляція помилок", () => {
 
     expect(mocks.SplashScreen.hide).toHaveBeenCalledTimes(1);
     expect(mocks.Keyboard.setResizeMode).toHaveBeenCalledTimes(1);
-    expect(mocks.App.addListener).toHaveBeenCalledTimes(1);
+    expect(mocks.App.addListener).toHaveBeenCalledTimes(2);
     // StatusBar warn-повідомлення вилетіло — інакше користувач побачив би
     // лише «мовчки не спрацювало».
     expect(warnSpy).toHaveBeenCalled();
@@ -185,7 +194,7 @@ describe("initNativeShell — ізоляція помилок", () => {
     const { initNativeShell } = await import("./index.js");
     await initNativeShell();
 
-    expect(mocks.App.addListener).toHaveBeenCalledTimes(1);
+    expect(mocks.App.addListener).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -248,5 +257,81 @@ describe("initNativeShell — deep-link listener", () => {
         value: originalLocation,
       });
     }
+  });
+});
+
+describe("initNativeShell — backButton listener", () => {
+  async function captureBackButtonCallback(
+    mocks: CapacitorMocks,
+  ): Promise<BackButtonCallback> {
+    const { initNativeShell } = await import("./index.js");
+    await initNativeShell();
+
+    const call = mocks.App.addListener.mock.calls.find(
+      ([event]) => event === "backButton",
+    );
+    expect(call?.[0]).toBe("backButton");
+    const cb = call?.[1] as BackButtonCallback;
+    expect(typeof cb).toBe("function");
+    return cb;
+  }
+
+  it("реєструє listener на 'backButton' (симетрично до 'appUrlOpen')", async () => {
+    const mocks = installCapacitorMocks();
+    const { initNativeShell } = await import("./index.js");
+
+    await initNativeShell();
+
+    expect(mocks.App.addListener).toHaveBeenCalledWith(
+      "backButton",
+      expect.any(Function),
+    );
+  });
+
+  it("коли canGoBack=true → window.history.back(), App.exitApp — НЕ викликається", async () => {
+    const mocks = installCapacitorMocks();
+    const historyBackSpy = vi
+      .spyOn(window.history, "back")
+      .mockImplementation(() => {});
+
+    const cb = await captureBackButtonCallback(mocks);
+    cb({ canGoBack: true });
+
+    expect(historyBackSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.App.exitApp).not.toHaveBeenCalled();
+  });
+
+  it("коли canGoBack=false → App.exitApp(), window.history.back — НЕ викликається", async () => {
+    const mocks = installCapacitorMocks();
+    const historyBackSpy = vi
+      .spyOn(window.history, "back")
+      .mockImplementation(() => {});
+
+    const cb = await captureBackButtonCallback(mocks);
+    cb({ canGoBack: false });
+
+    expect(mocks.App.exitApp).toHaveBeenCalledTimes(1);
+    expect(historyBackSpy).not.toHaveBeenCalled();
+  });
+
+  it("якщо addListener('backButton') падає — інші плагін-ініти НЕ ламаються", async () => {
+    const mocks = installCapacitorMocks();
+    // `appUrlOpen` реєструється першим виклик — хай резолвиться, а другий
+    // (`backButton`) хай падає. Це повторює шаблон resilience-тестів вище.
+    mocks.App.addListener
+      .mockResolvedValueOnce({ remove: vi.fn() })
+      .mockRejectedValueOnce(new Error("boom"));
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const { initNativeShell } = await import("./index.js");
+    await initNativeShell();
+
+    expect(mocks.StatusBar.setStyle).toHaveBeenCalledTimes(1);
+    expect(mocks.SplashScreen.hide).toHaveBeenCalledTimes(1);
+    expect(mocks.Keyboard.setResizeMode).toHaveBeenCalledTimes(1);
+    expect(mocks.App.addListener).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalled();
+    const warnArgs = warnSpy.mock.calls.map((c) => String(c[0]));
+    expect(warnArgs.some((m) => m.includes("backButton"))).toBe(true);
   });
 });
