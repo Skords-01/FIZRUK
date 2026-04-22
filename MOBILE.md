@@ -23,13 +23,13 @@ shell reads it from there via `webDir: "../server/dist"` in
 
 ## Prerequisites
 
-| Tool              | Version           | Notes                                                         |
-| ----------------- | ----------------- | ------------------------------------------------------------- |
-| Node.js           | 20.x (see .nvmrc) | `nvm install 20 && nvm use 20`                                |
-| pnpm              | 9.15.1            | `corepack enable && corepack prepare pnpm@9.15.1 --activate`  |
-| JDK               | 17 (Temurin)      | required by Capacitor 7 / AGP 8                               |
-| Android SDK       | API 35            | `compileSdk=35`, `minSdk=23` (Android Studio or `sdkmanager`) |
-| Xcode + CocoaPods | latest stable     | macOS only, iOS only                                          |
+| Tool              | Version           | Notes                                                                                                                                            |
+| ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Node.js           | 20.x (see .nvmrc) | `nvm install 20 && nvm use 20`                                                                                                                   |
+| pnpm              | 9.15.1            | `corepack enable && corepack prepare pnpm@9.15.1 --activate`                                                                                     |
+| JDK               | 21 (Temurin)      | matches `sourceCompatibility`/`targetCompatibility` VERSION_21 emitted into `apps/mobile-shell/android/app/capacitor.build.gradle` by `cap sync` |
+| Android SDK       | API 35            | `compileSdk=35`, `minSdk=23` (Android Studio or `sdkmanager`)                                                                                    |
+| Xcode + CocoaPods | latest stable     | macOS only, iOS only                                                                                                                             |
 
 ## Android — debug APK
 
