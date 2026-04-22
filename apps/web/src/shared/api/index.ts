@@ -15,6 +15,7 @@
 import { createApiClient } from "@sergeant/api-client";
 
 import { apiUrl, getApiPrefix } from "@shared/lib/apiUrl";
+import { getBearerToken } from "@shared/lib/bearerToken";
 
 function readNutritionToken(): string {
   try {
@@ -35,6 +36,12 @@ export const apiClient = createApiClient({
   // обидва канали шлють у `/api/v1/*` (default) або `/api/*` (VITE_API_VERSION=none).
   apiPrefix: getApiPrefix(),
   getNutritionToken: () => readNutritionToken(),
+  // У Capacitor WebView cookie-сесія ненадійна (Android cold-start, iOS ITP),
+  // тож шлемо `Authorization: Bearer <token>` — Better Auth `bearer()`
+  // плагін резолвить його у сесію нарівно з cookie. У браузері
+  // `getBearerToken()` повертає `null` і header не ставиться, cookie-флов
+  // працює як раніше.
+  getToken: () => getBearerToken(),
 });
 
 export const http = apiClient.http;
