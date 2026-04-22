@@ -32,8 +32,47 @@ vi.mock("@shared/api", async () => {
   };
 });
 
+// Mock `@sergeant/shared` tо контролювати `isCapacitor()` / `getPlatform()`
+// per-test — інакше native-гілку не перевіриш у jsdom без реального
+// Capacitor-рантайму.
+vi.mock("@sergeant/shared", async () => {
+  const actual =
+    await vi.importActual<typeof import("@sergeant/shared")>(
+      "@sergeant/shared",
+    );
+  return {
+    ...actual,
+    isCapacitor: vi.fn(() => false),
+    getPlatform: vi.fn(() => "web"),
+  };
+});
+
+// Mock native push gate — у юніт-тестах не тягнемо `@sergeant/mobile-shell`
+// (workspace-лінк є, але плагін сам кине "not implemented" у jsdom).
+vi.mock("@shared/lib/pushNative", () => ({
+  subscribeNativePush: vi.fn(),
+  unsubscribeNativePush: vi.fn(),
+  getStoredNativePushToken: vi.fn(),
+}));
+
 import { usePushNotifications } from "./usePushNotifications.js";
 import { pushApi } from "@shared/api";
+import { getPlatform, isCapacitor } from "@sergeant/shared";
+import {
+  getStoredNativePushToken,
+  subscribeNativePush,
+  unsubscribeNativePush,
+} from "@shared/lib/pushNative";
+
+const isCapacitorMock = isCapacitor as unknown as ReturnType<typeof vi.fn>;
+const getPlatformMock = getPlatform as unknown as ReturnType<typeof vi.fn>;
+const subscribeNativePushMock = subscribeNativePush as unknown as ReturnType<
+  typeof vi.fn
+>;
+const unsubscribeNativePushMock =
+  unsubscribeNativePush as unknown as ReturnType<typeof vi.fn>;
+const getStoredNativePushTokenMock =
+  getStoredNativePushToken as unknown as ReturnType<typeof vi.fn>;
 
 const getVapidPublicMock = pushApi.getVapidPublic as unknown as ReturnType<
   typeof vi.fn
@@ -158,6 +197,8 @@ describe("usePushNotifications — subscribe via api.push.register", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    isCapacitorMock.mockReturnValue(false);
+    getPlatformMock.mockReturnValue("web");
     getVapidPublicMock.mockResolvedValue({ publicKey: "AAAA" });
     legacyUnsubscribeMock.mockResolvedValue({ ok: true });
   });
@@ -233,6 +274,8 @@ describe("usePushNotifications — unsubscribe via api.push.unregister", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    isCapacitorMock.mockReturnValue(false);
+    getPlatformMock.mockReturnValue("web");
     getVapidPublicMock.mockResolvedValue({ publicKey: "AAAA" });
   });
 
@@ -308,6 +351,189 @@ describe("usePushNotifications — unsubscribe via api.push.unregister", () => {
 
     expect(unregisterMock).not.toHaveBeenCalled();
     // Локальний стан все одно чиститься, щоб UI не лишився «увімкненим».
+    expect(localStorage.getItem("hub_push_subscribed")).toBeNull();
+    expect(result.current.subscribed).toBe(false);
+  });
+});
+
+describe("usePushNotifications — native Capacitor branch", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    // Native-контекст: `isCapacitor()` → true. Web Push API (navigator.serviceWorker,
+    // Notification.requestPermission) НЕ підміняємо навмисно — щоб зафіксувати, що
+    // native-гілка до них не дотикається (інакше jsdom впаде на `await navigator.serviceWorker.ready`).
+    isCapacitorMock.mockReturnValue(true);
+    // `pushApi.getVapidPublic` не має викликатись у native — кидаємо reject,
+    // щоб випадковий `useQuery` не проскочив тихо.
+    getVapidPublicMock.mockRejectedValue(
+      new Error("VAPID must not be fetched on native"),
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("android: реєструє `{ platform: 'android', token }` без `keys` і не торкається Web Push API", async () => {
+    getPlatformMock.mockReturnValue("android");
+    subscribeNativePushMock.mockResolvedValue({
+      platform: "android",
+      token: "fcm-token-abc",
+    });
+
+    const notificationRequestSpy = vi.fn();
+    Object.defineProperty(globalThis, "Notification", {
+      configurable: true,
+      writable: true,
+      value: {
+        permission: "default",
+        requestPermission: notificationRequestSpy,
+      },
+    });
+    const serviceWorkerReadySpy = vi.fn();
+    Object.defineProperty(globalThis.navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        get ready() {
+          serviceWorkerReadySpy();
+          return Promise.reject(
+            new Error("serviceWorker must not be accessed on native"),
+          );
+        },
+      },
+    });
+
+    const registerMock = makeRegisterMock({ ok: true, platform: "android" });
+    const apiClient = makeApiClientWithMocks(registerMock);
+
+    const { result } = renderHook(() => usePushNotifications(), {
+      wrapper: makeWrapper(apiClient),
+    });
+
+    // `supported` має бути true навіть без Web Push API (capacitor-гейт).
+    expect(result.current.supported).toBe(true);
+
+    await act(async () => {
+      await result.current.subscribe();
+    });
+
+    await waitFor(() => {
+      expect(registerMock).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = registerMock.mock.calls[0][0];
+    expect(payload).toEqual({ platform: "android", token: "fcm-token-abc" });
+    expect(() => PushRegisterRequestSchema.parse(payload)).not.toThrow();
+
+    expect(subscribeNativePushMock).toHaveBeenCalledTimes(1);
+    // Web-Push side-effects MUST NOT бути тригернуті у native-гілці.
+    expect(notificationRequestSpy).not.toHaveBeenCalled();
+    expect(serviceWorkerReadySpy).not.toHaveBeenCalled();
+    expect(getVapidPublicMock).not.toHaveBeenCalled();
+
+    expect(localStorage.getItem("hub_push_subscribed")).toBe("1");
+    expect(result.current.subscribed).toBe(true);
+  });
+
+  it("ios: реєструє `{ platform: 'ios', token }` без `keys`", async () => {
+    getPlatformMock.mockReturnValue("ios");
+    subscribeNativePushMock.mockResolvedValue({
+      platform: "ios",
+      token: "apns-deadbeef",
+    });
+
+    const registerMock = makeRegisterMock({ ok: true, platform: "ios" });
+    const apiClient = makeApiClientWithMocks(registerMock);
+
+    const { result } = renderHook(() => usePushNotifications(), {
+      wrapper: makeWrapper(apiClient),
+    });
+
+    await act(async () => {
+      await result.current.subscribe();
+    });
+
+    await waitFor(() => {
+      expect(registerMock).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = registerMock.mock.calls[0][0];
+    expect(payload).toEqual({ platform: "ios", token: "apns-deadbeef" });
+    expect(() => PushRegisterRequestSchema.parse(payload)).not.toThrow();
+    expect(result.current.subscribed).toBe(true);
+  });
+
+  it("unsubscribe на native шле `{ platform, token }` і НЕ ходить у navigator.serviceWorker", async () => {
+    getPlatformMock.mockReturnValue("android");
+    getStoredNativePushTokenMock.mockResolvedValue("fcm-token-abc");
+    unsubscribeNativePushMock.mockResolvedValue("fcm-token-abc");
+
+    const serviceWorkerReadySpy = vi.fn();
+    Object.defineProperty(globalThis.navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        get ready() {
+          serviceWorkerReadySpy();
+          return Promise.reject(
+            new Error("serviceWorker must not be accessed on native"),
+          );
+        },
+      },
+    });
+
+    const registerMock = makeRegisterMock({ ok: true, platform: "android" });
+    const unregisterMock = makeUnregisterMock({
+      ok: true,
+      platform: "android",
+    });
+    const apiClient = makeApiClientWithMocks(registerMock, unregisterMock);
+
+    localStorage.setItem("hub_push_subscribed", "1");
+
+    const { result } = renderHook(() => usePushNotifications(), {
+      wrapper: makeWrapper(apiClient),
+    });
+
+    await act(async () => {
+      await result.current.unsubscribe();
+    });
+
+    await waitFor(() => {
+      expect(unregisterMock).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = unregisterMock.mock.calls[0][0];
+    expect(payload).toEqual({ platform: "android", token: "fcm-token-abc" });
+    expect(() => PushUnregisterRequestSchema.parse(payload)).not.toThrow();
+    expect(unsubscribeNativePushMock).toHaveBeenCalledTimes(1);
+    expect(serviceWorkerReadySpy).not.toHaveBeenCalled();
+    expect(legacyUnsubscribeMock).not.toHaveBeenCalled();
+    expect(localStorage.getItem("hub_push_subscribed")).toBeNull();
+    expect(result.current.subscribed).toBe(false);
+  });
+
+  it("unsubscribe без кешованого токена все одно очищає локальний стан", async () => {
+    getPlatformMock.mockReturnValue("ios");
+    getStoredNativePushTokenMock.mockResolvedValue(null);
+    unsubscribeNativePushMock.mockResolvedValue(null);
+
+    const registerMock = makeRegisterMock({ ok: true, platform: "ios" });
+    const unregisterMock = makeUnregisterMock({ ok: true, platform: "ios" });
+    const apiClient = makeApiClientWithMocks(registerMock, unregisterMock);
+
+    localStorage.setItem("hub_push_subscribed", "1");
+
+    const { result } = renderHook(() => usePushNotifications(), {
+      wrapper: makeWrapper(apiClient),
+    });
+
+    await act(async () => {
+      await result.current.unsubscribe();
+    });
+
+    // Без токена сервер анрегнути нічим — але UI все одно має піти у "вимкнено".
+    expect(unregisterMock).not.toHaveBeenCalled();
     expect(localStorage.getItem("hub_push_subscribed")).toBeNull();
     expect(result.current.subscribed).toBe(false);
   });

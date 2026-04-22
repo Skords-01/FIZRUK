@@ -245,6 +245,9 @@ importers:
       "@capacitor/preferences":
         specifier: ^7.0.4
         version: 7.0.4(@capacitor/core@7.6.2)
+      "@capacitor/push-notifications":
+        specifier: ^7.0.3
+        version: 7.0.6(@capacitor/core@7.6.2)
       "@capacitor/splash-screen":
         specifier: ^7.0.3
         version: 7.0.5(@capacitor/core@7.6.2)
@@ -2002,6 +2005,14 @@ packages:
     resolution:
       {
         integrity: sha512-TJhkwaI2RCs/iDC9PjNczZV4h6JM4gUtTuKMeFdy0OwGgFEHf4TrtW2mFMc1TnPDalYQ91p9NT+UKgiJs9/xtg==,
+      }
+    peerDependencies:
+      "@capacitor/core": ">=7.0.0"
+
+  "@capacitor/push-notifications@7.0.6":
+    resolution:
+      {
+        integrity: sha512-zAhbHpdbc15ImuVGgoFwUZsKI+jjGxy/oO5mgfYKUx8Xl2OskndzhL79PYsCPjyGLbqUR9NRUZJthV9auVT3nw==,
       }
     peerDependencies:
       "@capacitor/core": ">=7.0.0"
@@ -16589,6 +16600,10 @@ snapshots:
       "@capacitor/core": 7.6.2
 
   "@capacitor/preferences@7.0.4(@capacitor/core@7.6.2)":
+    dependencies:
+      "@capacitor/core": 7.6.2
+
+  "@capacitor/push-notifications@7.0.6(@capacitor/core@7.6.2)":
     dependencies:
       "@capacitor/core": 7.6.2
 
