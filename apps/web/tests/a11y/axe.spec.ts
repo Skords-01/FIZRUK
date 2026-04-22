@@ -111,12 +111,19 @@ for (const { name, path } of SURFACES) {
     }
 
     // Sanity: SPA bootstrap should not print console errors on these
-    // top-level surfaces in a fresh profile.
+    // top-level surfaces in a fresh profile. Network-level "Failed to
+    // load resource" errors are filtered because the a11y job runs
+    // against `vite preview` with no backend attached — /api/* calls
+    // fail by design. Real JS/React runtime errors are still caught.
     expect(
       consoleErrors.filter(
         (e) =>
           // vite-plugin-pwa registerSW noise in preview mode.
-          !e.includes("workbox") && !e.includes("Service worker"),
+          !e.includes("workbox") &&
+          !e.includes("Service worker") &&
+          // Browser-emitted network failures when /api/* has no
+          // backend to proxy to in CI.
+          !e.includes("Failed to load resource"),
       ),
       `console errors on ${path}:\n${consoleErrors.join("\n")}`,
     ).toEqual([]);
