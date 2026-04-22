@@ -20,6 +20,7 @@ import { ErrorBoundary } from "./core/ErrorBoundary.jsx";
 import { initSentry } from "./core/sentry.js";
 import { initWebVitals } from "./core/webVitals.js";
 import { runDemoCleanupOnce } from "./core/onboarding/cleanupDemoData.js";
+import { isCapacitor } from "@sergeant/shared";
 
 const queryClient = createAppQueryClient();
 
@@ -92,6 +93,26 @@ if (typeof window !== "undefined") {
   } else {
     setTimeout(scheduleInit, 0);
   }
+}
+
+// Native-shell bootstrap: лише в Capacitor WebView, ніколи у браузері.
+// Dynamic import ⇒ Vite кладе `@sergeant/mobile-shell` та всі `@capacitor/*`
+// плагіни в окремий chunk, тож browser-бандл не тягне їх зовсім.
+if (isCapacitor()) {
+  import("@sergeant/mobile-shell")
+    .then(({ initNativeShell }) =>
+      initNativeShell({
+        navigate: (path) => {
+          // React Router слухає `popstate` для оновлення шляху — це канонічний
+          // спосіб програмно навігувати без useNavigate() out-of-component.
+          window.history.pushState(null, "", path);
+          window.dispatchEvent(new PopStateEvent("popstate"));
+        },
+      }),
+    )
+    .catch((err) => {
+      console.warn("[main] native-shell init failed", err);
+    });
 }
 
 if ("serviceWorker" in navigator) {

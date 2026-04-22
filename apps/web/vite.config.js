@@ -124,12 +124,13 @@ export default defineConfig(({ mode }) => {
               if (id.includes("@zxing")) return "vendor-zxing";
               if (id.includes("react-markdown")) return "vendor-markdown";
               // Capacitor runtime + native плагіни (ML Kit / community
-              // barcode scanner) свідомо НЕ мапляться на жоден manual
-              // chunk: це дозволяє Rollup злити їх у той самий async
-              // chunk, що й `@sergeant/mobile-shell/barcodeNative`, з
-              // якого вони єдино імпортуються (через dynamic `import()`
-              // у `useBarcodeScanner`). Без цього catch-all нижче загнав
-              // би ML Kit у загальний `vendor`, який жадібно
+              // barcode scanner, @capacitor/status-bar, /splash-screen,
+              // /keyboard, /app) свідомо НЕ мапляться на жоден manual
+              // chunk: це дозволяє Rollup злити їх у ті самі async
+              // chunk-и, з яких вони єдино імпортуються (dynamic
+              // `import()` з `useBarcodeScanner` та `main.jsx` під
+              // guard-ом `isCapacitor()`). Без цього catch-all нижче
+              // загнав би плагіни у загальний `vendor`, який жадібно
               // підвантажується браузерами.
               if (
                 id.includes("/node_modules/@capacitor/") ||
