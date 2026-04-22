@@ -91,11 +91,75 @@ await api.push.register({ platform: "ios", token: devicePushToken });
 
 ### Сервер → пристрій
 
-- **Web** — існуючий flow `POST /api/push/send` через `web-push` + VAPID.
-  Працює однаково для PWA та mobile Expo web-build.
-- **iOS / Android** — **не реалізовано у цій сесії**. Токени лише
-  зберігаються у `push_devices`. Реальна відправка (APNs через
-  `apn`/`node-apn`, FCM через HTTP v1) — окрема сесія.
+Сервер-сайд fan-out живе в `apps/server/src/push/send.ts::sendToUser(userId, payload)`
+і викликається з `POST /api/v1/push/test` (ручка «пульнути тестовий пуш на всі
+мої пристрої») та з бізнес-флоу (coach nudges, reminders) через
+`sendToUserQuietly`. `sendToUser` читає обидві таблиці — `push_devices`
+(native iOS/Android) і `push_subscriptions` (web) — і паралельно доставляє
+payload трьома каналами:
+
+- **Web** — `sendWebPush` (`apps/server/src/lib/webpushSend.ts`) через VAPID.
+  Внутрішній `POST /api/push/send` (з `X-Api-Secret` для cron/worker-ів) —
+  web-only, використовує той самий шлях.
+- **iOS** — APNs HTTP/2 через `@parse/node-apn` з JWT-аутентифікацією
+  (`apps/server/src/push/apnsClient.ts`). Конфіг — env:
+  - `APNS_P8_KEY` — вміст `.p8` PEM-ключа (підтримує `\n`/`\r\n` escapes для
+    shell-env-ів; сервер нормалізує).
+  - `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID` — з Apple Developer.
+  - `APNS_PRODUCTION=true` → `api.push.apple.com`, інакше
+    `api.sandbox.push.apple.com` (TestFlight/dev-build).
+- **Android** — FCM HTTP v1 (`https://fcm.googleapis.com/v1/projects/{id}/messages:send`)
+  з OAuth2 Bearer через `google-auth-library` (`apps/server/src/push/fcmClient.ts`).
+  Конфіг — env:
+  - `FCM_SERVICE_ACCOUNT_JSON` — base64-encoded JSON service-account-а
+    (поля `project_id`, `client_email`, `private_key`). Сервер декодує base64
+    і парсить на boot; невалідний JSON → warn-log + FCM sender disabled,
+    але решта (APNs/web) продовжує працювати.
+
+`sendToUser` повертає агрегований `{ delivered: { ios, android, web }, cleaned, errors[] }`:
+
+- `delivered` — скільки пристроїв на кожній платформі отримали 2xx.
+- `cleaned` — скільки мертвих токенів/підписок сервер видалив у цьому
+  виклику. APNs 410 / BadDeviceToken / Unregistered → `DELETE FROM push_devices`.
+  FCM UNREGISTERED / SENDER_ID_MISMATCH / NOT_FOUND → `DELETE FROM push_devices`.
+  FCM `INVALID_ARGUMENT` навмисно НЕ тригерить cleanup (однаковий payload
+  на fan-out-і міг би знести всі Android-токени юзера разом — детальніше у
+  коментарі в `send.ts`). Web 404/410 → soft-delete у `push_subscriptions`.
+- `errors[]` — per-device помилки без cleanup (транзієнтні 5xx/429 після
+  вичерпання retry-лімітів, мережеві таймаути тощо). Retry policy — 3 спроби
+  з exponential-backoff-ом 200/1000/3000 мс для APNs 5xx/429 та FCM 5xx/429;
+  4xx без dead-коду (401/403/400) ретраїти безсенсу — сервер зупиняється
+  і реєструє error.
+
+Якщо обов'язкові env-и відсутні — сенд-шлях цієї платформи стає no-op
+(warn-log на boot, `error: "apns_disabled"` / `"fcm_disabled"` per-call).
+Це навмисно: так один відсутній Firebase service-account не валить увесь
+процес, і web/ios продовжують працювати.
+
+#### Payload-контракт
+
+`PushPayload` (`packages/shared/src/types/index.ts`) — один shape для всіх
+трьох каналів, сервер сам мапить у APNs/FCM/web-push формати:
+
+| Поле       | iOS (APNs)                                                                                       | Android (FCM v1)                                                                                   | Web                                             |
+| ---------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `title`    | `aps.alert.title`                                                                                | `notification.title`                                                                               | `{title}` у JSON                                |
+| `body`     | `aps.alert.body`                                                                                 | `notification.body`                                                                                | `{body}` у JSON                                 |
+| `data`     | top-level поля поруч з `aps`                                                                     | `message.data` (stringified)                                                                       | `{data}` inline у JSON                          |
+| `badge`    | `aps.badge`                                                                                      | `apns.payload.aps.badge` (через FCM→APNs)                                                          | —                                               |
+| `threadId` | `aps.thread-id`                                                                                  | —                                                                                                  | —                                               |
+| `url`      | `payload.url` (top-level)                                                                        | `data.url`                                                                                         | `data.url`                                      |
+| `silent`   | `aps.content-available=1`, `apns-push-type: background`, `apns-priority: 5`, без `alert`/`sound` | data-only (без `notification`), `android.priority=high`, `apns.headers.apns-push-type: background` | не інтерпретується (service-worker сам вирішує) |
+
+Top-level `url` перезаписує `data.url`, якщо юзер передав обидва — щоб контракт
+APNs (де `url` завжди у top-level payload) та FCM/web (де `url` у `data.url`)
+збігався на клієнті.
+
+Silent-push (background delivery) на APNs вимагає всі три заголовки одночасно:
+без `apns-push-type: background` Apple поверне `BadDeviceToken`, без `priority 5` —
+`InvalidPushType`. На FCM (який проксує APNs для iOS-шару, якщо токен
+походить з `@capacitor/push-notifications` і не з нативного APNs) ми дублюємо
+ці самі заголовки у `message.apns.headers`.
 
 ## Rate limiting
 
