@@ -38,7 +38,7 @@ describe("Фінік — Transactions period filter", () => {
     // 1. Navigate Finyk → Transactions.
     await tapWhenVisible("tab-finyk");
     await waitForVisibleById("finyk-overview-scroll");
-    await tapWhenVisible("finyk-overview-nav-transactions");
+    await tapWhenVisible("finyk-nav-grid-transactions");
     await waitForVisibleById("finyk-transactions");
 
     // 2. Seed one current-month expense so the test doesn't depend on

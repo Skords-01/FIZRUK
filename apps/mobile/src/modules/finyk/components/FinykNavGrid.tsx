@@ -25,6 +25,7 @@ function NavCard({ entry }: { entry: NavEntry }) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${entry.label}. ${entry.description}`}
+      testID={`finyk-nav-grid-${entry.id}`}
       onPress={() => router.push(entry.href as never)}
       className="flex-1 min-w-[46%] rounded-2xl border border-cream-300 bg-cream-50 p-4 active:opacity-80"
     >
