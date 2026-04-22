@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port 5173 --host 0.0.0.0",
     "build": "vite build",
+    "build:capacitor": "cross-env VITE_TARGET=capacitor vite build",
     "build:analyze": "cross-env ANALYZE=1 vite build",
     "preview": "vite preview",
     "lint": "eslint .",

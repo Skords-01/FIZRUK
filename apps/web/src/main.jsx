@@ -122,7 +122,20 @@ if (isCapacitor()) {
     });
 }
 
-if ("serviceWorker" in navigator) {
+// Service worker реєструємо лише у веб-деплої (`apps/web` → Vercel).
+// Capacitor WebView ігнорує SW, тож у shell-варіанті (`VITE_TARGET=capacitor`
+// + runtime `isCapacitor()`) вся ця гілка мертва і Vite-build її DCE-вирізає:
+//   - build-time `import.meta.env.VITE_TARGET !== "capacitor"` падає у `false`
+//     після `define`-заміни у `vite.config.js`, тож Rollup не тягне
+//     `virtual:pwa-register` (якого у capacitor-білді не існує — плагін
+//     `vite-plugin-pwa` там відключений);
+//   - runtime `!isCapacitor()` — defensive net на випадок, якщо дефолтний
+//     web-бандл раптом завантажиться у Capacitor WebView.
+if (
+  import.meta.env.VITE_TARGET !== "capacitor" &&
+  !isCapacitor() &&
+  "serviceWorker" in navigator
+) {
   import("virtual:pwa-register").then(({ registerSW }) => {
     const updateSW = registerSW({
       onNeedRefresh() {

@@ -56,8 +56,15 @@ PR, що чіпає `apps/mobile-shell/**`, `apps/web/**`, `apps/server/**`
 Потрібен Android SDK (через Android Studio або `sdkmanager`).
 
 ```bash
-# 1. Зібрати веб-бандл (йде в apps/server/dist — див. vite.config.js).
-pnpm build:web
+# 1. Зібрати веб-бандл у shell-варіанті (йде в apps/server/dist — див.
+#    vite.config.js). `@sergeant/mobile-shell#build:web` делегує до
+#    `@sergeant/web build:capacitor` (`VITE_TARGET=capacitor`), який
+#    вимикає `vite-plugin-pwa`: у `apps/server/dist` при цьому не
+#    зʼявляються `sw.js`, `manifest.webmanifest` та
+#    `virtual:pwa-register` chunk — native WebView їх ігнорує, тому у
+#    shell вони були dead weight. Для веб-деплою (Vercel) нічого не
+#    зміниться: там все ще використовується root `pnpm build:web`.
+pnpm --filter @sergeant/mobile-shell build:web
 
 # 2. Скопіювати бандл у нативний проєкт.
 pnpm --filter @sergeant/mobile-shell copy
