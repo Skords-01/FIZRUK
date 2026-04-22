@@ -65,11 +65,13 @@ jobs:
           node-version: "20"
           cache: pnpm
 
-      # actions/setup-java v4.7.1 — Capacitor 7 / AGP 8 require JDK 17.
+      # actions/setup-java v4.7.1 — Capacitor 7.4 targets Java 21
+      # (`:capacitor-android:compileDebugJavaWithJavac` fails with
+      # "invalid source release: 21" on older JDKs).
       - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
 
       - name: Install JS deps
         run: pnpm install --frozen-lockfile
