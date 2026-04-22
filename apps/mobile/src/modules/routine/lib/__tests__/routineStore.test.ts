@@ -10,7 +10,7 @@
  * we only assert on the sync wiring, never on real MMKV writes.
  */
 import { act, renderHook } from "@testing-library/react-native";
-import { ROUTINE_STORAGE_KEY } from "@sergeant/routine-domain";
+import { ROUTINE_STORAGE_KEY, dateKeyFromDate } from "@sergeant/routine-domain";
 
 const mockEnqueueChange = jest.fn();
 const mockSafeReadLS = jest.fn();
@@ -48,6 +48,22 @@ function firstHabitId(routine: ReturnType<typeof defaultRoutineState>): string {
   if (!id) throw new Error("expected at least one habit");
   return id;
 }
+
+/**
+ * Today's date-key (`YYYY-MM-DD` in local tz). Use this for any
+ * "toggle a fresh habit for date X" assertion — `habitScheduledOnDate`
+ * rejects dates before `habit.startDate || habit.createdAt`, and a
+ * habit created inside `act()` always has `createdAt = today`. A
+ * hard-coded key would silently break on whichever calendar day the
+ * CI host happens to run on.
+ *
+ * Must go through `dateKeyFromDate` (the same helper `applyCreateHabit`
+ * uses internally) rather than `toISOString().slice(0, 10)`. The latter
+ * yields the UTC date, which drifts one day ahead of the habit's
+ * local-tz `startDate` in positive-UTC offsets after local midnight but
+ * before UTC midnight (e.g. Europe/Kyiv = UTC+2/+3).
+ */
+const TODAY_KEY = dateKeyFromDate(new Date());
 
 describe("routineStore — enqueueChange wiring", () => {
   it("setRoutine fires enqueueChange with the routine key", () => {
@@ -92,7 +108,7 @@ describe("routineStore — enqueueChange wiring", () => {
     mockEnqueueChange.mockClear();
 
     act(() => {
-      result.current.toggleHabit(habitId, "2026-04-21");
+      result.current.toggleHabit(habitId, TODAY_KEY);
     });
 
     expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
@@ -104,7 +120,7 @@ describe("routineStore — enqueueChange wiring", () => {
     mockEnqueueChange.mockClear();
 
     act(() => {
-      result.current.toggleHabit("non-existent-habit", "2026-04-21");
+      result.current.toggleHabit("non-existent-habit", TODAY_KEY);
     });
 
     expect(mockEnqueueChange).not.toHaveBeenCalled();
@@ -115,7 +131,7 @@ describe("routineStore — enqueueChange wiring", () => {
     mockEnqueueChange.mockClear();
 
     act(() => {
-      result.current.bulkMarkDay("2026-04-21");
+      result.current.bulkMarkDay(TODAY_KEY);
     });
 
     expect(mockEnqueueChange).not.toHaveBeenCalled();
@@ -129,7 +145,7 @@ describe("routineStore — enqueueChange wiring", () => {
     mockEnqueueChange.mockClear();
 
     act(() => {
-      result.current.bulkMarkDay("2026-04-21");
+      result.current.bulkMarkDay(TODAY_KEY);
     });
 
     expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
@@ -140,7 +156,7 @@ describe("routineStore — enqueueChange wiring", () => {
     mockEnqueueChange.mockClear();
 
     act(() => {
-      result.current.setCompletionNote("missing", "2026-04-21", "note");
+      result.current.setCompletionNote("missing", TODAY_KEY, "note");
     });
 
     expect(mockEnqueueChange).not.toHaveBeenCalled();
@@ -155,7 +171,7 @@ describe("routineStore — enqueueChange wiring", () => {
     mockEnqueueChange.mockClear();
 
     act(() => {
-      result.current.setCompletionNote(id, "2026-04-21", "felt great");
+      result.current.setCompletionNote(id, TODAY_KEY, "felt great");
     });
 
     expect(mockEnqueueChange).toHaveBeenCalledWith(ROUTINE_STORAGE_KEY);
