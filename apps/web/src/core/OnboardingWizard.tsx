@@ -86,7 +86,9 @@ function VibeChipRow({ picks, togglePick }) {
               <span
                 className={cn(
                   "shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
-                  active ? "bg-brand-500/15 text-brand-600" : "bg-panelHi",
+                  active
+                    ? "bg-brand-500/15 text-brand-600 dark:text-brand-400"
+                    : "bg-panelHi",
                 )}
                 aria-hidden
               >
@@ -120,7 +122,7 @@ function SplashStep({ picks, togglePick, onContinue }) {
   const hasPicks = picks.length > 0;
   return (
     <div className="flex flex-col items-center text-center space-y-5">
-      <div className="w-20 h-20 rounded-3xl bg-brand-500/10 text-brand-600 flex items-center justify-center">
+      <div className="w-20 h-20 rounded-3xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
         <Icon name="sparkle" size={40} strokeWidth={1.8} aria-hidden />
       </div>
       <div>

@@ -262,7 +262,7 @@ export function Dashboard({
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
         <section
-          className="rounded-3xl p-6 overflow-hidden bg-hero-teal"
+          className="rounded-3xl p-6 overflow-hidden bg-hero-teal dark:bg-panel dark:border dark:border-teal-800/30 dark:[background-image:linear-gradient(135deg,rgba(20,184,166,0.18)_0%,rgba(20,184,166,0.05)_100%)]"
           aria-label="Привітання"
         >
           {/* eslint-disable-next-line sergeant-design/no-eyebrow-drift --

@@ -600,7 +600,7 @@ export default function App({
               </button>
             ) : null}
             <div
-              className="shrink-0 w-9 h-9 rounded-xl bg-emerald-500/12 flex items-center justify-center text-emerald-600 border border-emerald-500/15"
+              className="shrink-0 w-9 h-9 rounded-xl bg-emerald-500/12 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-500/15"
               aria-hidden
             >
               <svg

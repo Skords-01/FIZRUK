@@ -172,7 +172,7 @@ const ComparisonRow = memo(function ComparisonRow({
               good === null
                 ? "text-muted"
                 : good
-                  ? "text-emerald-600"
+                  ? "text-emerald-600 dark:text-emerald-400"
                   : "text-danger",
             )}
           >
@@ -336,7 +336,7 @@ export function Analytics({ mono, storage }: AnalyticsProps) {
               </div>
               <div className="text-center">
                 <div className="text-2xs text-subtle mb-1">Дохід</div>
-                <div className="text-sm font-bold tabular-nums text-emerald-600">
+                <div className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                   {summary.income.toLocaleString("uk-UA")} ₴
                 </div>
               </div>
@@ -345,7 +345,9 @@ export function Analytics({ mono, storage }: AnalyticsProps) {
                 <div
                   className={cn(
                     "text-sm font-bold tabular-nums",
-                    summary.balance >= 0 ? "text-emerald-600" : "text-danger",
+                    summary.balance >= 0
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-danger",
                   )}
                 >
                   {summary.balance >= 0 ? "+" : ""}

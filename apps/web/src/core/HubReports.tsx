@@ -298,7 +298,9 @@ function InsightCard({ emoji, title, stat, detail }) {
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm text-text leading-snug">{title}</p>
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-lg font-bold text-brand-600">{stat}</span>
+          <span className="text-lg font-bold text-brand-600 dark:text-brand-400">
+            {stat}
+          </span>
           {detail && (
             <span className="text-xs text-muted truncate">{detail}</span>
           )}

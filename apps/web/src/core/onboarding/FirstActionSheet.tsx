@@ -188,7 +188,11 @@ export function FirstActionHeroCard({ onDismiss }) {
                 {primary.desc}
               </div>
             </div>
-            <Icon name="chevron-right" size={18} className="text-brand-600" />
+            <Icon
+              name="chevron-right"
+              size={18}
+              className="text-brand-600 dark:text-brand-400"
+            />
           </div>
         </button>
 
