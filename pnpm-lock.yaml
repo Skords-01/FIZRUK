@@ -82,6 +82,9 @@ importers:
       "@sergeant/fizruk-domain":
         specifier: workspace:*
         version: link:../../packages/fizruk-domain
+      "@sergeant/nutrition-domain":
+        specifier: workspace:*
+        version: link:../../packages/nutrition-domain
       "@sergeant/routine-domain":
         specifier: workspace:*
         version: link:../../packages/routine-domain
