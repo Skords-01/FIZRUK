@@ -47,6 +47,23 @@ function LimitBudgetCardComponent({
   const [forecastOpen, setForecastOpen] = useState(
     Boolean(forecast?.overLimit),
   );
+  // Авто-розкриваємо секцію лише на переході `overLimit: false → true`
+  // (напр. користувач опускає ліміт інлайн-редактором, нова транзакція
+  // виводить проєкцію за стелю). `useState` запам'ятовує initial value
+  // тільки при першому монтажі, тож стежимо за попереднім значенням
+  // окремим state і оновлюємо його під час рендеру — render-time
+  // state adjustment за React docs (you-might-not-need-an-effect),
+  // без зайвого ре-рендеру через `useEffect`. Свідоме згортання
+  // користувачем вже-перевищеної секції лишається недоторканим, поки
+  // `overLimit` не впаде назад у `false` і не стрельне знову.
+  const nextOverLimit = Boolean(forecast?.overLimit);
+  const [prevOverLimit, setPrevOverLimit] = useState(nextOverLimit);
+  if (nextOverLimit !== prevOverLimit) {
+    setPrevOverLimit(nextOverLimit);
+    if (nextOverLimit) {
+      setForecastOpen(true);
+    }
+  }
   const [explanationOpen, setExplanationOpen] = useState(true);
 
   return (
