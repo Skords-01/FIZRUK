@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Label } from "@shared/components/ui/FormField";
 import { subtleNavButtonClass } from "@shared/components/ui/buttonPresets";
@@ -7,6 +8,147 @@ import { useDailyLog } from "../hooks/useDailyLog";
 import { Card } from "@shared/components/ui/Card";
 import { MiniLineChart } from "../components/MiniLineChart";
 import { PhotoProgress } from "../components/PhotoProgress";
+
+/**
+ * Trend cards on this page used to be always-expanded, which meant four
+ * ~180px-tall charts stacked one after another — on mobile Safari that
+ * pushed the useful summary + input form far off-screen. The user asked
+ * for them to be collapsible, so each chart card is now wrapped in
+ * `CollapsibleTrendCard`:
+ *
+ *  - Default: collapsed, showing only the title + a latest-value +
+ *    delta teaser, so the page reads as a compact list at first load.
+ *  - Tap/click the header to toggle. Per-card open state is persisted
+ *    in localStorage under `fizruk:body:trend-open:<key>` so the user's
+ *    choice survives reloads.
+ */
+const TREND_STORAGE_PREFIX = "fizruk:body:trend-open:";
+
+function readTrendOpen(key: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(TREND_STORAGE_PREFIX + key) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function CollapsibleTrendCard({
+  storageKey,
+  title,
+  latestValue,
+  latestUnit,
+  delta,
+  ariaLabel,
+  children,
+}: {
+  storageKey: string;
+  title: string;
+  latestValue: number | null;
+  latestUnit: string;
+  delta: number | null;
+  ariaLabel: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState<boolean>(() => readTrendOpen(storageKey));
+  const contentId = `trend-card-content-${storageKey}`;
+
+  const toggle = useCallback(() => {
+    setOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(
+            TREND_STORAGE_PREFIX + storageKey,
+            next ? "1" : "0",
+          );
+        } catch {
+          /* ignore quota / disabled storage */
+        }
+      }
+      return next;
+    });
+  }, [storageKey]);
+
+  const deltaClass =
+    delta == null || delta === 0
+      ? "text-muted"
+      : delta > 0
+        ? "text-warning"
+        : "text-success";
+  const deltaLabel =
+    delta == null
+      ? ""
+      : `${delta > 0 ? "+" : ""}${delta.toFixed(1)} ${latestUnit}`;
+
+  return (
+    <Card as="section" radius="lg" padding="none" aria-label={ariaLabel}>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        aria-controls={contentId}
+        className={cn(
+          "w-full flex items-center gap-3 px-4 py-3 text-left",
+          "rounded-2xl transition-colors",
+          "hover:bg-panelHi/40",
+        )}
+      >
+        <div className="flex-1 min-w-0">
+          <SectionHeading as="h2" size="sm" className="!mb-0">
+            {title}
+          </SectionHeading>
+        </div>
+        {latestValue != null && (
+          <div className="flex items-baseline gap-2 shrink-0">
+            <span className="text-sm font-semibold tabular-nums text-text">
+              {latestValue} {latestUnit}
+            </span>
+            {delta != null && delta !== 0 && (
+              <span className={cn("text-xs font-semibold", deltaClass)}>
+                {deltaLabel}
+              </span>
+            )}
+          </div>
+        )}
+        <span
+          aria-hidden
+          className={cn(
+            "inline-block w-4 text-muted transition-transform shrink-0",
+            open ? "rotate-180" : "rotate-0",
+          )}
+        >
+          ▾
+        </span>
+      </button>
+      {open && (
+        <div id={contentId} className="px-4 pb-4 pt-1">
+          {children}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function lastValidValue<T extends { value: number | null }>(
+  data: readonly T[],
+): number | null {
+  for (let i = data.length - 1; i >= 0; i--) {
+    const v = data[i].value;
+    if (v != null && Number.isFinite(Number(v))) return Number(v);
+  }
+  return null;
+}
+
+function firstValidValue<T extends { value: number | null }>(
+  data: readonly T[],
+): number | null {
+  for (let i = 0; i < data.length; i++) {
+    const v = data[i].value;
+    if (v != null && Number.isFinite(Number(v))) return Number(v);
+  }
+  return null;
+}
 
 const ENERGY_LABELS = [
   "",
@@ -335,61 +477,71 @@ export function Body({ onOpenMeasurements }) {
           </form>
         </Card>
 
-        {weightData.length >= 2 && (
-          <Card as="section" radius="lg" aria-label="Динаміка ваги">
-            <SectionHeading as="h2" size="sm" className="mb-3">
-              Динаміка ваги
-            </SectionHeading>
-            <MiniLineChart
-              data={weightData}
-              unit="кг"
-              color="rgb(22 163 74)"
-              metricLabel="вагу"
-            />
-          </Card>
-        )}
-
-        {sleepData.length >= 2 && (
-          <Card as="section" radius="lg" aria-label="Динаміка сну">
-            <SectionHeading as="h2" size="sm" className="mb-3">
-              Сон
-            </SectionHeading>
-            <MiniLineChart
-              data={sleepData}
-              unit="год"
-              color="rgb(99 102 241)"
-              metricLabel="сон"
-            />
-          </Card>
-        )}
-
-        {energyData.length >= 2 && (
-          <Card as="section" radius="lg" aria-label="Динаміка енергії">
-            <SectionHeading as="h2" size="sm" className="mb-3">
-              Рівень енергії
-            </SectionHeading>
-            <MiniLineChart
-              data={energyData}
-              unit="/5"
-              color="rgb(245 158 11)"
-              metricLabel="рівень енергії"
-            />
-          </Card>
-        )}
-
-        {moodData.length >= 2 && (
-          <Card as="section" radius="lg" aria-label="Динаміка настрою">
-            <SectionHeading as="h2" size="sm" className="mb-3">
-              Настрій
-            </SectionHeading>
-            <MiniLineChart
-              data={moodData}
-              unit="/5"
-              color="rgb(236 72 153)"
-              metricLabel="настрій"
-            />
-          </Card>
-        )}
+        {(
+          [
+            {
+              storageKey: "weight",
+              title: "Динаміка ваги",
+              ariaLabel: "Динаміка ваги",
+              data: weightData,
+              unit: "кг",
+              color: "rgb(22 163 74)",
+              metricLabel: "вагу",
+            },
+            {
+              storageKey: "sleep",
+              title: "Сон",
+              ariaLabel: "Динаміка сну",
+              data: sleepData,
+              unit: "год",
+              color: "rgb(99 102 241)",
+              metricLabel: "сон",
+            },
+            {
+              storageKey: "energy",
+              title: "Рівень енергії",
+              ariaLabel: "Динаміка енергії",
+              data: energyData,
+              unit: "/5",
+              color: "rgb(245 158 11)",
+              metricLabel: "рівень енергії",
+            },
+            {
+              storageKey: "mood",
+              title: "Настрій",
+              ariaLabel: "Динаміка настрою",
+              data: moodData,
+              unit: "/5",
+              color: "rgb(236 72 153)",
+              metricLabel: "настрій",
+            },
+          ] as const
+        )
+          .filter((card) => card.data.length >= 2)
+          .map((card) => {
+            const latest = lastValidValue(card.data);
+            const first = firstValidValue(card.data);
+            const delta =
+              latest != null && first != null ? latest - first : null;
+            return (
+              <CollapsibleTrendCard
+                key={card.storageKey}
+                storageKey={card.storageKey}
+                title={card.title}
+                ariaLabel={card.ariaLabel}
+                latestValue={latest}
+                latestUnit={card.unit}
+                delta={delta}
+              >
+                <MiniLineChart
+                  data={card.data}
+                  unit={card.unit}
+                  color={card.color}
+                  metricLabel={card.metricLabel}
+                />
+              </CollapsibleTrendCard>
+            );
+          })}
 
         <PhotoProgress />
 
