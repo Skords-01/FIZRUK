@@ -1,43 +1,24 @@
-import { useRef, useState } from "react";
 import { downloadJson } from "@sergeant/shared";
 import { Button } from "@shared/components/ui/Button";
-import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
-import { useToast } from "@shared/hooks/useToast";
 import { cn } from "@shared/lib/cn";
-import {
-  applyFizrukBackupPayload,
-  buildFizrukBackupPayload,
-} from "../../lib/fizrukStorage";
+import { buildFizrukBackupPayload } from "../../lib/fizrukStorage";
 
+/**
+ * Export-only variant of the Fizruk backup bar. The import flows
+ * ("Імпорт (додати)" / "Імпорт (замінити)") were removed on user
+ * request — keeping a one-way export button lets the user take a
+ * snapshot of their workouts/exercises/journal without exposing a
+ * destructive replace action from the Settings screen. The underlying
+ * `applyFizrukBackupPayload` helper stays in `fizrukStorage.ts` in
+ * case we want to restore the import surface later.
+ */
 export function WorkoutBackupBar({ className }) {
-  const fileRef = useRef(null);
-  const fileReplaceRef = useRef(null);
-  const toast = useToast();
-  const [confirmReplace, setConfirmReplace] = useState(false);
-
   const exportJson = async () => {
     const payload = buildFizrukBackupPayload();
     await downloadJson(
       `fizruk-backup-${new Date().toISOString().slice(0, 10)}.json`,
       payload,
     );
-  };
-
-  const runImport = (e, replace) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const data = JSON.parse(String(r.result));
-        applyFizrukBackupPayload(data, { replace });
-        window.location.reload();
-      } catch (err) {
-        toast.error((err as Error)?.message || "Не вдалось імпортувати файл");
-      }
-      e.target.value = "";
-    };
-    r.readAsText(f);
   };
 
   return (
@@ -48,7 +29,7 @@ export function WorkoutBackupBar({ className }) {
       )}
     >
       <p className="font-semibold text-text leading-snug">
-        Резервна копія та імпорт даних Фізрука (тренування, вправи, журнал).
+        Резервна копія даних Фізрука (тренування, вправи, журнал).
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -60,52 +41,7 @@ export function WorkoutBackupBar({ className }) {
         >
           Експорт JSON
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-9 min-h-[44px]"
-          type="button"
-          onClick={() => fileRef.current?.click()}
-        >
-          Імпорт (додати)
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-9 min-h-[44px] text-warning"
-          type="button"
-          onClick={() => setConfirmReplace(true)}
-        >
-          Імпорт (замінити)
-        </Button>
       </div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={(e) => runImport(e, false)}
-      />
-      <input
-        ref={fileReplaceRef}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={(e) => runImport(e, true)}
-      />
-      <ConfirmDialog
-        open={confirmReplace}
-        title="Замінити всі дані Фізрука?"
-        description="Поточні тренування та власні вправи буде замінено даними з файлу. Цю дію неможливо відмінити."
-        confirmLabel="Замінити"
-        cancelLabel="Скасувати"
-        danger
-        onConfirm={() => {
-          setConfirmReplace(false);
-          fileReplaceRef.current?.click();
-        }}
-        onCancel={() => setConfirmReplace(false)}
-      />
     </div>
   );
 }
