@@ -1,4 +1,4 @@
-import { memo, Suspense, useEffect, useRef, useState } from "react";
+import { memo, Suspense, useState } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { Icon } from "@shared/components/ui/Icon";
@@ -47,21 +47,23 @@ function LimitBudgetCardComponent({
   const [forecastOpen, setForecastOpen] = useState(
     Boolean(forecast?.overLimit),
   );
-  // `useState` фіксує initial value лише при першому монтажі. Без цього
-  // ефекту картка, яка монтувалась у безпечному стані, лишалась би
-  // згорнутою після того як прогноз перейшов у перевищення — напр. коли
-  // користувач опускає ліміт інлайн-редактором або надходить нова
-  // транзакція. Авто-розкриваємо секцію лише на переході `false → true`,
-  // щоб не перевідкривати її після того, як користувач свідомо її
-  // згорнув при вже перевищеному прогнозі.
-  const prevOverLimitRef = useRef(Boolean(forecast?.overLimit));
-  useEffect(() => {
-    const nextOverLimit = Boolean(forecast?.overLimit);
-    if (nextOverLimit && !prevOverLimitRef.current) {
+  // Авто-розкриваємо секцію лише на переході `overLimit: false → true`
+  // (напр. користувач опускає ліміт інлайн-редактором, нова транзакція
+  // виводить проєкцію за стелю). `useState` запам'ятовує initial value
+  // тільки при першому монтажі, тож стежимо за попереднім значенням
+  // окремим state і оновлюємо його під час рендеру — render-time
+  // state adjustment за React docs (you-might-not-need-an-effect),
+  // без зайвого ре-рендеру через `useEffect`. Свідоме згортання
+  // користувачем вже-перевищеної секції лишається недоторканим, поки
+  // `overLimit` не впаде назад у `false` і не стрельне знову.
+  const nextOverLimit = Boolean(forecast?.overLimit);
+  const [prevOverLimit, setPrevOverLimit] = useState(nextOverLimit);
+  if (nextOverLimit !== prevOverLimit) {
+    setPrevOverLimit(nextOverLimit);
+    if (nextOverLimit) {
       setForecastOpen(true);
     }
-    prevOverLimitRef.current = nextOverLimit;
-  }, [forecast?.overLimit]);
+  }
   const [explanationOpen, setExplanationOpen] = useState(true);
 
   return (
