@@ -6,8 +6,29 @@ export interface NutritionReminderPrefs {
   reminderHour?: number | null;
 }
 
+const LAST_NOTIFY_KEY_STORAGE = "nutrition_last_reminder_notif_key";
+
+function readLastNotifyKey(): string {
+  try {
+    return localStorage.getItem(LAST_NOTIFY_KEY_STORAGE) || "";
+  } catch {
+    return "";
+  }
+}
+
+function writeLastNotifyKey(key: string): void {
+  try {
+    localStorage.setItem(LAST_NOTIFY_KEY_STORAGE, key);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function useNutritionReminders(prefs: NutritionReminderPrefs): void {
-  const lastNotifyKeyRef = useRef<string>("");
+  // Seed from localStorage so a remount within the same reminder window
+  // (e.g. navigating away from nutrition and back) does not re-fire the
+  // same day's notification.
+  const lastNotifyKeyRef = useRef<string>(readLastNotifyKey());
 
   useEffect(() => {
     try {
@@ -40,6 +61,7 @@ export function useNutritionReminders(prefs: NutritionReminderPrefs): void {
       const key = `${todayISODate()}-${target}`;
       if (lastNotifyKeyRef.current === key) return;
       lastNotifyKeyRef.current = key;
+      writeLastNotifyKey(key);
       try {
         if ("serviceWorker" in navigator) {
           navigator.serviceWorker.ready
