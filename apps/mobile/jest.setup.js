@@ -16,6 +16,14 @@
 
 require("react-native-gesture-handler/jestSetup");
 
+// `@react-native-async-storage/async-storage` ships a hand-rolled
+// CommonJS mock — register it here so any component that reads/writes
+// persisted UI state (e.g. the collapsible Body trend cards) works in
+// tests without pulling in the real TurboModule.
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
+);
+
 // `@/auth/authClient` re-exports Better Auth's React client, which is
 // shipped as an ESM-only bundle. jest-expo's default transform list
 // does not include `better-auth/*`, so any test that indirectly
