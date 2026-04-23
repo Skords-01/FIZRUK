@@ -91,10 +91,18 @@ async function startZxingScanner(
   cancelRef: MutableRefObject<boolean>,
   zxingStopRef: MutableRefObject<(() => void) | null>,
 ) {
-  const { BrowserMultiFormatReader } = await import("@zxing/browser");
+  // We only ever scan 1D product barcodes (EAN/UPC/Code128). Use the
+  // 1D-only reader instead of `BrowserMultiFormatReader`. Import from
+  // the deep `esm/readers/...` path rather than the package root
+  // because `@zxing/browser`'s root barrel `export *`s every reader
+  // (Aztec / DataMatrix / PDF417 / QR / MultiFormat) and Rollup cannot
+  // reliably tree-shake across those. Runtime wins: fewer format
+  // attempts per frame on the fallback path.
+  const { BrowserMultiFormatOneDReader } =
+    await import("@zxing/browser/esm/readers/BrowserMultiFormatOneDReader.js");
   if (cancelRef.current) return;
 
-  const reader = new BrowserMultiFormatReader();
+  const reader = new BrowserMultiFormatOneDReader();
 
   const controls = await reader.decodeFromStream(
     stream!,
@@ -216,69 +224,86 @@ export function useWebScanner({
 
       if (cancelRef.current) return;
 
+      const WANTED_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"];
       const usedBarcodeDetector =
         typeof window !== "undefined" && "BarcodeDetector" in window;
 
+      // Some Chromium variants expose the `BarcodeDetector` global but
+      // `getSupportedFormats()` returns an empty list or no intersection
+      // with the product barcodes we care about — in that state the
+      // constructor succeeds but `.detect()` silently returns `[]`,
+      // and the user would stare at a "scanning" UI forever. Verify
+      // format support up front and fall through to zxing when the
+      // native detector can't actually help us.
+      let detector: any = null;
       if (usedBarcodeDetector) {
-        let detector: any = null;
         try {
-          detector = new (window as any).BarcodeDetector({
-            formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"],
-          });
+          const supported: string[] = await ((
+            window as any
+          ).BarcodeDetector.getSupportedFormats?.() ?? Promise.resolve([]));
+          const hasAny =
+            !Array.isArray(supported) ||
+            supported.length === 0 ||
+            WANTED_FORMATS.some((f) => supported.includes(f));
+          if (hasAny) {
+            detector = new (window as any).BarcodeDetector({
+              formats: WANTED_FORMATS,
+            });
+          }
         } catch {
           detector = null;
         }
+      }
 
-        if (detector) {
-          let consecutiveErrors = 0;
-          let lastTickTime = 0;
-          const tick = async () => {
-            if (cancelRef.current) return;
-            const now = performance.now();
-            if (now - lastTickTime < 150) {
-              rafRef.current = requestAnimationFrame(tick);
-              return;
-            }
-            lastTickTime = now;
-            try {
-              const v = videoRef.current;
-              if (v && v.readyState >= 2 && v.videoWidth > 0) {
-                const codes = await detector.detect(v);
-                consecutiveErrors = 0;
-                const first = codes?.[0];
-                const raw = first?.rawValue;
-                if (raw) {
-                  handleDetected({
-                    code: String(raw),
-                    format: String(first?.format ?? ""),
-                  });
-                  return;
-                }
-              }
-            } catch {
-              consecutiveErrors++;
-              if (consecutiveErrors >= 5) {
-                if (!cancelRef.current) {
-                  startZxingScanner(
-                    videoRef.current,
-                    streamRef.current,
-                    handleDetected,
-                    cancelRef,
-                    zxingStopRef,
-                  ).catch(() =>
-                    setStatus("Сканер не підтримується. Введи код вручну."),
-                  );
-                }
+      if (detector) {
+        let consecutiveErrors = 0;
+        let lastTickTime = 0;
+        const tick = async () => {
+          if (cancelRef.current) return;
+          const now = performance.now();
+          if (now - lastTickTime < 150) {
+            rafRef.current = requestAnimationFrame(tick);
+            return;
+          }
+          lastTickTime = now;
+          try {
+            const v = videoRef.current;
+            if (v && v.readyState >= 2 && v.videoWidth > 0) {
+              const codes = await detector.detect(v);
+              consecutiveErrors = 0;
+              const first = codes?.[0];
+              const raw = first?.rawValue;
+              if (raw) {
+                handleDetected({
+                  code: String(raw),
+                  format: String(first?.format ?? ""),
+                });
                 return;
               }
             }
-            if (!cancelRef.current) {
-              rafRef.current = requestAnimationFrame(tick);
+          } catch {
+            consecutiveErrors++;
+            if (consecutiveErrors >= 5) {
+              if (!cancelRef.current) {
+                startZxingScanner(
+                  videoRef.current,
+                  streamRef.current,
+                  handleDetected,
+                  cancelRef,
+                  zxingStopRef,
+                ).catch(() =>
+                  setStatus("Сканер не підтримується. Введи код вручну."),
+                );
+              }
+              return;
             }
-          };
-          rafRef.current = requestAnimationFrame(tick);
-          return;
-        }
+          }
+          if (!cancelRef.current) {
+            rafRef.current = requestAnimationFrame(tick);
+          }
+        };
+        rafRef.current = requestAnimationFrame(tick);
+        return;
       }
 
       try {
