@@ -203,14 +203,16 @@ export default function NutritionApp({
     // Recipes moved to a sub-tab inside the "menu" page (#8). Only read
     // the cache when the menu page is actually showing the recipes tab.
     if (activePage !== "menu" || menuSubTab !== "recipes") return;
-    const c = readRecipeCache(recipeCacheKey);
+    const c = readRecipeCache<Record<string, unknown>>(recipeCacheKey);
     if (c?.recipes?.length) {
       setRecipes(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        c.recipes.map((r: any) => ({
-          ...r,
-          id: r?.id ? String(r.id) : stableRecipeId(r),
-        })),
+        c.recipes.map((r) => {
+          const rawId = (r as { id?: unknown })?.id;
+          return {
+            ...r,
+            id: rawId ? String(rawId) : stableRecipeId(r),
+          };
+        }),
       );
       setRecipesRaw(c.recipesRaw || "");
       setRecipesTried(true);

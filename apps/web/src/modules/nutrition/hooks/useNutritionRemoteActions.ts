@@ -1,10 +1,26 @@
 import { useCallback, type Dispatch, type SetStateAction } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { nutritionApi } from "@shared/api";
+import type {
+  NutritionDayMeal,
+  NutritionDayPlan as ApiNutritionDayPlan,
+  NutritionMealType,
+  NutritionRecipe as ApiNutritionRecipe,
+  NutritionShoppingCategory,
+  NutritionWeekPlan as ApiNutritionWeekPlan,
+} from "@shared/api";
 import { formatNutritionError } from "../lib/nutritionErrors.js";
 import { writeRecipeCache } from "../lib/recipeCache.js";
 import { stableRecipeId } from "../lib/recipeIds.js";
 import { getDayMacros, getDaySummary } from "../lib/nutritionStorage.js";
+import type { Meal, NutritionLogLike } from "../lib/nutritionStorage.js";
+import type { PantryItem } from "../lib/pantryTextParser.js";
+import type {
+  NutritionDayPlan as UiNutritionDayPlan,
+  NutritionRecipe as UiNutritionRecipe,
+  NutritionWeekPlan as UiNutritionWeekPlan,
+} from "./useNutritionUiState.js";
+import type { ShoppingCategory } from "../lib/shoppingListStorage.js";
 
 type AnySetter<T = unknown> =
   | Dispatch<SetStateAction<T>>
@@ -62,37 +78,113 @@ function buildMutationHandlers<TData>({
   };
 }
 
+/**
+ * Minimal shape of `useNutritionPantries()` that this hook consumes.
+ * The full return type of that hook is bigger — we only need the parsed
+ * pantry items here, so requiring the whole thing would over-couple.
+ */
+export interface RemoteActionsPantry {
+  effectiveItems: PantryItem[];
+}
+
+/**
+ * Subset of `NutritionPrefs` that the remote actions hook reads when
+ * building request payloads. Kept narrow on purpose so tests can pass
+ * a mock that only fills the fields that matter.
+ */
+export interface RemoteActionsPrefs {
+  goal: string;
+  servings?: number | string | null;
+  timeMinutes?: number | string | null;
+  exclude?: string | null;
+  dailyTargetKcal: number | null;
+  dailyTargetProtein_g: number | null;
+  dailyTargetFat_g: number | null;
+  dailyTargetCarbs_g: number | null;
+}
+
+/**
+ * Subset of `useNutritionLog()` return used by `fetchDayHint` and
+ * `addMealFromPlan`.
+ */
+export interface RemoteActionsLog {
+  nutritionLog: NutritionLogLike;
+  selectedDate: string;
+  handleAddMeal: (meal: Partial<Meal>) => void;
+}
+
+/**
+ * Subset of `useShoppingList()` used by `generateShoppingList`.
+ */
+export interface RemoteActionsShopping {
+  setGeneratedList: (categories: ShoppingCategory[] | null | undefined) => void;
+}
+
+/**
+ * Payload the `setDayPlan` updater receives on a partial regeneration —
+ * we fold the new plan into the previous one per meal type, so typing
+ * `prev` strictly keeps the reducer honest about which fields exist.
+ */
+type DayPlanWithMeals = Omit<UiNutritionDayPlan, "meals"> & {
+  meals?: NutritionDayMeal[];
+};
+
 export interface UseNutritionRemoteActionsParams {
   setBusy: AnySetter<boolean>;
   setErr: AnySetter<string>;
   setStatusText: AnySetter<string>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  pantry: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  prefs: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  recipes: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setRecipes: (value: any) => void;
+  pantry: RemoteActionsPantry;
+  prefs: RemoteActionsPrefs;
+  recipes: UiNutritionRecipe[];
+  setRecipes: (value: UiNutritionRecipe[]) => void;
   setRecipesRaw: (value: string) => void;
   setRecipesTried: (value: boolean) => void;
   recipeCacheKey: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  weekPlan: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setWeekPlan: (value: any) => void;
+  weekPlan: UiNutritionWeekPlan | null;
+  setWeekPlan: (value: UiNutritionWeekPlan | null) => void;
   setWeekPlanRaw: (value: string) => void;
   setWeekPlanBusy: AnySetter<boolean>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setDayPlan: Dispatch<SetStateAction<any>>;
+  setDayPlan: Dispatch<SetStateAction<UiNutritionDayPlan | null>>;
   setDayPlanBusy: AnySetter<boolean>;
   setDayHintBusy: AnySetter<boolean>;
   setDayHintText: AnySetter<string>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  log: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  shopping: any;
+  log: RemoteActionsLog;
+  shopping: RemoteActionsShopping;
   setShoppingBusy: AnySetter<boolean>;
+}
+
+/**
+ * Payload the api-client returns from `recommendRecipes` before we tag
+ * each recipe with a stable id. Keeping it local avoids reaching into
+ * the api-client types for a structural detail that is only used at
+ * this boundary.
+ */
+type RecipeFromApi = ApiNutritionRecipe & { id?: unknown };
+
+/** Coerce a possibly-numeric pref value to a number with a fallback. */
+function toNumber(value: unknown, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+/**
+ * The shopping-list API returns categories without per-item `id` /
+ * `checked` (those live only in LS state). We mint them here so the
+ * downstream `ShoppingList` state stays well-formed.
+ */
+function adaptShoppingCategories(
+  categories: readonly NutritionShoppingCategory[],
+): ShoppingCategory[] {
+  return categories.map((cat, catIdx) => ({
+    name: String(cat.name ?? ""),
+    items: (Array.isArray(cat.items) ? cat.items : []).map((it, itIdx) => ({
+      id: `sl_${catIdx}_${itIdx}_${Math.random().toString(36).slice(2, 8)}`,
+      name: String(it.name ?? ""),
+      quantity: String(it.quantity ?? ""),
+      note: String(it.note ?? ""),
+      checked: false,
+    })),
+  }));
 }
 
 export function useNutritionRemoteActions({
@@ -134,14 +226,16 @@ export function useNutritionRemoteActions({
         items: items.slice(0, 40),
         preferences: {
           goal: prefs.goal,
-          servings: Number(prefs.servings) || 1,
-          timeMinutes: Number(prefs.timeMinutes) || 25,
+          servings: toNumber(prefs.servings, 1),
+          timeMinutes: toNumber(prefs.timeMinutes, 25),
           exclude: String(prefs.exclude || ""),
           locale: "uk-UA",
         },
       });
     },
-    ...buildMutationHandlers({
+    ...buildMutationHandlers<
+      Awaited<ReturnType<typeof nutritionApi.recommendRecipes>>
+    >({
       setBusy,
       setErr,
       setStatusText,
@@ -154,11 +248,9 @@ export function useNutritionRemoteActions({
           setRecipesTried(true);
         },
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onSuccessSideEffects: (data: any) => {
-        const list = Array.isArray(data?.recipes)
-          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            data.recipes.map((r: any) => ({
+      onSuccessSideEffects: (data) => {
+        const list: UiNutritionRecipe[] = Array.isArray(data?.recipes)
+          ? (data.recipes as RecipeFromApi[]).map((r) => ({
               ...r,
               id: r?.id ? String(r.id) : stableRecipeId(r),
             }))
@@ -194,7 +286,10 @@ export function useNutritionRemoteActions({
       setWeekPlanRaw("");
     },
     onSuccess: (data) => {
-      setWeekPlan(data?.plan || null);
+      const plan = (data?.plan ?? null) as
+        | (ApiNutritionWeekPlan & Record<string, unknown>)
+        | null;
+      setWeekPlan(plan);
       setWeekPlanRaw(typeof data?.rawText === "string" ? data.rawText : "");
     },
     onError: (err) => {
@@ -222,20 +317,15 @@ export function useNutritionRemoteActions({
           _synthetic: true,
         });
       }
-      const meals = log.nutritionLog?.[log.selectedDate]?.meals || [];
-      const macroSources = meals.reduce(
-        (
-          acc: Record<string, number>,
-          m: { macroSource?: string; source?: string },
-        ) => {
-          const k = String(
-            m?.macroSource || (m?.source === "photo" ? "photoAI" : "manual"),
-          );
-          acc[k] = (acc[k] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
+      const rawMeals = log.nutritionLog?.[log.selectedDate]?.meals || [];
+      const meals = rawMeals as Array<Partial<Meal>>;
+      const macroSources = meals.reduce<Record<string, number>>((acc, m) => {
+        const k = String(
+          m?.macroSource || (m?.source === "photo" ? "photoAI" : "manual"),
+        );
+        acc[k] = (acc[k] || 0) + 1;
+        return acc;
+      }, {});
       const macros = summary.hasAnyMacros
         ? getDayMacros(log.nutritionLog, log.selectedDate)
         : { kcal: null, protein_g: null, fat_g: null, carbs_g: null };
@@ -301,19 +391,26 @@ export function useNutritionRemoteActions({
       plan,
       regenerateMealType,
     }: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      plan: any;
+      plan: ApiNutritionDayPlan;
       regenerateMealType: string | null | undefined;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setDayPlan((prev: any) => {
-        if (regenerateMealType && prev?.meals?.length > 0) {
-          const newMeals = Array.isArray(plan.meals) ? plan.meals : [];
-          const merged = [
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ...prev.meals.filter((m: any) => m.type !== regenerateMealType),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ...newMeals.filter((m: any) => m.type === regenerateMealType),
+      setDayPlan((prev) => {
+        const prevWithMeals = prev as DayPlanWithMeals | null;
+        if (
+          regenerateMealType &&
+          prevWithMeals?.meals &&
+          prevWithMeals.meals.length > 0
+        ) {
+          const newMeals: NutritionDayMeal[] = Array.isArray(plan.meals)
+            ? (plan.meals as NutritionDayMeal[])
+            : [];
+          const merged: NutritionDayMeal[] = [
+            ...prevWithMeals.meals.filter(
+              (m) => m.type !== (regenerateMealType as NutritionMealType),
+            ),
+            ...newMeals.filter(
+              (m) => m.type === (regenerateMealType as NutritionMealType),
+            ),
           ];
           interface PlanTotals {
             totalKcal?: number;
@@ -322,8 +419,7 @@ export function useNutritionRemoteActions({
             totalCarbs_g?: number;
           }
           const totals = merged.reduce<PlanTotals>(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (acc, m: any) => ({
+            (acc, m) => ({
               totalKcal: (acc.totalKcal ?? 0) + (m.kcal ?? 0),
               totalProtein_g: (acc.totalProtein_g ?? 0) + (m.protein_g ?? 0),
               totalFat_g: (acc.totalFat_g ?? 0) + (m.fat_g ?? 0),
@@ -331,9 +427,9 @@ export function useNutritionRemoteActions({
             }),
             {},
           );
-          return { ...prev, meals: merged, ...totals };
+          return { ...prevWithMeals, meals: merged, ...totals };
         }
-        return plan;
+        return plan as unknown as UiNutritionDayPlan;
       });
     },
     onError: (err) => {
@@ -371,7 +467,7 @@ export function useNutritionRemoteActions({
       log.handleAddMeal({
         id,
         time: `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`,
-        mealType: meal.type || "snack",
+        mealType: (meal.type || "snack") as Meal["mealType"],
         label: (meal.type ? typeLabels[meal.type] : undefined) || "Прийом їжі",
         name: meal.name || "Страва",
         macros: {
@@ -388,14 +484,20 @@ export function useNutritionRemoteActions({
   );
 
   // ─── Shopping list ──────────────────────────────────────────────────────
+  interface ShoppingRequestBody {
+    pantryItems: PantryItem[];
+    locale: string;
+    weekPlan?: UiNutritionWeekPlan;
+    recipes?: UiNutritionRecipe[];
+  }
   const shoppingMutation = useMutation({
     mutationFn: (source: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: Record<string, any> = {
+      const body: ShoppingRequestBody = {
         pantryItems: pantry.effectiveItems.slice(0, 50),
         locale: "uk-UA",
       };
-      if (source === "weekplan" && weekPlan?.days?.length > 0) {
+      const weekPlanDays = Array.isArray(weekPlan?.days) ? weekPlan.days : [];
+      if (source === "weekplan" && weekPlan && weekPlanDays.length > 0) {
         body.weekPlan = weekPlan;
       } else if (recipes.length > 0) {
         body.recipes = recipes;
@@ -413,7 +515,7 @@ export function useNutritionRemoteActions({
       setErr("");
     },
     onSuccess: (data) => {
-      shopping.setGeneratedList(data.categories);
+      shopping.setGeneratedList(adaptShoppingCategories(data.categories));
     },
     onError: (err) => {
       setErr(formatNutritionError(err, "Помилка генерації списку покупок"));
