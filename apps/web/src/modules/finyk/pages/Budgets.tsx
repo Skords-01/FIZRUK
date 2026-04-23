@@ -3,6 +3,8 @@ import { useQueries } from "@tanstack/react-query";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
+import { Icon } from "@shared/components/ui/Icon";
+import { cn } from "@shared/lib/cn";
 import { calcCategorySpent, resolveExpenseCategoryMeta } from "../utils";
 import { computeFinykSchedule, startOfToday } from "../lib/upcomingSchedule";
 import { FinykStatsStrip } from "../components/FinykStatsStrip";
@@ -191,6 +193,30 @@ export function Budgets({ mono, storage, showBalance = true }) {
   const [dismissedAdvice, setDismissedAdvice] = useState<
     Record<string, string>
   >(() => readJSON("finyk_proactive_dismissed_v1", {}));
+
+  // Collapsible state for Limits / Goals sections. Default closed per
+  // product feedback (списком із можливістю згорнути, згорнуто за замовчуванням).
+  // Persist last choice to localStorage so the user's open/closed pref
+  // survives reloads and tab switches; still resets to closed only on
+  // first ever visit.
+  const [limitsOpen, setLimitsOpen] = useState<boolean>(() =>
+    readJSON("finyk_budgets_limits_open_v1", false),
+  );
+  const [goalsOpen, setGoalsOpen] = useState<boolean>(() =>
+    readJSON("finyk_budgets_goals_open_v1", false),
+  );
+  const toggleLimits = useCallback(() => {
+    setLimitsOpen((v) => {
+      writeJSON("finyk_budgets_limits_open_v1", !v);
+      return !v;
+    });
+  }, []);
+  const toggleGoals = useCallback(() => {
+    setGoalsOpen((v) => {
+      writeJSON("finyk_budgets_goals_open_v1", !v);
+      return !v;
+    });
+  }, []);
   const dismissAdvice = useCallback((categoryId, monthKey, text) => {
     if (!text) return;
     setDismissedAdvice((prev) => {
@@ -363,10 +389,28 @@ export function Budgets({ mono, storage, showBalance = true }) {
         />
 
         {/* Limits */}
-        <SectionHeading as="div" size="sm">
-          Ліміти · {monthStart.toLocaleDateString("uk-UA", { month: "long" })}
-        </SectionHeading>
-        {limitBudgets.length === 0 && (
+        <button
+          type="button"
+          onClick={toggleLimits}
+          aria-expanded={limitsOpen}
+          className="w-full flex items-center justify-between gap-3 -mb-1 px-1 py-2 text-left rounded-md hover:bg-panelHi transition-colors"
+        >
+          <SectionHeading as="span" size="sm">
+            Ліміти · {monthStart.toLocaleDateString("uk-UA", { month: "long" })}
+            {limitBudgets.length > 0 && (
+              <span className="ml-1 text-subtle">({limitBudgets.length})</span>
+            )}
+          </SectionHeading>
+          <Icon
+            name="chevron-down"
+            size={14}
+            className={cn(
+              "transition-transform text-muted",
+              limitsOpen ? "rotate-180" : "",
+            )}
+          />
+        </button>
+        {limitsOpen && limitBudgets.length === 0 && (
           <EmptyState
             compact
             icon={
@@ -390,76 +434,95 @@ export function Budgets({ mono, storage, showBalance = true }) {
             description="Встанови ліміт витрат на категорію, щоб не виходити за межі бюджету"
           />
         )}
-        {limitBudgets.map((b, i) => {
-          const cat = resolveExpenseCategoryMeta(
-            b.categoryId,
-            customCategories,
-          );
-          const bspent = calcSpent(b);
-          const usage = calculateLimitUsage(b, bspent);
-          const globalIdx = budgets.indexOf(b);
-          const showAdvice = shouldShowProactiveAdvice(usage, null);
-          const isEditing = editIdx === globalIdx;
-          const catLabel = cat?.label || "—";
-          return (
-            <LimitBudgetCard
-              key={b.id || i}
-              budget={b}
-              categoryLabel={catLabel}
-              spent={usage.spent}
-              pctRaw={usage.pctRaw}
-              pctRounded={usage.pctRounded}
-              remaining={usage.remaining}
-              isEditing={isEditing}
-              showProactiveAdvice={showAdvice}
-              proactiveLoading={proactiveLoading[b.categoryId]}
-              proactiveText={
-                proactiveAdvice[b.categoryId] &&
-                dismissedAdvice[
-                  `${proactiveItems.find((it) => it.categoryId === b.categoryId)?.monthKey ?? ""}_${b.categoryId}`
-                ] === proactiveAdvice[b.categoryId]
-                  ? null
-                  : proactiveAdvice[b.categoryId]
-              }
-              onDismissAdvice={
-                proactiveAdvice[b.categoryId]
-                  ? () => {
-                      const mk =
-                        proactiveItems.find(
-                          (it) => it.categoryId === b.categoryId,
-                        )?.monthKey ?? "";
-                      if (mk) {
-                        dismissAdvice(
-                          b.categoryId,
-                          mk,
-                          proactiveAdvice[b.categoryId],
-                        );
+        {limitsOpen &&
+          limitBudgets.map((b, i) => {
+            const cat = resolveExpenseCategoryMeta(
+              b.categoryId,
+              customCategories,
+            );
+            const bspent = calcSpent(b);
+            const usage = calculateLimitUsage(b, bspent);
+            const globalIdx = budgets.indexOf(b);
+            const showAdvice = shouldShowProactiveAdvice(usage, null);
+            const isEditing = editIdx === globalIdx;
+            const catLabel = cat?.label || "—";
+            return (
+              <LimitBudgetCard
+                key={b.id || i}
+                budget={b}
+                categoryLabel={catLabel}
+                spent={usage.spent}
+                pctRaw={usage.pctRaw}
+                pctRounded={usage.pctRounded}
+                remaining={usage.remaining}
+                isEditing={isEditing}
+                showProactiveAdvice={showAdvice}
+                proactiveLoading={proactiveLoading[b.categoryId]}
+                proactiveText={
+                  proactiveAdvice[b.categoryId] &&
+                  dismissedAdvice[
+                    `${proactiveItems.find((it) => it.categoryId === b.categoryId)?.monthKey ?? ""}_${b.categoryId}`
+                  ] === proactiveAdvice[b.categoryId]
+                    ? null
+                    : proactiveAdvice[b.categoryId]
+                }
+                onDismissAdvice={
+                  proactiveAdvice[b.categoryId]
+                    ? () => {
+                        const mk =
+                          proactiveItems.find(
+                            (it) => it.categoryId === b.categoryId,
+                          )?.monthKey ?? "";
+                        if (mk) {
+                          dismissAdvice(
+                            b.categoryId,
+                            mk,
+                            proactiveAdvice[b.categoryId],
+                          );
+                        }
                       }
-                    }
-                  : undefined
-              }
-              onBeginEdit={() => setEditIdx(globalIdx)}
-              onChangeLimit={(nextLimit) =>
-                setBudgets((bs) =>
-                  bs.map((x, j) =>
-                    j === globalIdx ? { ...x, limit: Number(nextLimit) } : x,
-                  ),
-                )
-              }
-              onSave={() => setEditIdx(null)}
-              onDelete={() => {
-                setBudgets((bs) => bs.filter((_, j) => j !== globalIdx));
-                setEditIdx(null);
-              }}
-            />
-          );
-        })}
+                    : undefined
+                }
+                onBeginEdit={() => setEditIdx(globalIdx)}
+                onChangeLimit={(nextLimit) =>
+                  setBudgets((bs) =>
+                    bs.map((x, j) =>
+                      j === globalIdx ? { ...x, limit: Number(nextLimit) } : x,
+                    ),
+                  )
+                }
+                onSave={() => setEditIdx(null)}
+                onDelete={() => {
+                  setBudgets((bs) => bs.filter((_, j) => j !== globalIdx));
+                  setEditIdx(null);
+                }}
+              />
+            );
+          })}
 
         {/* Goals */}
-        <SectionHeading as="div" size="sm" className="pt-1">
-          Цілі накопичення
-        </SectionHeading>
-        {goalBudgets.length === 0 && (
+        <button
+          type="button"
+          onClick={toggleGoals}
+          aria-expanded={goalsOpen}
+          className="w-full flex items-center justify-between gap-3 -mb-1 px-1 py-2 text-left rounded-md hover:bg-panelHi transition-colors"
+        >
+          <SectionHeading as="span" size="sm">
+            Цілі накопичення
+            {goalBudgets.length > 0 && (
+              <span className="ml-1 text-subtle">({goalBudgets.length})</span>
+            )}
+          </SectionHeading>
+          <Icon
+            name="chevron-down"
+            size={14}
+            className={cn(
+              "transition-transform text-muted",
+              goalsOpen ? "rotate-180" : "",
+            )}
+          />
+        </button>
+        {goalsOpen && goalBudgets.length === 0 && (
           <EmptyState
             compact
             icon={
@@ -481,37 +544,38 @@ export function Budgets({ mono, storage, showBalance = true }) {
             description="Постав ціль накопичення і відстежуй прогрес"
           />
         )}
-        {goalBudgets.map((b, i) => {
-          const progress = calculateGoalProgress(b, now);
-          const globalIdx = budgets.indexOf(b);
-          const isEditing = editIdx === globalIdx;
-          return (
-            <GoalBudgetCard
-              key={b.id || i}
-              budget={b}
-              saved={progress.saved}
-              pct={progress.pct}
-              daysLeft={progress.daysLeft}
-              monthlyLabel={getGoalMonthlyLabel(progress)}
-              isEditing={isEditing}
-              onBeginEdit={() => setEditIdx(globalIdx)}
-              onChangeSaved={(nextSaved) =>
-                setBudgets((bs) =>
-                  bs.map((x, j) =>
-                    j === globalIdx
-                      ? { ...x, savedAmount: Number(nextSaved) }
-                      : x,
-                  ),
-                )
-              }
-              onSave={() => setEditIdx(null)}
-              onDelete={() => {
-                setBudgets((bs) => bs.filter((_, j) => j !== globalIdx));
-                setEditIdx(null);
-              }}
-            />
-          );
-        })}
+        {goalsOpen &&
+          goalBudgets.map((b, i) => {
+            const progress = calculateGoalProgress(b, now);
+            const globalIdx = budgets.indexOf(b);
+            const isEditing = editIdx === globalIdx;
+            return (
+              <GoalBudgetCard
+                key={b.id || i}
+                budget={b}
+                saved={progress.saved}
+                pct={progress.pct}
+                daysLeft={progress.daysLeft}
+                monthlyLabel={getGoalMonthlyLabel(progress)}
+                isEditing={isEditing}
+                onBeginEdit={() => setEditIdx(globalIdx)}
+                onChangeSaved={(nextSaved) =>
+                  setBudgets((bs) =>
+                    bs.map((x, j) =>
+                      j === globalIdx
+                        ? { ...x, savedAmount: Number(nextSaved) }
+                        : x,
+                    ),
+                  )
+                }
+                onSave={() => setEditIdx(null)}
+                onDelete={() => {
+                  setBudgets((bs) => bs.filter((_, j) => j !== globalIdx));
+                  setEditIdx(null);
+                }}
+              />
+            );
+          })}
 
         {showForm ? (
           <AddBudgetForm
