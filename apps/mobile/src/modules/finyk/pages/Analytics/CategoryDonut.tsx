@@ -13,9 +13,15 @@
  * VictoryPie) matches the web implementation byte-for-byte and lets
  * us skip the layout overhead of victory-native for the small (160px)
  * chart this screen renders.
+ *
+ * When there are more than `TOP_N` categories, the legend renders a
+ * «Показати всі / Згорнути» toggle below it. Collapsed view shows the
+ * top N + an "Інше" bucket (default); expanded view replaces the
+ * bucket with every category in `data` so the user can drill into the
+ * long tail without leaving the screen.
  */
-import { memo } from "react";
-import { Text, View } from "react-native";
+import { memo, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import Svg, { Path, Text as SvgText } from "react-native-svg";
 
 import type { TopCategory } from "@sergeant/finyk-domain/domain";
@@ -95,6 +101,9 @@ const TOP_N = 5;
 const RENDER_MIN_SWEEP = 0.5;
 
 function CategoryDonutComponent({ data, size = 160 }: CategoryDonutProps) {
+  const [showAll, setShowAll] = useState(false);
+  const hasOverflow = (data?.length ?? 0) > TOP_N;
+
   if (!data || data.length === 0) return null;
 
   const cx = size / 2;
@@ -105,22 +114,32 @@ function CategoryDonutComponent({ data, size = 160 }: CategoryDonutProps) {
   const total = data.reduce((s, d) => s + d.spent, 0);
   if (total === 0) return null;
 
-  const top = data.slice(0, TOP_N);
-  const otherSpent = data.slice(TOP_N).reduce((s, d) => s + d.spent, 0);
-  const totalTopPct = top.reduce((s, d) => s + d.pct, 0);
-  const segments: Omit<Arc, "start" | "end">[] =
-    otherSpent > 0
-      ? [
-          ...top,
-          {
-            categoryId: "_other",
-            label: "Інше",
-            spent: otherSpent,
-            pct: Math.max(0, 100 - totalTopPct),
-            color: "#94a3b8",
-          },
-        ]
-      : top;
+  const expanded = showAll && hasOverflow;
+
+  let segments: Omit<Arc, "start" | "end">[];
+  if (expanded) {
+    // Expanded legend replaces the "Інше" bucket with every category
+    // from `data` (the selector caps this at 20 entries — see
+    // `selectCategoryDistributionFromIndex`).
+    segments = data.map((d) => ({ ...d }));
+  } else {
+    const top = data.slice(0, TOP_N);
+    const otherSpent = data.slice(TOP_N).reduce((s, d) => s + d.spent, 0);
+    const totalTopPct = top.reduce((s, d) => s + d.pct, 0);
+    segments =
+      otherSpent > 0
+        ? [
+            ...top,
+            {
+              categoryId: "_other",
+              label: "Інше",
+              spent: otherSpent,
+              pct: Math.max(0, 100 - totalTopPct),
+              color: "#94a3b8",
+            },
+          ]
+        : top;
+  }
 
   let currentAngle = 0;
   const arcs: Arc[] = segments.map((seg) => {
@@ -134,78 +153,92 @@ function CategoryDonutComponent({ data, size = 160 }: CategoryDonutProps) {
   const GAP_DEG = visible.length > 1 ? 1 : 0;
 
   return (
-    <View
-      className="w-full flex-row items-center gap-4"
-      testID="finyk-analytics-donut"
-    >
-      <Svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        accessibilityLabel="Кругова діаграма категорій"
-      >
-        {arcs.map((arc, i) => {
-          const sweep = arc.end - arc.start;
-          if (sweep < RENDER_MIN_SWEEP) return null;
-          const pad = Math.min(GAP_DEG / 2, sweep / 2 - 0.01);
-          const d = describeSector(
-            cx,
-            cy,
-            outerR,
-            innerR,
-            arc.start + pad,
-            arc.end - pad,
-          );
-          return <Path key={arc.categoryId || i} d={d} fill={arc.color} />;
-        })}
-        <SvgText
-          x={cx}
-          y={cy - 4}
-          textAnchor="middle"
-          fontSize="11"
-          fill="#78716c"
-          fontWeight="500"
+    <View className="w-full gap-3" testID="finyk-analytics-donut">
+      <View className="flex-row items-center gap-4">
+        <Svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          accessibilityLabel="Кругова діаграма категорій"
         >
-          Всього
-        </SvgText>
-        <SvgText
-          x={cx}
-          y={cy + 12}
-          textAnchor="middle"
-          fontSize="13"
-          fontWeight="600"
-          fill="#1c1917"
-        >
-          {`${total.toLocaleString("uk-UA")} ₴`}
-        </SvgText>
-      </Svg>
-
-      <View className="flex-1 gap-1.5 min-w-0">
-        {arcs.map((arc) => (
-          <View
-            key={arc.categoryId}
-            className="flex-row items-center gap-2"
-            testID={`finyk-analytics-donut-row-${arc.categoryId}`}
+          {arcs.map((arc, i) => {
+            const sweep = arc.end - arc.start;
+            if (sweep < RENDER_MIN_SWEEP) return null;
+            const pad = Math.min(GAP_DEG / 2, sweep / 2 - 0.01);
+            const d = describeSector(
+              cx,
+              cy,
+              outerR,
+              innerR,
+              arc.start + pad,
+              arc.end - pad,
+            );
+            return <Path key={arc.categoryId || i} d={d} fill={arc.color} />;
+          })}
+          <SvgText
+            x={cx}
+            y={cy - 4}
+            textAnchor="middle"
+            fontSize="11"
+            fill="#78716c"
+            fontWeight="500"
           >
+            Всього
+          </SvgText>
+          <SvgText
+            x={cx}
+            y={cy + 12}
+            textAnchor="middle"
+            fontSize="13"
+            fontWeight="600"
+            fill="#1c1917"
+          >
+            {`${total.toLocaleString("uk-UA")} ₴`}
+          </SvgText>
+        </Svg>
+
+        <View className="flex-1 gap-1.5 min-w-0">
+          {arcs.map((arc) => (
             <View
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: arc.color }}
-            />
-            <Text
-              className="text-xs text-stone-900 flex-1 min-w-0"
-              numberOfLines={1}
+              key={arc.categoryId}
+              className="flex-row items-center gap-2"
+              testID={`finyk-analytics-donut-row-${arc.categoryId}`}
             >
-              {arc.label}
-            </Text>
-            <Text className="text-xs text-stone-500 tabular-nums">
-              {arc.pct < 1 && arc.pct > 0 ? "<1" : arc.pct}%
-            </Text>
-            <Text className="text-xs font-medium text-stone-900 tabular-nums">
-              {arc.spent.toLocaleString("uk-UA")} ₴
-            </Text>
-          </View>
-        ))}
+              <View
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ backgroundColor: arc.color }}
+              />
+              <Text
+                className="text-xs text-stone-900 flex-1 min-w-0"
+                numberOfLines={1}
+              >
+                {arc.label}
+              </Text>
+              <Text className="text-xs text-stone-500 tabular-nums">
+                {arc.pct < 1 && arc.pct > 0 ? "<1" : arc.pct}%
+              </Text>
+              <Text className="text-xs font-medium text-stone-900 tabular-nums">
+                {arc.spent.toLocaleString("uk-UA")} ₴
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
+      {hasOverflow ? (
+        <Pressable
+          onPress={() => setShowAll((v) => !v)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            expanded ? "Згорнути категорії" : "Показати всі категорії"
+          }
+          testID="finyk-analytics-donut-toggle"
+          className="self-center px-3 py-1.5 rounded-full border border-cream-300 bg-cream-50 active:opacity-70"
+        >
+          <Text className="text-xs font-medium text-stone-700">
+            {expanded ? "Згорнути ↑" : `Показати всі (${data.length}) ↓`}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { cn } from "@shared/lib/cn";
 
 // Convert a polar angle (0° = 12 o'clock, clockwise) to cartesian coordinates.
@@ -50,10 +50,16 @@ function describeSector(cx, cy, outerR, innerR, startDeg, endDeg) {
   ].join(" ");
 }
 
+const TOP_N = 5;
+
 // Presentational donut chart for category spending. Output is fully
-// derived from props, so `memo` skips redundant re-renders when the
-// parent Analytics page re-renders for unrelated reasons.
+// derived from props + local expand/collapse state, so `memo` skips
+// redundant re-renders when the parent Analytics page re-renders for
+// unrelated reasons.
 function CategoryPieChartComponent({ data = [], size = 160, className }) {
+  const [showAll, setShowAll] = useState(false);
+  const hasOverflow = (data?.length ?? 0) > TOP_N;
+
   if (!data || data.length === 0) return null;
 
   const cx = size / 2;
@@ -65,21 +71,29 @@ function CategoryPieChartComponent({ data = [], size = 160, className }) {
   const total = data.reduce((s, d) => s + d.spent, 0);
   if (total === 0) return null;
 
-  const TOP_N = 5;
-  const top = data.slice(0, TOP_N);
-  const otherSpent = data.slice(TOP_N).reduce((s, d) => s + d.spent, 0);
-  const segments =
-    otherSpent > 0
-      ? [
-          ...top,
-          {
-            categoryId: "_other",
-            label: "Інше",
-            spent: otherSpent,
-            color: "#94a3b8",
-          },
-        ]
-      : top;
+  const expanded = showAll && hasOverflow;
+  let segments;
+  if (expanded) {
+    // Expanded view shows every category returned by the selector
+    // (capped at 20 in `selectCategoryDistributionFromIndex`). Collapsed
+    // view keeps the top N + "Інше" bucket.
+    segments = data;
+  } else {
+    const top = data.slice(0, TOP_N);
+    const otherSpent = data.slice(TOP_N).reduce((s, d) => s + d.spent, 0);
+    segments =
+      otherSpent > 0
+        ? [
+            ...top,
+            {
+              categoryId: "_other",
+              label: "Інше",
+              spent: otherSpent,
+              color: "#94a3b8",
+            },
+          ]
+        : top;
+  }
 
   let currentAngle = 0;
   const arcs = segments.map((seg) => {
@@ -180,6 +194,19 @@ function CategoryPieChartComponent({ data = [], size = 160, className }) {
           ))}
         </div>
       </div>
+      {hasOverflow ? (
+        <div className="mt-3 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            aria-expanded={expanded}
+            data-testid="finyk-analytics-donut-toggle"
+            className="px-3 py-1.5 rounded-full border border-line bg-panelHi text-xs font-medium text-text hover:border-muted/50 transition-colors"
+          >
+            {expanded ? "Згорнути ↑" : `Показати всі (${data.length}) ↓`}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
