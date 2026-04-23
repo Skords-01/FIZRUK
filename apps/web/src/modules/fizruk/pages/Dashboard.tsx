@@ -8,10 +8,13 @@ import { useWorkoutTemplates } from "../hooks/useWorkoutTemplates";
 import { useWorkouts } from "../hooks/useWorkouts";
 import { useMonthlyPlan } from "../hooks/useMonthlyPlan";
 import { BodyAtlas } from "../components/BodyAtlas";
+import { HeroCard, type HeroCardState } from "../components/dashboard/HeroCard";
 import { recoveryConflictsForExercise } from "@sergeant/fizruk-domain";
 import { workoutDurationSec } from "@sergeant/fizruk-domain";
 import { ACTIVE_WORKOUT_KEY } from "@sergeant/fizruk-domain";
+import { getNextPlanSession } from "@sergeant/fizruk-domain/domain";
 import { Card } from "@shared/components/ui/Card";
+import { useActiveFizrukWorkout } from "@shared/hooks/useActiveFizrukWorkout";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState.js";
 
 const SELECTED_TEMPLATE_KEY = "fizruk_selected_template_id_v1";
@@ -252,94 +255,93 @@ export function Dashboard({
     tryStartPlan(primaryAction.picks, primaryAction.templateId);
   };
 
+  // ── Hero state resolution ───────────────────────────────────────
+  // Priority: active session > today by program/plan > fallback
+  // template (recentlyUsed) > upcoming scheduled day > empty nudge.
+  // Each branch returns a fully-typed `HeroCardState` so the hero can
+  // decide on layout without re-deriving any data.
+  const activeWorkoutId = useActiveFizrukWorkout();
+  const activeWorkout = useMemo(() => {
+    if (!activeWorkoutId) return null;
+    const w = (workouts || []).find(
+      (it) => it && it.id === activeWorkoutId && !it.endedAt,
+    );
+    return w || null;
+  }, [activeWorkoutId, workouts]);
+
+  const nextPlanSession = useMemo(() => {
+    if (!templates?.length) return null;
+    try {
+      return getNextPlanSession({
+        plan: monthlyPlan,
+        templatesById: templates,
+      });
+    } catch {
+      return null;
+    }
+  }, [monthlyPlan, templates]);
+
+  const heroState: HeroCardState = useMemo(() => {
+    if (activeWorkout?.startedAt) {
+      return {
+        kind: "active",
+        startedAtIso: activeWorkout.startedAt,
+        itemsCount: (activeWorkout.items || []).length,
+      };
+    }
+    if (primaryAction) {
+      return {
+        kind: "today",
+        label: primaryAction.label,
+        exerciseCount: primaryAction.exerciseCount,
+        estimatedMin: estimatedDurationMin,
+        hint: primaryAction.hint,
+      };
+    }
+    if (nextPlanSession && !nextPlanSession.isToday) {
+      return {
+        kind: "upcoming",
+        label: nextPlanSession.templateName,
+        daysFromNow: nextPlanSession.daysFromNow,
+        dateKey: nextPlanSession.dateKey,
+        exerciseCount: nextPlanSession.exerciseCount,
+      };
+    }
+    return { kind: "empty", hasTemplates: (templates?.length || 0) > 0 };
+  }, [
+    activeWorkout,
+    primaryAction,
+    nextPlanSession,
+    templates,
+    estimatedDurationMin,
+  ]);
+
+  const openWorkoutsTab = () => {
+    window.location.hash = "#workouts";
+  };
+  const openTemplates = () => {
+    try {
+      sessionStorage.setItem("fizruk_workouts_mode", "templates");
+    } catch {}
+    window.location.hash = "#workouts";
+  };
+  const openPlan = () => {
+    window.location.hash = "#plan";
+  };
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad space-y-4">
-        <section
-          className="rounded-3xl p-6 overflow-hidden bg-hero-teal dark:bg-panel dark:border dark:border-teal-800/30 dark:[background-image:linear-gradient(135deg,rgba(20,184,166,0.18)_0%,rgba(20,184,166,0.05)_100%)]"
-          aria-label="Привітання"
-        >
-          {/* eslint-disable-next-line sergeant-design/no-eyebrow-drift --
-              Branded fizruk hero kicker above h1 — dynamic greeting string. */}
-          <p className="text-xs font-bold tracking-widest uppercase text-fizruk">
-            {greeting} · {today}
-          </p>
-          <h1 className="text-hero font-black text-white mt-3 leading-tight">
-            Твій прогрес
-            <br />
-            зібраний в одному місці
-          </h1>
-          <div className="mt-6 flex flex-col gap-3">
-            {primaryAction ? (
-              <button
-                type="button"
-                className="w-full py-4 px-5 rounded-2xl bg-fizruk-strong text-white transition-all active:scale-[0.98] flex items-center gap-3 text-left"
-                onClick={handleStartPrimary}
-                aria-label={`Почати: ${primaryAction.label}`}
-              >
-                <span
-                  className="shrink-0 w-11 h-11 rounded-full bg-white/15 flex items-center justify-center"
-                  aria-hidden
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </span>
-                <span className="min-w-0 flex-1">
-                  <SectionHeading
-                    as="span"
-                    size="xs"
-                    className="block text-white/70"
-                  >
-                    Почати
-                  </SectionHeading>
-                  <span className="block text-base font-black truncate leading-tight">
-                    {primaryAction.label}
-                  </span>
-                  <span className="block text-2xs text-white/70 mt-0.5 truncate">
-                    {primaryAction.exerciseCount} вправ
-                    {estimatedDurationMin
-                      ? ` · ~${estimatedDurationMin} хв`
-                      : ""}
-                    {primaryAction.hint ? ` · ${primaryAction.hint}` : ""}
-                  </span>
-                </span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="w-full py-4 rounded-full font-bold text-base bg-fizruk-strong text-white transition-all active:scale-[0.98]"
-                onClick={() => {
-                  try {
-                    sessionStorage.setItem("fizruk_workouts_mode", "templates");
-                  } catch {}
-                  window.location.hash = "#workouts";
-                }}
-                aria-label="Створити перший шаблон"
-              >
-                Створити перший шаблон
-              </button>
-            )}
-            <button
-              type="button"
-              className="w-full py-4 rounded-full font-semibold text-base text-white border border-white/25 transition-colors active:bg-white/10"
-              onClick={() => {
-                try {
-                  sessionStorage.setItem("fizruk_workouts_mode", "templates");
-                } catch {}
-                window.location.hash = "#workouts";
-              }}
-              aria-label="Мої шаблони"
-            >
-              Мої шаблони
-            </button>
-          </div>
-        </section>
+        <HeroCard
+          state={heroState}
+          greeting={greeting}
+          today={today}
+          onResume={openWorkoutsTab}
+          onStartToday={handleStartPrimary}
+          onOpenPlan={openPlan}
+          onOpenTemplates={openTemplates}
+          onOpenPrograms={() => onOpenPrograms?.()}
+        />
 
         {templates.length > 0 &&
           (() => {
