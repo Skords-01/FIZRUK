@@ -613,10 +613,10 @@ export function Transactions({
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  "text-xs px-4 py-2 rounded-full border transition-colors min-h-[36px]",
+                  "text-xs px-4 py-2 rounded-full border transition-colors min-h-[36px] font-medium",
                   filter === f.id
-                    ? "bg-primary border-primary text-white"
-                    : "bg-transparent border-line text-subtle hover:border-muted hover:text-muted",
+                    ? "bg-primary border-primary text-white shadow-sm"
+                    : "bg-panelHi border-line/60 text-muted hover:text-text hover:border-line",
                 )}
               >
                 {f.label}
