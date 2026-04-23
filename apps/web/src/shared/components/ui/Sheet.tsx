@@ -24,7 +24,9 @@ import { useDialogFocusTrap } from "../../hooks/useDialogFocusTrap";
  *   - 44×44 close button (WCAG tap target) with <Button variant="ghost" iconOnly>
  *   - focus trap + Escape via useDialogFocusTrap
  *   - overlay-click dismiss
- *   - animated slide-up with safe-area padding (safe-area-pb)
+ *   - animated slide-up with safe-area + bottom-nav margin so the
+ *     panel always clears the module bottom tab bar (see ModuleShell's
+ *     `--bottom-nav-height` CSS variable) and the iOS home indicator
  *   - keyboard-inset-aware margin if kbInsetPx is supplied
  *
  * Callers are still responsible for their own form state, validation,
@@ -90,8 +92,18 @@ export function Sheet({
 
   if (!open) return null;
 
-  const panelStyle: CSSProperties | undefined =
-    kbInsetPx && kbInsetPx > 0 ? { marginBottom: kbInsetPx } : undefined;
+  // Lift the panel above the module bottom nav (set via the
+  // `--bottom-nav-height` CSS variable on ModuleShell) plus the iOS
+  // home-indicator inset. `kbInsetPx` overrides the offset entirely
+  // when the soft keyboard is visible — we want the sheet to hug the
+  // keyboard, not float above where the nav would be.
+  const panelStyle: CSSProperties =
+    kbInsetPx && kbInsetPx > 0
+      ? { marginBottom: kbInsetPx }
+      : {
+          marginBottom:
+            "calc(var(--bottom-nav-height, 0px) + env(safe-area-inset-bottom, 0px))",
+        };
 
   return (
     <div
@@ -114,7 +126,7 @@ export function Sheet({
         onPointerDown={(e) => e.stopPropagation()}
         className={cn(
           "relative w-full max-w-lg bg-panel border-t border-line rounded-t-3xl shadow-soft",
-          "flex flex-col max-h-[90vh] safe-area-pb",
+          "flex flex-col max-h-[90vh]",
           "animate-slide-up",
           panelClassName,
         )}

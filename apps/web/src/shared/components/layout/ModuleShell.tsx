@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@shared/lib/cn";
 
 /**
@@ -40,8 +40,17 @@ export function ModuleShell({
   className,
   mainClassName,
 }: ModuleShellProps) {
+  // Expose the bottom-nav height as a CSS variable so descendants
+  // (e.g. bottom sheets rendered inside this shell) can lift themselves
+  // above it without having to know whether the current page renders a
+  // nav. Defaults to 0px when no nav is slotted.
+  const shellStyle: CSSProperties = {
+    "--bottom-nav-height": nav ? "60px" : "0px",
+  } as CSSProperties;
+
   return (
     <div
+      style={shellStyle}
       className={cn(
         "h-dvh flex flex-col bg-bg text-text overflow-hidden",
         className,
