@@ -28,7 +28,6 @@ import { finykKeys } from "@shared/lib/queryKeys.js";
 import { LimitBudgetCard } from "../components/budgets/LimitBudgetCard.jsx";
 import { GoalBudgetCard } from "../components/budgets/GoalBudgetCard.jsx";
 import { MonthlyPlanCard } from "../components/budgets/MonthlyPlanCard.jsx";
-import { BudgetForecastCard } from "../components/budgets/BudgetForecastCard.jsx";
 import { AddBudgetForm } from "../components/budgets/AddBudgetForm.jsx";
 import { readJSON, writeJSON } from "../lib/finykStorage.js";
 import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
@@ -436,11 +435,12 @@ export function Budgets({ mono, storage }) {
           );
           const showAdvice = shouldShowProactiveAdvice(usage, forecastForCat);
           const isEditing = editIdx === globalIdx;
+          const catLabel = cat?.label || "—";
           return (
             <LimitBudgetCard
               key={b.id || i}
               budget={b}
-              categoryLabel={cat?.label || "—"}
+              categoryLabel={catLabel}
               spent={usage.spent}
               pctRaw={usage.pctRaw}
               pctRounded={usage.pctRounded}
@@ -449,6 +449,21 @@ export function Budgets({ mono, storage }) {
               showProactiveAdvice={showAdvice}
               proactiveText={proactiveAdvice[b.categoryId]}
               proactiveLoading={proactiveLoading[b.categoryId]}
+              forecast={forecastForCat}
+              explanation={aiExplanations[b.categoryId]}
+              explanationLoading={isExplaining(b.categoryId)}
+              onExplain={
+                forecastForCat
+                  ? () =>
+                      explainCategory(
+                        b.categoryId,
+                        catLabel,
+                        forecastForCat.spent,
+                        forecastForCat.forecast,
+                        forecastForCat.limit,
+                      )
+                  : undefined
+              }
               onBeginEdit={() => setEditIdx(globalIdx)}
               onChangeLimit={(nextLimit) =>
                 setBudgets((bs) =>
@@ -465,49 +480,6 @@ export function Budgets({ mono, storage }) {
             />
           );
         })}
-
-        {/* Forecast — shown whenever there are limit budgets to avoid layout shifts */}
-        {limitBudgets.length > 0 && (
-          <>
-            <SectionHeading as="div" size="sm" className="pt-1">
-              Прогноз · кінець місяця
-            </SectionHeading>
-            {loadingTx && forecasts.length === 0 ? (
-              limitBudgets.map((b) => (
-                <Skeleton key={b.id} className="h-64 rounded-2xl" />
-              ))
-            ) : forecasts.length === 0 ? (
-              <div className="text-sm text-muted px-1">
-                Недостатньо даних для прогнозу
-              </div>
-            ) : null}
-            {forecasts.map((fc) => {
-              const cat = resolveExpenseCategoryMeta(
-                fc.categoryId,
-                customCategories,
-              );
-              const label = cat?.label || fc.categoryId;
-              return (
-                <BudgetForecastCard
-                  key={fc.categoryId}
-                  forecast={fc}
-                  categoryLabel={label}
-                  explanation={aiExplanations[fc.categoryId]}
-                  loading={isExplaining(fc.categoryId)}
-                  onExplain={() =>
-                    explainCategory(
-                      fc.categoryId,
-                      label,
-                      fc.spent,
-                      fc.forecast,
-                      fc.limit,
-                    )
-                  }
-                />
-              );
-            })}
-          </>
-        )}
 
         {/* Goals */}
         <SectionHeading as="div" size="sm" className="pt-1">
