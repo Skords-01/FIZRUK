@@ -166,6 +166,68 @@ describe("Analytics screen (mobile)", () => {
     });
   });
 
+  describe("category donut toggle", () => {
+    // Seven distinct MCC-driven categories so the donut has a non-empty
+    // long tail (> TOP_N = 5) and the "Показати всі" toggle is rendered.
+    const manyCategories: FinykAnalyticsData = {
+      ...emptyData(),
+      realTx: [
+        tx("c1", "2025-05-02T10:00:00Z", "АТБ", -600_00, 5411), // food
+        tx("c2", "2025-05-03T10:00:00Z", "Таксі", -500_00, 4121), // transport
+        tx("c3", "2025-05-04T10:00:00Z", "McDonalds", -400_00, 5812), // restaurant
+        tx("c4", "2025-05-05T10:00:00Z", "Spotify", -300_00, 4899), // subscriptions
+        tx("c5", "2025-05-06T10:00:00Z", "Аптека", -250_00, 5912), // health
+        tx("c6", "2025-05-07T10:00:00Z", "Rozetka", -150_00, 5311), // shopping
+        tx("c7", "2025-05-08T10:00:00Z", "Cinema", -80_00, 7832), // entertainment
+      ],
+    };
+
+    it("renders the toggle collapsed by default with an Інше bucket", () => {
+      render(<Analytics data={manyCategories} now={fixedNow} />);
+      const toggle = screen.getByTestId("finyk-analytics-donut-toggle");
+      expect(toggle).toBeTruthy();
+      // Collapsed legend shows an "Інше" row rolling up the long tail.
+      expect(
+        screen.getByTestId("finyk-analytics-donut-row-_other"),
+      ).toBeTruthy();
+    });
+
+    it("expands the legend to every category when pressed", () => {
+      render(<Analytics data={manyCategories} now={fixedNow} />);
+      const toggle = screen.getByTestId("finyk-analytics-donut-toggle");
+      fireEvent.press(toggle);
+      // The "Інше" row is gone and every real category id has its own row.
+      expect(
+        screen.queryByTestId("finyk-analytics-donut-row-_other"),
+      ).toBeNull();
+      for (const id of [
+        "food",
+        "transport",
+        "restaurant",
+        "subscriptions",
+        "health",
+        "shopping",
+        "entertainment",
+      ]) {
+        expect(
+          screen.getByTestId(`finyk-analytics-donut-row-${id}`),
+        ).toBeTruthy();
+      }
+    });
+
+    it("hides the toggle when there are ≤ TOP_N categories", () => {
+      const fewCategories: FinykAnalyticsData = {
+        ...emptyData(),
+        realTx: [
+          tx("f1", "2025-05-02T10:00:00Z", "АТБ", -300_00, 5411),
+          tx("f2", "2025-05-05T10:00:00Z", "Таксі", -80_00, 4121),
+        ],
+      };
+      render(<Analytics data={fewCategories} now={fixedNow} />);
+      expect(screen.queryByTestId("finyk-analytics-donut-toggle")).toBeNull();
+    });
+  });
+
   describe("month navigation", () => {
     it("stepping back unblocks the next-month button", () => {
       render(<Analytics data={emptyData()} now={new Date(2025, 4, 15)} />);
