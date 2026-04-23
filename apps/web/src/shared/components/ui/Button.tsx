@@ -62,15 +62,18 @@ const variants: Record<ButtonVariant, string> = {
   nutrition:
     "bg-nutrition text-white shadow-sm hover:bg-nutrition-hover hover:shadow-glow-lime active:scale-[0.98]",
 
-  // Soft module variants (for secondary actions within modules)
+  // Soft module variants (for secondary actions within modules).
+  // Dark mode swaps the light pastel surface for the saturated accent at
+  // low opacity so the button blends with the warm dark panel instead of
+  // reading as an acidic pastel — same convention used by Badge/Tabs.
   "finyk-soft":
-    "bg-finyk-soft text-finyk-strong dark:text-finyk border border-finyk-ring/50 hover:bg-brand-100 active:scale-[0.98]",
+    "bg-finyk-soft text-finyk-strong dark:bg-finyk/15 dark:text-finyk border border-finyk-ring/50 dark:border-finyk/30 hover:bg-brand-100 dark:hover:bg-finyk/25 active:scale-[0.98]",
   "fizruk-soft":
-    "bg-fizruk-soft text-fizruk-strong dark:text-fizruk border border-fizruk-ring/50 hover:bg-teal-100 active:scale-[0.98]",
+    "bg-fizruk-soft text-fizruk-strong dark:bg-fizruk/15 dark:text-fizruk border border-fizruk-ring/50 dark:border-fizruk/30 hover:bg-teal-100 dark:hover:bg-fizruk/25 active:scale-[0.98]",
   "routine-soft":
-    "bg-routine-surface text-routine-strong dark:text-routine border border-routine-ring/50 hover:bg-coral-100 active:scale-[0.98]",
+    "bg-routine-surface text-routine-strong dark:bg-routine/15 dark:text-routine border border-routine-ring/50 dark:border-routine/30 hover:bg-coral-100 dark:hover:bg-routine/25 active:scale-[0.98]",
   "nutrition-soft":
-    "bg-nutrition-soft text-nutrition-strong dark:text-nutrition border border-nutrition-ring/50 hover:bg-lime-100 active:scale-[0.98]",
+    "bg-nutrition-soft text-nutrition-strong dark:bg-nutrition/15 dark:text-nutrition border border-nutrition-ring/50 dark:border-nutrition/30 hover:bg-lime-100 dark:hover:bg-nutrition/25 active:scale-[0.98]",
 };
 
 const sizes: Record<ButtonSize, string> = {

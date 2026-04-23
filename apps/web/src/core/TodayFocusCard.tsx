@@ -159,11 +159,18 @@ const QUICK_ADD_CHIPS: QuickAddChip[] = (
   return { module: mod, label: a.shortLabel, action: a.action };
 });
 
+// Chip surfaces use saturated-accent-at-low-opacity in dark mode so they
+// blend with the warm dark panel instead of glowing as acidic pastel
+// (matches the `Badge`/`Tabs`/`Segmented` pattern already used across the
+// app). Light-mode surfaces stay on the soft pastel tokens.
 const MODULE_CHIP_CLASS: Record<HubModuleId, string> = {
-  finyk: "bg-finyk-soft text-finyk-strong dark:text-finyk",
-  fizruk: "bg-fizruk-soft text-fizruk-strong dark:text-fizruk",
-  routine: "bg-routine-surface text-routine-strong dark:text-routine",
-  nutrition: "bg-nutrition-soft text-nutrition-strong dark:text-nutrition",
+  finyk: "bg-finyk-soft text-finyk-strong dark:bg-finyk/15 dark:text-finyk",
+  fizruk:
+    "bg-fizruk-soft text-fizruk-strong dark:bg-fizruk/15 dark:text-fizruk",
+  routine:
+    "bg-routine-surface text-routine-strong dark:bg-routine/15 dark:text-routine",
+  nutrition:
+    "bg-nutrition-soft text-nutrition-strong dark:bg-nutrition/15 dark:text-nutrition",
 };
 
 /**
