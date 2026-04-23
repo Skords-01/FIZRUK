@@ -66,6 +66,22 @@ export function useNutritionLog() {
     );
   }, [nutritionLog]);
 
+  // Flush scheduled thumbnail deletes on unmount. The 6 s grace window
+  // exists to allow `handleRestoreMeal` to cancel the delete, but that
+  // handler only exists while the hook is alive — once we unmount the
+  // undo path is gone, so we cancel the timers and delete immediately
+  // instead of letting the raw `setTimeout` fire on a torn-down hook.
+  useEffect(() => {
+    const pending = pendingThumbDeletesRef.current;
+    return () => {
+      for (const [id, timer] of pending) {
+        clearTimeout(timer);
+        void deleteMealThumbnail(id);
+      }
+      pending.clear();
+    };
+  }, []);
+
   // Coach insight and weekly digest both derive from the nutrition log.
   // Invalidate them whenever the log changes so the next mount / user
   // refresh regenerates with the latest context. `staleTime: Infinity`

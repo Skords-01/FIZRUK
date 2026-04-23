@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NutritionHeader } from "./components/NutritionHeader.jsx";
 import { NutritionBottomNav } from "./components/NutritionBottomNav.jsx";
 import { SubTabs } from "./components/SubTabs.jsx";
@@ -71,6 +71,32 @@ export default function NutritionApp({
   // "Аналіз фото страви" disclosure open and pop the native file picker
   // on the next frame — no extra "Звідки страва?" detour.
   const [photoCardForceOpen, setPhotoCardForceOpen] = useState(false);
+
+  // Shared bucket for short-lived one-shot timers scheduled from imperative
+  // click / route handlers (file picker fallbacks, "Add meal" sheet open).
+  // We need to clear them on unmount so late setState / click() calls
+  // don't touch a torn-down component.
+  const transientTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(
+    new Set(),
+  );
+  const scheduleTransient = useCallback(
+    (cb: () => void, delayMs: number): ReturnType<typeof setTimeout> => {
+      const id = setTimeout(() => {
+        transientTimersRef.current.delete(id);
+        cb();
+      }, delayMs);
+      transientTimersRef.current.add(id);
+      return id;
+    },
+    [],
+  );
+  useEffect(() => {
+    const timers = transientTimersRef.current;
+    return () => {
+      for (const id of timers) clearTimeout(id);
+      timers.clear();
+    };
+  }, []);
 
   useEffect(() => {
     if (pwaAction === "add_meal") {
@@ -223,7 +249,7 @@ export default function NutritionApp({
         /* noop — picker may be blocked without a user gesture */
       }
     });
-    window.setTimeout(() => {
+    scheduleTransient(() => {
       cancelAnimationFrame(raf);
       try {
         photo.fileRef.current?.click();
@@ -360,7 +386,7 @@ export default function NutritionApp({
                   onAddMeal={() => {
                     log.setSelectedDate(todayISODate());
                     setActivePageAndHash("log");
-                    setTimeout(() => {
+                    scheduleTransient(() => {
                       log.setAddMealPhotoResult(null);
                       log.setAddMealSheetOpen(true);
                     }, 80);
