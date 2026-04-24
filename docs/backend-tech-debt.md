@@ -356,6 +356,12 @@
 
 **Стан (оновлення інвентарю):** серверний застосунок повністю у **`apps/server/src/**/_.ts`** з Vitest-тестами `_.test.ts`; ESM-імпорти з суфіксом `.js` — очікуваний патерн для Node. План «хвиль» нижче — **архівний RFC** (використовувати як чекліст strictness, а не як blocker).
 
+### Принцип (архів)
+
+- `tsconfig.server.json` вже існує (використовується у `pnpm typecheck`).
+- `allowJs: true` + поступове перейменування `.js → .ts` по файлах.
+- Жодного великого рефактору в одному PR. Один thematic group = один PR з міграцією.
+
 ### Можливі наступні кроки (P2)
 
 - Підвищити `strictness` / `noImplicitAny` у межах `@sergeant/server` (або локального `tsconfig`) без зміни runtime.
@@ -529,5 +535,5 @@ env-набір не підхопився; переглянь Railway logs на `
 
 - **Жодних mass-rewrite**. Кожен PR — тематичний, reviewable за один присід (≤ 600 рядків diff там, де це можливо).
 - **Жодних breaking змін у публічному API** без нотатки `BREAKING:` у title/body PR.
-- CI має пройти (`npm run lint && npm run typecheck && npm run test`).
+- CI має пройти (`pnpm lint && pnpm typecheck && pnpm test`).
 - Тести обов'язкові для кожного PR з логікою (не для PR-документу).
