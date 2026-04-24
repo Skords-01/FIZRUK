@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@shared/components/ui/Button";
+import { useToast } from "@shared/hooks/useToast";
 import { resetPassword } from "./authClient.js";
 
 /**
@@ -15,6 +16,7 @@ import { resetPassword } from "./authClient.js";
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const token = useMemo(() => searchParams.get("token") || "", [searchParams]);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -57,6 +59,7 @@ export function ResetPasswordPage() {
       }
       setStatus("done");
       setMessage("Пароль оновлено. Зараз перенесу на вхід…");
+      toast.success("Пароль оновлено");
       window.setTimeout(() => navigate("/sign-in", { replace: true }), 1500);
     } catch (err) {
       setStatus("error");
