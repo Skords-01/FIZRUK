@@ -31,150 +31,112 @@
 
 ## Структура
 
-```
-src/
-├── core/
-│   ├── App.jsx                   # Хаб: навігація між модулями, роутинг, composition shell
-│   ├── AuthContext.jsx           # AuthProvider + useAuth hook
-│   ├── AuthPage.jsx              # Вхід / реєстрація
-│   ├── authClient.js             # Better Auth React client
-│   ├── HubBackupPanel.jsx        # Спільний бекап/відновлення
-│   ├── HubChat.jsx               # AI-чат shell (Anthropic)
-│   ├── HubDashboard.jsx          # Головна сторінка хабу
-│   ├── HubRecommendations.jsx    # Крос-модульні рекомендації
-│   ├── HubReports.jsx            # Зведені звіти
-│   ├── HubSearch.jsx             # Глобальний пошук по всіх модулях
-│   ├── HubSettingsPage.jsx       # Shell-сторінка налаштувань (секції в settings/)
-│   ├── hubBackup.js              # Логіка бекапу/відновлення
-│   ├── ModuleErrorBoundary.jsx   # Ізоляція помилок модулів
-│   ├── OnboardingWizard.jsx      # Онбординг для нових користувачів
-│   ├── CoachInsightCard.jsx      # AI-порада дня (UI)
-│   ├── useCoachInsight.js        # AI-порада дня (логіка, /api/coach)
-│   ├── SyncStatusIndicator.jsx   # Іконка-пілюля стану синхронізації
-│   ├── useCloudSync.js           # Хмарна синхронізація + офлайн-черга + useSyncStatus
-│   ├── useWeeklyDigest.js        # Щотижневий дайджест (логіка)
-│   ├── WeeklyDigestCard.jsx      # Щотижневий дайджест (UI)
-│   ├── app/                      # App-shell компоненти/хуки: OfflineBanner, PageLoader,
-│   │                             # DarkModeToggle, IOSInstallBanner, UserMenuButton,
-│   │                             # MigrationPrompt, usePwaInstall, useIosInstallBanner,
-│   │                             # useSWUpdate, pwaAction
-│   ├── components/               # ChatMessage, ChatInput, AssistantMessageBody,
-│   │                             # PushNotificationToggle
-│   ├── hooks/                    # useSpeech (голос у чаті)
-│   ├── settings/                 # Секції налаштувань Hub: GeneralSection, FinykSection,
-│   │                             # FizrukSection, RoutineSection, NotificationsSection,
-│   │                             # AIDigestSection, SettingsPrimitives, hubPrefs
-│   └── lib/                      # hubChatContext, hubChatActions, hubChatUtils, hubChatSpeech,
-│                                 # insightsEngine, recommendationEngine, speechParsers
-├── modules/
-│   ├── finyk/                    # Фінанси
-│   │   ├── FinykApp.jsx          # Entry компонент модуля, нав + роутинг сторінок
-│   │   ├── pages/                # Overview, Transactions, Budgets, Assets, Analytics
-│   │   ├── components/           # BudgetTrendChart, CategoryChart, CategoryManager,
-│   │   │                         # CategorySelector, DebtCard, ManualExpenseSheet,
-│   │   │                         # NetworthChart, SubCard, SyncStatusBadge, TxListItem, TxRow
-│   │   ├── components/analytics/ # CategoryPieChart, MerchantList
-│   │   ├── components/budgets/   # GoalBudgetCard, LimitBudgetCard
-│   │   ├── components/charts/    # ChartFallback, lazy.js (lazy-chunking recharts)
-│   │   ├── hooks/                # useMonobank, usePrivatbank, useStorage, useAnalytics,
-│   │   │                         # useBudget, useUnifiedFinanceData
-│   │   ├── domain/               # transactions (унiфiкована модель Transaction +
-│   │   │                         # normalizeTransaction), selectors (чисті аналітичні
-│   │   │                         # проєкції), budget, debtEngine, subscriptionUtils
-│   │   ├── lib/                  # finykStorage (централізований storage-шар),
-│   │   │                         # storageManager, finykBackup, forecastEngine
-│   │   ├── constants/            # chartPalette
-│   │   └── hubRoutineSync.js     # Синхронізація Фінік → Рутина (підписки в календар)
-│   ├── fizruk/                   # Спорт
-│   │   ├── pages/                # Dashboard, Atlas, Exercise, Workouts, Progress,
-│   │   │                         # Measurements, PlanCalendar, Body, Programs
-│   │   ├── components/           # BodyAtlas, MiniLineChart, PhotoProgress,
-│   │   │                         # WeeklyVolumeChart, WellbeingChart, WorkoutTemplatesSection
-│   │   ├── components/workouts/  # ActiveWorkoutPanel, AddExerciseSheet, ExerciseDetailSheet,
-│   │   │                         # ExercisePickerSheet, RestTimerOverlay, WorkoutBackupBar,
-│   │   │                         # WorkoutCatalogSection, WorkoutFinishSheets, WorkoutJournalSection
-│   │   ├── hooks/                # useBodyPhotos, useDailyLog, useExerciseCatalog,
-│   │   │                         # useFizrukWorkoutReminder, useMeasurements, useMonthlyPlan,
-│   │   │                         # usePushupActivity, useRecovery, useRestSettings,
-│   │   │                         # useTrainingProgram, useWorkouts, useWorkoutTemplates
-│   │   ├── data/                 # exercises.gymup.json — каталог вправ
-│   │   └── lib/                  # fizrukStorage, recoveryCompute, recoveryConflict,
-│   │                             # recoveryForecast, trainingPrograms, workoutStats, workoutUi
-│   ├── routine/                  # Рутина та Hub-календар
-│   │   ├── components/           # DayProgressRing, DayReportSheet, HabitDetailSheet,
-│   │   │                         # HabitHeatmap, HabitLeadersBlock, PushupsWidget,
-│   │   │                         # RoutineBackupSection, RoutineBottomNav,
-│   │   │                         # RoutineCalendarPanel, RoutineSettingsSection,
-│   │   │                         # RoutineStatsPanel, WeekDayStrip
-│   │   ├── context/              # RoutineCalendarContext (розбитий на data/actions)
-│   │   ├── hooks/                # useRoutinePushups, useRoutineReminders, useVisualKeyboardInset
-│   │   └── lib/                  # completionNoteKey, finykSubscriptionCalendar, habitOrder,
-│   │                             # hubCalendarAggregate, routineConstants, routineDraftUtils,
-│   │                             # routinePushupsRead, routineStorage, streaks, weekUtils
-│   └── nutrition/                # Харчування
-│       ├── components/           # AddMealSheet, BarcodeScanner, ConfirmDeleteSheet,
-│       │                         # DailyPlanCard, ItemEditSheet, LogCard, NutritionBottomNav,
-│       │                         # NutritionDashboard, NutritionHeader, NutritionOverlays,
-│       │                         # NutritionPantrySelector, PantryCard, PantryManagerSheet,
-│       │                         # PhotoAnalyzeCard, RecipesCard, ShoppingListCard,
-│       │                         # WaterTrackerCard
-│       ├── components/meal-sheet/# Розбитий AddMealSheet на секції
-│       ├── hooks/                # useNutritionLog, useNutritionPantries, usePhotoAnalysis,
-│       │                         # useShoppingList, useWaterTracker, useNutritionCloudBackup,
-│       │                         # useNutritionHashRoute, useNutritionRemoteActions,
-│       │                         # useNutritionReminders, useNutritionUiState, usePantryBarcodeScan
-│       ├── domain/               # nutritionBackup
-│       └── lib/                  # fileToBase64, foodCategories, foodDb/ (seed foods),
-│                                 # goalPresets, macros, mealPhotoStorage, mealTypes,
-│                                 # mergeItems, nutritionApi, nutritionCloudBackup,
-│                                 # nutritionErrors, nutritionFormat, nutritionLogExport,
-│                                 # nutritionRouter, nutritionStats, nutritionStorage,
-│                                 # pantryTextParser, recipeBook, recipeCache, recipeIds,
-│                                 # shoppingListStorage, waterStorage
-├── shared/
-│   ├── components/ui/            # Banner, Button, Card, ConfirmDialog, EmptyState, Icon,
-│   │                             # Input, InputDialog, ProgressRing, SectionErrorBoundary,
-│   │                             # Skeleton, SwipeToAction, Toast, VoiceMicButton
-│   ├── hooks/                    # TypeScript: useDarkMode, useDebounce, useDialogFocusTrap,
-│   │                             # useOnlineStatus, usePushNotifications, useToast,
-│   │                             # useVisualKeyboardInset
-│   └── lib/                      # apiUrl, cn, date (toLocalISODate), perf, storage, storageKeys,
-│                                 # storageManager, storageQuota (safeJsonSet/safeSetItem), themeHex
-├── sw.js                         # Service Worker (PWA, офлайн-кеш, Web Push)
-└── main.jsx                      # Точка входу, реєстрація SW
+Monorepo — **Turborepo + pnpm** workspaces:
 
-server/
-├── index.js                      # Єдиний entrypoint (npm start; SERVER_MODE=replit для Replit-режиму)
-├── app.js                        # createApp({ servesFrontend, distPath, trustProxy }) — Express factory
-├── config.js                     # Конфіг рантайм-режиму (порт, SPA-static, trust proxy)
-├── auth.js                       # Better Auth (спільний pg pool з db.js)
-├── db.js                         # PostgreSQL pool, ensureSchema(), SQL-міграції з migrations/
-├── aiQuota.js                    # Денні AI-квоти (ai_usage_daily) per-user / per-IP
-├── httpCommon.mjs                # Спільні HTTP-утиліти (middleware, helmet, errorHandler)
-├── migrations/                   # 001_noop.sql, 002_ai_usage_daily.sql, schema_migrations
-└── api/
-    ├── barcode.js                # Пошук продукту за штрихкодом (OFF → USDA FDC → UPCitemdb)
-    ├── chat.js                   # AI-чат (Anthropic)
-    ├── coach.js                  # AI-порада дня (Anthropic)
-    ├── food-search.js            # Пошук у локальній/віддалених foodDb
-    ├── mono.js                   # Proxy до Monobank API
-    ├── privat.js                 # PrivatBank business API proxy (вимкнено прапором)
-    ├── push.js                   # Web Push: /vapid-public, /subscribe, /unsubscribe, /send
-    ├── sync.js                   # Хмарна синхронізація (push/pull по модулях)
-    ├── weekly-digest.js          # Щотижневий AI-дайджест
-    ├── lib/                      # cors, jsonSafe, rateLimit
-    └── nutrition/                # AI-ендпоінти харчування
-        ├── analyze-photo.js      # Фото → макроси (Anthropic Vision)
-        ├── backup-download.js    # Хмарний бекап (відновлення)
-        ├── backup-upload.js      # Хмарний бекап (завантаження)
-        ├── day-hint.js           # Підказка по денному раціону
-        ├── day-plan.js           # AI-денний план харчування
-        ├── parse-pantry.js       # Парсинг тексту комори
-        ├── recommend-recipes.js  # Рецепти з наявних продуктів
-        ├── refine-photo.js       # Уточнення результату аналізу фото
-        ├── shopping-list.js      # AI-генерація списку покупок
-        ├── week-plan.js          # Тижневий план харчування
-        └── lib/                  # anthropicFetch, nutritionResponse, nutritionSecurity
+```
+apps/web/        # React 18 + Vite PWA (головний клієнт)
+apps/server/     # Express + PostgreSQL API (TypeScript)
+apps/mobile/     # Expo React Native
+apps/mobile-shell/ # Capacitor wrapper (iOS/Android)
+packages/shared/ # DOM-free утиліти, STORAGE_KEYS, типи
+packages/api-client/ # HTTP-шар, ApiError, queryKeys
+packages/{finyk,fizruk,nutrition,routine}-domain/ # Типи модулів
+packages/design-tokens/ # CSS-змінні
+packages/config/ # ESLint plugin, TS configs, Tailwind preset
+```
+
+### Фронтенд (`apps/web/src/`)
+
+```
+apps/web/src/
+├── core/
+│   ├── App.tsx                  # Хаб: навігація між модулями, роутинг, composition shell
+│   ├── AuthContext.tsx          # AuthProvider + useAuth hook
+│   ├── AuthPage.tsx             # Вхід / реєстрація
+│   ├── authClient.ts            # Better Auth React client
+│   ├── HubBackupPanel.tsx       # Спільний бекап/відновлення
+│   ├── HubChat.tsx              # AI-чат shell (Anthropic)
+│   ├── HubDashboard.tsx         # Головна сторінка хабу
+│   ├── HubInsightsPanel.tsx     # Крос-модульні інсайти
+│   ├── HubReports.tsx           # Зведені звіти
+│   ├── HubSearch.tsx            # Глобальний пошук по всіх модулях
+│   ├── HubSettingsPage.tsx      # Shell-сторінка налаштувань (секції в settings/)
+│   ├── hubBackup.ts             # Логіка бекапу/відновлення
+│   ├── ErrorBoundary.tsx        # Глобальний ErrorBoundary
+│   ├── ModuleErrorBoundary.tsx  # Ізоляція помилок модулів
+│   ├── OnboardingWizard.tsx     # Онбординг для нових користувачів
+│   ├── TodayFocusCard.tsx       # Картка «сьогодні» (quick actions)
+│   ├── WeeklyDigestCard.tsx     # Щотижневий дайджест (UI)
+│   ├── useCoachInsight.ts       # AI-порада дня (логіка, /api/coach)
+│   ├── useWeeklyDigest.ts       # Щотижневий дайджест (логіка + агрегати)
+│   ├── app/                     # App-shell: HubMainContent, HubHeader, HubTabBar,
+│   │                            # IOSInstallBanner, usePwaInstall, useIosInstallBanner,
+│   │                            # useSWUpdate, pwaAction
+│   ├── cloudSync/               # Cloud sync engine (push/pull/offline queue/dirty flags)
+│   ├── components/              # ChatMessage, ChatInput, PushNotificationToggle
+│   ├── hooks/                   # useSpeech (голос у чаті)
+│   ├── hub/                     # Hub-level хуки: useFinykHubPreview та ін.
+│   ├── settings/                # Секції HubSettingsPage: General, Finyk, Fizruk,
+│   │                            # Routine, Notifications, AIDigest
+│   └── lib/                     # hubChatContext, hubChatActions, hubChatUtils, hubChatSpeech,
+│                                # insightsEngine, weeklyDigestAggregates,
+│                                # recommendationEngine, speechParsers
+├── modules/
+│   ├── finyk/                   # Фінанси
+│   │   ├── FinykApp.tsx         # Entry компонент модуля, навігація + роутинг
+│   │   ├── pages/               # Overview, Transactions, Budgets, Assets, Analytics
+│   │   ├── components/          # BudgetTrendChart, CategoryChart, DebtCard,
+│   │   │                        # ManualExpenseSheet, NetworthChart, TxListItem, ...
+│   │   ├── hooks/               # useMonobank, usePrivatbank, useAnalytics,
+│   │   │                        # useBudget, useUnifiedFinanceData
+│   │   ├── domain/              # Transaction (уніфікована модель + normalizeTransaction),
+│   │   │                        # selectors, budget, debtEngine, subscriptionUtils
+│   │   └── lib/                 # finykStorage, finykBackup, forecastEngine
+│   ├── fizruk/                  # Спорт
+│   │   ├── pages/               # Dashboard, Atlas, Workouts, Progress,
+│   │   │                        # Measurements, PlanCalendar, Body, Programs
+│   │   ├── components/          # BodyAtlas, WorkoutTemplatesSection, WeeklyVolumeChart, ...
+│   │   ├── components/workouts/ # ActiveWorkoutPanel, ExercisePickerSheet, RestTimerOverlay, ...
+│   │   ├── hooks/               # useWorkouts, useWorkoutTemplates, useExerciseCatalog,
+│   │   │                        # useRecovery, useMeasurements, useTrainingProgram, ...
+│   │   ├── data/                # exercises.gymup.json — каталог вправ
+│   │   └── lib/                 # fizrukStorage, recoveryCompute, workoutStats, workoutUi
+│   ├── routine/                 # Рутина та Hub-календар
+│   │   ├── components/          # HabitHeatmap, RoutineCalendarPanel, WeekDayStrip, ...
+│   │   ├── context/             # RoutineCalendarContext (data + actions)
+│   │   ├── hooks/               # useRoutinePushups, useRoutineReminders
+│   │   └── lib/                 # routineStorage, streaks, weekUtils, habitOrder
+│   └── nutrition/               # Харчування
+│       ├── components/          # AddMealSheet, BarcodeScanner, DailyPlanCard,
+│       │                        # PhotoAnalyzeCard, RecipesCard, WaterTrackerCard, ...
+│       ├── hooks/               # useNutritionLog, usePhotoAnalysis, useShoppingList,
+│       │                        # useWaterTracker, useNutritionPantries, ...
+│       └── lib/                 # nutritionStorage, macros, recipeBook, pantryTextParser,
+│                                # shoppingListStorage, waterStorage, foodDb/
+└── shared/
+    ├── components/ui/           # Button, Card, Icon, Input, EmptyState, Toast, ...
+    ├── hooks/                   # useDarkMode, useDebounce, useDialogFocusTrap, ...
+    └── lib/                     # cn, storage (safeReadLS/safeWriteLS), perf, themeHex
+```
+
+### Сервер (`apps/server/src/`)
+
+```
+apps/server/src/
+├── index.ts         # Entrypoint
+├── app.ts           # Express factory: createApp(...)
+├── auth.ts          # Better Auth (email/password, session cookies)
+├── db.ts            # PostgreSQL pool, ensureSchema(), SQL міграції
+├── aiQuota.ts       # Денні AI-квоти (ai_usage_daily) per-user / per-IP
+├── config.ts        # Runtime config (порт, режим, trust proxy)
+├── http/            # Middleware: authMiddleware, rateLimit, validate (Zod),
+│                    # CORS, Helmet CSP, errorHandler, requireAiQuota, requestId
+├── routes/          # Express роутери: auth, sync, push, chat, coach, barcode,
+│                    # banks, nutrition, food-search, weekly-digest, health, me
+├── modules/         # Бізнес-логіка: sync (LWW conflict resolution), push, weekly-digest
+├── push/            # APNs + FCM clients
+├── obs/             # Pino logger, Prometheus metrics, requestContext
+└── migrations/      # SQL міграції (001_noop, 002_ai_usage_daily, ...)
 ```
 
 Дорожня карта та ТЗ по модулях: [docs/hub-modules-roadmap.md](docs/hub-modules-roadmap.md).
@@ -232,15 +194,19 @@ Hub — повноцінний Progressive Web App:
 
 ## Запуск
 
-Локально потрібні **два окремі процеси** у різних терміналах:
-
 ```bash
-npm install
-npm run start      # 1) Express API (server/index.js, порт 3000)
-npm run dev        # 2) Vite dev server (фронт, порт 5173) — проксує /api → 3000
+pnpm install      # встановити залежності
+pnpm dev          # web + server паралельно (Turborepo)
 ```
 
-На Replit: `npm run start:replit` — єдиний unified-процес (фронт + API, порт 5000).
+Або окремо у двох терміналах:
+
+```bash
+cd apps/server && pnpm dev   # Express API, порт 3000
+cd apps/web    && pnpm dev   # Vite dev server, порт 5173 (проксує /api → 3000)
+```
+
+На Replit: `pnpm start:replit` — єдиний unified-процес (фронт + API, порт 5000).
 
 ## Змінні середовища
 
