@@ -51,6 +51,9 @@ const ResetPasswordPage = lazy(() =>
 const DesignShowcase = lazy(() =>
   import("./DesignShowcase").then((m) => ({ default: m.DesignShowcase })),
 );
+const ProfilePage = lazy(() =>
+  import("./ProfilePage.jsx").then((m) => ({ default: m.ProfilePage })),
+);
 interface ModuleAppProps {
   onBackToHub: () => void;
   pwaAction?: PwaAction;
@@ -107,6 +110,7 @@ const SIGN_IN_PATH = "/sign-in";
 // dashboard.
 const WELCOME_PATH = "/welcome";
 const RESET_PASSWORD_PATH = "/reset-password";
+const PROFILE_PATH = "/profile";
 
 // Tiny effect-only component so the redirect is a declarative render,
 // not a `navigate()` call in the middle of AppInner — keeps the render
@@ -126,6 +130,7 @@ function AppInner() {
   const onSignInRoute = location.pathname === SIGN_IN_PATH;
   const onWelcomeRoute = location.pathname === WELCOME_PATH;
   const onResetPasswordRoute = location.pathname === RESET_PASSWORD_PATH;
+  const onProfileRoute = location.pathname === PROFILE_PATH;
 
   const openAuth = useCallback(() => {
     navigate(SIGN_IN_PATH);
@@ -249,6 +254,19 @@ function AppInner() {
       <Suspense fallback={<PageLoader />}>
         <div className="page-enter">
           <ResetPasswordPage />
+        </div>
+      </Suspense>
+    );
+  }
+
+  if (onProfileRoute) {
+    if (!authLoading && !user) {
+      return <RedirectTo to={SIGN_IN_PATH} />;
+    }
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <div className="page-enter">
+          <ProfilePage />
         </div>
       </Suspense>
     );

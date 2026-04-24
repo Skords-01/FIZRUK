@@ -53,6 +53,22 @@ const fetchOptions = {
   },
 };
 
+type AuthResult<T = unknown> = {
+  data?: T;
+  error?: { message?: string; status?: number; statusText?: string } | null;
+};
+
+interface SessionItem {
+  id: string;
+  token: string;
+  userId: string;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
 const authClient = createAuthClient({
   baseURL: getAuthBaseURL(),
   fetchOptions,
@@ -60,11 +76,27 @@ const authClient = createAuthClient({
   forgetPassword: (args: {
     email: string;
     redirectTo?: string;
-  }) => Promise<{ data?: unknown; error?: { message?: string } | null }>;
+  }) => Promise<AuthResult>;
   resetPassword: (args: {
     token: string;
     newPassword: string;
-  }) => Promise<{ data?: unknown; error?: { message?: string } | null }>;
+  }) => Promise<AuthResult>;
+  updateUser: (args: {
+    name?: string;
+    image?: string | null;
+  }) => Promise<AuthResult>;
+  changePassword: (args: {
+    currentPassword: string;
+    newPassword: string;
+  }) => Promise<AuthResult>;
+  listSessions: () => Promise<AuthResult<SessionItem[]>>;
+  revokeSession: (args: { id: string }) => Promise<AuthResult>;
+  revokeSessions: () => Promise<AuthResult>;
+  deleteUser: (args?: {
+    callbackURL?: string;
+    password?: string;
+    token?: string;
+  }) => Promise<AuthResult>;
 };
 
 type PasswordResetResult = {
@@ -104,6 +136,12 @@ const {
   getSession,
   forgetPassword,
   resetPassword,
+  updateUser,
+  changePassword,
+  listSessions,
+  revokeSession,
+  revokeSessions,
+  deleteUser,
 } = typedAuthClient;
 
 type SignOutFn = typeof rawSignOut;
@@ -125,4 +163,19 @@ const signOut: SignOutFn = (async (...args) => {
   }
 }) as SignOutFn;
 
-export { signIn, signUp, signOut, getSession, forgetPassword, resetPassword };
+export {
+  signIn,
+  signUp,
+  signOut,
+  getSession,
+  forgetPassword,
+  resetPassword,
+  updateUser,
+  changePassword,
+  listSessions,
+  revokeSession,
+  revokeSessions,
+  deleteUser,
+};
+
+export type { AuthResult, SessionItem };
