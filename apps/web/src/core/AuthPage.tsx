@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
+import { useToast } from "@shared/hooks/useToast";
 import { useAuth } from "./AuthContext.jsx";
 
 export function AuthPage({ onContinueWithoutAccount }) {
   const { login, register, requestPasswordReset, authError, setAuthError } =
     useAuth();
+  const toast = useToast();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,9 +45,11 @@ export function AuthPage({ onContinueWithoutAccount }) {
     e.preventDefault();
     setLoading(true);
     if (mode === "login") {
-      await login(email, password);
+      const ok = await login(email, password);
+      if (ok) toast.success("Вхід виконано");
     } else {
-      await register(email, password, name || email.split("@")[0]);
+      const ok = await register(email, password, name || email.split("@")[0]);
+      if (ok) toast.success("Акаунт створено");
     }
     setLoading(false);
   };
