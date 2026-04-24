@@ -97,6 +97,14 @@ const authClient = createAuthClient({
     password?: string;
     token?: string;
   }) => Promise<AuthResult>;
+  sendVerificationEmail: (args: {
+    email: string;
+    callbackURL?: string;
+  }) => Promise<AuthResult>;
+  changeEmail: (args: {
+    newEmail: string;
+    callbackURL?: string;
+  }) => Promise<AuthResult>;
 };
 
 type PasswordResetResult = {
@@ -142,6 +150,8 @@ const {
   revokeSession,
   revokeSessions,
   deleteUser,
+  sendVerificationEmail,
+  changeEmail,
 } = typedAuthClient;
 
 type SignOutFn = typeof rawSignOut;
@@ -176,6 +186,8 @@ export {
   revokeSession,
   revokeSessions,
   deleteUser,
+  sendVerificationEmail,
+  changeEmail,
 };
 
 export type { AuthResult, SessionItem };
