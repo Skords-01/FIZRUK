@@ -1,7 +1,7 @@
 /**
  * Nutrition tab — nested Stack layout.
- * `index` — `NutritionApp`; `scan` — сканер штрихкодів (expo-camera);
- * `recipe/[id]` — поки заглушка.
+ * `index` — `NutritionApp`; `scan` — штрихкоди; `pantry` — комора;
+ * `saved-recipes` — збережені рецепти; `recipe/[id]` — картка; `recipe/form` — створення/редагування.
  */
 import { Stack, useRouter } from "expo-router";
 
@@ -27,7 +27,22 @@ export default function NutritionStackLayout() {
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="scan" options={{ title: "Сканер" }} />
-        <Stack.Screen name="recipe/[id]" options={{ title: "Рецепт" }} />
+        <Stack.Screen
+          name="pantry"
+          options={{ title: "Комора", headerShown: false }}
+        />
+        <Stack.Screen
+          name="saved-recipes"
+          options={{ title: "Рецепти", headerShown: false }}
+        />
+        <Stack.Screen
+          name="recipe/form"
+          options={{ title: "Рецепт", headerShown: false }}
+        />
+        <Stack.Screen
+          name="recipe/[id]"
+          options={{ title: "Рецепт", headerShown: false }}
+        />
       </Stack>
     </ModuleErrorBoundary>
   );

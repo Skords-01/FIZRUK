@@ -21,20 +21,21 @@
 
 Мобільний клієнт мусить підтримати наступні URL-схеми:
 
-| Scheme                             | Куди веде                                        |
-| ---------------------------------- | ------------------------------------------------ |
-| `sergeant://`                      | Головний хаб (equivalent to tab root)            |
-| `sergeant://workout/{id}`          | Екран конкретного тренування (fizruk)            |
-| `sergeant://workout/new`           | Створення тренування                             |
-| `sergeant://food/log`              | Щоденник їжі (nutrition, поточний день)          |
-| `sergeant://food/scan`             | Barcode-сканер для nutrition                     |
-| `sergeant://food/recipe/{id}`      | Детальна карточка рецепта                        |
-| `sergeant://finance`               | Finyk — дашборд фінансів                         |
-| `sergeant://finance/tx/{id}`       | Конкретна транзакція                             |
-| `sergeant://routine`               | Routine — список звичок                          |
-| `sergeant://routine/habit/{id}`    | Конкретна звичка                                 |
-| `sergeant://settings`              | Налаштування (профіль, push, sync)               |
-| `sergeant://auth/callback?token=…` | OAuth/password-reset callback (Better Auth Expo) |
+| Scheme                             | Куди веде                                           |
+| ---------------------------------- | --------------------------------------------------- |
+| `sergeant://`                      | Головний хаб (equivalent to tab root)               |
+| `sergeant://workout/{id}`          | Екран конкретного тренування (fizruk)               |
+| `sergeant://workout/new`           | Створення тренування                                |
+| `sergeant://food/log`              | Щоденник їжі (nutrition, поточний день)             |
+| `sergeant://food/scan`             | Barcode-сканер для nutrition                        |
+| `sergeant://food/pantry`           | Комора (pantry)                                     |
+| `sergeant://food/recipe/{id}`      | Детальна карточка рецепта (MMKV, імпорт JSON з web) |
+| `sergeant://finance`               | Finyk — дашборд фінансів                            |
+| `sergeant://finance/tx/{id}`       | Конкретна транзакція                                |
+| `sergeant://routine`               | Routine — список звичок                             |
+| `sergeant://routine/habit/{id}`    | Конкретна звичка                                    |
+| `sergeant://settings`              | Налаштування (профіль, push, sync)                  |
+| `sergeant://auth/callback?token=…` | OAuth/password-reset callback (Better Auth Expo)    |
 
 Expo `scheme: "sergeant"` у `app.json`. Dev-клієнт додатково обробляє
 `exp://` (Expo Go) і `http://localhost:8081` (Metro web) — обидва вже

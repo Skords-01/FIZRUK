@@ -14,6 +14,7 @@
  */
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { router } from "expo-router";
 
 import {
   getDayMacros,
@@ -21,7 +22,7 @@ import {
   getMacrosForDateRange,
   type NutritionPrefs,
 } from "@sergeant/nutrition-domain";
-import { toLocalISODate, type Macros } from "@sergeant/shared";
+import { hapticTap, toLocalISODate, type Macros } from "@sergeant/shared";
 
 import { Card } from "@/components/ui/Card";
 
@@ -188,6 +189,52 @@ export function Dashboard({ testID, onMealAdded }: DashboardProps) {
           targetKcal={prefs.dailyTargetKcal || 0}
           todayIso={today}
         />
+      </Card>
+
+      <Card testID="nutrition-pantry-cta">
+        <Pressable
+          onPress={() => {
+            hapticTap();
+            router.push("/(tabs)/nutrition/pantry");
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Відкрити комору"
+          className="flex-row items-center justify-between"
+        >
+          <View>
+            <Text className="text-sm font-semibold text-stone-900">Комора</Text>
+            <Text className="text-xs text-stone-500 mt-0.5">
+              Склад продуктів (кілька комор)
+            </Text>
+          </View>
+          <Text className="text-stone-400 text-lg" aria-hidden>
+            ›
+          </Text>
+        </Pressable>
+      </Card>
+
+      <Card testID="nutrition-saved-recipes-cta">
+        <Pressable
+          onPress={() => {
+            hapticTap();
+            router.push("/(tabs)/nutrition/saved-recipes");
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Збережені рецепти"
+          className="flex-row items-center justify-between"
+        >
+          <View>
+            <Text className="text-sm font-semibold text-stone-900">
+              Збережені рецепти
+            </Text>
+            <Text className="text-xs text-stone-500 mt-0.5">
+              Локальна книга, імпорт з web (JSON)
+            </Text>
+          </View>
+          <Text className="text-stone-400 text-lg" aria-hidden>
+            ›
+          </Text>
+        </Pressable>
       </Card>
 
       <WaterTrackerCard

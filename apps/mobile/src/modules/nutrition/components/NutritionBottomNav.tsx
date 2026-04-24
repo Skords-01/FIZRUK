@@ -5,15 +5,14 @@
  * 1:1 з `RoutineBottomNav` — інлайн buttons з емодзі, 44×44 min tap
  * targets, a11y tablist/tab roles.
  *
- * Phase 7 / PR 4 рендерить лише 3 вкладки — Dashboard / Log / Water.
- * AddMeal, Pantry, Shopping list, Recipes — це наступні PR-и, і вони
- * приєднаються сюди як нові пункти (або як sub-tabs всередині Log).
+ * Вкладки: Сьогодні / Журнал / Вода / Покупки. Pantry і рецепти — окремі
+ * екрани / PR-и.
  */
 import { Pressable, Text, View } from "react-native";
 
 import { hapticTap } from "@sergeant/shared";
 
-export type NutritionMainTab = "dashboard" | "log" | "water";
+export type NutritionMainTab = "dashboard" | "log" | "water" | "shopping";
 
 interface NavItem {
   id: NutritionMainTab;
@@ -25,6 +24,7 @@ const NAV: readonly NavItem[] = [
   { id: "dashboard", label: "Сьогодні", emoji: "🍽️" },
   { id: "log", label: "Журнал", emoji: "📒" },
   { id: "water", label: "Вода", emoji: "💧" },
+  { id: "shopping", label: "Покупки", emoji: "🛒" },
 ];
 
 export interface NutritionBottomNavProps {
