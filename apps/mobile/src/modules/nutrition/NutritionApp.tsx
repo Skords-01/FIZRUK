@@ -4,11 +4,10 @@
  * Mobile port of `apps/web/src/modules/nutrition/NutritionApp.tsx`.
  *
  * Зараз:
- *  - `ModuleErrorBoundary` + bottom-nav: `dashboard` / `log` / `water`.
- *  - `Dashboard` / `Log` / `Water` — див. `pages/`.
- *  - `AddMealSheet` — ручний ввід + перехід на
- *    `app/(tabs)/nutrition/scan` (expo-camera + `/api/barcode`, PR-6).
- * Далі: pantry / shopping, рецепти, deep link `recipe/[id]`, photo-AI (PR-7+).
+ *  - bottom-nav: `dashboard` / `log` / `water` / `shopping`.
+ *  - `Dashboard` / `Log` / `Water` / `Shopping` — див. `pages/`.
+ *  - `AddMealSheet` + `nutrition/scan` (штрихкод), pantry, збережені рецепти, `recipe/[id]`, `recipe/form`.
+ * Далі: photo-AI, паритет AI-рецептів з web.
  *
  * Persistence: активна вкладка — `STORAGE_KEYS.NUTRITION_MAIN_TAB` (MMKV).
  */
@@ -27,12 +26,18 @@ import {
 } from "./components/NutritionBottomNav";
 import { Dashboard } from "./pages/Dashboard";
 import { Log } from "./pages/Log";
+import { Shopping } from "./pages/Shopping";
 import { Water } from "./pages/Water";
 
 const TAB_PERSIST_KEY = STORAGE_KEYS.NUTRITION_MAIN_TAB;
 
 function isNutritionMainTab(value: unknown): value is NutritionMainTab {
-  return value === "dashboard" || value === "log" || value === "water";
+  return (
+    value === "dashboard" ||
+    value === "log" ||
+    value === "water" ||
+    value === "shopping"
+  );
 }
 
 function readPersistedTab(): NutritionMainTab {
@@ -56,6 +61,9 @@ function NutritionShell() {
         ) : null}
         {mainTab === "log" ? <Log testID="nutrition-log" /> : null}
         {mainTab === "water" ? <Water testID="nutrition-water" /> : null}
+        {mainTab === "shopping" ? (
+          <Shopping testID="nutrition-shopping" />
+        ) : null}
       </View>
 
       <NutritionBottomNav

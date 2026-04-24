@@ -27,6 +27,7 @@ export type SergeantDeepLink =
   | { type: "workout"; id: string }
   | { type: "food-log" }
   | { type: "food-scan" }
+  | { type: "food-pantry" }
   | { type: "food-recipe"; id: string }
   | { type: "finance" }
   | { type: "finance-tx"; id: string }
@@ -93,6 +94,8 @@ export function parseSergeantUrl(
         return { type: "food-log" };
       if (b === "scan" && c === undefined && rest4.length === 0)
         return { type: "food-scan" };
+      if (b === "pantry" && c === undefined && rest4.length === 0)
+        return { type: "food-pantry" };
       if (b === "recipe" && c && rest4.length === 0)
         return { type: "food-recipe", id: c };
       return null;
@@ -144,6 +147,8 @@ export function buildSergeantUrl(link: SergeantDeepLink): string {
       return "sergeant://food/log";
     case "food-scan":
       return "sergeant://food/scan";
+    case "food-pantry":
+      return "sergeant://food/pantry";
     case "food-recipe":
       return `sergeant://food/recipe/${encodeURIComponent(link.id)}`;
     case "finance":
@@ -194,6 +199,8 @@ export function hrefForDeepLink(link: SergeantDeepLink): Href | null {
       return "/(tabs)/nutrition";
     case "food-scan":
       return "/(tabs)/nutrition/scan";
+    case "food-pantry":
+      return "/(tabs)/nutrition/pantry";
     case "food-recipe":
       return {
         pathname: "/(tabs)/nutrition/recipe/[id]",

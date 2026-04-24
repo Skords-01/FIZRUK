@@ -86,6 +86,8 @@ export const STORAGE_KEYS = {
   NUTRITION_PANTRIES: "nutrition_pantries_v1",
   NUTRITION_ACTIVE_PANTRY: "nutrition_active_pantry_v1",
   NUTRITION_PREFS: "nutrition_prefs_v1",
+  /** Локальна книга збережених рецептів (mobile MMKV; web — IndexedDB). */
+  NUTRITION_SAVED_RECIPES: "nutrition_recipe_book_v1",
 
   // ─── Weekly Digest ────────────────────────────────────────────────────
   WEEKLY_DIGEST_PREFIX: "hub_weekly_digest_",

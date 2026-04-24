@@ -78,6 +78,12 @@ describe("parseSergeantUrl", () => {
       });
     });
 
+    it("parses food/pantry", () => {
+      expect(parseSergeantUrl("sergeant://food/pantry")).toEqual({
+        type: "food-pantry",
+      });
+    });
+
     it("parses food/recipe/{id}", () => {
       expect(parseSergeantUrl("sergeant://food/recipe/abc123")).toEqual({
         type: "food-recipe",
@@ -229,6 +235,7 @@ describe("buildSergeantUrl", () => {
       { type: "workout", id: "123" },
       { type: "food-log" },
       { type: "food-scan" },
+      { type: "food-pantry" },
       { type: "food-recipe", id: "r1" },
       { type: "finance" },
       { type: "finance-tx", id: "tx_9" },
@@ -277,6 +284,9 @@ describe("hrefForDeepLink", () => {
     );
     expect(hrefForDeepLink({ type: "food-scan" })).toBe(
       "/(tabs)/nutrition/scan",
+    );
+    expect(hrefForDeepLink({ type: "food-pantry" })).toBe(
+      "/(tabs)/nutrition/pantry",
     );
   });
 

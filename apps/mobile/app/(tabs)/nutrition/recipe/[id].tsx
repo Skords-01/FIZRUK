@@ -1,20 +1,12 @@
 /**
  * Deep-link target for `sergeant://food/recipe/{id}`.
- *
- * Stub until Phase 7 ports the web Recipe detail screen.
+ * Показує збережений на пристрої рецепт (MMKV, ключ `NUTRITION_SAVED_RECIPES`).
  */
 import { useLocalSearchParams } from "expo-router";
 
-import { DeepLinkPlaceholder } from "@/components/DeepLinkPlaceholder";
+import { RecipeDetailPage } from "@/modules/nutrition/pages/RecipeDetail";
 
 export default function NutritionRecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return (
-    <DeepLinkPlaceholder
-      title="Рецепт"
-      detail={id ? `ID: ${id}` : undefined}
-      followUp="Детальна карточка рецепта — Phase 7 (Порт модуля Харчування)."
-      primaryAction={{ label: "До Харчування", href: "/(tabs)/nutrition" }}
-    />
-  );
+  return <RecipeDetailPage id={id} />;
 }
