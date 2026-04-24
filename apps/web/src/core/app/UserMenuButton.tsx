@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@shared/lib/cn";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
@@ -42,6 +43,7 @@ export function UserMenuButton({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!open) return;
@@ -86,6 +88,17 @@ export function UserMenuButton({
             <p className="text-xs text-muted truncate">{user.email}</p>
           </div>
           <div className="border-t border-line pt-2 space-y-1">
+            <button
+              type="button"
+              onClick={() => {
+                navigate("/profile");
+                setOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 rounded-xl text-sm text-text hover:bg-panelHi transition-colors flex items-center gap-2"
+            >
+              <Icon name="user" size={16} />
+              Профіль
+            </button>
             <button
               type="button"
               onClick={() => {
