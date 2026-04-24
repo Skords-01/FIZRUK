@@ -5,6 +5,7 @@ import { Button } from "@shared/components/ui/Button";
 import { useToast } from "@shared/hooks/useToast";
 import { resetOnboardingState, type KVStore } from "@sergeant/shared";
 import { HubBackupPanel } from "../HubBackupPanel.jsx";
+import { swClearCaches, swGetDebugSnapshot, swSetDebug } from "../app/swControl";
 import {
   DASHBOARD_MODULE_LABELS,
   loadDashboardOrder,
@@ -96,6 +97,7 @@ export function GeneralSection({
     () => loadDashboardOrder() as ModuleId[],
   );
   const toast = useToast();
+  const [swBusy, setSwBusy] = useState(false);
 
   const localStorageStore: KVStore = {
     getString(key) {
@@ -178,6 +180,64 @@ export function GeneralSection({
         >
           Перезапустити онбординг
         </Button>
+      </SettingsSubGroup>
+      <SettingsSubGroup title="PWA та офлайн">
+        <p className="text-xs text-subtle leading-snug">
+          Якщо після оновлення щось «застрягло» (стара версія або дивні дані),
+          можна скинути кеш Service Worker і перезавантажити застосунок.
+        </p>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-10 flex-1"
+            disabled={swBusy || !("serviceWorker" in navigator)}
+            onClick={async () => {
+              setSwBusy(true);
+              try {
+                await swSetDebug(true);
+                const snap = await swGetDebugSnapshot();
+                // eslint-disable-next-line no-console
+                console.log("[sw] snapshot", snap);
+                toast.success("SW-діагностика виведена в консоль");
+              } catch (err) {
+                toast.error("Не вдалося отримати діагностику SW");
+                // eslint-disable-next-line no-console
+                console.warn("[sw] debug failed", err);
+              } finally {
+                setSwBusy(false);
+              }
+            }}
+          >
+            Діагностика SW
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-10 flex-1"
+            disabled={swBusy || !("serviceWorker" in navigator)}
+            onClick={async () => {
+              setSwBusy(true);
+              try {
+                const res = await swClearCaches();
+                // eslint-disable-next-line no-console
+                console.log("[sw] caches cleared", res);
+                toast.success("Кеш PWA скинуто. Перезавантажуємо…", 4000);
+                setTimeout(() => window.location.reload(), 300);
+              } catch (err) {
+                toast.error("Не вдалося скинути кеш PWA");
+                // eslint-disable-next-line no-console
+                console.warn("[sw] clear caches failed", err);
+              } finally {
+                setSwBusy(false);
+              }
+            }}
+          >
+            Скинути кеш PWA
+          </Button>
+        </div>
       </SettingsSubGroup>
       <SettingsSubGroup title="Упорядкувати модулі">
         <p className="text-xs text-subtle leading-snug">

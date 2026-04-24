@@ -16,6 +16,9 @@ test-results/
 .agents/ds-qa/
 .agents/test-plans/
 
+# Cursor / local IDE settings
+.cursor/
+
 # Mobile / EAS
 apps/mobile/google-services.json
 apps/mobile/GoogleService-Info.plist
