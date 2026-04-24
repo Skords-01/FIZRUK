@@ -19,7 +19,7 @@ const base = {
 await build({
   ...base,
   entryPoints: ["src/index.ts"],
-  outfile: "dist/index.js",
+  outfile: "dist-server/index.js",
   // Railway logs don't need minified stacks; keep readable output.
   minify: false,
   legalComments: "none",
@@ -33,7 +33,7 @@ await build({
 await build({
   ...base,
   entryPoints: ["migrate.mjs"],
-  outfile: "dist/migrate.js",
+  outfile: "dist-server/migrate.js",
   minify: false,
   legalComments: "none",
 });

@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "node --import tsx src/index.js",
     "build": "node build.mjs",
-    "start": "node dist/index.js",
+    "start": "node dist-server/index.js",
     "start:replit": "SERVER_MODE=replit node --import tsx src/index.js",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "db:migrate": "node dist/migrate.js",
+    "db:migrate": "node dist-server/migrate.js",
     "db:migrate:dev": "node --import tsx ./migrate.mjs"
   },
   "dependencies": {
