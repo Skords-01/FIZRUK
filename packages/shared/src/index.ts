@@ -50,6 +50,9 @@ export * from "./lib/weeklyDigest";
 // Shared hint/tip system (taxonomy + caps). Rendering is per-platform.
 export * from "./lib/hints";
 
+// Daily nudges & re-engagement (Phase 3 — retention).
+export * from "./lib/nudges";
+
 // Canonical analytics event names shared across platforms.
 export * from "./lib/analyticsEvents";
 

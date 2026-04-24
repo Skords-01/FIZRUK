@@ -38,8 +38,18 @@ import {
   isFirstActionPending,
   recordSessionDay,
   getSessionDays,
+  getVibePicks,
 } from "./onboarding/vibePicks.js";
 import { useFirstEntryCelebration } from "./onboarding/useFirstEntryCelebration.js";
+import { DailyNudge } from "./onboarding/DailyNudge.jsx";
+import { ReEngagementCard } from "./onboarding/ReEngagementCard.jsx";
+import {
+  getActiveNudge,
+  shouldShowReengagement,
+  recordLastActiveDate,
+  countRealEntries,
+  type KVStore,
+} from "@sergeant/shared";
 import {
   DndContext,
   closestCenter,
@@ -57,6 +67,30 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 const DASHBOARD_ORDER_KEY = STORAGE_KEYS.DASHBOARD_ORDER;
+
+const localStorageStore: KVStore = {
+  getString: (k) => {
+    try {
+      return localStorage.getItem(k);
+    } catch {
+      return null;
+    }
+  },
+  setString: (k, v) => {
+    try {
+      localStorage.setItem(k, v);
+    } catch {
+      /* noop */
+    }
+  },
+  remove: (k) => {
+    try {
+      localStorage.removeItem(k);
+    } catch {
+      /* noop */
+    }
+  },
+};
 
 // Public labels for each module, surfaced in Settings → "Упорядкувати модулі".
 // The source of truth lives in `@sergeant/shared` so the mobile dashboard
@@ -505,11 +539,29 @@ export function HubDashboard({
   const [softAuthDismissed, setSoftAuthDismissed] = useState(() =>
     isSoftAuthDismissed(),
   );
+  const entryCount = useMemo(() => countRealEntries(localStorageStore), []);
   const showSoftAuth =
     !user &&
     !softAuthDismissed &&
     typeof onShowAuth === "function" &&
     (hasRealEntry || sessionDays >= SOFT_AUTH_SESSION_DAYS_THRESHOLD);
+
+  // Re-engagement: detect dormant user (7+ days inactive)
+  const [reengagement, setReengagement] = useState(() =>
+    shouldShowReengagement(localStorageStore),
+  );
+  useEffect(() => {
+    recordLastActiveDate(localStorageStore);
+  }, []);
+
+  // Daily nudge (days 2–7, max 1 per day, dismissible)
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
+  const activeNudge = useMemo(() => {
+    if (nudgeDismissed || sessionDays < 2) return null;
+    return getActiveNudge(localStorageStore, sessionDays, {
+      picks: getVibePicks(),
+    });
+  }, [sessionDays, nudgeDismissed]);
 
   const { focus, rest, dismiss } = useDashboardFocus();
 
@@ -603,6 +655,7 @@ export function HubDashboard({
       <SoftAuthPromptCard
         onOpenAuth={onShowAuth}
         onDismiss={() => setSoftAuthDismissed(true)}
+        entryCount={entryCount}
       />
     );
   } else {
@@ -618,7 +671,23 @@ export function HubDashboard({
 
   return (
     <div className="space-y-4">
+      {reengagement.show && (
+        <ReEngagementCard
+          daysInactive={reengagement.daysInactive}
+          onContinue={() => setReengagement({ show: false, daysInactive: 0 })}
+          onDismiss={() => setReengagement({ show: false, daysInactive: 0 })}
+        />
+      )}
+
       {hero}
+
+      {activeNudge && !reengagement.show && (
+        <DailyNudge
+          nudge={activeNudge}
+          sessionDays={sessionDays}
+          onDismiss={() => setNudgeDismissed(true)}
+        />
+      )}
 
       {/* STATUS — тихий список модулів. Рядок, під який підʼїхала
           рекомендація, отримує inline `+` для quick-add. */}

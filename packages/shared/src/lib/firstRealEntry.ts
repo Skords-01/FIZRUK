@@ -96,6 +96,71 @@ export function hasAnyRealEntry(store: KVStore): boolean {
   return false;
 }
 
+/**
+ * Count total non-demo entries across all modules.
+ * Used by SoftAuthPromptCard to show "У тебе N записів".
+ */
+export function countRealEntries(store: KVStore): number {
+  let count = 0;
+
+  const manual = readJSON<unknown[]>(
+    store,
+    FIRST_REAL_ENTRY_SOURCES.FINYK_MANUAL,
+  );
+  if (Array.isArray(manual)) {
+    count += manual.filter(
+      (item) =>
+        item && typeof item === "object" && !(item as { demo?: unknown }).demo,
+    ).length;
+  }
+
+  const finykCache = readJSON<{ transactions?: unknown[] }>(
+    store,
+    FIRST_REAL_ENTRY_SOURCES.FINYK_TX_CACHE,
+  );
+  if (finykCache && Array.isArray(finykCache.transactions)) {
+    count += finykCache.transactions.length;
+  }
+
+  const fizruk = readJSON<unknown[] | { workouts?: unknown[] }>(
+    store,
+    FIRST_REAL_ENTRY_SOURCES.FIZRUK_WORKOUTS,
+  );
+  const workouts = Array.isArray(fizruk)
+    ? fizruk
+    : fizruk && Array.isArray(fizruk.workouts)
+      ? fizruk.workouts
+      : [];
+  count += workouts.filter(
+    (item) =>
+      item && typeof item === "object" && !(item as { demo?: unknown }).demo,
+  ).length;
+
+  const routine = readJSON<{ habits?: unknown[] }>(
+    store,
+    FIRST_REAL_ENTRY_SOURCES.ROUTINE,
+  );
+  if (routine && Array.isArray(routine.habits)) {
+    count += routine.habits.filter(
+      (item) =>
+        item && typeof item === "object" && !(item as { demo?: unknown }).demo,
+    ).length;
+  }
+
+  const nutrition = readJSON<Record<string, { meals?: unknown }>>(
+    store,
+    FIRST_REAL_ENTRY_SOURCES.NUTRITION_LOG,
+  );
+  if (nutrition && typeof nutrition === "object" && !Array.isArray(nutrition)) {
+    for (const day of Object.values(nutrition)) {
+      const meals = day?.meals;
+      if (Array.isArray(meals)) count += meals.length;
+    }
+  }
+
+  return count;
+}
+
 /** Event names emitted by `detectFirstRealEntry` when the flag flips. */
 export const FIRST_REAL_ENTRY_EVENTS = {
   FIRST_REAL_ENTRY: "first_real_entry",

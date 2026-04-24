@@ -10,7 +10,15 @@ import { dismissSoftAuth } from "./vibePicks.js";
  * their first real entry. Intentionally not a modal — we never interrupt
  * the user; they can ignore it until they're ready.
  */
-export function SoftAuthPromptCard({ onOpenAuth, onDismiss }) {
+export function SoftAuthPromptCard({
+  onOpenAuth,
+  onDismiss,
+  entryCount,
+}: {
+  onOpenAuth: () => void;
+  onDismiss?: () => void;
+  entryCount?: number;
+}) {
   useEffect(() => {
     trackEvent(ANALYTICS_EVENTS.AUTH_PROMPT_SHOWN, { placement: "dashboard" });
   }, []);
@@ -43,7 +51,9 @@ export function SoftAuthPromptCard({ onOpenAuth, onDismiss }) {
             Зберегти на всіх пристроях?
           </p>
           <p className="text-xs text-muted mt-1 leading-relaxed">
-            Акаунт синхронізує твої дані між телефоном і браузером. 20 секунд.
+            {entryCount != null && entryCount > 0
+              ? `У тебе ${entryCount} ${entryCount === 1 ? "запис" : entryCount < 5 ? "записи" : "записів"}. Створи акаунт, щоб не втратити.`
+              : "Акаунт синхронізує твої дані між телефоном і браузером. 20 секунд."}
           </p>
           <div className="flex items-center gap-2 mt-3">
             <Button
