@@ -2,18 +2,18 @@
  * Nutrition Dashboard (Сьогодні) — mobile
  * Mirror `apps/web/src/modules/nutrition/components/NutritionDashboard.tsx`
  *
- * PR-4 рендерить:
+ * Рендерить:
  *  - "Сьогодні" Card: лічильник прийомів + 4 macro-ring / 4 macro-tile
+ *  - "+ Додати" CTA → opens AddMealSheet (PR-5)
  *  - "Тиждень · ккал" Card: 7-денна mini-bar-chart
  *  - WaterTrackerCard
  *
- * Не входить у PR-4 (відкладено):
- *  - Кнопка "+ Додати" (веде в AddMealSheet → PR-5)
+ * Не входить у цей PR (відкладено):
  *  - Кнопка "Налаштувати денні цілі КБЖВ" (settings screen → PR-7)
  *  - AI-підказка дня (PR-8)
  */
-import { useMemo } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import {
   getDayMacros,
@@ -25,6 +25,7 @@ import { toLocalISODate, type Macros } from "@sergeant/shared";
 
 import { Card } from "@/components/ui/Card";
 
+import { AddMealSheet, type MealSavePayload } from "../components/AddMealSheet";
 import { MacroRing } from "../components/MacroRing";
 import { WaterTrackerCard } from "../components/WaterTrackerCard";
 import { WeekKcalChart } from "../components/WeekKcalChart";
@@ -80,11 +81,22 @@ function mealCountLabel(count: number): string {
 
 export interface DashboardProps {
   testID?: string;
+  onMealAdded?: () => void;
 }
 
-export function Dashboard({ testID }: DashboardProps) {
-  const { nutritionLog } = useNutritionLog();
+export function Dashboard({ testID, onMealAdded }: DashboardProps) {
+  const { nutritionLog, addMeal } = useNutritionLog();
   const { prefs } = useNutritionPrefs();
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const handleSave = useCallback(
+    (payload: MealSavePayload) => {
+      addMeal(toLocalISODate(new Date()), payload);
+      setSheetOpen(false);
+      onMealAdded?.();
+    },
+    [addMeal, onMealAdded],
+  );
 
   const today = toLocalISODate(new Date());
 
@@ -123,6 +135,15 @@ export function Dashboard({ testID }: DashboardProps) {
               {summary.mealCount} {mealCountLabel(summary.mealCount)} їжі
             </Text>
           </View>
+          <Pressable
+            onPress={() => setSheetOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Додати прийом їжі"
+            testID="nutrition-add-meal-btn"
+            className="bg-lime-600 rounded-full px-3 py-1.5"
+          >
+            <Text className="text-xs font-bold text-white">+ Додати</Text>
+          </Pressable>
         </View>
 
         {hasTargets ? (
@@ -172,6 +193,12 @@ export function Dashboard({ testID }: DashboardProps) {
       <WaterTrackerCard
         goalMl={prefs.waterGoalMl ?? 2000}
         testID="nutrition-water-card"
+      />
+
+      <AddMealSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onSave={handleSave}
       />
     </ScrollView>
   );

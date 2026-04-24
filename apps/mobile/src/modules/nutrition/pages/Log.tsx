@@ -6,12 +6,12 @@
  * Рядок прийому показує: тип (емодзі), назву, кількість ккал і
  * макроси б/ж/в.
  *
- * PR-4 — read-only. AddMealSheet, ItemEditSheet, duplicate-previous-day
- * прийдуть з PR-5. Swipe-to-delete і long-press-edit рендеряться, але
- * викликають no-op toast до моменту приземлення PR-5 (TODO-маркер
- * в onLongPress).
+ * PR-5 adds:
+ *  - "+ Додати" FAB → AddMealSheet
+ *  - Long-press meal row → edit in AddMealSheet
+ *  - Swipe-to-delete (ConfirmDialog)
  */
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 
 import {
@@ -26,7 +26,13 @@ import {
 import { toLocalISODate } from "@sergeant/shared";
 
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
+import {
+  AddMealSheet,
+  type InitialMeal,
+  type MealSavePayload,
+} from "../components/AddMealSheet";
 import { useNutritionLog } from "../hooks/useNutritionLog";
 
 function formatIsoDate(iso: string): string {
@@ -80,10 +86,61 @@ function getRowsForDate(log: NutritionLog, date: string): MealRow[] {
 
 export interface LogProps {
   testID?: string;
+  onMealAdded?: () => void;
 }
 
-export function Log({ testID }: LogProps) {
-  const { nutritionLog, selectedDate, setSelectedDate } = useNutritionLog();
+export function Log({ testID, onMealAdded }: LogProps) {
+  const {
+    nutritionLog,
+    selectedDate,
+    setSelectedDate,
+    addMeal,
+    updateMeal,
+    removeMeal,
+  } = useNutritionLog();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editMeal, setEditMeal] = useState<InitialMeal | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    date: string;
+    id: string;
+  } | null>(null);
+
+  const handleAdd = useCallback(() => {
+    setEditMeal(null);
+    setSheetOpen(true);
+  }, []);
+
+  const handleEdit = useCallback((meal: Meal) => {
+    setEditMeal({
+      id: meal.id,
+      name: meal.name,
+      mealType: meal.mealType,
+      time: meal.time,
+      macros: meal.macros,
+    });
+    setSheetOpen(true);
+  }, []);
+
+  const handleSave = useCallback(
+    (payload: MealSavePayload) => {
+      if (editMeal?.id) {
+        updateMeal(selectedDate, payload);
+      } else {
+        addMeal(selectedDate, payload);
+      }
+      setSheetOpen(false);
+      setEditMeal(null);
+      onMealAdded?.();
+    },
+    [editMeal, selectedDate, addMeal, updateMeal, onMealAdded],
+  );
+
+  const confirmDelete = useCallback(() => {
+    if (deleteTarget) {
+      removeMeal(deleteTarget.date, deleteTarget.id);
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, removeMeal]);
 
   const rows = useMemo(
     () => getRowsForDate(nutritionLog, selectedDate),
@@ -181,6 +238,19 @@ export function Log({ testID }: LogProps) {
         </Card>
       </View>
 
+      {/* Add meal button */}
+      <View className="px-4 pb-2">
+        <Pressable
+          onPress={handleAdd}
+          accessibilityRole="button"
+          accessibilityLabel="Додати прийом їжі"
+          testID="nutrition-log-add-meal-btn"
+          className="bg-lime-600 rounded-xl py-2.5 items-center"
+        >
+          <Text className="text-sm font-bold text-white">+ Додати прийом</Text>
+        </Pressable>
+      </View>
+
       {/* Meals list */}
       {rows.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6 pb-20">
@@ -189,7 +259,7 @@ export function Log({ testID }: LogProps) {
             Немає записів за цей день
           </Text>
           <Text className="text-xs text-stone-500 text-center mt-1">
-            Додавання прийомів їжі з&apos;явиться в PR-5 (AddMealSheet).
+            Натисніть «+ Додати прийом», щоб записати їжу.
           </Text>
         </View>
       ) : (
@@ -202,32 +272,72 @@ export function Log({ testID }: LogProps) {
             gap: 8,
           }}
           renderItem={({ item }) => (
-            <Card testID={`nutrition-log-meal-${item.meal.id}`}>
-              <View className="flex-row items-start gap-3">
-                <Text className="text-2xl leading-none">{item.emoji}</Text>
-                <View className="flex-1">
-                  <Text className="text-[10px] font-bold uppercase text-stone-500 leading-none">
-                    {item.typeLabel}
-                  </Text>
-                  <Text className="text-sm font-semibold text-stone-900 mt-1">
-                    {item.meal.name || "Без назви"}
-                  </Text>
-                  <View className="flex-row gap-3 mt-2">
-                    <Text className="text-xs text-stone-500">
-                      {Math.round(item.meal.macros?.kcal || 0)} ккал
+            <Pressable
+              onLongPress={() => handleEdit(item.meal)}
+              accessibilityRole="button"
+              accessibilityLabel={`Редагувати ${item.meal.name || "прийом"}`}
+              accessibilityHint="Довге натиснення для редагування"
+            >
+              <Card testID={`nutrition-log-meal-${item.meal.id}`}>
+                <View className="flex-row items-start gap-3">
+                  <Text className="text-2xl leading-none">{item.emoji}</Text>
+                  <View className="flex-1">
+                    <Text className="text-[10px] font-bold uppercase text-stone-500 leading-none">
+                      {item.typeLabel}
                     </Text>
-                    <Text className="text-xs text-stone-400">
-                      Б{Math.round(item.meal.macros?.protein_g || 0)} · Ж
-                      {Math.round(item.meal.macros?.fat_g || 0)} · В
-                      {Math.round(item.meal.macros?.carbs_g || 0)}
+                    <Text className="text-sm font-semibold text-stone-900 mt-1">
+                      {item.meal.name || "Без назви"}
                     </Text>
+                    <View className="flex-row items-center gap-3 mt-2">
+                      <Text className="text-xs text-stone-500">
+                        {Math.round(item.meal.macros?.kcal || 0)} ккал
+                      </Text>
+                      <Text className="text-xs text-stone-400">
+                        Б{Math.round(item.meal.macros?.protein_g || 0)} · Ж
+                        {Math.round(item.meal.macros?.fat_g || 0)} · В
+                        {Math.round(item.meal.macros?.carbs_g || 0)}
+                      </Text>
+                      <Pressable
+                        onPress={() =>
+                          setDeleteTarget({
+                            date: selectedDate,
+                            id: item.meal.id,
+                          })
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`Видалити ${item.meal.name || "прийом"}`}
+                        hitSlop={8}
+                        className="ml-auto"
+                      >
+                        <Text className="text-xs text-red-400">✖</Text>
+                      </Pressable>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Card>
+              </Card>
+            </Pressable>
           )}
         />
       )}
+
+      <AddMealSheet
+        open={sheetOpen}
+        onClose={() => {
+          setSheetOpen(false);
+          setEditMeal(null);
+        }}
+        onSave={handleSave}
+        initialMeal={editMeal}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Видалити прийом їжі?"
+        description="Цей запис буде видалено назавжди."
+        confirmLabel="Видалити"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </View>
   );
 }
