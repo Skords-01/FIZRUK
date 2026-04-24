@@ -8,6 +8,7 @@ import { Input } from "@shared/components/ui/Input";
 import { useToast } from "@shared/hooks/useToast";
 import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
 import { useAuth } from "./AuthContext.jsx";
+import { STORAGE_KEYS } from "@sergeant/shared";
 import {
   updateUser,
   changePassword,
@@ -15,6 +16,8 @@ import {
   revokeSession,
   deleteUser,
   signOut,
+  sendVerificationEmail,
+  changeEmail,
   type SessionItem,
 } from "./authClient.js";
 
@@ -75,6 +78,11 @@ function PersonalInfoSection({
   const [name, setName] = useState(user.name ?? "");
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [confirmRemoveAvatar, setConfirmRemoveAvatar] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
   const dirty = name.trim() !== (user.name ?? "");
 
   useEffect(() => {
@@ -116,6 +124,7 @@ function PersonalInfoSection({
   };
 
   const handleRemoveAvatar = async () => {
+    setConfirmRemoveAvatar(false);
     setUploadingAvatar(true);
     const res = await updateUser({ image: null });
     setUploadingAvatar(false);
@@ -123,6 +132,36 @@ function PersonalInfoSection({
       toast.error(res.error.message ?? "Не вдалося видалити аватар");
     } else {
       toast.success("Аватар видалено");
+      await onRefresh();
+    }
+  };
+
+  const handleSendVerification = async () => {
+    if (!user.email) return;
+    setSendingVerification(true);
+    const res = await sendVerificationEmail({ email: user.email });
+    setSendingVerification(false);
+    if (res.error) {
+      toast.error(
+        res.error.message ?? "Не вдалося надіслати лист підтвердження",
+      );
+    } else {
+      toast.success("Лист підтвердження надіслано");
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    const trimmed = newEmail.trim();
+    if (!trimmed) return;
+    setSavingEmail(true);
+    const res = await changeEmail({ newEmail: trimmed });
+    setSavingEmail(false);
+    if (res.error) {
+      toast.error(res.error.message ?? "Не вдалося змінити email");
+    } else {
+      toast.success("Лист підтвердження нового email надіслано");
+      setEditingEmail(false);
+      setNewEmail("");
       await onRefresh();
     }
   };
@@ -200,18 +239,58 @@ function PersonalInfoSection({
                 </span>
               )}
             </div>
-            {user.image && (
+            {user.image && !confirmRemoveAvatar && (
               <button
                 type="button"
                 className="text-xs text-muted hover:text-danger transition-colors mt-1"
                 disabled={!online || uploadingAvatar}
-                onClick={handleRemoveAvatar}
+                onClick={() => setConfirmRemoveAvatar(true)}
               >
                 Видалити фото
               </button>
             )}
+            {user.image && confirmRemoveAvatar && (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-danger font-medium">
+                  Видалити?
+                </span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-danger hover:text-danger/80 transition-colors"
+                  onClick={handleRemoveAvatar}
+                >
+                  Так
+                </button>
+                <button
+                  type="button"
+                  className="text-xs text-muted hover:text-text transition-colors"
+                  onClick={() => setConfirmRemoveAvatar(false)}
+                >
+                  Ні
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Email verification / change */}
+        {!user.emailVerified && user.email && (
+          <div className="flex items-center gap-2 rounded-xl bg-warning/10 border border-warning/30 px-3 py-2.5">
+            <Icon name="alert" size={14} className="text-warning shrink-0" />
+            <p className="text-xs text-warning font-medium flex-1">
+              Email не підтверджено
+            </p>
+            <Button
+              variant="ghost"
+              size="xs"
+              disabled={!online || sendingVerification}
+              loading={sendingVerification}
+              onClick={handleSendVerification}
+            >
+              Надіслати лист
+            </Button>
+          </div>
+        )}
 
         {/* Edit name */}
         <div className="space-y-2">
@@ -241,6 +320,68 @@ function PersonalInfoSection({
               Зберегти
             </Button>
           </div>
+        </div>
+
+        {/* Edit email */}
+        <div className="space-y-2">
+          <label
+            htmlFor="profile-email"
+            className="block text-xs font-medium text-muted"
+          >
+            Email
+          </label>
+          {!editingEmail ? (
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-text flex-1 truncate">{user.email}</p>
+              <Button
+                variant="ghost"
+                size="xs"
+                disabled={!online}
+                onClick={() => {
+                  setEditingEmail(true);
+                  setNewEmail(user.email ?? "");
+                }}
+              >
+                Змінити
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                id="profile-email"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Новий email"
+                autoComplete="email"
+                className="flex-1"
+              />
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={
+                  !newEmail.trim() ||
+                  newEmail.trim() === user.email ||
+                  savingEmail ||
+                  !online
+                }
+                loading={savingEmail}
+                onClick={handleChangeEmail}
+              >
+                Зберегти
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditingEmail(false);
+                  setNewEmail("");
+                }}
+              >
+                Скасувати
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Card>
@@ -619,7 +760,7 @@ interface MemoryEntry {
   createdAt: string;
 }
 
-const PROFILE_KEY = "hub_user_profile_v1";
+const PROFILE_KEY = STORAGE_KEYS.USER_PROFILE;
 
 const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
   allergy: { label: "Алергії", emoji: "🚫" },
@@ -635,6 +776,8 @@ const MEMORY_ONBOARDING_PROMPT =
   "Привіт! Давай заповнимо мій профіль. Задай мені по черзі кілька запитань: 1) Чи є в мене алергії або обмеження в їжі? 2) Яка моя дієта чи стиль харчування? 3) Яка моя основна ціль (схуднути, набрати масу, підтримка)? 4) Скільки разів на тиждень я тренуюсь і де? 5) Чи є щось ще важливе про моє здоров'я? Запам'ятай кожну відповідь через remember.";
 
 function MemoryBankSection() {
+  const toast = useToast();
+  const importRef = useRef<HTMLInputElement>(null);
   const [entries, setEntries] = useState<MemoryEntry[]>(() => {
     try {
       const raw = localStorage.getItem(PROFILE_KEY);
@@ -663,6 +806,64 @@ function MemoryBankSection() {
     window.dispatchEvent(new CustomEvent("hub:openChat", { detail: prompt }));
   }, [entries.length]);
 
+  const handleExport = useCallback(() => {
+    const json = JSON.stringify(entries, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sergeant-memory-bank-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Експорт завершено");
+  }, [entries, toast]);
+
+  const handleImport = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (importRef.current) importRef.current.value = "";
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result as string);
+          if (!Array.isArray(parsed)) {
+            toast.error("Невалідний формат файлу");
+            return;
+          }
+          const valid = parsed.filter(
+            (item: unknown) =>
+              typeof item === "object" &&
+              item !== null &&
+              "id" in item &&
+              "fact" in item,
+          ) as MemoryEntry[];
+          if (valid.length === 0) {
+            toast.error("Файл не містить валідних записів");
+            return;
+          }
+          const existingIds = new Set(entries.map((ent) => ent.id));
+          const merged = [
+            ...entries,
+            ...valid.filter((v) => !existingIds.has(v.id)),
+          ];
+          setEntries(merged);
+          try {
+            localStorage.setItem(PROFILE_KEY, JSON.stringify(merged));
+          } catch {}
+          const added = merged.length - entries.length;
+          toast.success(
+            `Імпортовано ${added} ${added === 1 ? "запис" : added < 5 ? "записи" : "записів"}`,
+          );
+        } catch {
+          toast.error("Не вдалося прочитати файл");
+        }
+      };
+      reader.readAsText(file);
+    },
+    [entries, toast],
+  );
+
   const grouped = useMemo(() => {
     const map: Record<string, MemoryEntry[]> = {};
     for (const e of entries) {
@@ -671,6 +872,13 @@ function MemoryBankSection() {
       map[cat].push(e);
     }
     return map;
+  }, [entries]);
+
+  const storageSize = useMemo(() => {
+    if (entries.length === 0) return "0 B";
+    const bytes = new Blob([JSON.stringify(entries)]).size;
+    if (bytes < 1024) return `${bytes} B`;
+    return `${(bytes / 1024).toFixed(1)} KB`;
   }, [entries]);
 
   const isEmpty = entries.length === 0;
@@ -687,6 +895,8 @@ function MemoryBankSection() {
             : entries.length < 5
               ? "записи"
               : "записів"}
+          {" \u00b7 "}
+          {storageSize}
         </span>
       </div>
 
@@ -701,10 +911,27 @@ function MemoryBankSection() {
               ШІ задасть кілька запитань щоб дізнатися про ваші алергії, цілі,
               уподобання та рівень активності
             </p>
-            <Button variant="primary" size="sm" onClick={openMemoryChat}>
-              <Icon name="sparkle" size={14} className="mr-1.5" />
-              Заповнити профіль
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <Button variant="primary" size="sm" onClick={openMemoryChat}>
+                <Icon name="sparkle" size={14} className="mr-1.5" />
+                Заповнити профіль
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => importRef.current?.click()}
+              >
+                <Icon name="upload" size={14} className="mr-1.5" />
+                Імпорт
+              </Button>
+            </div>
+            <input
+              ref={importRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImport}
+            />
           </div>
         ) : (
           <div className="space-y-3">
@@ -739,14 +966,39 @@ function MemoryBankSection() {
               );
             })}
 
-            <button
-              type="button"
-              onClick={openMemoryChat}
-              className="w-full mt-2 py-2.5 rounded-xl border border-dashed border-line text-sm text-muted hover:text-text hover:border-muted transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Icon name="plus" size={14} />
-              Додати інфо
-            </button>
+            <div className="flex gap-2 mt-2">
+              <button
+                type="button"
+                onClick={openMemoryChat}
+                className="flex-1 py-2.5 rounded-xl border border-dashed border-line text-sm text-muted hover:text-text hover:border-muted transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Icon name="plus" size={14} />
+                Додати інфо
+              </button>
+              <button
+                type="button"
+                onClick={handleExport}
+                className="py-2.5 px-3 rounded-xl border border-line text-sm text-muted hover:text-text hover:border-muted transition-colors flex items-center justify-center gap-1.5"
+                aria-label="Експорт пам'яті"
+              >
+                <Icon name="download" size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => importRef.current?.click()}
+                className="py-2.5 px-3 rounded-xl border border-line text-sm text-muted hover:text-text hover:border-muted transition-colors flex items-center justify-center gap-1.5"
+                aria-label="Імпорт пам'яті"
+              >
+                <Icon name="upload" size={14} />
+              </button>
+            </div>
+            <input
+              ref={importRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImport}
+            />
           </div>
         )}
       </div>

@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 // ── Mocks ────────────────────────────────────────────────────
@@ -11,6 +17,9 @@ const listSessionsMock = vi.fn<() => Promise<{ data: unknown[] }>>();
 const revokeSessionMock = vi.fn<(d: unknown) => Promise<{ error: null }>>();
 const deleteUserMock = vi.fn<(d: unknown) => Promise<{ error: null }>>();
 const signOutMock = vi.fn<() => Promise<void>>();
+const sendVerificationEmailMock =
+  vi.fn<(d: unknown) => Promise<{ error: null }>>();
+const changeEmailMock = vi.fn<(d: unknown) => Promise<{ error: null }>>();
 
 updateUserMock.mockResolvedValue({ error: null });
 changePasswordMock.mockResolvedValue({ error: null });
@@ -18,6 +27,8 @@ listSessionsMock.mockResolvedValue({ data: [] });
 revokeSessionMock.mockResolvedValue({ error: null });
 deleteUserMock.mockResolvedValue({ error: null });
 signOutMock.mockResolvedValue(undefined);
+sendVerificationEmailMock.mockResolvedValue({ error: null });
+changeEmailMock.mockResolvedValue({ error: null });
 
 vi.mock("./authClient.js", () => ({
   updateUser: (data: unknown) => updateUserMock(data),
@@ -26,6 +37,8 @@ vi.mock("./authClient.js", () => ({
   revokeSession: (data: unknown) => revokeSessionMock(data),
   deleteUser: (data: unknown) => deleteUserMock(data),
   signOut: () => signOutMock(),
+  sendVerificationEmail: (data: unknown) => sendVerificationEmailMock(data),
+  changeEmail: (data: unknown) => changeEmailMock(data),
 }));
 
 const useOnlineStatusMock = vi.fn(() => true);
@@ -85,7 +98,8 @@ describe("ProfilePage", () => {
     it("shows user name and email", () => {
       renderPage();
       expect(screen.getByText("Тест")).toBeInTheDocument();
-      expect(screen.getByText("test@example.com")).toBeInTheDocument();
+      const emails = screen.getAllByText("test@example.com");
+      expect(emails.length).toBeGreaterThanOrEqual(1);
     });
 
     it("shows verified badge when emailVerified is true", () => {
@@ -125,6 +139,37 @@ describe("ProfilePage", () => {
     it("hides remove photo link when no avatar", () => {
       renderPage();
       expect(screen.queryByText("Видалити фото")).not.toBeInTheDocument();
+    });
+
+    it("shows email verification banner when emailVerified is false", () => {
+      mockUser.emailVerified = false;
+      renderPage();
+      expect(screen.getByText("Email не підтверджено")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Надіслати лист" }),
+      ).toBeInTheDocument();
+    });
+
+    it("hides email verification banner when emailVerified is true", () => {
+      renderPage();
+      expect(
+        screen.queryByText("Email не підтверджено"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows avatar removal confirm when clicking remove photo", () => {
+      mockUser.image = "data:image/webp;base64,abc";
+      renderPage();
+      const links = screen.getAllByText("Видалити фото");
+      fireEvent.click(links[0]);
+      expect(screen.getByText("Видалити?")).toBeInTheDocument();
+    });
+
+    it("shows change email button", () => {
+      renderPage();
+      expect(
+        screen.getByRole("button", { name: "Змінити" }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -179,6 +224,21 @@ describe("ProfilePage", () => {
       renderPage();
       const avatarBtns = screen.getAllByLabelText("Змінити аватар");
       expect(avatarBtns[0]).toBeDisabled();
+    });
+
+    it("disables email verification button when offline", () => {
+      useOnlineStatusMock.mockReturnValue(false);
+      mockUser.emailVerified = false;
+      renderPage();
+      const btn = screen.getByRole("button", { name: "Надіслати лист" });
+      expect(btn).toBeDisabled();
+    });
+
+    it("disables change email button when offline", () => {
+      useOnlineStatusMock.mockReturnValue(false);
+      renderPage();
+      const btn = screen.getByRole("button", { name: "Змінити" });
+      expect(btn).toBeDisabled();
     });
   });
 

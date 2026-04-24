@@ -53,6 +53,9 @@ export const SYNC_MODULES = {
       STORAGE_KEYS.NUTRITION_PREFS,
     ],
   },
+  profile: {
+    keys: [STORAGE_KEYS.USER_PROFILE],
+  },
 } as const;
 
 export type ModuleName = keyof typeof SYNC_MODULES;
