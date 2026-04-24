@@ -52,6 +52,15 @@ export const ANALYTICS_EVENTS = Object.freeze({
   // Celebrations (Phase 2 — enriched feedback)
   CELEBRATION_SHOWN: "celebration_shown",
 
+  // Daily nudges (Phase 3 — retention)
+  DAILY_NUDGE_SHOWN: "daily_nudge_shown",
+  DAILY_NUDGE_CLICKED: "daily_nudge_clicked",
+  DAILY_NUDGE_DISMISSED: "daily_nudge_dismissed",
+
+  // Re-engagement (Phase 3 — retention)
+  REENGAGEMENT_SHOWN: "reengagement_shown",
+  REENGAGEMENT_CLICKED: "reengagement_clicked",
+
   // Hints / tips system
   HINT_SHOWN: "hint_shown",
   HINT_CLICKED: "hint_clicked",
