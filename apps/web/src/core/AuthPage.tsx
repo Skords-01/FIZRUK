@@ -135,8 +135,10 @@ export function AuthPage({ onContinueWithoutAccount }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
-              placeholder="Мінімум 6 символів"
+              minLength={mode === "register" ? 10 : 1}
+              placeholder={
+                mode === "register" ? "Мінімум 10 символів" : "Пароль"
+              }
               autoComplete={
                 mode === "login" ? "current-password" : "new-password"
               }
