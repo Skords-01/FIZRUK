@@ -351,6 +351,7 @@ export function createHttpClient(config: HttpClientConfig = {}): HttpClient {
     const { body, parseFailed } = safeParseJson(bodyText, ct);
 
     if (!res.ok) {
+      const requestIdHeader = res.headers.get("x-request-id") || undefined;
       const serverMessage =
         body && typeof body === "object"
           ? (body as { error?: unknown }).error
@@ -372,6 +373,7 @@ export function createHttpClient(config: HttpClientConfig = {}): HttpClient {
         body,
         bodyText,
         url,
+        requestId: requestIdHeader,
         retryAfterMs,
       });
     }

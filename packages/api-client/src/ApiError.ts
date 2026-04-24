@@ -14,6 +14,8 @@ export interface ApiErrorInit {
   body?: unknown;
   bodyText?: string;
   url: string;
+  /** Кореляційний ID відповіді (з `X-Request-Id` або `body.requestId`). */
+  requestId?: string;
   cause?: unknown;
   /**
    * Мілісекунди до найраніше безпечної повторної спроби, коли сервер повернув
@@ -37,6 +39,8 @@ export class ApiError extends Error {
   readonly url: string;
   /** `body?.error`, якщо сервер повернув стандартну форму помилки. */
   readonly serverMessage?: string;
+  /** Кореляційний ID запиту на сервері, якщо доступний. */
+  readonly requestId?: string;
   /** Мс до безпечного retry, якщо upstream віддав `Retry-After`. `undefined`
    *  якщо заголовок не було або він не парситься у додатну величину. */
   readonly retryAfterMs?: number;
@@ -49,6 +53,15 @@ export class ApiError extends Error {
     this.body = init.body;
     this.bodyText = init.bodyText ?? "";
     this.url = init.url;
+    const maybeBodyRequestId =
+      init.body && typeof init.body === "object"
+        ? (init.body as { requestId?: unknown }).requestId
+        : undefined;
+    this.requestId =
+      (typeof init.requestId === "string" && init.requestId.trim()) ||
+      (typeof maybeBodyRequestId === "string" && maybeBodyRequestId.trim())
+        ? String(init.requestId || maybeBodyRequestId).trim()
+        : undefined;
     const maybeServerMessage =
       init.body && typeof init.body === "object"
         ? (init.body as { error?: unknown }).error

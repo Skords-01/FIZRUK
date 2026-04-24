@@ -65,11 +65,13 @@ ALLOWED_ORIGINS=http://localhost:5173
 
 ## 5. Перевірка
 
-- `GET https://<твій-api>.up.railway.app/health` → тіло `ok`, якщо PostgreSQL доступний; інакше **503** і `unhealthy`. У відповідях API є заголовок `X-Request-Id` (або передай свій `X-Request-Id` з клієнта).
+- `GET https://<твій-api>.up.railway.app/readyz` (або історичний аліас `/health`) → тіло `ok`, якщо PostgreSQL доступний; інакше **503** і `unhealthy`.
+- `GET https://<твій-api>.up.railway.app/livez` → завжди `200 ok`, якщо процес живий (не чіпає БД) — зручно для простого uptime-моніторингу.
+- У відповідях API є заголовок `X-Request-Id` (або передай свій `X-Request-Id` з клієнта).
 - Реєстрація в застосунку з прод-фронту: куки й CORS мають відповідати `ALLOWED_ORIGINS` і домену API. Safari (ITP) блокує third-party cookie — Edge Middleware у `middleware.ts` проксіює `/api/*` через Vercel, роблячи cookie same-origin. Якщо сесія «не тримається» — перевір, що `BACKEND_URL` задано на Vercel і `VITE_API_BASE_URL` **видалено**.
 
 ## 6. Моніторинг і логи
 
-- **Healthcheck**: зовнішній монітор (UptimeRobot, Better Stack, тощо) — `GET /health` кожні 1–5 хв; алерт при **не 200** або тілі не `ok`.
+- **Healthcheck**:\n+ - **Uptime**: `GET /livez` кожні 1–5 хв.\n+ - **Readiness (з БД)**: `GET /readyz` (або `/health`) — корисно, якщо хочеш алертити саме проблеми з Postgres.\n+ - Алерт при **не 200** або тілі не `ok`.
 - **Логи Railway**: шукай за **`X-Request-Id`** з відповіді API або з тіла помилки (`requestId`), щоб зв’язати клієнт і сервер.
 - **Структуровані рядки** `{"msg":"http",...}` — фільтруй за `status >= 500` або `path` для регресій.

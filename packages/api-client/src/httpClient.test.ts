@@ -127,12 +127,18 @@ describe("httpClient — успішні запити", () => {
 
 describe("httpClient — помилки", () => {
   it("HTTP-помилка: ApiError.kind='http', .status, .serverMessage", async () => {
-    mockFetchOnce(jsonResponse({ error: "bad thing" }, { status: 400 }));
+    mockFetchOnce(
+      jsonResponse(
+        { error: "bad thing", requestId: "req_body_1" },
+        { status: 400, headers: { "X-Request-Id": "req_hdr_1" } },
+      ),
+    );
     await expect(http.get("/api/x")).rejects.toMatchObject({
       name: "ApiError",
       kind: "http",
       status: 400,
       serverMessage: "bad thing",
+      requestId: "req_hdr_1",
     });
   });
 
