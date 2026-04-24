@@ -49,4 +49,3 @@ test("auth: sign-up leads to authenticated hub surface", async ({ page }) => {
   await expect(page).not.toHaveURL(/\/sign-in/);
   await expect(page.locator("main, #root")).toBeVisible();
 });
-
