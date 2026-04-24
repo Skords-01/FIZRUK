@@ -74,9 +74,12 @@ describe("formatApiError", () => {
       message: "HTTP 500",
       status: 500,
       body: { error: "boom" },
+      requestId: "req_123",
       url: URL,
     });
-    expect(formatApiError(err, { fallback: "fb" })).toBe("boom");
+    expect(formatApiError(err, { fallback: "fb" })).toBe(
+      "boom (requestId: req_123)",
+    );
   });
 
   it("ApiError network + offline → офлайн-копія", () => {

@@ -258,7 +258,7 @@ npm run dev        # 2) Vite dev server (фронт, порт 5173) — прок
 | `AI_DAILY_ANON_LIMIT`      | Ні          | Ліміт AI-викликів для анонімного IP (за замовч. 40)                                                                                               |
 | `AI_QUOTA_DISABLED`        | Ні          | `1` — повністю вимкнути перевірки квот (напр., для локального dev)                                                                                |
 | `ALLOWED_ORIGINS`          | Ні          | Додаткові CORS origin через кому (локальне та preview вже дозволені)                                                                              |
-| `VITE_API_BASE_URL`        | Ні          | Базовий URL API **без** завершального `/`, напр. `https://xxx.up.railway.app` (порожньо → відносні шляхи)                                         |
+| `VITE_API_BASE_URL`        | Ні          | Базовий URL API **без** завершального `/` (краще не використовувати на Vercel у проді; див. `BACKEND_URL` + `middleware.ts`)                      |
 | `VITE_API_PROXY_TARGET`    | Ні          | Тільки для `vite dev`: куди проксувати `/api/*` (типово `http://127.0.0.1:3000`)                                                                  |
 | `VITE_NUTRITION_API_TOKEN` | Ні          | Токен Nutritionix для прямих запитів з фронту                                                                                                     |
 | `USDA_FDC_API_KEY`         | Ні          | Ключ USDA FoodData Central для barcode-fallback (безкоштовний на [api.data.gov](https://api.data.gov/signup)); без ключа — `DEMO_KEY` (40 req/hr) |
@@ -283,10 +283,11 @@ npm run dev        # 2) Vite dev server (фронт, порт 5173) — прок
 
 1. У Railway: новий сервіс з цього репозиторію, білд через [`Dockerfile.api`](Dockerfile.api) (див. [`railway.toml`](railway.toml)).
 2. У змінних сервісу Railway задати секрети: `ANTHROPIC_API_KEY`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, для Web Push — `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, `API_SECRET`; опційно `NUTRITION_API_TOKEN`, `USDA_FDC_API_KEY`, `ALLOWED_ORIGINS`.
-3. У **Vercel** (Environment Variables для Production/Preview): `VITE_API_BASE_URL` = публічний URL Railway (HTTPS).
-4. Каталог API — у [`server/modules/`](server/modules/), у корені репо немає `api/`, тож Vercel Hobby не створює десятки serverless-функцій.
+3. У **Vercel** (Environment Variables для Production/Preview): `BACKEND_URL` = публічний URL Railway (HTTPS).
+4. **Не використовуй `VITE_API_BASE_URL` у проді на Vercel**: веб має ходити на `/api/*` (same-origin), а Edge Middleware у [`middleware.ts`](middleware.ts) проксіює запити на `BACKEND_URL` — це критично для Safari (ITP) та cookie-сесій.
+5. Каталог API — у [`apps/server/src/`](apps/server/src/), у корені репо немає `api/`, тож Vercel Hobby не створює десятки serverless-функцій.
 
-Локально: `npm start` (Express, порт 3000). Фронт `npm run dev`: без `VITE_API_BASE_URL` запити йдуть на `/api/*` і проксуються на `VITE_API_PROXY_TARGET`.
+Локально: `npm start` (Express, порт 3000). Фронт `npm run dev`: запити йдуть на `/api/*` і проксуються на `VITE_API_PROXY_TARGET`.
 
 ## Деплой
 

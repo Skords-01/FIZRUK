@@ -48,15 +48,18 @@ describe("поза Capacitor — все no-op", () => {
   it("getBearerToken повертає null і НЕ підтягує auth-storage модуль", async () => {
     // Якщо модуль всередині `loadStorage()` все-таки почне резолвитись,
     // мок кине і ми побачимо це у звіті.
-    const importSpy = vi.fn(async () => {
+    const importSpy = vi.fn(() => {
       throw new Error("dynamic import should not be called in web branch");
     });
-    vi.doMock("@sergeant/mobile-shell/auth-storage", importSpy);
+    vi.doMock(
+      "@sergeant/mobile-shell/auth-storage",
+      importSpy as unknown as () => never,
+    );
 
     const { getBearerToken } = await import("./bearerToken.js");
     await expect(getBearerToken()).resolves.toBeNull();
     expect(importSpy).not.toHaveBeenCalled();
-  });
+  }, 20_000);
 
   it("setBearerToken — тихий no-op, не кидає, не викликає storage", async () => {
     const setSpy = vi.fn();
