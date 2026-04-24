@@ -422,6 +422,21 @@ interface ExportModuleDataAction {
   input: { module: string; format?: string };
 }
 
+interface RememberAction {
+  name: "remember";
+  input: { fact: string; category?: string };
+}
+
+interface ForgetAction {
+  name: "forget";
+  input: { fact_id: string };
+}
+
+interface MyProfileAction {
+  name: "my_profile";
+  input: { category?: string };
+}
+
 export type ChatAction =
   | ChangeCategoryAction
   | CreateDebtAction
@@ -480,6 +495,9 @@ export type ChatAction =
   | SaveNoteAction
   | ListNotesAction
   | ExportModuleDataAction
+  | RememberAction
+  | ForgetAction
+  | MyProfileAction
   | { name: string; input: Record<string, unknown> };
 
 interface BudgetLimit {
@@ -2863,6 +2881,116 @@ export function executeAction(action: ChatAction): string {
           default:
             return `Невідомий модуль: ${mod}. Доступні: finyk, fizruk, routine, nutrition.`;
         }
+      }
+      // ── Пам'ять / Профіль ──────────────────────────────────────
+      case "remember": {
+        const { fact, category } = (action as RememberAction).input;
+        const trimmed = (fact || "").trim();
+        if (!trimmed) return "Потрібен факт для запам'ятовування.";
+        const PROFILE_KEY = "hub_user_profile_v1";
+        const profile = ls<
+          Array<{
+            id: string;
+            fact: string;
+            category: string;
+            createdAt: string;
+          }>
+        >(PROFILE_KEY, []);
+        const duplicate = profile.find(
+          (p) => p.fact.toLowerCase() === trimmed.toLowerCase(),
+        );
+        if (duplicate)
+          return `Вже запам'ятовано: "${duplicate.fact}" [${duplicate.category}]`;
+        const entry = {
+          id: `mem_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+          fact: trimmed.slice(0, 500),
+          category: (category || "other").trim().toLowerCase(),
+          createdAt: new Date().toISOString(),
+        };
+        profile.push(entry);
+        lsSet(PROFILE_KEY, profile);
+        const categoryLabels: Record<string, string> = {
+          allergy: "алергія",
+          diet: "дієта",
+          goal: "ціль",
+          training: "тренування",
+          health: "здоров'я",
+          preference: "уподобання",
+          other: "інше",
+        };
+        return `Запам'ятав: "${trimmed}" [${categoryLabels[entry.category] || entry.category}]`;
+      }
+      case "forget": {
+        const { fact_id } = (action as ForgetAction).input;
+        if (!fact_id) return "Потрібен ID або текст факту.";
+        const PROFILE_KEY = "hub_user_profile_v1";
+        const profile = ls<
+          Array<{
+            id: string;
+            fact: string;
+            category: string;
+            createdAt: string;
+          }>
+        >(PROFILE_KEY, []);
+        if (profile.length === 0)
+          return "Профіль порожній — немає що забувати.";
+        const byId = profile.findIndex((p) => p.id === fact_id);
+        if (byId >= 0) {
+          const removed = profile.splice(byId, 1)[0];
+          lsSet(PROFILE_KEY, profile);
+          return `Забув: "${removed.fact}"`;
+        }
+        const byText = profile.findIndex((p) =>
+          p.fact.toLowerCase().includes(fact_id.toLowerCase()),
+        );
+        if (byText >= 0) {
+          const removed = profile.splice(byText, 1)[0];
+          lsSet(PROFILE_KEY, profile);
+          return `Забув: "${removed.fact}"`;
+        }
+        return `Не знайшов факт "${fact_id}" у профілі.`;
+      }
+      case "my_profile": {
+        const { category } = (action as MyProfileAction).input || {};
+        const PROFILE_KEY = "hub_user_profile_v1";
+        const profile = ls<
+          Array<{
+            id: string;
+            fact: string;
+            category: string;
+            createdAt: string;
+          }>
+        >(PROFILE_KEY, []);
+        if (profile.length === 0)
+          return "Профіль порожній. Скажи мені щось про себе — і я запам'ятаю!";
+        const filtered = category
+          ? profile.filter((p) => p.category === category.toLowerCase().trim())
+          : profile;
+        if (filtered.length === 0)
+          return `Немає записів у категорії "${category}".`;
+        const categoryLabels: Record<string, string> = {
+          allergy: "🚫 Алергії",
+          diet: "🍎 Дієта",
+          goal: "🎯 Цілі",
+          training: "🏋️ Тренування",
+          health: "💊 Здоров'я",
+          preference: "⭐ Уподобання",
+          other: "📝 Інше",
+        };
+        const grouped: Record<string, typeof filtered> = {};
+        for (const entry of filtered) {
+          const cat = entry.category || "other";
+          if (!grouped[cat]) grouped[cat] = [];
+          grouped[cat].push(entry);
+        }
+        const parts: string[] = [`Профіль (${filtered.length} записів):`];
+        for (const [cat, entries] of Object.entries(grouped)) {
+          parts.push(`\n${categoryLabels[cat] || cat}:`);
+          for (const e of entries) {
+            parts.push(`  • ${e.fact} (id:${e.id})`);
+          }
+        }
+        return parts.join("\n");
       }
       default:
         return `Невідома дія: ${action.name}`;
