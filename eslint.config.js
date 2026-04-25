@@ -30,6 +30,8 @@ export default [
       "**/test-results/**",
       ".turbo/**",
       "**/.turbo/**",
+      "coverage/**",
+      "**/coverage/**",
     ],
   },
   js.configs.recommended,
@@ -173,6 +175,7 @@ export default [
       "apps/web/src/**/__tests__/**",
       // Storage primitives — these are the wrappers everyone else
       // should call into.
+      "apps/web/src/shared/lib/localStorageKVStore.ts",
       "apps/web/src/shared/lib/storage.ts",
       "apps/web/src/shared/lib/storageManager.ts",
       "apps/web/src/shared/lib/storageQuota.ts",
