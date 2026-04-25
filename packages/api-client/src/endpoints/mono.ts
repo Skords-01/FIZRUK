@@ -11,6 +11,61 @@ import type { HttpClient } from "../httpClient";
 
 export type MonoCashbackType = "" | "None" | "UAH" | "Miles" | string;
 
+// ── Webhook migration DTOs (Track A) ─────────────────────────────────────
+
+export type MonoConnectionStatus =
+  | "pending"
+  | "active"
+  | "invalid"
+  | "disconnected";
+
+export interface MonoAccountDto {
+  userId: string;
+  monoAccountId: string;
+  sendId: string | null;
+  type: string | null;
+  currencyCode: number;
+  cashbackType: string | null;
+  maskedPan: string[];
+  iban: string | null;
+  balance: number | null;
+  creditLimit: number | null;
+  lastSeenAt: string;
+}
+
+export interface MonoTransactionDto {
+  userId: string;
+  monoAccountId: string;
+  monoTxId: string;
+  time: string;
+  amount: number;
+  operationAmount: number;
+  currencyCode: number;
+  mcc: number | null;
+  originalMcc: number | null;
+  hold: boolean | null;
+  description: string | null;
+  comment: string | null;
+  cashbackAmount: number | null;
+  commissionRate: number | null;
+  balance: number | null;
+  receiptId: string | null;
+  invoiceId: string | null;
+  counterEdrpou: string | null;
+  counterIban: string | null;
+  counterName: string | null;
+  source: "webhook" | "backfill";
+  receivedAt: string;
+}
+
+export interface MonoSyncState {
+  status: MonoConnectionStatus;
+  webhookActive: boolean;
+  lastEventAt: string | null;
+  lastBackfillAt: string | null;
+  accountsCount: number;
+}
+
 export interface MonoAccount {
   id: string;
   sendId?: string;
@@ -209,5 +264,62 @@ export function createMonoEndpoints(http: HttpClient): MonoEndpoints {
       }
       return all;
     },
+  };
+}
+
+// ── Webhook-based API facade (Track A) ───────────────────────────────────
+
+export interface MonoWebhookEndpoints {
+  connect: (
+    token: string,
+    opts?: { signal?: AbortSignal },
+  ) => Promise<{ status: MonoConnectionStatus; accountsCount: number }>;
+  disconnect: (opts?: { signal?: AbortSignal }) => Promise<void>;
+  syncState: (opts?: { signal?: AbortSignal }) => Promise<MonoSyncState>;
+  accounts: (opts?: { signal?: AbortSignal }) => Promise<MonoAccountDto[]>;
+  transactions: (
+    params: {
+      from?: string;
+      to?: string;
+      accountId?: string;
+      limit?: number;
+      cursor?: string;
+    },
+    opts?: { signal?: AbortSignal },
+  ) => Promise<MonoTransactionDto[]>;
+  backfill: (opts?: { signal?: AbortSignal }) => Promise<void>;
+}
+
+export function createMonoWebhookEndpoints(
+  http: HttpClient,
+): MonoWebhookEndpoints {
+  return {
+    connect: (token, opts) =>
+      http.post<{ status: MonoConnectionStatus; accountsCount: number }>(
+        "/api/mono/connect",
+        { token },
+        { signal: opts?.signal },
+      ),
+    disconnect: (opts) =>
+      http.post<void>("/api/mono/disconnect", undefined, {
+        signal: opts?.signal,
+      }),
+    syncState: (opts) =>
+      http.get<MonoSyncState>("/api/mono/sync-state", {
+        signal: opts?.signal,
+      }),
+    accounts: (opts) =>
+      http.get<MonoAccountDto[]>("/api/mono/accounts", {
+        signal: opts?.signal,
+      }),
+    transactions: (params, opts) =>
+      http.get<MonoTransactionDto[]>("/api/mono/transactions", {
+        query: params,
+        signal: opts?.signal,
+      }),
+    backfill: (opts) =>
+      http.post<void>("/api/mono/backfill", undefined, {
+        signal: opts?.signal,
+      }),
   };
 }
