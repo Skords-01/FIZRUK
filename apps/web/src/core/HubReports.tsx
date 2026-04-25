@@ -522,6 +522,7 @@ export function HubReports() {
           higherIsBetter={true}
           chart={
             <BarChart
+              key={`${period}-${offset}`}
               data={data.workouts.cur.daily}
               dates={dates}
               colorClass="bg-sky-500"
@@ -540,6 +541,7 @@ export function HubReports() {
           higherIsBetter={false}
           chart={
             <BarChart
+              key={`${period}-${offset}`}
               data={data.spending.cur.daily}
               dates={dates}
               colorClass="bg-emerald-500"
@@ -558,6 +560,7 @@ export function HubReports() {
           higherIsBetter={true}
           chart={
             <BarChart
+              key={`${period}-${offset}`}
               data={data.habits.cur.daily}
               dates={dates}
               colorClass="bg-orange-500"
@@ -577,6 +580,7 @@ export function HubReports() {
           higherIsBetter={true}
           chart={
             <BarChart
+              key={`${period}-${offset}`}
               data={data.kcal.cur.daily}
               dates={dates}
               colorClass="bg-lime-500"
