@@ -1,7 +1,9 @@
-import { useState, type ChangeEvent, type ReactNode } from "react";
+import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Card } from "@shared/components/ui/Card";
+import { Switch } from "@shared/components/ui/Switch";
+import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 
 interface ChevronIconProps {
   expanded: boolean;
@@ -127,12 +129,7 @@ export function ToggleRow({
         )}
       </div>
       <div className="shrink-0 pt-0.5">
-        <input
-          type="checkbox"
-          className="w-5 h-5 accent-primary cursor-pointer"
-          checked={checked}
-          onChange={onChange}
-        />
+        <Switch checked={checked} onChange={onChange} />
       </div>
     </label>
   );
@@ -157,12 +154,14 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFocusTrap(open, panelRef, { onEscape: onCancel });
+
   if (!open) return null;
   return (
     <div
       className="fixed inset-0 z-[120] flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
+      role="presentation"
     >
       <button
         type="button"
@@ -170,8 +169,16 @@ export function ConfirmModal({
         onClick={onCancel}
         aria-label="Закрити"
       />
-      <div className="relative w-full max-w-sm bg-panel border border-line rounded-2xl shadow-soft p-5 z-10">
-        <h2 className="text-base font-bold text-text">{title}</h2>
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-modal-title"
+        className="relative w-full max-w-sm bg-panel border border-line rounded-2xl shadow-soft p-5 z-10"
+      >
+        <h2 id="confirm-modal-title" className="text-base font-bold text-text">
+          {title}
+        </h2>
         {body && <p className="text-sm text-muted mt-2">{body}</p>}
         <div className="flex gap-2 mt-5">
           <button

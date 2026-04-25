@@ -3,40 +3,42 @@ import { cn } from "@shared/lib/cn";
 import { OnboardingWizard } from "../OnboardingWizard.jsx";
 
 // Static preview of the populated hub that sits behind the splash card on
-// `/welcome`. We intentionally don't render the real `HubDashboard` here
-// — the module rows show numbers that haven't been seeded yet, so a real
-// render would display zero-state copy and break the "look, this is your
-// hub about to happen" illusion. Instead we hand-roll four rows matching
-// `ModuleRow`'s visual rhythm.
-const PEEK_ROWS = [
+// `/welcome`. Renders a 2×2 bento grid matching `HubDashboard`'s module
+// cards so the blurred silhouette under the splash accurately teases the
+// real dashboard layout new users are about to see.
+const PEEK_CARDS = [
   {
     id: "finyk",
-    label: "Фінік",
-    accent: "text-finyk-strong dark:text-finyk bg-finyk-soft",
+    label: "💰 Фінік",
+    cardBg: "bg-finyk-soft/40 dark:bg-finyk/8",
+    iconClass: "bg-finyk-soft text-finyk dark:bg-finyk/15",
     icon: "credit-card",
-    metric: "−320 грн",
+    metric: "−320 ₴",
     sub: "тиждень",
   },
   {
     id: "fizruk",
-    label: "Фізрук",
-    accent: "text-fizruk-strong dark:text-fizruk bg-fizruk-soft",
+    label: "💪 Фізрук",
+    cardBg: "bg-fizruk-soft/40 dark:bg-fizruk/8",
+    iconClass: "bg-fizruk-soft text-fizruk dark:bg-fizruk/15",
     icon: "dumbbell",
     metric: "5 трен.",
     sub: "14 днів",
   },
   {
     id: "routine",
-    label: "Рутина",
-    accent: "text-routine-strong dark:text-routine bg-routine-surface",
+    label: "✅ Рутина",
+    cardBg: "bg-routine-surface/40 dark:bg-routine/8",
+    iconClass: "bg-routine-surface text-routine dark:bg-routine/15",
     icon: "check",
     metric: "7 днів",
-    sub: "стрік «вода»",
+    sub: "стрік",
   },
   {
     id: "nutrition",
-    label: "Харчування",
-    accent: "text-nutrition-strong dark:text-nutrition bg-nutrition-soft",
+    label: "🥗 Харчування",
+    cardBg: "bg-nutrition-soft/40 dark:bg-nutrition/8",
+    iconClass: "bg-nutrition-soft text-nutrition dark:bg-nutrition/15",
     icon: "utensils",
     metric: "420 ккал",
     sub: "сніданок",
@@ -59,7 +61,7 @@ function PeekBackdrop() {
       {/* Faux hub rendered under a blur so the user perceives the shape
           and accent colors of their about-to-be-populated dashboard, but
           can't read individual numbers well enough to be distracted from
-          the splash copy. */}
+          the splash copy. Uses a 2×2 bento grid matching the real dashboard. */}
       <div
         className="absolute inset-x-0 top-0 pt-[max(2.5rem,env(safe-area-inset-top))] px-5 max-w-lg mx-auto w-full opacity-40 blur-[6px]"
         style={{ filter: "blur(6px) saturate(0.85)" }}
@@ -69,29 +71,35 @@ function PeekBackdrop() {
             <div className="h-6 w-32 rounded-md bg-panelHi" />
             <div className="h-3 w-24 rounded-md bg-panelHi mt-2" />
           </div>
-          <div className="rounded-2xl border border-line bg-panel overflow-hidden divide-y divide-line/60">
-            {PEEK_ROWS.map((row) => (
+          <div className="grid grid-cols-2 gap-3">
+            {PEEK_CARDS.map((card) => (
               <div
-                key={row.id}
-                className="flex items-center gap-3 px-4 py-3 bg-panel"
+                key={card.id}
+                className={cn(
+                  "flex flex-col rounded-3xl border border-line p-3.5 shadow-card",
+                  card.cardBg,
+                )}
               >
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-xl flex items-center justify-center shrink-0",
-                    row.accent,
+                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mb-2",
+                    card.iconClass,
                   )}
                 >
-                  <Icon name={row.icon} size={16} strokeWidth={2} aria-hidden />
+                  <Icon
+                    name={card.icon}
+                    size={16}
+                    strokeWidth={2}
+                    aria-hidden
+                  />
                 </div>
-                <span className="text-xs font-semibold text-text truncate">
-                  {row.label}
+                <span className="text-xs font-semibold text-text">
+                  {card.label}
                 </span>
-                <div className="ml-auto flex items-center gap-2">
-                  <span className="text-sm font-semibold text-text tabular-nums">
-                    {row.metric}
-                  </span>
-                  <span className="text-[11px] text-muted">{row.sub}</span>
-                </div>
+                <span className="text-lg font-bold text-text tabular-nums mt-1">
+                  {card.metric}
+                </span>
+                <span className="text-2xs text-muted mt-0.5">{card.sub}</span>
               </div>
             ))}
           </div>
