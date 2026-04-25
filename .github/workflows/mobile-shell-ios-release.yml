@@ -160,7 +160,7 @@ jobs:
       # ─────────────────────────── Signed release path ────────────────────
       - name: Import code signing certificates
         if: steps.secrets.outputs.configured == 'true'
-        uses: apple-actions/import-codesign-certs@v3
+        uses: apple-actions/import-codesign-certs@63fff01cd422d4b7b855d40ca1e9d34d2de9427d # v3
         with:
           p12-file-base64: ${{ env.APPLE_BUILD_CERTIFICATE_BASE64 }}
           p12-password: ${{ env.APPLE_P12_PASSWORD }}
@@ -183,7 +183,7 @@ jobs:
 
       - name: Download provisioning profiles (App Store Connect API)
         if: steps.secrets.outputs.configured == 'true' && env.APP_STORE_CONNECT_API_KEY_ID != ''
-        uses: apple-actions/download-provisioning-profiles@v2
+        uses: apple-actions/download-provisioning-profiles@6d47d6dfaaece280647ee215957fb23acfe1fa7c # v2
         with:
           bundle-id: ${{ env.IOS_BUNDLE_ID }}
           profile-type: IOS_APP_STORE
@@ -253,7 +253,7 @@ jobs:
           steps.secrets.outputs.configured == 'true'
           && env.APP_STORE_CONNECT_API_KEY_ID != ''
           && (github.event_name != 'workflow_dispatch' || inputs.upload_testflight)
-        uses: apple-actions/upload-testflight-build@v1
+        uses: apple-actions/upload-testflight-build@54dc215b4cd5529730db39f11c84efdb71414e07 # v1
         with:
           app-path: apps/mobile-shell/ios/App/build/App.ipa
           issuer-id: ${{ env.APP_STORE_CONNECT_API_ISSUER_ID }}
