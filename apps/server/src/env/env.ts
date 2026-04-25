@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logger } from "../obs/logger.js";
 
 /**
  * Центральна валідація та документація всіх env-змінних серверу.
@@ -220,6 +221,6 @@ export function assertStartupEnv(): void {
   }
 
   if (warnings.length > 0) {
-    for (const w of warnings) console.warn(`[env] ${w}`);
+    for (const w of warnings) logger.warn({ msg: "env_warning", detail: w });
   }
 }

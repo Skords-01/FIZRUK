@@ -1,4 +1,5 @@
 import pino, { type Logger, type LoggerOptions } from "pino";
+import pinoHttp, { type HttpLogger } from "pino-http";
 import { als } from "./requestContext.js";
 
 /**
@@ -20,7 +21,7 @@ const level = process.env.LOG_LEVEL || (isDev ? "debug" : "info");
 // — навіть у вкладених user-об'єктах; усі типові варіанти токенів і secret.
 // Якщо треба додати новий шлях — додавай тут, а НЕ робиш `logger.info({...})`
 // з плейнтекстовим email, обходячи редакцію.
-const redactPaths = [
+export const redactPaths = [
   "req.headers.authorization",
   "req.headers.cookie",
   'req.headers["x-api-key"]',
@@ -84,6 +85,19 @@ const pinoOptions: LoggerOptions = {
 };
 
 export const logger: Logger = pino(pinoOptions);
+
+/**
+ * pino-http middleware — додає `req.log` (child logger, прив'язаний до запиту)
+ * до кожного Request. `autoLogging` вимкнено, бо access-log + Prometheus
+ * метрики вже генеруються `requestLogMiddleware`. Мета — тільки `req.log`.
+ */
+export const httpLogger: HttpLogger = pinoHttp({
+  logger,
+  autoLogging: false,
+  // Підхоплюємо requestId з уже наявного (встановленого requestIdMiddleware).
+  genReqId: (req) =>
+    (req as typeof req & { requestId?: string }).requestId ?? "unknown",
+});
 
 export interface SerializedError {
   name?: string;
