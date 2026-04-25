@@ -215,6 +215,34 @@ describe("useMonoStatements", () => {
     expect(mockedStatement).toHaveBeenCalledTimes(2);
   });
 
+  it("enqueueStatementCall: однакова черга для trim/untrim варіантів того самого токена", async () => {
+    // Регресія: до фіксу `useMonoStatements` нормалізував токен через
+    // `tok.trim()`, а `fetchMonth` у `useMonobank` передавав `token` як є.
+    // Якщо у `localStorage` лежав токен зі space-ами/newline-ом
+    // (`readStoredToken` не trim-ить), історичні та поточні запити
+    // потрапляли б у різні черги і йшли паралельно — знов 1 req/60s
+    // race з Monobank. Перевіряємо: `"  TOKEN  "` і `"TOKEN"` ділять
+    // ту саму чергу.
+    let started = 0;
+    let resolveFirst: (() => void) | null = null;
+    const p1 = enqueueStatementCall("  TOKEN  ", async () => {
+      started++;
+      await new Promise<void>((r) => {
+        resolveFirst = r;
+      });
+      return "first";
+    });
+    const p2 = enqueueStatementCall("TOKEN", async () => {
+      started++;
+      return "second";
+    });
+    await new Promise((r) => setTimeout(r, 30));
+    expect(started).toBe(1); // другий ще не стартував — у тій самій черзі
+    resolveFirst?.();
+    await Promise.all([p1, p2]);
+    expect(started).toBe(2);
+  });
+
   it("enqueueStatementCall: помилка одного запиту не блокує наступний у тій самій черзі", async () => {
     // Якби ми не робили `.catch(() => undefined)` у chain-у — `prev.then(fn)`
     // закидав би причину далі і всі майбутні enqueue по цьому токену

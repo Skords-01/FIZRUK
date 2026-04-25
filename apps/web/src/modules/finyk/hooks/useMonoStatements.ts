@@ -62,7 +62,17 @@ export function enqueueStatementCall<T>(
   token: string,
   fn: () => Promise<T>,
 ): Promise<T> {
-  const prev = tokenStatementQueues.get(token) ?? Promise.resolve();
+  // Нормалізуємо токен до trim-ового вигляду — той самий ключ, який
+  // `useMonoStatements` використовує у `tok = (token ?? "").trim()`. Без
+  // цього `fetchMonth(...)` (history-fetch у `useMonobank`) і
+  // `useMonoStatements` (поточний місяць) могли б опинитись у різних
+  // чергах, якби збережений токен мав leading/trailing whitespace
+  // (`readStoredToken` його не trim-ить — на відміну від `connect`).
+  // У такому випадку обидва call-site-и стартували б паралельно і знов
+  // ламали б 1 req/60s rate-limit Monobank — той самий баг, який
+  // `enqueueStatementCall` мав фіксити.
+  const key = (token ?? "").trim();
+  const prev = tokenStatementQueues.get(key) ?? Promise.resolve();
   // `prev.catch` гарантує, що навіть rejection попереднього запиту не
   // обвалить чергу — наступний `fn` стартує однаково.
   const work = prev.catch(() => undefined).then(fn);
@@ -70,10 +80,10 @@ export function enqueueStatementCall<T>(
   // флагував unhandled rejection для черги. Викликачу повертаємо
   // оригінальний `work`, щоб він міг ловити його помилку штатно.
   const tail = work.catch(() => undefined);
-  tokenStatementQueues.set(token, tail);
+  tokenStatementQueues.set(key, tail);
   tail.finally(() => {
-    if (tokenStatementQueues.get(token) === tail) {
-      tokenStatementQueues.delete(token);
+    if (tokenStatementQueues.get(key) === tail) {
+      tokenStatementQueues.delete(key);
     }
   });
   return work;
