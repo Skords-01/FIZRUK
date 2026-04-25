@@ -6,7 +6,6 @@ import {
   type MonoSyncState,
   type MonoAccountDto,
   type MonoTransactionDto,
-  type MonoTransactionsPage,
 } from "@shared/api";
 import { finykKeys, hubKeys } from "@shared/lib/queryKeys";
 import { authAwareRetry } from "@shared/lib/queryClient";
@@ -14,6 +13,7 @@ import { normalizeTransaction } from "@sergeant/finyk-domain/domain/transactions
 import type { Transaction } from "@sergeant/finyk-domain/domain/types";
 import { CURRENCY } from "../constants";
 import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
+import { fetchAllMonoTransactions } from "./monoTransactionsLoader";
 
 const SYNC_STATE_STALE = 30_000;
 const ACCOUNTS_STALE = 5 * 60_000;
@@ -121,10 +121,10 @@ export function useMonobankWebhook({
   ).toISOString();
   const txQueryKey = `${fromDate}|${toDate}`;
 
-  const txQuery = useQuery<MonoTransactionsPage>({
+  const txQuery = useQuery<MonoTransactionDto[]>({
     queryKey: finykKeys.monoWebhookTransactions(txQueryKey),
     queryFn: ({ signal }) =>
-      monoWebhookApi.transactions({ from: fromDate, to: toDate }, { signal }),
+      fetchAllMonoTransactions({ from: fromDate, to: toDate }, { signal }),
     enabled: enabled && isConnected,
     staleTime: TX_STALE,
     refetchOnWindowFocus: true,
@@ -132,9 +132,8 @@ export function useMonobankWebhook({
   });
 
   const transactions: Transaction[] = useMemo(() => {
-    const items = txQuery.data?.data;
-    if (!items) return [];
-    return items
+    if (!txQuery.data) return [];
+    return txQuery.data
       .map(webhookTxToNormalized)
       .sort((a, b) => (b.time ?? 0) - (a.time ?? 0));
   }, [txQuery.data]);
@@ -202,15 +201,15 @@ export function useMonobankWebhook({
         const to = new Date(year, month + 1, 1).toISOString();
         const key = `${from}|${to}`;
 
-        const page = await queryClient.fetchQuery({
+        const data = await queryClient.fetchQuery({
           queryKey: finykKeys.monoWebhookTransactions(key),
           queryFn: ({ signal }) =>
-            monoWebhookApi.transactions({ from, to }, { signal }),
+            fetchAllMonoTransactions({ from, to }, { signal }),
           staleTime: TX_STALE,
           retry: authAwareRetry(2),
         });
 
-        const normalized = (page?.data ?? [])
+        const normalized = (data ?? [])
           .map(webhookTxToNormalized)
           .sort((a, b) => (b.time ?? 0) - (a.time ?? 0));
         setHistoryTx(normalized);
