@@ -1,0 +1,201 @@
+import { z } from "zod";
+
+/**
+ * Центральна валідація та документація всіх env-змінних серверу.
+ *
+ * Запускається при першому імпорті (startup). У production-середовищі кидає
+ * помилку, якщо відсутні критичні змінні (`DATABASE_URL`). У dev — логує
+ * попередження. Кожна змінна задокументована коментарем і має тип + дефолт.
+ *
+ * Використання:
+ *   import { env } from "../env/env.js";
+ *   const pool = new Pool({ connectionString: env.DATABASE_URL });
+ *
+ * Env-змінні, що вже валідуються окремо (`betterAuthEnv.ts`), теж присутні
+ * для повноти документації, але їхня startup-логіка не дублюється.
+ */
+
+const coerceInt = z.coerce.number().int();
+
+const envSchema = z.object({
+  // ── Core ────────────────────────────────────────────────────────────
+  NODE_ENV: z
+    .enum(["production", "development", "test"])
+    .default("development"),
+  /** HTTP-порт. Railway / Replit інжектять автоматично. */
+  PORT: coerceInt.default(3000),
+  /** `railway` або `replit` — визначає CSP, trust-proxy, static-serving. */
+  SERVER_MODE: z.enum(["railway", "replit"]).optional(),
+
+  // ── Database ────────────────────────────────────────────────────────
+  /** Postgres connection string. Обов'язкова для всього, окрім health-check. */
+  DATABASE_URL: z.string().url().optional(),
+  /** Максимум з'єднань у pg Pool. */
+  PG_POOL_MAX: coerceInt.positive().default(10),
+  /** Поріг повільного запиту (мс) для логування та метрики. */
+  DB_SLOW_MS: coerceInt.positive().default(200),
+
+  // ── Redis ───────────────────────────────────────────────────────────
+  /** Redis URL для глобального rate-limit. Fallback — in-memory per-process. */
+  REDIS_URL: z.string().optional(),
+
+  // ── Auth (Better Auth) ──────────────────────────────────────────────
+  BETTER_AUTH_URL: z.string().url().optional(),
+  BETTER_AUTH_SECRET: z.string().optional(),
+  /** `"0"` — вимкнути SameSite=None cookies (для single-origin deploys). */
+  BETTER_AUTH_CROSS_SITE_COOKIES: z.string().optional(),
+  MIN_PASSWORD_LENGTH: coerceInt.positive().default(10),
+  MAX_PASSWORD_LENGTH: coerceInt.positive().default(128),
+
+  // ── CORS / Origins ──────────────────────────────────────────────────
+  /** Comma-separated allowed origins (e.g. `https://app.example.com`). */
+  ALLOWED_ORIGINS: z.string().optional(),
+  /** Regex pattern для динамічних origins (Vercel preview deploys тощо). */
+  ALLOWED_ORIGIN_REGEX: z.string().optional(),
+
+  // ── Replit ──────────────────────────────────────────────────────────
+  REPLIT_DEV_DOMAIN: z.string().optional(),
+  REPLIT_DOMAINS: z.string().optional(),
+
+  // ── Railway ─────────────────────────────────────────────────────────
+  RAILWAY_ENVIRONMENT: z.string().optional(),
+  RAILWAY_SERVICE_NAME: z.string().optional(),
+  RAILWAY_GIT_COMMIT_SHA: z.string().optional(),
+
+  // ── AI (Anthropic) ─────────────────────────────────────────────────
+  /** API-ключ для Anthropic Claude. Без нього /api/chat повертає 500. */
+  ANTHROPIC_API_KEY: z.string().optional(),
+  /** `"1"` — повністю вимкнути AI-квоту (fail-open без перевірки). */
+  AI_QUOTA_DISABLED: z.string().optional(),
+  /** Денний ліміт AI-запитів для автентифікованого юзера. */
+  AI_DAILY_USER_LIMIT: coerceInt.nonnegative().optional(),
+  /** Денний ліміт AI-запитів для анонімного юзера. */
+  AI_DAILY_ANON_LIMIT: coerceInt.nonnegative().optional(),
+  /** Вартість tool-call у одиницях квоти (default 3). */
+  AI_QUOTA_TOOL_COST: coerceInt.nonnegative().optional(),
+  /** JSON `{"tool_name": maxPerDay}` для per-tool лімітів. */
+  AI_QUOTA_TOOL_LIMITS: z.string().optional(),
+  /** Дефолтний ліміт tool-call на день, якщо tool не в AI_QUOTA_TOOL_LIMITS. */
+  AI_QUOTA_TOOL_DEFAULT_LIMIT: coerceInt.nonnegative().optional(),
+  /** Інтервал SSE heartbeat (мс). Тримає з'єднання живим через проксі. */
+  SSE_HEARTBEAT_MS: coerceInt.positive().default(15_000),
+
+  // ── Push Notifications ─────────────────────────────────────────────
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_EMAIL: z.string().optional(),
+  /** Base64-encoded APNs .p8 key file content. */
+  APNS_P8_KEY: z.string().optional(),
+  APNS_KEY_ID: z.string().optional(),
+  APNS_TEAM_ID: z.string().optional(),
+  APNS_BUNDLE_ID: z.string().optional(),
+  /** `"true"` — APNs production gateway, інакше sandbox. */
+  APNS_PRODUCTION: z.string().optional(),
+  /** JSON string of FCM service account credentials. */
+  FCM_SERVICE_ACCOUNT_JSON: z.string().optional(),
+
+  // ── Email ──────────────────────────────────────────────────────────
+  /** Resend API key. Без нього email (password reset, verification) скіпається. */
+  RESEND_API_KEY: z.string().optional(),
+  /** Адреса відправника (default: Sergeant <onboarding@resend.dev>). */
+  RESEND_FROM: z.string().optional(),
+
+  // ── Observability ──────────────────────────────────────────────────
+  /** Sentry DSN. Без нього Sentry вимкнений (Noop SDK). */
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_RELEASE: z.string().optional(),
+  /** `0.0`–`1.0` sampling rate для Sentry performance traces. */
+  SENTRY_TRACES_SAMPLE_RATE: z.string().optional(),
+  /** Pino log level override (trace, debug, info, warn, error, fatal). */
+  LOG_LEVEL: z.string().optional(),
+  /** `"1"` — human-readable pino-pretty output. */
+  LOG_PRETTY: z.string().optional(),
+  /** Bearer token для захисту `GET /metrics`. */
+  METRICS_TOKEN: z.string().optional(),
+
+  // ── Security ───────────────────────────────────────────────────────
+  /** `"1"` — вимкнути Content-Security-Policy (Replit dev). */
+  CSP_DISABLE: z.string().optional(),
+  /** `"1"` — CSP у report-only mode. */
+  CSP_REPORT_ONLY: z.string().optional(),
+  /** Bearer token для захисту nutrition API endpoints. */
+  NUTRITION_API_TOKEN: z.string().optional(),
+
+  // ── External APIs ──────────────────────────────────────────────────
+  /** USDA FoodData Central API key. Fallback: `DEMO_KEY`. */
+  USDA_API_KEY: z.string().optional(),
+
+  // ── Shutdown ───────────────────────────────────────────────────────
+  /** Grace-period (мс) для завершення in-flight запитів при SIGTERM. */
+  SHUTDOWN_GRACE_MS: coerceInt.nonnegative().default(15_000),
+  /** Hard-timeout (мс) — process.exit якщо shutdown зависне. */
+  SHUTDOWN_HARD_TIMEOUT_MS: coerceInt.nonnegative().default(25_000),
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+function parseEnv(): Env {
+  const result = envSchema.safeParse(process.env);
+  if (!result.success) {
+    const formatted = result.error.issues
+      .map((i) => `  ${i.path.join(".")}: ${i.message}`)
+      .join("\n");
+    throw new Error(`Invalid environment variables:\n${formatted}`);
+  }
+  return Object.freeze(result.data);
+}
+
+export const env: Env = parseEnv();
+
+/**
+ * Startup assertions для production. Виклик у `index.ts` після імпорту.
+ * Не дублює `betterAuthEnv.ts` — лише перевіряє змінні поза auth-скоупом.
+ */
+export function assertStartupEnv(): void {
+  const isProduction =
+    env.NODE_ENV === "production" ||
+    Boolean(env.RAILWAY_ENVIRONMENT) ||
+    Boolean(env.RAILWAY_SERVICE_NAME);
+
+  const warnings: string[] = [];
+
+  if (!env.DATABASE_URL) {
+    if (isProduction) {
+      throw new Error(
+        "DATABASE_URL is required in production. Set it to a Postgres connection string.",
+      );
+    }
+    warnings.push(
+      "DATABASE_URL is not set — database features will be unavailable.",
+    );
+  }
+
+  if (!env.ANTHROPIC_API_KEY) {
+    warnings.push(
+      "ANTHROPIC_API_KEY is not set — AI chat/coach/nutrition endpoints will return 500.",
+    );
+  }
+
+  if (!env.REDIS_URL) {
+    warnings.push(
+      "REDIS_URL is not set — rate limiting falls back to in-memory (per-process, not global).",
+    );
+  }
+
+  if (isProduction && !env.SENTRY_DSN) {
+    warnings.push(
+      "SENTRY_DSN is not set — error tracking is disabled in production.",
+    );
+  }
+
+  if (isProduction && !env.METRICS_TOKEN) {
+    warnings.push(
+      "METRICS_TOKEN is not set — /metrics endpoint is unprotected.",
+    );
+  }
+
+  if (warnings.length > 0) {
+    for (const w of warnings) console.warn(`[env] ${w}`);
+  }
+}

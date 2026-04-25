@@ -16,8 +16,10 @@
  */
 import "./sentry.js";
 
+import { assertStartupEnv } from "./env/env.js";
 import { assertBetterAuthStartupEnv } from "./env/betterAuthEnv.js";
 
+assertStartupEnv();
 assertBetterAuthStartupEnv();
 
 import type { Server } from "http";
