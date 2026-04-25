@@ -83,6 +83,7 @@ describe("ChatRequestSchema", () => {
   it("приймає порожній payload з дефолтами", () => {
     const r = ChatRequestSchema.safeParse({});
     expect(r.success).toBe(true);
+    if (!r.success) return;
     expect(r.data.context).toBe("");
     expect(r.data.messages).toEqual([]);
   });
@@ -179,6 +180,7 @@ describe("ParsePantrySchema", () => {
       locale: "uk-UA",
     });
     expect(r.success).toBe(true);
+    if (!r.success) return;
     expect(r.data.text).toBe("молоко 1л, хліб");
   });
 });

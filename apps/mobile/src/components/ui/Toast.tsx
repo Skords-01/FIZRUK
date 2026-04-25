@@ -60,10 +60,8 @@
  *   yet and all four variant icons are trivial shapes. TODO: swap to
  *   `react-native-svg` once the dependency lands in a later phase.
  * - Semantic colour tokens (`bg-brand-700`, `bg-danger`, `bg-warning`,
- *   `bg-primary`) fall back to concrete `brand-*` / `red-*` /
- *   `amber-*` / `cream-*` classes until mobile CSS-variable wiring
- *   lands. Same caveat as every other phase-1 primitive.
- *   TODO: align with design-tokens once mobile semantic variables land.
+ *   `bg-primary`) now resolve through CSS variables defined in
+ *   `global.css`.
  */
 
 import {

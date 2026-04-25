@@ -33,9 +33,7 @@
  *   parity): when the user has "Reduce Motion" on, the Modal uses
  *   `animationType="none"`.
  * - Semantic tokens (`bg-panel`, `border-line`, `text-text`,
- *   `text-muted`) fall back to concrete `cream-*` / `stone-*`
- *   classes — same caveat as every other phase-1 primitive.
- *   TODO: align with design-tokens once mobile semantic variables land.
+ *   `text-muted`) now resolve through CSS variables in `global.css`.
  */
 
 import { useEffect, useState, type ReactNode } from "react";

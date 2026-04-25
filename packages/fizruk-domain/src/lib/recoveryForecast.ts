@@ -28,7 +28,7 @@ export function forecastFullRecoveryByDate(
       out[id] = localDateKey(nowMs);
       continue;
     }
-    let found = null;
+    let found: string | null = null;
     for (let d = 1; d <= MAX_DAYS; d++) {
       const future = nowMs + d * DAY;
       const by = computeRecoveryBy(workouts, musclesUk, future);

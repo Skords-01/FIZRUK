@@ -32,10 +32,8 @@
  *   slot is laid out with `flex-row` and the text input `flex-1`s into
  *   the remaining space. Visual result is the same.
  * - Semantic colour tokens (`bg-panelHi`, `border-line`, `text-text`,
- *   `text-subtle`, `bg-danger`, …) fall back to concrete `cream-*` /
- *   `stone-*` / `brand-*` classes while mobile awaits CSS-variable
- *   wiring — same caveat as `Button.tsx` / `Card.tsx`.
- *   TODO: align with design-tokens once mobile semantic variables land.
+ *   `text-subtle`, `bg-danger`, …) now resolve through CSS variables
+ *   in `global.css`.
  */
 
 import { forwardRef, useState, type ReactNode } from "react";
@@ -102,13 +100,9 @@ const sizes: Record<InputSize, string> = {
   lg: "h-12 px-5 text-base rounded-2xl",
 };
 
-// TODO: align with design-tokens — `bg-panelHi`, `border-line`,
-// `text-text` etc. resolve through CSS variables that aren't wired
-// up on mobile yet. Falling back to concrete `cream-*` / `stone-*`
-// tokens, identical strategy to Button.tsx.
 const variantBase: Record<InputVariant, string> = {
-  default: "bg-cream-50 border border-cream-300",
-  filled: "bg-cream-100 border border-transparent",
+  default: "bg-panel border border-line",
+  filled: "bg-panelHi border border-transparent",
   ghost: "bg-transparent border border-transparent",
 };
 

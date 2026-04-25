@@ -259,7 +259,7 @@ export async function coachInsight(req: Request, res: Response): Promise<void> {
 
   const memorySummary = buildMemorySummary(memory);
 
-  const snapshotLines = [];
+  const snapshotLines: string[] = [];
   if (snapshot?.finyk) {
     snapshotLines.push(
       `[ФІНАНСИ ЦЬОГО ТИЖНЯ] Витрати: ${snapshot.finyk.totalSpent ?? 0} грн, Надходження: ${snapshot.finyk.totalIncome ?? 0} грн, Транзакцій: ${snapshot.finyk.txCount ?? 0}`,

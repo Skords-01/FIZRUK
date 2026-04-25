@@ -41,10 +41,7 @@
  *   panel wrapper; the legacy `accessibilityRole` union has no
  *   `"dialog"` member.
  * - Semantic tokens (`bg-panel`, `border-line`, `text-text`,
- *   `text-subtle`) fall back to concrete `cream-*` / `stone-*` classes
- *   until mobile CSS-variable wiring lands — same caveat as every
- *   other phase-1 primitive.
- *   TODO: align with design-tokens once mobile semantic variables land.
+ *   `text-subtle`) now resolve through CSS variables in `global.css`.
  */
 
 import { useEffect, useState, type ReactNode } from "react";

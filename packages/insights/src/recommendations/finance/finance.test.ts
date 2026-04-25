@@ -153,12 +153,12 @@ describe("noTxRecentRule", () => {
   // Допоміжні хелпери: tx (amount у копійках, time у секундах), manual expense.
   const DAY = 86_400_000;
   const now = new Date("2025-06-15T12:00:00Z");
-  const mkTx = (id, daysAgo) => ({
+  const mkTx = (id: string, daysAgo: number) => ({
     id,
     amount: -10000, // 100 ₴ expense
     time: Math.floor((now.getTime() - daysAgo * DAY) / 1000),
   });
-  const mkManual = (daysAgo) => ({
+  const mkManual = (daysAgo: number) => ({
     date: new Date(now.getTime() - daysAgo * DAY).toISOString(),
     amount: 120,
   });
@@ -254,7 +254,7 @@ describe("dailyVsWeeklyPaceRule", () => {
   const DAY = 86_400_000;
   // 16:00 локального часу, щоб пройти MIN_HOUR=14.
   const now = new Date("2025-06-15T16:00:00");
-  const mkTx = (id, daysAgo, uah) => ({
+  const mkTx = (id: string, daysAgo: number, uah: number) => ({
     id,
     amount: -Math.round(uah * 100),
     time: Math.floor((now.getTime() - daysAgo * DAY) / 1000),

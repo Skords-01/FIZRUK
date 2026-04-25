@@ -208,7 +208,7 @@ describe("getFrequentMerchants", () => {
   });
 
   it("поважає limit", () => {
-    const txs = [];
+    const txs: ReturnType<typeof bankTx>[] = [];
     for (let i = 0; i < 10; i++) {
       txs.push(
         bankTx({

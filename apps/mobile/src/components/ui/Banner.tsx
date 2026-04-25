@@ -26,10 +26,7 @@
  *   call sites pass a single `<Text>` child that can read the same
  *   colour off the surrounding theme.
  * - Semantic tokens (`border-line`, `bg-panelHi`, `text-text`,
- *   `bg-danger`) fall back to concrete `cream-*` / `stone-*` /
- *   `emerald-*` / `amber-*` / `red-*` classes — same caveat as
- *   `Button` / `Card` / `Input` until mobile CSS variables land.
- *   TODO: align with design-tokens once mobile semantic variables land.
+ *   `bg-danger`) now resolve through CSS variables in `global.css`.
  */
 
 import type { ReactNode } from "react";

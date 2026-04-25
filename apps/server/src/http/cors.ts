@@ -75,7 +75,7 @@ function getAllowedOriginRegex(): RegExp | null {
   return cachedRegex;
 }
 
-export function isOriginAllowed(origin) {
+export function isOriginAllowed(origin: string | undefined) {
   if (!origin) return false;
   if (getAllowedOrigins().includes(origin)) return true;
   const re = getAllowedOriginRegex();

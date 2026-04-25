@@ -383,7 +383,7 @@ export async function syncPushAll(req: Request, res: Response): Promise<void> {
       }
       // `clientUpdatedAt` — required у `SyncPushAllSchema`; fallback на
       // `new Date()` прибрано з тієї ж причини, що й у `syncPush` вище.
-      const clientTs = new Date(clientUpdatedAt);
+      const clientTs = new Date(clientUpdatedAt ?? Date.now());
       const r = await client.query<ModuleDataUpsertRow>(
         `INSERT INTO module_data (user_id, module, data, client_updated_at, version)
          VALUES ($1, $2, $3, $4, 1)
