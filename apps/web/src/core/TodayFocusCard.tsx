@@ -269,12 +269,10 @@ export function TodayFocusCard({
   focus,
   onAction,
   onDismiss,
-  coachInsight,
 }: {
   focus: FocusRec | null;
   onAction: (module: string) => void;
   onDismiss: (id: string) => void;
-  coachInsight?: string | null;
 }) {
   if (!focus) {
     return <EmptyFocus />;
@@ -348,12 +346,6 @@ export function TodayFocusCard({
         {focus.body && (
           <p className="text-xs text-muted mt-1 leading-relaxed">
             {focus.body}
-          </p>
-        )}
-
-        {coachInsight && (
-          <p className="text-xs text-text/85 italic mt-2 leading-relaxed border-l-2 border-primary/40 pl-2">
-            {coachInsight}
           </p>
         )}
 

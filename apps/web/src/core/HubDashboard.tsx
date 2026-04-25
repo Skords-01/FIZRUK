@@ -30,8 +30,7 @@ import { HubInsightsPanel } from "./HubInsightsPanel.jsx";
 import { WeeklyDigestCard, hasLiveWeeklyDigest } from "./WeeklyDigestCard.jsx";
 import { useWeeklyDigest, loadDigest, getWeekKey } from "./useWeeklyDigest.js";
 import { useCoachInsight } from "./useCoachInsight.js";
-import { CoachInsightCard } from "./CoachInsightCard.jsx";
-import { useHubPref } from "./settings/hubPrefs.js";
+import { AssistantAdviceCard } from "./AssistantAdviceCard.jsx";
 import { SoftAuthPromptCard } from "./onboarding/SoftAuthPromptCard.jsx";
 import { FirstActionHeroCard } from "./onboarding/FirstActionSheet.jsx";
 import { detectFirstRealEntry } from "./onboarding/firstRealEntry.js";
@@ -567,8 +566,6 @@ export function HubDashboard({
 
   const { focus, rest, dismiss } = useDashboardFocus();
 
-  // Coach insight — standalone card on the dashboard + inline in TodayFocusCard.
-  const [showCoach] = useHubPref<boolean>("showCoach", true);
   const {
     insight: coachInsightText,
     loading: coachLoading,
@@ -669,7 +666,6 @@ export function HubDashboard({
         focus={focus}
         onAction={onOpenModule}
         onDismiss={dismiss}
-        coachInsight={coachInsightText}
       />
     );
   }
@@ -686,14 +682,12 @@ export function HubDashboard({
 
       {hero}
 
-      {showCoach !== false && (
-        <CoachInsightCard
-          insight={coachInsightText}
-          loading={coachLoading}
-          error={coachError}
-          onRefresh={coachRefresh}
-        />
-      )}
+      <AssistantAdviceCard
+        insight={coachInsightText}
+        loading={coachLoading}
+        error={coachError}
+        onRefresh={coachRefresh}
+      />
 
       {activeNudge && !reengagement.show && (
         <DailyNudge
