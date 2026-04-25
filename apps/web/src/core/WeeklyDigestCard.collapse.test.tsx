@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 
 // `WeeklyDigestCard` reads from a TanStack-Query hook + a digest-history
 // hook + (when expanded) renders the stories overlay. None of that is
@@ -30,23 +30,52 @@ describe("WeeklyDigestCard — collapse contract", () => {
     vi.clearAllMocks();
   });
 
-  it("does NOT render the collapse control when `onCollapse` is omitted", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("does NOT expose the header as a collapse control when `onCollapse` is omitted", () => {
     render(<WeeklyDigestCard />);
     expect(
       screen.queryByRole("button", { name: /згорнути звіт тижня/i }),
     ).toBeNull();
   });
 
-  it("renders the collapse control when `onCollapse` is provided and invokes it on click", () => {
+  it("makes the whole header clickable when `onCollapse` is provided — click anywhere on it invokes the callback", () => {
     const onCollapse = vi.fn();
     render(<WeeklyDigestCard onCollapse={onCollapse} />);
 
-    const button = screen.getByRole("button", {
+    const header = screen.getByRole("button", {
       name: /згорнути звіт тижня/i,
     });
-    expect(button).not.toBeNull();
+    expect(header).not.toBeNull();
 
-    fireEvent.click(button);
+    // Click the header element itself (edge of the row).
+    fireEvent.click(header);
     expect(onCollapse).toHaveBeenCalledTimes(1);
+
+    // And clicking a child inside the header (e.g. the title text)
+    // should still bubble up and collapse the card.
+    fireEvent.click(screen.getByText("Звіт тижня"));
+    expect(onCollapse).toHaveBeenCalledTimes(2);
+  });
+
+  it("supports keyboard activation on the header (Enter + Space)", () => {
+    const onCollapse = vi.fn();
+    render(<WeeklyDigestCard onCollapse={onCollapse} />);
+
+    const header = screen.getByRole("button", {
+      name: /згорнути звіт тижня/i,
+    });
+
+    fireEvent.keyDown(header, { key: "Enter" });
+    expect(onCollapse).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(header, { key: " " });
+    expect(onCollapse).toHaveBeenCalledTimes(2);
+
+    // Unrelated keys do nothing.
+    fireEvent.keyDown(header, { key: "Escape" });
+    expect(onCollapse).toHaveBeenCalledTimes(2);
   });
 });

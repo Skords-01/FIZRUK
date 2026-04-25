@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import {
@@ -340,7 +340,29 @@ export function WeeklyDigestCard({ onCollapse }: WeeklyDigestCardProps = {}) {
         "transition-[box-shadow,filter,opacity,transform] duration-200 hover:shadow-float",
       )}
     >
-      <div className="px-4 py-3.5 flex items-center gap-3 bg-gradient-to-r from-transparent via-brand-50/30 to-teal-50/20 dark:from-transparent dark:via-brand-900/10 dark:to-teal-900/5">
+      <div
+        {...(onCollapse
+          ? {
+              role: "button",
+              tabIndex: 0,
+              "aria-label": "Згорнути звіт тижня",
+              onClick: onCollapse,
+              onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onCollapse();
+                }
+              },
+            }
+          : {})}
+        className={cn(
+          "px-4 py-3.5 flex items-center gap-3",
+          "bg-gradient-to-r from-transparent via-brand-50/30 to-teal-50/20",
+          "dark:from-transparent dark:via-brand-900/10 dark:to-teal-900/5",
+          onCollapse &&
+            "cursor-pointer select-none hover:bg-panelHi/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-inset",
+        )}
+      >
         <div
           className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
@@ -383,7 +405,12 @@ export function WeeklyDigestCard({ onCollapse }: WeeklyDigestCardProps = {}) {
           {history.length > 1 && (
             <button
               type="button"
-              onClick={() => setShowHistory((v) => !v)}
+              onClick={(e) => {
+                // History toggle lives inside the clickable header, so
+                // stop the click from bubbling up and collapsing the card.
+                e.stopPropagation();
+                setShowHistory((v) => !v);
+              }}
               title="Попередні тижні"
               className={cn(
                 "w-7 h-7 flex items-center justify-center rounded-lg transition-colors",
@@ -411,15 +438,12 @@ export function WeeklyDigestCard({ onCollapse }: WeeklyDigestCardProps = {}) {
             </button>
           )}
           {onCollapse && (
-            <button
-              type="button"
-              onClick={onCollapse}
-              title="Згорнути"
-              aria-label="Згорнути звіт тижня"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-text hover:bg-panelHi transition-colors"
+            <span
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-muted"
+              aria-hidden
             >
               <Icon name="chevron-up" size={15} strokeWidth={2.5} />
-            </button>
+            </span>
           )}
         </div>
       </div>
