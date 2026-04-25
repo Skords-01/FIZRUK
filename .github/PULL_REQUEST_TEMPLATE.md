@@ -19,6 +19,7 @@
 - [ ] Manual smoke (which flow?): ...
 - [ ] Vitest passes: ...
 - [ ] No new `AI-DANGER` markers added without justification.
+- [ ] Docs prose uses Ukrainian where practical, per `AGENTS.md`.
 
 ## AGENTS.md updated?
 

@@ -47,6 +47,7 @@ Structured comments for AI-agent context. Enforced by ESLint rule `sergeant-desi
 - Use path aliases (`@shared/*`, `@finyk/*`, etc.) instead of relative `../../../`.
 - Dependency bumps — separate PRs (don't mix with features).
 - When deleting a file — first `grep` its imports across the entire monorepo.
+- Documentation language: write new/updated prose docs in Ukrainian where practical. Keep code identifiers, commands, API names, commit scopes, stack terms, and external quotes in their original language when that is clearer.
 
 ## Verification before PR
 
