@@ -92,7 +92,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/design-tokens
       "@sergeant/finyk-domain":
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/finyk-domain
       "@sergeant/fizruk-domain":
         specifier: workspace:*

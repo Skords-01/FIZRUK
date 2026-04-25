@@ -26,7 +26,7 @@
     "@sentry/react-native": "~6.10.0",
     "@sergeant/api-client": "workspace:*",
     "@sergeant/design-tokens": "workspace:*",
-    "@sergeant/finyk-domain": "workspace:^",
+    "@sergeant/finyk-domain": "workspace:*",
     "@sergeant/fizruk-domain": "workspace:*",
     "@sergeant/nutrition-domain": "workspace:*",
     "@sergeant/routine-domain": "workspace:*",
