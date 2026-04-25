@@ -103,6 +103,9 @@ export type { SkipLinkProps } from "./SkipLink";
 export { Spinner } from "./Spinner";
 export type { SpinnerProps, SpinnerSize } from "./Spinner";
 
+export { Switch } from "./Switch";
+export type { SwitchProps } from "./Switch";
+
 export { Stat } from "./Stat";
 export type { StatProps, StatSize, StatTone } from "./Stat";
 

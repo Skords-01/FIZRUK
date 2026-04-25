@@ -1,6 +1,18 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type HubView = "dashboard" | "reports" | "settings";
+
+const VALID_VIEWS = new Set<string>(["dashboard", "reports", "settings"]);
+
+function readViewFromURL(): HubView {
+  try {
+    const param = new URLSearchParams(window.location.search).get("tab");
+    if (param && VALID_VIEWS.has(param)) return param as HubView;
+  } catch {
+    /* SSR / non-browser */
+  }
+  return "dashboard";
+}
 
 // Onboarding is now a URL-addressable route (`/welcome`) owned by
 // `AppInner`; it no longer lives in hub UI state. The router handles
@@ -23,7 +35,32 @@ export function useHubUIState(): HubUIState {
     null,
   );
   const [searchOpen, setSearchOpen] = useState(false);
-  const [hubView, setHubView] = useState<HubView>("dashboard");
+  const [hubView, setHubViewRaw] = useState<HubView>(readViewFromURL);
+
+  const setHubView = useCallback((view: HubView) => {
+    setHubViewRaw(view);
+
+    // Sync the tab to URL search params so deep-links and back button work.
+    const url = new URL(window.location.href);
+    if (view === "dashboard") {
+      url.searchParams.delete("tab");
+    } else {
+      url.searchParams.set("tab", view);
+    }
+    window.history.pushState(null, "", url.toString());
+
+    // Scroll to top when switching tabs.
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  // Listen for back/forward navigation.
+  useEffect(() => {
+    const onPopState = () => {
+      setHubViewRaw(readViewFromURL());
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   const openChat = useCallback((message: string | null = null) => {
     setChatInitialMessage(message || null);

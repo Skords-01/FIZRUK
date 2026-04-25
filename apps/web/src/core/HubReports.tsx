@@ -2,32 +2,14 @@ import { useState, useMemo } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { cn } from "@shared/lib/cn";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState.js";
+import { safeReadLS } from "@shared/lib/storage";
+import { parseFizrukWorkouts } from "@shared/lib/parseFizrukWorkouts";
 import { generateInsights } from "./lib/insightsEngine";
 import {
   calcFinykSpendingByDate,
   getFinykExcludedTxIdsFromStorage,
   getFinykTxSplitsFromStorage,
 } from "@finyk/utils";
-
-function safeParseLS(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function parseFizrukWorkouts(raw) {
-  if (!raw) return [];
-  try {
-    const p = JSON.parse(raw);
-    if (Array.isArray(p)) return p;
-    if (p && Array.isArray(p.workouts)) return p.workouts;
-  } catch {}
-  return [];
-}
 
 function localDateKey(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -95,7 +77,7 @@ function useReportData(period, offset) {
     }
 
     function collectSpending(dates) {
-      const txRaw = safeParseLS("finyk_tx_cache", null);
+      const txRaw = safeReadLS("finyk_tx_cache", null);
       const txList = txRaw?.txs ?? txRaw ?? [];
       const excludedTxIds = getFinykExcludedTxIdsFromStorage();
       const txSplits = getFinykTxSplitsFromStorage();
@@ -108,7 +90,7 @@ function useReportData(period, offset) {
     }
 
     function collectHabits(dates) {
-      const state = safeParseLS("hub_routine_v1", null);
+      const state = safeReadLS("hub_routine_v1", null);
       if (!state) return { pct: 0, daily: {} };
       const habits = Array.isArray(state.habits)
         ? state.habits.filter((h) => !h.archived)
@@ -137,7 +119,7 @@ function useReportData(period, offset) {
     }
 
     function collectKcal(dates) {
-      const log = safeParseLS("nutrition_log_v1", {});
+      const log = safeReadLS("nutrition_log_v1", {});
       const dateSet = new Set(dates);
       const daily = {};
       let total = 0;
