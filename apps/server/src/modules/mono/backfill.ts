@@ -1,9 +1,13 @@
 import type { Request, Response } from "express";
-import pool from "../../db.js";
+import { env } from "../../env/env.js";
+import { query } from "../../db.js";
 import { bankProxyFetch } from "../../lib/bankProxy.js";
 import { logger } from "../../obs/logger.js";
+import { decryptToken } from "./crypto.js";
 
-type AuthedRequest = Request & { user?: { id: string } };
+interface AuthedRequest extends Request {
+  user?: { id: string };
+}
 
 const BACKFILL_DAYS = 31;
 const PACING_MS = 60_000;
@@ -46,39 +50,34 @@ interface MonoStatementRaw {
   [key: string]: unknown;
 }
 
-/**
- * Decrypt the stored token. If Track A PR2 provides a proper decrypt helper,
- * this should be replaced with that import. For now, this reads the
- * encrypted token and decrypts using AES-256-GCM with MONO_TOKEN_KEY env var.
- */
 async function getDecryptedToken(userId: string): Promise<string | null> {
-  const { rows } = await pool.query(
+  const { rows } = await query<{
+    token_ciphertext: Buffer;
+    token_iv: Buffer;
+    token_tag: Buffer;
+  }>(
     `SELECT token_ciphertext, token_iv, token_tag FROM mono_connection WHERE user_id = $1`,
     [userId],
+    { op: "mono_backfill_token" },
   );
   if (rows.length === 0) return null;
 
-  const { token_ciphertext, token_iv, token_tag } = rows[0];
-  const keyHex = process.env.MONO_TOKEN_KEY;
-  if (!keyHex) {
-    logger.error({ msg: "MONO_TOKEN_KEY not configured" });
+  const encKey = env.MONO_TOKEN_ENC_KEY;
+  if (!encKey) {
+    logger.error({ msg: "MONO_TOKEN_ENC_KEY not configured" });
     return null;
   }
 
   try {
-    const { createDecipheriv } = await import("node:crypto");
-    const key = Buffer.from(keyHex, "hex");
-    const decipher = createDecipheriv(
-      "aes-256-gcm",
-      key,
-      Buffer.from(token_iv),
+    const row = rows[0];
+    return decryptToken(
+      {
+        ciphertext: row.token_ciphertext,
+        iv: row.token_iv,
+        tag: row.token_tag,
+      },
+      encKey,
     );
-    decipher.setAuthTag(Buffer.from(token_tag));
-    const decrypted = Buffer.concat([
-      decipher.update(Buffer.from(token_ciphertext)),
-      decipher.final(),
-    ]);
-    return decrypted.toString("utf8");
   } catch (err) {
     logger.error({ msg: "mono_token_decrypt_failed", err });
     return null;
@@ -117,7 +116,7 @@ async function upsertTransaction(
   accountId: string,
   tx: MonoStatementRaw,
 ): Promise<void> {
-  await pool.query(
+  await query(
     `INSERT INTO mono_transaction (
        user_id, mono_account_id, mono_tx_id, time, amount, operation_amount,
        currency_code, mcc, original_mcc, hold, description, comment,
@@ -162,6 +161,7 @@ async function upsertTransaction(
       tx.counterName ?? null,
       JSON.stringify(tx),
     ],
+    { op: "mono_tx_upsert" },
   );
 }
 
@@ -230,9 +230,10 @@ export async function backfillHandler(
     return;
   }
 
-  const { rows: accounts } = await pool.query(
+  const { rows: accounts } = await query<{ mono_account_id: string }>(
     `SELECT mono_account_id FROM mono_account WHERE user_id = $1`,
     [userId],
+    { op: "mono_backfill_accounts" },
   );
 
   if (accounts.length === 0) {
@@ -255,9 +256,10 @@ export async function backfillHandler(
         total += count;
       }
 
-      await pool.query(
+      await query(
         `UPDATE mono_connection SET last_backfill_at = NOW() WHERE user_id = $1`,
         [userId],
+        { op: "mono_backfill_update" },
       );
 
       logger.info({

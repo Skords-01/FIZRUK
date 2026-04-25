@@ -1,9 +1,11 @@
 import type { Request, Response } from "express";
-import pool from "../../db.js";
+import { query } from "../../db.js";
 import { validateQuery } from "../../http/validate.js";
 import { MonoTransactionsQuerySchema } from "../../http/schemas.js";
 
-type AuthedRequest = Request & { user?: { id: string } };
+interface AuthedRequest extends Request {
+  user?: { id: string };
+}
 
 /**
  * GET /api/mono/accounts — returns user's Monobank accounts from DB.
@@ -18,7 +20,7 @@ export async function accountsHandler(
     return;
   }
 
-  const { rows } = await pool.query(
+  const { rows } = await query(
     `SELECT
        user_id          AS "userId",
        mono_account_id  AS "monoAccountId",
@@ -35,6 +37,7 @@ export async function accountsHandler(
      WHERE user_id = $1
      ORDER BY currency_code, mono_account_id`,
     [userId],
+    { op: "mono_accounts_read" },
   );
 
   res.json(
@@ -138,7 +141,34 @@ export async function transactionsHandler(
   `;
   params.push(limit + 1);
 
-  const { rows } = await pool.query(sql, params);
+  interface TxRow {
+    userId: string;
+    monoAccountId: string;
+    monoTxId: string;
+    time: Date | string;
+    amount: number;
+    operationAmount: number;
+    currencyCode: number;
+    mcc: number | null;
+    originalMcc: number | null;
+    hold: boolean | null;
+    description: string | null;
+    comment: string | null;
+    cashbackAmount: number | null;
+    commissionRate: number | null;
+    balance: number | null;
+    receiptId: string | null;
+    invoiceId: string | null;
+    counterEdrpou: string | null;
+    counterIban: string | null;
+    counterName: string | null;
+    source: string;
+    receivedAt: Date | string;
+  }
+
+  const { rows } = await query<TxRow>(sql, params, {
+    op: "mono_transactions_read",
+  });
 
   const hasMore = rows.length > limit;
   const items = hasMore ? rows.slice(0, limit) : rows;

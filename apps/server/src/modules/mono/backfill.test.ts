@@ -2,10 +2,16 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Request, Response } from "express";
 import type { Mock } from "vitest";
 
-vi.mock("../../db.js", () => {
-  const pool = { query: vi.fn() };
-  return { default: pool, pool };
-});
+vi.mock("../../db.js", () => ({
+  query: vi.fn(),
+}));
+
+vi.mock("../../env/env.js", () => ({
+  env: {
+    MONO_TOKEN_ENC_KEY: undefined as string | undefined,
+    MONO_WEBHOOK_ENABLED: true,
+  },
+}));
 
 vi.mock("../../lib/bankProxy.js", () => ({
   bankProxyFetch: vi.fn(),
@@ -20,16 +26,25 @@ vi.mock("../../obs/logger.js", () => ({
   },
 }));
 
-import _pool from "../../db.js";
+vi.mock("./crypto.js", () => ({
+  decryptToken: vi.fn(),
+  encryptToken: vi.fn(),
+  tokenFingerprint: vi.fn(),
+}));
+
+import { query as _query } from "../../db.js";
+import { env } from "../../env/env.js";
 import { bankProxyFetch as _bankProxyFetch } from "../../lib/bankProxy.js";
+import { decryptToken as _decryptToken } from "./crypto.js";
 import {
   backfillHandler,
   __setBackfillSleep,
   __getActiveBackfills,
 } from "./backfill.js";
 
-const pool = _pool as unknown as { query: Mock };
+const queryMock = _query as unknown as Mock;
 const bankProxyFetch = _bankProxyFetch as unknown as Mock;
+const decryptToken = _decryptToken as unknown as Mock;
 
 interface TestRes {
   statusCode: number;
@@ -66,8 +81,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   __setBackfillSleep(async () => {});
   __getActiveBackfills().clear();
-  // Default: no MONO_TOKEN_KEY
-  delete process.env.MONO_TOKEN_KEY;
+  (env as { MONO_TOKEN_ENC_KEY: string | undefined }).MONO_TOKEN_ENC_KEY =
+    undefined;
 });
 
 describe("backfillHandler", () => {
@@ -86,8 +101,8 @@ describe("backfillHandler", () => {
     expect(res.body).toEqual({ error: "Backfill already in progress" });
   });
 
-  it("returns 400 if no connection (token decrypt fails)", async () => {
-    pool.query.mockResolvedValueOnce({ rows: [] }); // no connection
+  it("returns 400 if no connection", async () => {
+    queryMock.mockResolvedValueOnce({ rows: [] });
 
     const res = makeRes();
     await backfillHandler(makeReq(), res);
@@ -97,27 +112,34 @@ describe("backfillHandler", () => {
     });
   });
 
+  it("returns 400 if MONO_TOKEN_ENC_KEY missing", async () => {
+    queryMock.mockResolvedValueOnce({
+      rows: [
+        {
+          token_ciphertext: Buffer.from("ct"),
+          token_iv: Buffer.from("iv"),
+          token_tag: Buffer.from("tag"),
+        },
+      ],
+    });
+
+    const res = makeRes();
+    await backfillHandler(makeReq(), res);
+    expect(res.statusCode).toBe(400);
+  });
+
   it("returns 400 if no accounts to backfill", async () => {
-    // Setup: has connection but MONO_TOKEN_KEY configured
-    const crypto = await import("node:crypto");
-    const key = crypto.randomBytes(32);
-    process.env.MONO_TOKEN_KEY = key.toString("hex");
+    (env as { MONO_TOKEN_ENC_KEY: string | undefined }).MONO_TOKEN_ENC_KEY =
+      "a".repeat(64);
+    decryptToken.mockReturnValue("test-token");
 
-    const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-    const encrypted = Buffer.concat([
-      cipher.update("test-token", "utf8"),
-      cipher.final(),
-    ]);
-    const tag = cipher.getAuthTag();
-
-    pool.query
+    queryMock
       .mockResolvedValueOnce({
         rows: [
           {
-            token_ciphertext: encrypted,
-            token_iv: iv,
-            token_tag: tag,
+            token_ciphertext: Buffer.from("ct"),
+            token_iv: Buffer.from("iv"),
+            token_tag: Buffer.from("tag"),
           },
         ],
       })
@@ -130,32 +152,23 @@ describe("backfillHandler", () => {
   });
 
   it("starts backfill and responds immediately", async () => {
-    const crypto = await import("node:crypto");
-    const key = crypto.randomBytes(32);
-    process.env.MONO_TOKEN_KEY = key.toString("hex");
+    (env as { MONO_TOKEN_ENC_KEY: string | undefined }).MONO_TOKEN_ENC_KEY =
+      "a".repeat(64);
+    decryptToken.mockReturnValue("test-token");
 
-    const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-    const encrypted = Buffer.concat([
-      cipher.update("test-token", "utf8"),
-      cipher.final(),
-    ]);
-    const tag = cipher.getAuthTag();
-
-    pool.query
+    queryMock
       .mockResolvedValueOnce({
         rows: [
           {
-            token_ciphertext: encrypted,
-            token_iv: iv,
-            token_tag: tag,
+            token_ciphertext: Buffer.from("ct"),
+            token_iv: Buffer.from("iv"),
+            token_tag: Buffer.from("tag"),
           },
         ],
       })
       .mockResolvedValueOnce({
         rows: [{ mono_account_id: "acc1" }],
       })
-      // For each upsert
       .mockResolvedValue({ rows: [] });
 
     bankProxyFetch.mockResolvedValue({
@@ -174,14 +187,11 @@ describe("backfillHandler", () => {
     const res = makeRes();
     await backfillHandler(makeReq(), res);
 
-    // Should respond immediately with status: started
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({ status: "started", accountsCount: 1 });
 
-    // Let the async backfill complete
     await new Promise((r) => setTimeout(r, 100));
 
-    // Verify bankProxyFetch was called
     expect(bankProxyFetch).toHaveBeenCalled();
     const call = bankProxyFetch.mock.calls[0][0];
     expect(call.upstream).toBe("monobank");
@@ -189,21 +199,19 @@ describe("backfillHandler", () => {
   });
 
   it("guard releases after backfill completes", async () => {
-    const crypto = await import("node:crypto");
-    const key = crypto.randomBytes(32);
-    process.env.MONO_TOKEN_KEY = key.toString("hex");
+    (env as { MONO_TOKEN_ENC_KEY: string | undefined }).MONO_TOKEN_ENC_KEY =
+      "a".repeat(64);
+    decryptToken.mockReturnValue("test-token");
 
-    const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-    const encrypted = Buffer.concat([
-      cipher.update("test-token", "utf8"),
-      cipher.final(),
-    ]);
-    const tag = cipher.getAuthTag();
-
-    pool.query
+    queryMock
       .mockResolvedValueOnce({
-        rows: [{ token_ciphertext: encrypted, token_iv: iv, token_tag: tag }],
+        rows: [
+          {
+            token_ciphertext: Buffer.from("ct"),
+            token_iv: Buffer.from("iv"),
+            token_tag: Buffer.from("tag"),
+          },
+        ],
       })
       .mockResolvedValueOnce({
         rows: [{ mono_account_id: "acc1" }],
@@ -225,22 +233,20 @@ describe("backfillHandler", () => {
     expect(__getActiveBackfills().has("user_1")).toBe(false);
   });
 
-  it("UPSERT is idempotent: webhook+backfill overlap gives 1 row", async () => {
-    const crypto = await import("node:crypto");
-    const key = crypto.randomBytes(32);
-    process.env.MONO_TOKEN_KEY = key.toString("hex");
+  it("UPSERT query includes ON CONFLICT", async () => {
+    (env as { MONO_TOKEN_ENC_KEY: string | undefined }).MONO_TOKEN_ENC_KEY =
+      "a".repeat(64);
+    decryptToken.mockReturnValue("test-token");
 
-    const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-    const encrypted = Buffer.concat([
-      cipher.update("test-token", "utf8"),
-      cipher.final(),
-    ]);
-    const tag = cipher.getAuthTag();
-
-    pool.query
+    queryMock
       .mockResolvedValueOnce({
-        rows: [{ token_ciphertext: encrypted, token_iv: iv, token_tag: tag }],
+        rows: [
+          {
+            token_ciphertext: Buffer.from("ct"),
+            token_iv: Buffer.from("iv"),
+            token_tag: Buffer.from("tag"),
+          },
+        ],
       })
       .mockResolvedValueOnce({
         rows: [{ mono_account_id: "acc1" }],
@@ -264,33 +270,30 @@ describe("backfillHandler", () => {
     await backfillHandler(makeReq(), res);
     await new Promise((r) => setTimeout(r, 100));
 
-    // Verify the UPSERT SQL includes ON CONFLICT
-    const upsertCalls = pool.query.mock.calls.filter(
+    const upsertCalls = queryMock.mock.calls.filter(
       (c: unknown[]) =>
         typeof c[0] === "string" && (c[0] as string).includes("ON CONFLICT"),
     );
     expect(upsertCalls.length).toBeGreaterThan(0);
   });
 
-  it("pacing: uses sleep between pages", async () => {
+  it("pacing: uses sleep between accounts", async () => {
     const sleepMock = vi.fn(async () => {});
     __setBackfillSleep(sleepMock);
 
-    const crypto = await import("node:crypto");
-    const key = crypto.randomBytes(32);
-    process.env.MONO_TOKEN_KEY = key.toString("hex");
+    (env as { MONO_TOKEN_ENC_KEY: string | undefined }).MONO_TOKEN_ENC_KEY =
+      "a".repeat(64);
+    decryptToken.mockReturnValue("test-token");
 
-    const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-    const encrypted = Buffer.concat([
-      cipher.update("test-token", "utf8"),
-      cipher.final(),
-    ]);
-    const tag = cipher.getAuthTag();
-
-    pool.query
+    queryMock
       .mockResolvedValueOnce({
-        rows: [{ token_ciphertext: encrypted, token_iv: iv, token_tag: tag }],
+        rows: [
+          {
+            token_ciphertext: Buffer.from("ct"),
+            token_iv: Buffer.from("iv"),
+            token_tag: Buffer.from("tag"),
+          },
+        ],
       })
       .mockResolvedValueOnce({
         rows: [{ mono_account_id: "acc1" }, { mono_account_id: "acc2" }],
@@ -307,7 +310,6 @@ describe("backfillHandler", () => {
 
     await new Promise((r) => setTimeout(r, 100));
 
-    // Sleep should be called for pacing between accounts
     expect(sleepMock).toHaveBeenCalledWith(60_000);
   });
 });

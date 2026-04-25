@@ -2,15 +2,14 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Request, Response } from "express";
 import type { Mock } from "vitest";
 
-vi.mock("../../db.js", () => {
-  const pool = { query: vi.fn() };
-  return { default: pool, pool };
-});
+vi.mock("../../db.js", () => ({
+  query: vi.fn(),
+}));
 
-import _pool from "../../db.js";
+import { query as _query } from "../../db.js";
 import { accountsHandler, transactionsHandler } from "./read.js";
 
-const pool = _pool as unknown as { query: Mock };
+const queryMock = _query as unknown as Mock;
 
 interface TestRes {
   statusCode: number;
@@ -52,7 +51,7 @@ beforeEach(() => {
 
 describe("accountsHandler", () => {
   it("returns accounts for authenticated user", async () => {
-    pool.query.mockResolvedValueOnce({
+    queryMock.mockResolvedValueOnce({
       rows: [
         {
           userId: "user_1",
@@ -82,7 +81,7 @@ describe("accountsHandler", () => {
   });
 
   it("returns empty array when no accounts", async () => {
-    pool.query.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValueOnce({ rows: [] });
 
     const res = makeRes();
     await accountsHandler(makeReq(), res);
@@ -128,7 +127,7 @@ describe("transactionsHandler", () => {
       receivedAt: new Date("2025-01-15T00:00:00Z"),
     }));
 
-    pool.query.mockResolvedValueOnce({ rows });
+    queryMock.mockResolvedValueOnce({ rows });
 
     const res = makeRes();
     await transactionsHandler(makeReq({}), res);
@@ -140,7 +139,7 @@ describe("transactionsHandler", () => {
   });
 
   it("returns null nextCursor when no more results", async () => {
-    pool.query.mockResolvedValueOnce({
+    queryMock.mockResolvedValueOnce({
       rows: [
         {
           userId: "user_1",
@@ -179,7 +178,7 @@ describe("transactionsHandler", () => {
   });
 
   it("applies from/to/accountId filters", async () => {
-    pool.query.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValueOnce({ rows: [] });
 
     const res = makeRes();
     await transactionsHandler(
@@ -192,14 +191,14 @@ describe("transactionsHandler", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    const sql = pool.query.mock.calls[0][0] as string;
+    const sql = queryMock.mock.calls[0][0] as string;
     expect(sql).toContain("t.time >=");
     expect(sql).toContain("t.time <=");
     expect(sql).toContain("t.mono_account_id =");
   });
 
   it("applies cursor filter", async () => {
-    pool.query.mockResolvedValueOnce({ rows: [] });
+    queryMock.mockResolvedValueOnce({ rows: [] });
 
     const res = makeRes();
     await transactionsHandler(
@@ -210,10 +209,10 @@ describe("transactionsHandler", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    const sql = pool.query.mock.calls[0][0] as string;
+    const sql = queryMock.mock.calls[0][0] as string;
     expect(sql).toContain("t.time <");
     expect(sql).toContain("t.mono_tx_id <");
-    const params = pool.query.mock.calls[0][1] as unknown[];
+    const params = queryMock.mock.calls[0][1] as unknown[];
     expect(params).toContain("2025-01-15T12:00:00.000Z");
     expect(params).toContain("tx_25");
   });

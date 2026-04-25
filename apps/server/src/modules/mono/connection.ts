@@ -1,57 +1,274 @@
 import type { Request, Response } from "express";
-import pool from "../../db.js";
-
-type AuthedRequest = Request & { user?: { id: string } };
+import crypto from "node:crypto";
+import { env } from "../../env/env.js";
+import { query } from "../../db.js";
+import { logger } from "../../obs/logger.js";
+import { encryptToken, decryptToken, tokenFingerprint } from "./crypto.js";
+import type { EncryptedToken } from "./crypto.js";
 
 /**
- * POST /api/mono/connect — connect Monobank token.
- * Stub: returns 501 until Track A PR2 implementation.
+ * POST /api/mono/connect  — register Monobank webhook + persist connection.
+ * POST /api/mono/disconnect — unregister webhook + wipe connection data.
+ * GET  /api/mono/sync-state — lightweight connection status from DB.
+ *
+ * All three require an authenticated session (`req.user`).
+ * Gated behind `MONO_WEBHOOK_ENABLED`.
  */
+
+interface AuthedRequest extends Request {
+  user?: { id: string };
+}
+
+function assertWebhookEnabled(res: Response): boolean {
+  if (!env.MONO_WEBHOOK_ENABLED) {
+    res.status(404).json({ error: "Monobank webhook integration is disabled" });
+    return false;
+  }
+  return true;
+}
+
+function getUserId(req: AuthedRequest, res: Response): string | null {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "Потрібна автентифікація" });
+    return null;
+  }
+  return userId;
+}
+
+interface MonoClientInfoAccount {
+  id: string;
+  sendId?: string;
+  type?: string;
+  currencyCode?: number;
+  cashbackType?: string;
+  maskedPan?: string[];
+  iban?: string;
+  balance?: number;
+  creditLimit?: number;
+}
+
+interface MonoClientInfoResponse {
+  accounts?: MonoClientInfoAccount[];
+  [key: string]: unknown;
+}
+
 export async function connectHandler(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
-  res.status(501).json({ error: "Not implemented" });
+  if (!assertWebhookEnabled(res)) return;
+  const userId = getUserId(req as AuthedRequest, res);
+  if (!userId) return;
+
+  const { token } = req.body as { token?: string };
+  if (!token || typeof token !== "string" || token.length < 10) {
+    res.status(400).json({ error: "Invalid or missing token" });
+    return;
+  }
+
+  const encKey = env.MONO_TOKEN_ENC_KEY;
+  if (!encKey) {
+    res
+      .status(500)
+      .json({ error: "Server misconfigured: missing encryption key" });
+    return;
+  }
+
+  const clientInfoRes = await fetch(
+    "https://api.monobank.ua/personal/client-info",
+    { headers: { "X-Token": token } },
+  );
+  if (!clientInfoRes.ok) {
+    const body = await clientInfoRes.text();
+    logger.warn({
+      msg: "mono_connect_client_info_failed",
+      status: clientInfoRes.status,
+      fingerprint: tokenFingerprint(token),
+    });
+    res.status(clientInfoRes.status === 401 ? 401 : 502).json({
+      error:
+        clientInfoRes.status === 401
+          ? "Invalid Monobank token"
+          : "Failed to reach Monobank API",
+      upstream: body,
+    });
+    return;
+  }
+
+  const clientInfo: MonoClientInfoResponse =
+    (await clientInfoRes.json()) as MonoClientInfoResponse;
+  const accounts = clientInfo.accounts ?? [];
+
+  const webhookSecret = crypto.randomBytes(32).toString("hex");
+  const webhookUrl = `${env.PUBLIC_API_BASE_URL}/api/mono/webhook/${webhookSecret}`;
+
+  const registerRes = await fetch("https://api.monobank.ua/personal/webhook", {
+    method: "POST",
+    headers: {
+      "X-Token": token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ webHookUrl: webhookUrl }),
+  });
+
+  if (!registerRes.ok) {
+    const body = await registerRes.text();
+    logger.warn({
+      msg: "mono_webhook_register_failed",
+      status: registerRes.status,
+      fingerprint: tokenFingerprint(token),
+    });
+    res.status(502).json({
+      error: "Failed to register webhook with Monobank",
+      upstream: body,
+    });
+    return;
+  }
+
+  const encrypted: EncryptedToken = encryptToken(token, encKey);
+  const fingerprint = tokenFingerprint(token);
+
+  await query(
+    `INSERT INTO mono_connection
+       (user_id, token_ciphertext, token_iv, token_tag, token_fingerprint,
+        webhook_secret, webhook_registered_at, status, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW(), 'active', NOW())
+     ON CONFLICT (user_id) DO UPDATE SET
+       token_ciphertext = EXCLUDED.token_ciphertext,
+       token_iv = EXCLUDED.token_iv,
+       token_tag = EXCLUDED.token_tag,
+       token_fingerprint = EXCLUDED.token_fingerprint,
+       webhook_secret = EXCLUDED.webhook_secret,
+       webhook_registered_at = NOW(),
+       status = 'active',
+       updated_at = NOW()`,
+    [
+      userId,
+      encrypted.ciphertext,
+      encrypted.iv,
+      encrypted.tag,
+      fingerprint,
+      webhookSecret,
+    ],
+    { op: "mono_connection_upsert" },
+  );
+
+  for (const acc of accounts) {
+    await query(
+      `INSERT INTO mono_account
+         (user_id, mono_account_id, send_id, type, currency_code, cashback_type,
+          masked_pan, iban, balance, credit_limit, last_seen_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+       ON CONFLICT (user_id, mono_account_id) DO UPDATE SET
+         send_id = EXCLUDED.send_id,
+         type = EXCLUDED.type,
+         currency_code = EXCLUDED.currency_code,
+         cashback_type = EXCLUDED.cashback_type,
+         masked_pan = EXCLUDED.masked_pan,
+         iban = EXCLUDED.iban,
+         balance = EXCLUDED.balance,
+         credit_limit = EXCLUDED.credit_limit,
+         last_seen_at = NOW()`,
+      [
+        userId,
+        acc.id,
+        acc.sendId ?? null,
+        acc.type ?? null,
+        acc.currencyCode ?? 0,
+        acc.cashbackType ?? null,
+        acc.maskedPan ?? [],
+        acc.iban ?? null,
+        acc.balance ?? null,
+        acc.creditLimit ?? null,
+      ],
+      { op: "mono_account_upsert" },
+    );
+  }
+
+  logger.info({
+    msg: "mono_connected",
+    fingerprint,
+    accountsCount: accounts.length,
+  });
+
+  res.status(200).json({ status: "active", accountsCount: accounts.length });
 }
 
-/**
- * POST /api/mono/disconnect — disconnect Monobank.
- * Stub: returns 501 until Track A PR2 implementation.
- */
 export async function disconnectHandler(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<void> {
-  res.status(501).json({ error: "Not implemented" });
+  if (!assertWebhookEnabled(res)) return;
+  const userId = getUserId(req as AuthedRequest, res);
+  if (!userId) return;
+
+  const encKey = env.MONO_TOKEN_ENC_KEY;
+
+  const connResult = await query<{
+    token_ciphertext: Buffer;
+    token_iv: Buffer;
+    token_tag: Buffer;
+  }>(
+    "SELECT token_ciphertext, token_iv, token_tag FROM mono_connection WHERE user_id = $1",
+    [userId],
+    { op: "mono_connection_select" },
+  );
+
+  if (connResult.rows.length > 0 && encKey) {
+    try {
+      const row = connResult.rows[0];
+      const decryptedToken = decryptToken(
+        {
+          ciphertext: row.token_ciphertext,
+          iv: row.token_iv,
+          tag: row.token_tag,
+        },
+        encKey,
+      );
+      await fetch("https://api.monobank.ua/personal/webhook", {
+        method: "POST",
+        headers: {
+          "X-Token": decryptedToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ webHookUrl: "" }),
+      });
+    } catch (err) {
+      logger.warn({ msg: "mono_webhook_unregister_failed", err });
+    }
+  }
+
+  await query("DELETE FROM mono_connection WHERE user_id = $1", [userId], {
+    op: "mono_connection_delete",
+  });
+
+  logger.info({ msg: "mono_disconnected" });
+  res.status(200).json({ ok: true });
 }
 
-/**
- * GET /api/mono/sync-state — returns connection status, webhook state,
- * last event/backfill timestamps, and account count from DB.
- */
 export async function syncStateHandler(
   req: Request,
   res: Response,
 ): Promise<void> {
-  const userId = (req as AuthedRequest).user?.id;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
+  if (!assertWebhookEnabled(res)) return;
+  const userId = getUserId(req as AuthedRequest, res);
+  if (!userId) return;
 
-  const connResult = await pool.query(
-    `SELECT
-       status,
-       webhook_registered_at,
-       last_event_at,
-       last_backfill_at
-     FROM mono_connection
-     WHERE user_id = $1`,
+  const connResult = await query<{
+    status: string;
+    webhook_registered_at: string | null;
+    last_event_at: string | null;
+    last_backfill_at: string | null;
+  }>(
+    `SELECT status, webhook_registered_at, last_event_at, last_backfill_at
+     FROM mono_connection WHERE user_id = $1`,
     [userId],
+    { op: "mono_sync_state" },
   );
 
   if (connResult.rows.length === 0) {
-    res.json({
+    res.status(200).json({
       status: "disconnected",
       webhookActive: false,
       lastEventAt: null,
@@ -63,19 +280,18 @@ export async function syncStateHandler(
 
   const conn = connResult.rows[0];
 
-  const countResult = await pool.query(
-    `SELECT COUNT(*)::int AS cnt FROM mono_account WHERE user_id = $1`,
+  const countResult = await query<{ count: string }>(
+    "SELECT COUNT(*)::text AS count FROM mono_account WHERE user_id = $1",
     [userId],
+    { op: "mono_accounts_count" },
   );
 
-  const toIso = (v: unknown): string | null =>
-    v instanceof Date ? v.toISOString() : ((v as string | null) ?? null);
-
-  res.json({
+  res.status(200).json({
     status: conn.status,
-    webhookActive: conn.webhook_registered_at != null,
-    lastEventAt: toIso(conn.last_event_at),
-    lastBackfillAt: toIso(conn.last_backfill_at),
-    accountsCount: countResult.rows[0]?.cnt ?? 0,
+    webhookActive:
+      conn.status === "active" && conn.webhook_registered_at != null,
+    lastEventAt: conn.last_event_at,
+    lastBackfillAt: conn.last_backfill_at,
+    accountsCount: Number(countResult.rows[0]?.count ?? 0),
   });
 }
