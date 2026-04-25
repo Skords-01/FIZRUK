@@ -56,6 +56,9 @@ if (dsn) {
     },
   });
 
+  // AI-NOTE: console.log тут навмисний — sentry.ts оцінюється ДО logger.ts
+  // (ESM depth-first import order), тому pino-логер ще не ініціалізований.
+  // Формат — JSON-рядок, сумісний з Railway/Loki ingestion.
   console.log(
     JSON.stringify({
       level: "info",

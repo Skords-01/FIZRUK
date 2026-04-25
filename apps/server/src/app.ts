@@ -16,6 +16,7 @@ import {
   requestLogMiddleware,
   withRequestContext,
 } from "./http/index.js";
+import { httpLogger } from "./obs/logger.js";
 import { registerRoutes } from "./routes/index.js";
 import { createFrontendMiddleware } from "./routes/frontend.js";
 import { attachSentryErrorHandler } from "./sentry.js";
@@ -97,6 +98,9 @@ export function createApp({
 
   app.use(requestIdMiddleware);
   app.use(withRequestContext);
+  // pino-http: додає req.log (child logger) до кожного запиту. autoLogging
+  // вимкнено — access-log генерується requestLogMiddleware (з метриками).
+  app.use(httpLogger);
   app.use(requestLogMiddleware);
   // Rewrite /api/v1/* → /api/* ДО helmet/json-body/CORS: всі подальші
   // path-base-middleware (body-parsers на конкретних шляхах, `/api` CORS,
