@@ -10,23 +10,23 @@
 
 Якщо є тиждень — зроби лише це:
 
-| #   | Інструмент / практика                             | Effort    | Cost             | ROI    | Статус                                                            |
-| --- | ------------------------------------------------- | --------- | ---------------- | ------ | ----------------------------------------------------------------- |
-| 1   | **Sentry** для error tracking                     | 2 год     | $26/міс          | 🔥🔥🔥 | ⏳ pending (потребує credentials)                                  |
-| 2   | **Knip + depcheck** — clean dead code             | 1 год     | $0               | 🔥🔥   | ✅ done [#716](https://github.com/Skords-01/Sergeant/pull/716)    |
-| 3   | **Strict TypeScript (incremental)**               | 1-2 тижні | $0               | 🔥🔥🔥 | ⏳ pending                                                        |
-| 4   | **Testcontainers** для server tests               | 4 год     | $0               | 🔥🔥🔥 | ⏳ pending                                                        |
+| #   | Інструмент / практика                             | Effort    | Cost             | ROI    | Статус                                                         |
+| --- | ------------------------------------------------- | --------- | ---------------- | ------ | -------------------------------------------------------------- |
+| 1   | **Sentry** для error tracking                     | 2 год     | $26/міс          | 🔥🔥🔥 | ⏳ pending (потребує credentials)                              |
+| 2   | **Knip + depcheck** — clean dead code             | 1 год     | $0               | 🔥🔥   | ✅ done [#716](https://github.com/Skords-01/Sergeant/pull/716) |
+| 3   | **Strict TypeScript (incremental)**               | 1-2 тижні | $0               | 🔥🔥🔥 | ⏳ pending                                                     |
+| 4   | **Testcontainers** для server tests               | 4 год     | $0               | 🔥🔥🔥 | ⏳ pending                                                     |
 | 5   | **Vercel Pro plan** (рятує preview deploy)        | 5 хв      | $20/міс          | 🔥🔥   | 🟡 not started (потребує credit card мейнтейнера)              |
-| 6   | **Turbo remote cache**                            | 1 год     | $0 (Vercel free) | 🔥🔥   | ⏳ pending                                                        |
-| 7   | **Renovate** замість Dependabot                   | 1 год     | $0               | 🔥🔥   | ⏳ pending                                                        |
-| 8   | **AGENTS.md** (з #711)                            | 1 год     | $0               | 🔥🔥🔥 | ✅ done [#714](https://github.com/Skords-01/Sergeant/pull/714)    |
-| 9   | **MSW** для frontend tests                        | 4 год     | $0               | 🔥     | ⏳ pending                                                        |
-| 10  | **Snapshot tests на server serializers** (з #711) | 4 год     | $0               | 🔥🔥🔥 | ✅ done [#718](https://github.com/Skords-01/Sergeant/pull/718)    |
-| 11  | **Pino structured logging**                       | 4 год     | $0               | 🔥🔥   | ⏳ pending                                                        |
-| 12  | **Activate Playwright E2E на PR**                 | 2 год     | $0               | 🔥🔥   | ✅ done [#717](https://github.com/Skords-01/Sergeant/pull/717)    |
-| 13  | **PostHog** для product analytics                 | 4 год     | $0 (free tier)   | 🔥     | ⏳ pending                                                        |
-| 14  | **size-limit** + bundle-analyzer                  | 2 год     | $0               | 🔥     | ⏳ pending                                                        |
-| 15  | **CONTRIBUTING.md + 5-min quickstart**            | 2 год     | $0               | 🔥🔥   | ⏳ pending                                                        |
+| 6   | **Turbo remote cache**                            | 1 год     | $0 (Vercel free) | 🔥🔥   | ⏳ pending                                                     |
+| 7   | **Renovate** замість Dependabot                   | 1 год     | $0               | 🔥🔥   | ⏳ pending                                                     |
+| 8   | **AGENTS.md** (з #711)                            | 1 год     | $0               | 🔥🔥🔥 | ✅ done [#714](https://github.com/Skords-01/Sergeant/pull/714) |
+| 9   | **MSW** для frontend tests                        | 4 год     | $0               | 🔥     | ⏳ pending                                                     |
+| 10  | **Snapshot tests на server serializers** (з #711) | 4 год     | $0               | 🔥🔥🔥 | ✅ done [#718](https://github.com/Skords-01/Sergeant/pull/718) |
+| 11  | **Pino structured logging**                       | 4 год     | $0               | 🔥🔥   | ⏳ pending                                                     |
+| 12  | **Activate Playwright E2E на PR**                 | 2 год     | $0               | 🔥🔥   | ✅ done [#717](https://github.com/Skords-01/Sergeant/pull/717) |
+| 13  | **PostHog** для product analytics                 | 4 год     | $0 (free tier)   | 🔥     | ⏳ pending                                                     |
+| 14  | **size-limit** + bundle-analyzer                  | 2 год     | $0               | 🔥     | ⏳ pending                                                     |
+| 15  | **CONTRIBUTING.md + 5-min quickstart**            | 2 год     | $0               | 🔥🔥   | ⏳ pending                                                     |
 
 **Сумарно:** ~3-5 робочих днів + ~$50/міс. Це 80% wins за 20% effort-у.
 
@@ -115,15 +115,15 @@
 
 ### 3.1. Must-have
 
-| Tool                       | What                                                        | Effort    | Статус                                                            |
-| -------------------------- | ----------------------------------------------------------- | --------- | ----------------------------------------------------------------- |
-| **TypeScript strict mode** | Incremental: `strictNullChecks` → `noImplicitAny` → full    | 1-2 тижні | ⏳ pending                                                        |
-| **ESLint 9**               | У вас є                                                     | —         | ✅                                                                 |
-| **Prettier + lint-staged** | У вас є                                                     | —         | ✅                                                                 |
-| **Knip**                   | Find unused exports/files/deps (~50+ findings on first run) | 1 год     | ✅ done [#716](https://github.com/Skords-01/Sergeant/pull/716)    |
-| **depcheck**               | Find unused deps в package.json                             | 30 хв     | ✅ done [#716](https://github.com/Skords-01/Sergeant/pull/716)    |
-| **size-limit**             | Bundle size budget; fails CI on regression                  | 2 год     | ⏳ pending                                                        |
-| **CSpell**                 | Spell-checker для коду і коментарів                         | 30 хв     | ⏳ pending                                                        |
+| Tool                       | What                                                        | Effort    | Статус                                                         |
+| -------------------------- | ----------------------------------------------------------- | --------- | -------------------------------------------------------------- |
+| **TypeScript strict mode** | Incremental: `strictNullChecks` → `noImplicitAny` → full    | 1-2 тижні | ⏳ pending                                                     |
+| **ESLint 9**               | У вас є                                                     | —         | ✅                                                             |
+| **Prettier + lint-staged** | У вас є                                                     | —         | ✅                                                             |
+| **Knip**                   | Find unused exports/files/deps (~50+ findings on first run) | 1 год     | ✅ done [#716](https://github.com/Skords-01/Sergeant/pull/716) |
+| **depcheck**               | Find unused deps в package.json                             | 30 хв     | ✅ done [#716](https://github.com/Skords-01/Sergeant/pull/716) |
+| **size-limit**             | Bundle size budget; fails CI on regression                  | 2 год     | ⏳ pending                                                     |
+| **CSpell**                 | Spell-checker для коду і коментарів                         | 30 хв     | ⏳ pending                                                     |
 
 **Sergeant-priority:** strict TypeScript. Зараз `strict: false` — це баги waiting to happen.
 
@@ -158,28 +158,28 @@
 
 ### 4.1. Test infrastructure
 
-| Tool                          | What                                    | Effort | Tier | Статус                                                            |
-| ----------------------------- | --------------------------------------- | ------ | ---- | ----------------------------------------------------------------- |
-| **Snapshot tests (server)**   | Mono serializers response shape         | 4 год  | must | ✅ done [#718](https://github.com/Skords-01/Sergeant/pull/718)    |
-| **Playwright Smoke E2E (PR)** | Login → dashboard happy-path на кожен PR  | 2 год  | must | ✅ done [#717](https://github.com/Skords-01/Sergeant/pull/717)    |
-| **Testcontainers**            | Real Postgres у Docker для server tests | 4 год  | must | ⏳ pending                                                        |
-| **MSW (Mock Service Worker)** | Realistic API mocks для frontend tests  | 4 год  | must | ⏳ pending                                                        |
-| **fishery** / **factory-bot** | Test data factories                     | 2 год  | nice | ⏳ pending                                                        |
-| **faker**                     | Random test data                        | 30 хв  | nice | ⏳ pending                                                        |
-| **node:test**                 | If відмовляєтесь від Vitest для server  | 1 день | nice | ⏳ pending                                                        |
+| Tool                          | What                                     | Effort | Tier | Статус                                                         |
+| ----------------------------- | ---------------------------------------- | ------ | ---- | -------------------------------------------------------------- |
+| **Snapshot tests (server)**   | Mono serializers response shape          | 4 год  | must | ✅ done [#718](https://github.com/Skords-01/Sergeant/pull/718) |
+| **Playwright Smoke E2E (PR)** | Login → dashboard happy-path на кожен PR | 2 год  | must | ✅ done [#717](https://github.com/Skords-01/Sergeant/pull/717) |
+| **Testcontainers**            | Real Postgres у Docker для server tests  | 4 год  | must | ⏳ pending                                                     |
+| **MSW (Mock Service Worker)** | Realistic API mocks для frontend tests   | 4 год  | must | ⏳ pending                                                     |
+| **fishery** / **factory-bot** | Test data factories                      | 2 год  | nice | ⏳ pending                                                     |
+| **faker**                     | Random test data                         | 30 хв  | nice | ⏳ pending                                                     |
+| **node:test**                 | If відмовляєтесь від Vitest для server   | 1 день | nice | ⏳ pending                                                     |
 
 **Sergeant-priority:** Testcontainers. Зараз у server tests `queryMock.mockResolvedValueOnce(...)` — це не ловить SQL-помилки. Реальний PG ловить.
 
 ### 4.2. E2E і visual
 
-| Tool           | What                                 | Cost                  |
-| -------------- | ------------------------------------ | --------------------- |
+| Tool           | What                                                                         | Cost                  |
+| -------------- | ---------------------------------------------------------------------------- | --------------------- |
 | **Playwright** | ✅ активовано на PR ([#717](https://github.com/Skords-01/Sergeant/pull/717)) | $0                    |
-| **Detox**      | Mobile e2e (вже згаданий у Sergeant) | $0                    |
-| **Argos**      | Visual regression on PRs             | Free < 5K screenshots |
-| **Percy**      | BrowserStack-owned visual testing    | Free 5K screenshots   |
-| **Chromatic**  | Storybook-integrated visual testing  | $149/міс              |
-| **Lost Pixel** | Self-hosted visual testing           | $0                    |
+| **Detox**      | Mobile e2e (вже згаданий у Sergeant)                                         | $0                    |
+| **Argos**      | Visual regression on PRs                                                     | Free < 5K screenshots |
+| **Percy**      | BrowserStack-owned visual testing                                            | Free 5K screenshots   |
+| **Chromatic**  | Storybook-integrated visual testing                                          | $149/міс              |
+| **Lost Pixel** | Self-hosted visual testing                                                   | $0                    |
 
 ### 4.3. Performance і load
 
