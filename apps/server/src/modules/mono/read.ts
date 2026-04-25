@@ -14,6 +14,18 @@ interface AuthedRequest extends Request {
  * predicates like `!a.creditLimit`. We coerce to plain numbers because
  * Monobank balances are denominated in cents and stay well within the
  * safe-integer range (≤ 9 × 10¹⁵).
+ *
+ * ### Coerced BIGINT fields by handler
+ *
+ * **accountsHandler** — `balance`, `creditLimit`
+ *
+ * **transactionsHandler** — `amount`, `operationAmount`, `cashbackAmount`,
+ * `commissionRate`, `balance`
+ *
+ * Fields that remain strings intentionally:
+ * `monoAccountId`, `monoTxId`, `sendId`, `iban`, `receiptId`, `invoiceId`,
+ * `counterEdrpou`, `counterIban`, `counterName` — these are TEXT columns,
+ * not numeric.
  */
 function toNumberOrNull(v: unknown): number | null {
   if (v == null) return null;
