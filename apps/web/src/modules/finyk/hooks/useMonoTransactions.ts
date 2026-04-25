@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { monoWebhookApi, type MonoTransactionDto } from "@shared/api";
+import { type MonoTransactionDto } from "@shared/api";
 import { finykKeys } from "@shared/lib/queryKeys";
 import { authAwareRetry } from "@shared/lib/queryClient";
+import { fetchAllMonoTransactions } from "./monoTransactionsLoader";
 
 const STALE_TIME = 30_000;
 const GC_TIME = 5 * 60_000;
@@ -29,17 +30,11 @@ export function useMonoTransactions(
 ): UseMonoTransactionsResult {
   const { data, isFetching, isLoading, error } = useQuery({
     queryKey: finykKeys.monoTransactionsDb(rangeFrom, rangeTo, accountId),
-    queryFn: async ({ signal }) => {
-      const result = await monoWebhookApi.transactions(
-        {
-          from: rangeFrom,
-          to: rangeTo,
-          accountId,
-        },
+    queryFn: ({ signal }) =>
+      fetchAllMonoTransactions(
+        { from: rangeFrom, to: rangeTo, accountId },
         { signal },
-      );
-      return result;
-    },
+      ),
     enabled,
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
@@ -49,7 +44,7 @@ export function useMonoTransactions(
   });
 
   return {
-    transactions: data?.data ?? [],
+    transactions: data ?? [],
     isFetching,
     isLoading,
     error: error ?? null,
