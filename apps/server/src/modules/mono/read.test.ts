@@ -170,6 +170,59 @@ describe("accountsHandler", () => {
     expect(body[0].balance).toBeNull();
     expect(body[0].creditLimit).toBeNull();
   });
+
+  it("accountsHandler response shape matches snapshot", async () => {
+    // Fixture simulates node-postgres returning BIGINT columns as strings.
+    // balance (BIGINT), credit_limit (BIGINT) arrive as strings from pg.
+    queryMock.mockResolvedValueOnce({
+      rows: [
+        {
+          userId: "user_1",
+          monoAccountId: "acct_black",
+          sendId: "send_abc",
+          type: "black",
+          currencyCode: 980,
+          cashbackType: "UAH",
+          maskedPan: ["5375****1234"],
+          iban: "UA213223130000026007233566001",
+          balance: "1234500",
+          creditLimit: "0",
+          lastSeenAt: new Date("2025-06-15T10:30:00Z"),
+        },
+        {
+          userId: "user_1",
+          monoAccountId: "acct_white",
+          sendId: null,
+          type: "white",
+          currencyCode: 840,
+          cashbackType: null,
+          maskedPan: ["4111****5678"],
+          iban: null,
+          balance: "-50000",
+          creditLimit: "10000000",
+          lastSeenAt: new Date("2025-06-15T09:00:00Z"),
+        },
+        {
+          userId: "user_1",
+          monoAccountId: "acct_fop",
+          sendId: null,
+          type: "fop",
+          currencyCode: 980,
+          cashbackType: null,
+          maskedPan: null,
+          iban: "UA543210000000260099887766",
+          balance: null,
+          creditLimit: null,
+          lastSeenAt: new Date("2025-06-14T18:00:00Z"),
+        },
+      ],
+    });
+
+    const res = makeRes();
+    await accountsHandler(makeReq(), res);
+
+    expect(res.body).toMatchSnapshot();
+  });
 });
 
 describe("transactionsHandler", () => {
@@ -340,5 +393,68 @@ describe("transactionsHandler", () => {
     expect(tx.balance).toBe(987654);
     expect(typeof tx.amount).toBe("number");
     expect(typeof tx.commissionRate).toBe("number");
+  });
+
+  it("transactionsHandler response shape matches snapshot", async () => {
+    // Fixture simulates node-postgres returning BIGINT columns as strings.
+    // amount, operation_amount, cashback_amount, commission_rate, balance
+    // are all BIGINT in the DB and arrive as strings from pg.
+    queryMock.mockResolvedValueOnce({
+      rows: [
+        {
+          userId: "user_1",
+          monoAccountId: "acct_black",
+          monoTxId: "AbCdEfGhIj",
+          time: new Date("2025-06-15T14:23:11Z"),
+          amount: "-8900",
+          operationAmount: "-8900",
+          currencyCode: 980,
+          mcc: 5411,
+          originalMcc: 5411,
+          hold: false,
+          description: "АТБ-Маркет",
+          comment: "продукти",
+          cashbackAmount: "89",
+          commissionRate: "0",
+          balance: "4567800",
+          receiptId: "XXXX-XXXX-XXXX-XXXX",
+          invoiceId: null,
+          counterEdrpou: "12345678",
+          counterIban: "UA111222333444555666777888999",
+          counterName: "ТОВ АТБ-МАРКЕТ",
+          source: "webhook",
+          receivedAt: new Date("2025-06-15T14:23:12Z"),
+        },
+        {
+          userId: "user_1",
+          monoAccountId: "acct_black",
+          monoTxId: "KlMnOpQrSt",
+          time: new Date("2025-06-15T11:05:00Z"),
+          amount: "-250000",
+          operationAmount: "-250000",
+          currencyCode: 980,
+          mcc: 4829,
+          originalMcc: null,
+          hold: true,
+          description: "Переказ на картку",
+          comment: null,
+          cashbackAmount: null,
+          commissionRate: null,
+          balance: "4817800",
+          receiptId: null,
+          invoiceId: null,
+          counterEdrpou: null,
+          counterIban: null,
+          counterName: "Іваненко Петро",
+          source: "backfill",
+          receivedAt: new Date("2025-06-15T12:00:00Z"),
+        },
+      ],
+    });
+
+    const res = makeRes();
+    await transactionsHandler(makeReq({}), res);
+
+    expect(res.body).toMatchSnapshot();
   });
 });
