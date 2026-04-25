@@ -13,17 +13,17 @@ React Native). Співіснують навмисно: `applicationId` у shell
 
 ## Що готово
 
-| Функція                                       | Плагін / PR                                                                                                                                                                                                                                                                           |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Bearer-auth (Keychain / EncryptedSharedPrefs) | `@capacitor/preferences` — [#505](https://github.com/Skords-01/Sergeant/pull/505)                                                                                                                                                                                                     |
-| Native barcode scanner                        | `@capacitor-mlkit/barcode-scanning` — [#504](https://github.com/Skords-01/Sergeant/pull/504)                                                                                                                                                                                          |
-| Status bar + splash + keyboard + deep links   | `@capacitor/{status-bar,splash-screen,keyboard,app}` — [#506](https://github.com/Skords-01/Sergeant/pull/506)                                                                                                                                                                         |
-| Android hardware Back → web-history traversal | `@capacitor/app#backButton` — `canGoBack` → `window.history.back()`, інакше `App.exitApp()`                                                                                                                                                                                           |
-| Android native проєкт (закомічено)            | `android/` (з `cap add android`)                                                                                                                                                                                                                                                      |
-| Push у shell — лише нативний (FCM/APNs)       | `@capacitor/push-notifications` через `@shared/lib/pushNative`. Web Push (VAPID + `PushManager.subscribe`) повністю виключений з shell-бандла через `VITE_TARGET=capacitor` + dynamic `import()` → [#524](https://github.com/Skords-01/Sergeant/pull/524)                             |
-| Android debug-APK у CI                        | [`.github/workflows/mobile-shell-android.yml`](../../.github/workflows/mobile-shell-android.yml) → артефакт `sergeant-shell-debug-apk`                                                                                                                                                |
-| Android release-signing + ProGuard/R8         | `signingConfigs.release` у `android/app/build.gradle` читає `SERGEANT_RELEASE_*` з env/`gradle.properties`; `minifyEnabled true` + `shrinkResources true` + Capacitor keep-rules у `android/app/proguard-rules.pro`                                                                   |
-| Android release pipeline (AAB + APK у CI)     | [`.github/workflows/mobile-shell-android-release.yml`](../../.github/workflows/mobile-shell-android-release.yml) → `sergeant-shell-release-aab` (Play) + `sergeant-shell-release-apk` (sideload); setup-інструкція — [`MOBILE.md#release--android`](../../MOBILE.md#release--android) |
+| Функція                                       | Плагін / PR                                                                                                                                                                                                                                                                                                 |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bearer-auth (Keychain / EncryptedSharedPrefs) | `@capacitor/preferences` — [#505](https://github.com/Skords-01/Sergeant/pull/505)                                                                                                                                                                                                                           |
+| Native barcode scanner                        | `@capacitor-mlkit/barcode-scanning` — [#504](https://github.com/Skords-01/Sergeant/pull/504)                                                                                                                                                                                                                |
+| Status bar + splash + keyboard + deep links   | `@capacitor/{status-bar,splash-screen,keyboard,app}` — [#506](https://github.com/Skords-01/Sergeant/pull/506)                                                                                                                                                                                               |
+| Android hardware Back → web-history traversal | `@capacitor/app#backButton` — `canGoBack` → `window.history.back()`, інакше `App.exitApp()`                                                                                                                                                                                                                 |
+| Android native проєкт (закомічено)            | `android/` (з `cap add android`)                                                                                                                                                                                                                                                                            |
+| Push у shell — лише нативний (FCM/APNs)       | `@capacitor/push-notifications` через `@shared/lib/pushNative`. Web Push (VAPID + `PushManager.subscribe`) повністю виключений з shell-бандла через `VITE_TARGET=capacitor` + dynamic `import()` → [#524](https://github.com/Skords-01/Sergeant/pull/524)                                                   |
+| Android debug-APK у CI                        | [`.github/workflows/mobile-shell-android.yml`](../../.github/workflows/mobile-shell-android.yml) → артефакт `sergeant-shell-debug-apk`                                                                                                                                                                      |
+| Android release-signing + ProGuard/R8         | `signingConfigs.release` у `android/app/build.gradle` читає `SERGEANT_RELEASE_*` з env/`gradle.properties`; `minifyEnabled true` + `shrinkResources true` + Capacitor keep-rules у `android/app/proguard-rules.pro`                                                                                         |
+| Android release pipeline (AAB + APK у CI)     | [`.github/workflows/mobile-shell-android-release.yml`](../../.github/workflows/mobile-shell-android-release.yml) → `sergeant-shell-release-aab` (Play) + `sergeant-shell-release-apk` (sideload); setup-інструкція — [`docs/mobile-shell.md#release--android`](../../docs/mobile-shell.md#release--android) |
 
 Точка входу native-side — `src/index.ts → initNativeShell()`. Вона
 ідемпотентна (повторні виклики безпечні під HMR / LiveReload) і
@@ -53,7 +53,7 @@ PR, що чіпає `apps/mobile-shell/**`, `apps/web/**`, `apps/server/**`
 `sergeant-shell-debug-apk` (14 днів retention). iOS-сторона живе в
 сибілінгу `mobile-shell-ios.yml` (macOS runner, build-only без
 підпису). Огляд кроків і локальних команд — у
-[`MOBILE.md`](../../MOBILE.md).
+[`docs/mobile-shell.md`](../../docs/mobile-shell.md).
 
 ### Варіант Б — локальна збірка
 
@@ -95,7 +95,7 @@ pnpm --filter @sergeant/mobile-shell open:android
 `.github/workflows/mobile-shell-ios-release.yml` (триггери `push tag
 'v*'` + `workflow_dispatch`): сам робить `cap add ios` на `macos-latest`,
 архівує, експортує `.ipa` і заливає у TestFlight. Контракт секретів і
-інструкції для першого запуску — у [`MOBILE.md` → Release — iOS](../../MOBILE.md#release--ios).
+інструкції для першого запуску — у [`docs/mobile-shell.md` → Release — iOS](../../docs/mobile-shell.md#release--ios).
 
 ## Що НЕ зроблено
 
@@ -117,7 +117,7 @@ pnpm --filter @sergeant/mobile-shell open:android
 - ~~**Release pipeline на iOS не налаштований**~~ — зроблено
   сканфолдом у `.github/workflows/mobile-shell-ios-release.yml`. Для
   першого запуску потрібні всі Apple-секрети з контракту у
-  [`MOBILE.md` → Release — iOS](../../MOBILE.md#release--ios);
+  [`docs/mobile-shell.md` → Release — iOS](../../docs/mobile-shell.md#release--ios);
   без них job логить `::warning::iOS release secrets not configured`
   і падає у unsigned-Simulator-фолбек.
 - ~~**Native push notifications.** `usePushNotifications` у web тримає
