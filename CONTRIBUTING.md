@@ -177,6 +177,15 @@ See `docs/railway-vercel.md` for step-by-step deployment instructions.
 
 ---
 
+## Playbooks
+
+Repeatable checklists for common tasks live in [`docs/playbooks/`](docs/playbooks/). Follow them step-by-step to reduce missed steps:
+
+- [Add a feature flag](docs/playbooks/add-feature-flag.md)
+- [Cleanup dead code](docs/playbooks/cleanup-dead-code.md)
+
+---
+
 ## Need Help?
 
 - Check existing docs in `docs/` (roadmaps, tech debt, architecture).
