@@ -34,7 +34,10 @@ import { MonthlyPlanCard } from "../components/budgets/MonthlyPlanCard";
 import { AddBudgetForm } from "../components/budgets/AddBudgetForm";
 import { readJSON, writeJSON } from "../lib/finykStorage";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState";
-import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
+import {
+  trackEvent,
+  ANALYTICS_EVENTS,
+} from "../../../core/observability/analytics";
 
 // ─── React Query integration for AI chat lookups ──────────────────────────
 //

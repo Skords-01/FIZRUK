@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@shared/components/ui/Button";
 import { useToast } from "@shared/hooks/useToast";
-import { BrandLogo } from "./app/BrandLogo";
+import { BrandLogo } from "../app/BrandLogo";
 import { resetPassword } from "./authClient";
 
 /**

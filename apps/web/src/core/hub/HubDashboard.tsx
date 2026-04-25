@@ -26,30 +26,33 @@ import {
 } from "@sergeant/shared";
 import { openHubModule, openHubModuleWithAction } from "@shared/lib/hubNav";
 import { getModulePrimaryAction } from "@shared/lib/moduleQuickActions";
-import { TodayFocusCard, useDashboardFocus } from "./TodayFocusCard";
+import { TodayFocusCard, useDashboardFocus } from "../insights/TodayFocusCard";
 import { HubInsightsPanel } from "./HubInsightsPanel";
-import { WeeklyDigestCard, hasLiveWeeklyDigest } from "./WeeklyDigestCard";
+import {
+  WeeklyDigestCard,
+  hasLiveWeeklyDigest,
+} from "../insights/WeeklyDigestCard";
 import {
   useWeeklyDigest,
   loadDigest,
   getWeekKey,
   getWeekRange,
-} from "./useWeeklyDigest";
-import { useCoachInsight } from "./useCoachInsight";
-import { AssistantAdviceCard } from "./AssistantAdviceCard";
-import { SoftAuthPromptCard } from "./onboarding/SoftAuthPromptCard";
-import { FirstActionHeroCard } from "./onboarding/FirstActionSheet";
-import { detectFirstRealEntry } from "./onboarding/firstRealEntry";
+} from "../insights/useWeeklyDigest";
+import { useCoachInsight } from "../insights/useCoachInsight";
+import { AssistantAdviceCard } from "../insights/AssistantAdviceCard";
+import { SoftAuthPromptCard } from "../onboarding/SoftAuthPromptCard";
+import { FirstActionHeroCard } from "../onboarding/FirstActionSheet";
+import { detectFirstRealEntry } from "../onboarding/firstRealEntry";
 import {
   isSoftAuthDismissed,
   isFirstActionPending,
   recordSessionDay,
   getSessionDays,
   getVibePicks,
-} from "./onboarding/vibePicks";
-import { useFirstEntryCelebration } from "./onboarding/useFirstEntryCelebration";
-import { DailyNudge } from "./onboarding/DailyNudge";
-import { ReEngagementCard } from "./onboarding/ReEngagementCard";
+} from "../onboarding/vibePicks";
+import { useFirstEntryCelebration } from "../onboarding/useFirstEntryCelebration";
+import { DailyNudge } from "../onboarding/DailyNudge";
+import { ReEngagementCard } from "../onboarding/ReEngagementCard";
 import {
   getActiveNudge,
   shouldShowReengagement,

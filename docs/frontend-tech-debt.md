@@ -96,7 +96,7 @@ Codemod ідемпотентний: повторний запуск дасть `
 | 1060   | `core/ProfilePage.tsx`                              |
 | 949    | `fizruk/components/workouts/ActiveWorkoutPanel.tsx` |
 | 907    | `core/onboarding/seedDemoData.ts`                   |
-| 902    | `core/HubDashboard.tsx`                             |
+| 902    | `core/hub/HubDashboard.tsx`                         |
 | 894    | `fizruk/pages/Workouts.tsx`                         |
 | 827    | `finyk/pages/Transactions.tsx`                      |
 | 824    | `routine/components/RoutineCalendarPanel.tsx`       |
@@ -107,13 +107,13 @@ Codemod ідемпотентний: повторний запуск дасть `
 | 686    | `core/lib/hubChatContext.ts`                        |
 | 671    | `routine/RoutineApp.tsx`                            |
 | 669    | `nutrition/components/LogCard.tsx`                  |
-| 662    | `core/HubChat.tsx`                                  |
+| 662    | `core/hub/HubChat.tsx`                              |
 | 642    | `sw.js`                                             |
-| 638    | `core/HubReports.tsx`                               |
+| 638    | `core/hub/HubReports.tsx`                           |
 | 637    | `fizruk/pages/Exercise.tsx`                         |
 | 631    | `fizruk/pages/Body.tsx`                             |
 | 610    | `nutrition/NutritionApp.tsx`                        |
-| 610    | `core/HubSearch.tsx`                                |
+| 610    | `core/hub/HubSearch.tsx`                            |
 
 **Імпакт:** повільніший code review, важче тестувати окремі частини, можливі
 circular deps.
@@ -155,7 +155,7 @@ aggregation, cloud sync flows.
 ```
 core/settings/GeneralSection.tsx:193  console.log("[sw] snapshot", snap)
 core/settings/GeneralSection.tsx:215  console.log("[sw] caches cleared", res)
-core/analytics.ts:58                  console.log("[analytics]", event)
+core/observability/analytics.ts:58                  console.log("[analytics]", event)
 core/cloudSync/logger.ts:39-41        console.debug("[cloud-sync]")
 core/cloudSync/hook/useCloudSyncDebug.ts:15  (docstring reference)
 shared/lib/perf.ts:28                 console.debug("[perf]")
@@ -209,7 +209,7 @@ Production код чистий. Тестові `any` — фабрики фікт
 
 1. **Міграція TODO-списку `no-raw-local-storage`** — пріоритетно файли з
    найбільшою кількістю викликів (`core/settings/FinykSection.tsx` — 20,
-   `core/lib/chatActions/fizrukActions.ts` — 7, `core/HubDashboard.tsx` — 5).
+   `core/lib/chatActions/fizrukActions.ts` — 7, `core/hub/HubDashboard.tsx` — 5).
 2. **File splitting** — Assets, ProfilePage, ActiveWorkoutPanel.
 3. **Test coverage** — recommendation engine, reports aggregation, cloud
    sync flows.

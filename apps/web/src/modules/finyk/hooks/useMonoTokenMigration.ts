@@ -8,7 +8,10 @@ import {
   safeRemoveLS,
 } from "@shared/lib/storage";
 import { useFlag } from "../../../core/lib/featureFlags";
-import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
+import {
+  trackEvent,
+  ANALYTICS_EVENTS,
+} from "../../../core/observability/analytics";
 import { useToast } from "@shared/hooks/useToast";
 
 const TOKEN_KEY = "finyk_token";

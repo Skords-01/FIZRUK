@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@shared/components/ui/Button";
 import { Icon } from "@shared/components/ui/Icon";
 import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../auth/AuthContext";
 import { ChangePasswordSection } from "./ChangePasswordSection";
 import { DangerZoneSection } from "./DangerZoneSection";
 import { MemoryBankSection } from "./MemoryBankSection";

@@ -3,7 +3,7 @@
  *
  * Collapsible list of secondary coach-style recommendations rendered
  * below the Status row stack on the dashboard. Port of the web
- * component at `apps/web/src/core/HubInsightsPanel.tsx` — same item
+ * component at `apps/web/src/core/hub/HubInsightsPanel.tsx` — same item
  * shape, same dismissal contract, same visual hierarchy (accent bar
  * → title → body → inline `Відкрити` link).
  *

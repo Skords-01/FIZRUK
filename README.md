@@ -185,7 +185,7 @@ server/
 
 ## HubChat (AI-чат)
 
-**Архітектура:** клієнт `src/core/HubChat.tsx` + `src/core/lib/hubChatActions.ts` (виконавець tool-calls) ↔ сервер `server/modules/chat.js` (Anthropic tool-use, Claude Sonnet 4.6). Користувач керує всіма 4 модулями голосом або текстом без переходу в UI.
+**Архітектура:** клієнт `src/core/hub/HubChat.tsx` + `src/core/lib/hubChatActions.ts` (виконавець tool-calls) ↔ сервер `server/modules/chat.js` (Anthropic tool-use, Claude Sonnet 4.6). Користувач керує всіма 4 модулями голосом або текстом без переходу в UI.
 
 **Інструменти (32):**
 

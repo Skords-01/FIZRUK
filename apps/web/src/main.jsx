@@ -17,8 +17,8 @@ import "@shared/lib/fileDownload";
 // effects only.
 import "@shared/hooks/useVisualKeyboardInset";
 import { ErrorBoundary } from "./core/ErrorBoundary.jsx";
-import { initSentry } from "./core/sentry.js";
-import { initWebVitals } from "./core/webVitals.js";
+import { initSentry } from "./core/observability/sentry.js";
+import { initWebVitals } from "./core/observability/webVitals.js";
 import { runDemoCleanupOnce } from "./core/onboarding/cleanupDemoData.js";
 import { runDemoSeedFromUrl } from "./core/onboarding/seedDemoData.js";
 import { isCapacitor } from "@sergeant/shared";

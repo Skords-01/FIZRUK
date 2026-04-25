@@ -3,7 +3,11 @@ import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 import { useToast } from "@shared/hooks/useToast";
-import { listSessions, revokeSession, type SessionItem } from "../authClient";
+import {
+  listSessions,
+  revokeSession,
+  type SessionItem,
+} from "../auth/authClient";
 import { formatDate, parseUA } from "./sessions";
 
 export function SessionsSection({ online }: { online: boolean }) {

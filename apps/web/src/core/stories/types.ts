@@ -3,7 +3,7 @@ import type {
   FizrukAggregate,
   NutritionAggregate,
   RoutineAggregate,
-} from "../useWeeklyDigest";
+} from "../insights/useWeeklyDigest";
 
 export type SlideKind =
   | "intro"

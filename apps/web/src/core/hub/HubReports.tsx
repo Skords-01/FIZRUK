@@ -4,7 +4,7 @@ import { cn } from "@shared/lib/cn";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState";
 import { safeReadLS } from "@shared/lib/storage";
 import { parseFizrukWorkouts } from "@shared/lib/parseFizrukWorkouts";
-import { generateInsights } from "./lib/insightsEngine";
+import { generateInsights } from "../lib/insightsEngine";
 import {
   calcFinykSpendingByDate,
   getFinykExcludedTxIdsFromStorage,

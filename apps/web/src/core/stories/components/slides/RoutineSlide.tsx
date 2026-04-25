@@ -1,7 +1,7 @@
 /* eslint-disable sergeant-design/no-eyebrow-drift */
 import { StoryShell } from "./StoryShell";
 import type { RoutineSlideData } from "../../types";
-import type { HabitStat } from "../../../useWeeklyDigest";
+import type { HabitStat } from "../../../insights/useWeeklyDigest";
 
 export function RoutineSlide({ slide }: { slide: RoutineSlideData }) {
   const { agg, ai } = slide;

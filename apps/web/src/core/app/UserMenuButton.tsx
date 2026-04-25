@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@shared/lib/cn";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
-import { useSyncStatus } from "../useCloudSync";
+import { useSyncStatus } from "../cloudSync/useCloudSync";
 
 function SyncBadge({ user, syncing }) {
   const { dirtyCount, queuedCount, isOnline } = useSyncStatus();

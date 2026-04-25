@@ -26,7 +26,7 @@ vi.mock("@shared/api", async () => {
   };
 });
 
-vi.mock("../../../core/analytics", () => ({
+vi.mock("../../../core/observability/analytics", () => ({
   trackEvent: vi.fn(),
   ANALYTICS_EVENTS: {
     MONO_TOKEN_MIGRATED: "mono_token_migrated",
@@ -43,7 +43,7 @@ vi.mock("@shared/hooks/useToast", () => ({
 }));
 
 import { monoWebhookApi } from "@shared/api";
-import { trackEvent } from "../../../core/analytics";
+import { trackEvent } from "../../../core/observability/analytics";
 import { useMonoTokenMigration } from "./useMonoTokenMigration";
 
 const mockedConnect = monoWebhookApi.connect as unknown as ReturnType<

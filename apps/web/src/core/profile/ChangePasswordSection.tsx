@@ -4,7 +4,7 @@ import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 import { Input } from "@shared/components/ui/Input";
 import { useToast } from "@shared/hooks/useToast";
-import { changePassword } from "../authClient";
+import { changePassword } from "../auth/authClient";
 
 export function ChangePasswordSection({ online }: { online: boolean }) {
   const toast = useToast();

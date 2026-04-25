@@ -98,7 +98,7 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
 
 ### Після
 
-- `src/core/hubSearchEngine.ts`:
+- `src/core/hub/hubSearchEngine.ts`:
   - `normalize(s)` — lowercase + NFD + diacritic strip + apostrophe
     normalization (ʼ → ').
   - `tokenize(q)` — split by whitespace.
@@ -107,7 +107,7 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
   - `scoreAndSort(items, query, limit)` — filter + rank + stable sort.
   - `getRecentQueries / pushRecentQuery / clearRecentQueries` —
     localStorage cap-5, оновлюється при `Enter` або кліку на хіт.
-- `src/core/HubSearch.tsx` (переписано):
+- `src/core/hub/HubSearch.tsx` (переписано):
   - Показує recent-queries chips коли input порожній.
   - Highlighted row (`aria-selected`, `ring-1 ring-brand-500/25`) +
     `data-hit-idx` для keyboard-nav scroll.
@@ -164,15 +164,15 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
 - `src/shared/lib/undoToast.tsx`
 - `src/shared/components/ui/SkeletonList.tsx` _(видалено в
   PR [#439](https://github.com/Skords-01/Sergeant/pull/439) — dead code)_
-- `src/core/hubSearchEngine.ts`
+- `src/core/hub/hubSearchEngine.ts`
 - `docs/ux-audit-2025.md`
 
 ### Змінені (основні)
 
 - `src/core/App.tsx` — ⌘K/Ctrl+K handler.
-- `src/core/HubChat.tsx` — AbortController cancel, context-aware
+- `src/core/hub/HubChat.tsx` — AbortController cancel, context-aware
   prompts, unmount-abort cleanup.
-- `src/core/HubSearch.tsx` — перевстановлено з fuzzy engine +
+- `src/core/hub/HubSearch.tsx` — перевстановлено з fuzzy engine +
   keyboard-nav + recent queries + ARIA.
 - `src/core/ModuleErrorBoundary.tsx` — Retry button + remount key.
 - `src/core/app/PageLoader.tsx` — Skeleton замість тексту.
@@ -186,7 +186,7 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
 - `src/shared/components/ui/VoiceMicButton.tsx`
 - `src/core/components/ChatInput.jsx`
 - `src/core/app/UserMenuButton.tsx`
-- `src/core/WeeklyDigestCard.tsx`
+- `src/core/insights/WeeklyDigestCard.tsx`
 - `src/modules/finyk/pages/Transactions.jsx`
 - `src/modules/finyk/components/SyncStatusBadge.jsx`
 - `src/modules/nutrition/components/meal-sheet/FoodPickerSection.jsx`

@@ -3,7 +3,7 @@
  * Prevents magic strings scattered across the codebase.
  *
  * When adding a new key, also consider whether it should be part of cloud
- * sync — if yes, add it to `SYNC_MODULES` in `src/core/useCloudSync.js`.
+ * sync — if yes, add it to `SYNC_MODULES` in `src/core/cloudSync/useCloudSync.js`.
  */
 export const STORAGE_KEYS = {
   // ─── Hub ──────────────────────────────────────────────────────────────

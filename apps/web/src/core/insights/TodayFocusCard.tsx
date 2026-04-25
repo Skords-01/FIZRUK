@@ -11,7 +11,7 @@ import {
   MODULE_PRIMARY_ACTION,
   getModulePrimaryAction,
 } from "@shared/lib/moduleQuickActions";
-import { generateRecommendations } from "./lib/recommendationEngine";
+import { generateRecommendations } from "../lib/recommendationEngine";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState";
 
 // Reuse the same dismissed-map key HubRecommendations used so user

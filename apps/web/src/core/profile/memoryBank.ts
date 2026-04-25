@@ -1,6 +1,6 @@
 import { STORAGE_KEYS } from "@sergeant/shared";
 import { safeReadLS, safeWriteLS } from "@shared/lib/storage";
-import { notifySyncDirty } from "../useCloudSync";
+import { notifySyncDirty } from "../cloudSync/useCloudSync";
 import type { MemoryEntry } from "./types";
 
 export const PROFILE_KEY = STORAGE_KEYS.USER_PROFILE;

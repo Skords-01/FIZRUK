@@ -4,7 +4,7 @@ import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 import { useToast } from "@shared/hooks/useToast";
-import { deleteUser, signOut } from "../authClient";
+import { deleteUser, signOut } from "../auth/authClient";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 
 interface DangerZoneSectionProps {

@@ -296,7 +296,7 @@ const RoutineDigestSchema = z
 
 // Клієнтські агрегатори повертають `null`, коли у модулі немає даних за
 // тиждень (див. `aggregateFizruk`/`aggregateNutrition`/`aggregateRoutine` у
-// `src/core/useWeeklyDigest.ts`). `.nullish()` приймає і `null`, і
+// `src/core/insights/useWeeklyDigest.ts`). `.nullish()` приймає і `null`, і
 // `undefined`, тож запит проходить валідацію незалежно від того, чи
 // клієнт пропускає поле, чи надсилає його як `null`.
 export const WeeklyDigestSchema = z.object({

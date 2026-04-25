@@ -34,7 +34,7 @@ signOutMock.mockResolvedValue(undefined);
 sendVerificationEmailMock.mockResolvedValue({ error: null });
 changeEmailMock.mockResolvedValue({ error: null });
 
-vi.mock("./authClient.js", () => ({
+vi.mock("./auth/authClient.js", () => ({
   updateUser: (data: unknown) => updateUserMock(data),
   changePassword: (data: unknown) => changePasswordMock(data),
   listSessions: () => listSessionsMock(),
@@ -66,7 +66,7 @@ const mockUser = {
 const refreshMock = vi.fn(async () => undefined);
 const logoutMock = vi.fn(async () => undefined);
 
-vi.mock("./AuthContext.jsx", () => ({
+vi.mock("./auth/AuthContext.jsx", () => ({
   useAuth: () => ({
     user: mockUser,
     logout: logoutMock,
