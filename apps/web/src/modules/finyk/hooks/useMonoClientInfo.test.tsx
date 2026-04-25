@@ -1,24 +1,15 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
-import { ApiError } from "@shared/api";
-
-vi.mock("@shared/api", async () => {
-  const actual =
-    await vi.importActual<typeof import("@shared/api")>("@shared/api");
-  return {
-    ...actual,
-    monoApi: {
-      clientInfo: vi.fn(),
-      statement: vi.fn(),
-    },
-  };
-});
-
-import { monoApi } from "@shared/api";
+import { server } from "../../../test/msw/server";
 import { useMonoClientInfo } from "./useMonoClientInfo";
+
+// AI-NOTE: MSW intercepts real fetch calls — no vi.mock("@shared/api") needed.
+// The full code path (hook → monoApi → httpClient → fetch) is exercised.
+// Endpoint: GET /api/v1/mono?path=/personal/client-info  (see mono.ts)
 
 function makeWrapper() {
   const client = new QueryClient({
@@ -31,30 +22,45 @@ function makeWrapper() {
   };
 }
 
-const mockedClientInfo = monoApi.clientInfo as unknown as ReturnType<
-  typeof vi.fn
->;
-
-describe("useMonoClientInfo", () => {
+describe("useMonoClientInfo (MSW)", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    server.resetHandlers();
   });
 
-  it("не робить запит, поки token порожній", async () => {
+  it("does not fetch when token is empty", async () => {
+    let called = false;
+    server.use(
+      http.get("*/api/v1/mono", () => {
+        called = true;
+        return HttpResponse.json({});
+      }),
+    );
+
     const { result } = renderHook(() => useMonoClientInfo(""), {
       wrapper: makeWrapper(),
     });
+
     expect(result.current.fetchStatus).toBe("idle");
-    expect(mockedClientInfo).not.toHaveBeenCalled();
+    expect(called).toBe(false);
   });
 
-  it("повертає клієнтську інформацію при валідному токені", async () => {
+  it("returns client info on success", async () => {
     const info = {
       clientId: "cl_123",
       name: "Тест",
       accounts: [{ id: "a1", currencyCode: 980 }],
     };
-    mockedClientInfo.mockResolvedValueOnce(info);
+
+    server.use(
+      http.get("*/api/v1/mono", ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("path") === "/personal/client-info") {
+          expect(request.headers.get("X-Token")).toBe("TOKEN_A");
+          return HttpResponse.json(info);
+        }
+        return HttpResponse.json({ error: "unexpected path" }, { status: 404 });
+      }),
+    );
 
     const { result } = renderHook(() => useMonoClientInfo("TOKEN_A"), {
       wrapper: makeWrapper(),
@@ -62,23 +68,17 @@ describe("useMonoClientInfo", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(info);
-    expect(mockedClientInfo).toHaveBeenCalledTimes(1);
-    expect(mockedClientInfo).toHaveBeenCalledWith(
-      "TOKEN_A",
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
-    );
   });
 
-  it("не ретраїть auth-помилки (401/403)", async () => {
-    const authError = new ApiError({
-      kind: "http",
-      status: 401,
-      message: "Unauthorized",
-      url: "/api/mono",
-    });
-    mockedClientInfo.mockRejectedValue(authError);
+  it("does not retry auth errors (401)", async () => {
+    let callCount = 0;
+    server.use(
+      http.get("*/api/v1/mono", () => {
+        callCount++;
+        return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }),
+    );
 
-    // Використовуємо свій клієнт з retry=1, щоб перевірити саме наш guard.
     const client = new QueryClient({
       defaultOptions: { queries: { retry: 3 } },
     });
@@ -91,6 +91,6 @@ describe("useMonoClientInfo", () => {
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(mockedClientInfo).toHaveBeenCalledTimes(1);
+    expect(callCount).toBe(1);
   });
 });
