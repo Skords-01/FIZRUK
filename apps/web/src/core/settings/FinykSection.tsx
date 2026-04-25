@@ -272,6 +272,12 @@ export function FinykSection() {
       localStorage.removeItem("finyk_tx_cache");
       localStorage.removeItem("finyk_tx_cache_last_good");
       queryClient.invalidateQueries({ queryKey: hubKeys.preview("finyk") });
+      if (webhookEnabled) {
+        queryClient.removeQueries({
+          queryKey: finykKeys.monoWebhookTransactions(),
+        });
+        queryClient.invalidateQueries({ queryKey: finykKeys.monoSyncState });
+      }
     } catch {
       /* storage may be disabled — safe to ignore */
     }

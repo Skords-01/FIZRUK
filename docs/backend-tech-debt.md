@@ -193,6 +193,16 @@
 
 Реалізація (фактична): **`apps/server/src/lib/bankProxy.ts`** + тонкі **`modules/mono.ts`** / **`modules/privat.ts`** (делегують `bankProxyFetch`).
 
+### Monobank webhook integration (Track A)
+
+Webhook-based server-side integration added in PR2. Key components:
+
+- **`modules/mono/crypto.ts`** — AES-256-GCM encryption/decryption for token-at-rest storage using `MONO_TOKEN_ENC_KEY` (32-byte hex). Never log raw tokens.
+- **`modules/mono/connection.ts`** — connect (validate token → register webhook → persist encrypted token + accounts), disconnect (unregister webhook best-effort → delete connection), syncState (lightweight DB read). All gated by `MONO_WEBHOOK_ENABLED`.
+- **`modules/mono/webhook.ts`** — public `POST /api/mono/webhook/:secret` endpoint. Path-secret auth with timing-safe comparison, idempotent UPSERT into `mono_transaction`, balance/event updates. Prometheus metrics: `mono_webhook_received_total{status}`, `mono_webhook_duration_ms{status}`.
+- **DB schema**: `mono_connection`, `mono_account`, `mono_transaction` (migration `008_mono_integration.sql`).
+- **Feature flag**: `MONO_WEBHOOK_ENABLED` (env, default `false`). When disabled, connect/disconnect/syncState return 404; webhook endpoint is always mounted but rejects unknown secrets.
+
 ---
 
 ## AI quota deep-dive

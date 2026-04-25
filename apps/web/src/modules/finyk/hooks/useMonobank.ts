@@ -156,7 +156,7 @@ function sleep(ms: number) {
  */
 export function useMonobank() {
   const webhookEnabled = useFlag("mono_webhook");
-  const webhookResult = useMonobankWebhook();
+  const webhookResult = useMonobankWebhook({ enabled: webhookEnabled });
   const legacyResult = useMonobankLegacy();
 
   if (webhookEnabled) {

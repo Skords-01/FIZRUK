@@ -50,7 +50,9 @@ function webhookTxToNormalized(dto: MonoTransactionDto): Transaction {
  * Uses server-side DB endpoints instead of client-side Monobank API polling.
  * Returns the same shape as `useMonobank()` for drop-in compatibility.
  */
-export function useMonobankWebhook() {
+export function useMonobankWebhook({
+  enabled = true,
+}: { enabled?: boolean } = {}) {
   const queryClient = useQueryClient();
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState("");
@@ -60,6 +62,7 @@ export function useMonobankWebhook() {
   const syncStateQuery = useQuery<MonoSyncState>({
     queryKey: finykKeys.monoSyncState,
     queryFn: ({ signal }) => monoWebhookApi.syncState({ signal }),
+    enabled,
     staleTime: SYNC_STATE_STALE,
     refetchOnWindowFocus: true,
     retry: authAwareRetry(1),
@@ -73,7 +76,7 @@ export function useMonobankWebhook() {
   const accountsQuery = useQuery<MonoAccountDto[]>({
     queryKey: finykKeys.monoWebhookAccounts,
     queryFn: ({ signal }) => monoWebhookApi.accounts({ signal }),
-    enabled: isConnected,
+    enabled: enabled && isConnected,
     staleTime: ACCOUNTS_STALE,
     refetchOnWindowFocus: false,
     retry: authAwareRetry(1),
@@ -121,7 +124,7 @@ export function useMonobankWebhook() {
     queryKey: finykKeys.monoWebhookTransactions(txQueryKey),
     queryFn: ({ signal }) =>
       monoWebhookApi.transactions({ from: fromDate, to: toDate }, { signal }),
-    enabled: isConnected,
+    enabled: enabled && isConnected,
     staleTime: TX_STALE,
     refetchOnWindowFocus: true,
     retry: authAwareRetry(2),

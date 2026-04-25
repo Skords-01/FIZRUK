@@ -266,6 +266,22 @@ export const webVitalsCls = new client.Histogram({
   registers: [register],
 });
 
+// ───────────────────────── Mono webhook ───────────────────────
+export const monoWebhookReceivedTotal = new client.Counter({
+  name: "mono_webhook_received_total",
+  help: "Monobank webhook deliveries by outcome",
+  labelNames: ["status"], // ok|invalid_secret|bad_payload|error
+  registers: [register],
+});
+
+export const monoWebhookDurationMs = new client.Histogram({
+  name: "mono_webhook_duration_ms",
+  help: "Monobank webhook handler duration in ms",
+  labelNames: ["status"],
+  buckets: [1, 5, 25, 50, 100, 250, 500, 1000],
+  registers: [register],
+});
+
 // ───────────────────────── Helpers ────────────────────────────
 export type StatusClass = "5xx" | "4xx" | "3xx" | "2xx" | "other";
 
