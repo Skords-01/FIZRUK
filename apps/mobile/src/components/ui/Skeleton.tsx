@@ -26,10 +26,8 @@
  * - `aria-hidden="true"` → `accessibilityElementsHidden` + an
  *   `importantForAccessibility="no-hide-descendants"` pair so both
  *   iOS and Android screen-readers skip the placeholder.
- * - Semantic token (`bg-panelHi`) falls back to the concrete
- *   `cream-*` class until mobile CSS-variable wiring lands — same
- *   caveat as every other phase-1 primitive.
- *   TODO: align with design-tokens once mobile semantic variables land.
+ * - Semantic token (`bg-panelHi`) now resolves through CSS variables
+ *   in `global.css`.
  */
 
 import { useEffect, useRef, useState } from "react";

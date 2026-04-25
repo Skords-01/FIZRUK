@@ -60,10 +60,7 @@ export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 const variantContainer: Record<ButtonVariant, string> = {
   // Core variants
   primary: "bg-brand-500",
-  // TODO: align with design-tokens — `panel` / `line` resolve through CSS
-  // variables that are not yet wired up on mobile. Falls back to concrete
-  // cream tokens for now.
-  secondary: "bg-cream-50 border border-cream-300",
+  secondary: "bg-panel border border-line",
   ghost: "bg-transparent",
   danger: "bg-danger/10 border border-danger/30",
   destructive: "bg-danger",
@@ -85,9 +82,8 @@ const variantContainer: Record<ButtonVariant, string> = {
 // Variant → label (text) NativeWind classes.
 const variantLabel: Record<ButtonVariant, string> = {
   primary: "text-white",
-  // TODO: align with design-tokens — same CSS-variable caveat as above.
-  secondary: "text-stone-900",
-  ghost: "text-stone-500",
+  secondary: "text-text",
+  ghost: "text-muted",
   danger: "text-danger",
   destructive: "text-white",
   success: "text-brand-700",

@@ -1,3 +1,54 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SEMANTIC DESIGN TOKENS — mirrors apps/web/src/index.css
+   NativeWind resolves CSS variables at compile time; values here must
+   be space-separated RGB triplets so Tailwind opacity modifiers work.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* Light theme */
+    --c-bg: 253 249 243;
+    --c-panel: 255 255 255;
+    --c-panel-hi: 250 247 241;
+    --c-line: 235 228 218;
+    --c-text: 28 25 23;
+    --c-muted: 87 83 78;
+    --c-subtle: 107 100 93;
+    --c-primary: 28 25 23;
+    --c-accent: 16 185 129;
+    --c-surface: var(--c-panel);
+    --c-surface-muted: var(--c-panel-hi);
+    --c-fg: var(--c-text);
+    --c-fg-muted: var(--c-muted);
+    --c-border: var(--c-line);
+    --c-border-strong: 221 211 197;
+    --c-success: 16 185 129;
+    --c-warning: 245 158 11;
+    --c-danger: 239 68 68;
+    --c-info: 14 165 233;
+    --c-success-soft: 209 250 229;
+    --c-warning-soft: 254 243 199;
+    --c-danger-soft: 254 226 226;
+    --c-info-soft: 224 242 254;
+  }
+
+  .dark {
+    --c-bg: 23 20 18;
+    --c-panel: 32 28 25;
+    --c-panel-hi: 48 42 37;
+    --c-line: 82 74 65;
+    --c-text: 250 247 241;
+    --c-muted: 180 174 169;
+    --c-subtle: 135 128 121;
+    --c-primary: 250 247 241;
+    --c-border-strong: 112 102 90;
+    --c-success-soft: 6 95 70;
+    --c-warning-soft: 146 64 14;
+    --c-danger-soft: 153 27 27;
+    --c-info-soft: 7 89 133;
+  }
+}

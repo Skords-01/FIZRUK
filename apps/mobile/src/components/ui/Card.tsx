@@ -70,15 +70,11 @@ const radii: Record<CardRadius, string> = {
 // Core variants omit the radius class — it's controlled by the `radius` prop.
 // Module-branded variants bake `rounded-3xl` into their class string for
 // hero surfaces, matching the web component.
-// TODO: align with design-tokens — `bg-panel` / `border-line` / `shadow-*`
-// resolve through CSS variables that are not yet wired up on mobile.
-// Same `cream-*` fallback approach as Button.tsx until the semantic
-// colour variables land on the mobile runtime.
 const variantContainer: Record<CardVariant, string> = {
-  default: "bg-cream-50 border border-cream-300",
-  interactive: "bg-cream-50 border border-cream-300",
-  flat: "bg-cream-50 border border-cream-300",
-  elevated: "bg-cream-50 border border-cream-300",
+  default: "bg-panel border border-line",
+  interactive: "bg-panel border border-line",
+  flat: "bg-panel border border-line",
+  elevated: "bg-panel border border-line",
   ghost: "bg-transparent border border-transparent",
 
   // Module hero cards — branded surface. Mobile strips the `dark:` modifiers
