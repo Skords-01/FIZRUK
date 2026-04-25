@@ -1,6 +1,9 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
-const isCi = process.env.CI === "true";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import("esbuild").BuildOptions} */
 const base = {
@@ -46,7 +49,14 @@ await build({
   legalComments: "none",
 });
 
-if (!isCi) {
-  // Best-effort sanity check: ensure the output files exist by letting
-  // esbuild throw if anything failed above.
-}
+// `runPendingSqlMigrations` resolves `migrationsDir` as
+// `path.join(__dirname, "migrations")`, де `__dirname` після bundling — це
+// `dist-server/`. esbuild не копіює нон-JS ассети сам, тому без цього кроку
+// `fs.readdir` на проді падав у ENOENT і runner мовчки no-op-ив (повертав
+// `migrate_ok` для порожнього списку файлів). Копіюємо `src/migrations` у
+// `dist-server/migrations`, щоб і runtime-старт, і Pre-Deploy job бачили
+// усі pending SQL-файли.
+const srcMigrations = path.join(__dirname, "src", "migrations");
+const distMigrations = path.join(__dirname, "dist-server", "migrations");
+await fs.rm(distMigrations, { recursive: true, force: true });
+await fs.cp(srcMigrations, distMigrations, { recursive: true });

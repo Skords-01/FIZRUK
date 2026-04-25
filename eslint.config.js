@@ -17,6 +17,8 @@ export default [
     ignores: [
       "dist/**",
       "**/dist/**",
+      "dist-server/**",
+      "**/dist-server/**",
       "**/node_modules/**",
       "node_modules/**",
       ".agents/**",
