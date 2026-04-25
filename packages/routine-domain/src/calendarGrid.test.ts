@@ -130,12 +130,12 @@ describe("groupEventsForList", () => {
       habitEvent("a", "08:00"),
       habitEvent("fz1", null, {
         sourceKind: "fizruk",
-        habitId: null,
+        habitId: undefined,
         fizruk: true,
       }),
       habitEvent("fy1", null, {
         sourceKind: "finykSub",
-        habitId: null,
+        habitId: undefined,
         finykSub: true,
       }),
     ];

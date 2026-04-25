@@ -145,29 +145,33 @@ describe("suggestNextSet", () => {
 
   it("reps ≤ 5: adds 2.5 kg, no alt", () => {
     const s = suggestNextSet({ weightKg: 100, reps: 5 });
-    expect(s.weightKg).toBe(102.5);
-    expect(s.reps).toBe(5);
-    expect(s.altWeightKg).toBeUndefined();
+    expect(s).not.toBeNull();
+    expect(s!.weightKg).toBe(102.5);
+    expect(s!.reps).toBe(5);
+    expect(s!.altWeightKg).toBeUndefined();
   });
 
   it("reps 6-10: adds 2.5 kg primary + same-weight +1 rep alt", () => {
     const s = suggestNextSet({ weightKg: 80, reps: 8 });
-    expect(s.weightKg).toBe(82.5);
-    expect(s.reps).toBe(8);
-    expect(s.altWeightKg).toBe(80);
-    expect(s.altReps).toBe(9);
+    expect(s).not.toBeNull();
+    expect(s!.weightKg).toBe(82.5);
+    expect(s!.reps).toBe(8);
+    expect(s!.altWeightKg).toBe(80);
+    expect(s!.altReps).toBe(9);
   });
 
   it("reps > 10: adds 5% rounded to 2.5 kg, no alt", () => {
     const s = suggestNextSet({ weightKg: 40, reps: 12 });
-    expect(s.weightKg).toBe(42.5);
-    expect(s.altWeightKg).toBeUndefined();
+    expect(s).not.toBeNull();
+    expect(s!.weightKg).toBe(42.5);
+    expect(s!.altWeightKg).toBeUndefined();
   });
 
   it("result weightKg is always a multiple of 2.5", () => {
     [3, 8, 15].forEach((reps) => {
       const s = suggestNextSet({ weightKg: 67.5, reps });
-      expect(s.weightKg % 2.5).toBeCloseTo(0);
+      expect(s).not.toBeNull();
+      expect(s!.weightKg % 2.5).toBeCloseTo(0);
     });
   });
 });

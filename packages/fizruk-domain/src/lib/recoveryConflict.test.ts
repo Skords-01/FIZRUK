@@ -13,7 +13,7 @@ describe("recoveryConflictsForExercise", () => {
 
   it("flags red when primary muscle is red", () => {
     const ex = { muscles: { primary: ["chest"], secondary: [] } };
-    const by = { chest: { label: "Груди", status: "red" } };
+    const by = { chest: { label: "Груди", status: "red" as const } };
     const cf = recoveryConflictsForExercise(ex, by);
     expect(cf.hasWarning).toBe(true);
     expect(cf.red.length).toBe(1);
@@ -21,7 +21,7 @@ describe("recoveryConflictsForExercise", () => {
 
   it("flags yellow for secondary", () => {
     const ex = { muscles: { primary: [], secondary: ["back"] } };
-    const by = { back: { label: "Спина", status: "yellow" } };
+    const by = { back: { label: "Спина", status: "yellow" as const } };
     const cf = recoveryConflictsForExercise(ex, by);
     expect(cf.yellow.length).toBe(1);
   });
@@ -30,7 +30,7 @@ describe("recoveryConflictsForExercise", () => {
 describe("recoveryConflictsForWorkoutItem", () => {
   it("maps item muscles to exercise shape", () => {
     const it = { musclesPrimary: ["legs"], musclesSecondary: [] };
-    const by = { legs: { label: "Ноги", status: "red" } };
+    const by = { legs: { label: "Ноги", status: "red" as const } };
     const cf = recoveryConflictsForWorkoutItem(it, by);
     expect(cf.hasWarning).toBe(true);
   });

@@ -63,23 +63,23 @@ const logger = _logger as unknown as {
 };
 const syncOperationsTotal = _syncOperationsTotal as unknown as { inc: Mock };
 
+interface TestResBody {
+  ok?: boolean;
+  error?: string;
+  details?: unknown;
+  results?: Record<
+    string,
+    { ok: boolean; error?: string; conflict?: boolean; version?: number }
+  >;
+  data?: unknown;
+  module?: string;
+  version?: number;
+  conflict?: boolean;
+}
+
 interface TestRes {
   statusCode: number;
-  body:
-    | {
-        ok?: boolean;
-        error?: string;
-        details?: unknown;
-        results?: Record<
-          string,
-          { ok: boolean; error?: string; conflict?: boolean; version?: number }
-        >;
-        data?: unknown;
-        module?: string;
-        version?: number;
-        conflict?: boolean;
-      }
-    | undefined;
+  body: TestResBody;
   status(code: number): TestRes;
   json(payload: unknown): TestRes;
 }
@@ -87,7 +87,7 @@ interface TestRes {
 function makeRes(): TestRes & Response {
   const res: TestRes = {
     statusCode: 200,
-    body: undefined,
+    body: {} as TestResBody,
     status(code: number) {
       this.statusCode = code;
       return this;
@@ -258,8 +258,8 @@ describe("syncPushAll metric correctness around transaction boundary", () => {
     );
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.results.finyk).toEqual({ ok: false, error: "Too large" });
-    expect(res.body.results.nutrition).toMatchObject({
+    expect(res.body.results!.finyk).toEqual({ ok: false, error: "Too large" });
+    expect(res.body.results!.nutrition).toMatchObject({
       ok: true,
       conflict: true,
       version: 7,

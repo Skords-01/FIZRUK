@@ -1,7 +1,7 @@
 // Rule: прогрес фінансових цілей — повідомляємо коли до фінішу лишилось
 // 20%. Працює з budget.type === "goal", порівнюючи savedAmount/targetAmount.
 
-import type { Rule } from "../types.js";
+import type { Rec, Rule } from "../types.js";
 import type { FinanceContext } from "../financeContext.js";
 
 interface Goal {
@@ -17,7 +17,7 @@ export const goalProgressRule: Rule<FinanceContext> = {
   module: "finyk",
   evaluate(ctx) {
     const goals = ctx.budgets.filter((b) => b.type === "goal") as Goal[];
-    const recs = [];
+    const recs: Rec[] = [];
     for (const g of goals) {
       const target = Number(g.targetAmount) || 0;
       const saved = Number(g.savedAmount) || 0;

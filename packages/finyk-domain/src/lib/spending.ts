@@ -25,7 +25,7 @@ interface SpendingByDateOptions extends SpendingOptions {
  * виконується викликачем при виводі.
  */
 export function calcFinykSpendingTotal(
-  transactions: Tx[],
+  transactions: Tx[] | null | undefined,
   { excludedTxIds, txSplits = {} }: SpendingOptions = {},
 ): number {
   const list = Array.isArray(transactions) ? transactions : [];

@@ -19,22 +19,26 @@ function makeReqRes() {
       originalUrl: "/api/x",
       requestId: "req_1",
     } as unknown as Request,
-    res: {
-      statusCode: 200,
-      body: undefined as unknown,
-      headersSent: false,
-      setHeader(name: string, value: string) {
-        headers[name] = value;
+    res: Object.assign(
+      {
+        statusCode: 200,
+        body: undefined as unknown,
+        headersSent: false,
+        setHeader(name: string, value: string) {
+          headers[name] = value;
+        },
       },
-      status(code: number) {
-        this.statusCode = code;
-        return this;
+      {
+        status(this: { statusCode: number }, code: number) {
+          this.statusCode = code;
+          return this;
+        },
+        json(this: { body: unknown }, payload: unknown) {
+          this.body = payload;
+          return this;
+        },
       },
-      json(payload: unknown) {
-        this.body = payload;
-        return this;
-      },
-    } as unknown as Response & { statusCode: number; body: unknown },
+    ) as unknown as Response & { statusCode: number; body: unknown },
   };
 }
 

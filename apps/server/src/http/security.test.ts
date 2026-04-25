@@ -36,10 +36,11 @@ describe("buildApiCspDirectives", () => {
 });
 
 describe("apiHelmetMiddleware", () => {
-  function captureCsp(middleware) {
-    let csp;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function captureCsp(middleware: (...args: any[]) => void) {
+    let csp: { name: string; value: string } | undefined;
     const res = {
-      setHeader(name, value) {
+      setHeader(name: string, value: string) {
         if (/content-security-policy/i.test(name)) csp = { name, value };
       },
       getHeader() {},
@@ -52,9 +53,9 @@ describe("apiHelmetMiddleware", () => {
   it("API-only (default) → виставляє строгу CSP", () => {
     const csp = captureCsp(apiHelmetMiddleware());
     expect(csp).toBeTruthy();
-    expect(csp.name).toBe("Content-Security-Policy");
-    expect(String(csp.value)).toContain("default-src 'none'");
-    expect(String(csp.value)).toContain("script-src 'none'");
+    expect(csp!.name).toBe("Content-Security-Policy");
+    expect(String(csp!.value)).toContain("default-src 'none'");
+    expect(String(csp!.value)).toContain("script-src 'none'");
   });
 
   it("servesFrontend=true → CSP вимкнена (не ламає SPA на Replit)", () => {

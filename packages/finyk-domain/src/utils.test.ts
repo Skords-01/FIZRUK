@@ -69,14 +69,17 @@ describe("getCategory (expense)", () => {
 
 describe("resolveExpenseCategoryMeta", () => {
   it("повертає MCC категорію", () => {
-    expect(resolveExpenseCategoryMeta("food").id).toBe("food");
+    const r = resolveExpenseCategoryMeta("food");
+    expect(r).not.toBeNull();
+    expect(r!.id).toBe("food");
   });
   it("повертає кастомну категорію з переданого списку", () => {
     const r = resolveExpenseCategoryMeta("c_1", [
       { id: "c_1", label: "Підписка на кабельне" },
     ]);
-    expect(r.id).toBe("c_1");
-    expect(r.label).toBe("Підписка на кабельне");
+    expect(r).not.toBeNull();
+    expect(r!.id).toBe("c_1");
+    expect(r!.label).toBe("Підписка на кабельне");
   });
   it("повертає null для невідомого id", () => {
     expect(resolveExpenseCategoryMeta("ghost")).toBeNull();
@@ -301,7 +304,7 @@ describe("calcFinykSpendingTotal", () => {
 describe("calcFinykSpendingByDate", () => {
   it("агрегує витрати по днях і узгоджує total з сумою округлених daily", () => {
     const dateSet = new Set(["2024-06-01", "2024-06-02"]);
-    const localDateKeyFn = (d) => {
+    const localDateKeyFn = (d: Date) => {
       const m = String(d.getUTCMonth() + 1).padStart(2, "0");
       const day = String(d.getUTCDate()).padStart(2, "0");
       return `${d.getUTCFullYear()}-${m}-${day}`;

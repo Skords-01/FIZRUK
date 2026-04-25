@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { calcMonthlyNeeded } from "../utils";
 
-function setNow(isoDate) {
+function setNow(isoDate: string) {
   const ts = new Date(isoDate).getTime();
   vi.setSystemTime(ts);
 }
