@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { captureException } from "./sentry";
+import { captureException } from "./observability/sentry";
 
 interface FallbackProps {
   error: Error;

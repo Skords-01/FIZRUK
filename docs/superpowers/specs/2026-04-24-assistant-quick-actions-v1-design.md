@@ -240,7 +240,7 @@ const RISKY_TOOLS = new Set([
 
 Очікувані зміни:
 
-- `apps/web/src/core/HubChat.tsx`
+- `apps/web/src/core/hub/HubChat.tsx`
 - `apps/web/src/core/components/ChatQuickActions.tsx`
 - `apps/web/src/core/components/ChatMessage.tsx`
 - `apps/web/src/core/lib/hubChatQuickActions.ts`

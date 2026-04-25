@@ -1,5 +1,8 @@
 import { useMemo, useEffect, useRef, useState, useCallback } from "react";
-import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
+import {
+  trackEvent,
+  ANALYTICS_EVENTS,
+} from "../../../core/observability/analytics";
 import {
   calcDebtRemaining,
   calcReceivableRemaining,

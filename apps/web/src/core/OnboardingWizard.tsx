@@ -10,7 +10,7 @@ import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Icon } from "@shared/components/ui/Icon";
 import { BrandLogo } from "./app/BrandLogo";
-import { trackEvent, ANALYTICS_EVENTS } from "./analytics";
+import { trackEvent, ANALYTICS_EVENTS } from "./observability/analytics";
 import {
   ALL_MODULES,
   markFirstActionPending,

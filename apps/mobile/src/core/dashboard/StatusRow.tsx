@@ -2,7 +2,7 @@
  * Sergeant Hub — StatusRow (mobile)
  *
  * Single row in the mobile dashboard's module list. Visual layout
- * mirrors the web `StatusRow` inside `apps/web/src/core/HubDashboard.tsx`:
+ * mirrors the web `StatusRow` inside `apps/web/src/core/hub/HubDashboard.tsx`:
  * accent bar → icon tile → label + description → **quick-stats preview**
  * → chevron. The preview section renders:
  *   - `main` — a primary figure rendered bold-right of the label/body,

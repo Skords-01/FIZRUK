@@ -16,8 +16,8 @@ import { ToastContainer } from "@shared/components/ui/Toast";
 import { HUB_OPEN_MODULE_EVENT } from "@shared/lib/hubNav";
 import { ApiClientProvider } from "@sergeant/api-client/react";
 import { apiClient } from "@shared/api";
-import { AuthProvider, useAuth } from "./AuthContext";
-import { useCloudSync } from "./useCloudSync";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { useCloudSync } from "./cloudSync/useCloudSync";
 import { PageLoader } from "./app/PageLoader";
 import { OfflineBanner } from "./app/OfflineBanner";
 import { MigrationPrompt } from "./app/MigrationPrompt";
@@ -42,10 +42,10 @@ import { ShellDeepLinkBridge } from "./app/ShellDeepLinkBridge";
 import { HintsOrchestrator } from "./hints/HintsOrchestrator";
 
 const AuthPage = lazy(() =>
-  import("./AuthPage").then((m) => ({ default: m.AuthPage })),
+  import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),
 );
 const ResetPasswordPage = lazy(() =>
-  import("./ResetPasswordPage").then((m) => ({
+  import("./auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
   })),
 );

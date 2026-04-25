@@ -5,7 +5,7 @@
  *   1. Greeting + today label + settings button (always visible).
  *   2. Hero slot with one-hero rule: `FirstActionHeroCard` >
  *      `SoftAuthPromptCard` > `TodayFocusCard`, mirroring
- *      `apps/web/src/core/HubDashboard.tsx`.
+ *      `apps/web/src/core/hub/HubDashboard.tsx`.
  *   3. Status row stack (`DraggableDashboard`) with per-module
  *      quick-stats preview wired via `useModulePreviews`.
  *   4. `HubInsightsPanel` — collapsible secondary-recs block. Fed

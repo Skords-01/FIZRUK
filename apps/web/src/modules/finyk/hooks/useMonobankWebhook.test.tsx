@@ -20,7 +20,7 @@ vi.mock("@shared/api", async () => {
   };
 });
 
-vi.mock("../../../core/analytics", () => ({
+vi.mock("../../../core/observability/analytics", () => ({
   trackEvent: vi.fn(),
   ANALYTICS_EVENTS: {
     BANK_CONNECT_STARTED: "bank_connect_started",

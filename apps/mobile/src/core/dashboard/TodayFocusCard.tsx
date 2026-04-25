@@ -1,5 +1,5 @@
 /**
- * Mobile port of `apps/web/src/core/TodayFocusCard.tsx`.
+ * Mobile port of `apps/web/src/core/insights/TodayFocusCard.tsx`.
  *
  * Shape mirrors the web version: one hero card that shows either the
  * current `focus` rec (primary CTA + optional dismiss) or an

@@ -3,7 +3,7 @@ import {
   aggregateFizruk,
   aggregateNutrition,
   aggregateRoutine,
-} from "../useWeeklyDigest";
+} from "../insights/useWeeklyDigest";
 import { BG_GRADIENTS } from "./constants";
 import type { Slide } from "./types";
 

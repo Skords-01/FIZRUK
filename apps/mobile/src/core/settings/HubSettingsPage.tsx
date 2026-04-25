@@ -1,7 +1,7 @@
 /**
  * Sergeant Hub-core — HubSettingsPage shell (React Native, first cut)
  *
- * Mobile port of `apps/web/src/core/HubSettingsPage.tsx`.
+ * Mobile port of `apps/web/src/core/hub/HubSettingsPage.tsx`.
  *
  * Scope of this cut (Phase 2 / Hub-core — remaining sections PR):
  *  - Shell with a screen title ("Налаштування") and a vertical stack of

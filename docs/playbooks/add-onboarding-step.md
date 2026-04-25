@@ -158,7 +158,7 @@ pnpm --filter @sergeant/mobile exec vitest run src/core/OnboardingWizard.test.ts
 
 ### 7. Аналітика
 
-`OnboardingWizard.tsx` емітить `ANALYTICS_EVENTS.onboarding_step_*`. Перевір, що твій новий step_id з'являється в подіях. Якщо потрібен новий event для дії всередині кроку (наприклад, `notif_permission_granted`) — додай у `apps/web/src/core/analytics.ts` constants.
+`OnboardingWizard.tsx` емітить `ANALYTICS_EVENTS.onboarding_step_*`. Перевір, що твій новий step_id з'являється в подіях. Якщо потрібен новий event для дії всередині кроку (наприклад, `notif_permission_granted`) — додай у `apps/web/src/core/observability/analytics.ts` constants.
 
 ### 8. PR
 

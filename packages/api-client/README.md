@@ -283,14 +283,14 @@ export function useDayPlan(date: string) {
 
 Є рівно два місця в коді, де ми **свідомо** не ходимо через `@shared/api`. Будь ласка, не "виправляйте" їх — вони існують з технічних причин, і кожне з них задокументоване на місці.
 
-### 1. `src/core/webVitals.js` — Core Web Vitals
+### 1. `src/core/observability/webVitals.js` — Core Web Vitals
 
 - Відправляє батч метрик на `POST /api/metrics/web-vitals`.
 - Використовує `navigator.sendBeacon(...)` з fallback на `fetch({ keepalive: true })`.
 - **Чому не `http.post`:** `sendBeacon` — єдиний надійний спосіб доставити метрики на `visibilitychange=hidden` / `pagehide`. `http.post` з базовими `credentials: "include"` + без `keepalive` на unload не буде доставлено. Додавати це в `@shared/api` лише заради одного виклику — надмірна абстракція.
 - Телеметрія не повинна ламати UX: модуль свідомо ковтає всі помилки.
 
-### 2. `src/core/authClient.js` — better-auth
+### 2. `src/core/auth/authClient.js` — better-auth
 
 - Імпортує `createAuthClient` з `better-auth/react`.
 - Викликає `signIn`, `signUp`, `signOut`, `useSession`.

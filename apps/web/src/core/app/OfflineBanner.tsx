@@ -1,5 +1,5 @@
 import { Icon } from "@shared/components/ui/Icon";
-import { useSyncStatus } from "../useCloudSync";
+import { useSyncStatus } from "../cloudSync/useCloudSync";
 import { pluralUa } from "@sergeant/shared";
 
 /**

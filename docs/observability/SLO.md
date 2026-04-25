@@ -178,7 +178,7 @@ sum(rate(web_vitals_duration_ms_count{metric="LCP"}[w]))
 `rating="good"` або кращому) — повернемось до формалізації алертів коли
 набереться дата.
 
-**Джерело**: `web-vitals` npm пакет на клієнті (див. `src/core/webVitals.js`),
+**Джерело**: `web-vitals` npm пакет на клієнті (див. `src/core/observability/webVitals.js`),
 батч через `navigator.sendBeacon` на `visibilitychange=hidden` / `pagehide`,
 бекенд-ендпоінт `POST /api/metrics/web-vitals` (rate-limited 60 req/min/IP),
 запис у `web_vitals_duration_ms{metric,rating}` і `web_vitals_cls{rating}`.

@@ -7,7 +7,7 @@ import {
   type KVStore,
 } from "@sergeant/shared";
 import { useToast } from "@shared/hooks/useToast";
-import { ANALYTICS_EVENTS, trackEvent } from "../analytics";
+import { ANALYTICS_EVENTS, trackEvent } from "../observability/analytics";
 import { useHubPref } from "../settings/hubPrefs";
 
 const localStorageStore: KVStore = {

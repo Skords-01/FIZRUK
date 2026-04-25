@@ -8,7 +8,7 @@ import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
 import { useVisualKeyboardInset } from "@sergeant/shared";
 import { hubKeys } from "@shared/lib/queryKeys";
-import { useFinykHubPreview } from "./hub/useFinykHubPreview";
+import { useFinykHubPreview } from "./useFinykHubPreview";
 
 import {
   CONTEXT_TTL_MS,
@@ -25,15 +25,15 @@ import {
   isHelpCommand,
   getActiveModule,
   HELP_TEXT,
-} from "./lib/hubChatUtils";
-import { buildContextMeasured } from "./lib/hubChatContext";
-import { executeAction } from "./lib/hubChatActions";
-import { VOICE_KEYWORDS, speak, stopSpeaking } from "./lib/hubChatSpeech";
-import { buildActionCard } from "./lib/hubChatActionCards";
-import type { ChatActionCard } from "./lib/hubChatActionCards";
-import { ChatMessage, TypingIndicator } from "./components/ChatMessage";
-import { ChatInput } from "./components/ChatInput";
-import { ChatQuickActions } from "./components/ChatQuickActions";
+} from "../lib/hubChatUtils";
+import { buildContextMeasured } from "../lib/hubChatContext";
+import { executeAction } from "../lib/hubChatActions";
+import { VOICE_KEYWORDS, speak, stopSpeaking } from "../lib/hubChatSpeech";
+import { buildActionCard } from "../lib/hubChatActionCards";
+import type { ChatActionCard } from "../lib/hubChatActionCards";
+import { ChatMessage, TypingIndicator } from "../components/ChatMessage";
+import { ChatInput } from "../components/ChatInput";
+import { ChatQuickActions } from "../components/ChatQuickActions";
 
 function HubChat({ onClose, initialMessage }) {
   const [messages, setMessages] = useState(() => {

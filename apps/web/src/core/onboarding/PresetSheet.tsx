@@ -3,7 +3,7 @@ import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Sheet } from "@shared/components/ui/Sheet";
 import { openHubModuleWithAction } from "@shared/lib/hubNav";
-import { trackEvent, ANALYTICS_EVENTS } from "../analytics";
+import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
 import { applyPreset } from "./presetApply";
 import { writePresetPrefill } from "./presetPrefill";
 
