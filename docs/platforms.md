@@ -153,7 +153,7 @@ Android-частина (`android/`) закомічена, `applicationId`
   як smoke-test ProGuard/R8 + Capacitor sync на PR-ах. ProGuard/R8
   keep-rules для всіх `@capacitor/*` плагінів — у
   `android/app/proguard-rules.pro`. Setup-інструкція (keytool → base64
-  → GitHub Secrets) — у [`MOBILE.md#release--android`](../MOBILE.md#release--android).
+  → GitHub Secrets) — у [`mobile-shell.md#release--android`](./mobile-shell.md#release--android).
 - **Play Store upload workflow (internal track).** Release-signing pipeline
   уже стоїть; автоматичний upload через `google-github-actions/upload-google-play`
   - service-account JSON (новий secret `ANDROID_PLAY_SERVICE_ACCOUNT_JSON`)
@@ -167,7 +167,7 @@ Android-частина (`android/`) закомічена, `applicationId`
   `workflow_dispatch`): архів → `.ipa` → TestFlight через
   `apple-actions/upload-testflight-build@v1`. Для першого реального
   запуску потрібні Apple-секрети (контракт у
-  [`MOBILE.md` → Release — iOS](../MOBILE.md#release--ios)). Без них
+  [`mobile-shell.md` → Release — iOS](./mobile-shell.md#release--ios)). Без них
   job падає в unsigned-Simulator-фолбек і не ламається.
 - ~~**Native push.** `usePushNotifications` у web користується Service
   Worker-ом + VAPID — у WebView це працює кульгаво (iOS тільки 16.4+,

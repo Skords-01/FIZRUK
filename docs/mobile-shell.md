@@ -3,15 +3,15 @@
 > Short operator-oriented reference for the Capacitor shell
 > (`@sergeant/mobile-shell`). For the design rationale, plugin list, and
 > history of the shell, read
-> [`apps/mobile-shell/README.md`](apps/mobile-shell/README.md). For the
+> [`apps/mobile-shell/README.md`](../apps/mobile-shell/README.md). For the
 > Expo / React Native app (`@sergeant/mobile`) see
-> [`apps/mobile/README.md`](apps/mobile/README.md) and
-> [`docs/mobile.md`](docs/mobile.md).
+> [`apps/mobile/README.md`](../apps/mobile/README.md) and
+> [`mobile.md`](./mobile.md).
 
 The Capacitor shell wraps the existing `@sergeant/web` Vite bundle as a
 native Android/iOS app. The web bundle lands in `apps/server/dist` — the
 shell reads it from there via `webDir: "../server/dist"` in
-[`apps/mobile-shell/capacitor.config.ts`](apps/mobile-shell/capacitor.config.ts).
+[`apps/mobile-shell/capacitor.config.ts`](../apps/mobile-shell/capacitor.config.ts).
 
 > Shell білдить web-бандл через
 > `pnpm --filter @sergeant/mobile-shell build:web`, який делегує до
@@ -104,10 +104,10 @@ after cloning a fresh machine).
 Two dedicated workflows build the shell on every PR that touches
 `apps/mobile-shell/**`, `apps/web/**`, `apps/server/**`, or `packages/**`:
 
-| Workflow                                                                 | Runner          | Output                                                    |
-| ------------------------------------------------------------------------ | --------------- | --------------------------------------------------------- |
-| [`mobile-shell-android.yml`](.github/workflows/mobile-shell-android.yml) | `ubuntu-latest` | Debug APK uploaded as `sergeant-shell-debug-apk` artifact |
-| [`mobile-shell-ios.yml`](.github/workflows/mobile-shell-ios.yml)         | `macos-latest`  | Simulator `.app` (build-only, no artifact)                |
+| Workflow                                                                    | Runner          | Output                                                    |
+| --------------------------------------------------------------------------- | --------------- | --------------------------------------------------------- |
+| [`mobile-shell-android.yml`](../.github/workflows/mobile-shell-android.yml) | `ubuntu-latest` | Debug APK uploaded as `sergeant-shell-debug-apk` artifact |
+| [`mobile-shell-ios.yml`](../.github/workflows/mobile-shell-ios.yml)         | `macos-latest`  | Simulator `.app` (build-only, no artifact)                |
 
 Both debug jobs run `pnpm build:web` → `cap sync <platform>` → native
 build with no signing. The signed / release lanes live in dedicated
@@ -121,7 +121,7 @@ the Capacitor shell.
 ## Release — iOS
 
 The release lane lives in
-[`mobile-shell-ios-release.yml`](.github/workflows/mobile-shell-ios-release.yml)
+[`mobile-shell-ios-release.yml`](../.github/workflows/mobile-shell-ios-release.yml)
 on `macos-latest`. It triggers on tag pushes matching `v*` and on
 manual `workflow_dispatch`; the PR-time `mobile-shell-ios.yml`
 workflow is unchanged.
@@ -129,7 +129,7 @@ workflow is unchanged.
 The job runs an unsigned Simulator fallback (identical to the PR-time
 workflow) until all signing secrets below are present. Once they are,
 it archives `App.xcarchive`, exports a signed `.ipa` using
-[`apps/mobile-shell/ci/ExportOptions.plist`](apps/mobile-shell/ci/ExportOptions.plist)
+[`apps/mobile-shell/ci/ExportOptions.plist`](../apps/mobile-shell/ci/ExportOptions.plist)
 (rendered with `envsubst`), uploads the IPA as a GitHub artifact
 (`sergeant-shell-ipa`, 14 days retention), and ships it to TestFlight
 via `apple-actions/upload-testflight-build@v1`.
@@ -202,7 +202,7 @@ The release lane produces **two** artefacts from one workflow run:
 > key — so you never need to re-run the workflow just to get the other
 > format.
 
-Workflow: [`mobile-shell-android-release.yml`](.github/workflows/mobile-shell-android-release.yml).
+Workflow: [`mobile-shell-android-release.yml`](../.github/workflows/mobile-shell-android-release.yml).
 Triggers:
 
 - `workflow_dispatch` — manual run from the Actions UI (select the
