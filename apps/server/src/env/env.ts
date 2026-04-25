@@ -122,6 +122,17 @@ const envSchema = z.object({
   /** Bearer token для захисту nutrition API endpoints. */
   NUTRITION_API_TOKEN: z.string().optional(),
 
+  // ── Monobank webhook ─────────────────────────────────────────────────
+  /** Feature flag: увімкнути webhook-based Monobank інтеграцію. */
+  MONO_WEBHOOK_ENABLED: z
+    .enum(["true", "false", "1", "0", ""])
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
+  /** 32-byte hex ключ для AES-256-GCM шифрування Monobank токенів. */
+  MONO_TOKEN_ENC_KEY: z.string().optional(),
+  /** Публічна базова URL API (Railway) для реєстрації webhook у Monobank. */
+  PUBLIC_API_BASE_URL: z.string().optional(),
+
   // ── External APIs ──────────────────────────────────────────────────
   /** USDA FoodData Central API key. Fallback: `DEMO_KEY`. */
   USDA_API_KEY: z.string().optional(),
@@ -193,6 +204,19 @@ export function assertStartupEnv(): void {
     warnings.push(
       "METRICS_TOKEN is not set — /metrics endpoint is unprotected.",
     );
+  }
+
+  if (env.MONO_WEBHOOK_ENABLED) {
+    if (!env.MONO_TOKEN_ENC_KEY) {
+      throw new Error(
+        "MONO_TOKEN_ENC_KEY is required when MONO_WEBHOOK_ENABLED=true. Must be 32-byte hex (64 chars).",
+      );
+    }
+    if (!env.PUBLIC_API_BASE_URL) {
+      throw new Error(
+        "PUBLIC_API_BASE_URL is required when MONO_WEBHOOK_ENABLED=true.",
+      );
+    }
   }
 
   if (warnings.length > 0) {

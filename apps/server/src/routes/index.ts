@@ -2,6 +2,7 @@ import type { Express } from "express";
 import type { Pool } from "pg";
 import { createAuthRouter } from "./auth.js";
 import { createBanksRouter } from "./banks.js";
+import { createMonoWebhookRouter } from "./mono-webhook.js";
 import { createBarcodeRouter } from "./barcode.js";
 import { createChatRouter } from "./chat.js";
 import { createCoachRouter } from "./coach.js";
@@ -30,6 +31,7 @@ export function registerRoutes(app: Express, { pool }: { pool: Pool }): void {
   app.use(createMeRouter());
   app.use(createSyncRouter());
   app.use(createChatRouter());
+  app.use(createMonoWebhookRouter());
   app.use(createBanksRouter());
   app.use(createBarcodeRouter());
   app.use(createNutritionRouter());

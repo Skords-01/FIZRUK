@@ -134,6 +134,7 @@ export function createApp({
   app.use("/api/sync", express.json({ limit: "6mb" }));
   app.use("/api/coach/memory", express.json({ limit: "6mb" }));
   app.use("/api/chat", express.json({ limit: "1mb" }));
+  app.use("/api/mono/webhook", express.json({ limit: "32kb" }));
   app.use(express.json({ limit: "128kb" }));
 
   // Global CORS for the whole /api surface. Individual handlers may re-set

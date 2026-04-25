@@ -119,12 +119,18 @@ export {
 
 export {
   createMonoEndpoints,
+  createMonoWebhookEndpoints,
   type MonoAccount,
+  type MonoAccountDto,
   type MonoCashbackType,
   type MonoClientInfo,
+  type MonoConnectionStatus,
   type MonoEndpoints,
   type MonoJar,
   type MonoStatementEntry,
+  type MonoSyncState,
+  type MonoTransactionDto,
+  type MonoWebhookEndpoints,
 } from "./endpoints/mono";
 
 export {
