@@ -15,12 +15,13 @@ export default defineConfig({
       ...baseCoverageConfig,
       include: ["src/**/*.ts"],
       thresholds: {
-        // Baseline (2026-04-25): lines 67.13 / branches 76.68 / fns 71.28.
-        // Floors set ~2pp below baseline to absorb flake; raise per sprint.
-        lines: 65,
-        branches: 74,
-        functions: 69,
-        statements: 65,
+        // Baseline (2026-04-25, post barcode + weekly-digest tests):
+        // lines 69.82 / branches 77.37 / fns 74.48. Floors set ~2pp below to
+        // absorb flake; raise per sprint as more handler tests land.
+        lines: 67,
+        branches: 75,
+        functions: 72,
+        statements: 67,
       },
     },
   },
