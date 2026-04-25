@@ -95,7 +95,6 @@ export function GeneralSection({
   user,
 }: GeneralSectionProps) {
   const [orderReset, setOrderReset] = useState(false);
-  const [showCoach, setShowCoach] = useHubPref<boolean>("showCoach", true);
   const [showHints, setShowHints] = useHubPref<boolean>("showHints", true);
   const [order, setOrder] = useState<ModuleId[]>(
     () => loadDashboardOrder() as ModuleId[],
@@ -149,12 +148,6 @@ export function GeneralSection({
     <SettingsGroup title="Загальні" emoji="⚙️">
       <ToggleRow label="Темна тема" checked={dark} onChange={onToggleDark} />
       <SettingsSubGroup title="Дашборд">
-        <ToggleRow
-          label="Показувати AI-коуч"
-          description="Блок з щоденною порадою коуча на головному екрані."
-          checked={showCoach !== false}
-          onChange={(e) => setShowCoach(e.target.checked)}
-        />
         <ToggleRow
           label="Показувати підказки"
           description="Короткі підказки в моменті (без спаму)."
