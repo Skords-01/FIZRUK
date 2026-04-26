@@ -12,12 +12,12 @@ import { cn } from "../../lib/cn";
  *   <div className="text-2xl font-extrabold text-text mt-1 tabular-nums">82 кг</div>
  *   <div className="text-xs text-subtle mt-1">+0.4 кг</div>
  *
- * Tones tint the value: default (text-text), success, warning, danger,
- * and each module's brand token (finyk/fizruk/routine/nutrition) for the
- * rare branded metric readouts.
+ * `variant` tints the value (see `docs/COMPONENT_API.md`): default
+ * (text-text), success, warning, danger, and each module's brand token
+ * (finyk/fizruk/routine/nutrition) for the rare branded metric readouts.
  */
 
-export type StatTone =
+export type StatVariant =
   | "default"
   | "success"
   | "warning"
@@ -29,7 +29,7 @@ export type StatTone =
 
 export type StatSize = "sm" | "md" | "lg";
 
-const toneClass: Record<StatTone, string> = {
+const variantClass: Record<StatVariant, string> = {
   default: "text-text",
   success: "text-success",
   warning: "text-warning",
@@ -50,7 +50,8 @@ export interface StatProps {
   label: ReactNode;
   value: ReactNode;
   sublabel?: ReactNode;
-  tone?: StatTone;
+  /** Colour variant for the value. Defaults to `default` (text-text). */
+  variant?: StatVariant;
   size?: StatSize;
   /** Optional leading icon / emoji rendered left of the value. */
   icon?: ReactNode;
@@ -63,7 +64,7 @@ export function Stat({
   label,
   value,
   sublabel,
-  tone = "default",
+  variant = "default",
   size = "md",
   icon,
   align = "left",
@@ -87,7 +88,7 @@ export function Stat({
           align === "center" && "justify-center",
           align === "right" && "justify-end",
           valueSize[size],
-          toneClass[tone],
+          variantClass[variant],
         )}
       >
         {icon && (

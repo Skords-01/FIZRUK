@@ -12,14 +12,15 @@ import { cn } from "../../lib/cn";
  *   - text-2xs text-nutrition/70 font-bold uppercase tracking-wide (nutrition macros)
  *
  * Sizes drive **font scale + weight + casing + tracking** only. Colour
- * is picked via `tone` so the same size can render in `subtle` (default
- * eyebrow on cards), `muted`, or a module-branded tint (finyk /
- * fizruk / routine / nutrition). Semantics default to <h3>.
+ * is picked via `variant` (see `docs/COMPONENT_API.md`) so the same size
+ * can render in `subtle` (default eyebrow on cards), `muted`, or a
+ * module-branded tint (finyk / fizruk / routine / nutrition). Semantics
+ * default to <h3>.
  */
 
 export type SectionHeadingSize = "xs" | "sm" | "md" | "lg" | "xl";
 
-export type SectionHeadingTone =
+export type SectionHeadingVariant =
   | "subtle"
   | "muted"
   | "text"
@@ -37,7 +38,7 @@ const sizes: Record<SectionHeadingSize, string> = {
   xl: "text-xl font-extrabold leading-tight",
 };
 
-const tones: Record<SectionHeadingTone, string> = {
+const variants: Record<SectionHeadingVariant, string> = {
   subtle: "text-subtle",
   muted: "text-muted",
   text: "text-text",
@@ -52,20 +53,21 @@ const tones: Record<SectionHeadingTone, string> = {
   nutrition: "text-nutrition-strong dark:text-nutrition/70",
 };
 
-// Default tone per size — eyebrow sizes (xs/sm) are muted/subtle;
+// Default variant per size — eyebrow sizes (xs/sm) are muted/subtle;
 // body-size headings default to the foreground text colour.
-const defaultToneForSize: Record<SectionHeadingSize, SectionHeadingTone> = {
-  xs: "subtle",
-  sm: "subtle",
-  md: "text",
-  lg: "text",
-  xl: "text",
-};
+const defaultVariantForSize: Record<SectionHeadingSize, SectionHeadingVariant> =
+  {
+    xs: "subtle",
+    sm: "subtle",
+    md: "text",
+    lg: "text",
+    xl: "text",
+  };
 
 export interface SectionHeadingProps extends HTMLAttributes<HTMLElement> {
   size?: SectionHeadingSize;
   /** Colour variant. Defaults to `subtle` for xs/sm and `text` for md+. */
-  tone?: SectionHeadingTone;
+  variant?: SectionHeadingVariant;
   as?: ElementType;
   /** Optional right-aligned slot for actions/links. */
   action?: ReactNode;
@@ -79,14 +81,14 @@ export interface SectionHeadingProps extends HTMLAttributes<HTMLElement> {
 export function SectionHeading({
   className,
   size = "xs",
-  tone,
+  variant,
   as: Component = "h3",
   action,
   children,
   ...props
 }: SectionHeadingProps) {
-  const resolvedTone = tone ?? defaultToneForSize[size];
-  const base = cn(sizes[size], tones[resolvedTone]);
+  const resolvedVariant = variant ?? defaultVariantForSize[size];
+  const base = cn(sizes[size], variants[resolvedVariant]);
 
   if (action) {
     return (
@@ -114,4 +116,4 @@ export function SectionHeading({
 export const SectionHeader = SectionHeading;
 export type SectionHeaderProps = SectionHeadingProps;
 export type SectionHeaderSize = SectionHeadingSize;
-export type SectionHeaderTone = SectionHeadingTone;
+export type SectionHeaderVariant = SectionHeadingVariant;

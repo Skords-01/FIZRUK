@@ -76,7 +76,7 @@ export function FizrukDayPlanSheet({
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <SectionHeading as="p" size="xs" tone="subtle">
+                  <SectionHeading as="p" size="xs" variant="subtle">
                     Призначений шаблон
                   </SectionHeading>
                   <p className="text-base font-bold text-text mt-0.5">
@@ -99,7 +99,7 @@ export function FizrukDayPlanSheet({
                   <SectionHeading
                     as="p"
                     size="xs"
-                    tone="subtle"
+                    variant="subtle"
                     className="mb-1.5"
                   >
                     Вправи ({exerciseList.length})
@@ -134,7 +134,7 @@ export function FizrukDayPlanSheet({
           )}
 
           <div>
-            <SectionHeading as="p" size="xs" tone="subtle" className="mb-2">
+            <SectionHeading as="p" size="xs" variant="subtle" className="mb-2">
               {currentTemplate ? "Змінити шаблон" : "Обрати шаблон"}
             </SectionHeading>
             {templates.length === 0 ? (

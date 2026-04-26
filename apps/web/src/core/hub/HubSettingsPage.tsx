@@ -156,8 +156,8 @@ export function HubSettingsPage({ syncing, onSync, onPull, user }) {
 
         {!q && (
           <Tabs
-            tone="pill"
-            accent="brand"
+            style="pill"
+            variant="brand"
             fill
             ariaLabel="Групи налаштувань"
             items={GROUPS.map((g) => ({ value: g.id, label: g.label }))}

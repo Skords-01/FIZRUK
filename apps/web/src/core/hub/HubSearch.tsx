@@ -483,7 +483,7 @@ export function HubSearch({ onClose, onOpenModule }: HubSearchProps) {
         {showRecents && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <SectionHeading as="p" size="sm" tone="muted">
+              <SectionHeading as="p" size="sm" variant="muted">
                 Недавні запити
               </SectionHeading>
               <button
@@ -545,7 +545,7 @@ export function HubSearch({ onClose, onOpenModule }: HubSearchProps) {
 
         {Object.entries(grouped).map(([moduleId, group]) => (
           <div key={moduleId}>
-            <SectionHeading as="p" size="sm" tone="muted" className="mb-1.5">
+            <SectionHeading as="p" size="sm" variant="muted" className="mb-1.5">
               {group.label}
             </SectionHeading>
             <div className="space-y-1">

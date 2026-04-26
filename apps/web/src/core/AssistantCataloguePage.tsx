@@ -242,7 +242,7 @@ function ModuleGroup({
         <SectionHeading
           as="span"
           size="sm"
-          tone="text"
+          variant="text"
           id={headingId}
           className="flex items-center gap-2 m-0"
         >

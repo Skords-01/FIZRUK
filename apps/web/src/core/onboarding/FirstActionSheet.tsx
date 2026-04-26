@@ -200,7 +200,7 @@ export function FirstActionHeroCard({ onDismiss }) {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <SectionHeading as="div" size="sm" tone="subtle">
+            <SectionHeading as="div" size="sm" variant="subtle">
               Старт
             </SectionHeading>
             <h2 className="text-base font-bold text-text mt-0.5">

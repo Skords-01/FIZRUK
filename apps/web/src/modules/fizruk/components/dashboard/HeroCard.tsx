@@ -179,7 +179,7 @@ function HeroKicker({
   readonly today: string;
 }) {
   return (
-    <SectionHeading as="p" size="sm" tone="fizruk">
+    <SectionHeading as="p" size="sm" variant="fizruk">
       {greeting} · {today}
     </SectionHeading>
   );

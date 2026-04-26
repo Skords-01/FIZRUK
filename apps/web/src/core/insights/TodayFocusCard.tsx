@@ -207,7 +207,7 @@ function EmptyFocus() {
       )}
     >
       <div className="flex items-center justify-between gap-2 mb-2">
-        <SectionHeading as="span" size="xs" tone="muted">
+        <SectionHeading as="span" size="xs" variant="muted">
           Зараз
         </SectionHeading>
         {reward && (
@@ -356,7 +356,7 @@ export function TodayFocusCard({
           <SectionHeading
             as="span"
             size="xs"
-            tone="muted"
+            variant="muted"
             className={severityTone?.eyebrow}
           >
             Зараз
