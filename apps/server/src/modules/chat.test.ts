@@ -381,3 +381,161 @@ describe("chat handler — system payload (prompt caching)", () => {
     expect(payload.system[0].cache_control).toEqual({ type: "ephemeral" });
   });
 });
+
+describe("chat handler — auto-continuation на stop_reason=max_tokens", () => {
+  // AI-CONTEXT: коли Anthropic обрізає відповідь по max_tokens, сервер
+  // склеює partial текст як assistant-повідомлення і робить ще один upstream-виклик —
+  // модель продовжує рівно з обриву. Юзер бачить одну склеєну відповідь.
+  it("tool-result: склеює partial відповіді з двох upstream-викликів при max_tokens", async () => {
+    anthropicMessages
+      .mockResolvedValueOnce({
+        response: { ok: true, status: 200 },
+        data: {
+          stop_reason: "max_tokens",
+          content: [{ type: "text", text: "Перша частина брифінгу… " }],
+        },
+      })
+      .mockResolvedValueOnce({
+        response: { ok: true, status: 200 },
+        data: {
+          stop_reason: "end_turn",
+          content: [{ type: "text", text: "друга частина — кінець." }],
+        },
+      });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "брифінг" }],
+      tool_calls_raw: [
+        {
+          type: "tool_use",
+          id: "toolu_b",
+          name: "create_reminder",
+          input: { habit_id: "h1", time: "09:00" },
+        },
+      ],
+      tool_results: [{ tool_use_id: "toolu_b", content: "ok" }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(anthropicMessages).toHaveBeenCalledTimes(2);
+    expect(asRec(res.body).text).toBe(
+      "Перша частина брифінгу… друга частина — кінець.",
+    );
+
+    // Continuation-виклик отримує partial-text як останнє assistant-повідомлення.
+    const secondCallPayload = anthropicMessages.mock.calls[1][1] as {
+      messages: Array<{ role: string; content: unknown }>;
+    };
+    const last =
+      secondCallPayload.messages[secondCallPayload.messages.length - 1];
+    expect(last).toMatchObject({
+      role: "assistant",
+      content: "Перша частина брифінгу… ",
+    });
+  });
+
+  it("first-step text: продовжує при max_tokens, повертає склеєний text", async () => {
+    anthropicMessages
+      .mockResolvedValueOnce({
+        response: { ok: true, status: 200 },
+        data: {
+          stop_reason: "max_tokens",
+          content: [{ type: "text", text: "Аналіз бюджету: " }],
+        },
+      })
+      .mockResolvedValueOnce({
+        response: { ok: true, status: 200 },
+        data: {
+          stop_reason: "end_turn",
+          content: [{ type: "text", text: "перевитрата на 1200₴." }],
+        },
+      });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "що з фінансами?" }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(anthropicMessages).toHaveBeenCalledTimes(2);
+    expect(res.body).toEqual({
+      text: "Аналіз бюджету: перевитрата на 1200₴.",
+    });
+  });
+
+  it("НЕ продовжує коли stop_reason='end_turn'", async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: {
+        stop_reason: "end_turn",
+        content: [{ type: "text", text: "Привіт!" }],
+      },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "привіт" }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(anthropicMessages).toHaveBeenCalledTimes(1);
+    expect(res.body).toEqual({ text: "Привіт!" });
+  });
+
+  it("НЕ продовжує якщо у відповіді є tool_use (max_tokens на середині tool call)", async () => {
+    // Модель повернула tool_use і обрізалася. Continuation тут не має сенсу —
+    // далі має йти tool_result від клієнта, а не assistant-text.
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: {
+        stop_reason: "max_tokens",
+        content: [
+          { type: "text", text: "Видаляю…" },
+          {
+            type: "tool_use",
+            id: "toolu_z",
+            name: "delete_transaction",
+            input: { tx_id: "m_z" },
+          },
+        ],
+      },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "видали m_z" }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(anthropicMessages).toHaveBeenCalledTimes(1);
+    expect(asRec(res.body).tool_calls).toHaveLength(1);
+  });
+
+  it("обмежує кількість continuation викликів (cap)", async () => {
+    // Імітуємо runaway: модель щоразу повертає max_tokens.
+    // Cap MAX_TEXT_CONTINUATIONS=3 → загалом ≤ 4 викликів upstream.
+    const part = (i: number) => ({
+      response: { ok: true, status: 200 },
+      data: {
+        stop_reason: "max_tokens",
+        content: [{ type: "text", text: `chunk${i} ` }],
+      },
+    });
+    anthropicMessages
+      .mockResolvedValueOnce(part(1))
+      .mockResolvedValueOnce(part(2))
+      .mockResolvedValueOnce(part(3))
+      .mockResolvedValueOnce(part(4))
+      .mockResolvedValueOnce(part(5));
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "довгий запит" }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(anthropicMessages.mock.calls.length).toBeLessThanOrEqual(4);
+    expect(res.body).toEqual({ text: "chunk1 chunk2 chunk3 chunk4 " });
+  });
+});

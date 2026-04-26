@@ -1,4 +1,9 @@
 import type { Request, Response } from "express";
+
+// Anthropic upstream-виклики повертають web/fetch `Response`, а Express також
+// експортує тип з ім'ям `Response`. Розрізняємо явно через alias, інакше TS
+// підставляє Express-type у віддалені від HTTP-ендпоінту місця.
+type FetchResponse = globalThis.Response;
 import { validateBody } from "../http/validate.js";
 import { ChatRequestSchema } from "../http/schemas.js";
 import {
@@ -101,6 +106,7 @@ interface AnthropicContentBlock {
 
 interface AnthropicMessagesResponseData {
   content?: AnthropicContentBlock[];
+  stop_reason?: string;
   error?: { message?: string };
   [key: string]: unknown;
 }
@@ -110,9 +116,127 @@ interface ClientChatMessage {
   content: string;
 }
 
-interface StreamEventBlockDelta {
+interface StreamEvent {
   type: string;
-  delta?: { type?: string; text?: string };
+  delta?: { type?: string; text?: string; stop_reason?: string };
+}
+
+/**
+ * Максимум авто-continuation викликів при `stop_reason: "max_tokens"`. Кожен
+ * continuation — це окремий upstream-виклик до Anthropic з partial assistant-text-ом,
+ * доклеєним як останнє повідомлення — модель продовжить рівно з обриву.
+ *
+ * Чому cap: якщо модель вперто хоче писати більше за N × max_tokens — це баг у промпті
+ * (або рунавай generation), і краще віддати юзеру обрізану відповідь, ніж спалити квоту
+ * на нескінченний stream. 3 × 1.5–2.5k ≈ 5–7k токенів виходу — це вже повний брифінг
+ * + великий weekly digest. Env-override — для тестів.
+ */
+const MAX_TEXT_CONTINUATIONS =
+  Number(process.env.CHAT_MAX_TEXT_CONTINUATIONS) || 3;
+
+/**
+ * Викликає `anthropicMessages` у циклі: якщо відповідь обірвалася на max_tokens
+ * і в content-і лише text-блоки (без tool_use), доклеює partial текст як
+ * assistant-повідомлення і робить ще один виклик. Повертає останню response/data,
+ * але з content, де вся накопичена текстова частина зібрана в один text-блок.
+ *
+ * Якщо в content-і є tool_use — НЕ продовжуємо: tool_use завжди має йти
+ * парою з tool_result, який буде робити клієнт. Без cap-а на max_tokens в моделі,
+ * що пише tool_use+text разом — рідкісний варіант; якщо трапляється, пропускаємо без
+ * continuation — клієнт обробить tool_use, а якщо text при цьому обрізаний — це прийнятно.
+ */
+async function callAnthropicWithContinuation(
+  apiKey: string,
+  basePayload: Record<string, unknown>,
+  options: {
+    timeoutMs?: number;
+    endpoint: string;
+    signal?: AbortSignal;
+  },
+): Promise<{
+  response: FetchResponse | null;
+  data: AnthropicMessagesResponseData;
+  continued: boolean;
+}> {
+  const baseMessages = (basePayload.messages as Array<unknown>) ?? [];
+  let currentMessages: Array<unknown> = baseMessages.slice();
+  const mergedTextChunks: string[] = [];
+  let lastResponse: FetchResponse | null = null;
+  let lastData: AnthropicMessagesResponseData = {};
+  let lastNonTextBlocks: AnthropicContentBlock[] = [];
+  let continued = false;
+
+  for (let i = 0; i <= MAX_TEXT_CONTINUATIONS; i++) {
+    if (options.signal?.aborted) break;
+
+    const { response, data } = await anthropicMessages(
+      apiKey,
+      { ...basePayload, messages: currentMessages },
+      options,
+    );
+    lastResponse = response;
+    lastData = data as AnthropicMessagesResponseData;
+
+    if (!response?.ok) {
+      // Upstream error — caller обробить (refund + propagate).
+      return { response, data: lastData, continued };
+    }
+
+    const content: AnthropicContentBlock[] = lastData?.content ?? [];
+    const textParts = content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text ?? "")
+      .join("");
+    if (textParts) mergedTextChunks.push(textParts);
+    lastNonTextBlocks = content.filter((b) => b.type !== "text");
+
+    const stopReason = lastData?.stop_reason;
+    const hasToolUse = lastNonTextBlocks.some((b) => b.type === "tool_use");
+
+    if (
+      stopReason !== "max_tokens" ||
+      hasToolUse ||
+      i === MAX_TEXT_CONTINUATIONS ||
+      !textParts
+    ) {
+      const mergedContent = buildMergedContent(
+        mergedTextChunks.join(""),
+        lastNonTextBlocks,
+      );
+      return {
+        response,
+        data: { ...lastData, content: mergedContent },
+        continued,
+      };
+    }
+
+    // Продовжуємо: доклеюємо partial текст як assistant-повідомлення і б'ємо знову.
+    currentMessages = [
+      ...currentMessages,
+      { role: "assistant", content: textParts },
+    ];
+    continued = true;
+  }
+
+  // Захисний fallback (не досяжний у нормальному флоу).
+  return {
+    response: lastResponse,
+    data: {
+      ...lastData,
+      content: buildMergedContent(mergedTextChunks.join(""), lastNonTextBlocks),
+    },
+    continued,
+  };
+}
+
+function buildMergedContent(
+  mergedText: string,
+  nonTextBlocks: AnthropicContentBlock[],
+): AnthropicContentBlock[] {
+  const out: AnthropicContentBlock[] = [];
+  if (mergedText) out.push({ type: "text", text: mergedText });
+  out.push(...nonTextBlocks);
+  return out;
 }
 
 /**
@@ -198,11 +322,15 @@ export default async function handler(
 
     let response, data;
     try {
-      ({ response, data } = await anthropicMessages(apiKey, payload, {
-        timeoutMs: 30000,
-        endpoint: "chat-tool-result",
-        signal: clientAbort.signal,
-      }));
+      ({ response, data } = await callAnthropicWithContinuation(
+        apiKey,
+        payload,
+        {
+          timeoutMs: 30000,
+          endpoint: "chat-tool-result",
+          signal: clientAbort.signal,
+        },
+      ));
     } catch (e) {
       await refundQuotaOnUpstreamFailure(req);
       throw e;
@@ -210,14 +338,13 @@ export default async function handler(
 
     if (!response?.ok) {
       await refundQuotaOnUpstreamFailure(req);
-      const errData = data as AnthropicMessagesResponseData;
       res
         .status(response?.status || 500)
-        .json({ error: errData?.error?.message || "AI error" });
+        .json({ error: data?.error?.message || "AI error" });
       return;
     }
 
-    const text = extractAnthropicText(data as AnthropicMessagesResponseData);
+    const text = extractAnthropicText(data);
     res.status(200).json({ text: text || "Готово." });
     return;
   }
@@ -231,7 +358,7 @@ export default async function handler(
 
   let response, data;
   try {
-    ({ response, data } = await anthropicMessages(
+    ({ response, data } = await callAnthropicWithContinuation(
       apiKey,
       // AI-CONTEXT: перший крок чату — модель може повернути text або tool_use.
       // Direct-text відповіді на питання типу «що з фінансами?» потребують
@@ -254,15 +381,13 @@ export default async function handler(
 
   if (!response?.ok) {
     await refundQuotaOnUpstreamFailure(req);
-    const errData = data as AnthropicMessagesResponseData;
     res
       .status(response?.status || 500)
-      .json({ error: errData?.error?.message || "AI error" });
+      .json({ error: data?.error?.message || "AI error" });
     return;
   }
 
-  const content: AnthropicContentBlock[] =
-    (data as AnthropicMessagesResponseData)?.content || [];
+  const content: AnthropicContentBlock[] = data?.content || [];
   const toolUses = content.filter((b) => b.type === "tool_use");
   const textParts = content
     .filter((b) => b.type === "text")
@@ -299,67 +424,35 @@ export default async function handler(
  */
 const SSE_HEARTBEAT_MS = Number(process.env.SSE_HEARTBEAT_MS) || 15_000;
 
+interface StreamIterationResult {
+  outcome: "ok" | "error";
+  stopReason: string | null;
+  accumulatedText: string;
+}
+
 /**
- * Anthropic Messages API stream → SSE для клієнта (data: {"t":"фрагмент"}).
+ * Читає одну upstream-відповідь Anthropic (SSE) і форвардить text-дельти у `res`.
+ * Повертає накопичений текст і `stop_reason` з `message_delta`-події — це потрібно
+ * для авто-continuation (див. `streamAnthropicToSse`).
+ *
+ * НЕ пише `[DONE]` і НЕ закриває `res`: оркестратор може запустити ще одну
+ * ітерацію (continuation) у той самий SSE-потік.
  */
-async function streamAnthropicToSse(
-  req: Request,
+async function streamOneIterationToSse(
   res: Response,
-  apiKey: string,
-  payload: Record<string, unknown>,
-  endpoint: string = "chat",
-  abortSignal?: AbortSignal,
-): Promise<void> {
-  let response, recordStreamEnd;
-  try {
-    ({ response, recordStreamEnd } = await anthropicMessagesStream(
-      apiKey,
-      payload,
-      { endpoint, timeoutMs: 60000, signal: abortSignal },
-    ));
-  } catch (e) {
-    await refundQuotaOnUpstreamFailure(req);
-    throw e;
-  }
-
-  if (!response.ok) {
-    await refundQuotaOnUpstreamFailure(req);
-    let errMsg = "AI error";
-    try {
-      const j = (await response.json()) as AnthropicMessagesResponseData;
-      errMsg = j?.error?.message || errMsg;
-    } catch {
-      try {
-        errMsg = await response.text();
-      } catch {
-        /* ignore */
-      }
-    }
-    res.status(response.status).json({ error: errMsg });
-    return;
-  }
-
-  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-  let streamOutcome = "ok";
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("X-Accel-Buffering", "no");
-
-  const reader = response.body?.getReader();
+  upstream: FetchResponse,
+): Promise<StreamIterationResult> {
+  const reader = upstream.body?.getReader();
   if (!reader) {
-    recordStreamEnd("error");
-    res.status(500).json({ error: "No response body" });
-    return;
+    return { outcome: "error", stopReason: null, accumulatedText: "" };
   }
-
-  // Heartbeat: чистий SSE-коментар кожні N мс, поки живе з'єднання.
-  // `res.writableEnded` — щоб не писати у вже закритий потік (клієнт відвалився).
-  const heartbeat = setInterval(() => {
-    if (!res.writableEnded) res.write(": ping\n\n");
-  }, SSE_HEARTBEAT_MS);
-  if (typeof heartbeat.unref === "function") heartbeat.unref();
 
   const decoder = new TextDecoder();
   let lineBuf = "";
+  let accumulatedText = "";
+  let stopReason: string | null = null;
+  let outcome: "ok" | "error" = "ok";
+
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -373,9 +466,9 @@ async function streamAnthropicToSse(
         if (!line.startsWith("data: ")) continue;
         const raw = line.slice(6).trim();
         if (raw === "[DONE]") continue;
-        let ev: StreamEventBlockDelta;
+        let ev: StreamEvent;
         try {
-          ev = JSON.parse(raw) as StreamEventBlockDelta;
+          ev = JSON.parse(raw) as StreamEvent;
         } catch {
           continue;
         }
@@ -384,20 +477,154 @@ async function streamAnthropicToSse(
           ev.delta?.type === "text_delta" &&
           ev.delta.text
         ) {
-          res.write(`data: ${JSON.stringify({ t: ev.delta.text })}\n\n`);
+          accumulatedText += ev.delta.text;
+          if (!res.writableEnded) {
+            res.write(`data: ${JSON.stringify({ t: ev.delta.text })}\n\n`);
+          }
+        } else if (ev.type === "message_delta" && ev.delta?.stop_reason) {
+          stopReason = ev.delta.stop_reason;
         }
       }
     }
   } catch (e: unknown) {
-    streamOutcome = "error";
+    outcome = "error";
     const message = e instanceof Error ? e.message : String(e);
-    res.write(`data: ${JSON.stringify({ err: message })}\n\n`);
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ err: message })}\n\n`);
+    }
+  }
+
+  return { outcome, stopReason, accumulatedText };
+}
+
+/**
+ * Anthropic Messages API stream → SSE для клієнта (data: {"t":"фрагмент"}).
+ *
+ * Підтримує авто-continuation: якщо upstream закінчив `message_delta` зі
+ * `stop_reason: "max_tokens"` і ми зібрали partial-text, відкриваємо ще один
+ * upstream-стрім з тим самим payload + `{role:"assistant", content: partial}`
+ * як останнім повідомленням. Anthropic продовжить рівно з обриву; клієнт
+ * бачить безперервний потік `data: {"t":"..."}` подій без жодної маркеровки.
+ *
+ * Cap на кількість continuation — `MAX_TEXT_CONTINUATIONS`.
+ */
+async function streamAnthropicToSse(
+  req: Request,
+  res: Response,
+  apiKey: string,
+  payload: Record<string, unknown>,
+  endpoint: string = "chat",
+  abortSignal?: AbortSignal,
+): Promise<void> {
+  let firstResponse: FetchResponse;
+  let firstRecordEnd: (outcome?: string) => void;
+  try {
+    ({ response: firstResponse, recordStreamEnd: firstRecordEnd } =
+      await anthropicMessagesStream(apiKey, payload, {
+        endpoint,
+        timeoutMs: 60000,
+        signal: abortSignal,
+      }));
+  } catch (e) {
+    await refundQuotaOnUpstreamFailure(req);
+    throw e;
+  }
+
+  if (!firstResponse.ok) {
+    await refundQuotaOnUpstreamFailure(req);
+    let errMsg = "AI error";
+    try {
+      const j = (await firstResponse.json()) as AnthropicMessagesResponseData;
+      errMsg = j?.error?.message || errMsg;
+    } catch {
+      try {
+        errMsg = await firstResponse.text();
+      } catch {
+        /* ignore */
+      }
+    }
+    res.status(firstResponse.status).json({ error: errMsg });
+    return;
+  }
+
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("X-Accel-Buffering", "no");
+
+  // Heartbeat: чистий SSE-коментар кожні N мс, поки живе з'єднання.
+  // `res.writableEnded` — щоб не писати у вже закритий потік (клієнт відвалився).
+  const heartbeat = setInterval(() => {
+    if (!res.writableEnded) res.write(": ping\n\n");
+  }, SSE_HEARTBEAT_MS);
+  if (typeof heartbeat.unref === "function") heartbeat.unref();
+
+  let currentMessages = (payload.messages as Array<unknown>) ?? [];
+  let currentResponse: FetchResponse = firstResponse;
+  let currentRecordEnd = firstRecordEnd;
+  let continuationsLeft = MAX_TEXT_CONTINUATIONS;
+
+  try {
+    while (true) {
+      const iter = await streamOneIterationToSse(res, currentResponse);
+      currentRecordEnd(iter.outcome);
+
+      if (
+        iter.outcome === "error" ||
+        iter.stopReason !== "max_tokens" ||
+        continuationsLeft <= 0 ||
+        !iter.accumulatedText ||
+        abortSignal?.aborted ||
+        res.writableEnded
+      ) {
+        break;
+      }
+
+      // Continuation: відкриваємо новий upstream з partial-text як assistant-msg.
+      currentMessages = [
+        ...currentMessages,
+        { role: "assistant", content: iter.accumulatedText },
+      ];
+      try {
+        const { response: nextResponse, recordStreamEnd: nextRecordEnd } =
+          await anthropicMessagesStream(
+            apiKey,
+            { ...payload, messages: currentMessages },
+            {
+              endpoint: `${endpoint}-cont`,
+              timeoutMs: 60000,
+              signal: abortSignal,
+            },
+          );
+        if (!nextResponse.ok) {
+          // Upstream-помилка на continuation: лишаємо вже стрімнутий текст,
+          // юзер бачить partial відповідь + помилку.
+          nextRecordEnd("error");
+          if (!res.writableEnded) {
+            res.write(
+              `data: ${JSON.stringify({ err: "AI continuation failed" })}\n\n`,
+            );
+          }
+          break;
+        }
+        currentResponse = nextResponse;
+        currentRecordEnd = nextRecordEnd;
+        continuationsLeft -= 1;
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({ err: message })}\n\n`);
+        }
+        break;
+      }
+    }
   } finally {
     clearInterval(heartbeat);
-    recordStreamEnd(streamOutcome);
   }
-  res.write("data: [DONE]\n\n");
-  res.end();
+
+  if (!res.writableEnded) {
+    res.write("data: [DONE]\n\n");
+    res.end();
+  }
 }
 
 function sanitizeMessages(messages: unknown): ClientChatMessage[] {
