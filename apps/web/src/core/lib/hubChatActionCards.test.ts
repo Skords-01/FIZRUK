@@ -193,6 +193,62 @@ describe("buildActionCard", () => {
     expect(summary?.risky).toBeUndefined();
   });
 
+  it("будує картку для set_habit_schedule (routine, calendar, не risky)", () => {
+    const card = buildActionCard({
+      name: "set_habit_schedule",
+      input: { habit_id: "h1", days: ["mon", "wed", "fri"] },
+      result: 'Розклад звички "Тренування" — Пн, Ср, Пт',
+    });
+    expect(card?.module).toBe("routine");
+    expect(card?.icon).toBe("calendar");
+    expect(card?.title).toBe("Розклад звички оновлено");
+    expect(card?.summary).toBe("mon, wed, fri");
+    expect(card?.risky).toBeUndefined();
+  });
+
+  it("set_habit_schedule failed — суфікс «не вийшло» у title", () => {
+    const card = buildActionCard({
+      name: "set_habit_schedule",
+      input: { habit_id: "h1", days: ["foo"] },
+      result: "Помилка: невідомі дні",
+    });
+    expect(card?.status).toBe("failed");
+    expect(card?.title).toMatch(/не вийшло/);
+  });
+
+  it("будує картку для pause_habit (routine, pause-circle, не risky)", () => {
+    const card = buildActionCard({
+      name: "pause_habit",
+      input: { habit_id: "h1" },
+      result: 'Звичку "Біг" поставлено на паузу.',
+    });
+    expect(card?.module).toBe("routine");
+    expect(card?.icon).toBe("pause-circle");
+    expect(card?.title).toBe("Стан паузи звички оновлено");
+    expect(card?.summary).toContain("h1");
+    expect(card?.summary).toContain("на паузі");
+    expect(card?.risky).toBeUndefined();
+  });
+
+  it("pause_habit з paused=false показує «знято з паузи» у summary", () => {
+    const card = buildActionCard({
+      name: "pause_habit",
+      input: { habit_id: "h1", paused: false },
+      result: 'Звичку "Біг" знято з паузи.',
+    });
+    expect(card?.summary).toContain("знято з паузи");
+  });
+
+  it("pause_habit failed — статус failed і суфікс у title", () => {
+    const card = buildActionCard({
+      name: "pause_habit",
+      input: { habit_id: "" },
+      result: "Помилка: потрібен habit_id",
+    });
+    expect(card?.status).toBe("failed");
+    expect(card?.title).toMatch(/не вийшло/);
+  });
+
   it("кожна картка має непустий id, title і summary", () => {
     const card = buildActionCard({
       name: "create_habit",

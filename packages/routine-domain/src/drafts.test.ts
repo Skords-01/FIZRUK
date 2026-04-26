@@ -37,6 +37,7 @@ describe("routine-domain/drafts", () => {
       timeOfDay: "20:00",
       reminderTimes: [" 08:00 ", "bad", "13:00:00"],
       weekdays: [1, 2, 3],
+      paused: false,
     });
     expect(p.name).toBe("Test");
     expect(p.emoji).toBe("✓");

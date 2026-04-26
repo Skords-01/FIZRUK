@@ -343,6 +343,16 @@ export interface HabitStatsAction {
   input: { habit_id: string; period_days?: number | string };
 }
 
+export interface SetHabitScheduleAction {
+  name: "set_habit_schedule";
+  input: { habit_id: string; days: string[] };
+}
+
+export interface PauseHabitAction {
+  name: "pause_habit";
+  input: { habit_id: string; paused?: boolean };
+}
+
 export interface SuggestMealAction {
   name: "suggest_meal";
   input: { focus?: string; meal_type?: string };
@@ -499,6 +509,8 @@ export type ChatAction =
   | EditHabitAction
   | ReorderHabitsAction
   | HabitStatsAction
+  | SetHabitScheduleAction
+  | PauseHabitAction
   | SuggestMealAction
   | CopyMealFromDateAction
   | PlanMealsForDayAction
