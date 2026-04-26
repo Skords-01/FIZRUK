@@ -6,12 +6,20 @@
   "description": "Shared Sergeant design tokens & Tailwind preset (web + mobile)",
   "files": [
     "tailwind-preset.js",
-    "tokens.js"
+    "tokens.js",
+    "index.d.ts"
   ],
   "main": "./tokens.js",
+  "types": "./index.d.ts",
   "exports": {
-    ".": "./tokens.js",
-    "./tokens": "./tokens.js",
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./tokens.js"
+    },
+    "./tokens": {
+      "types": "./index.d.ts",
+      "default": "./tokens.js"
+    },
     "./tailwind-preset": "./tailwind-preset.js"
   },
   "scripts": {
