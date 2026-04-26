@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import type { ModuleAccent } from "@sergeant/design-tokens";
 import { cn } from "@shared/lib/cn";
 
 /**
@@ -32,12 +33,7 @@ import { cn } from "@shared/lib/cn";
 
 export type TabsStyle = "underline" | "pill";
 
-export type TabsVariant =
-  | "brand"
-  | "finyk"
-  | "fizruk"
-  | "routine"
-  | "nutrition";
+export type TabsVariant = "brand" | ModuleAccent;
 
 export type TabsSize = "sm" | "md";
 
