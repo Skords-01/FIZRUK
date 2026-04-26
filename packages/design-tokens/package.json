@@ -7,14 +7,26 @@
   "files": [
     "tailwind-preset.js",
     "tokens.js",
-    "mobile.ts"
+    "index.d.ts",
+    "mobile.js",
+    "mobile.d.ts"
   ],
   "main": "./tokens.js",
+  "types": "./index.d.ts",
   "exports": {
-    ".": "./tokens.js",
-    "./tokens": "./tokens.js",
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./tokens.js"
+    },
+    "./tokens": {
+      "types": "./index.d.ts",
+      "default": "./tokens.js"
+    },
     "./tailwind-preset": "./tailwind-preset.js",
-    "./mobile": "./mobile.ts"
+    "./mobile": {
+      "types": "./mobile.d.ts",
+      "default": "./mobile.js"
+    }
   },
   "scripts": {
     "typecheck": "echo 'design-tokens has no ts sources'",
