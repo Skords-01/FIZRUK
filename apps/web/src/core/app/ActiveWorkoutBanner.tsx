@@ -42,7 +42,7 @@ export function ActiveWorkoutBanner({ hidden = false }: { hidden?: boolean }) {
           aria-hidden
         >
           <Icon name="dumbbell" size={16} strokeWidth={2.25} />
-          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success ring-2 ring-fizruk motion-safe:animate-pulse" />
+          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success ring-2 ring-fizruk-strong motion-safe:animate-pulse" />
         </span>
         <span className="text-sm font-semibold whitespace-nowrap">
           Тренування триває
