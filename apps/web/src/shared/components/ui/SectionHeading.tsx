@@ -30,12 +30,37 @@ export type SectionHeadingVariant =
   | "routine"
   | "nutrition";
 
-const sizes: Record<SectionHeadingSize, string> = {
-  xs: "text-2xs font-bold uppercase tracking-widest",
-  sm: "text-xs font-bold uppercase tracking-widest",
-  md: "text-sm font-semibold",
-  lg: "text-lg font-extrabold leading-tight",
-  xl: "text-xl font-extrabold leading-tight",
+/**
+ * Font-weight override. Default is size-dependent (eyebrow sizes bold,
+ * md semibold, lg/xl extrabold). Primary use-case is the Finyk drift
+ * "text-xs text-muted uppercase tracking-wide font-semibold" — after this
+ * prop exists, call-sites can opt-in via `<SectionHeading weight="semibold">`
+ * and drop their raw-className eslint-disable.
+ */
+export type SectionHeadingWeight = "semibold" | "bold" | "extrabold";
+
+// Size-only tokens (font-scale + casing + tracking). Weight is applied
+// separately so `weight` prop overrides can compose cleanly.
+const sizeTokens: Record<SectionHeadingSize, string> = {
+  xs: "text-2xs uppercase tracking-widest",
+  sm: "text-xs uppercase tracking-widest",
+  md: "text-sm",
+  lg: "text-lg leading-tight",
+  xl: "text-xl leading-tight",
+};
+
+const weightTokens: Record<SectionHeadingWeight, string> = {
+  semibold: "font-semibold",
+  bold: "font-bold",
+  extrabold: "font-extrabold",
+};
+
+const defaultWeightForSize: Record<SectionHeadingSize, SectionHeadingWeight> = {
+  xs: "bold",
+  sm: "bold",
+  md: "semibold",
+  lg: "extrabold",
+  xl: "extrabold",
 };
 
 const variants: Record<SectionHeadingVariant, string> = {
@@ -68,6 +93,12 @@ export interface SectionHeadingProps extends HTMLAttributes<HTMLElement> {
   size?: SectionHeadingSize;
   /** Colour variant. Defaults to `subtle` for xs/sm and `text` for md+. */
   variant?: SectionHeadingVariant;
+  /**
+   * Font-weight override. Defaults to `bold` for xs/sm (eyebrow),
+   * `semibold` for md, and `extrabold` for lg/xl. Use `semibold` to
+   * match the Finyk eyebrow tone on neutral cards.
+   */
+  weight?: SectionHeadingWeight;
   as?: ElementType;
   /** Optional right-aligned slot for actions/links. */
   action?: ReactNode;
@@ -82,13 +113,19 @@ export function SectionHeading({
   className,
   size = "xs",
   variant,
+  weight,
   as: Component = "h3",
   action,
   children,
   ...props
 }: SectionHeadingProps) {
   const resolvedVariant = variant ?? defaultVariantForSize[size];
-  const base = cn(sizes[size], variants[resolvedVariant]);
+  const resolvedWeight = weight ?? defaultWeightForSize[size];
+  const base = cn(
+    sizeTokens[size],
+    weightTokens[resolvedWeight],
+    variants[resolvedVariant],
+  );
 
   if (action) {
     return (
