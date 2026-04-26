@@ -9,18 +9,18 @@ import {
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Icon } from "@shared/components/ui/Icon";
-import { BrandLogo } from "./app/BrandLogo";
-import { trackEvent, ANALYTICS_EVENTS } from "./observability/analytics";
+import { BrandLogo } from "../app/BrandLogo";
+import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
 import {
   ALL_MODULES,
   markFirstActionPending,
   markFirstActionStartedAt,
   saveVibePicks,
-} from "./onboarding/vibePicks";
+} from "./vibePicks";
 import {
   markOnboardingDone,
   shouldShowOnboarding as sharedShouldShowOnboarding,
-} from "./onboarding/onboardingGate";
+} from "./onboardingGate";
 import { MODULE_LABELS } from "@shared/lib/moduleLabels";
 import {
   ONBOARDING_MODULE_DESCRIPTIONS,
