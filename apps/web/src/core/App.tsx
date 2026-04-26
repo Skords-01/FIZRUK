@@ -32,7 +32,7 @@ import { HubFloatingActions } from "./app/HubFloatingActions";
 import { HubModals } from "./app/HubModals";
 import { ActiveWorkoutBanner } from "./app/ActiveWorkoutBanner";
 import { WelcomeScreen } from "./app/WelcomeScreen";
-import { shouldShowOnboarding } from "./OnboardingWizard";
+import { shouldShowOnboarding } from "./onboarding/OnboardingWizard";
 import { isFirstRealEntryDone } from "./onboarding/vibePicks";
 import { hasAnyRealEntry } from "./onboarding/firstRealEntry";
 import { useHubNavigation } from "./hooks/useHubNavigation";
@@ -53,7 +53,7 @@ const DesignShowcase = lazy(() =>
   import("./DesignShowcase").then((m) => ({ default: m.DesignShowcase })),
 );
 const ProfilePage = lazy(() =>
-  import("./ProfilePage").then((m) => ({ default: m.ProfilePage })),
+  import("./profile/ProfilePage").then((m) => ({ default: m.ProfilePage })),
 );
 interface ModuleAppProps {
   onBackToHub: () => void;

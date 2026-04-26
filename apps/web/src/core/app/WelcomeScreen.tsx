@@ -1,6 +1,6 @@
 import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
-import { OnboardingWizard } from "../OnboardingWizard";
+import { OnboardingWizard } from "../onboarding/OnboardingWizard";
 
 // Static preview of the populated hub that sits behind the splash card on
 // `/welcome`. Renders a 2×2 bento grid matching `HubDashboard`'s module
