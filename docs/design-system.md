@@ -40,8 +40,8 @@
 | `surface`        | Картки, панелі                      | `#ffffff` | `#201c19` |
 | `surface-muted`  | Інпути, hover, допоміжні поверхні   | `#faf7f1` | `#292420` |
 | `surface-strong` | Стек сторінки під модалкою          | = `bg`    | = `bg`    |
-| `border`         | Розмежувачі, обводки картки         | `#ebe4da` | `#3a342e` |
-| `border-strong`  | Сильніший дільник (інпути, таблиці) | `#ddd3c5` | `#4a423a` |
+| `border`         | Розмежувачі, обводки картки         | `#ebe4da` | `#524a41` |
+| `border-strong`  | Сильніший дільник (інпути, таблиці) | `#ddd3c5` | `#70665a` |
 
 Back-compat: старі токени `panel` / `panelHi` / `line` продовжують працювати.
 
@@ -50,8 +50,8 @@ Back-compat: старі токени `panel` / `panelHi` / `line` продовж
 | Token    | Роль                                | Light               | Dark      |
 | -------- | ----------------------------------- | ------------------- | --------- |
 | `text`   | Заголовки, основний текст           | `#1c1917`           | `#faf7f1` |
-| `muted`  | Секундарний текст, мітки            | `#57534e`           | `#a8a29e` |
-| `subtle` | Третинний текст, плейсхолдери       | `#a8a29e`           | `#57534e` |
+| `muted`  | Секундарний текст, мітки            | `#57534e`           | `#b4aea9` |
+| `subtle` | Третинний текст, плейсхолдери       | `#6b645d`           | `#878079` |
 | `fg-*`   | Семантичні аліаси (prefer new code) | = text/muted/subtle |
 
 ### 2.3 Бренд і модулі
@@ -103,8 +103,8 @@ Back-compat: старі токени `panel` / `panelHi` / `line` продовж
 
 | Клас        | Size / line-height | Використання                 |
 | ----------- | ------------------ | ---------------------------- |
-| `text-3xs`  | 10 / 14            | Підписи під мітрами          |
-| `text-2xs`  | 11 / 16            | Eyebrow-лейбли, tag-и        |
+| `text-3xs`  | 9 / 12             | Підписи під мітрами          |
+| `text-2xs`  | 10 / 14            | Eyebrow-лейбли, tag-и        |
 | `text-xs`   | 12 / 16            | Метадата, timestamp          |
 | `text-sm`   | 14 / 20            | Вторинний текст, кнопки `sm` |
 | `text-base` | 16 / 24            | Базовий body                 |
@@ -277,7 +277,7 @@ Home/End, `role="tablist"`.
 </SectionHeader>
 ```
 
-**Розмір (`size`) vs колір (`tone`)** — окремі осі:
+**Розмір (`size`) vs колір (`variant`)** — окремі осі:
 
 | size | type-scale                                     | коли                    |
 | ---- | ---------------------------------------------- | ----------------------- |
@@ -287,23 +287,23 @@ Home/End, `role="tablist"`.
 | `lg` | `text-lg font-extrabold leading-tight`         | page sub-section        |
 | `xl` | `text-xl font-extrabold leading-tight`         | page/route title        |
 
-| tone        | клас                | коли                                  |
-| ----------- | ------------------- | ------------------------------------- |
-| `subtle` \* | `text-subtle`       | eyebrow по замовчуванню для `xs`/`sm` |
-| `muted`     | `text-muted`        | послаблений підпис                    |
-| `text` \*   | `text-text`         | за замовчуванням для `md`/`lg`/`xl`   |
-| `accent`    | `text-accent`       | глобальний фокус/лінк (emerald)       |
-| `finyk`     | `text-finyk/70`     | brand-tint у модулі ФІНІК             |
-| `fizruk`    | `text-fizruk/70`    | brand-tint у модулі ФІЗРУК            |
-| `routine`   | `text-routine/70`   | brand-tint у модулі Рутина            |
-| `nutrition` | `text-nutrition/70` | brand-tint у модулі Харчування        |
+| variant     | клас                                           | коли                                  |
+| ----------- | ---------------------------------------------- | ------------------------------------- |
+| `subtle` \* | `text-subtle`                                  | eyebrow по замовчуванню для `xs`/`sm` |
+| `muted`     | `text-muted`                                   | послаблений підпис                    |
+| `text` \*   | `text-text`                                    | за замовчуванням для `md`/`lg`/`xl`   |
+| `accent`    | `text-accent`                                  | глобальний фокус/лінк (emerald)       |
+| `finyk`     | `text-finyk-strong dark:text-finyk/70`         | brand-tint у модулі ФІНІК             |
+| `fizruk`    | `text-fizruk-strong dark:text-fizruk/70`       | brand-tint у модулі ФІЗРУК            |
+| `routine`   | `text-routine-strong dark:text-routine/70`     | brand-tint у модулі Рутина            |
+| `nutrition` | `text-nutrition-strong dark:text-nutrition/70` | brand-tint у модулі Харчування        |
 
 Зірочкою (\*) — це значення за замовчуванням; їх можна не передавати.
 
 **Branded eyebrow** (напр. KJВЖ-картки в Харчуванні):
 
 ```tsx
-<SectionHeading as="div" size="xs" tone="nutrition">
+<SectionHeading as="div" size="xs" variant="nutrition">
   Білки
 </SectionHeading>
 ```
