@@ -750,7 +750,7 @@ CI gate: `vitest --coverage` + threshold (наприклад 70% lines) на cri
 
 - **Mobile-specific** — окремий roadmap для Expo / Capacitor.
 - **Fizruk / Nutrition / Routine domain logic** — це продуктові roadmap-и.
-- **Marketing / SEO** — окремо (skill `seo-audit` уже є в `.agents/skills/`).
+- **Marketing / SEO** — окремо.
 - **Hiring і team scaling** — інші питання.
 
 ---
