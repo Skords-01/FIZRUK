@@ -56,6 +56,8 @@ const KNOWN_TOOLS: ReadonlySet<string> = new Set([
   "log_set",
   "mark_habit_done",
   "create_habit",
+  "set_habit_schedule",
+  "pause_habit",
   "morning_briefing",
   "weekly_summary",
 ]);
@@ -100,7 +102,9 @@ function moduleFor(name: string): ChatActionCardModule {
   if (
     name === "mark_habit_done" ||
     name === "create_habit" ||
-    name === "archive_habit"
+    name === "archive_habit" ||
+    name === "set_habit_schedule" ||
+    name === "pause_habit"
   ) {
     return "routine";
   }
@@ -123,6 +127,10 @@ function iconFor(name: string): string | undefined {
     case "mark_habit_done":
     case "create_habit":
       return "check";
+    case "set_habit_schedule":
+      return "calendar";
+    case "pause_habit":
+      return "pause-circle";
     case "morning_briefing":
       return "sun";
     case "weekly_summary":
@@ -153,6 +161,10 @@ function titleFor(name: string, status: ChatActionCardStatus): string {
       return `Звичка виконана${failedSuffix}`;
     case "create_habit":
       return `Звичку створено${failedSuffix}`;
+    case "set_habit_schedule":
+      return `Розклад звички оновлено${failedSuffix}`;
+    case "pause_habit":
+      return `Стан паузи звички оновлено${failedSuffix}`;
     case "morning_briefing":
       return `Ранковий брифінг${failedSuffix}`;
     case "weekly_summary":
@@ -247,6 +259,23 @@ function summaryFor(
       const habit = stringField("habit_id") || stringField("name");
       if (habit) return habit;
       break;
+    }
+    case "set_habit_schedule": {
+      const days = (input.days as unknown) ?? null;
+      if (Array.isArray(days) && days.length > 0) {
+        return days
+          .map((d) => (typeof d === "string" ? d.trim() : ""))
+          .filter((d) => d.length > 0)
+          .join(", ");
+      }
+      break;
+    }
+    case "pause_habit": {
+      const habit = stringField("habit_id");
+      const paused = input.paused;
+      const state = paused === false ? "знято з паузи" : "на паузі";
+      if (habit) return `${habit} · ${state}`;
+      return state;
     }
     case "start_workout": {
       const program = stringField("program_id") || stringField("name");

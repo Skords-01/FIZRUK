@@ -21,6 +21,30 @@ describe("routine-domain/schedule", () => {
     expect(habitScheduledOnDate(h, "2026-01-05")).toBe(false);
   });
 
+  it("respects paused flag", () => {
+    expect(habitScheduledOnDate(habit({ paused: true }), "2026-01-05")).toBe(
+      false,
+    );
+    expect(
+      habitScheduledOnDate(
+        habit({ recurrence: "weekly", weekdays: [0, 2, 4], paused: true }),
+        "2026-01-05",
+      ),
+    ).toBe(false);
+    expect(
+      habitScheduledOnDate(
+        habit({ recurrence: "monthly", paused: true }),
+        "2026-01-01",
+      ),
+    ).toBe(false);
+    expect(
+      habitScheduledOnDate(
+        habit({ recurrence: "once", paused: true }),
+        "2026-01-01",
+      ),
+    ).toBe(false);
+  });
+
   it("respects startDate / endDate bounds", () => {
     const h = habit({ startDate: "2026-01-05", endDate: "2026-01-10" });
     expect(habitScheduledOnDate(h, "2026-01-04")).toBe(false);

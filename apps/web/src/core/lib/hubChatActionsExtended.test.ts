@@ -633,6 +633,151 @@ describe("complete_habit_for_date + archive_habit", () => {
   });
 });
 
+describe("set_habit_schedule", () => {
+  function createHabitAndId(name = "Тренування"): string {
+    executeAction({ name: "create_habit", input: { name } });
+    const state = readLS<{ habits: Array<{ id: string }> }>("hub_routine_v1", {
+      habits: [],
+    });
+    return state.habits[0].id;
+  }
+
+  it("приймає англ. дні і виставляє Mon-first weekdays + recurrence='weekly'", () => {
+    const id = createHabitAndId();
+    const msg = executeAction({
+      name: "set_habit_schedule",
+      input: { habit_id: id, days: ["mon", "wed", "fri"] },
+    });
+    expect(msg).toContain("Пн");
+    expect(msg).toContain("Ср");
+    expect(msg).toContain("Пт");
+    const state = readLS<{
+      habits: Array<{ id: string; recurrence: string; weekdays: number[] }>;
+    }>("hub_routine_v1", { habits: [] });
+    expect(state.habits[0].recurrence).toBe("weekly");
+    expect(state.habits[0].weekdays).toEqual([0, 2, 4]);
+  });
+
+  it("приймає укр. короткі назви та змішаний регістр", () => {
+    const id = createHabitAndId();
+    executeAction({
+      name: "set_habit_schedule",
+      input: { habit_id: id, days: ["Пн", "СР", "пт"] },
+    });
+    const state = readLS<{
+      habits: Array<{ id: string; weekdays: number[] }>;
+    }>("hub_routine_v1", { habits: [] });
+    expect(state.habits[0].weekdays).toEqual([0, 2, 4]);
+  });
+
+  it("дедуплікує і сортує дні", () => {
+    const id = createHabitAndId();
+    executeAction({
+      name: "set_habit_schedule",
+      input: { habit_id: id, days: ["fri", "mon", "fri", "пн", "wed"] },
+    });
+    const state = readLS<{
+      habits: Array<{ id: string; weekdays: number[] }>;
+    }>("hub_routine_v1", { habits: [] });
+    expect(state.habits[0].weekdays).toEqual([0, 2, 4]);
+  });
+
+  it("повертає помилку коли всі токени невалідні (не змінює стан)", () => {
+    const id = createHabitAndId();
+    const before = readLS<{
+      habits: Array<{ id: string; recurrence?: string; weekdays?: number[] }>;
+    }>("hub_routine_v1", { habits: [] });
+    const msg = executeAction({
+      name: "set_habit_schedule",
+      input: { habit_id: id, days: ["foo", "bar"] },
+    });
+    expect(msg).toContain("Не вдалось розпізнати");
+    const after = readLS<{
+      habits: Array<{ id: string; recurrence?: string; weekdays?: number[] }>;
+    }>("hub_routine_v1", { habits: [] });
+    expect(after.habits[0].weekdays).toEqual(before.habits[0].weekdays);
+  });
+
+  it("повертає помилку для відсутньої звички / порожніх входів", () => {
+    expect(
+      executeAction({
+        name: "set_habit_schedule",
+        input: { habit_id: "", days: ["mon"] },
+      }),
+    ).toBe("Потрібен habit_id.");
+    expect(
+      executeAction({
+        name: "set_habit_schedule",
+        input: { habit_id: "abc", days: [] },
+      }),
+    ).toBe("Потрібен непорожній масив days.");
+    expect(
+      executeAction({
+        name: "set_habit_schedule",
+        input: { habit_id: "no_such", days: ["mon"] },
+      }),
+    ).toContain("не знайдено");
+  });
+});
+
+describe("pause_habit", () => {
+  function createHabitAndId(name = "Біг"): string {
+    executeAction({ name: "create_habit", input: { name } });
+    const state = readLS<{ habits: Array<{ id: string }> }>("hub_routine_v1", {
+      habits: [],
+    });
+    return state.habits[0].id;
+  }
+
+  it("за замовчуванням ставить на паузу та зберігає paused=true", () => {
+    const id = createHabitAndId();
+    const msg = executeAction({
+      name: "pause_habit",
+      input: { habit_id: id },
+    });
+    expect(msg).toContain("на паузу");
+    const state = readLS<{ habits: Array<{ id: string; paused?: boolean }> }>(
+      "hub_routine_v1",
+      { habits: [] },
+    );
+    expect(state.habits[0].paused).toBe(true);
+  });
+
+  it("paused=false знімає з паузи", () => {
+    const id = createHabitAndId();
+    executeAction({ name: "pause_habit", input: { habit_id: id } });
+    const msg = executeAction({
+      name: "pause_habit",
+      input: { habit_id: id, paused: false },
+    });
+    expect(msg).toContain("знято з паузи");
+    const state = readLS<{ habits: Array<{ id: string; paused?: boolean }> }>(
+      "hub_routine_v1",
+      { habits: [] },
+    );
+    expect(state.habits[0].paused).toBe(false);
+  });
+
+  it("ідемпотентно: повторна пауза — no-op з info-меседжем", () => {
+    const id = createHabitAndId();
+    executeAction({ name: "pause_habit", input: { habit_id: id } });
+    const msg = executeAction({
+      name: "pause_habit",
+      input: { habit_id: id },
+    });
+    expect(msg).toContain("вже на паузі");
+  });
+
+  it("повертає помилку для відсутнього habit_id / неіснуючої звички", () => {
+    expect(
+      executeAction({ name: "pause_habit", input: { habit_id: "" } }),
+    ).toBe("Потрібен habit_id.");
+    expect(
+      executeAction({ name: "pause_habit", input: { habit_id: "no_such" } }),
+    ).toContain("не знайдено");
+  });
+});
+
 describe("add_calendar_event", () => {
   it("створює разову подію як звичку once", () => {
     const msg = executeAction({

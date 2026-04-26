@@ -16,6 +16,7 @@ export interface Habit {
   categoryId?: string | null;
   createdAt?: string;
   archived?: boolean;
+  paused?: boolean;
   recurrence?: Recurrence | string;
   startDate?: string | null;
   endDate?: string | null;
@@ -66,6 +67,7 @@ export interface HabitDraftPatch {
   timeOfDay?: string;
   reminderTimes?: string[];
   weekdays?: number[];
+  paused?: boolean;
 }
 
 /**
@@ -83,6 +85,7 @@ export interface HabitDraft {
   timeOfDay: string;
   reminderTimes: string[];
   weekdays: number[];
+  paused: boolean;
 }
 
 export interface ReminderPreset {

@@ -131,9 +131,10 @@ const WORK_WEEKDAYS = [0, 1, 2, 3, 4];
  * dates.
  */
 export function habitActiveRoutineWeekdays(
-  h: Pick<Habit, "recurrence" | "weekdays" | "archived">,
+  h: Pick<Habit, "recurrence" | "weekdays" | "archived" | "paused">,
 ): number[] {
   if (h.archived) return [];
+  if (h.paused) return [];
   const rec = (h.recurrence as string) || "daily";
   if (rec === "daily") return [...EVERY_WEEKDAY];
   if (rec === "weekdays") return [...WORK_WEEKDAYS];

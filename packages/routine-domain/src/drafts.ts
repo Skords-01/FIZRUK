@@ -73,6 +73,7 @@ export function emptyHabitDraft(): HabitDraft {
     timeOfDay: "",
     reminderTimes: [],
     weekdays: [0, 1, 2, 3, 4, 5, 6],
+    paused: false,
   };
 }
 
@@ -108,6 +109,7 @@ export function habitDraftToPatch(draft: HabitDraft): HabitDraftPatch {
     weekdays: Array.isArray(draft.weekdays)
       ? draft.weekdays
       : [0, 1, 2, 3, 4, 5, 6],
+    paused: draft.paused === true,
   };
 }
 
@@ -136,6 +138,7 @@ export function habitToDraft(h: Habit): HabitDraft {
     timeOfDay: h.timeOfDay || "",
     reminderTimes,
     weekdays,
+    paused: h.paused === true,
   };
 }
 

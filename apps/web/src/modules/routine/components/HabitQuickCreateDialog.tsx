@@ -50,6 +50,7 @@ function habitToDraft(habit: Habit): HabitDraft {
       Array.isArray(habit.weekdays) && habit.weekdays.length
         ? habit.weekdays
         : [0, 1, 2, 3, 4, 5, 6],
+    paused: habit.paused === true,
   };
 }
 
