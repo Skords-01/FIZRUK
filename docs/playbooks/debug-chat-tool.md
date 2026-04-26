@@ -64,7 +64,7 @@ Response **другого** `/api/chat` запиту повертає `{ type: "
 
 - Текст відповіді згадує результат tool-а («Залоговано 200 мл води») — все ок, проблема була не в pipeline, а у UI: action card / quick action не оновився, або `cloudsync` не синхронізував.
 - Текст відповіді — generic «Готово» без конкретики → handler повернув занадто короткий результат. Розширь, додай числа з input-а у return string.
-- `stop_reason: "max_tokens"` → continuation request обірвано на 2500 токенах (див. `AGENTS.md` → _max_tokens budget per request_). Або скороти `tool_result.content`, або тимчасово підніми `max_tokens` і прогни ще раз.
+- `stop_reason: "max_tokens"` → continuation request обірвано на 2500 токенах (див. `AGENTS.md` → _max_tokens budget per request_). Сервер автоматично тягне auto-continuation до `MAX_TEXT_CONTINUATIONS=3` додаткових викликів (тільки якщо в `content` лише `text`, без `tool_use`), тож юзер у більшості випадків бачить склеєну повну відповідь. Якщо все одно обрізає — значить упёрлись у cap (3×2500 ≈ 7500 токенів виходу): або скороти `tool_result.content`/розбий запит, або тимчасово підніми `CHAT_MAX_TEXT_CONTINUATIONS` для відтворення.
 
 ### 6. Чи UI оновився?
 
