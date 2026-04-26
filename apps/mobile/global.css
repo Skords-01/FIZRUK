@@ -37,6 +37,8 @@
   }
 
   .dark {
+    color-scheme: dark;
+
     --c-bg: 23 20 18;
     --c-panel: 32 28 25;
     --c-panel-hi: 48 42 37;
@@ -50,5 +52,25 @@
     --c-warning-soft: 146 64 14;
     --c-danger-soft: 153 27 27;
     --c-info-soft: 7 89 133;
+
+    /* ───────────────────────────────────────────────────────────────────
+       MODULE DARK SURFACES & BORDERS — mirrors apps/web/src/index.css
+       Premixed accents tuned for use over the dark `panel` background.
+       Decoupled from the live `--c-finyk` / `--c-routine` / … accents so
+       the visual proportions of `bg-<m>-surface-dark/N` and
+       `border-<m>-border-dark/N` opacity tints don't silently drift if a
+       module's primary colour is later retuned. Initial RGB values
+       mirror the corresponding `moduleColors.<m>.primary` from
+       `packages/design-tokens/tokens.js` — change them here
+       independently when dark-mode tints need their own treatment.
+       ─────────────────────────────────────────────────────────────────── */
+    --c-finyk-surface-dark: 16 185 129; /* emerald-500 */
+    --c-finyk-border-dark: 16 185 129; /* emerald-500 */
+    --c-fizruk-surface-dark: 20 184 166; /* teal-500 */
+    --c-fizruk-border-dark: 20 184 166; /* teal-500 */
+    --c-routine-surface-dark: 249 112 102; /* coral-500 */
+    --c-routine-border-dark: 249 112 102; /* coral-500 */
+    --c-nutrition-surface-dark: 146 204 23; /* lime-500 */
+    --c-nutrition-border-dark: 146 204 23; /* lime-500 */
   }
 }
