@@ -373,7 +373,11 @@ export function handleCrossAction(action: ChatAction): string | undefined {
       });
       if (expenses.length < 3)
         return "Недостатньо транзакцій для аналізу аномалій.";
-      const amounts = expenses.map((t) => getTxStatAmount(t, anomalySplits));
+      const amounts = expenses
+        .map((t) => getTxStatAmount(t, anomalySplits))
+        .filter((a) => a > 0);
+      if (amounts.length < 3)
+        return "Недостатньо транзакцій для аналізу аномалій.";
       const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
       const anomalies = expenses
         .filter((t) => getTxStatAmount(t, anomalySplits) > avg * threshold)
