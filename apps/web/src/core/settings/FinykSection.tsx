@@ -8,7 +8,12 @@ import {
   monoWebhookApi,
   type MonoSyncState,
 } from "@shared/api";
-import { safeReadLS } from "@shared/lib/storage";
+import {
+  safeReadLS,
+  safeReadStringLS,
+  safeWriteLS,
+  safeRemoveLS,
+} from "@shared/lib/storage";
 import { finykKeys, hubKeys } from "@shared/lib/queryKeys";
 import { useFlag } from "../lib/featureFlags";
 import { useStorage as useFinykStorage } from "../../modules/finyk/hooks/useStorage";
@@ -62,48 +67,31 @@ export function FinykSection() {
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [newCategoryLabel, setNewCategoryLabel] = useState("");
 
-  const [privatIdInput, setPrivatIdInput] = useState<string>(() => {
-    try {
-      return (
-        localStorage.getItem("finyk_privat_id") ||
-        sessionStorage.getItem("finyk_privat_id") ||
-        ""
-      );
-    } catch {
-      return "";
-    }
-  });
-  const [privatTokenInput, setPrivatTokenInput] = useState<string>(() => {
-    try {
-      return (
-        localStorage.getItem("finyk_privat_token") ||
-        sessionStorage.getItem("finyk_privat_token") ||
-        ""
-      );
-    } catch {
-      return "";
-    }
-  });
+  const [privatIdInput, setPrivatIdInput] = useState<string>(
+    () =>
+      safeReadStringLS("finyk_privat_id", null) ??
+      sessionStorage.getItem("finyk_privat_id") ??
+      "",
+  );
+  const [privatTokenInput, setPrivatTokenInput] = useState<string>(
+    () =>
+      safeReadStringLS("finyk_privat_token", null) ??
+      sessionStorage.getItem("finyk_privat_token") ??
+      "",
+  );
   const [showPrivatToken, setShowPrivatToken] = useState(false);
-  const [rememberPrivat, setRememberPrivat] = useState<boolean>(() => {
-    try {
-      return !!localStorage.getItem("finyk_privat_id");
-    } catch {
-      return false;
-    }
-  });
+  const [rememberPrivat, setRememberPrivat] = useState<boolean>(
+    () => !!safeReadStringLS("finyk_privat_id", null),
+  );
   const [privatError, setPrivatError] = useState("");
   const [privatConnecting, setPrivatConnecting] = useState(false);
-  const [privatConnected, setPrivatConnected] = useState<boolean>(() => {
-    try {
-      return !!(
-        localStorage.getItem("finyk_privat_id") ||
+  const [privatConnected, setPrivatConnected] = useState<boolean>(
+    () =>
+      !!(
+        safeReadStringLS("finyk_privat_id", null) ||
         sessionStorage.getItem("finyk_privat_id")
-      );
-    } catch {
-      return false;
-    }
-  });
+      ),
+  );
   const [confirmDisconnectPrivat, setConfirmDisconnectPrivat] = useState(false);
 
   const connectPrivat = async () => {
@@ -129,15 +117,15 @@ export function FinykSection() {
         throw err;
       }
       if (rememberPrivat) {
-        localStorage.setItem("finyk_privat_id", cleanId);
-        localStorage.setItem("finyk_privat_token", cleanToken);
+        safeWriteLS("finyk_privat_id", cleanId);
+        safeWriteLS("finyk_privat_token", cleanToken);
         sessionStorage.removeItem("finyk_privat_id");
         sessionStorage.removeItem("finyk_privat_token");
       } else {
         sessionStorage.setItem("finyk_privat_id", cleanId);
         sessionStorage.setItem("finyk_privat_token", cleanToken);
-        localStorage.removeItem("finyk_privat_id");
-        localStorage.removeItem("finyk_privat_token");
+        safeRemoveLS("finyk_privat_id");
+        safeRemoveLS("finyk_privat_token");
       }
       setPrivatConnected(true);
       window.location.reload();
@@ -151,16 +139,12 @@ export function FinykSection() {
   };
 
   const disconnectPrivat = () => {
-    try {
-      localStorage.removeItem("finyk_privat_id");
-      localStorage.removeItem("finyk_privat_token");
-      sessionStorage.removeItem("finyk_privat_id");
-      sessionStorage.removeItem("finyk_privat_token");
-      localStorage.removeItem("finyk_privat_tx_cache");
-      localStorage.removeItem("finyk_privat_balance_cache");
-    } catch {
-      /* storage may be disabled — safe to ignore */
-    }
+    safeRemoveLS("finyk_privat_id");
+    safeRemoveLS("finyk_privat_token");
+    sessionStorage.removeItem("finyk_privat_id");
+    sessionStorage.removeItem("finyk_privat_token");
+    safeRemoveLS("finyk_privat_tx_cache");
+    safeRemoveLS("finyk_privat_balance_cache");
     setPrivatConnected(false);
     setPrivatIdInput("");
     setPrivatTokenInput("");
@@ -251,15 +235,11 @@ export function FinykSection() {
   const infoData = rawCache?.info ?? rawCache;
   const token = (() => {
     if (webhookEnabled) return null;
-    try {
-      return (
-        localStorage.getItem("finyk_token") ||
-        sessionStorage.getItem("finyk_token") ||
-        null
-      );
-    } catch {
-      return null;
-    }
+    return (
+      safeReadStringLS("finyk_token", null) ??
+      sessionStorage.getItem("finyk_token") ??
+      null
+    );
   })();
   const clientName = webhookEnabled ? null : (infoData?.name ?? null);
   const uahAccounts: UahAccount[] =
@@ -268,32 +248,24 @@ export function FinykSection() {
       : [];
 
   const clearTxCache = () => {
-    try {
-      localStorage.removeItem("finyk_tx_cache");
-      localStorage.removeItem("finyk_tx_cache_last_good");
-      queryClient.invalidateQueries({ queryKey: hubKeys.preview("finyk") });
-      if (webhookEnabled) {
-        queryClient.removeQueries({
-          queryKey: finykKeys.monoWebhookTransactions(),
-        });
-        queryClient.invalidateQueries({ queryKey: finykKeys.monoSyncState });
-      }
-    } catch {
-      /* storage may be disabled — safe to ignore */
+    safeRemoveLS("finyk_tx_cache");
+    safeRemoveLS("finyk_tx_cache_last_good");
+    queryClient.invalidateQueries({ queryKey: hubKeys.preview("finyk") });
+    if (webhookEnabled) {
+      queryClient.removeQueries({
+        queryKey: finykKeys.monoWebhookTransactions(),
+      });
+      queryClient.invalidateQueries({ queryKey: finykKeys.monoSyncState });
     }
   };
 
   const disconnect = () => {
-    try {
-      sessionStorage.removeItem("finyk_token");
-      localStorage.removeItem("finyk_token");
-      localStorage.removeItem("finyk_token_remembered");
-      localStorage.removeItem("finyk_info_cache");
-      localStorage.removeItem("finyk_tx_cache");
-      localStorage.removeItem("finyk_tx_cache_last_good");
-    } catch {
-      /* storage may be disabled — safe to ignore */
-    }
+    sessionStorage.removeItem("finyk_token");
+    safeRemoveLS("finyk_token");
+    safeRemoveLS("finyk_token_remembered");
+    safeRemoveLS("finyk_info_cache");
+    safeRemoveLS("finyk_tx_cache");
+    safeRemoveLS("finyk_tx_cache_last_good");
     window.location.reload();
   };
 
