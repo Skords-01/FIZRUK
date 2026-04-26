@@ -543,6 +543,42 @@ export const ASSISTANT_CAPABILITIES: readonly AssistantCapability[] = [
     requiresOnline: true,
   },
   {
+    id: "set_habit_schedule",
+    module: "routine",
+    label: "Дні тижня для звички",
+    shortLabel: "Розклад",
+    icon: "calendar",
+    description:
+      "Виставити точні дні тижня для звички (recurrence='weekly'). Приймає англ. (mon..sun) або укр. (пн..нд).",
+    examples: [
+      "тренування пн ср пт",
+      "медитація щодня крім неділі",
+      "біг tue thu sat",
+    ],
+    prompt: "Постав розклад звички: ",
+    requiresInput: true,
+    requiresOnline: true,
+    keywords: ["weekday", "schedule", "weekly", "розклад", "дні"],
+  },
+  {
+    id: "pause_habit",
+    module: "routine",
+    label: "Поставити звичку на паузу",
+    shortLabel: "Пауза",
+    icon: "pause-circle",
+    description:
+      "Тимчасово відключити звичку без архівування — не потрапляє в календар і не шле нагадування. Оборотно.",
+    examples: [
+      "постав 'Біг' на паузу",
+      "запаузь медитацію",
+      "знов активуй воду",
+    ],
+    prompt: "Постав звичку на паузу: ",
+    requiresInput: true,
+    requiresOnline: true,
+    keywords: ["pause", "resume", "unpause", "пауза", "відновити"],
+  },
+  {
     id: "archive_habit",
     module: "routine",
     label: "Архівувати звичку",
