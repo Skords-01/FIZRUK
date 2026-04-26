@@ -680,6 +680,265 @@ const noLowContrastTextOnFill = {
   },
 };
 
+// ─── no-bigint-string ───────────────────────────────────────────────────
+//
+// The `pg` driver returns `int8` / `bigint` columns as JavaScript strings
+// (see AGENTS.md hard rule #1 and issue #708). Every server serializer
+// that maps `.rows` from a query result must wrap numeric-looking
+// columns in `Number(...)` so the JSON contract sends actual numbers
+// to API consumers.
+//
+// This rule uses a **name-based heuristic**: when it finds a
+// `.rows.map(…)` call whose callback returns an object literal, it
+// checks each property whose key matches the configurable
+// `numericColumns` list. If the property value is a plain member
+// expression (`r.id`, `row.amount`) without a `Number(…)` wrapper,
+// it reports a warning.
+//
+// The heuristic intentionally prefers false-negatives over
+// false-positives — it only fires on the canonical
+// `rows.map(r => ({ id: r.id }))` shape.
+
+const DEFAULT_NUMERIC_COLUMNS = [
+  "id",
+  "user_id",
+  "account_id",
+  "transaction_id",
+  "workout_id",
+  "habit_id",
+  "recipe_id",
+  "meal_id",
+  "subscription_id",
+  "budget_id",
+  "debt_id",
+  "asset_id",
+  "amount",
+  "balance",
+  "credit_limit",
+  "count",
+  "version",
+  "created_at",
+  "updated_at",
+  "deleted_at",
+];
+
+const NO_BIGINT_STRING_MESSAGE =
+  "Property `{{prop}}` looks like a pg numeric column mapped from `.rows` without `Number(…)` coercion. The `pg` driver returns `bigint` as a string — wrap it: `{{prop}}: Number({{expr}})`. See AGENTS.md rule #1.";
+
+function isNumberCall(node) {
+  if (!node || node.type !== "CallExpression") return false;
+  const callee = node.callee;
+  return callee.type === "Identifier" && callee.name === "Number";
+}
+
+function isToNumberOrNullCall(node) {
+  if (!node || node.type !== "CallExpression") return false;
+  const callee = node.callee;
+  return callee.type === "Identifier" && /^toNumber/.test(callee.name);
+}
+
+function isNumericCoercion(node) {
+  if (!node) return false;
+  if (isNumberCall(node)) return true;
+  if (isToNumberOrNullCall(node)) return true;
+  // parseInt / parseFloat
+  if (
+    node.type === "CallExpression" &&
+    node.callee.type === "Identifier" &&
+    (node.callee.name === "parseInt" || node.callee.name === "parseFloat")
+  ) {
+    return true;
+  }
+  // Unary `+expr`
+  if (node.type === "UnaryExpression" && node.operator === "+") return true;
+  // Ternary where both branches are coerced (e.g. `r.x ? Number(r.x) : 0`)
+  if (node.type === "ConditionalExpression") {
+    return (
+      isNumericCoercion(node.consequent) && isNumericCoercion(node.alternate)
+    );
+  }
+  // Literal number (default fallback like `0` or `null`)
+  if (
+    node.type === "Literal" &&
+    (typeof node.value === "number" || node.value === null)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isRowsMemberAccess(node) {
+  // Match `<expr>.rows` (e.g. `result.rows`, `res.rows`)
+  if (
+    node.type === "MemberExpression" &&
+    !node.computed &&
+    node.property.type === "Identifier" &&
+    node.property.name === "rows"
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function matchesNumericColumn(key, numericColumnsSet) {
+  if (typeof key !== "string") return false;
+  // Exact match
+  if (numericColumnsSet.has(key)) return true;
+  // Suffix match for `*_id`, `*_at` patterns
+  if (key.endsWith("_id") || key.endsWith("_at")) return true;
+  return false;
+}
+
+function getSourceText(node) {
+  if (
+    node.type === "MemberExpression" &&
+    !node.computed &&
+    node.property.type === "Identifier"
+  ) {
+    if (node.object.type === "Identifier") {
+      return `${node.object.name}.${node.property.name}`;
+    }
+  }
+  if (node.type === "Identifier") return node.name;
+  return "…";
+}
+
+const noBigintString = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid mapping pg `.rows` into an object literal without `Number(…)` on columns that are likely `bigint`/`int8`. The `pg` driver returns these as strings — see AGENTS.md rule #1.",
+    },
+    schema: [
+      {
+        type: "object",
+        properties: {
+          numericColumns: {
+            type: "array",
+            items: { type: "string" },
+            uniqueItems: true,
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
+    messages: { noCoercion: NO_BIGINT_STRING_MESSAGE },
+  },
+  create(context) {
+    const options = context.options[0] || {};
+    const numericColumnsSet = new Set(
+      options.numericColumns || DEFAULT_NUMERIC_COLUMNS,
+    );
+
+    return {
+      CallExpression(node) {
+        // Look for `<something>.rows.map(<callback>)`
+        const callee = node.callee;
+        if (callee.type !== "MemberExpression") return;
+        if (callee.computed) return;
+        if (
+          !callee.property ||
+          callee.property.type !== "Identifier" ||
+          callee.property.name !== "map"
+        ) {
+          return;
+        }
+        // callee.object should be `<expr>.rows`
+        if (!isRowsMemberAccess(callee.object)) return;
+
+        // Get the callback (first argument to .map())
+        const callback = node.arguments && node.arguments[0];
+        if (!callback) return;
+        if (
+          callback.type !== "ArrowFunctionExpression" &&
+          callback.type !== "FunctionExpression"
+        ) {
+          return;
+        }
+
+        // Find the returned object expression
+        let returnedObject = null;
+
+        if (callback.body.type === "ObjectExpression") {
+          // Arrow with concise body: `rows.map(r => ({ ... }))`
+          returnedObject = callback.body;
+        } else if (callback.body.type === "BlockStatement") {
+          // Block body — look for `return { ... }`
+          for (const stmt of callback.body.body) {
+            if (
+              stmt.type === "ReturnStatement" &&
+              stmt.argument &&
+              stmt.argument.type === "ObjectExpression"
+            ) {
+              returnedObject = stmt.argument;
+              break;
+            }
+          }
+        }
+
+        if (!returnedObject) return;
+
+        // Get the callback parameter name (for heuristic: `r.id` where r is the param)
+        const params = callback.params;
+        if (!params || params.length === 0) return;
+        const paramNode = params[0];
+        // Support simple identifier and destructuring (skip destructuring — it's a different pattern)
+        let paramName = null;
+        if (paramNode.type === "Identifier") {
+          paramName = paramNode.name;
+        } else {
+          // Destructured param — skip this callback (the destructured names
+          // are the column names themselves, not `r.id` style)
+          return;
+        }
+
+        // Check each property in the returned object
+        for (const prop of returnedObject.properties) {
+          if (prop.type === "SpreadElement") continue;
+          if (prop.type !== "Property") continue;
+
+          // Get the property key name
+          let keyName = null;
+          if (prop.key.type === "Identifier") {
+            keyName = prop.key.name;
+          } else if (
+            prop.key.type === "Literal" &&
+            typeof prop.key.value === "string"
+          ) {
+            keyName = prop.key.value;
+          }
+          if (!keyName) continue;
+
+          // Check if this key matches numeric columns
+          if (!matchesNumericColumn(keyName, numericColumnsSet)) continue;
+
+          // Check if the value is already wrapped in Number() or equivalent
+          const value = prop.value;
+          if (isNumericCoercion(value)) continue;
+
+          // Check if the value is a member expression on the param (r.id, r.amount, etc.)
+          if (
+            value.type === "MemberExpression" &&
+            !value.computed &&
+            value.object.type === "Identifier" &&
+            value.object.name === paramName
+          ) {
+            context.report({
+              node: prop.value,
+              messageId: "noCoercion",
+              data: {
+                prop: keyName,
+                expr: getSourceText(value),
+              },
+            });
+          }
+        }
+      },
+    };
+  },
+};
+
 const plugin = {
   rules: {
     "no-eyebrow-drift": noEyebrowDrift,
@@ -689,6 +948,7 @@ const plugin = {
     "ai-marker-syntax": aiMarkerSyntax,
     "valid-tailwind-opacity": validTailwindOpacity,
     "no-low-contrast-text-on-fill": noLowContrastTextOnFill,
+    "no-bigint-string": noBigintString,
   },
 };
 
@@ -700,6 +960,7 @@ export {
   ALLOWED_TAILWIND_OPACITY_STEPS,
   TAILWIND_OPACITY_UTILITIES,
   STRONG_BG_FAMILIES,
+  DEFAULT_NUMERIC_COLUMNS,
 };
 
 export default plugin;

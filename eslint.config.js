@@ -314,5 +314,22 @@ export default [
       ],
     },
   },
+  // Server bigint→string guardrail — the `pg` driver returns `int8` /
+  // `bigint` columns as JavaScript strings; every `.rows.map(…)` that
+  // constructs a response object must wrap numeric-looking columns in
+  // `Number(…)`. See AGENTS.md hard rule #1 and issue #708.
+  //
+  // Scoped to `apps/server/src/**` only — the web app never queries
+  // pg directly.
+  {
+    files: ["apps/server/src/**/*.{js,ts}"],
+    ignores: [
+      "apps/server/src/**/*.test.{js,ts}",
+      "apps/server/src/**/__tests__/**",
+    ],
+    rules: {
+      "sergeant-design/no-bigint-string": "error",
+    },
+  },
   eslintConfigPrettier,
 ];
