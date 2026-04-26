@@ -393,15 +393,21 @@ Full dark mode support with warm undertones:
 
 ```css
 .dark {
-  --c-bg: 23 20 18; /* Warm dark */
-  --c-panel: 32 28 25; /* Elevated surface */
-  --c-panel-hi: 41 36 32; /* Hover state */
-  --c-line: 58 52 46; /* Borders */
-  --c-text: 250 247 241; /* Warm white */
-  --c-muted: 168 162 158; /* Medium gray */
-  --c-subtle: 87 83 78; /* Dimmed */
+  --c-bg: 23 20 18; /* #171412 — warm dark */
+  --c-panel: 32 28 25; /* #201c19 — elevated surface */
+  --c-panel-hi: 48 42 37; /* #302a25 — hover / input */
+  --c-line: 82 74 65; /* #524a41 — warm border */
+  --c-border-strong: 112 102 90; /* #70665a — prominent divider */
+  --c-text: 250 247 241; /* #faf7f1 — warm white */
+  --c-muted: 180 174 169; /* #b4aea9 — medium warm gray */
+  --c-subtle: 135 128 121; /* #878079 — readable tertiary */
 }
 ```
+
+> Contrast intent: `muted` / `subtle` / `line` були підняті після WCAG-аудиту
+> (див. PR-серію підняття контрасту темної теми). Dark-mode border тепер
+> читається на `--c-panel` ≥3:1, а `--c-subtle` забезпечує ≥4.5:1 на всіх
+> поверхнях.
 
 ---
 
@@ -425,11 +431,13 @@ Full dark mode support with warm undertones:
 
 ### File Locations
 
-- **Tailwind Config**: `/tailwind.config.js`
-- **Global CSS**: `/src/index.css`
-- **Color Palette**: `/src/modules/finyk/constants/chartPalette.js`
-- **Module Themes**: `/src/shared/lib/moduleThemes.js`
-- **UI Components**: `/src/shared/components/ui/`
+- **Tailwind preset (web + mobile)**: `packages/design-tokens/tailwind-preset.js`
+- **Raw visual tokens**: `packages/design-tokens/tokens.js`
+- **Mobile-only tokens (NativeWind)**: `packages/design-tokens/mobile.js`
+- **Global CSS (semantic variables)**: `apps/web/src/index.css`
+- **Chart theme (series, palette, gradients)**: `apps/web/src/shared/charts/chartTheme.ts`
+- **UI primitives (web)**: `apps/web/src/shared/components/ui/`
+- **UI primitives (mobile)**: `apps/mobile/src/components/ui/`
 
 ### Key Components
 
