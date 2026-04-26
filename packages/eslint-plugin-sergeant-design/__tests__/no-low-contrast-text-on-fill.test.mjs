@@ -128,6 +128,31 @@ describe("no-low-contrast-text-on-fill", () => {
     assert.equal(messages.length, 0);
   });
 
+  it("does NOT flag opacity-tinted bg utilities (regression for review #859)", () => {
+    // `bg-brand/50 text-white` previously half-matched `bg-brand` (with
+    // `stepRaw=undefined`) because the regex lookahead allowed `/` as a
+    // closing boundary. The rule docs explicitly carve opacity tints out
+    // — they're soft washes, not saturated solid fills, and the
+    // foreground over them is `text-{family}-strong`, not white. Lock
+    // both shapes (`bg-brand/N` and `bg-brand-500/N`) so the regression
+    // can't sneak back.
+    for (const cls of [
+      "bg-brand/50 text-white",
+      "bg-brand/10 text-white",
+      "bg-finyk/15 text-white",
+      "bg-success/30 text-white",
+      "bg-brand-500/40 text-white",
+      "bg-fizruk-200/8 text-white",
+    ]) {
+      const messages = lint(`const c = "${cls}";`);
+      assert.equal(
+        messages.length,
+        0,
+        `expected no violation for "${cls}" — opacity tints are out of scope`,
+      );
+    }
+  });
+
   it("does NOT flag `bg-{c} text-text` (no white-on-fill text)", () => {
     const messages = lint(`const c = "bg-brand text-text";`);
     assert.equal(messages.length, 0);

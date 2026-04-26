@@ -604,8 +604,16 @@ const STRONG_BG_FAMILIES = [
 // (variant prefixes contain a `:`; we exclude them via the leading
 // boundary). The (?<!\S) lookbehind ensures we only match at a
 // whitespace boundary so `dark:bg-finyk` does NOT match `bg-finyk`.
+//
+// The trailing lookahead deliberately rejects `/` so that
+// `bg-brand/50` (an opacity-tinted soft wash, explicitly out-of-scope
+// per the rule docs) does NOT half-match `bg-brand` with
+// `stepRaw=undefined`. Only whitespace / end-of-string close the
+// match; the optional `-(\d{1,3})` group already swallows the
+// numeric step, so `bg-brand-500/40` similarly fails the lookahead
+// and is left for the (separate) opacity-tier rules.
 const RX_SATURATED_BG = new RegExp(
-  String.raw`(?<!\S)bg-(${STRONG_BG_FAMILIES.join("|")})(?:-(\d{1,3}))?(?=\s|$|/)`,
+  String.raw`(?<!\S)bg-(${STRONG_BG_FAMILIES.join("|")})(?:-(\d{1,3}))?(?=\s|$)`,
   "g",
 );
 
