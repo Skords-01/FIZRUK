@@ -170,9 +170,15 @@ export default async function handler(
       { role: "user", content: toolResultMessages },
     ];
 
+    // AI-CONTEXT: cap на tool-result відповідь — це фінальний текст для
+    // юзера після того як модель отримала дані з tool_result (брифінги,
+    // підсумки, аналіз бюджету). Markdown-таблиці + кілька секцій по-українськи
+    // легко займають 1.5–2k токенів; нижчі значення обрізали відповідь
+    // посеред речення. Тримаємо із запасом — модель сама зупиниться раніше,
+    // якщо контент закінчився.
     const payload = {
       model: "claude-sonnet-4-6",
-      max_tokens: 400,
+      max_tokens: 2500,
       system: buildSystem(context),
       tools: TOOLS_WITH_CACHE,
       messages: fullMessages,
@@ -227,9 +233,14 @@ export default async function handler(
   try {
     ({ response, data } = await anthropicMessages(
       apiKey,
+      // AI-CONTEXT: перший крок чату — модель може повернути text або tool_use.
+      // Direct-text відповіді на питання типу «що з фінансами?» потребують
+      // більше за 600 токенів, бо це часто структуровані пояснення з
+      // markdown-форматуванням. Тримаємо нижче за tool-result cap, бо тут
+      // зазвичай немає таблиць/брифінгів.
       {
         model: "claude-sonnet-4-6",
-        max_tokens: 600,
+        max_tokens: 1500,
         system: buildSystem(context),
         tools: TOOLS_WITH_CACHE,
         messages: cleaned,
