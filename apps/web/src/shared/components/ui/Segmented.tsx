@@ -10,15 +10,23 @@ import { cn } from "@shared/lib/cn";
  *
  * Not intended to replace `<SubTabs>` (full-width bar-style) — that
  * pattern is a separate variant kept in its own component for now.
+ *
+ * Two-axis API (see `docs/COMPONENT_API.md`):
+ *   - `variant` — accent colour (`brand` for the default chrome; the four
+ *                 module tokens scope the active state to a module).
+ *   - `style`   — visual treatment of the active chip.
+ *                 `solid` — filled accent background (Fizruk Workouts).
+ *                 `soft`  (default) — tinted surface + accent border
+ *                                       + accent text (Routine chips).
  */
 
-export type SegmentedAccent =
+export type SegmentedVariant =
   | "brand"
   | "fizruk"
   | "routine"
   | "nutrition"
   | "finyk";
-export type SegmentedTone = "solid" | "soft";
+export type SegmentedStyle = "solid" | "soft";
 export type SegmentedSize = "sm" | "md";
 
 export interface SegmentedItem<V extends string = string> {
@@ -32,18 +40,20 @@ export interface SegmentedProps<V extends string = string> {
   items: ReadonlyArray<SegmentedItem<V>>;
   value: V;
   onChange: (value: V) => void;
-  /** "solid" = filled accent background (used in Fizruk Workouts tabs).
-   *  "soft"  = tinted surface + accent border + accent text (Routine chips). */
-  tone?: SegmentedTone;
+  /** Visual treatment of the active chip. Defaults to `soft`.
+   *  `solid` = filled accent background (used in Fizruk Workouts tabs).
+   *  `soft`  = tinted surface + accent border + accent text (Routine chips). */
+  style?: SegmentedStyle;
   /** "sm" ≈ 36px min-height; "md" = 44px min-height (touch target). */
   size?: SegmentedSize;
-  accent?: SegmentedAccent;
+  /** Accent colour token. Defaults to `brand`. */
+  variant?: SegmentedVariant;
   /** Accessible label for the underlying role="tablist". */
   ariaLabel?: string;
   className?: string;
 }
 
-const ACCENT_SOLID: Record<SegmentedAccent, string> = {
+const VARIANT_SOLID: Record<SegmentedVariant, string> = {
   brand: "bg-brand text-white border-brand",
   fizruk: "bg-fizruk text-white border-fizruk",
   routine: "bg-routine text-white border-routine",
@@ -51,7 +61,7 @@ const ACCENT_SOLID: Record<SegmentedAccent, string> = {
   finyk: "bg-finyk text-white border-finyk",
 };
 
-const ACCENT_SOFT: Record<SegmentedAccent, string> = {
+const VARIANT_SOFT: Record<SegmentedVariant, string> = {
   brand:
     "border-brand-200 bg-brand-50 text-brand-700 shadow-sm dark:border-brand/40 dark:bg-brand/15 dark:text-brand",
   fizruk:
@@ -76,14 +86,14 @@ export function Segmented<V extends string = string>({
   items,
   value,
   onChange,
-  tone = "soft",
+  style = "soft",
   size = "md",
-  accent = "brand",
+  variant = "brand",
   ariaLabel,
   className,
 }: SegmentedProps<V>) {
   const activeClass =
-    tone === "solid" ? ACCENT_SOLID[accent] : ACCENT_SOFT[accent];
+    style === "solid" ? VARIANT_SOLID[variant] : VARIANT_SOFT[variant];
 
   return (
     <div

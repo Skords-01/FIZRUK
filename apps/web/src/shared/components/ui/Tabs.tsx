@@ -21,14 +21,19 @@ import { cn } from "@shared/lib/cn";
  *                  navigation, supports controlled panels.
  *   - `Segmented`— compact mode/view switcher (chips). No panels, shorter.
  *
- * Tones:
- *   - `underline` — minimal underline under active tab (default)
- *   - `pill`      — soft tinted pill background on active tab
+ * Two-axis API (see `docs/COMPONENT_API.md`):
+ *   - `variant` — accent colour (`brand` is the navigation default; the
+ *                 four module tokens scope the active state to a module).
+ *   - `style`   — visual treatment of the active tab.
+ *                 `underline` (default) — thin border under the active
+ *                                          label; works in dense layouts.
+ *                 `pill`                 — soft tinted pill on the active
+ *                                          label; better when isolated.
  */
 
-export type TabsTone = "underline" | "pill";
+export type TabsStyle = "underline" | "pill";
 
-export type TabsAccent = "brand" | ModuleAccent;
+export type TabsVariant = "brand" | ModuleAccent;
 
 export type TabsSize = "sm" | "md";
 
@@ -46,8 +51,10 @@ export interface TabsProps<V extends string = string> {
   items: ReadonlyArray<TabItem<V>>;
   value: V;
   onChange: (value: V) => void;
-  tone?: TabsTone;
-  accent?: TabsAccent;
+  /** Visual treatment of the active tab. Defaults to `underline`. */
+  style?: TabsStyle;
+  /** Accent colour token. Defaults to `brand`. */
+  variant?: TabsVariant;
   size?: TabsSize;
   /** Stretch tabs to fill the container width. */
   fill?: boolean;
@@ -57,7 +64,7 @@ export interface TabsProps<V extends string = string> {
   tabsClassName?: string;
 }
 
-const ACCENT_TEXT: Record<TabsAccent, string> = {
+const VARIANT_TEXT: Record<TabsVariant, string> = {
   brand: "text-brand",
   finyk: "text-finyk",
   fizruk: "text-fizruk",
@@ -65,7 +72,7 @@ const ACCENT_TEXT: Record<TabsAccent, string> = {
   nutrition: "text-nutrition",
 };
 
-const ACCENT_UNDERLINE: Record<TabsAccent, string> = {
+const VARIANT_UNDERLINE: Record<TabsVariant, string> = {
   brand: "border-brand",
   finyk: "border-finyk",
   fizruk: "border-fizruk",
@@ -73,7 +80,7 @@ const ACCENT_UNDERLINE: Record<TabsAccent, string> = {
   nutrition: "border-nutrition",
 };
 
-const ACCENT_PILL: Record<TabsAccent, string> = {
+const VARIANT_PILL: Record<TabsVariant, string> = {
   brand: "bg-brand-50 text-brand-700 dark:bg-brand/15 dark:text-brand",
   finyk:
     "bg-finyk-soft text-finyk-strong dark:bg-finyk-surface-dark/15 dark:text-finyk",
@@ -85,7 +92,7 @@ const ACCENT_PILL: Record<TabsAccent, string> = {
     "bg-nutrition-soft text-nutrition-strong dark:bg-nutrition-surface-dark/15 dark:text-nutrition",
 };
 
-const ACCENT_RING: Record<TabsAccent, string> = {
+const VARIANT_RING: Record<TabsVariant, string> = {
   brand: "focus-visible:ring-brand-500/45",
   finyk: "focus-visible:ring-finyk/45",
   fizruk: "focus-visible:ring-fizruk/45",
@@ -102,8 +109,8 @@ export function Tabs<V extends string = string>({
   items,
   value,
   onChange,
-  tone = "underline",
-  accent = "brand",
+  style = "underline",
+  variant = "brand",
   size = "md",
   fill = false,
   ariaLabel,
@@ -170,7 +177,7 @@ export function Tabs<V extends string = string>({
       aria-label={ariaLabel}
       className={cn(
         "flex items-stretch",
-        tone === "underline"
+        style === "underline"
           ? "gap-1 border-b border-line"
           : "gap-1 p-1 rounded-2xl bg-surface-muted",
         fill && "w-full",
@@ -183,24 +190,24 @@ export function Tabs<V extends string = string>({
           "inline-flex items-center justify-center gap-2 font-semibold",
           "transition-colors outline-none",
           "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-          ACCENT_RING[accent],
+          VARIANT_RING[variant],
           SIZE[size],
           fill && "flex-1 min-w-0",
           item.disabled && "opacity-50 cursor-not-allowed",
         );
 
-        const toneClasses =
-          tone === "underline"
+        const styleClasses =
+          style === "underline"
             ? cn(
                 "rounded-none border-b-2 -mb-px",
                 isActive
-                  ? cn(ACCENT_UNDERLINE[accent], ACCENT_TEXT[accent])
+                  ? cn(VARIANT_UNDERLINE[variant], VARIANT_TEXT[variant])
                   : "border-transparent text-fg-muted hover:text-fg",
               )
             : cn(
                 "rounded-xl",
                 isActive
-                  ? ACCENT_PILL[accent]
+                  ? VARIANT_PILL[variant]
                   : "text-fg-muted hover:text-fg hover:bg-surface",
               );
 
@@ -217,7 +224,7 @@ export function Tabs<V extends string = string>({
             disabled={item.disabled}
             onClick={() => !item.disabled && onChange(item.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
-            className={cn(commonClasses, toneClasses, tabsClassName)}
+            className={cn(commonClasses, styleClasses, tabsClassName)}
           >
             {item.icon}
             <span className="truncate">{item.label}</span>

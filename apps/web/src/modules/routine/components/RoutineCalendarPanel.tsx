@@ -246,9 +246,9 @@ export function RoutineCalendarPanel({
       )}
 
       <Segmented
-        tone="soft"
+        style="soft"
         size="sm"
-        accent="routine"
+        variant="routine"
         ariaLabel="Часовий діапазон"
         items={timeModeItems}
         value={timeMode}

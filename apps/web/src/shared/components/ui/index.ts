@@ -68,17 +68,19 @@ export { SectionHeader, SectionHeading } from "./SectionHeading";
 export type {
   SectionHeaderProps,
   SectionHeaderSize,
+  SectionHeaderVariant,
   SectionHeadingProps,
   SectionHeadingSize,
+  SectionHeadingVariant,
 } from "./SectionHeading";
 
 export { Segmented } from "./Segmented";
 export type {
-  SegmentedAccent,
   SegmentedItem,
   SegmentedProps,
   SegmentedSize,
-  SegmentedTone,
+  SegmentedStyle,
+  SegmentedVariant,
 } from "./Segmented";
 
 export { Select } from "./Select";
@@ -107,15 +109,15 @@ export { Switch } from "./Switch";
 export type { SwitchProps } from "./Switch";
 
 export { Stat } from "./Stat";
-export type { StatProps, StatSize, StatTone } from "./Stat";
+export type { StatProps, StatSize, StatVariant } from "./Stat";
 
 export { Tabs } from "./Tabs";
 export type {
   TabItem,
-  TabsAccent,
   TabsProps,
   TabsSize,
-  TabsTone,
+  TabsStyle,
+  TabsVariant,
 } from "./Tabs";
 
 export { ToastContainer } from "./Toast";

@@ -165,7 +165,7 @@ export function RoutineCalendarMonthGrid({
                     key={`dh-${item.label}`}
                     as="p"
                     size="xs"
-                    tone="subtle"
+                    variant="subtle"
                     className={cn(idx > 0 && "mt-2")}
                   >
                     {item.label}

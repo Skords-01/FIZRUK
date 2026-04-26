@@ -61,7 +61,7 @@ export function RoutineCalendarHero({
         />
         <div className="flex-1 grid grid-cols-2 gap-2 w-full sm:grid-cols-2 lg:grid-cols-4">
           <div className={C.statCard}>
-            <SectionHeading as="p" size="xs" tone="subtle">
+            <SectionHeading as="p" size="xs" variant="subtle">
               Подій у зрізі
             </SectionHeading>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
@@ -69,7 +69,7 @@ export function RoutineCalendarHero({
             </p>
           </div>
           <div className={C.statCard}>
-            <SectionHeading as="p" size="xs" tone="subtle">
+            <SectionHeading as="p" size="xs" variant="subtle">
               Звичок активних
             </SectionHeading>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
@@ -77,7 +77,7 @@ export function RoutineCalendarHero({
             </p>
           </div>
           <div className={C.statCard}>
-            <SectionHeading as="p" size="xs" tone="subtle">
+            <SectionHeading as="p" size="xs" variant="subtle">
               Виконання
             </SectionHeading>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">
@@ -88,7 +88,7 @@ export function RoutineCalendarHero({
             </p>
           </div>
           <div className={C.statCard}>
-            <SectionHeading as="p" size="xs" tone="subtle">
+            <SectionHeading as="p" size="xs" variant="subtle">
               Поточна серія
             </SectionHeading>
             <p className="text-2xl font-black text-text tabular-nums mt-0.5">

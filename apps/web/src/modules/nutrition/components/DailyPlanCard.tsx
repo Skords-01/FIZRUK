@@ -149,7 +149,7 @@ function MealRow({ meal, onAddToLog, onRegen, busy }) {
             <span className="text-base leading-none" aria-hidden>
               {MEAL_TYPE_ICONS[meal.type] || "🍴"}
             </span>
-            <SectionHeading as="span" size="sm" tone="nutrition">
+            <SectionHeading as="span" size="sm" variant="nutrition">
               {MEAL_TYPE_LABELS[meal.type] || meal.label}
             </SectionHeading>
           </div>

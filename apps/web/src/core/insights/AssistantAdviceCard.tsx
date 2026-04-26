@@ -71,7 +71,7 @@ export function AssistantAdviceCard({
             >
               S
             </span>
-            <SectionHeading as="span" size="xs" tone="muted">
+            <SectionHeading as="span" size="xs" variant="muted">
               Порада асистента
             </SectionHeading>
           </div>

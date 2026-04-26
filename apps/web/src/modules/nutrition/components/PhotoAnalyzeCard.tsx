@@ -132,7 +132,7 @@ export function PhotoAnalyzeCard({
                 <SectionHeading
                   as="div"
                   size="xs"
-                  tone="nutrition"
+                  variant="nutrition"
                   className="leading-none mb-1"
                 >
                   {m.label}
