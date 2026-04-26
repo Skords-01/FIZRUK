@@ -117,7 +117,7 @@ Payload-и мають використовувати `TOOLS_WITH_CACHE`:
 }
 ```
 
-Anthropic docs описують cache prefix ordering як `tools` → `system` → `messages`; `tools` і `system` обидва cacheable. Для Sergeant важливий практичний контракт: usage має показати non-zero `cache_creation_input_tokens` на першому запиті і non-zero `cache_read_input_tokens` на повторному.
+Серверний `chat.ts` тримає rollout invariant як `system` → `tools` → `messages`: `SYSTEM_PREFIX` і tool definitions мають бути стабільними, а `context` лишається окремим non-cached system block. Для Sergeant важливий практичний контракт: usage має показати non-zero `cache_creation_input_tokens` на першому запиті і non-zero `cache_read_input_tokens` на повторному.
 
 ### 3. (Опц.) Beta header — лише для старих моделей
 
