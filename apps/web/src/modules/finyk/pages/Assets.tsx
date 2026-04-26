@@ -469,7 +469,7 @@ export function Assets({
                 >
                   <div className="flex items-center gap-3">
                     <span
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/5 text-muted"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-surface-muted text-muted"
                       aria-hidden
                     >
                       <Icon name="credit-card" size={16} />
