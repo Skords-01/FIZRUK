@@ -2,12 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DebtCard } from "../components/DebtCard";
 import { SubCard } from "../components/SubCard";
 import { RecurringSuggestions } from "../components/RecurringSuggestions";
-import { TxRow } from "../components/TxRow";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
-import { Icon, type IconName } from "@shared/components/ui/Icon";
+import { Icon } from "@shared/components/ui/Icon";
 import {
   getAccountLabel,
   getMonoDebt,
@@ -20,10 +19,6 @@ import {
   getDebtEffectiveTotal,
   getReceivableEffectiveTotal,
 } from "../utils";
-import {
-  getDebtTxRole,
-  getReceivableTxRole,
-} from "@sergeant/finyk-domain/domain/debtEngine";
 import { filterVisibleAccounts } from "@sergeant/finyk-domain/domain/assets/aggregates";
 import { cn } from "@shared/lib/cn";
 import { openHubModule } from "@shared/lib/hubNav";
@@ -32,111 +27,12 @@ import { VoiceMicButton } from "@shared/components/ui/VoiceMicButton";
 import { parseExpenseSpeech as parseExpenseVoice } from "@sergeant/shared";
 import { computeFinykSchedule, startOfToday } from "../lib/upcomingSchedule";
 import { FinykStatsStrip } from "../components/FinykStatsStrip";
-
-type SectionBarProps = {
-  title: string;
-  iconName: IconName;
-  iconTone?: "success" | "danger" | "muted";
-  summary?: string | null;
-  open: boolean;
-  onToggle: () => void;
-};
-
-function AssetsLiabilitiesBar({
-  assets,
-  liabilities,
-}: {
-  assets: number;
-  liabilities: number;
-}) {
-  const total = assets + liabilities;
-  if (total <= 0) return null;
-  const assetsPct = Math.round((assets / total) * 100);
-  const liabilitiesPct = 100 - assetsPct;
-  return (
-    <div className="mt-3">
-      <div
-        className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/10"
-        role="img"
-        aria-label={`Активи ${assetsPct}% · Пасиви ${liabilitiesPct}%`}
-      >
-        <div className="bg-emerald-300/90" style={{ width: `${assetsPct}%` }} />
-        <div
-          className="bg-rose-400/80"
-          style={{ width: `${liabilitiesPct}%` }}
-        />
-      </div>
-      <div className="flex justify-between text-[11px] text-emerald-100/80 mt-1.5">
-        <span>Активи {assetsPct}%</span>
-        <span>Пасиви {liabilitiesPct}%</span>
-      </div>
-    </div>
-  );
-}
-
-function QuickActionButton({
-  iconName,
-  label,
-  onClick,
-}: {
-  iconName: IconName;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1 py-2.5 text-xs text-muted border border-dashed border-line rounded-2xl hover:border-primary hover:text-primary transition-colors"
-    >
-      <Icon name={iconName} size={18} />
-      <span className="font-medium">+ {label}</span>
-    </button>
-  );
-}
-
-function SectionBar({
-  title,
-  iconName,
-  iconTone = "muted",
-  summary,
-  open,
-  onToggle,
-}: SectionBarProps) {
-  const toneClass =
-    iconTone === "success"
-      ? "text-success"
-      : iconTone === "danger"
-        ? "text-danger"
-        : "text-muted";
-  return (
-    <button
-      onClick={onToggle}
-      className="w-full flex items-center justify-between px-4 py-3 bg-panelHi border border-line rounded-2xl mb-2 text-left transition-colors hover:border-muted/50"
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <span
-          className={cn(
-            "inline-flex items-center justify-center shrink-0",
-            toneClass,
-          )}
-          aria-hidden
-        >
-          <Icon name={iconName} size={18} />
-        </span>
-        <div className="min-w-0">
-          <div className="text-sm font-bold text-text truncate">{title}</div>
-          {summary && (
-            <div className="text-xs text-muted mt-0.5 truncate">{summary}</div>
-          )}
-        </div>
-      </div>
-      <span className="text-xs text-muted shrink-0 ml-2">
-        {open ? "Згорнути ↑" : "Розкласти ↓"}
-      </span>
-    </button>
-  );
-}
+import {
+  AssetsLiabilitiesBar,
+  QuickActionButton,
+  SectionBar,
+} from "./AssetsBars";
+import { AssetsTxPickerView } from "./AssetsTxPickerView";
 
 export function Assets({
   mono,
@@ -309,253 +205,22 @@ export function Assets({
   }, [showDebtForm, open.liabilities]);
 
   if (txPicker) {
-    // --- Mono credit card repayment linking ---
-    if (txPicker.type === "monoDebt") {
-      const account = accounts.find((a) => a.id === txPicker.id);
-      const linkedIds = monoDebtLinkedTxIds[txPicker.id] || [];
-      const paid = transactions
-        .filter((t) => linkedIds.includes(t.id))
-        .reduce((s, t) => s + Math.abs(t.amount / 100), 0);
-      const remaining = getMonoDebt(account);
-      const total = paid + remaining;
-      const label = getAccountLabel(account);
-
-      const isSuggested = (t) => t._accountId === txPicker.id && t.amount > 0;
-
-      return (
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-line bg-bg sticky top-0 z-10">
-            <button
-              onClick={() => setTxPicker(null)}
-              className="text-sm text-muted hover:text-text transition-colors"
-            >
-              ← Назад
-            </button>
-            <span className="text-sm font-bold">Погашення: {label}</span>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-              <Card variant="flat" radius="md" className="mb-3">
-                <div className="text-xs text-subtle mb-1">{label}</div>
-                <div className="text-2xl font-extrabold text-danger">
-                  −
-                  {remaining.toLocaleString("uk-UA", {
-                    maximumFractionDigits: 0,
-                  })}{" "}
-                  ₴ залишок боргу
-                </div>
-                <div className="text-xs text-subtle mt-1">
-                  Погашено цього місяця:{" "}
-                  {paid.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
-                  · Базовий борг:{" "}
-                  {total.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}{" "}
-                  ₴
-                </div>
-                <div className="h-1.5 bg-line rounded-full overflow-hidden mt-3">
-                  <div
-                    className="h-full bg-danger rounded-full transition-[width,background-color] duration-500"
-                    style={{
-                      width: `${total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0}%`,
-                    }}
-                  />
-                </div>
-              </Card>
-              <p className="text-xs text-subtle mb-3 px-1">
-                Тапни транзакцію щоб прив&apos;язати як погашення. Виділені
-                зеленим — автоматично виявлені поповнення картки.
-              </p>
-              {transactions.map((t, i) => {
-                const isLinked = linkedIds.includes(t.id);
-                const suggested = isSuggested(t);
-                return (
-                  <div key={i}>
-                    {suggested && !isLinked && (
-                      <div className="text-2xs font-semibold text-success px-1 pt-1">
-                        ↑ Поповнення картки
-                      </div>
-                    )}
-                    <TxRow
-                      tx={t}
-                      highlighted={isLinked}
-                      onClick={() => toggleMonoDebtTx(txPicker.id, t.id)}
-                      accounts={accounts}
-                      hideAmount={!showBalance}
-                      customCategories={customCategories}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (txPicker.type === "sub") {
-      const sub = subscriptions.find((s) => s.id === txPicker.subId);
-      if (!sub) {
-        return (
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-line bg-bg sticky top-0 z-10">
-              <button
-                type="button"
-                onClick={() => setTxPicker(null)}
-                className="text-sm text-muted hover:text-text transition-colors"
-              >
-                ← Назад
-              </button>
-            </div>
-          </div>
-        );
-      }
-      const linkedId = sub.linkedTxId;
-      const expenses = transactions
-        .filter((t) => t.amount < 0)
-        .sort((a, b) => (b.time || 0) - (a.time || 0));
-      return (
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-line bg-bg sticky top-0 z-10">
-            <button
-              type="button"
-              onClick={() => setTxPicker(null)}
-              className="text-sm text-muted hover:text-text transition-colors"
-            >
-              ← Назад
-            </button>
-            <span className="text-sm font-bold">
-              Транзакція для «{sub.name}»
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-              <Card variant="flat" radius="md" className="mb-4">
-                <p className="text-xs text-subtle leading-relaxed">
-                  Обери списання (наприклад через Apple/Google). День місяця з
-                  транзакції підставиться в «день списання»; сума піде в огляд і
-                  в Рутину.
-                  {linkedId && (
-                    <button
-                      type="button"
-                      className="block mt-2 text-sm font-semibold text-danger hover:underline"
-                      onClick={() => {
-                        updateSubscription(sub.id, { linkedTxId: null });
-                        setTxPicker(null);
-                      }}
-                    >
-                      Зняти привʼязку
-                    </button>
-                  )}
-                </p>
-              </Card>
-              {expenses.map((t, i) => {
-                const isLinked = linkedId === t.id;
-                return (
-                  <TxRow
-                    key={t.id || i}
-                    tx={t}
-                    highlighted={isLinked}
-                    customCategories={customCategories}
-                    onClick={() => {
-                      if (isLinked) {
-                        updateSubscription(sub.id, { linkedTxId: null });
-                      } else {
-                        const bd = new Date((t.time || 0) * 1000).getDate();
-                        updateSubscription(sub.id, {
-                          linkedTxId: t.id,
-                          billingDay: bd,
-                        });
-                      }
-                      setTxPicker(null);
-                    }}
-                    accounts={accounts}
-                    hideAmount={!showBalance}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // --- Manual debt / receivable linking ---
-    const isDebt = txPicker.type === "debt";
-    const items = isDebt ? manualDebts : receivables;
-    const item = items.find((d) => d.id === txPicker.id);
-    const linked = item?.linkedTxIds || [];
-    const paid = isDebt
-      ? getDebtPaid(item, transactions)
-      : getRecvPaid(item, transactions);
-    const total = isDebt
-      ? getDebtEffectiveTotal(item, transactions)
-      : getReceivableEffectiveTotal(item, transactions);
-    const remaining = isDebt
-      ? calcDebtRemaining(item, transactions)
-      : calcReceivableRemaining(item, transactions);
-    const getTxRole = (tx) =>
-      isDebt ? getDebtTxRole(tx) : getReceivableTxRole(tx);
-
     return (
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-line bg-bg sticky top-0 z-10">
-          <button
-            onClick={() => setTxPicker(null)}
-            className="text-sm text-muted hover:text-text transition-colors"
-          >
-            ← Назад
-          </button>
-          <span className="text-sm font-bold">
-            {isDebt ? "Транзакції по пасиву" : "Транзакції по активу"}
-          </span>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-            <Card variant="flat" radius="md" className="mb-4">
-              <div className="text-xs text-subtle">
-                {item?.emoji} {item?.name}
-              </div>
-              <div
-                className={cn(
-                  "text-2xl font-extrabold mt-1",
-                  isDebt ? "text-danger" : "text-success",
-                )}
-              >
-                {isDebt ? "−" : "+"}
-                {remaining.toLocaleString("uk-UA")} ₴ залишок
-              </div>
-              <div className="text-xs text-subtle mt-1">
-                Сплачено: {paid.toLocaleString("uk-UA")} з{" "}
-                {total?.toLocaleString("uk-UA")} ₴
-              </div>
-            </Card>
-            {transactions.map((t, i) => {
-              const isLinked = linked.includes(t.id);
-              const role = isLinked ? getTxRole(t) : null;
-              return (
-                <div key={i}>
-                  {isLinked && (
-                    <div
-                      className="text-xs font-bold px-1 py-1"
-                      style={{ color: role.color }}
-                    >
-                      {role.label}
-                    </div>
-                  )}
-                  <TxRow
-                    tx={t}
-                    highlighted={isLinked}
-                    onClick={() =>
-                      toggleLinkedTx(txPicker.id, t.id, txPicker.type)
-                    }
-                    hideAmount={!showBalance}
-                    customCategories={customCategories}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <AssetsTxPickerView
+        txPicker={txPicker}
+        setTxPicker={setTxPicker}
+        accounts={accounts}
+        transactions={transactions}
+        monoDebtLinkedTxIds={monoDebtLinkedTxIds}
+        toggleMonoDebtTx={toggleMonoDebtTx}
+        subscriptions={subscriptions}
+        updateSubscription={updateSubscription}
+        manualDebts={manualDebts}
+        receivables={receivables}
+        toggleLinkedTx={toggleLinkedTx}
+        showBalance={showBalance}
+        customCategories={customCategories}
+      />
     );
   }
 
