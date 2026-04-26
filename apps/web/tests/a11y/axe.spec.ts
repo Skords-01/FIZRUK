@@ -45,6 +45,11 @@ const SURFACES: Array<{ name: string; path: string }> = [
   { name: "fizruk-dashboard", path: "/?module=fizruk" },
   { name: "nutrition-dashboard", path: "/?module=nutrition" },
   { name: "routine-dashboard", path: "/?module=routine" },
+  // Design-system showcase page — renders the full catalogue of Sergeant
+  // primitives in every variant × tone × size combination. Running axe
+  // here catches a11y regressions at the primitive level (before they
+  // propagate into module surfaces).
+  { name: "design-showcase", path: "/design" },
 ];
 
 for (const { name, path } of SURFACES) {
