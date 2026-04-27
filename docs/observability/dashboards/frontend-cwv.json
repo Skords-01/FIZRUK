@@ -1,9 +1,22 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "Prometheus datasource for Sergeant server metrics",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
   "annotations": {
     "list": [
       {
         "builtIn": 1,
-        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -46,52 +59,85 @@
       "title": "LCP — rating distribution",
       "description": "Largest Contentful Paint. Thresholds: good ≤2500ms, needs-improvement ≤4000ms, poor >4000ms. Baseline mode — no SLO threshold lines.",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 30,
-            "stacking": { "mode": "percent" },
+            "stacking": {
+              "mode": "percent"
+            },
             "lineWidth": 1
           },
           "unit": "percentunit"
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "good" },
+            "matcher": {
+              "id": "byName",
+              "options": "good"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "green", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "needs-improvement" },
+            "matcher": {
+              "id": "byName",
+              "options": "needs-improvement"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "yellow", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "poor" },
+            "matcher": {
+              "id": "byName",
+              "options": "poor"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "red", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
               }
             ]
           }
         ]
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
@@ -104,9 +150,17 @@
     {
       "title": "LCP p75",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
       "id": 2,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -119,8 +173,13 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -134,52 +193,85 @@
       "title": "INP — rating distribution",
       "description": "Interaction to Next Paint. Thresholds: good ≤200ms, needs-improvement ≤500ms, poor >500ms.",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
       "id": 3,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 30,
-            "stacking": { "mode": "percent" },
+            "stacking": {
+              "mode": "percent"
+            },
             "lineWidth": 1
           },
           "unit": "percentunit"
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "good" },
+            "matcher": {
+              "id": "byName",
+              "options": "good"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "green", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "needs-improvement" },
+            "matcher": {
+              "id": "byName",
+              "options": "needs-improvement"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "yellow", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "poor" },
+            "matcher": {
+              "id": "byName",
+              "options": "poor"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "red", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
               }
             ]
           }
         ]
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
@@ -192,9 +284,17 @@
     {
       "title": "INP p75",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
       "id": 4,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -207,8 +307,13 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -222,52 +327,85 @@
       "title": "FCP — rating distribution",
       "description": "First Contentful Paint. Thresholds: good ≤1800ms, needs-improvement ≤3000ms, poor >3000ms.",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
       "id": 5,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 30,
-            "stacking": { "mode": "percent" },
+            "stacking": {
+              "mode": "percent"
+            },
             "lineWidth": 1
           },
           "unit": "percentunit"
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "good" },
+            "matcher": {
+              "id": "byName",
+              "options": "good"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "green", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "needs-improvement" },
+            "matcher": {
+              "id": "byName",
+              "options": "needs-improvement"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "yellow", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "poor" },
+            "matcher": {
+              "id": "byName",
+              "options": "poor"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "red", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
               }
             ]
           }
         ]
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
@@ -280,9 +418,17 @@
     {
       "title": "FCP p75",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
       "id": 6,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -295,8 +441,13 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -310,52 +461,85 @@
       "title": "TTFB — rating distribution",
       "description": "Time to First Byte. Thresholds: good ≤800ms, needs-improvement ≤1800ms, poor >1800ms.",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
       "id": 7,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 30,
-            "stacking": { "mode": "percent" },
+            "stacking": {
+              "mode": "percent"
+            },
             "lineWidth": 1
           },
           "unit": "percentunit"
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "good" },
+            "matcher": {
+              "id": "byName",
+              "options": "good"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "green", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "needs-improvement" },
+            "matcher": {
+              "id": "byName",
+              "options": "needs-improvement"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "yellow", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "poor" },
+            "matcher": {
+              "id": "byName",
+              "options": "poor"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "red", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
               }
             ]
           }
         ]
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
@@ -368,9 +552,17 @@
     {
       "title": "TTFB p75",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
       "id": 8,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -383,8 +575,13 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -398,52 +595,85 @@
       "title": "CLS — rating distribution",
       "description": "Cumulative Layout Shift (unitless). Thresholds: good ≤0.1, needs-improvement ≤0.25, poor >0.25. Separate histogram (web_vitals_cls).",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
       "id": 9,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
             "drawStyle": "line",
             "fillOpacity": 30,
-            "stacking": { "mode": "percent" },
+            "stacking": {
+              "mode": "percent"
+            },
             "lineWidth": 1
           },
           "unit": "percentunit"
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "good" },
+            "matcher": {
+              "id": "byName",
+              "options": "good"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "green", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "needs-improvement" },
+            "matcher": {
+              "id": "byName",
+              "options": "needs-improvement"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "yellow", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "poor" },
+            "matcher": {
+              "id": "byName",
+              "options": "poor"
+            },
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "red", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
               }
             ]
           }
         ]
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
@@ -456,9 +686,17 @@
     {
       "title": "CLS p75",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
       "id": 10,
-      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -472,8 +710,13 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -502,9 +745,12 @@
       }
     ]
   },
-  "time": { "from": "now-6h", "to": "now" },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "timepicker": {},
-  "timezone": "",
+  "timezone": "Europe/Kyiv",
   "title": "Sergeant — Frontend CWV",
   "uid": "sergeant-frontend-cwv",
   "version": 1
