@@ -168,7 +168,7 @@
 - `PR-4.A` ✅ closed — [#900](https://github.com/Skords-01/Sergeant/pull/900) `test(server): add SSE end-to-end harness for chat streaming` (17 тестів на `streamAnthropicToSse` / `streamOneIterationToSse`: text-дельти, auto-continuation на `max_tokens`, cap, graceful errors, chunk-боундарі, prompt-cache метрика).
 - `PR-4.B` ✅ closed — [#908](https://github.com/Skords-01/Sergeant/pull/908) `test(server): barcode contract tests for OFF/USDA/UPCitemdb normalizers` (UPCitemdb extracted з `barcode.ts` у власний `normalizers/upcitemdb.ts`; 22 unit-тести + 14 cross-source contract тестів із realistic фікстурами Nutella/Cheerios/Coca-Cola; спільний `NormalizedProduct`-shape зафіксовано через `assertContract()` helper).
 - `PR-4.C` ✅ closed — [#882](https://github.com/Skords-01/Sergeant/pull/882) `refactor(server,lib): extract OFF/USDA/Mono normalizers into apps/server/src/lib/normalizers/{off,usda,mono}.ts`.
-- `PR-4.D` — `chore(server,api-client): generate api-client types from server zod schemas via zod-to-openapi` (закриває drift у rule #3 автоматично).
+- `PR-4.D` 🟡 partial Phase 1 — інфраструктура `zod-openapi` + `docs/api/openapi.json` (36 paths, 26 components) + freshness check-скрипт (`scripts/api/check-openapi-fresh.mjs`, runnable локально через `pnpm api:check-openapi`) + ADR-0025. Workflow `.github/workflows/openapi-freshness.yml` додає юзер вручну (OAuth App без `workflow` scope не може писати в `.github/workflows/`). Phase 2 (codegen api-client типів зі spec через `openapi-typescript`) — окремий PR.
 
 ---
 
@@ -349,7 +349,7 @@
   - `docs/adr/0010-mobile-dual-track-capacitor-expo.md` (Capacitor wrapper) ✅ ([#956](https://github.com/Skords-01/Sergeant/pull/956))
   - `docs/adr/0005-anthropic-model-selection-and-prompt-caching.md` (Anthropic tool-on-client) ✅ ([#958](https://github.com/Skords-01/Sergeant/pull/958))
   - `docs/adr/0023-turbo-monorepo-runner.md` (Turborepo as monorepo task runner) ✅
-  - `docs/adr/0024-monorepo-apps-packages-split.md` (apps/_ + packages/_ split) ✅
+  - `docs/adr/0024-monorepo-apps-packages-split.md` (`apps/*` + `packages/*` split) ✅
   - **Caveat (resolved):** паралельні ADR-пакети #956/#961/#962 створили колізії номерів 0003-0012 (10 пар файлів з однаковим NNNN); розв'язано через PR [#989](https://github.com/Skords-01/Sergeant/pull/989) `docs(adr): resolve numbering collisions`.
 
 ---
@@ -424,7 +424,7 @@
 | #   | PR                                                       | Effort    | Імпакт               | Status                                                                                                                                               |
 | --- | -------------------------------------------------------- | --------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 13  | `PR-6.C` — strict: true full + remove allowJs            | 1 тиждень | strict TS done       | ⏳ pending                                                                                                                                           |
-| 14  | `PR-4.D` — zod-to-openapi для api-client                 | 1 тиждень | автоматизує rule #3  | ⏳ pending                                                                                                                                           |
+| 14  | `PR-4.D` — zod-to-openapi для api-client                 | 1 тиждень | автоматизує rule #3  | 🟡 Phase 1 done — spec згенеровано, freshness-скрипт працює (`pnpm api:check-openapi`); workflow додає юзер; Phase 2 (api-client codegen) — наступний PR |
 | 15  | `PR-8.A` + `PR-8.C` — error-budget policy + tool metrics | 3-5 д     | operational maturity | `PR-8.A` ✅ [#942](https://github.com/Skords-01/Sergeant/pull/942); `PR-8.C` ✅ через PR-12.A [#864](https://github.com/Skords-01/Sergeant/pull/864) |
 | 16  | `PR-10.B` + `PR-10.C` — split smoke-e2e + nightly audit  | 2-3 д     | CI scaling           | `PR-10.B` ✅ closed; `PR-10.C` ✅ closed — [#944](https://github.com/Skords-01/Sergeant/pull/944)                                                    |
 | 17  | `PR-11.A` + `PR-11.C` — freshness badges + ADR template  | 1 тиждень | doc lifecycle        | `PR-11.A` ✅ [#952](https://github.com/Skords-01/Sergeant/pull/952); `PR-11.C` ✅ closed (5/5)                                                       |

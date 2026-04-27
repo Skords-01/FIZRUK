@@ -1,0 +1,64 @@
+# Sergeant API — OpenAPI spec
+
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
+[`openapi.json`](./openapi.json) — згенерований OpenAPI 3.1 specification. Single source of truth — zod-схеми у [`packages/shared/src/schemas/api.ts`](../../packages/shared/src/schemas/api.ts) + route-каталог у [`packages/shared/src/openapi/routes.ts`](../../packages/shared/src/openapi/routes.ts).
+
+## Чому коммітимо JSON
+
+- **Diff-friendly review**: PR показує semantic API change в одному файлі.
+- **External integrators**: можна імпортувати в Postman/Insomnia/Swagger UI без додаткового build-step.
+- **CI gate**: PR що змінює zod-схему, але не оновив spec — fail у [`openapi-freshness.yml`](../../.github/workflows/openapi-freshness.yml).
+
+Drift-protection — мотивація, описана в [ADR-0023](../adr/0023-openapi-generation.md).
+
+## Як перегенерувати
+
+```bash
+pnpm api:generate-openapi
+```
+
+Це перепише `docs/api/openapi.json` з поточних zod-схем. Закоміть результат у тому ж PR, що змінює схему чи route.
+
+## Як перевірити, що spec свіжий
+
+```bash
+pnpm api:check-openapi
+```
+
+Цей же скрипт запускається у CI (`.github/workflows/openapi-freshness.yml`). Якщо коммітнутий файл відстає від generator output — exit 1 з підказкою, що запустити.
+
+## Як переглянути в браузері
+
+Swagger UI наразі не хоститься у `apps/server` (Phase 3, див. ADR-0023). Локально можна підняти:
+
+```bash
+npx @redocly/cli preview-docs docs/api/openapi.json
+```
+
+Або відкрити `https://editor.swagger.io/` і вставити JSON у редактор.
+
+## Що зараз покрито
+
+Phase 1 (PR-4.D): 36 endpoint-ів + 26 named-компонентів.
+
+- **Request-схеми** — повне покриття для всіх endpoint-ів з `validateBody(...)` (22 endpoint-и).
+- **Response-схеми** — точно описано: `MeResponse`, `PushSendSummary`, `PushTestResponse`. Решта endpoint-ів задокументована як generic `application/json` (Phase 2 додасть точні response-схеми).
+- **Auth**: `cookieAuth` (web — better-auth session cookie), `bearerAuth` (mobile — Expo bearer token).
+
+## Що НЕ покрито (Phase 2+, окремі PR-и)
+
+- Codegen TS-типів `packages/api-client/src/endpoints/*` зі spec-у через `openapi-typescript`.
+- Точні response-схеми на endpoint-ах, де handler повертає довільний JSON.
+- Swagger UI на `/api/docs` у `apps/server`.
+
+Деталі — [ADR-0023](../adr/0023-openapi-generation.md), розділ "Migration plan".
+
+## Як додати новий endpoint
+
+1. Додаєш zod-схему у `packages/shared/src/schemas/api.ts` (для request body / query).
+2. Реєструєш `id` через `.meta({ id: "MyName" })` у [`packages/shared/src/openapi/registry.ts`](../../packages/shared/src/openapi/registry.ts).
+3. Додаєш path-запис у [`packages/shared/src/openapi/routes.ts`](../../packages/shared/src/openapi/routes.ts) (path → method → schema → responses).
+4. Запускаєш `pnpm api:generate-openapi` і комітиш `docs/api/openapi.json` у тому ж PR.
+
+CI ловить пропущений крок 4 автоматично.
