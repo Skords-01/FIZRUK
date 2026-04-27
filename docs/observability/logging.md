@@ -88,7 +88,7 @@ coupling, простіше тестувати.
 ## 3. Redaction policy
 
 Pino маскує значення на `[redacted]` для шляхів, визначених у
-[`redactPaths`](../../apps/server/src/obs/logger.ts#L24) (48 елементів).
+[`redactPaths`](../../apps/server/src/obs/logger.ts#L24) (22 елементи).
 Логічне групування:
 
 ### Auth-заголовки
