@@ -34,6 +34,8 @@ import { MonthlyPlanCard } from "../components/budgets/MonthlyPlanCard";
 import { AddBudgetForm } from "../components/budgets/AddBudgetForm";
 import { readJSON, writeJSON } from "../lib/finykStorage";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState";
+import { useToast } from "@shared/hooks/useToast";
+import { showUndoToast } from "@shared/lib/undoToast";
 import {
   trackEvent,
   ANALYTICS_EVENTS,
@@ -109,6 +111,7 @@ export function Budgets({
   showBalance = true,
   focusLimitCategoryId = null,
 }) {
+  const toast = useToast();
   const { realTx, loadingTx, transactions } = mono;
   const {
     budgets,
@@ -553,8 +556,21 @@ export function Budgets({
                   }
                   onSave={() => setEditIdx(null)}
                   onDelete={() => {
-                    setBudgets((bs) => bs.filter((_, j) => j !== globalIdx));
+                    const removed = b;
+                    const removedIdx = globalIdx;
+                    setBudgets((bs) =>
+                      bs.filter((_, j) => j !== removedIdx),
+                    );
                     setEditIdx(null);
+                    showUndoToast(toast, {
+                      msg: "Видалено ліміт",
+                      onUndo: () =>
+                        setBudgets((bs) => {
+                          const next = [...bs];
+                          next.splice(removedIdx, 0, removed);
+                          return next;
+                        }),
+                    });
                   }}
                 />
               </div>
@@ -642,8 +658,21 @@ export function Budgets({
                 }
                 onSave={() => setEditIdx(null)}
                 onDelete={() => {
-                  setBudgets((bs) => bs.filter((_, j) => j !== globalIdx));
+                  const removed = b;
+                  const removedIdx = globalIdx;
+                  setBudgets((bs) =>
+                    bs.filter((_, j) => j !== removedIdx),
+                  );
                   setEditIdx(null);
+                  showUndoToast(toast, {
+                    msg: "Видалено ціль",
+                    onUndo: () =>
+                      setBudgets((bs) => {
+                        const next = [...bs];
+                        next.splice(removedIdx, 0, removed);
+                        return next;
+                      }),
+                  });
                 }}
               />
             );

@@ -15,6 +15,8 @@ import {
 } from "../utils";
 import { cn } from "@shared/lib/cn";
 import { openHubModule } from "@shared/lib/hubNav";
+import { useToast } from "@shared/hooks/useToast";
+import { showUndoToast } from "@shared/lib/undoToast";
 import { notifyFinykRoutineCalendarSync } from "../hubRoutineSync";
 import { FinykStatsStrip } from "../components/FinykStatsStrip";
 import {
@@ -99,6 +101,7 @@ export function AssetsSubscriptionsSection({ state }: { state: State }) {
     setNewSub,
     setTxPicker,
   } = state;
+  const toast = useToast();
 
   return (
     <div className="mb-3 space-y-0">
@@ -119,8 +122,21 @@ export function AssetsSubscriptionsSection({ state }: { state: State }) {
           sub={sub}
           transactions={transactions}
           onDelete={() => {
-            setSubscriptions((ss) => ss.filter((_, j) => j !== i));
+            const removed = sub;
+            const removedIdx = i;
+            setSubscriptions((ss) => ss.filter((_, j) => j !== removedIdx));
             notifyFinykRoutineCalendarSync();
+            showUndoToast(toast, {
+              msg: `Видалено підписку «${removed.name}»`,
+              onUndo: () => {
+                setSubscriptions((ss) => {
+                  const next = [...ss];
+                  next.splice(removedIdx, 0, removed);
+                  return next;
+                });
+                notifyFinykRoutineCalendarSync();
+              },
+            });
           }}
           onEdit={(updated) => {
             setSubscriptions((ss) =>
@@ -154,6 +170,7 @@ export function AssetsSubscriptionsSection({ state }: { state: State }) {
 // Assets section body (Monobank accounts + receivables + manual assets)
 // ---------------------------------------------------------------------------
 export function AssetsAssetsSection({ state }: { state: State }) {
+  const toast = useToast();
   const {
     accounts,
     transactions,
@@ -230,9 +247,14 @@ export function AssetsAssetsSection({ state }: { state: State }) {
           total={getReceivableEffectiveTotal(r, transactions)}
           dueDate={r.dueDate}
           isReceivable
-          onDelete={() =>
-            setReceivables((rs) => rs.filter((x) => x.id !== r.id))
-          }
+          onDelete={() => {
+            const removed = r;
+            setReceivables((rs) => rs.filter((x) => x.id !== removed.id));
+            showUndoToast(toast, {
+              msg: `Видалено борг «${removed.name}»`,
+              onUndo: () => setReceivables((rs) => [...rs, removed]),
+            });
+          }}
           onLink={() => setTxPicker({ id: r.id, type: "recv" })}
           linkedCount={r.linkedTxIds?.length || 0}
         />
@@ -298,10 +320,24 @@ export function AssetsAssetsSection({ state }: { state: State }) {
                   : a.currency}
             </span>
             <button
-              onClick={() =>
-                setManualAssets((as) => as.filter((_, j) => j !== i))
-              }
+              onClick={() => {
+                const removed = a;
+                const removedIdx = i;
+                setManualAssets((as) =>
+                  as.filter((_, j) => j !== removedIdx),
+                );
+                showUndoToast(toast, {
+                  msg: `Видалено актив «${removed.name}»`,
+                  onUndo: () =>
+                    setManualAssets((as) => {
+                      const next = [...as];
+                      next.splice(removedIdx, 0, removed);
+                      return next;
+                    }),
+                });
+              }}
               className="text-subtle hover:text-danger text-sm transition-colors"
+              aria-label={`Видалити актив ${a.name}`}
             >
               {"\u{1F5D1}"}
             </button>
@@ -316,6 +352,7 @@ export function AssetsAssetsSection({ state }: { state: State }) {
 // Liabilities section body
 // ---------------------------------------------------------------------------
 export function AssetsLiabilitiesSection({ state }: { state: State }) {
+  const toast = useToast();
   const {
     transactions,
     manualDebts,
@@ -379,9 +416,14 @@ export function AssetsLiabilitiesSection({ state }: { state: State }) {
           paid={getDebtPaid(d, transactions)}
           total={getDebtEffectiveTotal(d, transactions)}
           dueDate={d.dueDate}
-          onDelete={() =>
-            setManualDebts((ds) => ds.filter((x) => x.id !== d.id))
-          }
+          onDelete={() => {
+            const removed = d;
+            setManualDebts((ds) => ds.filter((x) => x.id !== removed.id));
+            showUndoToast(toast, {
+              msg: `Видалено борг «${removed.name}»`,
+              onUndo: () => setManualDebts((ds) => [...ds, removed]),
+            });
+          }}
           onLink={() => setTxPicker({ id: d.id, type: "debt" })}
           linkedCount={d.linkedTxIds?.length || 0}
         />
