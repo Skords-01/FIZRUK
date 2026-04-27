@@ -131,7 +131,12 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
     <div className="flex flex-col items-center text-center space-y-6">
       <div className="flex items-center gap-2">
         <div className="w-12 h-12 rounded-2xl bg-finyk/15 border border-finyk/30 flex items-center justify-center">
-          <Icon name="credit-card" size={22} className="text-finyk" aria-hidden />
+          <Icon
+            name="credit-card"
+            size={22}
+            className="text-finyk"
+            aria-hidden
+          />
         </div>
         <div className="w-12 h-12 rounded-2xl bg-fizruk/15 border border-fizruk/30 flex items-center justify-center">
           <Icon name="dumbbell" size={22} className="text-fizruk" aria-hidden />
@@ -140,7 +145,12 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
           <Icon name="check" size={22} className="text-routine" aria-hidden />
         </div>
         <div className="w-12 h-12 rounded-2xl bg-nutrition-soft border border-nutrition/30 flex items-center justify-center">
-          <Icon name="utensils" size={22} className="text-nutrition" aria-hidden />
+          <Icon
+            name="utensils"
+            size={22}
+            className="text-nutrition"
+            aria-hidden
+          />
         </div>
       </div>
       <div className="space-y-2">
@@ -190,11 +200,34 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
 // Step 2: Module selection (ModuleCards)
 // ---------------------------------------------------------------------------
 
-const MODULE_ACTIVE_CLASSES: Record<string, { border: string; bg: string; icon: string; check: string }> = {
-  finyk:     { border: "border-finyk/60",     bg: "bg-finyk/8",     icon: "bg-finyk/15 text-finyk",     check: "bg-finyk" },
-  fizruk:    { border: "border-fizruk/60",    bg: "bg-fizruk/8",    icon: "bg-fizruk/15 text-fizruk",    check: "bg-fizruk" },
-  routine:   { border: "border-routine/60",   bg: "bg-routine/8",   icon: "bg-routine/15 text-routine",   check: "bg-routine" },
-  nutrition: { border: "border-nutrition/60", bg: "bg-nutrition/8", icon: "bg-nutrition/15 text-nutrition", check: "bg-nutrition" },
+const MODULE_ACTIVE_CLASSES: Record<
+  string,
+  { border: string; bg: string; icon: string; check: string }
+> = {
+  finyk: {
+    border: "border-finyk/60",
+    bg: "bg-finyk/8",
+    icon: "bg-finyk/15 text-finyk",
+    check: "bg-finyk",
+  },
+  fizruk: {
+    border: "border-fizruk/60",
+    bg: "bg-fizruk/8",
+    icon: "bg-fizruk/15 text-fizruk",
+    check: "bg-fizruk",
+  },
+  routine: {
+    border: "border-routine/60",
+    bg: "bg-routine/8",
+    icon: "bg-routine/15 text-routine",
+    check: "bg-routine",
+  },
+  nutrition: {
+    border: "border-nutrition/60",
+    bg: "bg-nutrition/8",
+    icon: "bg-nutrition/15 text-nutrition",
+    check: "bg-nutrition",
+  },
 };
 
 const MODULE_CARDS = ALL_MODULES.map((id) => ({
@@ -235,10 +268,12 @@ function ModuleCard({
       )}
     >
       {active && (
-        <span className={cn(
-          "absolute top-2.5 right-2.5 w-5 h-5 rounded-full text-white flex items-center justify-center",
-          activeClasses.check,
-        )}>
+        <span
+          className={cn(
+            "absolute top-2.5 right-2.5 w-5 h-5 rounded-full text-white flex items-center justify-center",
+            activeClasses.check,
+          )}
+        >
           <Icon name="check" size={12} strokeWidth={3} />
         </span>
       )}
