@@ -4,7 +4,7 @@
 **Скоуп:** репо `Skords-01/Sergeant` (default branch на момент клонування).
 **Метод:** репозиторний прохід — структура, конфіги, `AGENTS.md`/`CONTRIBUTING.md`/`README.md`, `docs/*` (roadmap, tech-debt, observability, playbooks), `.github/workflows/ci.yml`, `eslint.config.js`, `packages/eslint-plugin-sergeant-design/`, `apps/*/tsconfig.json`, міграції в `apps/server/src/migrations/`. Без виконання CI/тестів.
 
-> **Статус виконання — оновлено 2026-04-27 (третя ревізія: +#897 +#898)**
+> **Статус виконання — оновлено 2026-04-27 (четверта ревізія: +#902 +#904)**
 > Поки документ жив в attachments, частина PR-ідей з нього вже відпрацьована
 > через дочерні Devin-сесії. Узагальнений знімок прогресу:
 
@@ -28,6 +28,8 @@
 | PR-3.B   | decompose `Assets.tsx` (1147 LOC) into smaller modules                 | ✅ closed  | [#887](https://github.com/Skords-01/Sergeant/pull/887)                                                                 |
 | PR-9.B   | gitleaks SHA-pinned secret-scan blocking job in CI                     | ✅ closed  | [#897](https://github.com/Skords-01/Sergeant/pull/897)                                                                 |
 | PR-3.C   | split `seedFoodsUk.ts` (1614 LOC) by category into `seeds/*`           | ✅ closed  | [#898](https://github.com/Skords-01/Sergeant/pull/898)                                                                 |
+| PR-9.C   | vulnerability SLA matrix + weekly breach-reminder workflow             | ✅ closed  | [#902](https://github.com/Skords-01/Sergeant/pull/902)                                                                 |
+| PR-7.B   | cloud-sync offline-queue + replay-on-reconnect integration tests       | ✅ closed  | [#904](https://github.com/Skords-01/Sergeant/pull/904)                                                                 |
 | Інші     | див. inline-теги нижче                                                 | ⏳ pending | —                                                                                                                      |
 
 > Sprint-таблиці нижче (`Спринт 0`, `Спринт 1-2`, `Спринт 3-6`) також оновлені
@@ -152,8 +154,8 @@
 
 **PR-ідеї:**
 
-- `PR-4.A` — `test(server,chat): SSE end-to-end harness` (`Testcontainers` Postgres + fake Anthropic upstream через `nock` або in-memory mock; асерти на: сплітинг по chunk, `tool_use` boundary, `auto-continuation` при `stop_reason: max_tokens`).
-- `PR-4.B` — `test(server,nutrition): contract tests for barcode handler against OFF/USDA/UPCitemdb` (за `nock`-mock-серверами; асерти на нормалізацію в спільну схему).
+- `PR-4.A` ✅ closed — [#900](https://github.com/Skords-01/Sergeant/pull/900) `test(server): add SSE end-to-end harness for chat streaming` (17 тестів на `streamAnthropicToSse` / `streamOneIterationToSse`: text-дельти, auto-continuation на `max_tokens`, cap, graceful errors, chunk-боундарі, prompt-cache метрика).
+- `PR-4.B` ✅ closed — [#908](https://github.com/Skords-01/Sergeant/pull/908) `test(server): barcode contract tests for OFF/USDA/UPCitemdb normalizers` (UPCitemdb extracted з `barcode.ts` у власний `normalizers/upcitemdb.ts`; 22 unit-тести + 14 cross-source contract тестів із realistic фікстурами Nutella/Cheerios/Coca-Cola; спільний `NormalizedProduct`-shape зафіксовано через `assertContract()` helper).
 - `PR-4.C` ✅ closed — [#882](https://github.com/Skords-01/Sergeant/pull/882) `refactor(server,lib): extract OFF/USDA/Mono normalizers into apps/server/src/lib/normalizers/{off,usda,mono}.ts`.
 - `PR-4.D` — `chore(server,api-client): generate api-client types from server zod schemas via zod-to-openapi` (закриває drift у rule #3 автоматично).
 
@@ -232,8 +234,8 @@
 **PR-ідеї:**
 
 - `PR-7.A` ✅ closed — [#886](https://github.com/Skords-01/Sergeant/pull/886) `test(web): unit + integration tests for recommendationEngine and TodayFocusCard`.
-- `PR-7.B` — `test(web,cloud-sync): integration tests for offline queue + replay on reconnect` (через MSW з offline-mode + RTL).
-- `PR-7.C` — `test(web,reports): HubReports aggregation snapshot tests` для крос-модульних звітів.
+- `PR-7.B` ✅ closed — [#904](https://github.com/Skords-01/Sergeant/pull/904) `test(web,cloud-sync): integration tests for offline queue + replay on reconnect` — 17 тестів, 4 сценарії (coalesce, happy replay, server-error, MAX_OFFLINE_QUEUE overflow).
+- `PR-7.C` ✅closed — `test(web,reports): HubReports aggregation snapshot tests` для крос-модульних звітів. Витягнуто 4 чистих агрегатори з inline-замикань `useReportData` у `apps/web/src/core/hub/hubReports.aggregation.ts`; 44 snapshot-тести покривають date-helpers, per-module aggregators і повний cross-module звіт із усіма 4 модулями заповненими.
 - `PR-7.D` — `ci(test): add weekly flaky-tests dashboard` (GitHub Action, що збирає `vitest --reporter json` за 7 днів і публікує markdown trend в artifact).
 - `PR-7.E` — `test(mobile): triage 3 known flaky tests one-by-one (each in own PR), document fixes`.
 
@@ -283,7 +285,7 @@
 
 - `PR-9.A` ✅ closed — [#862](https://github.com/Skords-01/Sergeant/pull/862) `ci(security): make pnpm audit --audit-level=high blocking by default + escape hatch via labeled PR (e.g. label "audit-exception")`. Це міняє default на «потрібно явно дозволити», а не «потрібно явно заблокувати».
 - `PR-9.B` ✅ closed — [#897](https://github.com/Skords-01/Sergeant/pull/897) `ci(security): add gitleaks step (SHA-pinned)` — окремий blocking `Secret scan (gitleaks)` job, паралельний з `check`/`coverage`.
-- `PR-9.C` ⏳ pending — `docs(security): vulnerability SLA matrix (critical: same-day; high: ≤14 days; med: ≤30 days)` + автоматичний reminder action.
+- `PR-9.C` ✅ closed — [#902](https://github.com/Skords-01/Sergeant/pull/902) `docs(security): vulnerability SLA matrix (critical: same-day; high: ≤14 days; med: ≤30 days)` + weekly `security-sla-reminder.yml` workflow з idempotent breach-comments.
 - `PR-9.D` ✅ closed — [#871](https://github.com/Skords-01/Sergeant/pull/871) `feat(eslint-plugins): no-anthropic-key-in-logs` (AST + heuristic-rule на `console.log`/`logger.*`/`pino.*` з `process.env.ANTHROPIC_API_KEY` або secret-identifier у scope з імпортом `@anthropic-ai/sdk`).
 
 ---
@@ -397,7 +399,7 @@
 | 8   | `PR-2.B` — `no-bigint-string` ESLint rule               | 1-2 д  | автоматизує rule #1   | ✅ [#868](https://github.com/Skords-01/Sergeant/pull/868)                                                                              |
 | 9   | `PR-2.C` — `rq-keys-only-from-factory`                  | 1-2 д  | автоматизує rule #2   | ✅ [#869](https://github.com/Skords-01/Sergeant/pull/869)                                                                              |
 | 10  | `PR-12.B` — chatActions contract tests                  | 2 д    | safety net на tools   | ✅ [#885](https://github.com/Skords-01/Sergeant/pull/885)                                                                              |
-| 11  | `PR-7.A` + `PR-7.B` — recommendation + cloud-sync tests | 3 д    | critical paths        | `PR-7.A` ✅ [#886](https://github.com/Skords-01/Sergeant/pull/886); `PR-7.B` ⏳ pending                                                |
+| 11  | `PR-7.A` + `PR-7.B` — recommendation + cloud-sync tests | 3 д    | critical paths        | `PR-7.A` ✅ [#886](https://github.com/Skords-01/Sergeant/pull/886); `PR-7.B` ✅ [#904](https://github.com/Skords-01/Sergeant/pull/904) |
 | 12  | `PR-5.A` — migration linter                             | 1 д    | автоматизує rule #4   | ✅ [#863](https://github.com/Skords-01/Sergeant/pull/863)                                                                              |
 
 ### Спринт 3-6 (2-3 місяці) — «масштабування»
