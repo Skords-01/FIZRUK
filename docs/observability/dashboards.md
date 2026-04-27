@@ -57,3 +57,17 @@
 
 - **blocked/allowed**:
   - `sum by (key, outcome) (rate(rate_limit_hits_total[5m]))`
+
+---
+
+## Importable Grafana dashboard JSONs
+
+Ready-to-import JSON dashboards live in [`dashboards/`](./dashboards/):
+
+| File                                                    | Scope                                                                 |
+| ------------------------------------------------------- | --------------------------------------------------------------------- |
+| [`http-red.json`](./dashboards/http-red.json)           | HTTP RED (rate, errors, duration p50/p95/p99) with module/path filter |
+| [`db-use.json`](./dashboards/db-use.json)               | Postgres pool USE, query duration, slow queries, DB errors            |
+| [`slo-burn-rate.json`](./dashboards/slo-burn-rate.json) | Multi-window multi-burn-rate SLO overview (all domains)               |
+
+Import via Grafana UI: **Dashboards → Import → Upload JSON**. See [`dashboards/README.md`](./dashboards/README.md) for details on datasource variables and expected labels.
