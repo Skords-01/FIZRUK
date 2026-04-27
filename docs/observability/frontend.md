@@ -149,8 +149,9 @@ Lightweight product analytics sink: **console logger + localStorage ring-buffer*
 fire-and-forget, ніколи не кидає.
 
 **Event names** визначені в `@sergeant/shared` →
-`packages/shared/src/lib/analyticsEvents.ts` → `ANALYTICS_EVENTS` (~40 подій:
-onboarding, finyk, FTUX, auth, nudges, hints). Typo не компілюється.
+`packages/shared/src/lib/analyticsEvents.ts` → `ANALYTICS_EVENTS` (~50 подій:
+onboarding, finyk, FTUX, auth, nudges, hints, hubchat, cloudsync, subscription).
+Typo не компілюється.
 
 **Sentry зв'язок**: analytics не емітить breadcrumbs напряму, але
 `console.log("[analytics]", event)` потрапляє у Sentry console-breadcrumbs
@@ -205,16 +206,101 @@ auto-pageview стріляє на будь-яку мутацію URL (включ
 `refresh_token`, `magic`, `auth`, `password`, `secret`, `api_key`)
 редактуються до `[redacted]`. Без `VITE_POSTHOG_KEY` ефект no-op.
 
+### HubChat events
+
+**Файл:** `apps/web/src/core/hub/HubChat.tsx`.
+
+Трекаємо факт взаємодії з асистентом, НЕ текст повідомлень. Три події:
+
+| Event                  | Коли                                              | Payload                                                                        |
+| ---------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `hubchat_message_sent` | Юзер відправив повідомлення (після всіх guard-ів) | `{ length, fromVoice, module? }`                                               |
+| `hubchat_tool_invoked` | На кожен `tool_call` із відповіді LLM             | `{ tool, module? }`                                                            |
+| `hubchat_error`        | Будь-яка помилка у `send()` catch-блоці           | `{ kind, status? }` де `kind ∈ http \| parse \| aborted \| network \| unknown` |
+
+`length` — кількість символів, не текст; `fromVoice: boolean` — дає розділити
+voice vs typed сценарії у funnels; `tool` — канонічне ім'я `ChatAction`
+(напр. `add_expense`, `log_workout`). Для `hubchat_error` `status` заповнюється
+тільки для `kind=http` (HTTP-код сервера), щоб алерт-и ловили spike-и 5xx
+окремо від 4xx.
+
+### CloudSync events
+
+**Файл:** `apps/web/src/core/cloudSync/hook/useSyncCallbacks.ts` — lifecycle
+(start/success/fail). **Файли:** `engine/push.ts`, `engine/initialSync.ts` —
+conflict-резолюція.
+
+| Event                    | Коли                                                      | Payload                                        |
+| ------------------------ | --------------------------------------------------------- | ---------------------------------------------- |
+| `sync_started`           | `onStart` у `makeBoundCallbacks`                          | `{}`                                           |
+| `sync_succeeded`         | `onSuccess` — успішний прогін `runExclusive`              | `{ duration_ms }`                              |
+| `sync_failed`            | `onError` — після класифікації `toSyncError`              | `{ error_type, retryable, duration_ms }`       |
+| `sync_conflict_resolved` | `conflicted.length > 0` у `pushAll` / `initialSync.merge` | `{ kind: "push" \| "initial-merge", modules }` |
+
+`error_type` — категорія з `SyncError["type"]` (`network` / `auth` / `conflict`
+/ `validation` / `unknown`). `retryable` — boolean з того самого normalizer-а;
+дозволяє відокремити транзієнтні помилки від терміналу (4xx без авто-retry).
+`modules` у `sync_conflict_resolved` — лічильник, не імена модулів: кардинальність
+у PostHog залишається маленькою, але spike-и LWW-loss детектуються.
+
+### Subscription events (placeholders)
+
+Білінг ще не підключений, але канонічні імена вже зафіксовані в
+`ANALYTICS_EVENTS` (`SUBSCRIPTION_STARTED`, `SUBSCRIPTION_CANCELED`,
+`SUBSCRIPTION_RENEWED`) — щоб у момент підключення Stripe/IAP не винаходити
+нові імена і не розвалити PostHog-funnel-и між першим і другим релізом.
+Очікувані payload-и (для майбутнього implementor-а):
+
+```ts
+trackEvent(ANALYTICS_EVENTS.SUBSCRIPTION_STARTED, {
+  plan: "monthly" | "yearly",
+  source: "paywall" | "deeplink" | "cta",
+  price_cents: number,
+  currency: string, // ISO-4217, "UAH" / "USD" / …
+});
+trackEvent(ANALYTICS_EVENTS.SUBSCRIPTION_CANCELED, {
+  plan: string,
+  reason: "user" | "billing" | "expired",
+});
+trackEvent(ANALYTICS_EVENTS.SUBSCRIPTION_RENEWED, {
+  plan: string,
+  period: number, // кількість успішних renewal-ів
+});
+```
+
+Revenue-аналітика (MRR/ARR у PostHog) рахується через super-property
+`$revenue` на `subscription_started` / `subscription_renewed` — окремий
+task коли білінг оживе.
+
 ### Identify / reset
 
 `AuthContext` слухає `user?.id` і викликає:
 
-- `identifyPostHogUser(userId)` — при переході у `authenticated`.
+- `identifyPostHogUser(userId, traits)` — при переході у `authenticated`.
 - `resetPostHog()` — при переході `authenticated → unauthenticated`.
 
 Виклики fire-and-forget; події, що прилетіли до завершення init,
 буферизуються (до 100) і flush-ляться після завантаження SDK. Buffer
 відкидається, якщо `VITE_POSTHOG_KEY` не виставлений.
+
+#### Person traits
+
+`buildIdentifyTraits(user)` (`apps/web/src/core/observability/identifyTraits.ts`)
+збирає person properties для `identify` payload-у:
+
+| Trait         | Джерело                                                        | Формат                 | Примітки                                                                                                            |
+| ------------- | -------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `vibe`        | `getVibePicks()` (localStorage `hub_onboarding_vibes_v1`)      | `DashboardModuleId[]`  | Опускається, якщо vibe-picks порожні або `localStorage` недоступний. Сегментуємо ретеншн і funnel-и за вкладкою.    |
+| `plan`        | константа `"free"`                                             | `"free" \| "pro"`      | До запуску підписок (Stripe / LiqPay) завжди `"free"`. `identifyTraits.ts` — єдине місце, де треба підставити tier. |
+| `locale`      | `navigator.language`                                           | string ≤ 16 chars      | Узгоджено з `Locale` schema у `packages/shared/src/schemas/api.ts`. Опускається, якщо `navigator` недоступний.      |
+| `signup_date` | `user.createdAt` з `/api/v1/me` (Better Auth `user.createdAt`) | `YYYY-MM-DD` у **UTC** | Лише дата, без часу — без зайвого PII. Опускається, якщо `createdAt` = null або зіпсована.                          |
+
+Контракт навмисно **толерантний**: будь-яке з джерел може мовчазно
+відмовитись (Capacitor cold-start без localStorage, SSR-середовище без
+`navigator`, legacy-юзери з `createdAt = null`) — `identify` все одно
+виконається з тими трейтами, що доступні. Це краще, ніж ламати
+identify повністю або перетирати раніше встановлений person property
+порожнім значенням.
 
 ### ENV
 
@@ -231,6 +317,72 @@ Payload для `trackEvent` уже має бути без PII (див. `ANALYTIC
 JSDoc). PostHog-distinctId — `user.id` (UUID Better Auth), ніколи не email
 і не bearer-токен. `sanitize_properties` додатково страхує від `$cookies`,
 якщо autocapture у майбутньому увімкнуть.
+
+### Release annotations (GitHub Actions → PostHog API)
+
+**Файл:** `scripts/ci/posthog-release-annotation.mjs`,
+**Workflow:** `.github/workflows/posthog-release-annotation.yml`.
+
+Кожен merge у `main` триггерить production deploy (Vercel + Railway). У
+той самий момент GitHub Actions постить release annotation у PostHog
+([REST API](https://posthog.com/docs/data/annotations)) — анотація
+відмалюється вертикальною лінією поверх **усіх** PostHog-дашбордів (DAU,
+funnel, retention, paywall, error-rate, CWV insights). Сенс — миттєва
+кореляція «дроп DAU о 14:30» ⇄ «релізний реф abc1234, commit
+`feat(web): …`» без ходіння у GitHub.
+
+**Тригер:** `push` у `main` + `workflow_dispatch` (ручна анотація з
+`dry_run` опцією).
+
+**Payload, що шлеться:**
+
+```json
+POST {POSTHOG_HOST}/api/projects/{POSTHOG_PROJECT_ID}/annotations/
+Authorization: Bearer {POSTHOG_PERSONAL_API_KEY}
+Content-Type: application/json
+
+{
+  "content": "Release abc1234 (main): feat(web): … [run #12345]",
+  "scope": "project",
+  "date_marker": "2026-04-27T17:00:00.000Z"
+}
+```
+
+`content`-рядок будується з `GITHUB_SHA` (короткий 7-ch), `GITHUB_REF_NAME`,
+першого рядка commit-message (`head_commit.message` з push event payload)
+і `GITHUB_RUN_ID`. Обрізається до 400 символів з ellipsis, щоб не впертись
+у server-side ліміти.
+
+**Repo secrets (`Settings → Secrets and variables → Actions`):**
+
+| Секрет                     | Опис                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `POSTHOG_PERSONAL_API_KEY` | **Personal API key**, не публічний `phc_*` project key. Доступний у `phx_…` префіксі. |
+| `POSTHOG_PROJECT_ID`       | Числовий project id з URL у PostHog UI (`/project/<id>/…`).                           |
+| `POSTHOG_HOST`             | Опційно. Дефолт `https://eu.posthog.com`. Для US: `https://us.posthog.com`.           |
+
+Якщо `POSTHOG_PERSONAL_API_KEY` або `POSTHOG_PROJECT_ID` не виставлені
+(форки, нові середовища) — скрипт логує warning і виходить з exit 0
+(graceful no-op), workflow не червонітиме.
+
+**Як отримати Personal API key:** PostHog UI → user menu → _Personal API
+keys_ → Create. Мінімальний scope: `annotation:write` + `project:read`.
+
+**Локальний smoke (без секретів):**
+
+```bash
+POSTHOG_DRY_RUN=1 \
+POSTHOG_PERSONAL_API_KEY=phx_test \
+POSTHOG_PROJECT_ID=42 \
+GITHUB_SHA=abcdef0123 GITHUB_REF_NAME=main GITHUB_RUN_ID=999 \
+node scripts/ci/posthog-release-annotation.mjs
+```
+
+`POSTHOG_DRY_RUN=1` лише логує payload, без HTTP-виклику.
+
+**Як шукати анотацію в UI:** PostHog → будь-який insight з time-axis →
+вертикальна лінія з підписом `Release abc1234 …`. Або
+`Project → Annotations` → таблиця всіх анотацій + фільтр по scope/dates.
 
 ---
 

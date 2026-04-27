@@ -62,6 +62,7 @@ const mockUser = {
   name: "Тест",
   image: null as string | null,
   emailVerified: true,
+  createdAt: "2026-01-15T08:30:00.000Z" as string | null,
 };
 const refreshMock = vi.fn(async () => undefined);
 const logoutMock = vi.fn(async () => undefined);

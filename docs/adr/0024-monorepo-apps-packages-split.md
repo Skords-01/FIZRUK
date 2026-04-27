@@ -18,10 +18,10 @@
 
 Sergeant — pnpm-workspace монорепо з єдиною деклaративною межею:
 
-| Кошик        | Що живе                                                                        | Чи деплоюється напряму         | Може імпортувати з                                  |
-| ------------ | ------------------------------------------------------------------------------ | ------------------------------ | --------------------------------------------------- |
-| `apps/*`     | Deployable surface (`web`, `server`, `mobile`, `mobile-shell`)                 | **Так** — 1:1 з runtime-target | `apps/*` (тільки сам себе) + будь-який `packages/*` |
-| `packages/*` | Reusable libraries (`shared`, `api-client`, домен-пакети, design-tokens, etc.) | **Ні** (publish-on-demand)     | Тільки інші `packages/*`                            |
+| Кошик        | Що живе                                                                                 | Чи деплоюється напряму         | Може імпортувати з                                  |
+| ------------ | --------------------------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------- |
+| `apps/*`     | Deployable surface (`web`, `server`, `mobile`, `mobile-shell`)                          | **Так** — 1:1 з runtime-target | `apps/*` (тільки сам себе) + будь-який `packages/*` |
+| `packages/*` | Reusable libraries (`shared`, `api-client`, домен-пакети, design-tokens, eslint-plugin) | **Ні** (publish-on-demand)     | Тільки інші `packages/*`                            |
 
 Hard rule: **`packages/*` ніколи не імпортує з `apps/*`**. Якщо домен-пакет
 стає apps-aware — це сигнал, що його логіка має жити в самому app, або
@@ -96,7 +96,7 @@ packages:
 | `apps/mobile`       | Expo SDK 52 (RN 0.76) → APNs/FCM        | `com.sergeant.app`   |
 | `apps/mobile-shell` | Capacitor 7 WebView shell of `apps/web` | `com.sergeant.shell` |
 
-### `packages/*` (9)
+### `packages/*` (10)
 
 | Package                         | Що містить                                                                                                        | Споживачі                 |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------- |
@@ -152,7 +152,7 @@ ESLint resolver шукає `eslint-plugin-*` за naming convention.
 Перейменувати — означає писати ручний resolver. Не варте.
 
 **Audit-quote:** [2026-04-26 audit](../audits/2026-04-26-sergeant-audit-devin.md),
-пункт 1: "4 apps + 9 packages, `pnpm-workspace.yaml` чітко як `apps/*` +
+пункт 1: "4 apps + 9 `@sergeant/*` packages (+ `eslint-plugin-sergeant-design`), `pnpm-workspace.yaml` чітко як `apps/*` +
 `packages/*`. … Domain packages — справжня доменна ізоляція, не fake."
 
 ## Consequences
