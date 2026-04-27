@@ -1,5 +1,20 @@
 # Assistant Capability Catalogue — дизайн-спек
 
+> **Status:** shipped (PR [#795](https://github.com/Skords-01/Sergeant/pull/795) +
+> follow-ups [#798](https://github.com/Skords-01/Sergeant/pull/798),
+> [#799](https://github.com/Skords-01/Sergeant/pull/799),
+> [#800](https://github.com/Skords-01/Sergeant/pull/800),
+> [#805](https://github.com/Skords-01/Sergeant/pull/805),
+> [#812](https://github.com/Skords-01/Sergeant/pull/812),
+> [#839](https://github.com/Skords-01/Sergeant/pull/839)).
+> Реджистр живе у `packages/shared/src/lib/assistantCatalogue.ts`; UI — у
+> `apps/web/src/core/AssistantCataloguePage.tsx` + `CapabilityDetailModal.tsx`;
+> server system prompt будується з реджистру через `buildModuleToolList()` у
+> `apps/server/src/modules/chat/toolDefs/systemPrompt.ts` (`SYSTEM_PROMPT_VERSION = "v6"`);
+> `/help` редіректить на каталог через `onOpenCatalogue` у `HubChat.tsx`.
+> Залишковий борг: видалити back-compat shim `apps/web/src/core/lib/hubChatQuickActions.ts`
+> після міграції `ChatQuickActions.tsx` на пряме читання `getQuickActionCapabilities()`.
+
 ## Контекст
 
 HubChat має 60 серверних tool definitions, ~50-рядковий `HELP_TEXT` і 10 quick action chips — три **повністю незалежних** списки можливостей, кожен підтримується вручну. Конкретний стан до цього спека:
