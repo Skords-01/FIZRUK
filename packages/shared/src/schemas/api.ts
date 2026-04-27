@@ -572,6 +572,12 @@ export const PushTestResponseSchema = z.object({
   errors: z.array(PushSendErrorSchema),
 });
 
+// `/api/push/send` (worker fan-out) повертає той самий summary, що й
+// `/api/push/test`. OpenAPI registry віддає їх як окремі іменовані схеми
+// `PushSendSummary` / `PushTestResponse`, тож тримаємо явний alias —
+// рефактор може розщепити їх у майбутньому без зміни контракту.
+export const PushSendSummarySchema = PushTestResponseSchema;
+
 // ────────────────────── Pagination ──────────────────────
 // Переused у будь-якому endpoint-і, що повертає список. Query-params завжди
 // приходять рядками — `z.coerce.number()` конвертує "8" → 8 автоматично.

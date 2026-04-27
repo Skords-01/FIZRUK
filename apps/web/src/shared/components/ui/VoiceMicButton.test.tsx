@@ -22,12 +22,15 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   // Прибираємо все, що тести могли поставити на window.
-  type W = typeof window & {
+  // `MediaRecorder` оголошений у lib.dom.d.ts як обовʼязковий → перетинна
+  // `& { MediaRecorder?: unknown }` його не послаблює. Використовуємо `Omit`
+  // щоб зробити поле опційним і дозволити `delete`.
+  type W = Omit<typeof window, "MediaRecorder"> & {
     SpeechRecognition?: unknown;
     webkitSpeechRecognition?: unknown;
     MediaRecorder?: unknown;
   };
-  const w = window as W;
+  const w = window as unknown as W;
   delete w.SpeechRecognition;
   delete w.webkitSpeechRecognition;
   delete w.MediaRecorder;
@@ -46,10 +49,10 @@ describe("VoiceMicButton", () => {
       interimResults = false;
       maxAlternatives = 1;
       continuous = false;
-      onstart = null;
-      onend = null;
-      onresult = null;
-      onerror = null;
+      onstart: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      onresult: ((e: unknown) => void) | null = null;
+      onerror: ((e: unknown) => void) | null = null;
       start() {}
       stop() {}
       abort() {}
