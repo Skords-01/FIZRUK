@@ -2,6 +2,7 @@
 
 - **Status:** accepted
 - **Date:** 2026-04-27
+- **Last reviewed:** 2026-04-27 by @Skords-01
 - **Reviewers:** @Skords-01
 - **Supersedes:** —
 - **Related:**
@@ -9,8 +10,11 @@
   - [`apps/server/src/modules/chat/tools.ts`](../../apps/server/src/modules/chat/tools.ts) — реєстр Anthropic tools.
   - [`apps/server/src/modules/chat/toolMetrics.ts`](../../apps/server/src/modules/chat/toolMetrics.ts) — `chat_tool_invocations_total{tool, outcome}` (PR-12.C, [#924](https://github.com/Skords-01/Sergeant/pull/924)).
   - [`apps/web/src/core/lib/chatActions/`](../../apps/web/src/core/lib/chatActions/) — клієнтські handler-и tool-call-ів.
+  - [`docs/ai-coding-improvements.md`](../ai-coding-improvements.md) § «Блок 3. Code markers» — визначення `AI-DANGER`-маркерів.
   - [`docs/playbooks/add-hubchat-tool.md`](../playbooks/add-hubchat-tool.md) — операційний how-to.
   - [`docs/playbooks/tune-system-prompt.md`](../playbooks/tune-system-prompt.md).
+  - [`docs/playbooks/add-feature-flag.md`](../playbooks/add-feature-flag.md) — feature-flag механіка для фази 3 (rollout) і ADR-2.10.
+  - [ADR-0005](./0005-anthropic-model-and-caching.md) — model selection + prompt caching (закриває TBD-ADR з §2.8).
 
 ---
 
@@ -26,6 +30,24 @@
 | 4. KPIs     | 30 днів post-merge    | Прометей + дашборд `proposed - executed` + retention                | Recurring review note |
 
 Кожна фаза має criteria-вихід; невідповідність на будь-якому gate-і — повернення на попередню фазу або **deprecation** (видалення з реєстру + cleanup metrics).
+
+### Додаткові sub-decisions
+
+Крім 4-фазного flow, цей ADR фіксує:
+
+| #    | Тема                                 | Decision (коротко)                                                            |
+| ---- | ------------------------------------ | ----------------------------------------------------------------------------- |
+| 2.1  | Чому потрібен формальний lifecycle   | (оригінальний sub-ADR)                                                        |
+| 2.2  | Фаза 1: Proposal                     | RFC-issue + tool-spec template                                                |
+| 2.3  | Фаза 2: Safety review                | Mandatory checklist у PR-template                                             |
+| 2.4  | Фаза 3: Rollout                      | Feature flag + 24h staging перед production                                   |
+| 2.5  | Фаза 4: KPIs                         | 30-day review, deprecation thresholds                                         |
+| 2.6  | Owner-domain map                     | Solo-repo зараз; trigger розширення — 2-й contributor з ≥3 PR-ами             |
+| 2.7  | Anthropic prompt-cache budget        | Батчити N tools в один PR при масових змінах                                  |
+| 2.8  | Не-цілі (out of scope)               | (оригінальний)                                                                |
+| 2.9  | Tool input_schema versioning         | Optional fields — minor; required — major (`_v2` + 30-day deprecation старої) |
+| 2.10 | Hot kill-switch (DB flag, no deploy) | `tool_kill_switches` table + LISTEN; <1 min recovery; auth: owner-domain      |
+| 2.11 | Token-budget cap для `tools` array   | Сума `JSON.stringify(input_schema).length` ⊤ 16 KB; CI-check у `tools.ts`     |
 
 ---
 
@@ -114,6 +136,8 @@ accepted.
 
 ---
 
+<!-- AI-DANGER markers — визначення у `docs/ai-coding-improvements.md` §«Блок 3. Code markers». Inline comment виду `// AI-DANGER: <опис ризику>`, флагується в PR-review і видимий в .github/PULL_REQUEST_TEMPLATE.md чеклісті. -->
+
 ## ADR-2.3 — Фаза 2: Safety review
 
 ### Status
@@ -156,7 +180,7 @@ PR з кодом нового tool-у (`apps/server/src/modules/chat/toolDefs/<s
 
 ### Markers
 
-- [ ] AI-DANGER marker на handler-функції, якщо вона мутує дані.
+- [ ] [AI-DANGER marker](../ai-coding-improvements.md) на handler-функції, якщо вона мутує дані.
 - [ ] Inline comment пояснює, чому tool необхідний (не просто wrap над існуючим API).
 ```
 
@@ -210,6 +234,8 @@ accepted.
 | `chat_tool_result_truncated_total{tool}`-rate | ≤ 10% від `executed`       | Reduce output size або винести у окремий endpoint      |
 | Sentry-error-rate handler-у                   | ≤ 1% від `executed`        | Bug-fix; якщо chronic — escalate до safety-фази заново |
 
+> **Why these numbers.** Thresholds — initial heuristic, обрані з ranges «lower bound, за яким теоретична користь tool-у рівна cost-у». 80% executed_rate = 1 з 5 invocation-ів schema-fail-иться — жива ситуація для автопоправленої model output, але якщо нижче — chronic schema-drift. ½-forecast — 50%-ьовий бафер на KPI-форекасти, які завжди оптимістичні у motivation. **Ревалідуємо після перших 5 tools у KPI-фазі** — якщо більше 80% з них fail-ять один і той же threshold, він не відображає реальність.
+
 Якщо tool **2 рази підряд** (60 днів) не проходить пороги — формальний deprecation-PR:
 
 1. Прибрати з `TOOLS`-реєстру.
@@ -240,7 +266,7 @@ accepted.
 | `routine`            | @Skords-01 | `mark_habit_done`, `query_streak`                             |
 | `hub` (cross-domain) | @Skords-01 | `get_briefing`, `summarize_period`                            |
 
-(Single-owner repo; коли команда росте — owners-секцію оновити.)
+(Single-owner repo зараз; owners-секцію розширюємо, як тільки до ´git log apps/server/src/modules/chat/´ додається другий contributor з ≥3 змердженими PR-ами. До того — єдиний owner = єдиний reviewer.)
 
 ### Exit criteria
 
@@ -276,14 +302,186 @@ n/a (operational reference).
 
 - **Tool authoring style** (іменування, opinionated input shapes) — це operational guidance у `docs/playbooks/add-hubchat-tool.md`.
 - **System prompt tuning** — окремий playbook `docs/playbooks/tune-system-prompt.md`.
-- **Anthropic version bumps / model selection** — закрито у [ADR-0005](./0005-anthropic-model-selection-and-prompt-caching.md) (`claude-sonnet-4-6` як єдиний tier; cache breakpoint policy; `SYSTEM_PROMPT_VERSION`-bump-rule).
+- **Anthropic version bumps / model selection / prompt caching budget** — [ADR-0005](./0005-anthropic-model-and-caching.md) (закриває TBD-ADR).
 - **Quotas і monetization gating** — ADR-0001 + `requireAiQuota` middleware.
 - **Безпека ширше за tool boundary** (XSS, CSRF, secrets management) — repo-wide AGENTS.md hard rules.
+
+---
+
+## ADR-2.9 — Tool input_schema versioning
+
+### Status
+
+proposed.
+
+### Context
+
+Коли `input_schema` для існуючого tool-у змінюється, реальні краї випадків:
+
+1. **Adding optional field** (`age?: number`) — безпечно: модель просто не передає поле у `tool_use`, handler працює.
+2. **Renaming a field** (`category` → `merchant_category`) — model бачить нову schema, але in-flight `tool_use_id` з client-а, який був reload-нутий після deploy-у, отримує стару schema, server приймає нову → schema mismatch → `unknown_tool` або crash.
+3. **Adding required field** (`amount: number` було optional, стало required) — model, що бачить стару schema, не передає поле; handler crashes.
+
+Без зафіксованої політики кожен schema-edit — потенційний backward-incompat.
+
+### Decision
+
+**Semver-style: minor для додавання optional, major для перейменування / required.**
+
+1. **Minor (backwards-compatible):**
+   - Додавання optional поля.
+   - Послаблення обмежень (`max(50)` → `max(100)`).
+   - **Дозволено** у тому самому PR, без проходження фаз 1-3.
+2. **Major (breaking):**
+   - Перейменування або видалення поля.
+   - Додавання required поля без default.
+   - Посилення обмежень (`max(100)` → `max(50)`).
+   - **Новий tool-name з `_v2` suffix-ом** (`delete_transaction_v2`). Старий (`delete_transaction`) лишається у реєстрі 30 днів як deprecated, з banner-ом у SYSTEM_PREFIX «prefer `delete_transaction_v2`».
+   - Через 30 днів — `delete_transaction` ремув-иться з реєстру (deprecation flow з ADR-2.5).
+   - **Проходить фази 1-3 заново** як новий tool.
+3. **Cache-invalidation note:** Anthropic prompt-cache (ADR-2.7) інвалідується автоматично на будь-яку зміну `tools` array, включно з minor. Acceptable cost-spike, якщо schema-edits рідкі.
+4. **Detection:** у CI додаємо перевірку (`scripts/lint-tool-schemas.mjs`): дифф `apps/server/src/modules/chat/toolDefs/**/*.ts` від base-бранчу. Якщо tool-name той самий, а schema видалила або перейменувала field — CI fail з повідомленням «this is a major change, use \_v2 suffix».
+
+### Consequences
+
+**Позитивні:**
+
+- In-flight `tool_use_id`-и від старих client-ів працюють 30 днів після deploy-у.
+- Mobile users (які бувають на старих bundle-ах тижнями) — graceful degradation.
+- Нові розробники автоматично проходять safety-review для major-змін.
+
+**Негативні:**
+
+- Період 30 днів з двома tools у реєстрі (старий + `_v2`) — враховується у ADR-2.11 token-budget cap.
+- CI-перевірка потребує base-branch git-fetch (~2-5s overhead).
+
+### Alternatives considered
+
+- **Always major (кожна зміна — \_vN):** noisy, якщо додаємо просто optional `note`-поле.
+- **No versioning (silent deploy):** регресії приходять через user-complaints.
+- **API-versioned tools (`api_version` у `tool_use`):** Anthropic protocol не підтримує.
+
+---
+
+## ADR-2.10 — Hot kill-switch (DB flag, no deploy)
+
+### Status
+
+proposed.
+
+### Context
+
+ADR-2.4 (фаза 3 rollout) описує feature-flag (`AI_TOOL_<NAME>_ENABLED=1`) як primary kill-switch. Проблема: вимкнення flag-у — окремий PR + Railway deploy = **5-15 хвилин реакції**. Для destructive tool (наприклад, `delete_transaction`), який виявив себе у production, це занадто довго: за 5 хвилин model може викликати tool десятки разів.
+
+Потрібен **<1-хвилинний kill-switch без redeploy**.
+
+### Decision
+
+**Postgres flag-table + LISTEN-trigger (аналогічно plan-cache в ADR-1.3):**
+
+1. **Schema** (PR-12.E):
+
+   ```sql
+   CREATE TABLE tool_kill_switches (
+     tool_name TEXT PRIMARY KEY,
+     enabled BOOLEAN NOT NULL DEFAULT true,
+     reason TEXT,
+     disabled_by TEXT,
+     disabled_at TIMESTAMPTZ,
+     CHECK (enabled OR (reason IS NOT NULL AND disabled_by IS NOT NULL))
+   );
+   ```
+
+2. **In-memory cache** (сервер-side LRU `Map<tool_name, boolean>`, розмір ~50). Читається на кожен Anthropic-call перед будуванням `tools` array — disabled tools **видаляються з array**.
+3. **NOTIFY-trigger** на `tool_kill_switches` UPDATE/INSERT → LISTEN-loop у сервері робить `cache.set(tool_name, enabled)`. Пропагація по всіх server-instance-ах < 1 c.
+4. **API for toggle:** `POST /api/admin/tools/:name/disable` (admin-only, Better Auth `admin`-role). Body: `{ reason: "chronic crashes in handler #N", disabled_by: "@Skords-01" }`. Повертає 200 якщо cache invalidate-нувся.
+5. **CLI fallback:** `pnpm tool:kill <name> --reason "..."` (`scripts/tool-kill.mjs`) — пише в DB напряму через Railway DB-proxy. Рятує, якщо admin-API сам зламаний.
+6. **Re-enable** — той самий endpoint з `enabled=true`, але **вимагає ADR-2.5 KPI-фази заново** (re-rollout, не hot resume).
+7. **Auth model:** список `disabled_by`-операторів — owner-домену (ADR-2.6) або on-call (якщо в майбутньому).
+
+Відмінності від ADR-2.4 feature-flag-у:
+
+| Аспект        | ADR-2.4 ENV-flag         | ADR-2.10 DB kill-switch    |
+| ------------- | ------------------------ | -------------------------- |
+| Призначення   | Rollout, planned changes | Emergency stop             |
+| Пропагація    | 5-15 хв (deploy)         | < 1 хв (LISTEN)            |
+| Audit trail   | Git history              | DB row + Sentry breadcrumb |
+| Authorization | Repo write-access        | Admin role                 |
+
+### Consequences
+
+**Позитивні:**
+
+- Bad-tool radius обмежений 60 секундами.
+- Audit trail (хто, коли, чому) — в одній row.
+- Не конфліктує з ADR-2.4 ENV-flag — їх два layers: env-flag — для rollout, DB-flag — для екстреного вимкнення.
+
+**Негативні:**
+
+- 1 додатковий LISTEN-connection на server-instance — prom-budget acceptable.
+- Admin-endpoint — attack vector. Mitigation: rate-limit + Sentry-alert на 100% викликів.
+- Два рівні control-у — ризик «я ввімкнув ENV-flag, але DB-flag вимкнений». Mitigation: dashboard показує effective state (env AND db).
+
+### Alternatives considered
+
+- **Redis-based flag:** додає інфраструктурну залежність, Postgres NOTIFY — вбудовано (як в ADR-1.3).
+- **Hard-fail всього Anthropic-call при emergency:** занадто агресивно — якщо ламається лише один tool, решта chat має працювати.
+- **Anthropic API blocking on prompt-level (system-prompt зміни):** не гарантує невикликання.
+
+---
+
+## ADR-2.11 — Token-budget cap для `tools` array
+
+### Status
+
+proposed.
+
+### Context
+
+Кожен tool у `tools` array Anthropic включається в context **на кожен виклик моделі**. При 50 tools, кожен ~200 токенів schema, ми витрачаємо ~10K токенів на input-context-load на кожну user-message. Prompt-cache (ADR-2.7) знижує cost ~10×, але cache-miss-и при deploy-ах / model-bump-ах — full price.
+
+Без cap-у регресія: «quickly add 5 tools» в одному PR — token-budget вибухає, ніхто не помічає до квартального Anthropic-bill-у.
+
+### Decision
+
+**16 KB cap на суму `JSON.stringify(input_schema).length` усіх enabled tools, enforced в CI.**
+
+1. **Limit:** Сума байт-довжин серіалізованих `input_schema` (без `description`-полів, які окремо розраховуємо) ≤ 16 384 байт. Це ~2 700 token вхідного бюджету.
+2. **CI-check** (`scripts/check-tool-budget.mjs`):
+   - Обходить `apps/server/src/modules/chat/toolDefs/**/*.ts`, рахує розмір кожної schema.
+   - Logs розмір кожного tool в CSV (для будь-якого PR-у).
+   - Fails якщо total > 16 KB.
+   - Додається у `pnpm lint` workflow.
+3. **Description-cap окремо:** кожен tool description ≤ 1000 байт. Description-и не враховуються в 16 KB cap-і (вони вже регулюються «common sense»). PR-review-ер флагує, якщо description > 500 байт.
+4. **На break-cap:** PR-author обирає:
+   - Спростити schema (видалити рідковживані поля).
+   - Deprecate інший невикористовуваний tool (з KPI-фази ADR-2.5).
+   - Писати ADR-поправку, що підвищує cap (потребує explicit decision — чому платимо більше).
+
+### Consequences
+
+**Позитивні:**
+
+- Cost-discipline — явний, не «виявляємо після bill-у».
+- CI-output є живою специфікацією: розмір кожного tool видимий.
+- Linkage з ADR-2.5 KPI-фазою: deprecation-thresholds реально роблять місце для нових.
+
+**Негативні:**
+
+- При 30+ tools cap стане binding constraint — доводиться «play tetris». Acceptable — це фіча, не баг.
+- 16 KB — heuristic; може бути too-tight або too-loose. Ревалідуємо після Q1 launch.
+
+### Alternatives considered
+
+- **No cap:** historical default, вже бачили silent token-bloat.
+- **Soft warning, no fail:** ігнорується без forcing-function-у.
+- **Per-tool cap (кожен ≤ N байт):** дозволяє mass-add маленьких tool-ів — той самий ризик.
 
 ---
 
 ## Open questions
 
 1. **Tool deprecation: hard-delete чи tombstone?** Зараз пропонується hard-delete з `TOOLS`. Альтернатива: лишати у whitelist з `outcome=deprecated` міткою — щоб старі metric-series не зникали миттєво. Вирішується у PR-12.C follow-up.
-2. **Cross-tool dependency.** Наприклад, `start_workout` залежить від `get_active_workout_session`. Чи потрібен явний DAG у tool spec? Поки — описувати у `motivation`-секції issue, але якщо таких випадків стане > 5, повертаємось до питання.
-3. **A/B testing нового tool.** Поки що усі юзери одразу отримують tool після rollout. Альтернатива — feature-flag на 50% і порівняти `executed_rate` між cohort-ами. Вирішується після інтеграції feature-flag-сервіс (поки немає).
+2. **Cross-tool dependency.** Наприклад, `start_workout` залежить від `get_active_workout_session`. **Рішення зараз:** описувати у `motivation`-секції issue (фаза 1 ADR-2.2) як free-form text. Explicit `depends_on`-поле у tool-spec додамо, як тільки буде >5 живих випадків у реєстрі (зараз — 0). Ревалідуємо при кожному KPI-review.
+3. **A/B testing нового tool.** **Рішення зараз:** використовуємо existing feature-flag систему (плейбук [`add-feature-flag.md`](../playbooks/add-feature-flag.md)) + `userId %% N`-cohort split у SYSTEM_PREFIX. Перший A/B-tested tool — у PR-12.F (ще не відкритий). Для більш складних cohort-flow (вік, geo) — ADR-0018 (бек-лог в README).
+4. **Output cap реалізація.** Safety checklist в ADR-2.3 вимагає `output ≤ 8000 chars`. Реалізація вже є: в `apps/server/src/modules/chat/tools.ts` ToolResult schema truncate-ить овер-cap output і пише metric `chat_tool_result_truncated_total{tool}`. Нові tool-и наслідують автоматично.

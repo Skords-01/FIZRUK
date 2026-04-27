@@ -1,32 +1,70 @@
-# ADR-0001: Monetization architecture (11 рішень перед стартом)
+# ADR-0001: Monetization architecture (16 рішень перед стартом)
 
 - **Status:** proposed
 - **Date:** 2026-04-27
+- **Last reviewed:** 2026-04-27 by @Skords-01
 - **Reviewers:** @Skords-01
 - **Supersedes:** —
 - **Related:**
   - [`docs/launch/01-monetization-and-pricing.md`](../launch/01-monetization-and-pricing.md) — бізнес-модель, тіри, ціни.
   - [`docs/launch/06-monetization-architecture.md`](../launch/06-monetization-architecture.md) — технічний скелетон v2 (PR-розбивка, schema, risk register).
+  - [ADR-0003](./0003-refund-and-dispute.md) — refund / dispute flow (закриває open question з ADR-1.11).
+  - [ADR-0004](./0004-pii-and-account-deletion.md) — account-deletion flow + Stripe customer cleanup.
 
 ---
 
 ## 0. TL;DR
 
-Цей ADR фіксує **11 архітектурних рішень**, які повинні бути затверджені **до старту PR-M.1**. Без цього ADR код не починаємо: ці питання випливуть посеред PR-M.7 (Stripe webhook) як суперечливі і доведеться переробляти.
+Цей ADR фіксує **16 архітектурних рішень**, які повинні бути затверджені **до старту PR-M.1**. Без цього ADR код не починаємо: ці питання випливуть посеред PR-M.7 (Stripe webhook) як суперечливі і доведеться переробляти.
 
-| #    | Тема                          | Decision (коротко)                                                                 |
-| ---- | ----------------------------- | ---------------------------------------------------------------------------------- |
-| 1.1  | Payment provider              | Stripe primary; LiqPay — Phase 2 (поза MVP)                                        |
-| 1.2  | Schema design                 | Single-row-per-user `subscriptions`; audit trail у follow-up `subscription_events` |
-| 1.3  | Plan-cache TTL + invalidation | RQ `staleTime: 60s`; server LRU `ttl: 300s` + Postgres NOTIFY → SSE                |
-| 1.4  | Grandfather policy            | **Withdrawn** — немає legacy-юзерів на момент launch                               |
-| 1.5  | Trial для нових юзерів        | 14 днів Pro без payment method; anti-fraud — hard requirement перед PR-M.10        |
-| 1.6  | AI-ліміт для free             | 5 chat msg/day, 3 photo/day; ENV-driven, A/B-тестабельно без міграції              |
-| 1.7  | requireAiQuota ↔ requirePlan  | requireAiQuota читає план; requirePlan — лише на не-AI gates                       |
-| 1.8  | Webhook event-id retention    | 90 днів у `stripe_webhook_events`; cron-purge у follow-up                          |
-| 1.9  | Currency                      | UAH only на MVP; USD/EUR через Stripe Multi-currency у Phase 7                     |
-| 1.10 | Tax handling                  | MVP: Stripe Tax OFF, UAH only. Legal entity — hard blocker. ФОП — паралельно       |
-| 1.11 | Cancellation flow             | `cancel_at_period_end=true`: Pro до `current_period_end`, потім auto-деграда       |
+| #    | Тема                          | Decision (коротко)                                                                                                |
+| ---- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1.1  | Payment provider              | Stripe primary; LiqPay — Phase 2 (поза MVP)                                                                       |
+| 1.2  | Schema design                 | Single-row-per-user `subscriptions`; audit trail у follow-up `subscription_events`                                |
+| 1.3  | Plan-cache TTL + invalidation | RQ `staleTime: 60s`; server LRU `ttl: 300s` + Postgres NOTIFY → SSE                                               |
+| 1.4  | Grandfather policy            | **Withdrawn** — немає legacy-юзерів на момент launch                                                              |
+| 1.5  | Trial для нових юзерів        | 14 днів Pro без payment method; anti-fraud — hard requirement перед PR-M.10                                       |
+| 1.6  | AI-ліміт для free             | 5 chat msg/day, 3 photo/day; ENV-driven, A/B-тестабельно без міграції                                             |
+| 1.7  | requireAiQuota ↔ requirePlan  | requireAiQuota читає план; requirePlan — лише на не-AI gates                                                      |
+| 1.8  | Webhook event-id retention    | 90 днів у `stripe_webhook_events`; cron-purge у follow-up                                                         |
+| 1.9  | Currency                      | UAH only на MVP; USD/EUR через Stripe Multi-currency у Phase 7                                                    |
+| 1.10 | Tax handling                  | MVP: Stripe Tax OFF, UAH only. Legal entity — hard blocker. ФОП — паралельно                                      |
+| 1.11 | Cancellation flow             | `cancel_at_period_end=true`: Pro до `current_period_end`, потім auto-деграда. Refund/dispute — окремо в ADR-0003. |
+| 1.12 | Dunning / past_due strategy   | 7-day Stripe Smart Retries → graceful degrade у `past_due` → cancel на 7-й день                                   |
+| 1.13 | Proration / mid-cycle change  | Upgrade — `create_prorations`; downgrade — у `current_period_end` без proration                                   |
+| 1.14 | Stripe API version pinning    | `STRIPE_API_VERSION` env-var; bump раз/квартал зі snapshot-тестами на webhook payload                             |
+| 1.15 | Client idempotency keys       | UUID v4 на client-initiated `POST /billing/*`; 24h server-side dedup-table                                        |
+| 1.16 | Billing observability / SLO   | Webhook-latency p95 < 5s; refund-rate alert > 2%/тиждень; MRR/churn dashboard у Grafana                           |
+
+### Phase glossary
+
+ADR посилається на «Phase N» декілька разів. Глосарій (синхронізовано з [`docs/launch/04-launch-readiness.md`](../launch/04-launch-readiness.md)):
+
+| Phase | Тригер                                                                                | Що відкривається                                                                                |
+| ----- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 0     | Зараз — pre-launch, MVP-розробка.                                                     | PR-M.0 ... M.10. UAH only, free + Pro, без cancel-flow ADR.                                     |
+| 1     | Перші 10 paying users.                                                                | Validate paywall conversion, refund-flow exercises, manual dunning.                             |
+| 2     | LiqPay як secondary provider.                                                         | Дублюємо Stripe-flow для UA-cards (BIN 4149).                                                   |
+| 7     | 100 paying users **AND** monetization stable for ≥30 днів **AND** ФОП зареєстрований. | Stripe Tax ON, USD/EUR prices, `subscription_events` table, EU/UK VAT registrations за потреби. |
+| 8     | 1K concurrent active users.                                                           | Redis pub/sub замість Postgres NOTIFY, WebSocket замість SSE, sharded Postgres.                 |
+
+Точні цифри пере-валідуємо при кожному review цього ADR.
+
+### Internal dependencies (sub-ADR-и)
+
+| Залежний | Залежить від      | Чому                                                                                                 |
+| -------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
+| ADR-1.3  | ADR-1.2           | NOTIFY-trigger пишеться на schema з ADR-1.2.                                                         |
+| ADR-1.6  | ADR-1.7           | FREE_LIMITS читаються middleware-ом з ADR-1.7.                                                       |
+| ADR-1.7  | ADR-1.2, ADR-1.3  | `getUserPlan` читає subscriptions через `planCache`.                                                 |
+| ADR-1.11 | ADR-1.3           | NOTIFY-trigger скидає cache на `cancel_at_period_end`-toggle.                                        |
+| ADR-1.12 | ADR-1.11          | Past-due → cancel переходить у канонічний cancel-flow.                                               |
+| ADR-1.13 | ADR-1.2, ADR-1.11 | Proration пише в той самий schema; downgrade використовує `cancel_at_period_end`-механіку.           |
+| ADR-1.14 | ADR-1.8           | Snapshot-тести на webhook event-shape запускаються на тих самих payload-ах, що зберігаються 90 днів. |
+| ADR-1.15 | ADR-1.8           | Серверна dedup-table — по структурі аналогічна `stripe_webhook_events`.                              |
+| ADR-1.16 | усі 1.1–1.15      | Observability покриває увесь pipeline.                                                               |
+| ADR-0003 | ADR-1.8, ADR-1.11 | Refund-flow використовує webhook-events і cancel-семантику.                                          |
+| ADR-0004 | ADR-1.2           | Account-deletion змінює `subscriptions` row + Stripe customer.                                       |
 
 ---
 
@@ -161,7 +199,7 @@ Trigger див. [`docs/launch/06-monetization-architecture.md` §3.1](../launch/
 
 ### Status
 
-**withdrawn (2026-04-27).** На момент прийняття рішень Sergeant не має користувачів, окрім автора-розробника. Grandfather-механізм не потрібен — немає legacy-когорти, яку треба грейсити.
+**withdrawn (2026-04-27).** Цей sub-ADR ніколи не дійшов до `accepted` — рішення відкликане у тому самому PR-і, що додав ADR-0001 (бо немає legacy-юзерів на момент launch, окрім автора-розробника). Grandfather-механізм не потрібен — немає legacy-когорти, яку треба грейсити. Див. README §«Status enum» — `withdrawn` означає саме це: розглядалось, не дійшло до merge.
 
 ### Context (historical)
 
@@ -514,7 +552,276 @@ return "free";
 
 - **Immediate cancel з pro-rata refund:** складніший код (proration math), Customer Portal не робить за замовчуванням. Відкинуто.
 - **Immediate cancel без refund:** unfair — юзер заплатив, не отримав, churn гарантовано. Відкинуто.
-- **Окремий ADR про refund/dispute flow:** винесено в ADR-0003 (open question).
+- **Окремий ADR про refund/dispute flow:** винесено в [ADR-0003](./0003-refund-and-dispute.md) — закрито у тому самому PR-і.
+
+---
+
+## ADR-1.12 — Dunning / past_due retry strategy
+
+### Status
+
+proposed.
+
+### Context
+
+Коли charge на recurring-invoice fails (картка expired, недостатньо коштів, do_not_honor), Stripe виставляє `invoice.payment_failed` і робить retry. Без зафіксованої dunning-strategy ми ризикуємо одним з двох:
+
+1. **Занадто агресивно cancel-нути:** юзер на 1 день в bus-trip без 4G — карта пропустила одну спробу — підписку вирубили. Втрачаємо payments, які могли б успішно retry-нути.
+2. **Занадто м'яко** — юзер 30 днів користується Pro без оплати, churn-имо лише після місяця.
+
+Stripe Smart Retries покриває (1) — використовує ML на кожен retry-attempt і має reasonable defaults. Питання: коли саме ми переходимо у `past_due` (кеш скидається? UI показує banner?), і коли остаточно cancel-имо.
+
+### Decision
+
+**7-day soft window зі Stripe Smart Retries**, потім авто-cancel:
+
+1. **Day 0 (`invoice.payment_failed`):** `subscriptions.status='past_due'`. UI показує **non-blocking banner** «Не вдалось списати оплату. Поновіть картку у [Customer Portal]». Pro-фічі **продовжують працювати** — `effectivePlan()` повертає `pro` для `past_due` ще 7 днів.
+2. **Day 1-6:** Stripe Smart Retries (3-4 attempts) на свій графік. Кожна успішна спроба — `invoice.paid` → `status='active'`, banner зникає. Web-app шле email-нагадування на day 3 (`scripts/dunning-reminders.mjs`, cron).
+3. **Day 7 (`customer.subscription.deleted` від Stripe):** ми ставимо `status='canceled'`, `plan='free'`, NOTIFY-тригер з ADR-1.3 миттєво invalidate-ить cache. Email «Підписку призупинено». Anti-pattern: **не блокуємо** read-only доступ до існуючих даних — лише Pro-features.
+4. **Re-subscribe** (новий checkout) — стандартний flow, без legacy stigma.
+
+`effectivePlan()` логіка з ADR-1.11 розширюється:
+
+```ts
+if (status === "past_due" && current_period_end && now < current_period_end + 7d) return plan; // grace
+if (status === "past_due") return "free"; // після 7 днів, але ще не прийшов customer.subscription.deleted
+```
+
+### Consequences
+
+**Позитивні:**
+
+- Stripe Smart Retries — індустріальний стандарт; Stripe-recovery rate ~25-40% на failed-charge-ах.
+- 7-day grace навмисно >= longest-Smart-Retry-window (~6 днів) — гарантуємо, що cancel приходить **після** усіх retry, не паралельно.
+- UI banner — не paywall — зменшує churn від transient помилок.
+
+**Негативні:**
+
+- Якщо юзер свідомо «забув» поновити картку — ми безкоштовно даємо 7 днів Pro. Acceptable: це <1% MRR, дешевше ніж агресивні cancel-flow + customer-success.
+- Email-нагадування потребує `apps/server` cron + transactional email integration. Це **окремий блокер** перед PR-M.10 (paywall enable). Виноситься у PR-M.13.
+
+### Alternatives considered
+
+- **Immediate cancel on `payment_failed`:** false-positive rate занадто високий для нашої когорти (UA-юзери, FX-flaky cards).
+- **30-day grace:** забагато — заохочує abuse.
+- **Hard paywall у grace-period:** UX-friction, churn значно вищий ніж дозволяти Pro з banner-ом.
+
+---
+
+## ADR-1.13 — Proration / mid-cycle plan change
+
+### Status
+
+proposed.
+
+### Context
+
+Коли юзер міняє план посеред періоду (monthly → yearly upgrade, або yearly → monthly downgrade, або просто змінює tier), Stripe має параметр `proration_behavior`:
+
+- `create_prorations` — нараховує credit за невикористаний час старого плану і списує доплату за новий, **миттєво**.
+- `none` — нова ціна стартує з наступного `current_period_end`, без credit.
+- `always_invoice` — створює invoice одразу.
+
+Без зафіксованої політики upgrade-flow стане «то-так-то-сяк», а downgrade — джерелом disputes.
+
+### Decision
+
+**Asymmetric: upgrade — `create_prorations`, downgrade — `cancel_at_period_end`-style.**
+
+1. **Upgrade (monthly→yearly або free→Pro mid-cycle):**
+   - `proration_behavior='create_prorations'`.
+   - Юзер платить delta негайно. Stripe credit за невикористані дні старого плану автоматично applied.
+   - `subscriptions` row update-иться через `customer.subscription.updated` webhook.
+2. **Downgrade (yearly→monthly або Pro→free):**
+   - **Не proration.** Старий план активний до `current_period_end`, далі вмикається новий (або `free`).
+   - Семантично використовуємо ту саму механіку, що ADR-1.11 (`cancel_at_period_end=true` + `subscription_schedules` у Stripe для майбутнього price-switch).
+   - UI показує «Поточний план Pro Yearly до {date}, потім Pro Monthly».
+3. **Same-tier change (наприклад, monthly Pro re-subscribe після cancel):** окремий checkout, не proration. Без edge-cases.
+
+### Consequences
+
+**Позитивні:**
+
+- Upgrade — мінімальний UX-friction, юзер одразу отримує більше value.
+- Downgrade — без unexpected refund-disputes («чому я отримав менше, ніж очікував?»).
+- Code complexity мінімальна: один webhook-handler різниться по `proration` value.
+
+**Негативні:**
+
+- Edge case: upgrade за 1 день до `current_period_end` створює тривіально малий proration credit (~0.03×). Acceptable — Stripe сам фільтрує < $0.50 credits.
+- Downgrade-«lock-in»: юзер чекає до `current_period_end` щоб отримати нижчий план. Можна зрозуміти як friction, але це industry-norm (Notion, Linear, Spotify працюють так само).
+
+### Alternatives considered
+
+- **`always_invoice` для всіх змін:** генерує багато invoice-ів з малими сумами — bookkeeping noise.
+- **`none` для upgrade:** юзер платить за старий план до кінця періоду — упускаємо upgrade momentum.
+- **Pro-rata refund на downgrade:** Stripe не робить це автоматично, потрібен власний refund-flow → плодить disputes (див. ADR-0003).
+
+---
+
+## ADR-1.14 — Stripe API version pinning
+
+### Status
+
+proposed.
+
+### Context
+
+Stripe випускає нову API-версію кожні 3-6 місяців. Кожна версія може змінити webhook event payload shape (поля додаються — backwards-compatible; поля переіменовуються — breaking). За замовчуванням SDK використовує **аккаунт-default-версію**, яка міняється automatically коли Stripe нас «грейсово апгрейдить» (зазвичай через 12 місяців без opt-out).
+
+Без explicit pinning ми ризикуємо: webhook-handler написаний під версію X, Stripe тихо переключив account на X+1 — payload змінився — handler crashes — 5xx у webhook → Stripe retry → eventually drop.
+
+### Decision
+
+**Pin Stripe API version через ENV-var + snapshot test.**
+
+1. `STRIPE_API_VERSION` (наприклад, `2025-12-01.preview`) у `apps/server/src/env/env.ts`. Required env-var у `staging` і `production`.
+2. Stripe SDK constructor: `new Stripe(secretKey, { apiVersion: env.STRIPE_API_VERSION })`. Це **робить запити Stripe API** через цю версію + **інтерпретує webhooks** як цю версію (Stripe нормалізує payload до запитаної версії, незалежно від account-default).
+3. **Snapshot-тести** webhook payloads (`apps/server/src/modules/billing/webhook.test.ts`) фіксують shape для зафіксованої версії. Якщо хтось бампає `STRIPE_API_VERSION` без оновлення snapshots — CI fails.
+4. **Bump policy:**
+   - Quarterly review: чи є нова Stripe-version з фічами, які нам цікаві (наприклад, новий tax-метод).
+   - Bump через окремий PR з: новий `STRIPE_API_VERSION` + перегенеровані snapshot-и + manual test через Stripe CLI proxy на staging.
+   - Production-deploy bump-у — окремий 1-line PR, як у ADR-2.4 (фаза 3 для AI-tools). 24h на staging перед production.
+
+### Consequences
+
+**Позитивні:**
+
+- Detерміністичний webhook payload — handler-и стабільні.
+- Migration to new version — explicit процес, не silent breakage.
+- Snapshot-тести служать regression-suite-ом і живою специфікацією webhook-shape-ів.
+
+**Негативні:**
+
+- Quarterly maintenance overhead (~2-4 години на bump).
+- Можемо пропустити security-фікси у «свіжих» Stripe-версіях. Mitigation: subscribe на Stripe Engineering blog.
+
+### Alternatives considered
+
+- **No pinning, account-default:** silently breaks. Відкинуто.
+- **Auto-bump на CI cron:** ризиковано — Stripe-bump-и іноді мають breaking changes у нюансних edge-cases (`invoice.lines` shape).
+
+---
+
+## ADR-1.15 — Client-initiated idempotency keys
+
+### Status
+
+proposed.
+
+### Context
+
+Webhook-idempotency покривається ADR-1.8 через `event.id PRIMARY KEY`. Але є інша сторона: client → server mutations (наприклад, `POST /api/billing/checkout-session`, `POST /api/billing/cancel`). Без idempotency:
+
+1. Юзер двічі тисне «Subscribe» (network lag) → 2 Stripe checkout sessions → інколи 2 paid customers.
+2. Web-app retries POST на 502 → server вже створив Stripe customer першим запитом → дубль.
+3. Mobile: background-fetch retry після crash → дубль.
+
+### Decision
+
+**UUID v4 idempotency-key, передається у `Idempotency-Key` HTTP header. 24-годинний server-side dedup.**
+
+1. **Client side:**
+   - Web: `crypto.randomUUID()` генерується на mount`<CheckoutButton />`-component-у; той самий ключ retry-їться на network errors.
+   - Mobile: те саме через `expo-crypto` `randomUUID()`.
+   - api-client wrapper (`packages/api-client/src/billing.ts`) додає header автоматично, якщо метод позначений `idempotent: true`.
+2. **Server side:**
+   - Middleware `requireIdempotencyKey` (`apps/server/src/middleware/idempotency.ts`) на mutation-ендпоінтах (`POST /billing/*`, `POST /account/delete`).
+   - Dedup-table `idempotency_keys (key TEXT PRIMARY KEY, user_id UUID, response_body JSONB, http_status INT, created_at TIMESTAMPTZ)`.
+   - При першому запиті — handler виконується, response кешується у table.
+   - При повторному з тим самим key + user — повертаємо cached response (без виконання handler-а).
+   - Cleanup: `DELETE WHERE created_at < NOW() - INTERVAL '24 hours'` — daily cron (Phase 7).
+3. **Stripe API:** Stripe SDK має власний `idempotencyKey` параметр на `customers.create` / `subscriptions.create`. Передаємо туди той самий ключ — Stripe також робить dedup.
+4. **Errors:** якщо handler упав з 5xx — **не кешуємо**. Наступний retry зможе спробувати знову.
+
+### Consequences
+
+**Позитивні:**
+
+- Подвійні clicks / retry-storms — безпечні.
+- Stripe не створює дубль customers / subscriptions.
+- Dedup-table сам по собі — audit trail (хто, коли, з яким key, що відповіли).
+
+**Негативні:**
+
+- Додатковий PK lookup на кожен mutation. Acceptable — це мікросекунди, billing-ендпоінти rare.
+- Memory: 24h × ~100 mutations/day × 5KB = ~12MB. Negligible.
+- Складніша client logic: ключ треба генерувати **до** першого retry-attempt-у. RQ-mutation hook має бути key-aware.
+
+### Alternatives considered
+
+- **Hash-based idempotency** (`hash(payload + user_id)`): не покриває case, коли юзер змінив payload навмисно (e.g., два різні plan-id). Відкинуто.
+- **Client-side debounce only:** не покриває cross-tab / cross-device retries. Відкинуто.
+- **Stripe `Idempotency-Key` only, без власної dedup:** не покриває **наш** server state (наприклад, ми створили audit-row перед Stripe-call → дубль audit-row).
+
+---
+
+## ADR-1.16 — Billing observability and SLO
+
+### Status
+
+proposed.
+
+### Context
+
+Billing pipeline = critical path. Сlient checkout → server → Stripe → webhook → DB → cache invalidation → UI update. Будь-яка ланка може тихо зламатися: Stripe webhook lag, DB transaction deadlock, NOTIFY-trigger drop, SSE disconnect. Без observability ці failures починають вилазити через user-complaints у Telegram, не через alert.
+
+Зараз `apps/server/src/obs/` має базову Prometheus-інфру; `docs/observability/SLO.md` визначає загальні SLO. Питання: які саме метрики **specifically** для billing, і які thresholds.
+
+### Decision
+
+**Метрики (Prometheus):**
+
+| Метрика                                          | Тип       | Threshold / SLO                                              |
+| ------------------------------------------------ | --------- | ------------------------------------------------------------ |
+| `stripe_webhook_received_total{event_type}`      | counter   | (raw rate)                                                   |
+| `stripe_webhook_latency_seconds{event_type}`     | histogram | p95 < 5s, p99 < 15s. Alert при p95 > 10s 5хв поспіль.        |
+| `stripe_webhook_errors_total{event_type, error}` | counter   | error_rate > 1% за 5 хв → Sentry alert.                      |
+| `subscriptions_state_total{plan, status}`        | gauge     | Daily snapshot. Source-of-truth для MRR-розрахунку.          |
+| `plan_cache_hit_ratio`                           | gauge     | > 95% (ADR-1.3 cache hit rate).                              |
+| `notify_listener_disconnected_total`             | counter   | > 0 / hour → alert (cache invalidation сломаний — ADR-1.3).  |
+| `idempotency_key_duplicate_total`                | counter   | (raw rate; для baseline) — ADR-1.15.                         |
+| `refund_initiated_total{reason}`                 | counter   | weekly_rate > 2% від `subscriptions_active` → Sentry alert.  |
+| `dunning_recovery_total{outcome}`                | counter   | 7-day recovery rate < 20% → alert (Smart Retries не працює). |
+| `dispute_created_total{reason_code}`             | counter   | > 0 / тиждень → Sentry — потребує ручного triage.            |
+
+**Dashboard:** `docs/observability/dashboards.md` — додати секцію `Billing` з Grafana-board JSON. PR-M.16 покриває це.
+
+**SLO targets (перші 90 днів post-launch):**
+
+- Webhook end-to-end latency p95 < 5s.
+- DB-update після webhook → cache-invalidation latency p95 < 1s.
+- MRR retention за 30-day window > 90%.
+- Refund rate < 2% / тиждень від active-subscriptions.
+- Dispute rate < 0.5% / місяць від всіх charges.
+
+Thresholds — **initial heuristic**, ревалідуємо після перших 100 paying-users.
+
+**Required artifacts перед PR-M.10 (paywall enable):**
+
+- Усі вищезгадані метрики **emit-ить** код (навіть якщо threshold не відомий ще).
+- Sentry-alerts **створено** на P1-критичні (webhook errors, NOTIFY disconnect).
+- Grafana board існує (нехай поки порожній).
+- `docs/observability/runbook.md` має секцію «Billing incidents» з top-3 most-likely failures.
+
+### Consequences
+
+**Позитивні:**
+
+- Billing-incidents видні **до** того, як юзер скаржиться.
+- MRR/churn — операційний trail без ручного спорту по Stripe Dashboard.
+- Runbook-friendly: alert → лінк на runbook → лінк на ADR.
+
+**Негативні:**
+
+- Metrics-cardinality: `event_type`, `reason_code`, `error` — потенційна explosion. Mitigation: whitelist allowed values у `apps/server/src/obs/billingMetrics.ts`.
+- Alert fatigue ризик. Mitigation: P1 alerts → Sentry; P2-P3 — daily digest, не on-call ping.
+
+### Alternatives considered
+
+- **Datadog / NewRelic billing-add-on:** дорожче, дублює існуючу Prometheus-інфру.
+- **Stripe Dashboard alone:** не покриває власний state (NOTIFY, cache, RQ).
+- **Logs-only + Sentry:** не дає aggregation для SLO-перевірок.
 
 ---
 
@@ -528,19 +835,27 @@ return "free";
 
 ## Implementation tracker
 
-| PR         | Реалізує ADR                       | Статус                          |
-| ---------- | ---------------------------------- | ------------------------------- |
-| PR-M.0     | ADR-1.1 ... ADR-1.11               | (цей PR)                        |
-| PR-M.1     | ADR-1.2, ADR-1.11 (schema)         | pending                         |
-| PR-M.2     | ADR-1.2                            | pending                         |
-| PR-M.3     | ADR-1.3                            | pending                         |
-| ~~PR-M.4~~ | ~~ADR-1.4~~                        | **removed (ADR-1.4 withdrawn)** |
-| PR-M.5     | ADR-1.7                            | pending                         |
-| PR-M.6     | ADR-1.6, ADR-1.7                   | pending                         |
-| PR-M.7     | ADR-1.1, ADR-1.8, ADR-1.10 (legal) | pending                         |
-| PR-M.8     | ADR-1.5, ADR-1.11 (cancel UI)      | pending                         |
-| PR-M.9     | ADR-1.9                            | pending                         |
-| PR-M.10    | ADR-1.5 (PAYWALL + anti-fraud)     | pending                         |
+> **Last validated: 2026-04-27.** Ревалідовуємо при кожному merge PR-M.X.
+
+| PR         | Реалізує ADR                               | Статус                          |
+| ---------- | ------------------------------------------ | ------------------------------- |
+| PR-M.0     | ADR-1.1 ... ADR-1.16                       | (цей PR)                        |
+| PR-M.1     | ADR-1.2, ADR-1.11, ADR-1.13 (schema)       | pending                         |
+| PR-M.2     | ADR-1.2                                    | pending                         |
+| PR-M.3     | ADR-1.3                                    | pending                         |
+| ~~PR-M.4~~ | ~~ADR-1.4~~                                | **removed (ADR-1.4 withdrawn)** |
+| PR-M.5     | ADR-1.7                                    | pending                         |
+| PR-M.6     | ADR-1.6, ADR-1.7                           | pending                         |
+| PR-M.13    | ADR-1.12 (dunning + cron)                  | pending                         |
+| PR-M.14    | ADR-1.13 (proration)                       | pending                         |
+| PR-M.15    | ADR-1.14, ADR-1.15 (API pin + idempotency) | pending                         |
+| PR-M.16    | ADR-1.16 (observability + SLO)             | pending                         |
+| PR-M.17    | ADR-0003 (refund / dispute)                | pending                         |
+| PR-M.18    | ADR-0004 (account deletion)                | pending                         |
+| PR-M.7     | ADR-1.1, ADR-1.8, ADR-1.10 (legal)         | pending                         |
+| PR-M.8     | ADR-1.5, ADR-1.11 (cancel UI)              | pending                         |
+| PR-M.9     | ADR-1.9                                    | pending                         |
+| PR-M.10    | ADR-1.5 (PAYWALL + anti-fraud)             | pending                         |
 
 ---
 

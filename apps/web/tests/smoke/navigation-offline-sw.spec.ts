@@ -24,7 +24,7 @@ async function seedLocalStorage(page: Page) {
   }, SEEDED_LS);
 }
 
-test("nav: module routes render (best-effort)", async ({ page }) => {
+test("@extended nav: module routes render (best-effort)", async ({ page }) => {
   await seedLocalStorage(page);
 
   for (const mod of ["finyk", "fizruk", "nutrition", "routine"] as const) {
@@ -33,7 +33,10 @@ test("nav: module routes render (best-effort)", async ({ page }) => {
   }
 });
 
-test("offline: shows OfflineBanner status", async ({ page, context }) => {
+test("@extended offline: shows OfflineBanner status", async ({
+  page,
+  context,
+}) => {
   await seedLocalStorage(page);
   await page.goto("/", { waitUntil: "domcontentloaded" });
 
@@ -46,7 +49,7 @@ test("offline: shows OfflineBanner status", async ({ page, context }) => {
   await context.setOffline(false);
 });
 
-test("sw: debug roundtrip works (best-effort)", async ({ page }) => {
+test("@extended sw: debug roundtrip works (best-effort)", async ({ page }) => {
   await seedLocalStorage(page);
   await page.goto("/?sw=debug", { waitUntil: "domcontentloaded" });
 

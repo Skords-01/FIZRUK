@@ -17,6 +17,9 @@ import { cn } from "../../lib/cn";
  * - fizruk: Teal fitness theme
  * - routine: Coral habit theme
  * - nutrition: Lime nutrition theme
+ *
+ * Touch: `xs` / `sm` / icon-only sizes get `min 44×44px` under `@media (pointer: coarse)`
+ * so primary controls stay tappable on phones while staying visually compact on desktop.
  */
 
 export type ButtonVariant =
@@ -39,49 +42,41 @@ export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 const variants: Record<ButtonVariant, string> = {
   // Core variants
-  // `bg-brand-strong` = emerald-700 (5.48:1 vs text-white) — clears WCAG
-  // AA at body sizes. Saturated `bg-brand-500` failed at ~2.5:1; see
-  // docs/brand-palette-wcag-aa-proposal.md § 2.2.
   primary:
-    "bg-brand-strong text-white shadow-sm hover:bg-brand-800 hover:shadow-glow active:bg-brand-900 active:scale-[0.98]",
+    "bg-brand-500 text-white shadow-sm hover:bg-brand-600 hover:shadow-glow active:bg-brand-700 active:scale-[0.98]",
   secondary:
     "bg-panel text-text border border-line shadow-sm hover:bg-panelHi hover:border-brand-200 active:scale-[0.98]",
   ghost:
     "bg-transparent text-muted hover:bg-panelHi hover:text-text active:bg-line/50",
   danger:
-    "bg-danger-soft text-danger-strong border border-danger/30 hover:bg-danger/15 hover:border-danger/50 active:scale-[0.98]",
+    "bg-danger-soft text-danger border border-danger/30 hover:bg-danger/15 hover:border-danger/50 active:scale-[0.98]",
   destructive:
-    "bg-danger-strong text-white shadow-sm hover:brightness-110 hover:shadow-danger-ring active:scale-[0.98]",
+    "bg-danger text-white shadow-sm hover:brightness-110 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.15)] active:scale-[0.98]",
   success:
     "bg-brand-50 text-brand-700 border border-brand-200/50 hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:border-brand-500/30 dark:hover:bg-brand-500/25 active:scale-[0.98]",
 
-  // Module-specific branded buttons. `bg-{module}-strong` = the
-  // module's `[700]` (or lime-800 for nutrition) — clears WCAG AA on
-  // text-white (5.0–7.0:1). Hover stays at the existing `*-hover`
-  // shade (= brand-600) which is one step *lighter* than the new base;
-  // that’s the same hover-on-pressed pattern Apple/Material use for
-  // dark CTAs.
+  // Module-specific branded buttons
   finyk:
-    "bg-finyk-strong text-white shadow-sm hover:bg-finyk-hover hover:shadow-glow active:scale-[0.98]",
+    "bg-finyk text-white shadow-sm hover:bg-finyk-hover hover:shadow-glow active:scale-[0.98]",
   fizruk:
-    "bg-fizruk-strong text-white shadow-sm hover:bg-fizruk-hover hover:shadow-glow-teal active:scale-[0.98]",
+    "bg-fizruk text-white shadow-sm hover:bg-fizruk-hover hover:shadow-glow-teal active:scale-[0.98]",
   routine:
-    "bg-routine-strong text-white shadow-sm hover:bg-routine-hover hover:shadow-glow-coral active:scale-[0.98]",
+    "bg-routine text-white shadow-sm hover:bg-routine-hover hover:shadow-glow-coral active:scale-[0.98]",
   nutrition:
-    "bg-nutrition-strong text-white shadow-sm hover:bg-nutrition-hover hover:shadow-glow-lime active:scale-[0.98]",
+    "bg-nutrition text-white shadow-sm hover:bg-nutrition-hover hover:shadow-glow-lime active:scale-[0.98]",
 
   // Soft module variants (for secondary actions within modules).
   // Dark mode swaps the light pastel surface for the saturated accent at
   // low opacity so the button blends with the warm dark panel instead of
   // reading as an acidic pastel — same convention used by Badge/Tabs.
   "finyk-soft":
-    "bg-finyk-soft text-finyk-strong dark:bg-finyk-surface-dark/15 dark:text-finyk border border-finyk-ring/50 dark:border-finyk-border-dark/30 hover:bg-brand-100 dark:hover:bg-finyk-surface-dark/25 active:scale-[0.98]",
+    "bg-finyk-soft text-finyk-strong dark:bg-finyk/15 dark:text-finyk border border-finyk-ring/50 dark:border-finyk/30 hover:bg-brand-100 dark:hover:bg-finyk/25 active:scale-[0.98]",
   "fizruk-soft":
-    "bg-fizruk-soft text-fizruk-strong dark:bg-fizruk-surface-dark/15 dark:text-fizruk border border-fizruk-ring/50 dark:border-fizruk-border-dark/30 hover:bg-teal-100 dark:hover:bg-fizruk-surface-dark/25 active:scale-[0.98]",
+    "bg-fizruk-soft text-fizruk-strong dark:bg-fizruk/15 dark:text-fizruk border border-fizruk-ring/50 dark:border-fizruk/30 hover:bg-teal-100 dark:hover:bg-fizruk/25 active:scale-[0.98]",
   "routine-soft":
-    "bg-routine-surface text-routine-strong dark:bg-routine-surface-dark/15 dark:text-routine border border-routine-ring/50 dark:border-routine-border-dark/30 hover:bg-coral-100 dark:hover:bg-routine-surface-dark/25 active:scale-[0.98]",
+    "bg-routine-surface text-routine-strong dark:bg-routine/15 dark:text-routine border border-routine-ring/50 dark:border-routine/30 hover:bg-coral-100 dark:hover:bg-routine/25 active:scale-[0.98]",
   "nutrition-soft":
-    "bg-nutrition-soft text-nutrition-strong dark:bg-nutrition-surface-dark/15 dark:text-nutrition border border-nutrition-ring/50 dark:border-nutrition-border-dark/30 hover:bg-lime-100 dark:hover:bg-nutrition-surface-dark/25 active:scale-[0.98]",
+    "bg-nutrition-soft text-nutrition-strong dark:bg-nutrition/15 dark:text-nutrition border border-nutrition-ring/50 dark:border-nutrition/30 hover:bg-lime-100 dark:hover:bg-nutrition/25 active:scale-[0.98]",
 };
 
 const sizes: Record<ButtonSize, string> = {
@@ -125,6 +120,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) {
     const isDisabled = disabled || loading;
+    const needsCoarseMinTarget = iconOnly || size === "xs" || size === "sm";
 
     return (
       <button
@@ -135,10 +131,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         aria-live={loading ? "polite" : undefined}
         className={cn(
           // Base styles
-          "inline-flex items-center justify-center",
-          "transition-interactive",
+          "inline-flex items-center justify-center touch-manipulation",
+          "motion-safe:transition-all motion-safe:duration-200 motion-safe:ease-smooth",
+          "motion-reduce:transition-none motion-reduce:active:!scale-100",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-panel",
           "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
+          // Touch / coarse pointer: WCAG 2.5.5 / HIG ≥44×44px for compact controls.
+          needsCoarseMinTarget &&
+            "[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]",
           // Variant
           variants[variant],
           // Size

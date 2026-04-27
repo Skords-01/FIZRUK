@@ -4,7 +4,97 @@
 
 ---
 
-## Контекст
+## Decision Tree
+
+> Follow this tree from Q1 downward. Each leaf node (→ **ACTION**) links to the detailed steps below.
+
+**Q1: Чи tool call дійшов до клієнта?**
+
+- Network tab: response має `{ type: "tool_use", name: "...", input: {...} }` → перейди до Q2
+- Response має тільки `{ type: "text" }` (модель не викликала tool) → перейди до Q1a
+- Network error / 5xx → перевір `ANTHROPIC_API_KEY` у `.env` → [§1](#1-чи-tool-call-взагалі-дійшов-до-клієнта)
+
+**Q1a: Чому модель не викликала tool?**
+
+- Tool не у списку `TOOLS` (`apps/server/src/modules/chat/tools.ts`) → додай у `toolDefs/index.ts`
+- `SYSTEM_PREFIX` не згадує tool (рядки 7–14 `systemPrompt.ts`) → додай згадку
+- `description` у `toolDefs/<domain>.ts` неоднозначний → переписати імперативно з прикладом
+- Все на місці → tune prompt → [tune-system-prompt.md](tune-system-prompt.md)
+
+**Q2: Чи handler виконався на клієнті?**
+
+- `console.log("executeAction", action)` з'явився → перейди до Q3
+- Лог не з'явився → Network error або streaming parse failure → [§2](#2-чи-виконався-handler-на-клієнті)
+- `Невідома дія: <name>` → case не додано у `chatActions/<domain>Actions.ts` або name mismatch (camelCase vs snake_case) → додай case
+
+**Q3: Чи side effect (localStorage) записався?**
+
+- Ключ записався коректно → перейди до Q4
+- Ключ не змінився → handler не використовує `lsSet()` з `@shared/lib/storage` → [§3](#3-чи-правильний-side-effect-localstorage)
+- Ключ перезаписаний (old data gone) → `lsSet(key, newItem)` замість `lsSet(key, [...prev, newItem])` → fix append logic
+
+**Q4: Чи `tool_result` дійшов до моделі?**
+
+- `tool_results[].content` містить інформативний string → перейди до Q5
+- `tool_results[].content` порожній → handler повертає `undefined` замість `string` → fix return type → [§4](#4-чи-модель-отримала-tool_result)
+- `is_error: true` у `tool_result` → handler кинув typed error → перевір stack trace
+- `"Помилка виконання: …"` → handler кинув виняток → debug handler → [§4](#4-чи-модель-отримала-tool_result)
+
+**Q5: Чи модель прийняла результат у фінальному тексті?**
+
+- Текст згадує конкретний результат ("Залоговано 200 мл води") → проблема в UI → перейди до Q6
+- Generic "Готово" → handler повертає занадто короткий result → розширь return string
+- `stop_reason: "max_tokens"` → continuation cap (3×2500) → скороти `tool_result.content` або підніми `CHAT_MAX_TEXT_CONTINUATIONS`
+
+**Q6: Чи UI оновився?**
+
+- Action card не рендериться → `hubChatActionCards.ts` не покриває новий tool → додай маппер
+- React Query cache stale → handler не викликає `queryClient.invalidateQueries` → додай invalidation
+- localStorage-only домен (Routine, Fizruk) → компонент не re-render-ить → перевір subscription на ls changes
+
+```mermaid
+flowchart TD
+    Q1{"Q1: tool_use у response?"}
+    Q1 -- "Так" --> Q2
+    Q1 -- "Тільки text" --> Q1a
+    Q1 -- "5xx / NetworkError" --> API_KEY["Перевір\nANTHROPIC_API_KEY"]
+
+    Q1a{"Q1a: Чому модель\nне викликала tool?"}
+    Q1a -- "Tool не в TOOLS" --> ADD_TOOL["Додай у\ntoolDefs/index.ts"]
+    Q1a -- "SYSTEM_PREFIX\nне згадує" --> ADD_PROMPT["Додай у\nsystemPrompt.ts"]
+    Q1a -- "description\nнеоднозначний" --> REWRITE["Переписати\nдескрипцію"]
+
+    Q2{"Q2: Handler виконався?"}
+    Q2 -- "Так (log є)" --> Q3
+    Q2 -- "Ні (no log)" --> NETWORK["Network / parse\nerror"]
+    Q2 -- "Невідома дія" --> ADD_CASE["Додай case у\ndomainActions.ts"]
+
+    Q3{"Q3: localStorage OK?"}
+    Q3 -- "Записався" --> Q4
+    Q3 -- "Не змінився" --> LS_FIX["Використай\nlsSet()"]
+    Q3 -- "Перезаписано" --> APPEND["Fix: append\nне overwrite"]
+
+    Q4{"Q4: tool_result OK?"}
+    Q4 -- "String є" --> Q5
+    Q4 -- "Порожній" --> RETURN["Fix: return string\nне undefined"]
+    Q4 -- "is_error / exception" --> DEBUG["Debug handler\nstack trace"]
+
+    Q5{"Q5: Модель прийняла?"}
+    Q5 -- "Конкретний текст" --> Q6
+    Q5 -- "Generic Готово" --> EXPAND["Розширь\nreturn string"]
+    Q5 -- "max_tokens" --> TRIM["Скороти result /\nпідніми cap"]
+
+    Q6{"Q6: UI оновився?"}
+    Q6 -- "Action card нема" --> MAPPER["Додай маппер у\nhubChatActionCards"]
+    Q6 -- "Cache stale" --> INVALIDATE["Додай\ninvalidateQueries"]
+    Q6 -- "ls-only domain" --> SUBSCRIBE["Перевір\nls subscription"]
+```
+
+---
+
+## Background (Original Steps)
+
+### Контекст
 
 HubChat tool execution path має 5 ланок (див. `AGENTS.md` → _Architecture: AI tool execution path_): user message → `/api/chat` (server pass-through) → Anthropic → `tool_use` блок → клієнтський `executeAction` → handler домену → `tool_result` → друге звернення до моделі. Зламатися може будь-яка з них; цей playbook — порядок локалізації.
 
@@ -13,10 +103,6 @@ HubChat tool execution path має 5 ланок (див. `AGENTS.md` → _Archit
 - Відкрий DevTools → Console + Network → `/api/chat`.
 - Включи логування у браузері: `localStorage.setItem("hubchat:debug", "1")` і перезавантаж сторінку (якщо фіча є; інакше додай локально `console.log` у потрібну точку).
 - Перевір що `ANTHROPIC_API_KEY` справді є у `.env`. Без нього сервер віддає 500 і UI показує generic error.
-
----
-
-## Steps
 
 ### 1. Чи tool call взагалі дійшов до клієнта?
 
