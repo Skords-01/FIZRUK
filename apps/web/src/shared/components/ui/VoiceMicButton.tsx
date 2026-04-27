@@ -166,8 +166,9 @@ export function VoiceMicButton({
   if (!supported) return null;
 
   const sizeMap: Record<VoiceMicButtonSize, string> = {
-    sm: "w-8 h-8",
-    md: "w-10 h-10",
+    // sm/md visual size stays compact; coarse-pointer min 44×44 is applied below.
+    sm: "w-8 h-8 [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]",
+    md: "w-10 h-10 [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]",
     lg: "w-12 h-12",
   };
   const iconSize = size === "sm" ? 14 : size === "lg" ? 20 : 16;
@@ -185,7 +186,8 @@ export function VoiceMicButton({
       aria-label={listening ? "Зупинити запис" : label || "Голосовий ввід"}
       title={listening ? "Зупинити запис" : label || "Голосовий ввід"}
       className={cn(
-        "relative flex items-center justify-center rounded-2xl shrink-0 transition-[background-color,border-color,color,box-shadow,opacity,transform]",
+        "relative flex items-center justify-center rounded-2xl shrink-0 touch-manipulation",
+        "motion-safe:transition-all motion-reduce:transition-none",
         sizeMap[size] || sizeMap.md,
         listening
           ? "bg-error/15 text-error border border-error/30 motion-safe:animate-pulse"
