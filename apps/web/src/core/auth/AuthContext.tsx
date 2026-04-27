@@ -13,6 +13,7 @@ import { useUser, apiQueryKeys } from "@sergeant/api-client/react";
 import type { User } from "@sergeant/shared";
 import { signIn, signUp, signOut, forgetPassword } from "./authClient";
 import { identifyPostHogUser, resetPostHog } from "../observability/posthog";
+import { buildIdentifyTraits } from "../observability/identifyTraits";
 
 /**
  * AuthContext — єдине джерело правди «хто я» для веб-додатку.
@@ -145,17 +146,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Привʼязуємо/відвʼязуємо аналітику до userId. Ref тримає попередній
   // userId, щоб `reset()` викликався тільки на реальному переході
   // authenticated → unauthenticated, а не при першому mount з `null`.
+  // Traits (vibe / plan / locale / signup_date) збираються у
+  // `buildIdentifyTraits()` — див. JSDoc у `identifyTraits.ts` про
+  // джерела і поведінку при відсутності localStorage / navigator.
   const lastIdentifiedUserIdRef = useRef<string | null>(null);
   useEffect(() => {
     const currentId = user?.id ?? null;
     const prevId = lastIdentifiedUserIdRef.current;
-    if (currentId && currentId !== prevId) {
-      identifyPostHogUser(currentId);
+    if (currentId && user && currentId !== prevId) {
+      // Cast у `Record<string, unknown>` — `IdentifyTraits` має іменовані
+      // опціональні поля без index-signature, тому TS не звужує його до
+      // record-у автоматично. Контракт `identifyPostHogUser` приймає
+      // довільний bag-of-properties — типи трейтів захищає сам
+      // `buildIdentifyTraits`.
+      identifyPostHogUser(
+        currentId,
+        buildIdentifyTraits(user) as Record<string, unknown>,
+      );
       lastIdentifiedUserIdRef.current = currentId;
     } else if (!currentId && prevId) {
       resetPostHog();
       lastIdentifiedUserIdRef.current = null;
     }
+    // `user` навмисно НЕ в deps: traits, які залежать від `user`
+    // (signup_date), стабільні на час життя ідентифікованої сесії, а
+    // решта (vibe / plan / locale) тягнеться з зовнішніх джерел —
+    // localStorage і `navigator`. Перезапуск ефекту на кожен новий
+    // `user`-референс (наприклад, після refetch `/api/v1/me`)
+    // спричинив би зайві identify-виклики при тому самому id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Request a password reset email via Better Auth. Returns `true` when

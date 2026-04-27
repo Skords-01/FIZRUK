@@ -73,6 +73,7 @@ interface UseUserState {
           name: string | null;
           image: string | null;
           emailVerified: boolean;
+          createdAt: string | null;
         };
       }
     | undefined;
@@ -109,6 +110,7 @@ const SAMPLE_USER = {
   name: "A",
   image: null,
   emailVerified: true,
+  createdAt: "2026-01-15T08:30:00.000Z",
 };
 
 describe("AuthContext", () => {
