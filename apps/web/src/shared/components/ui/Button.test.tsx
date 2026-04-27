@@ -57,6 +57,40 @@ describe("Button", () => {
     expect(cls).toContain("text-white");
   });
 
+  it("primary hover/active are monotonically darker than the -strong base", () => {
+    // Regression guard: when the primary base was promoted to `bg-brand-strong`
+    // (= emerald-700), the old `hover:bg-brand-600 active:bg-brand-700`
+    // classes turned the interaction inverted (hover lighter than base) and
+    // dropped the active state (700 = base, no visible change). Pin the
+    // corrected progression so the inversion can't silently come back.
+    const { getByRole } = render(<Button variant="primary">Go</Button>);
+    const cls = getByRole("button").className;
+    expect(cls).toContain("hover:bg-brand-800");
+    expect(cls).toContain("active:bg-brand-900");
+    expect(cls).not.toContain("hover:bg-brand-600");
+    expect(cls).not.toContain("active:bg-brand-700");
+  });
+
+  it.each([
+    ["finyk", "hover:bg-emerald-800", "active:bg-emerald-900"],
+    ["fizruk", "hover:bg-teal-800", "active:bg-teal-900"],
+    ["routine", "hover:bg-coral-800", "active:bg-coral-900"],
+    // nutrition's `-strong` is lime-800 already, so hover only goes to lime-900.
+    ["nutrition", "hover:bg-lime-900", null],
+  ] as const)(
+    "%s variant darkens monotonically from -strong (no inverted hover)",
+    (variant, hoverCls, activeCls) => {
+      const { getByRole } = render(<Button variant={variant}>Go</Button>);
+      const cls = getByRole("button").className;
+      expect(cls).toContain(`bg-${variant}-strong`);
+      expect(cls).toContain(hoverCls);
+      if (activeCls) expect(cls).toContain(activeCls);
+      // The pre-fix tokens (`*-hover` = -600 step) would lighten the button
+      // on hover relative to a -strong (700+) base.
+      expect(cls).not.toContain(`hover:bg-${variant}-hover`);
+    },
+  );
+
   it("applies size classes distinctly for md vs xs", () => {
     const { getByRole, rerender } = render(<Button size="xs">X</Button>);
     expect(getByRole("button").className).toMatch(/\bh-8\b/);
