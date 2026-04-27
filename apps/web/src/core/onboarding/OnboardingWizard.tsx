@@ -717,7 +717,9 @@ export function OnboardingWizard({
       step: "goals",
       durationMs: Date.now() - state.stepStartedAt,
     });
-    trackEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_VIEWED, { step: "permissions" });
+    trackEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_VIEWED, {
+      step: "permissions",
+    });
     setShowPermissions(true);
   }, [state.stepStartedAt]);
 

@@ -558,9 +558,7 @@ export function Budgets({
                   onDelete={() => {
                     const removed = b;
                     const removedIdx = globalIdx;
-                    setBudgets((bs) =>
-                      bs.filter((_, j) => j !== removedIdx),
-                    );
+                    setBudgets((bs) => bs.filter((_, j) => j !== removedIdx));
                     setEditIdx(null);
                     showUndoToast(toast, {
                       msg: "Видалено ліміт",
@@ -660,9 +658,7 @@ export function Budgets({
                 onDelete={() => {
                   const removed = b;
                   const removedIdx = globalIdx;
-                  setBudgets((bs) =>
-                    bs.filter((_, j) => j !== removedIdx),
-                  );
+                  setBudgets((bs) => bs.filter((_, j) => j !== removedIdx));
                   setEditIdx(null);
                   showUndoToast(toast, {
                     msg: "Видалено ціль",

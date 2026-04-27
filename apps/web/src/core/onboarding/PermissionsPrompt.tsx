@@ -23,7 +23,12 @@ import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
  */
 
 type PermissionId = "push" | "microphone" | "camera";
-type PermissionUiState = "idle" | "asking" | "granted" | "denied" | "unsupported";
+type PermissionUiState =
+  | "idle"
+  | "asking"
+  | "granted"
+  | "denied"
+  | "unsupported";
 
 interface PermissionRowMeta {
   id: PermissionId;
@@ -67,8 +72,7 @@ const ROWS: readonly PermissionRowMeta[] = [
   {
     id: "camera",
     title: "Камера",
-    reason:
-      "Сканер штрихкодів продуктів і фото страв для AI-аналізу калорій.",
+    reason: "Сканер штрихкодів продуктів і фото страв для AI-аналізу калорій.",
     icon: (
       <svg
         width="22"
@@ -134,11 +138,13 @@ export function PermissionsPrompt({
   onComplete: (granted: PermissionId[]) => void;
   onBack: () => void;
 }) {
-  const [states, setStates] = useState<Record<PermissionId, PermissionUiState>>({
-    push: "idle",
-    microphone: "idle",
-    camera: "idle",
-  });
+  const [states, setStates] = useState<Record<PermissionId, PermissionUiState>>(
+    {
+      push: "idle",
+      microphone: "idle",
+      camera: "idle",
+    },
+  );
 
   const handleAllow = useCallback(async (id: PermissionId) => {
     setStates((s) => ({ ...s, [id]: "asking" }));
@@ -164,13 +170,12 @@ export function PermissionsPrompt({
       <div className="space-y-1">
         <h2 className="text-xl font-bold text-text">Дозволи</h2>
         <p className="text-xs text-muted leading-relaxed max-w-xs mx-auto">
-          Щоб усе працювало, Sergeant може попросити кілька дозволів
-          браузера. Можна пропустити — увімкнеш у налаштуваннях, коли
-          знадобиться.
+          Щоб усе працювало, Sergeant може попросити кілька дозволів браузера.
+          Можна пропустити — увімкнеш у налаштуваннях, коли знадобиться.
         </p>
       </div>
 
-      <ul className="w-full space-y-2 text-left" role="list">
+      <ul className="w-full space-y-2 text-left">
         {ROWS.map((row) => {
           const state = states[row.id];
           return (
@@ -217,7 +222,7 @@ export function PermissionsPrompt({
                     className={cn(state === "asking" && "opacity-60")}
                     aria-label={`Дозволити ${row.title.toLowerCase()}`}
                   >
-                    {state === "asking" ? "..." : "Дозволити"}
+                    {state === "asking" ? "…" : "Дозволити"}
                   </Button>
                 )}
               </div>

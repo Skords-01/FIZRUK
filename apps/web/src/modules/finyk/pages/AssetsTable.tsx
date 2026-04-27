@@ -323,9 +323,7 @@ export function AssetsAssetsSection({ state }: { state: State }) {
               onClick={() => {
                 const removed = a;
                 const removedIdx = i;
-                setManualAssets((as) =>
-                  as.filter((_, j) => j !== removedIdx),
-                );
+                setManualAssets((as) => as.filter((_, j) => j !== removedIdx));
                 showUndoToast(toast, {
                   msg: `Видалено актив «${removed.name}»`,
                   onUndo: () =>
