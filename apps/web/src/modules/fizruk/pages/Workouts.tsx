@@ -12,6 +12,7 @@ import { AddExerciseSheet } from "../components/workouts/AddExerciseSheet";
 import { ExerciseDetailSheet } from "../components/workouts/ExerciseDetailSheet";
 import { WorkoutJournalSection } from "../components/workouts/WorkoutJournalSection";
 import { WorkoutCatalogSection } from "../components/workouts/WorkoutCatalogSection";
+import { QuickStartSheet } from "../components/workouts/QuickStartSheet";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { useRecovery } from "../hooks/useRecovery";
 import { useWorkoutTemplates } from "../hooks/useWorkoutTemplates";
@@ -135,6 +136,7 @@ export function Workouts() {
   const [riskyTemplateConfirm, setRiskyTemplateConfirm] = useState(null); // stores template when risky
   const [now, setNow] = useState(Date.now());
   const [retroOpen, setRetroOpen] = useState(false);
+  const [quickStartOpen, setQuickStartOpen] = useState(false);
   const [retroDate, setRetroDate] = useState(() => {
     const x = new Date();
     return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
@@ -473,12 +475,11 @@ export function Workouts() {
             activeWorkout={activeWorkout}
             activeDuration={activeDuration}
             recentWorkouts={recentWorkouts}
-            createWorkout={createWorkout}
-            setActiveWorkoutId={setActiveWorkoutId}
             onOpenSession={() => setView("log")}
             onOpenCatalog={() => setView("catalog")}
             onOpenTemplates={() => setView("templates")}
             onOpenJournal={() => setView("log")}
+            onRequestStart={() => setQuickStartOpen(true)}
             onOpenRetro={() => {
               setRetroOpen(true);
               setView("log");
@@ -590,6 +591,43 @@ export function Workouts() {
           addExercise={addExercise}
         />
 
+        <QuickStartSheet
+          open={quickStartOpen}
+          onClose={() => setQuickStartOpen(false)}
+          exercises={exercises}
+          search={search}
+          onPickTemplate={() => {
+            setQuickStartOpen(false);
+            setView("templates");
+          }}
+          onConfirmExercises={(picks) => {
+            // Build a fresh ad-hoc session and pre-load the picked
+            // exercises before flipping the active flag — that way the
+            // session-level live timer (`activeWorkout.startedAt`) is
+            // only created after the user confirmed their selection,
+            // matching the user-stated requirement that the timer must
+            // not start before exercises are lined up.
+            const w = createWorkout();
+            for (const ex of picks) {
+              const isCardio = ex.primaryGroup === "cardio";
+              addItem(w.id, {
+                exerciseId: ex.id,
+                nameUk: ex?.name?.uk || ex?.name?.en,
+                primaryGroup: ex.primaryGroup,
+                musclesPrimary: ex?.muscles?.primary || [],
+                musclesSecondary: ex?.muscles?.secondary || [],
+                type: isCardio ? "distance" : "strength",
+                sets: isCardio ? undefined : [{ weightKg: 0, reps: 0 }],
+                durationSec: isCardio ? 0 : 0,
+                distanceM: isCardio ? 0 : 0,
+              });
+            }
+            setActiveWorkoutId(w.id);
+            setQuickStartOpen(false);
+            setView("log");
+          }}
+        />
+
         <RestTimerOverlay
           restTimer={restTimer}
           onCancel={() => setRestTimer(null)}
@@ -687,12 +725,17 @@ interface WorkoutsHomeProps {
     endedAt?: string | null;
     items?: ReadonlyArray<unknown>;
   }>;
-  createWorkout: () => { id: string };
-  setActiveWorkoutId: (id: string | null) => void;
   onOpenSession: () => void;
   onOpenCatalog: () => void;
   onOpenTemplates: () => void;
   onOpenJournal: () => void;
+  /**
+   * Opens the start chooser (`QuickStartSheet`) instead of immediately
+   * spinning up an empty session — the chooser itself is responsible
+   * for creating the workout once the user picked a template or a set
+   * of exercises.
+   */
+  onRequestStart: () => void;
   onOpenRetro: () => void;
 }
 
@@ -700,21 +743,14 @@ function WorkoutsHome({
   activeWorkout,
   activeDuration,
   recentWorkouts,
-  createWorkout,
-  setActiveWorkoutId,
   onOpenSession,
   onOpenCatalog,
   onOpenTemplates,
   onOpenJournal,
+  onRequestStart,
   onOpenRetro,
 }: WorkoutsHomeProps) {
   const hasActive = !!activeWorkout && !activeWorkout.endedAt;
-
-  const handleStart = () => {
-    const w = createWorkout();
-    setActiveWorkoutId(w.id);
-    onOpenSession();
-  };
 
   return (
     <div className="space-y-4">
@@ -742,21 +778,11 @@ function WorkoutsHome({
             Немає активного тренування
           </div>
           <div className="text-xs text-subtle mt-1">
-            Почни нове, обери шаблон або внеси проведене заняття заднім числом.
+            Почни нове — обереш шаблон або підбереш вправи перед стартом.
           </div>
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Button
-              className="h-12 text-base sm:col-span-2"
-              onClick={handleStart}
-            >
+          <div className="mt-3 grid grid-cols-1 gap-2">
+            <Button className="h-12 text-base" onClick={onRequestStart}>
               ▶︎ Почати тренування
-            </Button>
-            <Button
-              variant="ghost"
-              className="h-12 text-base"
-              onClick={onOpenTemplates}
-            >
-              📋 Тренування за шаблоном →
             </Button>
             <Button
               variant="ghost"
