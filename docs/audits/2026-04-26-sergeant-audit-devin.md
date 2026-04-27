@@ -154,8 +154,8 @@
 
 **PR-ідеї:**
 
-- `PR-4.A` — `test(server,chat): SSE end-to-end harness` (`Testcontainers` Postgres + fake Anthropic upstream через `nock` або in-memory mock; асерти на: сплітинг по chunk, `tool_use` boundary, `auto-continuation` при `stop_reason: max_tokens`).
-- `PR-4.B` — `test(server,nutrition): contract tests for barcode handler against OFF/USDA/UPCitemdb` (за `nock`-mock-серверами; асерти на нормалізацію в спільну схему).
+- `PR-4.A` ✅ closed — [#900](https://github.com/Skords-01/Sergeant/pull/900) `test(server): add SSE end-to-end harness for chat streaming` (17 тестів на `streamAnthropicToSse` / `streamOneIterationToSse`: text-дельти, auto-continuation на `max_tokens`, cap, graceful errors, chunk-боундарі, prompt-cache метрика).
+- `PR-4.B` ✅ closed — [#908](https://github.com/Skords-01/Sergeant/pull/908) `test(server): barcode contract tests for OFF/USDA/UPCitemdb normalizers` (UPCitemdb extracted з `barcode.ts` у власний `normalizers/upcitemdb.ts`; 22 unit-тести + 14 cross-source contract тестів із realistic фікстурами Nutella/Cheerios/Coca-Cola; спільний `NormalizedProduct`-shape зафіксовано через `assertContract()` helper).
 - `PR-4.C` ✅ closed — [#882](https://github.com/Skords-01/Sergeant/pull/882) `refactor(server,lib): extract OFF/USDA/Mono normalizers into apps/server/src/lib/normalizers/{off,usda,mono}.ts`.
 - `PR-4.D` — `chore(server,api-client): generate api-client types from server zod schemas via zod-to-openapi` (закриває drift у rule #3 автоматично).
 
@@ -235,7 +235,7 @@
 
 - `PR-7.A` ✅ closed — [#886](https://github.com/Skords-01/Sergeant/pull/886) `test(web): unit + integration tests for recommendationEngine and TodayFocusCard`.
 - `PR-7.B` ✅ closed — [#904](https://github.com/Skords-01/Sergeant/pull/904) `test(web,cloud-sync): integration tests for offline queue + replay on reconnect` — 17 тестів, 4 сценарії (coalesce, happy replay, server-error, MAX_OFFLINE_QUEUE overflow).
-- `PR-7.C` — `test(web,reports): HubReports aggregation snapshot tests` для крос-модульних звітів.
+- `PR-7.C` ✅ closed — [#913](https://github.com/Skords-01/Sergeant/pull/913) `test(web): hub-reports aggregation snapshot tests` — витягнуто 4 чисті агрегатори з inline-замикань `useReportData` у `apps/web/src/core/hub/hubReports.aggregation.ts`; 44 snapshot-тести покривають date-helpers, per-module aggregators і повний cross-module звіт із усіма 4 модулями заповненими.
 - `PR-7.D` — `ci(test): add weekly flaky-tests dashboard` (GitHub Action, що збирає `vitest --reporter json` за 7 днів і публікує markdown trend в artifact).
 - `PR-7.E` — `test(mobile): triage 3 known flaky tests one-by-one (each in own PR), document fixes`.
 

@@ -38,7 +38,10 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView style={[s.container, { backgroundColor: colors.bg }]}>
-      <Pressable style={s.skip} onPress={() => router.replace("/(auth)/sign-up")}>
+      <Pressable
+        style={s.skip}
+        onPress={() => router.replace("/(auth)/sign-up")}
+      >
         <Text style={s.skipText}>Пропустити</Text>
       </Pressable>
 
@@ -46,7 +49,10 @@ export default function OnboardingScreen() {
         <View
           style={[
             s.iconWrap,
-            { backgroundColor: slide.color + "22", borderColor: slide.color + "44" },
+            {
+              backgroundColor: slide.color + "22",
+              borderColor: slide.color + "44",
+            },
           ]}
         >
           <Text style={s.icon}>{slide.icon}</Text>
@@ -72,7 +78,10 @@ export default function OnboardingScreen() {
       </View>
 
       <View style={s.actions}>
-        <Pressable style={[s.nextBtn, { backgroundColor: slide.color }]} onPress={goNext}>
+        <Pressable
+          style={[s.nextBtn, { backgroundColor: slide.color }]}
+          onPress={goNext}
+        >
           <Text style={s.nextBtnText}>{isLast ? "Розпочати →" : "Далі"}</Text>
         </Pressable>
       </View>
@@ -82,9 +91,18 @@ export default function OnboardingScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: spacing.xl },
-  skip: { alignSelf: "flex-end", paddingTop: spacing.md, paddingBottom: spacing.lg },
+  skip: {
+    alignSelf: "flex-end",
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+  },
   skipText: { color: colors.textMuted, fontSize: 14 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: spacing.xl },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xl,
+  },
   iconWrap: {
     width: 120,
     height: 120,
@@ -94,11 +112,30 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   icon: { fontSize: 52 },
-  title: { color: colors.text, fontSize: 26, fontWeight: "800", textAlign: "center" },
-  desc: { color: colors.textMuted, fontSize: 15, textAlign: "center", lineHeight: 22 },
-  dots: { flexDirection: "row", justifyContent: "center", gap: 8, marginBottom: spacing.lg },
+  title: {
+    color: colors.text,
+    fontSize: 26,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  desc: {
+    color: colors.textMuted,
+    fontSize: 15,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  dots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: spacing.lg,
+  },
   dot: { height: 8, borderRadius: 4 },
   actions: { paddingBottom: spacing.xl },
-  nextBtn: { borderRadius: radius.md, paddingVertical: 16, alignItems: "center" },
+  nextBtn: {
+    borderRadius: radius.md,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
   nextBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

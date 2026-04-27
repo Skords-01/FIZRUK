@@ -102,7 +102,12 @@ export default function SignInScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  form: { flex: 1, padding: spacing.xl, justifyContent: "center", gap: spacing.md },
+  form: {
+    flex: 1,
+    padding: spacing.xl,
+    justifyContent: "center",
+    gap: spacing.md,
+  },
   title: { color: colors.text, fontSize: 28, fontWeight: "700" },
   subtitle: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.lg },
   passHeader: {

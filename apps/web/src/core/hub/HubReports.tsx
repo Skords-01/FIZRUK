@@ -3,155 +3,47 @@ import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { cn } from "@shared/lib/cn";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState";
 import { safeReadLS } from "@shared/lib/storage";
-import { parseFizrukWorkouts } from "@shared/lib/parseFizrukWorkouts";
 import { generateInsights } from "../lib/insightsEngine";
 import {
-  calcFinykSpendingByDate,
   getFinykExcludedTxIdsFromStorage,
   getFinykTxSplitsFromStorage,
 } from "@finyk/utils";
+import {
+  aggregateReport,
+  getPeriodRange,
+  localDateKey,
+  type Period,
+  type ReportData,
+} from "./hubReports.aggregation";
 
-function localDateKey(d = new Date()) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function addDays(d, n) {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
-
-function getPeriodRange(period, offset = 0) {
-  const now = new Date();
-  if (period === "week") {
-    const mondayOffset = (now.getDay() + 6) % 7;
-    const mon = new Date(now);
-    mon.setDate(now.getDate() - mondayOffset + offset * 7);
-    mon.setHours(0, 0, 0, 0);
-    const sun = addDays(mon, 6);
-    return { start: mon, end: sun };
-  } else {
-    const y = now.getFullYear();
-    const m = now.getMonth() + offset;
-    const start = new Date(y, m, 1);
-    const end = new Date(y, m + 1, 0);
-    return { start, end };
-  }
-}
-
-function datesInRange(start, end) {
-  const dates = [];
-  const d = new Date(start);
-  while (d <= end) {
-    dates.push(localDateKey(d));
-    d.setDate(d.getDate() + 1);
-  }
-  return dates;
-}
-
-function useReportData(period, offset) {
-  return useMemo(() => {
-    const cur = getPeriodRange(period, offset);
-    const prev = getPeriodRange(period, offset - 1);
-
-    const curDates = datesInRange(cur.start, cur.end);
-    const prevDates = datesInRange(prev.start, prev.end);
-
-    function collectWorkouts(dates) {
-      const workouts = parseFizrukWorkouts(
-        localStorage.getItem("fizruk_workouts_v1"),
-      );
-      if (!workouts.length && !localStorage.getItem("fizruk_workouts_v1"))
-        return { count: 0, daily: {} };
-      const dateSet = new Set(dates);
-      const daily = {};
-      let count = 0;
-      for (const w of workouts) {
-        if (!w.endedAt) continue;
-        const dk = localDateKey(new Date(w.startedAt));
-        if (!dateSet.has(dk)) continue;
-        count++;
-        daily[dk] = (daily[dk] || 0) + 1;
-      }
-      return { count, daily };
-    }
-
-    function collectSpending(dates) {
-      const txRaw = safeReadLS("finyk_tx_cache", null);
-      const txList = txRaw?.txs ?? txRaw ?? [];
-      const excludedTxIds = getFinykExcludedTxIdsFromStorage();
-      const txSplits = getFinykTxSplitsFromStorage();
-      return calcFinykSpendingByDate(txList, {
-        excludedTxIds,
-        txSplits: txSplits as Record<string, unknown[]>,
-        dateSet: new Set(dates),
-        localDateKeyFn: localDateKey,
-      });
-    }
-
-    function collectHabits(dates) {
-      const state = safeReadLS("hub_routine_v1", null);
-      if (!state) return { pct: 0, daily: {} };
-      const habits = Array.isArray(state.habits)
-        ? state.habits.filter((h) => !h.archived)
-        : [];
-      const completions = state.completions ?? {};
-      if (!habits.length) return { pct: 0, daily: {} };
-
-      const daily = {};
-      let totalPossible = 0,
-        totalDone = 0;
-      for (const dk of dates) {
-        const possible = habits.length;
-        const done = habits.filter(
-          (h) =>
-            Array.isArray(completions[h.id]) && completions[h.id].includes(dk),
-        ).length;
-        totalPossible += possible;
-        totalDone += done;
-        daily[dk] = possible > 0 ? Math.round((done / possible) * 100) : 0;
-      }
-      return {
-        pct:
-          totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0,
-        daily,
-      };
-    }
-
-    function collectKcal(dates) {
-      const log = safeReadLS("nutrition_log_v1", {});
-      const dateSet = new Set(dates);
-      const daily = {};
-      let total = 0;
-      for (const dk of Object.keys(log)) {
-        if (!dateSet.has(dk)) continue;
-        const meals = Array.isArray(log[dk]?.meals) ? log[dk].meals : [];
-        const kcal = meals.reduce((s, m) => s + (m?.macros?.kcal ?? 0), 0);
-        total += kcal;
-        daily[dk] = Math.round(kcal);
-      }
-      const daysWithData = Object.keys(daily).length;
-      return {
-        total: Math.round(total),
-        avg: daysWithData > 0 ? Math.round(total / daysWithData) : 0,
-        daily,
-      };
-    }
-
-    return {
-      period: { start: cur.start, end: cur.end, dates: curDates },
-      workouts: {
-        cur: collectWorkouts(curDates),
-        prev: collectWorkouts(prevDates),
-      },
-      spending: {
-        cur: collectSpending(curDates),
-        prev: collectSpending(prevDates),
-      },
-      habits: { cur: collectHabits(curDates), prev: collectHabits(prevDates) },
-      kcal: { cur: collectKcal(curDates), prev: collectKcal(prevDates) },
-    };
-  }, [period, offset]);
+function useReportData(period: Period, offset: number): ReportData {
+  return useMemo(
+    () =>
+      aggregateReport(period, offset, {
+        rawFizrukWorkouts: localStorage.getItem("fizruk_workouts_v1"),
+        finyk: {
+          txList: (() => {
+            const raw = safeReadLS("finyk_tx_cache", null) as
+              | { txs?: unknown[] }
+              | unknown[]
+              | null;
+            const list = Array.isArray(raw)
+              ? raw
+              : Array.isArray(raw?.txs)
+                ? raw!.txs
+                : [];
+            return list as Parameters<
+              typeof aggregateReport
+            >[2]["finyk"]["txList"];
+          })(),
+          excludedTxIds: getFinykExcludedTxIdsFromStorage(),
+          txSplits: getFinykTxSplitsFromStorage() as Record<string, unknown[]>,
+        },
+        routineState: safeReadLS("hub_routine_v1", null),
+        nutritionLog: safeReadLS("nutrition_log_v1", {}),
+      }),
+    [period, offset],
+  );
 }
 
 function formatPeriodLabel(period, offset) {
@@ -411,7 +303,7 @@ function InsightCard({ emoji, title, stat, detail }) {
 }
 
 export function HubReports() {
-  const [period, setPeriod] = useState("week");
+  const [period, setPeriod] = useState<Period>("week");
   const [offset, setOffset] = useState(0);
 
   const data = useReportData(period, offset);
@@ -425,7 +317,7 @@ export function HubReports() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex rounded-xl overflow-hidden border border-line shrink-0">
-          {["week", "month"].map((p) => (
+          {(["week", "month"] as const).map((p) => (
             <button
               key={p}
               type="button"

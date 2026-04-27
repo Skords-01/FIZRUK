@@ -30,7 +30,10 @@ export default function WelcomeScreen() {
               key={m.label}
               style={[
                 s.chip,
-                { borderColor: m.color + "55", backgroundColor: m.color + "22" },
+                {
+                  borderColor: m.color + "55",
+                  backgroundColor: m.color + "22",
+                },
               ]}
             >
               <Text style={[s.chipText, { color: m.color }]}>{m.label}</Text>
@@ -48,8 +51,7 @@ export default function WelcomeScreen() {
         </Pressable>
         <Pressable onPress={() => router.push("/(auth)/sign-in")}>
           <Text style={s.signInLink}>
-            Вже маєш акаунт?{" "}
-            <Text style={s.signInLinkBold}>Увійти</Text>
+            Вже маєш акаунт? <Text style={s.signInLinkBold}>Увійти</Text>
           </Text>
         </Pressable>
       </View>
@@ -58,8 +60,17 @@ export default function WelcomeScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.xl },
-  logoWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: spacing.lg },
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    paddingHorizontal: spacing.xl,
+  },
+  logoWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.lg,
+  },
   logo: {
     width: 88,
     height: 88,
@@ -68,10 +79,30 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  appName: { color: colors.text, fontSize: 34, fontWeight: "800", letterSpacing: -0.5 },
-  tagline: { color: colors.textMuted, fontSize: 15, textAlign: "center", lineHeight: 22 },
-  chips: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8 },
-  chip: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
+  appName: {
+    color: colors.text,
+    fontSize: 34,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    color: colors.textMuted,
+    fontSize: 15,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  chips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
   chipText: { fontSize: 12, fontWeight: "600" },
   actions: { gap: spacing.md, paddingBottom: spacing.xl },
   primaryBtn: {

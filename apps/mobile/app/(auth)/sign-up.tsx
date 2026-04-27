@@ -1,6 +1,12 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signUp } from "@/auth/authClient";
 import { colors, spacing } from "@/theme";
@@ -34,7 +40,14 @@ function PasswordStrength({ password }: { password: string }) {
           }}
         />
       </View>
-      <Text style={{ color: levelColors[level], fontSize: 11, marginTop: 4, fontWeight: "600" }}>
+      <Text
+        style={{
+          color: levelColors[level],
+          fontSize: 11,
+          marginTop: 4,
+          fontWeight: "600",
+        }}
+      >
         {labels[level]}
       </Text>
     </View>
@@ -127,7 +140,12 @@ export default function SignUpScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  form: { flex: 1, padding: spacing.xl, justifyContent: "center", gap: spacing.md },
+  form: {
+    flex: 1,
+    padding: spacing.xl,
+    justifyContent: "center",
+    gap: spacing.md,
+  },
   title: { color: colors.text, fontSize: 28, fontWeight: "700" },
   subtitle: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.lg },
   error: { color: colors.danger, fontSize: 13 },
