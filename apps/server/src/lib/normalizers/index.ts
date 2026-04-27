@@ -27,3 +27,10 @@ export {
   type NormalizedMonoAccount,
   type NormalizedMonoTransaction,
 } from "./mono.js";
+
+export {
+  normalizeUPCitemdb,
+  type UPCitemdbItem,
+  type UPCitemdbResponse,
+  type NormalizedUPCitemdbBarcode,
+} from "./upcitemdb.js";

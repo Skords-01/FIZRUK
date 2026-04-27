@@ -5,8 +5,10 @@ import { validateQuery } from "../http/validate.js";
 import { barcodeLookupsTotal } from "../obs/metrics.js";
 import {
   normalizeOFFBarcode,
+  normalizeUPCitemdb,
   normalizeUSDABarcode,
   type OFFProduct,
+  type UPCitemdbResponse,
   type USDAFood,
 } from "../lib/normalizers/index.js";
 
@@ -278,36 +280,15 @@ async function lookupUPCitemdb(
       recordLookup("upcitemdb", "miss", elapsedMs(start));
       return null;
     }
-    const data = (await r.json()) as {
-      items?: Array<{ title?: string; brand?: string }>;
-    };
-    const item = Array.isArray(data?.items) ? data.items[0] : null;
-    if (!item) {
+    const data = (await r.json()) as UPCitemdbResponse;
+    const product = normalizeUPCitemdb(data);
+    if (!product) {
       recordLookup("upcitemdb", "miss", elapsedMs(start));
       return null;
     }
-
-    const name = item.title || null;
-    if (!name) {
-      recordLookup("upcitemdb", "miss", elapsedMs(start));
-      return null;
-    }
-
-    const brand = item.brand || null;
 
     recordLookup("upcitemdb", "hit", elapsedMs(start));
-    return {
-      name,
-      brand,
-      kcal_100g: null,
-      protein_100g: null,
-      fat_100g: null,
-      carbs_100g: null,
-      servingSize: null,
-      servingGrams: null,
-      source: "upcitemdb",
-      partial: true, // no nutrition data — frontend should prompt user to fill in macros
-    };
+    return product;
   } catch (e: unknown) {
     recordLookup(
       "upcitemdb",
