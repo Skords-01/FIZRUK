@@ -38,7 +38,17 @@ docs/adr/
 
 ## Поточні ADR
 
-| #    | Назва                     | Статус   | Створено   | Контекст                                                                            |
-| ---- | ------------------------- | -------- | ---------- | ----------------------------------------------------------------------------------- |
-| 0001 | Monetization architecture | proposed | 2026-04-27 | 11 рішень перед стартом monetization-MVP (provider, cache, trial, tax, cancel, ...) |
-| 0002 | AI tool lifecycle         | accepted | 2026-04-27 | 4-фазний процес для Anthropic tools: Proposal → Safety → Rollout → KPIs.            |
+| #    | Назва                              | Статус   | Створено   | Контекст                                                                                                     |
+| ---- | ---------------------------------- | -------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
+| 0001 | Monetization architecture          | proposed | 2026-04-27 | 11 рішень перед стартом monetization-MVP (provider, cache, trial, tax, cancel, ...)                          |
+| 0002 | AI tool lifecycle                  | accepted | 2026-04-27 | 4-фазний процес для Anthropic tools: Proposal → Safety → Rollout → KPIs.                                     |
+| 0003 | _(reserved — refund flow, TBD)_    | —        | —          | Зарезервовано під monetization (див. ADR-0001 §1).                                                           |
+| 0004 | _(reserved — family plans, TBD)_   | —        | —          | Зарезервовано під monetization (див. ADR-0001 §1).                                                           |
+| 0005 | _(reserved — referral codes, TBD)_ | —        | —          | Зарезервовано під monetization (див. ADR-0001 §1).                                                           |
+| 0006 | RQ keys factory                    | accepted | 2026-04-27 | Централізовані `queryKeys.ts` факторії, ESLint-rule `rq-keys-only-from-factory`, hashing секретів.           |
+| 0007 | Tailwind opacity / `-strong` tier  | accepted | 2026-04-27 | Зареєстрована opacity-шкала + `-strong` companion-кольори для WCAG-AA на solid-fills.                        |
+| 0008 | Feature flags                      | accepted | 2026-04-27 | Client-only registry над `typedStore` (LS-backed, sync між табами), `experimental` лайфцикл.                 |
+| 0009 | Push notifications                 | accepted | 2026-04-27 | `sendToUser` як єдина точка fan-out на web/APNs/FCM; circuit-breaker; `PushPayload` контракт.                |
+| 0010 | Testing pyramid                    | accepted | 2026-04-27 | 5 шарів (unit / component+MSW / integration+Testcontainers / a11y / smoke-e2e), per-package coverage floors. |
+| 0011 | Memory Bank                        | accepted | 2026-04-27 | Local-first user-fact store у `localStorage[USER_PROFILE]`; injection у HubChat system-prompt.               |
+| 0012 | Atomic SQL daily quotas            | accepted | 2026-04-27 | `INSERT … ON CONFLICT DO UPDATE WHERE` для AI-квоти; bucket-и `default`/`tool:*`; refund-on-fail.            |
