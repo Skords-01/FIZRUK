@@ -147,9 +147,6 @@ const envSchema = z.object({
   CSP_DISABLE: z.string().optional(),
   /** `"1"` — CSP у report-only mode. */
   CSP_REPORT_ONLY: z.string().optional(),
-  /** Bearer token для захисту nutrition API endpoints. */
-  NUTRITION_API_TOKEN: z.string().optional(),
-
   // ── Monobank webhook ─────────────────────────────────────────────────
   /** Feature flag: увімкнути webhook-based Monobank інтеграцію. */
   MONO_WEBHOOK_ENABLED: z

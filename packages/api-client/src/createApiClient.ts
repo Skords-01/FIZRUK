@@ -11,7 +11,6 @@ import { createPushEndpoints, type PushEndpoints } from "./endpoints/push";
 import {
   createNutritionEndpoints,
   type NutritionEndpoints,
-  type NutritionTokenProvider,
 } from "./endpoints/nutrition";
 import {
   createBarcodeEndpoints,
@@ -36,13 +35,7 @@ import {
   type WeeklyDigestEndpoints,
 } from "./endpoints/weeklyDigest";
 
-export interface ApiClientConfig extends HttpClientConfig {
-  /**
-   * Провайдер токена для nutrition-ендпоінтів (прокидується у заголовок
-   * `X-Token`). Використовується тільки для `/api/nutrition/*`.
-   */
-  getNutritionToken?: NutritionTokenProvider;
-}
+export type ApiClientConfig = HttpClientConfig;
 
 /**
  * Типізований API-клієнт для всіх публічних ендпоінтів Sergeant. Повертає
@@ -71,8 +64,7 @@ export interface ApiClient {
 }
 
 export function createApiClient(config: ApiClientConfig = {}): ApiClient {
-  const { getNutritionToken, ...httpConfig } = config;
-  const http = createHttpClient(httpConfig);
+  const http = createHttpClient(config);
   return {
     http,
     me: createMeEndpoints(http),
@@ -80,7 +72,7 @@ export function createApiClient(config: ApiClientConfig = {}): ApiClient {
     coach: createCoachEndpoints(http),
     chat: createChatEndpoints(http),
     push: createPushEndpoints(http),
-    nutrition: createNutritionEndpoints(http, { getToken: getNutritionToken }),
+    nutrition: createNutritionEndpoints(http),
     barcode: createBarcodeEndpoints(http),
     foodSearch: createFoodSearchEndpoints(http),
     mono: createMonoEndpoints(http),

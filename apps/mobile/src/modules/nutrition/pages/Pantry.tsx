@@ -146,8 +146,7 @@ export function PantryPage({ testID }: { testID?: string }) {
           <Text className="text-xs text-fg-muted mb-2">
             Великий список мовою природи — на сервері Claude розкладе в позиції
             й додасть у цей склад (злиття, як на web). Потрібен Anthropic key на
-            бекенді; за `NUTRITION_API_TOKEN` — те саме в
-            `EXPO_PUBLIC_NUTRITION_API_TOKEN` у .env.
+            бекенді та авторизована сесія.
           </Text>
           <TextInput
             value={bulkText}

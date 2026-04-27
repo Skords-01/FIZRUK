@@ -43,13 +43,13 @@ export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 const variants: Record<ButtonVariant, string> = {
   // Core variants
   primary:
-    "bg-brand-strong text-white shadow-sm hover:bg-brand-600 hover:shadow-glow active:bg-brand-700 active:scale-[0.98]",
+    "bg-brand-strong text-white shadow-sm hover:bg-brand-800 hover:shadow-glow active:bg-brand-900 active:scale-[0.98]",
   secondary:
     "bg-panel text-text border border-line shadow-sm hover:bg-panelHi hover:border-brand-200 active:scale-[0.98]",
   ghost:
     "bg-transparent text-muted hover:bg-panelHi hover:text-text active:bg-line/50",
   danger:
-    "bg-danger-soft text-danger border border-danger/30 hover:bg-danger/15 hover:border-danger/50 active:scale-[0.98]",
+    "bg-danger-soft text-danger-strong border border-danger/30 hover:bg-danger/15 hover:border-danger/50 dark:text-red-200 active:scale-[0.98]",
   destructive:
     "bg-danger-strong text-white shadow-sm hover:brightness-110 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.15)] active:scale-[0.98]",
   success:
@@ -57,13 +57,13 @@ const variants: Record<ButtonVariant, string> = {
 
   // Module-specific branded buttons
   finyk:
-    "bg-finyk-strong text-white shadow-sm hover:bg-finyk-hover hover:shadow-glow active:scale-[0.98]",
+    "bg-finyk-strong text-white shadow-sm hover:bg-emerald-800 hover:shadow-glow active:bg-emerald-900 active:scale-[0.98]",
   fizruk:
-    "bg-fizruk-strong text-white shadow-sm hover:bg-fizruk-hover hover:shadow-glow-teal active:scale-[0.98]",
+    "bg-fizruk-strong text-white shadow-sm hover:bg-teal-800 hover:shadow-glow-teal active:bg-teal-900 active:scale-[0.98]",
   routine:
-    "bg-routine-strong text-white shadow-sm hover:bg-routine-hover hover:shadow-glow-coral active:scale-[0.98]",
+    "bg-routine-strong text-white shadow-sm hover:bg-coral-800 hover:shadow-glow-coral active:bg-coral-900 active:scale-[0.98]",
   nutrition:
-    "bg-nutrition-strong text-white shadow-sm hover:bg-nutrition-hover hover:shadow-glow-lime active:scale-[0.98]",
+    "bg-nutrition-strong text-white shadow-sm hover:bg-lime-900 hover:shadow-glow-lime active:scale-[0.98]",
 
   // Soft module variants (for secondary actions within modules).
   // Dark mode swaps the light pastel surface for the saturated accent at
