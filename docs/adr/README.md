@@ -40,4 +40,4 @@ docs/adr/
 
 | #    | Назва                     | Статус   | Створено   | Контекст                                                                            |
 | ---- | ------------------------- | -------- | ---------- | ----------------------------------------------------------------------------------- |
-| 0001 | Monetization architecture | proposed | 2026-04-27 | 10 рішень перед стартом monetization-MVP (provider, cache, grandfather, trial, ...) |
+| 0001 | Monetization architecture | proposed | 2026-04-27 | 11 рішень перед стартом monetization-MVP (provider, cache, trial, tax, cancel, ...) |
