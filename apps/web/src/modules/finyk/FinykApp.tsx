@@ -238,6 +238,7 @@ export default function App({
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       <ModuleHeader
+        module="finyk"
         left={
           typeof onBackToHub === "function" ? (
             <ModuleHeaderBackButton onClick={onBackToHub} />

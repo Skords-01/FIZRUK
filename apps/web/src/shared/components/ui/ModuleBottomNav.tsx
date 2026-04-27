@@ -52,6 +52,7 @@ export interface ModuleBottomNavProps {
 type ColorTokens = {
   text: string;
   pill: string;
+  chipBg: string;
   glow: string;
   badge: string;
 };
@@ -60,24 +61,28 @@ const COLORS: Record<ModuleNavColor, ColorTokens> = {
   finyk: {
     text: "text-finyk",
     pill: "bg-gradient-to-r from-brand-400 to-brand-500",
+    chipBg: "bg-finyk/[.12]",
     glow: "drop-shadow-module-nav-finyk",
     badge: "bg-finyk",
   },
   fizruk: {
     text: "text-fizruk",
     pill: "bg-gradient-to-r from-teal-400 to-teal-500",
+    chipBg: "bg-fizruk/[.12]",
     glow: "drop-shadow-module-nav-fizruk",
     badge: "bg-fizruk",
   },
   routine: {
     text: "text-routine",
     pill: "bg-gradient-to-r from-coral-400 to-coral-500",
+    chipBg: "bg-routine/[.12]",
     glow: "drop-shadow-module-nav-routine",
     badge: "bg-routine",
   },
   nutrition: {
     text: "text-nutrition",
     pill: "bg-gradient-to-r from-lime-400 to-lime-500",
+    chipBg: "bg-nutrition/[.12]",
     glow: "drop-shadow-module-nav-nutrition",
     badge: "bg-nutrition",
   },
@@ -129,19 +134,11 @@ export function ModuleBottomNav({
                 active ? "text-text" : "text-muted hover:text-text/70",
               )}
             >
-              {active && (
-                <span
-                  className={cn(
-                    "absolute top-0 left-1/2 -translate-x-1/2",
-                    "w-10 h-1 rounded-full shadow-sm",
-                    tokens.pill,
-                  )}
-                  aria-hidden
-                />
-              )}
               <span
                 className={cn(
-                  "relative transition-[background-color,color,opacity,transform] duration-200",
+                  "relative flex items-center justify-center w-10 h-[26px] rounded-[13px]",
+                  "transition-[background-color,color,opacity,transform] duration-200",
+                  active ? tokens.chipBg : "bg-transparent",
                   active && tokens.text,
                   active && tokens.glow,
                 )}

@@ -480,6 +480,7 @@ export default function RoutineApp({
   return (
     <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
       <ModuleHeader
+        module="routine"
         left={
           typeof onBackToHub === "function" ? (
             <ModuleHeaderBackButton onClick={onBackToHub} />

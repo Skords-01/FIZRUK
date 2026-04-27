@@ -405,6 +405,8 @@ export function Overview({ mono, storage, onNavigate, showBalance = true }) {
           firstName={firstName}
           dateLabel={dateLabel}
           showBalance={showBalance}
+          dayBudget={dayBudget}
+          spendPlanRatio={spendPlanRatio}
         />
 
         <p className="text-xs text-subtle px-1 -mt-1 leading-relaxed">
