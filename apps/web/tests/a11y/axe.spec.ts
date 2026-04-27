@@ -45,14 +45,9 @@ const SURFACES: Array<{ name: string; path: string }> = [
   { name: "fizruk-dashboard", path: "/?module=fizruk" },
   { name: "nutrition-dashboard", path: "/?module=nutrition" },
   { name: "routine-dashboard", path: "/?module=routine" },
-  // /design (DesignShowcase) renders the full primitive catalogue —
-  // every brand × tone × variant × size combination of Button / Badge /
-  // Tabs / Segmented / Stat / SectionHeading / Banner / FormField / etc.
-  // axe-gating it catches contrast & ARIA regressions at the *primitive*
-  // level before consumers do. Re-armed in PR #855 once Step 2 of the
-  // brand-palette WCAG-AA migration landed (Button/Badge/Tabs/Stat/
-  // Segmented/SectionHeading/FormField now use the `*-strong` companions
-  // documented in docs/brand-palette-wcag-aa-proposal.md).
+  /** Auth form: labels, errors, primary actions — high regression risk for a11y. */
+  { name: "auth-sign-in", path: "/sign-in" },
+  /** Design system showcase: module accents, buttons, states — contrast & pattern coverage. */
   { name: "design-showcase", path: "/design" },
 ];
 

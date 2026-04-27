@@ -13,6 +13,15 @@
  *     (U+2026) is a single glyph, renders with correct kerning, and is
  *     what Web Interface Guidelines recommend for truncation cues
  *     ("Loading…", "Пошук…", etc.). Auto-fixable.
+ *
+ * Motion / reduced-motion (convention — not auto-enforced yet):
+ *   - Prefer `motion-safe:` on `animate-*` and decorative transitions so
+ *     `prefers-reduced-motion: reduce` users get calmer UI; pair with
+ *     `motion-reduce:transition-none` where you use `transition-all` on
+ *     controls.
+ *   - Global `index.css` already shortens animation/transition duration under
+ *     `prefers-reduced-motion`; explicit `motion-safe:` keeps intent obvious
+ *     in code review and avoids relying only on the global reset.
  */
 
 const EYEBROW_MESSAGE =

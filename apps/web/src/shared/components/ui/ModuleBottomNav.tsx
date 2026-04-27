@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import type { ModuleAccent } from "@sergeant/design-tokens";
 import { cn } from "../../lib/cn";
 
 /**
@@ -20,12 +19,13 @@ import { cn } from "../../lib/cn";
  *
  * Accessibility:
  * - Default role is <nav> with <button aria-current="page">.
+ * - Visible text label provides the accessible name (no duplicate aria-label).
  * - Pass `role="tablist"` to render as tabs (role="tab", aria-selected,
  *   tabIndex, aria-controls via `panelId`). Matches routine settings
  *   tabs semantics.
  */
 
-export type ModuleNavColor = ModuleAccent;
+export type ModuleNavColor = "finyk" | "fizruk" | "routine" | "nutrition";
 
 export interface ModuleBottomNavItem {
   id: string;
@@ -52,7 +52,6 @@ export interface ModuleBottomNavProps {
 type ColorTokens = {
   text: string;
   pill: string;
-  chipBg: string;
   glow: string;
   badge: string;
 };
@@ -61,29 +60,25 @@ const COLORS: Record<ModuleNavColor, ColorTokens> = {
   finyk: {
     text: "text-finyk",
     pill: "bg-gradient-to-r from-brand-400 to-brand-500",
-    chipBg: "bg-finyk/[.12]",
-    glow: "drop-shadow-module-nav-finyk",
+    glow: "drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]",
     badge: "bg-finyk",
   },
   fizruk: {
     text: "text-fizruk",
     pill: "bg-gradient-to-r from-teal-400 to-teal-500",
-    chipBg: "bg-fizruk/[.12]",
-    glow: "drop-shadow-module-nav-fizruk",
+    glow: "drop-shadow-[0_0_8px_rgba(20,184,166,0.3)]",
     badge: "bg-fizruk",
   },
   routine: {
     text: "text-routine",
     pill: "bg-gradient-to-r from-coral-400 to-coral-500",
-    chipBg: "bg-routine/[.12]",
-    glow: "drop-shadow-module-nav-routine",
+    glow: "drop-shadow-[0_0_8px_rgba(249,112,102,0.3)]",
     badge: "bg-routine",
   },
   nutrition: {
     text: "text-nutrition",
     pill: "bg-gradient-to-r from-lime-400 to-lime-500",
-    chipBg: "bg-nutrition/[.12]",
-    glow: "drop-shadow-module-nav-nutrition",
+    glow: "drop-shadow-[0_0_8px_rgba(132,204,22,0.3)]",
     badge: "bg-nutrition",
   },
 };
@@ -125,20 +120,27 @@ export function ModuleBottomNav({
               }
               aria-controls={isTablist ? item.panelId : undefined}
               tabIndex={isTablist ? (active ? 0 : -1) : undefined}
-              aria-label={item.label}
               onClick={() => onChange(item.id)}
               className={cn(
                 "relative flex-1 flex flex-col items-center justify-center gap-1",
-                "transition-[background-color,color,box-shadow,opacity,transform] duration-200 min-h-[48px] active:scale-95",
+                "transition-all duration-200 min-h-[48px] active:scale-95",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-panel",
                 active ? "text-text" : "text-muted hover:text-text/70",
               )}
             >
+              {active && (
+                <span
+                  className={cn(
+                    "absolute top-0 left-1/2 -translate-x-1/2",
+                    "w-10 h-1 rounded-full shadow-sm",
+                    tokens.pill,
+                  )}
+                  aria-hidden
+                />
+              )}
               <span
                 className={cn(
-                  "relative flex items-center justify-center w-10 h-[26px] rounded-[13px]",
-                  "transition-[background-color,color,opacity,transform] duration-200",
-                  active ? tokens.chipBg : "bg-transparent",
+                  "relative transition-all duration-200",
                   active && tokens.text,
                   active && tokens.glow,
                 )}
