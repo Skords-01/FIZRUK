@@ -1,0 +1,5 @@
+# tsconfig strict guard — require review for files that affect TypeScript
+# strictness inheritance. See docs/playbooks/tsconfig-strict-guard.md.
+apps/*/tsconfig.json               @Skords-01
+packages/config/**                 @Skords-01
+tools/tsconfig-guard/**            @Skords-01

@@ -1,10 +1,74 @@
 # Playbook: Hotfix Production Regression
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+
 **Trigger:** "Прод впав" / користувачі скаржаться / HTTP 500 на `/health` / Sentry alert / Railway logs показують panic.
 
 ---
 
-## Steps
+## Decision Tree
+
+> Follow this tree from Q1 downward. Each leaf node (→ **ACTION**) links to the detailed steps below.
+
+**Q1: Чи підтверджено що прод дійсно зламаний?**
+
+- `/health` повертає 200 і юзер-флоу працює → **STOP** — false alarm, задокументуй і закрий
+- `/health` повертає 5xx або конкретний endpoint зламано → перейди до Q2
+
+**Q2: Який тип регресії?**
+
+- UI-only (no data corruption, cosmetic / JS error) → перейди до Q3
+- Data corruption suspected (неправильні суми, зникли записи) → **STOP** → freeze deploys + ескалейт мейнтейнеру → див. [§3 Hotfix branch](#3-створити-hotfix-гілку-від-main) + [§8 Post-mortem](#8-post-mortem-note)
+- Security incident (PII leak, unauthorized access) → **STOP** → [rotate-secrets.md](rotate-secrets.md) + інцидент-рев'ю → потім повернись до [§4 Мінімальний фікс](#4-мінімальний-фікс)
+
+**Q3: Чи вдалось локалізувати коміт?**
+
+- Так, конкретний коміт знайдено через `git log` / `git bisect` → перейди до Q4
+- Ні, стектрейс / логи незрозумілі → зібрати додаткову інформацію ([§1](#1-підтвердити-симптом), [§2](#2-локалізувати-причину)) → повтори Q3
+
+**Q4: Чи фікс стосується DB serializer?**
+
+- Так → обов'язково перевірити bigint→number coercion (AGENTS.md rule #1) → [§4](#4-мінімальний-фікс)
+- Ні → [§4](#4-мінімальний-фікс)
+
+**Q5: Чи тест написаний і зелений?**
+
+- Так → [§6 Fast-track PR](#6-fast-track-pr-review) → [§7 Deploy](#7-deploy-через-railway) → [§8 Post-mortem](#8-post-mortem-note)
+- Ні → повернись до [§5](#5-написати-тест-що-відтворює-регресію)
+
+```mermaid
+flowchart TD
+    Q1{"Q1: /health OK?"}
+    Q1 -- "200 + user-flow works" --> FALSE_ALARM["🟢 False alarm — close"]
+    Q1 -- "5xx / endpoint broken" --> Q2
+
+    Q2{"Q2: Тип регресії?"}
+    Q2 -- "UI-only" --> Q3
+    Q2 -- "Data corruption" --> FREEZE["🔴 Freeze deploys\n+ escalate"]
+    Q2 -- "Security / PII" --> ROTATE["🔴 rotate-secrets.md\n+ incident review"]
+
+    Q3{"Q3: Коміт локалізовано?"}
+    Q3 -- "Так" --> Q4
+    Q3 -- "Ні" --> GATHER["Збери логи\n§1 + §2"] --> Q3
+
+    Q4{"Q4: DB serializer?"}
+    Q4 -- "Так" --> FIX_DB["§4 Fix + bigint coercion"]
+    Q4 -- "Ні" --> FIX["§4 Мінімальний фікс"]
+
+    FIX_DB --> Q5
+    FIX --> Q5
+
+    Q5{"Q5: Тест зелений?"}
+    Q5 -- "Так" --> PR["§6 PR → §7 Deploy\n→ §8 Post-mortem"]
+    Q5 -- "Ні" --> TEST["§5 Написати тест"] --> Q5
+
+    FREEZE --> FIX
+    ROTATE --> FIX
+```
+
+---
+
+## Background (Original Steps)
 
 ### 1. Підтвердити симптом
 

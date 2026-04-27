@@ -4,7 +4,78 @@
 
 ---
 
-## Контекст
+## Decision Tree
+
+> Follow this tree from Q1 downward. Each leaf node (→ **ACTION**) links to the detailed steps below.
+
+**Q1: Чи тест дійсно flaky?**
+
+- Падає ≥5 з 20 локальних ранів → **Так, flaky** → перейди до Q2
+- Падає < 1 з 20 → скоріш за все environment-залежне (Node version, кеш) → перевір env differences
+- **Завжди** падає у CI, **завжди** проходить локально → **Environment difference** (не flaky) → перейди до Q1a
+
+**Q1a: Яка environment difference?**
+
+- Node version (CI = 20.x, local інша) → pin Node version
+- Timezone (CI = UTC, local = Europe/Kyiv) → `process.env.TZ = "Europe/Kyiv"` у тесті
+- Locale / OS → ізолюй залежне API → [§3e DOM cleanup](#3e-dom-cleanup) або mock
+
+**Q2: Яка причина flakiness?**
+
+- Час / таймери (`Date.now()`, `setTimeout` без `vi.useFakeTimers()`) → [§3a](#3a-час--таймери)
+- Async без await (`fireEvent.click` → assertion перед promise resolved) → [§3b](#3b-async-race)
+- Shared state між тестами (localStorage / MMKV / mocks not cleared) → [§3c](#3c-shared-state)
+- Залежність від порядку тестів (test A leaves state for test B) → [§3d](#3d-test-ordering)
+- DOM cleanup (multiple `render()` без `cleanup`) → [§3e](#3e-dom-cleanup)
+- Незрозуміло → запусти з `--sequence.shuffle` і дивись [§2](#2-класифікуй-причину-flakiness) → повтори Q2
+
+**Q3: Чи фікс пройшов 50/50 ранів?**
+
+- Так (0 failures з 50) → [§5 Видали з flaky-list](#5-видали-з-flaky-list) → [§6 CI smoke](#6-ci-smoke) → [§7 PR](#7-pr)
+- Ні (≥1 failure) → повернись до Q2, копай глибше
+
+```mermaid
+flowchart TD
+    Q1{"Q1: Тест дійсно flaky?\n(20 runs)"}
+    Q1 -- "≥5/20 fail" --> Q2
+    Q1 -- "<1/20 fail" --> ENV_CACHE["Environment /\ncache issue"]
+    Q1 -- "Always fail CI\nAlways pass local" --> Q1a
+
+    Q1a{"Q1a: Environment\ndifference?"}
+    Q1a -- "Node version" --> PIN_NODE["Pin Node 20.x"]
+    Q1a -- "Timezone" --> TZ["process.env.TZ =\n'Europe/Kyiv'"]
+    Q1a -- "Locale / OS" --> ISOLATE["Mock / isolate\nOS-dependent API"]
+
+    Q2{"Q2: Причина flakiness?"}
+    Q2 -- "Час / таймери" --> FIX_TIME["§3a: vi.useFakeTimers\n+ vi.setSystemTime"]
+    Q2 -- "Async race" --> FIX_ASYNC["§3b: findByX /\nawait waitFor"]
+    Q2 -- "Shared state" --> FIX_STATE["§3c: beforeEach\nclear + afterEach cleanup"]
+    Q2 -- "Test ordering" --> FIX_ORDER["§3d: --shuffle\n+ isolate setup"]
+    Q2 -- "DOM cleanup" --> FIX_DOM["§3e: afterEach\ncleanup()"]
+    Q2 -- "Unclear" --> SHUFFLE["Run --shuffle\n+ analyse"] --> Q2
+
+    FIX_TIME --> Q3
+    FIX_ASYNC --> Q3
+    FIX_STATE --> Q3
+    FIX_ORDER --> Q3
+    FIX_DOM --> Q3
+    PIN_NODE --> Q3
+    TZ --> Q3
+    ISOLATE --> Q3
+
+    Q3{"Q3: 50/50 pass?"}
+    Q3 -- "0 failures" --> REMOVE["§5 Remove from\nflaky-list"]
+    Q3 -- "≥1 failure" --> Q2
+
+    REMOVE --> CI["§6 CI: 3 green\nruns in a row"]
+    CI --> PR["§7 PR"]
+```
+
+---
+
+## Background (Original Steps)
+
+### Контекст
 
 Sergeant має 3 відомі flaky тести у `apps/mobile` (зафіксовано в AGENTS.md):
 
@@ -13,10 +84,6 @@ Sergeant має 3 відомі flaky тести у `apps/mobile` (зафіксо
 - `apps/mobile/src/core/settings/HubSettingsPage.test.tsx`
 
 Вони падають у CI на `main`, але не блокують merge — це by design, поки їх не стабілізували. Якщо береш flaky — мета **видалити з AGENTS.md flaky-list**, а не тимчасово приховати.
-
----
-
-## Steps
 
 ### 1. Підтверди flakiness емпірично
 

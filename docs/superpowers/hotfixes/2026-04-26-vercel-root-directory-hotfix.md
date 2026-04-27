@@ -1,5 +1,13 @@
 # Hotfix Vercel Root Directory
 
+> **Status:** shipped (PR [#803](https://github.com/Skords-01/Sergeant/pull/803)).
+> `apps/web/vercel.json` додано з тими ж production settings (pnpm 9.15.1, build
+> `@sergeant/web`, `outputDirectory: ../server/dist`, headers, SPA rewrites,
+> `.well-known` exclusions).
+>
+> Раніше лежало у `docs/superpowers/specs/`; перенесено сюди як incident-runbook,
+> бо це не дизайн модуля, а one-off operations fix.
+
 ## Проблема
 
 Production `sergeant.vercel.app` повертає Vercel `404: NOT_FOUND`. Vercel project має Root Directory `apps/web`, а поточний Vercel config лежить у корені репозиторію. Project config читається з project root directory, тому root-level `vercel.json` може не застосовуватись до `apps/web` project.
