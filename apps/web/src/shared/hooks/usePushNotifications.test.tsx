@@ -93,7 +93,7 @@ function makeMockPushSubscription(args: {
     endpoint: args.endpoint,
     expirationTime: null,
     options: {} as PushSubscriptionOptions,
-    getKey: () => null,
+    getKey: (): ArrayBuffer | null => null,
     toJSON: () => ({
       endpoint: args.endpoint,
       keys: { p256dh: args.p256dh, auth: args.auth },

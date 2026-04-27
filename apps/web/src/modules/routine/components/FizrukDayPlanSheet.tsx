@@ -9,6 +9,13 @@ import { useWorkoutTemplates } from "../../fizruk/hooks/useWorkoutTemplates";
 import { useExerciseCatalog } from "../../fizruk/hooks/useExerciseCatalog";
 import { parseDateKey } from "../lib/hubCalendarAggregate";
 
+interface CatalogExercise {
+  id: string;
+  name?: { uk?: string; en?: string };
+  primaryGroup?: string;
+  primaryGroupUk?: string;
+}
+
 export interface FizrukDayPlanSheetProps {
   dateKey: string | null;
   onClose: () => void;
@@ -32,11 +39,13 @@ export function FizrukDayPlanSheet({
     [currentTemplateId, templates],
   );
 
-  const exerciseList = useMemo(() => {
+  const exerciseList = useMemo<CatalogExercise[]>(() => {
     if (!currentTemplate) return [];
-    return (currentTemplate.exerciseIds || [])
-      .map((id: string) => exercises.find((e) => e.id === id))
-      .filter(Boolean);
+    return ((currentTemplate.exerciseIds || []) as string[])
+      .map((id: string) =>
+        (exercises as CatalogExercise[]).find((e) => e.id === id),
+      )
+      .filter((e): e is CatalogExercise => Boolean(e));
   }, [currentTemplate, exercises]);
 
   const dateLabel = dateKey
