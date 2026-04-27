@@ -4,7 +4,7 @@
 **Скоуп:** репо `Skords-01/Sergeant` (default branch на момент клонування).
 **Метод:** репозиторний прохід — структура, конфіги, `AGENTS.md`/`CONTRIBUTING.md`/`README.md`, `docs/*` (roadmap, tech-debt, observability, playbooks), `.github/workflows/ci.yml`, `eslint.config.js`, `packages/eslint-plugin-sergeant-design/`, `apps/*/tsconfig.json`, міграції в `apps/server/src/migrations/`. Без виконання CI/тестів.
 
-> **Статус виконання — оновлено 2026-04-27 (шоста ревізія: +PR-11.C partial)**
+> **Статус виконання — оновлено 2026-04-27 (шоста ревізія: +PR-11.C partial, +PR-8.C duplicate)**
 > Поки документ жив в attachments, частина PR-ідей з нього вже відпрацьована
 > через дочерні Devin-сесії. Узагальнений знімок прогресу:
 
@@ -34,6 +34,7 @@
 | PR-6.B   | `noImplicitAny` phase 2 — routine + shared + nutrition (3 з 6)         | 🟡 partial | [#923](https://github.com/Skords-01/Sergeant/pull/923), [#934](https://github.com/Skords-01/Sergeant/pull/934)         |
 | PR-7.E   | de-flake `OnboardingWizard.test.tsx` (1/3 flaky triage)                | ✅ closed  | [#963](https://github.com/Skords-01/Sergeant/pull/963)                                                                 |
 | PR-11.C  | ADR template + README index                                            | 🟡 partial | template+README зроблено, retroactive ADRs ⏳                                                                          |
+| PR-8.C   | SYSTEM_PROMPT_VERSION + cache-hit metric                               | 🔄 duplicate | by PR-12.A ([#864](https://github.com/Skords-01/Sergeant/pull/864))                                                    |
 | Інші     | див. inline-теги нижче                                                 | ⏳ pending | —                                                                                                                      |
 
 > Sprint-таблиці нижче (`Спринт 0`, `Спринт 1-2`, `Спринт 3-6`) також оновлені
@@ -262,7 +263,7 @@
 
 - `PR-8.A` — `docs(obs): error-budget policy` — який тип фіч freeze, коли HTTP API budget вигорає; які ні (security fixes, hotfixes).
 - `PR-8.B` — `feat(obs): expose Prometheus /metrics from apps/server` (якщо ще не) + Grafana dashboard import JSON у `docs/observability/dashboards/`.
-- `PR-8.C` — `feat(server,chat): SYSTEM_PROMPT_VERSION constant + cache-hit metric` — підготовка до prompt-cache rollout.
+- `PR-8.C` 🔄 duplicate — closed as duplicate of [PR-12.A](#12-продуктова-масштабованість-та-ai-напрям) ([#864](https://github.com/Skords-01/Sergeant/pull/864)). PR-12.A уже реалізував усе, що описувалось у PR-8.C: `SYSTEM_PROMPT_VERSION` константу, активацію prompt-caching для `SYSTEM_PREFIX` через `cache_control: ephemeral`, per-request метрику `anthropic_prompt_cache_hit_total{version, outcome}` (включно зі streaming-шляхом).
 
 ---
 
