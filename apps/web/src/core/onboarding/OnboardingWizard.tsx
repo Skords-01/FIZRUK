@@ -129,8 +129,19 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 function WelcomeStep({ onContinue }: { onContinue: () => void }) {
   return (
     <div className="flex flex-col items-center text-center space-y-6">
-      <div className="w-20 h-20 rounded-3xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-        <Icon name="sparkle" size={40} strokeWidth={1.8} aria-hidden />
+      <div className="flex items-center gap-2">
+        <div className="w-12 h-12 rounded-2xl bg-finyk/15 border border-finyk/30 flex items-center justify-center">
+          <Icon name="credit-card" size={22} className="text-finyk" aria-hidden />
+        </div>
+        <div className="w-12 h-12 rounded-2xl bg-fizruk/15 border border-fizruk/30 flex items-center justify-center">
+          <Icon name="dumbbell" size={22} className="text-fizruk" aria-hidden />
+        </div>
+        <div className="w-12 h-12 rounded-2xl bg-routine-surface border border-routine/30 flex items-center justify-center">
+          <Icon name="check" size={22} className="text-routine" aria-hidden />
+        </div>
+        <div className="w-12 h-12 rounded-2xl bg-nutrition-soft border border-nutrition/30 flex items-center justify-center">
+          <Icon name="utensils" size={22} className="text-nutrition" aria-hidden />
+        </div>
       </div>
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-text">
@@ -179,6 +190,13 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
 // Step 2: Module selection (ModuleCards)
 // ---------------------------------------------------------------------------
 
+const MODULE_ACTIVE_CLASSES: Record<string, { border: string; bg: string; icon: string; check: string }> = {
+  finyk:     { border: "border-finyk/60",     bg: "bg-finyk/8",     icon: "bg-finyk/15 text-finyk",     check: "bg-finyk" },
+  fizruk:    { border: "border-fizruk/60",    bg: "bg-fizruk/8",    icon: "bg-fizruk/15 text-fizruk",    check: "bg-fizruk" },
+  routine:   { border: "border-routine/60",   bg: "bg-routine/8",   icon: "bg-routine/15 text-routine",   check: "bg-routine" },
+  nutrition: { border: "border-nutrition/60", bg: "bg-nutrition/8", icon: "bg-nutrition/15 text-nutrition", check: "bg-nutrition" },
+};
+
 const MODULE_CARDS = ALL_MODULES.map((id) => ({
   id,
   icon: ONBOARDING_VIBE_ICONS[id],
@@ -196,6 +214,13 @@ function ModuleCard({
   active: boolean;
   onToggle: () => void;
 }) {
+  const activeClasses = MODULE_ACTIVE_CLASSES[card.id] ?? {
+    border: "border-brand-500/60",
+    bg: "bg-brand-500/8",
+    icon: "bg-brand-500/15 text-brand-600 dark:text-brand-400",
+    check: "bg-brand-strong",
+  };
+
   return (
     <button
       type="button"
@@ -205,12 +230,15 @@ function ModuleCard({
         "relative w-full text-left p-3.5 rounded-2xl border transition-all duration-200",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
         active
-          ? "border-brand-500/60 bg-brand-500/8 shadow-card"
+          ? `${activeClasses.border} ${activeClasses.bg} shadow-card`
           : "border-line bg-panel hover:border-brand-500/30",
       )}
     >
       {active && (
-        <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-brand-strong text-white flex items-center justify-center">
+        <span className={cn(
+          "absolute top-2.5 right-2.5 w-5 h-5 rounded-full text-white flex items-center justify-center",
+          activeClasses.check,
+        )}>
           <Icon name="check" size={12} strokeWidth={3} />
         </span>
       )}
@@ -218,9 +246,7 @@ function ModuleCard({
         <span
           className={cn(
             "shrink-0 w-10 h-10 rounded-xl flex items-center justify-center",
-            active
-              ? "bg-brand-500/15 text-brand-600 dark:text-brand-400"
-              : "bg-panelHi text-muted",
+            active ? activeClasses.icon : "bg-panelHi text-muted",
           )}
           aria-hidden
         >
@@ -276,6 +302,11 @@ function ModulesStep({
           </div>
         ))}
       </div>
+      <p className="text-[11px] text-center text-muted min-h-[16px]">
+        {picks.length === 0
+          ? "Пропустиш вибір — отримаєш усі 4 модулі 🎉"
+          : `Обрано: ${picks.length} з ${ALL_MODULES.length}`}
+      </p>
       <div className="w-full flex gap-2">
         <Button
           type="button"
@@ -297,9 +328,6 @@ function ModulesStep({
           <Icon name="chevron-right" size={16} />
         </Button>
       </div>
-      {picks.length === 0 && (
-        <p className="text-[11px] text-muted">Без вибору — всі 4 модулі.</p>
-      )}
     </div>
   );
 }
@@ -485,10 +513,19 @@ function GoalsStep({
           size="lg"
           className="flex-1"
         >
-          Заповни мій хаб
+          Відкрити Sergeant
           <Icon name="chevron-right" size={16} />
         </Button>
       </div>
+      {hasQuestions && (
+        <button
+          type="button"
+          onClick={onFinish}
+          className="w-full text-xs text-muted hover:text-text transition-colors py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 rounded"
+        >
+          Пропустити налаштування
+        </button>
+      )}
     </div>
   );
 }
@@ -517,7 +554,7 @@ export function OnboardingWizard({
 }) {
   const [state, dispatch] = useReducer(wizardReducer, {
     step: "welcome",
-    picks: [...ALL_MODULES],
+    picks: [],
     goals: { ...EMPTY_GOALS },
     stepStartedAt: Date.now(),
   });
