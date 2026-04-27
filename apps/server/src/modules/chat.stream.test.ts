@@ -33,6 +33,7 @@ vi.mock("../lib/anthropic.js", () => ({
 
 vi.mock("../obs/metrics.js", () => ({
   anthropicPromptCacheHitTotal: { inc: vi.fn() },
+  chatToolInvocationsTotal: { inc: vi.fn() },
   aiRequestDurationMs: { observe: vi.fn() },
   aiRequestsTotal: { inc: vi.fn() },
   aiTokensTotal: { inc: vi.fn() },
