@@ -106,6 +106,7 @@ export function FizrukHeader({
 
   return (
     <ModuleHeader
+      module={showChevronBack ? undefined : "fizruk"}
       left={left}
       title={titleFor(page)}
       subtitle={showChevronBack ? undefined : subtitleFor(page, activeProgram)}
