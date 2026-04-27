@@ -276,9 +276,28 @@ export function WorkoutItemCard({
               <VoiceMicButton
                 size="md"
                 label="Голосовий ввід підходу"
+                // Domain prompt steers Whisper toward the canonical
+                // weight/reps shape ("80 кг 8 разів"). Without it Whisper
+                // tends to spell short numbers out ("вісімдесят кілограмів"),
+                // which the parser handles too — but digits are easier to
+                // confirm visually when the user replays the transcript.
+                promptHint="Вправа з вагою та повтореннями: жим штанги 80 кг 8 разів, присідання 100 кг 5 повторень."
                 onResult={(transcript) => {
                   const parsed = parseWorkoutSetSpeech(transcript);
-                  if (!parsed) return;
+                  // Refuse to add an empty set: parser returns a truthy
+                  // object with all-null metrics whenever nothing usable
+                  // was understood (see speechParsers.ts contract). Without
+                  // this guard the user sees a 0×0 set + rest timer and no
+                  // explanation — surprising at best, data-corrupting at
+                  // worst (silently logged by the cloud-sync queue).
+                  if (
+                    !parsed ||
+                    (parsed.weight == null &&
+                      parsed.reps == null &&
+                      parsed.sets == null)
+                  ) {
+                    return;
+                  }
                   const newSet = {
                     weightKg: parsed.weight ?? 0,
                     reps: parsed.reps ?? 0,

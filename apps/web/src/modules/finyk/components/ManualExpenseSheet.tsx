@@ -367,6 +367,7 @@ export function ManualExpenseSheet({
             <VoiceMicButton
               size="md"
               label="Сказати голосом"
+              promptHint="Витрата у гривнях: кава 60 гривень, продукти 350 грн, таксі 200, обід 150."
               onResult={(transcript) => {
                 const parsed = parseExpenseSpeech(transcript);
                 if (!parsed) return;

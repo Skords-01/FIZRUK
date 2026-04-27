@@ -243,6 +243,7 @@ export function HabitForm({
               setHabitDraft((d) => ({ ...d, name: t }));
             }}
             label="Голосовий ввід назви звички"
+            promptHint="Назва звички українською: пити воду, медитувати, ранкова пробіжка, читати книгу."
             className="shrink-0"
           />
         </div>
