@@ -165,6 +165,8 @@ const ALLOWED_LICENSES = new Set([
   // BSD-3-Clause half, so the dep is MIT-compatible for our purposes.
   "(BSD-2-Clause OR MIT OR Apache-2.0)", // triple-dual (rc); all halves
   // are already allowed individually.
+  "(MPL-2.0 OR Apache-2.0)", // dual (dompurify, transitively via
+  // posthog-js → @rrweb/*); both halves are already allowed individually.
   "Python-2.0", // permissive PSF licence (argparse); MIT-compatible.
   "CC-BY-4.0", // attribution-only (caniuse-lite data file, used by
   // browserslist). Attribution requirement is satisfied by listing the
