@@ -29,14 +29,24 @@ const HeroCardImpl = function HeroCard({
       </div>
       <div
         className={cn(
-          "text-[40px] font-bold tracking-tight leading-tight mt-2 tabular-nums text-finyk-strong dark:text-finyk",
+          "text-[40px] font-bold tracking-tight leading-tight mt-2 tabular-nums",
+          networth < 0
+            ? "text-danger-strong dark:text-danger"
+            : "text-finyk-strong dark:text-finyk",
           !showBalance && "tracking-widest",
         )}
       >
         {showBalance ? (
           <>
             {networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
-            <span className="text-2xl font-semibold text-finyk/60 ml-1">₴</span>
+            <span
+              className={cn(
+                "text-2xl font-semibold ml-1",
+                networth < 0 ? "text-danger/60" : "text-finyk/60",
+              )}
+            >
+              ₴
+            </span>
           </>
         ) : (
           "••••••"
