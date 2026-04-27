@@ -4,7 +4,70 @@
 
 ---
 
-## Steps
+## Decision Tree
+
+> Follow this tree from Q1 downward. Each leaf node (→ **ACTION**) links to the detailed steps below.
+
+**Q1: Це витік чи планова ротація?**
+
+- Витік (secret з'явився у логах / git history / public) → **URGENT** → перейди до Q2
+- Планова ротація / security audit → перейди до Q3
+- Підозріла активність (незвичайні запити, unknown sessions) → розслідуй спочатку → якщо підтверджено витік → Q2, якщо false alarm → закрий
+
+**Q2: Який secret скомпрометовано?**
+
+- `BETTER_AUTH_SECRET` → **WARNING**: всі сесії стануть невалідними → ротація в low-traffic час → [§2 Generate](#2-згенерувати-новий-secret) → [§3 Update envs](#3-оновити-secret-у-середовищах) → [§5 Invalidate old](#5-інвалідувати-старий-secret)
+- `MONO_TOKEN_ENC_KEY` → **COMPLEX**: потрібна re-encryption всіх `mono_connection.token_ciphertext` → окремий migration script → [§2](#2-згенерувати-новий-secret) → [§3](#3-оновити-secret-у-середовищах) → [§5](#5-інвалідувати-старий-secret)
+- `VAPID_*` keys → regenerate pair → [§2](#2-згенерувати-новий-secret) → всі push-підписки стануть невалідними (юзери re-subscribe)
+- External API key (Anthropic, Resend, Sentry) → revoke на dashboard провайдера → [§2](#2-згенерувати-новий-secret) → [§3](#3-оновити-secret-у-середовищах)
+- Інший secret → [§2](#2-згенерувати-новий-secret) → [§3](#3-оновити-secret-у-середовищах)
+
+**Q3: Який secret ротується?**
+
+- Той самий вибір що у Q2 (без urgent pressure) → відповідний шлях з Q2
+
+**Q4: Чи `/health` повертає 200 після оновлення?**
+
+- Так → [§5 Invalidate old](#5-інвалідувати-старий-secret) → якщо витік → [§6 Post-mortem](#6-post-mortem-якщо-leak)
+- Ні → відкат до старого secret, debug → [hotfix-prod-regression.md](hotfix-prod-regression.md)
+
+```mermaid
+flowchart TD
+    Q1{"Q1: Витік чи планова?"}
+    Q1 -- "Витік / leak" --> Q2
+    Q1 -- "Планова ротація" --> Q3
+    Q1 -- "Підозра" --> INVESTIGATE["Розслідуй"] --> Q1_CONFIRM{"Підтверджено?"}
+    Q1_CONFIRM -- "Так" --> Q2
+    Q1_CONFIRM -- "Ні" --> CLOSE["Закрий"]
+
+    Q2{"Q2: Який secret?"}
+    Q2 -- "BETTER_AUTH_SECRET" --> AUTH["⚠️ All sessions\ninvalidated\n→ low-traffic rotate"]
+    Q2 -- "MONO_TOKEN_ENC_KEY" --> MONO["⚠️ Re-encrypt\nall tokens\n→ migration script"]
+    Q2 -- "VAPID keys" --> VAPID["Regenerate pair\n→ push re-subscribe"]
+    Q2 -- "External API key" --> EXT["Revoke on provider\n→ generate new"]
+    Q2 -- "Other" --> GEN["§2 Generate\n§3 Update envs"]
+
+    Q3{"Q3: Який secret?"}
+    Q3 -- "Same choices" --> Q2
+
+    AUTH --> GENERATE["§2 Generate new"]
+    MONO --> GENERATE
+    VAPID --> GENERATE
+    EXT --> GENERATE
+    GEN --> GENERATE
+
+    GENERATE --> UPDATE["§3 Update all envs"]
+    UPDATE --> Q4{"Q4: /health OK?"}
+    Q4 -- "200 ✓" --> INVALIDATE["§5 Invalidate old"]
+    Q4 -- "5xx ✗" --> ROLLBACK["Rollback\n→ hotfix playbook"]
+    INVALIDATE --> LEAK{"Was it a leak?"}
+    LEAK -- "Yes" --> PM["§6 Post-mortem"]
+    LEAK -- "No" --> DONE["Done"]
+```
+
+---
+
+## Background (Original Steps)
 
 ### 1. Оцінити scope витоку
 
