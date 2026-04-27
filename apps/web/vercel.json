@@ -51,6 +51,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://sergeant-production.up.railway.app/api/:path*"
+    },
+    {
       "source": "/((?!api/|\\.well-known/).*)",
       "destination": "/index.html"
     }
