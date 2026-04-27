@@ -562,7 +562,7 @@ export const PushSendErrorSchema = z.object({
   platform: PushSendPlatformSchema,
   reason: z.string(),
 });
-export const PushSendSummarySchema = z.object({
+export const PushTestResponseSchema = z.object({
   delivered: z.object({
     ios: z.number().int().nonnegative(),
     android: z.number().int().nonnegative(),
@@ -571,8 +571,6 @@ export const PushSendSummarySchema = z.object({
   cleaned: z.number().int().nonnegative(),
   errors: z.array(PushSendErrorSchema),
 });
-
-export const PushTestResponseSchema = PushSendSummarySchema;
 
 // ────────────────────── Pagination ──────────────────────
 // Переused у будь-якому endpoint-і, що повертає список. Query-params завжди

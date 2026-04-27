@@ -6,18 +6,6 @@ import { lazy } from "react";
 // the original named component via a default export adapter so existing props
 // and rendering logic stay untouched.
 
-export const BudgetTrendChart = lazy(() =>
-  import("../BudgetTrendChart").then((m) => ({
-    default: m.BudgetTrendChart,
-  })),
-);
-
-export const CategoryChart = lazy(() =>
-  import("../CategoryChart").then((m) => ({
-    default: m.CategoryChart,
-  })),
-);
-
 export const NetworthChart = lazy(() =>
   import("../NetworthChart").then((m) => ({
     default: m.NetworthChart,
