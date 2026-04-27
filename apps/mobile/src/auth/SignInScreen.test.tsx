@@ -29,9 +29,9 @@ describe("SignInScreen", () => {
   it("renders the sign-in form", () => {
     const { getByText, getByPlaceholderText } = render(<SignInScreen />);
 
-    expect(getByText("З поверненням")).toBeTruthy();
-    expect(getByPlaceholderText("email@example.com")).toBeTruthy();
-    expect(getByPlaceholderText("пароль")).toBeTruthy();
+    expect(getByText("З поверненням 👋")).toBeTruthy();
+    expect(getByPlaceholderText("ваш@email.com")).toBeTruthy();
+    expect(getByPlaceholderText("••••••••••")).toBeTruthy();
     expect(getByText("Увійти")).toBeTruthy();
   });
 
@@ -41,10 +41,10 @@ describe("SignInScreen", () => {
     const { getByPlaceholderText, getByText } = render(<SignInScreen />);
 
     fireEvent.changeText(
-      getByPlaceholderText("email@example.com"),
+      getByPlaceholderText("ваш@email.com"),
       "test@example.com",
     );
-    fireEvent.changeText(getByPlaceholderText("пароль"), "password123");
+    fireEvent.changeText(getByPlaceholderText("••••••••••"), "password123");
     fireEvent.press(getByText("Увійти"));
 
     await waitFor(() => {
@@ -66,10 +66,10 @@ describe("SignInScreen", () => {
     );
 
     fireEvent.changeText(
-      getByPlaceholderText("email@example.com"),
+      getByPlaceholderText("ваш@email.com"),
       "bad@example.com",
     );
-    fireEvent.changeText(getByPlaceholderText("пароль"), "wrong");
+    fireEvent.changeText(getByPlaceholderText("••••••••••"), "wrong");
     fireEvent.press(getByText("Увійти"));
 
     const errorMsg = await findByText("Invalid credentials");

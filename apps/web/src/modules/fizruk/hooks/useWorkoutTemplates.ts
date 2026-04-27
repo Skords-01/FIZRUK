@@ -4,22 +4,36 @@ import { STORAGE_KEYS } from "@sergeant/shared";
 
 const KEY = STORAGE_KEYS.FIZRUK_TEMPLATES;
 
+export interface WorkoutTemplate {
+  id: string;
+  name: string;
+  exerciseIds: string[];
+  groups: unknown[];
+  updatedAt?: string;
+  lastUsedAt?: string;
+  [key: string]: unknown;
+}
+
+type TemplatesUpdater =
+  | WorkoutTemplate[]
+  | ((prev: WorkoutTemplate[]) => WorkoutTemplate[]);
+
 function uid() {
   return `tpl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function useWorkoutTemplates() {
-  const [templates, setTemplates] = useState([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
 
   useEffect(() => {
     const parsed = safeReadLS(KEY, []);
-    if (Array.isArray(parsed)) setTemplates(parsed);
+    if (Array.isArray(parsed)) setTemplates(parsed as WorkoutTemplate[]);
   }, []);
 
   // Функціональний updater через setTemplates, щоб уникнути stale closure:
   // колбеки в undo-toast можуть викликатись після того, як state оновився
   // (див. AGENTS.md §5.11).
-  const persist = useCallback((updater) => {
+  const persist = useCallback((updater: TemplatesUpdater) => {
     setTemplates((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater;
       safeWriteLS(KEY, next);
@@ -50,7 +64,7 @@ export function useWorkoutTemplates() {
   );
 
   const updateTemplate = useCallback(
-    (id, patch) => {
+    (id: string, patch: Partial<WorkoutTemplate>) => {
       persist((prev) =>
         prev.map((t) =>
           t.id === id
@@ -63,14 +77,14 @@ export function useWorkoutTemplates() {
   );
 
   const removeTemplate = useCallback(
-    (id) => {
+    (id: string) => {
       persist((prev) => prev.filter((t) => t.id !== id));
     },
     [persist],
   );
 
   const restoreTemplate = useCallback(
-    (template, atIndex) => {
+    (template: WorkoutTemplate | null | undefined, atIndex?: number) => {
       if (!template || !template.id) return;
       persist((prev) => {
         if (prev.some((t) => t.id === template.id)) return prev;
@@ -87,7 +101,7 @@ export function useWorkoutTemplates() {
   );
 
   const markTemplateUsed = useCallback(
-    (id) => {
+    (id: string) => {
       persist((prev) =>
         prev.map((t) =>
           t.id === id ? { ...t, lastUsedAt: new Date().toISOString() } : t,

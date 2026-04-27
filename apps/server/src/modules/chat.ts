@@ -17,7 +17,9 @@ import {
   recordToolProposals,
   recordToolExecutions,
 } from "./chat/toolMetrics.js";
+import { truncateToolResults } from "./chat/toolResultTruncation.js";
 import { anthropicPromptCacheHitTotal } from "../obs/metrics.js";
+import { als } from "../obs/requestContext.js";
 
 type WithAnthropicKey = Request & { anthropicKey?: string };
 
@@ -307,10 +309,17 @@ export default async function handler(
   // Другий крок: клієнт виконав tool calls і повертає результати
   if (tool_results && tool_calls_raw) {
     recordToolExecutions(tool_results, tool_calls_raw);
-    const toolResultMessages = tool_results.map((r) => ({
+    // Великі `tool_result`-блоби (брифінги, місячні digest-и) з'їдають
+    // бюджет вхідних токенів і зривають continuation. Truncate на сервері,
+    // повний blob — у Sentry breadcrumb для debug-у.
+    const requestId = als.getStore()?.requestId ?? undefined;
+    const normalizedToolResults = truncateToolResults(tool_results, {
+      requestId,
+    });
+    const toolResultMessages = normalizedToolResults.map((r) => ({
       type: "tool_result" as const,
       tool_use_id: r.tool_use_id,
-      content: String(r.content ?? "ok"),
+      content: r.content,
     }));
 
     // Беремо лише останнє user-повідомлення (питання що спричинило tool call)

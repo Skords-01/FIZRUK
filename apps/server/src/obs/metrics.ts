@@ -124,6 +124,13 @@ export const chatToolInvocationsTotal = new client.Counter({
   registers: [register],
 });
 
+export const chatToolResultTruncatedTotal = new client.Counter({
+  name: "chat_tool_result_truncated_total",
+  help: "tool_result content truncated server-side before Anthropic call",
+  labelNames: ["reason"], // reason=size_threshold
+  registers: [register],
+});
+
 export const aiQuotaBlocksTotal = new client.Counter({
   name: "ai_quota_blocks_total",
   help: "AI quota refusals",
