@@ -46,6 +46,7 @@ interface AuthContextValue {
   authError: string | null;
   setAuthError: (msg: string | null) => void;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: () => Promise<boolean>;
   register: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<boolean>;
@@ -108,6 +109,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     [invalidateMe],
   );
+
+  // Better Auth `signIn.social` ініціює OAuth-редирект на провайдера —
+  // у разі успіху сторінка переходить на Google і керування назад
+  // повертається через `callbackURL`, тож resolve тут зазвичай не
+  // настає. Помилки (provider не сконфігуровано на сервері, мережа,
+  // CSRF) повертаються синхронно через `result.error` — піднімаємо їх
+  // у `authError`, щоб користувач отримав фідбек замість мовчазного
+  // нічого.
+  const loginWithGoogle = useCallback(async () => {
+    setAuthError(null);
+    try {
+      const result = await signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+      if (result?.error) {
+        setAuthError(
+          translateAuthError(
+            result.error.message || "Не вдалося увійти через Google",
+          ),
+        );
+        return false;
+      }
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Не вдалося увійти через Google";
+      setAuthError(message);
+      return false;
+    }
+  }, []);
 
   const register = useCallback(
     async (email: string, password: string, name: string) => {
@@ -211,6 +243,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       authError,
       setAuthError,
       login,
+      loginWithGoogle,
       register,
       logout,
       requestPasswordReset,
@@ -222,6 +255,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       status,
       authError,
       login,
+      loginWithGoogle,
       register,
       logout,
       requestPasswordReset,
