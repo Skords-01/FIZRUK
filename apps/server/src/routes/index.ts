@@ -12,6 +12,7 @@ import { createMeRouter } from "./me.js";
 import { createNutritionRouter } from "./nutrition.js";
 import { createPushRouter } from "./push.js";
 import { createSyncRouter } from "./sync.js";
+import { createTranscribeRouter } from "./transcribe.js";
 import { createWebVitalsRouter } from "./web-vitals.js";
 import { createWeeklyDigestRouter } from "./weekly-digest.js";
 
@@ -40,4 +41,5 @@ export function registerRoutes(app: Express, { pool }: { pool: Pool }): void {
   app.use(createFoodSearchRouter());
   app.use(createWebVitalsRouter());
   app.use(createPushRouter());
+  app.use(createTranscribeRouter());
 }
