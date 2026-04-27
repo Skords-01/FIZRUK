@@ -17,29 +17,29 @@
 
 ### Повний список алертів
 
-| #   | Alert                             | Severity | SLO / домен               | Runbook                                                                           |
-| --- | --------------------------------- | -------- | ------------------------- | --------------------------------------------------------------------------------- |
-| 1   | `HttpErrorBudgetBurnFast`         | page     | HTTP API 99.0 %           | [runbook § HttpErrorBudgetBurn](./runbook.md#httperrorbudgetburn)                 |
-| 2   | `HttpErrorBudgetBurnSlow`         | ticket   | HTTP API 99.0 %           | [runbook § HttpErrorBudgetBurn](./runbook.md#httperrorbudgetburn)                 |
-| 3   | `HttpLatencyP95High`              | ticket   | HTTP latency p95 < 1 s    | [runbook § HttpLatencyP95High](./runbook.md#httplatencyp95high)                   |
-| 4   | `SyncErrorBudgetBurnFast`         | page     | Sync 99.5 %               | [runbook § SyncErrorBudgetBurn](./runbook.md#syncerrorbudgetburn)                 |
-| 5   | `SyncErrorBudgetBurnSlow`         | ticket   | Sync 99.5 %               | [runbook § SyncErrorBudgetBurn](./runbook.md#syncerrorbudgetburn)                 |
-| 6   | `SyncLatencyP95High`              | ticket   | Sync latency p95 < 2.5 s  | [runbook § SyncLatencyP95High](./runbook.md#synclatencyp95high)                   |
-| 7   | `SyncConflictSpike`               | ticket   | Sync (не SLO)             | [runbook § SyncConflictSpike](./runbook.md#syncconflictspike)                     |
-| 8   | `AuthErrorBudgetBurnFast`         | page     | Auth 99.0 %               | [runbook § AuthErrorBudgetBurn](./runbook.md#autherrorbudgetburn)                 |
-| 9   | `AuthErrorBudgetBurnSlow`         | ticket   | Auth 99.0 %               | [runbook § AuthErrorBudgetBurn](./runbook.md#autherrorbudgetburn)                 |
-| 10  | `AuthSessionLookupSlow`           | ticket   | Auth latency p95 < 100 ms | [runbook § AuthSessionLookupSlow](./runbook.md#authsessionlookupslow)             |
-| 11  | `AuthRateLimitSpike`              | ticket   | Auth (не SLO)             | [runbook § AuthRateLimitSpike](./runbook.md#authratelimitspike)                   |
-| 12  | `AiErrorBudgetBurnFast`           | page     | AI 97.0 %                 | [runbook § AiErrorBudgetBurn](./runbook.md#aierrorbudgetburn)                     |
-| 13  | `AiErrorBudgetBurnSlow`           | ticket   | AI 97.0 %                 | [runbook § AiErrorBudgetBurn](./runbook.md#aierrorbudgetburn)                     |
-| 14  | `AiLatencyP95High`                | ticket   | AI latency p95 < 30 s     | [runbook § AiLatencyP95High](./runbook.md#ailatencyp95high)                       |
-| 15  | `AiQuotaStoreDown`                | ticket   | AI quota (фін. ризик)     | [runbook § AiQuotaStoreDown](./runbook.md#aiquotastoredown)                       |
-| 16  | `ExternalHttpErrorBudgetBurnSlow` | ticket   | External HTTP 95.0 %      | [runbook § ExternalHttpErrorBudgetBurn](./runbook.md#externalhttperrorbudgetburn) |
-| 17  | `UnhandledRejectionObserved`      | page     | Process                   | [runbook § UnhandledRejection](./runbook.md#unhandledrejection)                   |
-| 18  | `UncaughtExceptionObserved`       | page     | Process                   | [runbook § UncaughtException](./runbook.md#uncaughtexception)                     |
-| 19  | `DbPoolWaitingSustained`          | ticket   | DB pool (leading)         | [runbook § DbPoolWaitingSustained](./runbook.md#dbpoolwaitingsustained)           |
-| 20  | `DbPoolSaturated`                 | page     | DB pool                   | [runbook § DbPoolSaturated](./runbook.md#dbpoolsaturated)                         |
-| 21  | `ProgrammerErrorsIncreasing`      | ticket   | App errors                | [runbook § ProgrammerErrors](./runbook.md#programmererrors)                       |
+| #   | Alert                             | Severity | SLO / домен               | Runbook                                                                            |
+| --- | --------------------------------- | -------- | ------------------------- | ---------------------------------------------------------------------------------- |
+| 1   | `HttpErrorBudgetBurnFast`         | page     | HTTP API 99.0 %           | [runbook § HttpErrorBudgetBurn](./runbook.md#httperrorbudgetburn)                  |
+| 2   | `HttpErrorBudgetBurnSlow`         | ticket   | HTTP API 99.0 %           | [runbook § HttpErrorBudgetBurn](./runbook.md#httperrorbudgetburn)                  |
+| 3   | `HttpLatencyP95High`              | ticket   | HTTP latency p95 < 1 s    | [runbook § HttpLatencyP95High](./runbook.md#httplatencyp95high)                    |
+| 4   | `SyncErrorBudgetBurnFast`         | page     | Sync 99.5 %               | [runbook § SyncErrorBudgetBurn](./runbook.md#syncerrorbudgetburn)                  |
+| 5   | `SyncErrorBudgetBurnSlow`         | ticket   | Sync 99.5 %               | [runbook § SyncErrorBudgetBurn](./runbook.md#syncerrorbudgetburn)                  |
+| 6   | `SyncLatencyP95High`              | ticket   | Sync latency p95 < 2.5 s  | [runbook § SyncLatencyP95High](./runbook.md#synclatencyp95high)                    |
+| 7   | `SyncConflictSpike`               | ticket   | Sync (не SLO)             | [runbook § SyncConflictSpike](./runbook.md#syncconflictspike)                      |
+| 8   | `AuthErrorBudgetBurnFast`         | page     | Auth 99.0 %               | [runbook § AuthErrorBudgetBurn](./runbook.md#autherrorbudgetburn)                  |
+| 9   | `AuthErrorBudgetBurnSlow`         | ticket   | Auth 99.0 %               | [runbook § AuthErrorBudgetBurn](./runbook.md#autherrorbudgetburn)                  |
+| 10  | `AuthSessionLookupSlow`           | ticket   | Auth latency p95 < 100 ms | [runbook § AuthSessionLookupSlow](./runbook.md#authsessionlookupslow)              |
+| 11  | `AuthRateLimitSpike`              | ticket   | Auth (не SLO)             | [runbook § AuthRateLimitSpike](./runbook.md#authratelimitspike)                    |
+| 12  | `AiErrorBudgetBurnFast`           | page     | AI 97.0 %                 | [runbook § AiErrorBudgetBurn](./runbook.md#aierrorbudgetburn)                      |
+| 13  | `AiErrorBudgetBurnSlow`           | ticket   | AI 97.0 %                 | [runbook § AiErrorBudgetBurn](./runbook.md#aierrorbudgetburn)                      |
+| 14  | `AiLatencyP95High`                | ticket   | AI latency p95 < 30 s     | [runbook § AiLatencyP95High](./runbook.md#ailatencyp95high)                        |
+| 15  | `AiQuotaStoreDown`                | ticket   | AI quota (фін. ризик)     | [runbook § AiQuotaStoreDown](./runbook.md#aiquotastoredown)                        |
+| 16  | `ExternalHttpErrorBudgetBurnSlow` | ticket   | External HTTP 95.0 %      | [runbook § ExternalHttpErrorBudgetBurn](./runbook.md#externalhttperrorbudgetburn)  |
+| 17  | `UnhandledRejectionObserved`      | page     | Process                   | [runbook § UnhandledRejection](./runbook.md#unhandledrejection--uncaughtexception) |
+| 18  | `UncaughtExceptionObserved`       | page     | Process                   | [runbook § UncaughtException](./runbook.md#unhandledrejection--uncaughtexception)  |
+| 19  | `DbPoolWaitingSustained`          | ticket   | DB pool (leading)         | [runbook § DbPoolWaitingSustained](./runbook.md#dbpoolwaitingsustained)            |
+| 20  | `DbPoolSaturated`                 | page     | DB pool                   | [runbook § DbPoolSaturated](./runbook.md#dbpoolsaturated)                          |
+| 21  | `ProgrammerErrorsIncreasing`      | ticket   | App errors                | [runbook § ProgrammerErrors](./runbook.md#programmererrors)                        |
 
 Визначення алертів: [`prometheus/alert_rules.yml`](./prometheus/alert_rules.yml).
 
@@ -221,4 +221,4 @@ Next update: 03:30 UTC
 - [ ] **Module owners** (§3): `AGENTS.md` не містить іменних owner-ів — усі модулі позначені TBD. Потрібно заповнити після розподілу on-call відповідальності.
 - [ ] **Alertmanager config** (§2): `alertmanager.yml` відсутній у репо. Описано очікуваний сетап — потрібно створити і задеплоїти.
 - [ ] **Dashboards** (§5): каталог `docs/observability/dashboards/` планується в окремому PR.
-- [ ] **Postmortem template** (§8): `docs/postmortems/TEMPLATE.md` потрібно створити.
+- [x] **Postmortem template** (§8): `docs/postmortems/TEMPLATE.md` створено в цьому PR.
