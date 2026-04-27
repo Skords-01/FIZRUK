@@ -43,19 +43,30 @@ export function AssetsNetworthCard({
   totalDebt,
   showBalance,
 }: Pick<State, "networth" | "totalAssets" | "totalDebt" | "showBalance">) {
+  const isNegative = networth < 0;
   return (
     <div className="rounded-3xl bg-finyk/[.06] dark:bg-finyk-surface-dark/10 border border-finyk/[.14] dark:border-finyk-border-dark/20 p-5 mb-3 shadow-card">
       <p className="text-sm text-muted">Загальний нетворс</p>
       <div
         className={cn(
-          "text-[40px] font-bold tracking-tight leading-tight mt-2 tabular-nums text-finyk-strong dark:text-finyk",
+          "text-[40px] font-bold tracking-tight leading-tight mt-2 tabular-nums",
+          isNegative
+            ? "text-danger-strong dark:text-danger"
+            : "text-finyk-strong dark:text-finyk",
           !showBalance && "tracking-widest",
         )}
       >
         {showBalance ? (
           <>
             {networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
-            <span className="text-2xl font-semibold text-finyk/60 ml-1">₴</span>
+            <span
+              className={cn(
+                "text-2xl font-semibold ml-1",
+                isNegative ? "text-danger/60" : "text-finyk/60",
+              )}
+            >
+              ₴
+            </span>
           </>
         ) : (
           "\u2022\u2022\u2022\u2022\u2022\u2022"
@@ -100,6 +111,7 @@ export function AssetsSubscriptionsSection({ state }: { state: State }) {
     newSub,
     setNewSub,
     setTxPicker,
+    showBalance,
   } = state;
   const toast = useToast();
 
@@ -121,6 +133,7 @@ export function AssetsSubscriptionsSection({ state }: { state: State }) {
           key={sub.id}
           sub={sub}
           transactions={transactions}
+          showBalance={showBalance}
           onDelete={() => {
             const removed = sub;
             const removedIdx = i;
@@ -190,6 +203,7 @@ export function AssetsAssetsSection({ state }: { state: State }) {
     assetFormRef,
     assetNameInputRef,
     setTxPicker,
+    showBalance,
   } = state;
 
   return (
@@ -217,14 +231,17 @@ export function AssetsAssetsSection({ state }: { state: State }) {
               <div>
                 <div className="text-sm font-medium">{getAccountLabel(a)}</div>
                 <div className="text-xs text-subtle mt-0.5">
-                  {(a.balance / 100).toLocaleString("uk-UA", {
-                    minimumFractionDigits: 2,
-                  })}{" "}
-                  {a.currencyCode === 980
-                    ? "₴"
-                    : a.currencyCode === 840
-                      ? "$"
-                      : "€"}
+                  {showBalance
+                    ? `${(a.balance / 100).toLocaleString("uk-UA", {
+                        minimumFractionDigits: 2,
+                      })} ${
+                        a.currencyCode === 980
+                          ? "₴"
+                          : a.currencyCode === 840
+                            ? "$"
+                            : "€"
+                      }`
+                    : "\u2022\u2022\u2022\u2022"}
                 </div>
               </div>
             </div>
@@ -247,6 +264,7 @@ export function AssetsAssetsSection({ state }: { state: State }) {
           total={getReceivableEffectiveTotal(r, transactions)}
           dueDate={r.dueDate}
           isReceivable
+          showBalance={showBalance}
           onDelete={() => {
             const removed = r;
             setReceivables((rs) => rs.filter((x) => x.id !== removed.id));
@@ -312,12 +330,15 @@ export function AssetsAssetsSection({ state }: { state: State }) {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-success">
-              {Number(a.amount).toLocaleString("uk-UA")}{" "}
-              {a.currency === "UAH"
-                ? "₴"
-                : a.currency === "USD"
-                  ? "$"
-                  : a.currency}
+              {showBalance
+                ? `${Number(a.amount).toLocaleString("uk-UA")} ${
+                    a.currency === "UAH"
+                      ? "₴"
+                      : a.currency === "USD"
+                        ? "$"
+                        : a.currency
+                  }`
+                : "\u2022\u2022\u2022\u2022"}
             </span>
             <button
               onClick={() => {
@@ -364,6 +385,7 @@ export function AssetsLiabilitiesSection({ state }: { state: State }) {
     debtFormRef,
     debtNameInputRef,
     setTxPicker,
+    showBalance,
   } = state;
 
   return (
@@ -400,6 +422,7 @@ export function AssetsLiabilitiesSection({ state }: { state: State }) {
             remaining={remaining}
             paid={paidFromLinked}
             total={volatileTotal}
+            showBalance={showBalance}
             onLink={() => setTxPicker({ id: a.id, type: "monoDebt" })}
             linkedCount={linkedIds.length}
           />
@@ -414,6 +437,7 @@ export function AssetsLiabilitiesSection({ state }: { state: State }) {
           paid={getDebtPaid(d, transactions)}
           total={getDebtEffectiveTotal(d, transactions)}
           dueDate={d.dueDate}
+          showBalance={showBalance}
           onDelete={() => {
             const removed = d;
             setManualDebts((ds) => ds.filter((x) => x.id !== removed.id));
@@ -520,9 +544,13 @@ export function AssetsTable({ state }: { state: State }) {
         title="Активи"
         iconName="trending-up"
         iconTone="success"
-        summary={`+${totalAssets.toLocaleString("uk-UA", {
-          maximumFractionDigits: 0,
-        })} ₴`}
+        summary={
+          showBalance
+            ? `+${totalAssets.toLocaleString("uk-UA", {
+                maximumFractionDigits: 0,
+              })} ₴`
+            : "\u2022\u2022\u2022\u2022"
+        }
         open={open.assets}
         onToggle={() => setOpen((v) => ({ ...v, assets: !v.assets }))}
       />
@@ -533,9 +561,13 @@ export function AssetsTable({ state }: { state: State }) {
         title="Пасиви"
         iconName="trending-down"
         iconTone="danger"
-        summary={`\u2212${totalDebt.toLocaleString("uk-UA", {
-          maximumFractionDigits: 0,
-        })} ₴`}
+        summary={
+          showBalance
+            ? `\u2212${totalDebt.toLocaleString("uk-UA", {
+                maximumFractionDigits: 0,
+              })} ₴`
+            : "\u2022\u2022\u2022\u2022"
+        }
         open={open.liabilities}
         onToggle={() => setOpen((v) => ({ ...v, liabilities: !v.liabilities }))}
       />
