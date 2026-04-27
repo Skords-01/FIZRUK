@@ -15,9 +15,9 @@ describe("SectionHeading", () => {
     const { container } = render(<SectionHeading>Розділ</SectionHeading>);
     const el = container.querySelector("h3")!;
     expect(el).not.toBeNull();
-    expect(el.className).toContain("text-2xs");
+    expect(el.className).toContain("text-xs");
     expect(el.className).toContain("uppercase");
-    expect(el.className).toContain("tracking-widest");
+    expect(el.className).toContain("tracking-wider");
     expect(el.className).toContain("font-bold");
     expect(el.className).toContain("text-subtle");
   });

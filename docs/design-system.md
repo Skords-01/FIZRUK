@@ -281,7 +281,7 @@ Home/End, `role="tablist"`.
 
 | size | type-scale                                     | коли                    |
 | ---- | ---------------------------------------------- | ----------------------- |
-| `xs` | `text-2xs font-bold uppercase tracking-widest` | compact in-card eyebrow |
+| `xs` | `text-xs  font-bold uppercase tracking-wider`  | compact in-card eyebrow |
 | `sm` | `text-xs  font-bold uppercase tracking-widest` | standard section title  |
 | `md` | `text-sm font-semibold`                        | inline group heading    |
 | `lg` | `text-lg font-extrabold leading-tight`         | page sub-section        |
