@@ -466,7 +466,7 @@ export function Body({ onOpenMeasurements }) {
             <button
               type="submit"
               className={cn(
-                "w-full py-3 rounded-xl font-semibold text-sm transition-[background-color,box-shadow,opacity,transform]",
+                "focus-ring w-full py-3 rounded-xl font-semibold text-sm transition-[background-color,box-shadow,opacity,transform]",
                 submitSuccess
                   ? "bg-success-strong text-white"
                   : "bg-success-strong text-white active:scale-[0.98]",

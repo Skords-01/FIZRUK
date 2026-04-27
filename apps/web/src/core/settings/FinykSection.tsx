@@ -442,7 +442,10 @@ export function FinykSection() {
                 <button
                   type="button"
                   onClick={() => setShowWebhookToken((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-text"
+                  className="focus-ring absolute right-3 top-1/2 -translate-y-1/2 rounded-md text-subtle hover:text-text"
+                  aria-label={
+                    showWebhookToken ? "Приховати токен" : "Показати токен"
+                  }
                 >
                   {showWebhookToken ? "\u{1F648}" : "\u{1F441}"}
                 </button>
@@ -643,7 +646,7 @@ export function FinykSection() {
                   <button
                     type="button"
                     onClick={() => setShowPrivatToken((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-text"
+                    className="focus-ring absolute right-3 top-1/2 -translate-y-1/2 rounded-md text-subtle hover:text-text"
                     aria-label={showPrivatToken ? "Приховати" : "Показати"}
                   >
                     {showPrivatToken ? "🙈" : "👁"}
