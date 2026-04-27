@@ -43,7 +43,7 @@ export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 const variants: Record<ButtonVariant, string> = {
   // Core variants
   primary:
-    "bg-brand-strong text-white shadow-sm hover:bg-brand-600 hover:shadow-glow active:bg-brand-700 active:scale-[0.98]",
+    "bg-brand-strong text-white shadow-sm hover:bg-brand-800 hover:shadow-glow active:bg-brand-900 active:scale-[0.98]",
   secondary:
     "bg-panel text-text border border-line shadow-sm hover:bg-panelHi hover:border-brand-200 active:scale-[0.98]",
   ghost:
