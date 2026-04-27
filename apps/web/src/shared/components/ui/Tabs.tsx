@@ -21,7 +21,7 @@ import { cn } from "@shared/lib/cn";
  *                  navigation, supports controlled panels.
  *   - `Segmented`— compact mode/view switcher (chips). No panels, shorter.
  *
- * Two-axis API (see `docs/COMPONENT_API.md`):
+ * Two-axis API (see `docs/design/COMPONENT_API.md`):
  *   - `variant` — accent colour (`brand` is the navigation default; the
  *                 four module tokens scope the active state to a module).
  *   - `style`   — visual treatment of the active tab.
@@ -77,7 +77,7 @@ export interface TabsProps<V extends string = string> {
 // Active-tab text on the page background. The brand `*-500` shade only
 // clears ~2.5:1 on cream `bg-bg`; the `*-strong` companion (= `[700]`,
 // or lime-800 for nutrition) clears ≥4.5:1. See
-// docs/brand-palette-wcag-aa-proposal.md § 2.2.
+// docs/design/brand-palette-wcag-aa-proposal.md § 2.2.
 const VARIANT_TEXT: Record<TabsVariant, string> = {
   brand: "text-brand-strong",
   finyk: "text-finyk-strong",

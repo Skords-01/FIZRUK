@@ -34,7 +34,7 @@
  * with `statusColors` in `./tokens.js`.
  *
  * AI-CONTEXT: `*Strong` companions mirror the web `*-strong` Tailwind
- * tokens introduced in PR #854 / docs/brand-palette-wcag-aa-proposal.md.
+ * tokens introduced in PR #854 / docs/design/brand-palette-wcag-aa-proposal.md.
  * On the current *dark-only* mobile theme the saturated `*` shades already
  * clear WCAG AA against `bg` / `surface` (emerald-500 ≈ 5.4:1, amber-500
  * ≈ 8.3:1, etc.) — `*Strong` is **not** required there, and using it on

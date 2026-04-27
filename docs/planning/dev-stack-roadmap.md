@@ -210,7 +210,7 @@ pnpm --filter @sergeant/web build:analyze
 
 ## 4. Тестування
 
-Окрема секція в `docs/ai-coding-improvements.md` (#711) містить деталі по Vitest, Playwright, Argos, Storybook, snapshot tests. Тут — додаткові тулзи.
+Окрема секція в `docs/planning/ai-coding-improvements.md` (#711) містить деталі по Vitest, Playwright, Argos, Storybook, snapshot tests. Тут — додаткові тулзи.
 
 ### 4.1. Test infrastructure
 
@@ -720,9 +720,9 @@ CI gate: `vitest --coverage` + threshold (наприклад 70% lines) на cri
 
 ### Документи що оновились разом
 
-- `docs/ai-coding-improvements.md` — TL;DR таблиця з Status-колонкою, прогрес-блок, маркери ✅ на блоках 1, 3, 4.2, 4.5, implementation checklist з лінками на PR.
-- `docs/dev-stack-roadmap.md` — TL;DR з Status-колонкою (5/15 done), §3.1 Static analysis і §4.1 Test infrastructure з ✅, §8.1 Security оновлений з Renovate vulnerabilityAlerts.
-- `docs/renovate-usage.md` — новий файл, як працювати з Renovate-PR-ами щодня.
+- `docs/planning/ai-coding-improvements.md` — TL;DR таблиця з Status-колонкою, прогрес-блок, маркери ✅ на блоках 1, 3, 4.2, 4.5, implementation checklist з лінками на PR.
+- `docs/planning/dev-stack-roadmap.md` — TL;DR з Status-колонкою (5/15 done), §3.1 Static analysis і §4.1 Test infrastructure з ✅, §8.1 Security оновлений з Renovate vulnerabilityAlerts.
+- `docs/integrations/renovate-usage.md` — новий файл, як працювати з Renovate-PR-ами щодня.
 
 ### 2026-04-25 (вечір) — друга хвиля + продуктова фіча
 
@@ -760,10 +760,10 @@ CI gate: `vitest --coverage` + threshold (наприклад 70% lines) на cri
 
 ## Зв'язки з іншими roadmap-ами
 
-- `docs/monobank-roadmap.md` (#709) — продуктовий roadmap по Mono-інтеграції.
-- `docs/ai-coding-improvements.md` (#711) — інфраструктура для AI-агентів.
-- `docs/frontend-tech-debt.md` — існуючі borгs у web.
-- `docs/backend-tech-debt.md` — існуючі borгs у server.
+- `docs/integrations/monobank-roadmap.md` (#709) — продуктовий roadmap по Mono-інтеграції.
+- `docs/planning/ai-coding-improvements.md` (#711) — інфраструктура для AI-агентів.
+- `docs/tech-debt/frontend.md` — існуючі borгs у web.
+- `docs/tech-debt/backend.md` — існуючі borгs у server.
 - `docs/monobank-webhook-migration.md` — completed migration.
 
 Цей документ — **superset** і **canonical** для все-проєктних рекомендацій.

@@ -4,7 +4,7 @@
  * registry, same retry caps, same event names — but all storage
  * metadata keys are mobile-specific and prefixed `mobile:` so an MMKV
  * instance on device never collides with web localStorage keys that
- * happen to share the same string (see `docs/react-native-migration.md`
+ * happen to share the same string (see `docs/mobile/react-native-migration.md`
  * § 6.1).
  *
  * The `ModuleName` identifiers (`finyk`, `fizruk`, `routine`,

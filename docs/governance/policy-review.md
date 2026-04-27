@@ -21,7 +21,7 @@
 - `git log` за період + GitHub PR list (Conventional Commit лінт = автоматичний).
 - CI runs за період (artifact-и `migration-lint`, `audit`, `commitlint`, `lint`).
 - `docs/security/audit-exceptions.md` — активні винятки `audit-exception`.
-- `docs/frontend-tech-debt.md`, `docs/backend-tech-debt.md` — burn-down trend.
+- `docs/tech-debt/frontend.md`, `docs/tech-debt/backend.md` — burn-down trend.
 
 ---
 
@@ -142,6 +142,6 @@ playbook-у. Один рядок на кандидата.
 
 - `AGENTS.md` — джерело hard rules (`#1`–`#9` на момент створення цього шаблону).
 - `docs/security/audit-exceptions.md` — формат запису `audit-exception`.
-- `docs/frontend-tech-debt.md` / `docs/backend-tech-debt.md` — burn-down lists.
+- `docs/tech-debt/frontend.md` / `docs/tech-debt/backend.md` — burn-down lists.
 - `packages/eslint-plugin-sergeant-design/README.md` — каталог наявних кастомних
   правил (приклади для нових кандидатів).

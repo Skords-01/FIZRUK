@@ -51,17 +51,17 @@ describe("parseFreshnessThreshold", () => {
 describe("parseTechDebtFiles", () => {
   it("returns the default list when the env var is missing", () => {
     assert.deepEqual(parseTechDebtFiles(undefined), [
-      "docs/frontend-tech-debt.md",
+      "docs/tech-debt/frontend.md",
     ]);
-    assert.deepEqual(parseTechDebtFiles(""), ["docs/frontend-tech-debt.md"]);
+    assert.deepEqual(parseTechDebtFiles(""), ["docs/tech-debt/frontend.md"]);
   });
 
   it("splits a comma-separated list and trims whitespace", () => {
     assert.deepEqual(
       parseTechDebtFiles(
-        "docs/frontend-tech-debt.md, docs/backend-tech-debt.md",
+        "docs/tech-debt/frontend.md, docs/tech-debt/backend.md",
       ),
-      ["docs/frontend-tech-debt.md", "docs/backend-tech-debt.md"],
+      ["docs/tech-debt/frontend.md", "docs/tech-debt/backend.md"],
     );
   });
 
@@ -70,7 +70,7 @@ describe("parseTechDebtFiles", () => {
   });
 
   it("returns the default when only commas are provided", () => {
-    assert.deepEqual(parseTechDebtFiles(",,,"), ["docs/frontend-tech-debt.md"]);
+    assert.deepEqual(parseTechDebtFiles(",,,"), ["docs/tech-debt/frontend.md"]);
   });
 });
 
@@ -199,7 +199,7 @@ describe("run", () => {
 
   it("passes when the marker is within the threshold", () => {
     const result = run({
-      files: ["docs/frontend-tech-debt.md"],
+      files: ["docs/tech-debt/frontend.md"],
       thresholdDays: 60,
       now,
       read: () => "> **Оновлено 2026-04-20.** notes",
@@ -213,7 +213,7 @@ describe("run", () => {
 
   it("fails when the marker is older than the threshold", () => {
     const result = run({
-      files: ["docs/frontend-tech-debt.md"],
+      files: ["docs/tech-debt/frontend.md"],
       thresholdDays: 60,
       now,
       read: () => "> **Оновлено 2026-01-01.** notes",
@@ -236,7 +236,7 @@ describe("run", () => {
 
   it("fails when the marker is missing from the file", () => {
     const result = run({
-      files: ["docs/frontend-tech-debt.md"],
+      files: ["docs/tech-debt/frontend.md"],
       thresholdDays: 60,
       now,
       read: () => "# Title\n\nSome paragraph.\n",
@@ -248,8 +248,8 @@ describe("run", () => {
 
   it("checks every configured file independently", () => {
     const contents = {
-      "docs/frontend-tech-debt.md": "> **Оновлено 2026-04-20.**",
-      "docs/backend-tech-debt.md": "> **Оновлено 2026-01-01.**",
+      "docs/tech-debt/frontend.md": "> **Оновлено 2026-04-20.**",
+      "docs/tech-debt/backend.md": "> **Оновлено 2026-01-01.**",
     };
     const result = run({
       files: Object.keys(contents),

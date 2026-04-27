@@ -119,4 +119,4 @@ Script: [`scripts/lint-migrations.mjs`](../../scripts/lint-migrations.mjs) | Tes
 - [pre-merge-migration-checklist.md](pre-merge-migration-checklist.md) — **обов'язковий чек-лист** для рев'ю PR-у з міграцією перед merge.
 - [AGENTS.md](../../AGENTS.md) — rule #1 (bigint), rule #3 (API contract), rule #4 (migrations)
 - [monobank-webhook-migration.md](../monobank-webhook-migration.md) — приклад великої міграції (008)
-- [backend-tech-debt.md](../backend-tech-debt.md) — §Database & migrations review
+- [backend-tech-debt.md](../tech-debt/backend.md) — §Database & migrations review

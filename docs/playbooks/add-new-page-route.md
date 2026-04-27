@@ -100,5 +100,5 @@ pnpm --filter @sergeant/web exec playwright test
 
 - [add-feature-flag.md](add-feature-flag.md) — якщо сторінка за feature flag
 - [add-api-endpoint.md](add-api-endpoint.md) — якщо потрібен новий backend endpoint
-- [frontend-tech-debt.md](../frontend-tech-debt.md) — загальні фронтенд-конвенції
+- [frontend-tech-debt.md](../tech-debt/frontend.md) — загальні фронтенд-конвенції
 - [AGENTS.md](../../AGENTS.md) — rule #2 (RQ keys)

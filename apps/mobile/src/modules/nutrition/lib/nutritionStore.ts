@@ -19,7 +19,7 @@
  * JS `localStorage` setItem-patch that the web uses to auto-mark
  * modules dirty. UI layers that need `useCloudSync` parity must either
  * (a) call `enqueueChange(key)` explicitly, or (b) prefer
- * `useSyncedStorage` wrappers. See `docs/react-native-migration.md`
+ * `useSyncedStorage` wrappers. See `docs/mobile/react-native-migration.md`
  * § 6.1 and `apps/mobile/src/sync/config.ts` for the full list of
  * nutrition keys that are already registered in `SYNC_MODULES`.
  */

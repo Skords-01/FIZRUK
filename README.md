@@ -179,9 +179,9 @@ server/
         └── lib/                  # anthropicFetch, nutritionResponse, nutritionSecurity
 ```
 
-Дорожня карта та ТЗ по модулях: [docs/hub-modules-roadmap.md](docs/hub-modules-roadmap.md). Огляд стеку фронтенду (монорепо): [docs/frontend-overview.md](docs/frontend-overview.md).
+Дорожня карта та ТЗ по модулях: [docs/hub-modules-roadmap.md](docs/hub-modules-roadmap.md). Огляд стеку фронтенду (монорепо): [docs/architecture/frontend-overview.md](docs/architecture/frontend-overview.md).
 
-**Деплой:** фронт Vercel + API/PostgreSQL на Railway — покроково [docs/railway-vercel.md](docs/railway-vercel.md). Локальна БД: `pnpm db:up` (Docker Compose).
+**Деплой:** фронт Vercel + API/PostgreSQL на Railway — покроково [docs/integrations/railway-vercel.md](docs/integrations/railway-vercel.md). Локальна БД: `pnpm db:up` (Docker Compose).
 
 > **New contributor?** See [CONTRIBUTING.md](CONTRIBUTING.md) for a 5-minute quickstart.
 

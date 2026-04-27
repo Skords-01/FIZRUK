@@ -10,7 +10,7 @@ using…» (Android) і без зупинки у Safari (iOS).
 
 - **Custom scheme** (`com.sergeant.shell://scan`) — працював і раніше
   через `parseDeepLink()` + `App.addListener('appUrlOpen', ...)`; див.
-  `apps/mobile-shell/src/index.ts` і `docs/platforms.md`.
+  `apps/mobile-shell/src/index.ts` і `docs/architecture/platforms.md`.
 - **HTTPS App Links / Universal Links** — нова форма, яку `parseDeepLink()`
   нормалізує до тієї ж React-Router-path. Хости перераховані в константі
   `DEEP_LINK_HTTPS_HOSTS` у тому ж файлі та мають бути синхронізовані з:
@@ -20,7 +20,7 @@ using…» (Android) і без зупинки у Safari (iOS).
   - `/.well-known/assetlinks.json` (Android DAL);
   - `/.well-known/apple-app-site-association` (iOS AASA).
 
-Поточні hosts (див. `docs/mobile.md` секція CORS — «prod»):
+Поточні hosts (див. `docs/mobile/overview.md` секція CORS — «prod»):
 
 - `sergeant.vercel.app` — Vercel дефолт;
 - `sergeant.2dmanager.com.ua` — кастомний prod-домен.

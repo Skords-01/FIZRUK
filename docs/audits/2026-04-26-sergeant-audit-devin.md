@@ -151,7 +151,7 @@
 - `PR-3.B` ✅ closed — [#887](https://github.com/Skords-01/Sergeant/pull/887) `refactor(web,finyk): decompose Assets.tsx (1147 LOC) into smaller modules` — пілот для top-10 list.
 - `PR-3.C` ✅ closed — [#898](https://github.com/Skords-01/Sergeant/pull/898) `refactor(web,nutrition): split seedFoodsUk.ts (1614 LOC) by category (meat/fish/dairy/grains/...)` — чисто data-split, 19 per-category файлів, всі 390 елементів структурно ідентичні.
 - `PR-3.D` ✅ closed — [#865](https://github.com/Skords-01/Sergeant/pull/865) `chore(web,storage): migrate top-3 high-call-site localStorage files to safe wrappers` (`core/settings/FinykSection.tsx` -20, `core/lib/chatActions/fizrukActions.ts` -7, `core/hub/HubDashboard.tsx` -5) — burn-down list.
-- `PR-3.E` ✅ closed — [#907](https://github.com/Skords-01/Sergeant/pull/907) `ci(ci): freshness gate for docs/frontend-tech-debt.md` (`scripts/check-tech-debt-freshness.mjs`, wired у `pnpm lint:tech-debt-freshness` → root `pnpm lint`). Парсить `> **Оновлено YYYY-MM-DD.**` маркер, fail коли > `FRESHNESS_THRESHOLD_DAYS` (default 60). Маркер, а не git mtime, — тому format-only edit не «reset-ить» свіжість.
+- `PR-3.E` ✅ closed — [#907](https://github.com/Skords-01/Sergeant/pull/907) `ci(ci): freshness gate for docs/tech-debt/frontend.md` (`scripts/check-tech-debt-freshness.mjs`, wired у `pnpm lint:tech-debt-freshness` → root `pnpm lint`). Парсить `> **Оновлено YYYY-MM-DD.**` маркер, fail коли > `FRESHNESS_THRESHOLD_DAYS` (default 60). Маркер, а не git mtime, — тому format-only edit не «reset-ить» свіжість.
 
 ---
 

@@ -79,7 +79,7 @@
 
 - [ ] Pre-deploy команда Railway: автоматичний `pnpm db:migrate` перед стартом нового релізу — готовий до цієї міграції (немає кращого моменту для break-y migrations).
 - [ ] Якщо це **breaking** для running код-у (наприклад, видалення колонки, на яку ще пише чинна версія): двофазний deploy (див. розділ B).
-- [ ] У `docs/backend-tech-debt.md` оновлено секцію "Database & migrations" якщо міграція змінює invariant-и (індекси, foreign keys, нові таблиці-домени).
+- [ ] У `docs/tech-debt/backend.md` оновлено секцію "Database & migrations" якщо міграція змінює invariant-и (індекси, foreign keys, нові таблиці-домени).
 
 ```
 
@@ -114,5 +114,5 @@
 - [`AGENTS.md`](../../AGENTS.md) — hard rules #1 (bigint), #3 (API contract), #4 (migrations).
 - [`scripts/lint-migrations.mjs`](../../scripts/lint-migrations.mjs) — CI-script для `migration-lint` job-у.
 - [`apps/server/src/migrations/__tests__/rollback-sanity.test.ts`](../../apps/server/src/migrations/__tests__/rollback-sanity.test.ts) — auto-test, що `down.sql` принаймні виконується (PR #918).
-- [`docs/backend-tech-debt.md`](../backend-tech-debt.md) — Database & migrations review.
+- [`docs/tech-debt/backend.md`](../tech-debt/backend.md) — Database & migrations review.
 ```

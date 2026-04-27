@@ -109,9 +109,9 @@
 
 ## See also
 
-- `docs/monobank-roadmap.md`
+- `docs/integrations/monobank-roadmap.md`
 - `docs/monobank-webhook-migration.md`
-- `docs/frontend-tech-debt.md`, `docs/backend-tech-debt.md`
+- `docs/tech-debt/frontend.md`, `docs/tech-debt/backend.md`
 ```
 
 **Перевірка:** AI відкриває репо → читає `AGENTS.md` → не повторює помилки які я ловив у попередніх PR-ах.

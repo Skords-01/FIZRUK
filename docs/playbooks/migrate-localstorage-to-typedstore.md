@@ -101,6 +101,6 @@ pnpm lint
 
 ## See also
 
-- [frontend-tech-debt.md](../frontend-tech-debt.md) — §2 Прямі localStorage виклики
+- [frontend-tech-debt.md](../tech-debt/frontend.md) — §2 Прямі localStorage виклики
 - [cleanup-dead-code.md](cleanup-dead-code.md) — якщо під час міграції знайдено мертвий код
 - [AGENTS.md](../../AGENTS.md) — загальні конвенції

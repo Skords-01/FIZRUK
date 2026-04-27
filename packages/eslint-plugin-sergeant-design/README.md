@@ -177,7 +177,7 @@ Forbids type-safety bypasses in production code (PR-6.E). Catches four patterns:
 3. `as any` casts
 4. `as unknown as X` double-casts
 
-Severity: **error** (scoped to `apps/web/src/**` and `apps/server/src/**`). Test files are exempt. Existing violations are allowlisted in `eslint.config.js` — see [`docs/frontend-tech-debt.md`](../../docs/frontend-tech-debt.md) §no-strict-bypass.
+Severity: **error** (scoped to `apps/web/src/**` and `apps/server/src/**`). Test files are exempt. Existing violations are allowlisted in `eslint.config.js` — see [`docs/tech-debt/frontend.md`](../../docs/tech-debt/frontend.md) §no-strict-bypass.
 
 #### Options
 
