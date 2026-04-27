@@ -1,0 +1,149 @@
+{
+  "name": "06 — Mono Webhook Enrichment (Mono → AI categorize → budget alert)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mono-transaction",
+        "options": { "rawBody": true }
+      },
+      "id": "mono-webhook",
+      "name": "Mono Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO module_data (module, user_id, data, created_at) VALUES ('finyk', '{{ $json.body.user_id }}', '{{ JSON.stringify($json.body.data) }}'::jsonb, NOW()) RETURNING id;",
+        "options": {}
+      },
+      "id": "save-to-db",
+      "name": "Save to module_data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 300],
+      "credentials": {
+        "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-sonnet-4-20250514",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a transaction categorizer for a Ukrainian personal finance app. Categorize the transaction into one of: groceries, transport, dining, entertainment, utilities, health, shopping, education, subscriptions, income, transfer, other. Respond with JSON: {\"category\": \"...\", \"confidence\": 0.0-1.0}"
+            },
+            {
+              "role": "user",
+              "content": "=Transaction: {{ $json.body.data.description }} Amount: {{ $json.body.data.amount / 100 }} UAH MCC: {{ $json.body.data.mcc }}"
+            }
+          ]
+        },
+        "options": { "maxTokens": 100 }
+      },
+      "id": "ai-categorize",
+      "name": "AI → categorize",
+      "type": "n8n-nodes-base.anthropic",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "anthropicApi": { "id": "CONFIGURE_ME", "name": "Anthropic" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE module_data SET data = data || '{{ JSON.stringify({ ai_category: $json.category }) }}'::jsonb WHERE id = {{ $node['Save to module_data'].json.id }};",
+        "options": {}
+      },
+      "id": "update-category",
+      "name": "Update category in DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [900, 300],
+      "credentials": {
+        "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COALESCE(SUM(ABS((data->>'amount')::numeric / 100)), 0) AS monthly_spent FROM module_data WHERE module = 'finyk' AND user_id = '{{ $json.body.user_id }}' AND created_at >= date_trunc('month', NOW());",
+        "options": {}
+      },
+      "id": "check-budget",
+      "name": "Check monthly budget",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1120, 300],
+      "credentials": {
+        "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "over-budget",
+              "leftValue": "={{ $json.monthly_spent }}",
+              "rightValue": 15000,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "budget-threshold",
+      "name": "Over ₴15K threshold?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ALERT_CHAT_ID }}",
+        "text": "=💸 *Budget alert*\n\nMonthly spending: ₴{{ Math.round($json.monthly_spent) }}\nThreshold: ₴15,000\n\nLatest: {{ $node['Mono Webhook'].json.body.data.description }} (₴{{ Math.abs($node['Mono Webhook'].json.body.data.amount / 100) }})",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "telegram-budget",
+      "name": "Telegram → budget alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1560, 200],
+      "credentials": {
+        "telegramApi": { "id": "CONFIGURE_ME", "name": "Sergeant Ops Bot" }
+      }
+    }
+  ],
+  "connections": {
+    "Mono Webhook": {
+      "main": [[{ "node": "Save to module_data", "type": "main", "index": 0 }]]
+    },
+    "Save to module_data": {
+      "main": [[{ "node": "AI → categorize", "type": "main", "index": 0 }]]
+    },
+    "AI → categorize": {
+      "main": [
+        [{ "node": "Update category in DB", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update category in DB": {
+      "main": [[{ "node": "Check monthly budget", "type": "main", "index": 0 }]]
+    },
+    "Check monthly budget": {
+      "main": [[{ "node": "Over ₴15K threshold?", "type": "main", "index": 0 }]]
+    },
+    "Over ₴15K threshold?": {
+      "main": [
+        [{ "node": "Telegram → budget alert", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Europe/Kyiv" },
+  "tags": [{ "name": "monobank" }, { "name": "finyk" }, { "name": "ai" }]
+}
