@@ -21,7 +21,8 @@ multi-burn-rate** алерти (Google SRE Workbook, Ch. 5). Формули SLI 
 | External HTTP  | outcome ∈ {`ok`,`hit`,`miss`} / total (per-upstream)                        | 95.0 % | —                          |
 
 **Вікно**: 30 діб rolling. **Error budget** = `1 - SLO`. Наприклад для HTTP API
-1 % бюджету ≈ 7h12m downtime / місяць.
+1 % бюджету ≈ 7h12m downtime / місяць. Що робити, коли бюджет вигорає —
+див. [`error-budget-policy.md`](./error-budget-policy.md).
 
 ---
 
