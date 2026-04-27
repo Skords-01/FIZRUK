@@ -7,7 +7,7 @@
  *
  * CI gate:   `.github/workflows/openapi-freshness.yml` запускає цей скрипт
  *            і `git diff --exit-code` — якщо результат відрізняється від
- *            коммітнутого файлу, PR не пройде. Це дзеркало рішення з ADR-0023.
+ *            коммітнутого файлу, PR не пройде. Це дзеркало рішення з ADR-0025.
  */
 import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";

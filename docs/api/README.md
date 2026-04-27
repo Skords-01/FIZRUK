@@ -8,9 +8,9 @@
 
 - **Diff-friendly review**: PR показує semantic API change в одному файлі.
 - **External integrators**: можна імпортувати в Postman/Insomnia/Swagger UI без додаткового build-step.
-- **CI gate**: PR що змінює zod-схему, але не оновив spec — fail через `pnpm api:check-openapi` (workflow `.github/workflows/openapi-freshness.yml` додається вручну, шаблон у [ADR-0023 §8](../adr/0023-openapi-generation.md)).
+- **CI gate**: PR що змінює zod-схему, але не оновив spec — fail через `pnpm api:check-openapi` (workflow `.github/workflows/openapi-freshness.yml` додається вручну, шаблон у [ADR-0025 §8](../adr/0025-openapi-generation.md)).
 
-Drift-protection — мотивація, описана в [ADR-0023](../adr/0023-openapi-generation.md).
+Drift-protection — мотивація, описана в [ADR-0025](../adr/0025-openapi-generation.md).
 
 ## Як перегенерувати
 
@@ -26,11 +26,11 @@ pnpm api:generate-openapi
 pnpm api:check-openapi
 ```
 
-Скрипт призначений для CI (workflow-шаблон у [ADR-0023 §8](../adr/0023-openapi-generation.md)). Якщо коммітнутий файл відстає від generator output — exit 1 з підказкою, що запустити.
+Скрипт призначений для CI (workflow-шаблон у [ADR-0025 §8](../adr/0025-openapi-generation.md)). Якщо коммітнутий файл відстає від generator output — exit 1 з підказкою, що запустити.
 
 ## Як переглянути в браузері
 
-Swagger UI наразі не хоститься у `apps/server` (Phase 3, див. ADR-0023). Локально можна підняти:
+Swagger UI наразі не хоститься у `apps/server` (Phase 3, див. ADR-0025). Локально можна підняти:
 
 ```bash
 npx @redocly/cli preview-docs docs/api/openapi.json
@@ -52,7 +52,7 @@ Phase 1 (PR-4.D): 36 endpoint-ів + 26 named-компонентів.
 - Точні response-схеми на endpoint-ах, де handler повертає довільний JSON.
 - Swagger UI на `/api/docs` у `apps/server`.
 
-Деталі — [ADR-0023](../adr/0023-openapi-generation.md), розділ "Migration plan".
+Деталі — [ADR-0025](../adr/0025-openapi-generation.md), розділ "Migration plan".
 
 ## Як додати новий endpoint
 

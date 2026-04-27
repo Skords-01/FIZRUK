@@ -31,8 +31,8 @@ export function buildOpenApiDocument() {
         description: "Production (Vercel edge → Railway)",
       },
       {
-        url: "http://localhost:8787",
-        description: "Local dev (apps/server)",
+        url: "http://localhost:3000",
+        description: "Local dev (apps/server, default Express PORT)",
       },
     ],
     components: {
