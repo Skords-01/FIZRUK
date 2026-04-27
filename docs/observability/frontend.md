@@ -183,6 +183,28 @@ Init-конфіг (`posthog.init`):
 Super-properties, що додаються автоматично: `platform` (`web`/`ios`/`android`)
 і `is_capacitor` (boolean) — теж через `@sergeant/shared`.
 
+### Pageviews
+
+**Файл:** `apps/web/src/core/observability/PageviewTracker.tsx`.
+
+`capture_pageview: false` у `posthog.init` свідомий — PostHog дефолтний
+auto-pageview стріляє на будь-яку мутацію URL (включно з query-params) і
+записує повний `window.location.href` як `$current_url`. Для Sergeant це
+означало б:
+
+1. Magic-link токени (`?token=…`), OAuth-коди (`?code=…&state=…`), PWA-action
+   параметри просочувались би у event-props як частина `$current_url`.
+2. Кожен клік по filter-у чи відкриття модалки через query-param був би
+   окремим `$pageview` — шум у funnels і retention.
+
+Замість цього окремий `<PageviewTracker />` (монтується у `core/App.tsx`
+всередині `<BrowserRouter>`) слухає `useLocation().pathname` і явно викликає
+`capturePostHogEvent("$pageview", { $current_url, $pathname })` тільки на
+зміну pathname. `$current_url` прокидається через `sanitizeUrl()` —
+чутливі query-ключі (`token`, `code`, `state`, `access_token`,
+`refresh_token`, `magic`, `auth`, `password`, `secret`, `api_key`)
+редактуються до `[redacted]`. Без `VITE_POSTHOG_KEY` ефект no-op.
+
 ### Identify / reset
 
 `AuthContext` слухає `user?.id` і викликає:
