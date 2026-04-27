@@ -142,12 +142,28 @@ export default function App({
   const { clientInfo, connecting, error, authError, connect } = mono;
   const syncTone =
     mergedMono?.syncState?.status === "error"
-      ? { dot: "bg-danger",  text: "помилка",   pill: "bg-danger-soft  text-danger  border-danger/20"  }
+      ? {
+          dot: "bg-danger",
+          text: "помилка",
+          pill: "bg-danger-soft  text-danger  border-danger/20",
+        }
       : mergedMono?.syncState?.status === "partial"
-        ? { dot: "bg-warning", text: "частково", pill: "bg-warning/10   text-warning border-warning/20" }
+        ? {
+            dot: "bg-warning",
+            text: "частково",
+            pill: "bg-warning/10   text-warning border-warning/20",
+          }
         : mergedMono?.syncState?.status === "loading"
-          ? { dot: "bg-muted",   text: "оновлення",pill: "bg-panelHi     text-muted   border-line"       }
-          : { dot: "bg-success", text: "ок",        pill: "bg-success/10  text-success border-success/20" };
+          ? {
+              dot: "bg-muted",
+              text: "оновлення",
+              pill: "bg-panelHi     text-muted   border-line",
+            }
+          : {
+              dot: "bg-success",
+              text: "ок",
+              pill: "bg-success/10  text-success border-success/20",
+            };
 
   // Свайп між вкладками (без pull-to-refresh: скрол живе всередині сторінок, зовнішній scrollTop завжди 0)
   const touchStartX = useRef(null);
@@ -276,7 +292,12 @@ export default function App({
               )}
               aria-label={`Стан синхронізації: ${syncTone.text}`}
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", syncTone.dot)} />
+              <span
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full shrink-0",
+                  syncTone.dot,
+                )}
+              />
               <span className="hidden sm:inline">{syncTone.text}</span>
             </div>
             <button
