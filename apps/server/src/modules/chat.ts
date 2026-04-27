@@ -579,13 +579,21 @@ async function streamAnthropicToSse(
 
   if (!firstResponse.ok) {
     await refundQuotaOnUpstreamFailure(req);
+    // Body — одноразовий стрім: `await response.json()` його консьюмить, тож
+    // `response.text()` після failed-`.json()` нічого не поверне (тіло вже
+    // прочитане). Робимо `clone()` ДО першої спроби, щоб мати можливість
+    // прочитати raw text fallback-ом для не-JSON 5xx (наприклад "Service
+    // Unavailable" від Cloudflare/Railway-edge без application/json
+    // content-type).
+    const errClone = firstResponse.clone();
     let errMsg = "AI error";
     try {
       const j = (await firstResponse.json()) as AnthropicMessagesResponseData;
       errMsg = j?.error?.message || errMsg;
     } catch {
       try {
-        errMsg = await firstResponse.text();
+        const text = await errClone.text();
+        if (text) errMsg = text;
       } catch {
         /* ignore */
       }

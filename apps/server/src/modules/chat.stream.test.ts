@@ -525,13 +525,11 @@ describe("chat handler — SSE first-call upstream errors", () => {
     expect(res.headers["Content-Type"]).toBeUndefined();
   });
 
-  it("перший upstream !ok з не-JSON боді → дефолтний 'AI error' (документує quirk fetch API)", async () => {
-    // `firstResponse.json()` спочатку реджектиться (не JSON), AЛЕ це
-    // одночасно консьюмить body-стрім. Коли catch-гілка робить
-    // `firstResponse.text()`, body вже вичерпано — отримуємо порожній
-    // рядок або throw, тож логіка падає на дефолтний `errMsg = "AI error"`.
-    // Тест фіксує цю поведінку, щоб майбутні рефактори не зламали статус-код,
-    // не звертаючи уваги на повідомлення (chat.ts:582-592).
+  it("перший upstream !ok з не-JSON боді → fallback на raw text() через clone()", async () => {
+    // `firstResponse.json()` консьюмить body-стрім. Щоб після failed-`.json()`
+    // мати можливість прочитати raw-text, у chat.ts тримаємо `clone()` ДО
+    // першої спроби — інакше `.text()` поверне нічого і ми втратимо edge-case
+    // 5xx без application/json (Cloudflare/Railway-edge "Service Unavailable").
     anthropicMessagesStream.mockResolvedValueOnce({
       response: new Response("Service Unavailable", {
         status: 503,
@@ -545,7 +543,7 @@ describe("chat handler — SSE first-call upstream errors", () => {
     await handler(req, res);
 
     expect(res.statusCode).toBe(503);
-    expect((res.body as { error: string }).error).toBe("AI error");
+    expect((res.body as { error: string }).error).toBe("Service Unavailable");
     // SSE-заголовки НЕ виставлені (помилкова гілка віддає JSON, а не event-stream).
     expect(res.headers["Content-Type"]).toBeUndefined();
   });
