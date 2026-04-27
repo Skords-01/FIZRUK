@@ -1,6 +1,6 @@
 # Agents in Sergeant
 
-> Last reviewed: 2026-04-27. Reviewer: @Skords-01
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
 
 ## Repo overview
 
