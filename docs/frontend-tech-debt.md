@@ -2,7 +2,7 @@
 
 Аналіз кодової бази `apps/web/src` (434 source файли, 87k рядків).
 
-> **Оновлено 2026-04-26.** Базові cifri (allowlist size, file
+> **Оновлено 2026-04-27.** Базові cifri (allowlist size, file
 > sizes, countи) переперевірені відносно поточного `eslint.config.js`
 > і вмісту `apps/web/src/`.
 

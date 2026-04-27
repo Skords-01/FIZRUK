@@ -86,9 +86,13 @@
 
 - **OK / середній:** каталог **`TOOLS`** винесено в **`chat/tools.ts`** (файл великий за LOC — **середній** борг підтримуваності, не безпеки).
 - **OK** — основні шляхи помилок Anthropic мапляться на HTTP status; refund квоти при upstream-failure.
+- **OK** — prompt-caching на SYSTEM_PREFIX (`cache_control: ephemeral`) активований у [#864](https://github.com/Skords-01/Sergeant/pull/864) (audit PR-12.A); per-request метрика `anthropic_prompt_cache_hit_total{version,outcome=hit|miss}` включно зі streaming-шляхом.
+- **OK** — per-tool lifecycle-метрика `chat_tool_invocations_total{tool, outcome=proposed|executed|unknown_tool}` ([#924](https://github.com/Skords-01/Sergeant/pull/924), audit PR-12.C). Whitelist від `TOOLS`-реєстру (anti-cardinality), wired у обидва кроки handler-а. `proposed - executed` дає кількість запропонованих, але не виконаних tool-call-ів.
+- **OK** — server-side truncation великих `tool_result`-payload-ів ([#922](https://github.com/Skords-01/Sergeant/pull/922), audit PR-12.E): threshold 2 000 chars, head 600 + tail 400 + marker, повний blob у Sentry breadcrumb `chat.tool_result`. Метрика `chat_tool_result_truncated_total{reason}`. Закриває edge case з briefing/digest, що зривав continuation.
 - **Середній** — SSE heartbeat (`SSE_HEARTBEAT_MS`); на жорсткому proxy read-timeout можливі обриви — tune `ping` / `flushHeaders` за потреби.
 - **Низький** — якщо `response.body` без `getReader()` до старту SSE — прямий `res.status(500).json` (рідкісний edge); решта stream-errors йдуть у SSE payload.
-- **Тести:** **`chat.test.ts`** покриває контракт tool schemas / частину логіки; **повний** E2E SSE + tool_use у supertest — залишок (**середній**, PR F).
+- **OK** — **`chat.test.ts`** + **`chat.stream.test.ts`** ([#900](https://github.com/Skords-01/Sergeant/pull/900), audit PR-4.A) повністю покривають handler + 17 тестів на streaming-шлях `streamAnthropicToSse`/`streamOneIterationToSse` (line-buffer, chunk-boundaries, auto-continuation, cap, partial-text, abort).
+- **Operations:** lifecycle нових tools формалізований у [`docs/adr/0002-tool-lifecycle.md`](adr/0002-tool-lifecycle.md) (audit PR-12.D) — Proposal / Safety / Rollout / KPIs з KPI-thresholds на `chat_tool_invocations_total`.
 
 ### `modules/coach.ts` + `coach.test.ts`
 
@@ -304,7 +308,7 @@ Webhook-based server-side integration added in PR2. Key components:
 
 - **Pino** + ALS-mixin (`requestId`/`userId`/`module` у кожному рядку).
 - **Sentry** з PII-redaction, beforeSend/beforeBreadcrumb.
-- **Prometheus**: `http_requests_total`, `http_request_duration_ms`, `db_query_duration_ms`, `db_slow_queries_total`, `db_errors_total`, `ai_quota_blocks_total`, `ai_quota_fail_open_total`, `external_http_requests_total`, `rate_limit_hits_total`, `sync_operations_total`, `sync_duration_ms`, `sync_payload_bytes`, `sync_conflicts_total`, `auth_attempts_total`, `auth_session_lookup_duration_ms`, `push_*`, `app_errors_total{kind,status,code,module}`.
+- **Prometheus**: `http_requests_total`, `http_request_duration_ms`, `db_query_duration_ms`, `db_slow_queries_total`, `db_errors_total`, `ai_quota_blocks_total`, `ai_quota_fail_open_total`, `external_http_requests_total`, `rate_limit_hits_total`, `sync_operations_total`, `sync_duration_ms`, `sync_payload_bytes`, `sync_conflicts_total`, `auth_attempts_total`, `auth_session_lookup_duration_ms`, `push_*`, `app_errors_total{kind,status,code,module}`, `anthropic_prompt_cache_hit_total{version,outcome}` ([#864](https://github.com/Skords-01/Sergeant/pull/864), audit PR-12.A), `chat_tool_invocations_total{tool,outcome}` ([#924](https://github.com/Skords-01/Sergeant/pull/924), audit PR-12.C — `outcome=proposed|executed|unknown_tool` lifecycle), `chat_tool_result_truncated_total{reason}` ([#922](https://github.com/Skords-01/Sergeant/pull/922), audit PR-12.E).
 - **Request-id**: `X-Request-Id` header + у JSON-тілі помилок.
 - **/livez**, **/readyz**, **/metrics** endpoints.
 
