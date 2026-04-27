@@ -80,7 +80,7 @@
 **PR-ідеї:**
 
 - `PR-1.A` — `chore(config): enforce inheritance of strict from tsconfig.base in apps/web,server (codeowner-blocking comment)`.
-- `PR-1.B` — `docs(architecture): per-app status matrix (active/stabilize/legacy/migration)` — на 1 сторінку, з датою останньої ревалідації.
+- `PR-1.B` ✅ closed — [#931](https://github.com/Skords-01/Sergeant/pull/931) `docs(docs): per-app status matrix` (`docs/architecture/apps-status-matrix.md`) — одна сторінка, 4 apps + 10 packages з `active/stabilize/migration/legacy`-легендою, дата ревалідації (`Last revalidated: 2026-04-27`, наступна — квартально).
 
 ---
 
@@ -131,7 +131,7 @@
 - `PR-3.B` ✅ closed — [#887](https://github.com/Skords-01/Sergeant/pull/887) `refactor(web,finyk): decompose Assets.tsx (1147 LOC) into smaller modules` — пілот для top-10 list.
 - `PR-3.C` ✅ closed — [#898](https://github.com/Skords-01/Sergeant/pull/898) `refactor(web,nutrition): split seedFoodsUk.ts (1614 LOC) by category (meat/fish/dairy/grains/...)` — чисто data-split, 19 per-category файлів, всі 390 елементів структурно ідентичні.
 - `PR-3.D` ✅ closed — [#865](https://github.com/Skords-01/Sergeant/pull/865) `chore(web,storage): migrate top-3 high-call-site localStorage files to safe wrappers` (`core/settings/FinykSection.tsx` -20, `core/lib/chatActions/fizrukActions.ts` -7, `core/hub/HubDashboard.tsx` -5) — burn-down list.
-- `PR-3.E` — `ci(web): add report on frontend-tech-debt freshness` (CI fail, якщо `frontend-tech-debt.md` не редагувався 60+ днів).
+- `PR-3.E` ✅ closed — [#907](https://github.com/Skords-01/Sergeant/pull/907) `ci(ci): freshness gate for docs/frontend-tech-debt.md` (`scripts/check-tech-debt-freshness.mjs`, wired у `pnpm lint:tech-debt-freshness` → root `pnpm lint`). Парсить `> **Оновлено YYYY-MM-DD.**` маркер, fail коли > `FRESHNESS_THRESHOLD_DAYS` (default 60). Маркер, а не git mtime, — тому format-only edit не «reset-ить» свіжість.
 
 ---
 
@@ -357,7 +357,7 @@
 
 - `PR-12.A` ✅ closed — [#864](https://github.com/Skords-01/Sergeant/pull/864) `feat(server,chat): activate prompt caching for SYSTEM_PREFIX (cache_control: ephemeral) + SYSTEM_PROMPT_VERSION constant` + per-request метрика `anthropic_prompt_cache_hit_total{version, outcome}` (включно зі streaming-шляхом). Очікуваний ефект: зниження Anthropic spend на 30-50% для повторних запитів.
 - `PR-12.B` ✅ closed — [#885](https://github.com/Skords-01/Sergeant/pull/885) `test(web): contract tests for all hubChatActions handlers (happy + error path)`.
-- `PR-12.C` — `feat(server,chat): per-tool metrics (tool_invocations_total{tool=,outcome=}) → SLO dashboard`.
+- `PR-12.C` ✅ closed — [#930](https://github.com/Skords-01/Sergeant/pull/930) `feat(server): per-tool chat invocations metric (ADR-0002 PR-12.C)` — `chat_tool_invocations_total{tool, outcome}` з outcome `proposed` (модель повернула `tool_use`) / `executed` (клієнт повернув `tool_result` з matching `tool_use_id`). Різниця — KPI `tool_rejected_rate` з ADR-0002. Recorded server-side до Anthropic-виклику (не залежить від upstream-успіху другого кроку). 6 нових vitest cases.
 - `PR-12.D` ✅closed — `docs(ai): tool lifecycle model (proposal → safety review → rollout → KPIs)` — реалізовано як [`docs/adr/0002-tool-lifecycle.md`](../adr/0002-tool-lifecycle.md): 4-фазний процес (Proposal/Safety/Rollout/KPIs) з checklist-ами для кожної фази, owner-domain map і KPI-thresholds на основі `chat_tool_invocations_total` (PR-12.C).
 - `PR-12.E` ✅closed — `feat(server,chat): truncate-aware tool_result handler` — якщо `tool_result` >N токенів, серверна частина серіалізує summary + повний blob у Sentry breadcrumb. Закриває edge case, де великі briefing/digest вибивають continuation. Реалізовано: `apps/server/src/modules/chat/toolResultTruncation.ts` (threshold 2 000 chars, head 600 + tail 400 + marker), wired у `chat.ts` перед `tool_result`-payload-ом, `chat_tool_result_truncated_total{reason}` метрика, 14 unit + 2 integration тестів.
 
