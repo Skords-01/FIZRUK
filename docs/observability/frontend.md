@@ -209,12 +209,31 @@ auto-pageview стріляє на будь-яку мутацію URL (включ
 
 `AuthContext` слухає `user?.id` і викликає:
 
-- `identifyPostHogUser(userId)` — при переході у `authenticated`.
+- `identifyPostHogUser(userId, traits)` — при переході у `authenticated`.
 - `resetPostHog()` — при переході `authenticated → unauthenticated`.
 
 Виклики fire-and-forget; події, що прилетіли до завершення init,
 буферизуються (до 100) і flush-ляться після завантаження SDK. Buffer
 відкидається, якщо `VITE_POSTHOG_KEY` не виставлений.
+
+#### Person traits
+
+`buildIdentifyTraits(user)` (`apps/web/src/core/observability/identifyTraits.ts`)
+збирає person properties для `identify` payload-у:
+
+| Trait         | Джерело                                                        | Формат                 | Примітки                                                                                                            |
+| ------------- | -------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `vibe`        | `getVibePicks()` (localStorage `hub_onboarding_vibes_v1`)      | `DashboardModuleId[]`  | Опускається, якщо vibe-picks порожні або `localStorage` недоступний. Сегментуємо ретеншн і funnel-и за вкладкою.    |
+| `plan`        | константа `"free"`                                             | `"free" \| "pro"`      | До запуску підписок (Stripe / LiqPay) завжди `"free"`. `identifyTraits.ts` — єдине місце, де треба підставити tier. |
+| `locale`      | `navigator.language`                                           | string ≤ 16 chars      | Узгоджено з `Locale` schema у `packages/shared/src/schemas/api.ts`. Опускається, якщо `navigator` недоступний.      |
+| `signup_date` | `user.createdAt` з `/api/v1/me` (Better Auth `user.createdAt`) | `YYYY-MM-DD` у **UTC** | Лише дата, без часу — без зайвого PII. Опускається, якщо `createdAt` = null або зіпсована.                          |
+
+Контракт навмисно **толерантний**: будь-яке з джерел може мовчазно
+відмовитись (Capacitor cold-start без localStorage, SSR-середовище без
+`navigator`, legacy-юзери з `createdAt = null`) — `identify` все одно
+виконається з тими трейтами, що доступні. Це краще, ніж ламати
+identify повністю або перетирати раніше встановлений person property
+порожнім значенням.
 
 ### ENV
 

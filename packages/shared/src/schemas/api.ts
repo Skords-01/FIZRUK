@@ -24,6 +24,12 @@ export const UserSchema = z.object({
   name: z.string().nullable(),
   image: z.string().nullable(),
   emailVerified: z.boolean(),
+  // Better Auth's `user.createdAt` (час реєстрації акаунта) — ISO-8601
+  // рядок. Потрібен PostHog `identify` для трейту `signup_date` і для
+  // майбутніх "за днем життя акаунта" сегментацій. Nullable, бо для
+  // legacy-юзерів, у яких поле відсутнє у БД, краще лишити null, ніж
+  // валити `/api/v1/me` для всієї сесії.
+  createdAt: z.string().datetime({ offset: true }).nullable(),
 });
 export type User = z.infer<typeof UserSchema>;
 
