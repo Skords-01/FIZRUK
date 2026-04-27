@@ -12,17 +12,18 @@ import { useState } from "react";
 import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
 import {
-  QUICK_ACTIONS,
+  type AssistantCapability,
+  type CapabilityModule,
+  getQuickActionCapabilities,
+  isActiveQuickActionModule,
   isIncompletePrompt,
   pickTopQuickActions,
   sortQuickActionsForModule,
-  type QuickAction,
-  type QuickActionModule,
-} from "../lib/hubChatQuickActions";
+} from "@sergeant/shared";
 
 interface ChatQuickActionsProps {
   /** Активний модуль (з URL hash). `null` — генеричний топ. */
-  activeModule: QuickActionModule | null;
+  activeModule: CapabilityModule | null;
   /** Чи в стрімі / завантаженні відповіді. Disable-ить усі chip-и. */
   loading: boolean;
   /** Стан мережі. Якщо false — disable-ить `requiresOnline`. */
@@ -38,26 +39,35 @@ interface ChatQuickActionsProps {
 
 const MAX_VISIBLE = 6;
 
+const QUICK_ACTIONS = getQuickActionCapabilities();
+
 function chipClassName({
   disabled,
-  module,
   active,
+  hubLike,
 }: {
   disabled: boolean;
-  module: QuickActionModule;
   active: boolean;
+  hubLike: boolean;
 }): string {
   return cn(
     "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition-colors",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
     active
       ? "bg-brand-500/10 border border-brand-500/40 text-brand-600 hover:bg-brand-500/15"
-      : module === "hub"
+      : hubLike
         ? "bg-panel border border-line text-text hover:border-muted"
         : "bg-panel border border-line text-subtle hover:text-text hover:border-muted",
     disabled && "opacity-40 cursor-not-allowed",
   );
 }
+
+const HUB_LIKE: ReadonlySet<CapabilityModule> = new Set([
+  "cross",
+  "analytics",
+  "utility",
+  "memory",
+]);
 
 export function ChatQuickActions({
   activeModule,
@@ -76,7 +86,7 @@ export function ChatQuickActions({
   const allSorted = sortQuickActionsForModule(QUICK_ACTIONS, activeModule);
   const moreActions = allSorted.slice(MAX_VISIBLE);
 
-  const handleClick = (a: QuickAction) => {
+  const handleClick = (a: AssistantCapability) => {
     if (isIncompletePrompt(a.prompt)) {
       onPrefill(a.prompt);
     } else {
@@ -84,10 +94,11 @@ export function ChatQuickActions({
     }
   };
 
-  const renderChip = (a: QuickAction) => {
-    const disabled = loading || (a.requiresOnline && !online);
-    const reason =
-      !online && a.requiresOnline ? "Потрібне з'єднання" : undefined;
+  const renderChip = (a: AssistantCapability) => {
+    const requiresOnline = a.requiresOnline ?? true;
+    const disabled = loading || (requiresOnline && !online);
+    const reason = !online && requiresOnline ? "Потрібне з'єднання" : undefined;
+    const shortLabel = a.shortLabel ?? a.label;
     return (
       <button
         key={a.id}
@@ -99,13 +110,13 @@ export function ChatQuickActions({
         aria-label={a.label}
         className={chipClassName({
           disabled,
-          module: a.module,
-          active: activeModule === a.module && a.module !== "hub",
+          active: isActiveQuickActionModule(a, activeModule),
+          hubLike: HUB_LIKE.has(a.module),
         })}
       >
         <Icon name={a.icon} size={13} aria-hidden />
         <span className="hidden sm:inline">{a.label}</span>
-        <span className="sm:hidden">{a.shortLabel}</span>
+        <span className="sm:hidden">{shortLabel}</span>
       </button>
     );
   };
@@ -128,8 +139,8 @@ export function ChatQuickActions({
             aria-controls="chat-quick-actions-more-list"
             className={chipClassName({
               disabled: loading,
-              module: "hub",
               active: false,
+              hubLike: true,
             })}
           >
             <Icon

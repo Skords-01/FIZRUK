@@ -1023,6 +1023,80 @@ export function getQuickActionCapabilities(): readonly AssistantCapability[] {
     );
 }
 
+/**
+ * Modules that have a dedicated UI surface (URL hash, navigation tab).
+ * Cross-module / analytics / utility / memory chips collapse onto the
+ * generic "hub" bucket for the chip UI.
+ */
+const HUB_LIKE_MODULES: ReadonlySet<CapabilityModule> = new Set([
+  "cross",
+  "analytics",
+  "utility",
+  "memory",
+]);
+
+/** Whether a module is module-specific (i.e. not hub-like). */
+function isDomainModule(m: CapabilityModule): boolean {
+  return !HUB_LIKE_MODULES.has(m);
+}
+
+/**
+ * `prompt` ending in `": "` ⇒ incomplete: caller should prefill the input
+ * instead of auto-sending. Mirrors the `requiresInput` flag but works on
+ * arbitrary strings (e.g. legacy presets).
+ */
+export function isIncompletePrompt(prompt: string): boolean {
+  return /:\s$/.test(prompt);
+}
+
+/**
+ * Sort: active module first, then hub-like (cross/analytics/utility/memory),
+ * then remaining domain modules. Within a group by `quickActionPriority`
+ * ascending; stable.
+ */
+export function sortQuickActionsForModule(
+  actions: readonly AssistantCapability[],
+  activeModule: CapabilityModule | null,
+): AssistantCapability[] {
+  const groupRank = (m: CapabilityModule): number => {
+    if (activeModule && m === activeModule) return 0;
+    if (HUB_LIKE_MODULES.has(m)) return 1;
+    return 2;
+  };
+  return actions
+    .map((a, idx) => ({ a, idx }))
+    .sort((x, y) => {
+      const dg = groupRank(x.a.module) - groupRank(y.a.module);
+      if (dg !== 0) return dg;
+      const dp =
+        (x.a.quickActionPriority ?? 999) - (y.a.quickActionPriority ?? 999);
+      if (dp !== 0) return dp;
+      return x.idx - y.idx;
+    })
+    .map(({ a }) => a);
+}
+
+/** Top N quick-action chips after sorting; the rest go under the "Ще" toggle. */
+export function pickTopQuickActions(
+  actions: readonly AssistantCapability[],
+  activeModule: CapabilityModule | null,
+  limit = 6,
+): AssistantCapability[] {
+  return sortQuickActionsForModule(actions, activeModule).slice(0, limit);
+}
+
+/** Whether a capability's chip should be styled as "active". */
+export function isActiveQuickActionModule(
+  capability: AssistantCapability,
+  activeModule: CapabilityModule | null,
+): boolean {
+  return (
+    activeModule !== null &&
+    capability.module === activeModule &&
+    isDomainModule(activeModule)
+  );
+}
+
 /** Group capabilities by module preserving CAPABILITY_MODULE_ORDER. */
 export function groupCapabilitiesByModule(
   caps: readonly AssistantCapability[] = ASSISTANT_CAPABILITIES,

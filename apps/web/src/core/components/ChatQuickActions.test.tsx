@@ -2,7 +2,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { ChatQuickActions } from "./ChatQuickActions";
-import { QUICK_ACTIONS } from "../lib/hubChatQuickActions";
+import { getQuickActionCapabilities } from "@sergeant/shared";
+
+const QUICK_ACTIONS = getQuickActionCapabilities();
 
 afterEach(() => cleanup());
 
@@ -29,14 +31,14 @@ describe("ChatQuickActions", () => {
     setup();
     // Hub-сценарій має бути серед видимих
     expect(
-      screen.getByTestId("chat-quick-action-morning-briefing"),
+      screen.getByTestId("chat-quick-action-morning_briefing"),
     ).toBeTruthy();
-    expect(screen.getByTestId("chat-quick-action-daily-summary")).toBeTruthy();
+    expect(screen.getByTestId("chat-quick-action-daily_summary")).toBeTruthy();
   });
 
   it("повний prompt → onSend, не onPrefill", () => {
     const { onSend, onPrefill } = setup();
-    fireEvent.click(screen.getByTestId("chat-quick-action-morning-briefing"));
+    fireEvent.click(screen.getByTestId("chat-quick-action-morning_briefing"));
     expect(onSend).toHaveBeenCalledTimes(1);
     expect(onSend.mock.calls[0]?.[0]).toMatch(/брифінг/i);
     expect(onPrefill).not.toHaveBeenCalled();
@@ -44,7 +46,7 @@ describe("ChatQuickActions", () => {
 
   it("неповний prompt (закінчується на ': ') → onPrefill, не onSend", () => {
     const { onSend, onPrefill } = setup({ activeModule: "finyk" });
-    fireEvent.click(screen.getByTestId("chat-quick-action-add-expense"));
+    fireEvent.click(screen.getByTestId("chat-quick-action-create_transaction"));
     expect(onPrefill).toHaveBeenCalledTimes(1);
     expect(onPrefill.mock.calls[0]?.[0]).toMatch(/^Додай витрату:\s$/);
     expect(onSend).not.toHaveBeenCalled();
@@ -52,14 +54,14 @@ describe("ChatQuickActions", () => {
 
   it("loading=true → всі chip-и disabled", () => {
     setup({ loading: true });
-    const briefing = screen.getByTestId("chat-quick-action-morning-briefing");
+    const briefing = screen.getByTestId("chat-quick-action-morning_briefing");
     expect((briefing as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("offline + requiresOnline → chip disabled з пояснювальним title", () => {
     setup({ online: false });
     const briefing = screen.getByTestId(
-      "chat-quick-action-morning-briefing",
+      "chat-quick-action-morning_briefing",
     ) as HTMLButtonElement;
     expect(briefing.disabled).toBe(true);
     expect(briefing.getAttribute("title")).toMatch(/з'єднання/i);
@@ -87,6 +89,6 @@ describe("ChatQuickActions", () => {
         b.getAttribute("data-testid")?.startsWith("chat-quick-action-"),
       );
     const firstId = buttons[0]?.getAttribute("data-testid");
-    expect(firstId).toMatch(/start-workout|log-set/);
+    expect(firstId).toMatch(/start_workout|log_set/);
   });
 });
