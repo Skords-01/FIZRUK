@@ -44,12 +44,6 @@ export type { AvatarProps, AvatarSize, AvatarStatus } from "./Avatar";
 export { EmptyState } from "./EmptyState";
 export type { EmptyStateProps } from "./EmptyState";
 
-export { EmptyStateIllustration } from "./EmptyStateIllustration";
-export type {
-  EmptyStateIllustrationProps,
-  IllustrationVariant,
-} from "./EmptyStateIllustration";
-
 export { FormField, Label } from "./FormField";
 export type { FormFieldProps, LabelProps } from "./FormField";
 
