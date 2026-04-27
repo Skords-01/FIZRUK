@@ -2,7 +2,9 @@ import {
   createContext,
   useContext,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -10,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useUser, apiQueryKeys } from "@sergeant/api-client/react";
 import type { User } from "@sergeant/shared";
 import { signIn, signUp, signOut, forgetPassword } from "./authClient";
+import { identifyPostHogUser, resetPostHog } from "../observability/posthog";
 
 /**
  * AuthContext — єдине джерело правди «хто я» для веб-додатку.
@@ -138,6 +141,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     await invalidateMe();
   }, [invalidateMe]);
+
+  // Привʼязуємо/відвʼязуємо аналітику до userId. Ref тримає попередній
+  // userId, щоб `reset()` викликався тільки на реальному переході
+  // authenticated → unauthenticated, а не при першому mount з `null`.
+  const lastIdentifiedUserIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentId = user?.id ?? null;
+    const prevId = lastIdentifiedUserIdRef.current;
+    if (currentId && currentId !== prevId) {
+      identifyPostHogUser(currentId);
+      lastIdentifiedUserIdRef.current = currentId;
+    } else if (!currentId && prevId) {
+      resetPostHog();
+      lastIdentifiedUserIdRef.current = null;
+    }
+  }, [user?.id]);
 
   // Request a password reset email via Better Auth. Returns `true` when
   // the request was accepted (the server still answers OK even if the

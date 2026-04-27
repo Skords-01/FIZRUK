@@ -1,22 +1,26 @@
 // Lightweight product analytics sink.
 //
-// Currently this is a console logger only — it gives us a single place to
-// wire `trackEvent` calls from the product and later swap the transport to
-// PostHog / Amplitude / a proxy endpoint without touching call sites.
+// Подвійний transport:
+//   1. Локальний ring-buffer (`hub_analytics_log_v1` у localStorage,
+//      max 200 подій) + `console.log("[analytics]", …)` — devtools
+//      і Sentry console-breadcrumbs. Працює завжди.
+//   2. PostHog — якщо виставлений `VITE_POSTHOG_KEY`. Fire-and-forget
+//      через `posthog.ts` (lazy dynamic import), буферизує події до
+//      завершення init.
 //
 // Contract:
 //   - `trackEvent(name, payload?)` is fire-and-forget. It never throws
 //     and never returns a Promise that callers need to await.
 //   - Payload is expected to be a small plain object with NO sensitive
 //     data (no tokens, emails, amounts linked to a real identity, etc.).
-//
-// When we add a real provider we will only change this file.
 
 /** @typedef {{ eventName: string, payload: object, timestamp: string }} AnalyticsEvent */
 
 import { ANALYTICS_EVENTS } from "@sergeant/shared";
+import { capturePostHogEvent } from "./posthog";
 
 export { ANALYTICS_EVENTS };
+export { initPostHog, identifyPostHogUser, resetPostHog } from "./posthog";
 
 const LOG_KEY = "hub_analytics_log_v1";
 const MAX_LOG = 200;
@@ -63,4 +67,5 @@ export function trackEvent(eventName, payload = {}) {
     };
     analyticsWindow.__hubAnalytics = [...current, event].slice(-MAX_LOG);
   } catch {}
+  capturePostHogEvent(eventName, event.payload as Record<string, unknown>);
 }
