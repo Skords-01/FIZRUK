@@ -1,0 +1,326 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "SLO.md",
+      "tooltip": "Service Level Objectives",
+      "type": "link",
+      "url": "https://github.com/Skords-01/Sergeant/blob/main/docs/observability/SLO.md"
+    },
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "runbook.md",
+      "tooltip": "Incident Runbook",
+      "type": "link",
+      "url": "https://github.com/Skords-01/Sergeant/blob/main/docs/observability/runbook.md"
+    }
+  ],
+  "panels": [
+    {
+      "title": "Token rate by model (prompt + completion)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "stacking": { "mode": "normal" },
+            "lineWidth": 1
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (model, kind) (rate(ai_tokens_total{kind=~\"prompt|completion\"}[5m]))",
+          "legendFormat": "{{model}} — {{kind}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Estimated daily spend (USD)",
+      "description": "Estimated daily cost. Adjust $usd_per_1m_tokens variable to match your Anthropic pricing tier.",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "textMode": "value_and_name",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(ai_tokens_total{kind=~\"prompt|completion\"}[24h])) / 1e6 * $usd_per_1m_tokens",
+          "legendFormat": "daily spend estimate",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Cache-hit ratio (1h window)",
+      "description": "Anthropic prompt cache hit ratio. Target line at 0.5 per PR-12.A.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "target (0.5)" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.fillOpacity", "value": 0 }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "rate(anthropic_prompt_cache_hit_total{outcome=\"hit\"}[1h]) / clamp_min(rate(anthropic_prompt_cache_hit_total[1h]), 1)",
+          "legendFormat": "cache-hit ratio",
+          "refId": "A"
+        },
+        {
+          "expr": "vector(0.5)",
+          "legendFormat": "target (0.5)",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "AI quota blocks",
+      "description": "Requests refused by AI quota. Any value > 0 means users are being rate-limited.",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
+      "id": 4,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(ai_quota_blocks_total[1h]))",
+          "legendFormat": "quota blocks (1h)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "AI quota fail-open (CRITICAL)",
+      "description": "Quota store unavailable, requests passing through without limit check. Any value > 0 is a billing risk.",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 },
+      "id": 5,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(ai_quota_fail_open_total[1h]))",
+          "legendFormat": "fail-open (1h)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "AI request outcomes",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 6,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "stacking": { "mode": "normal" },
+            "lineWidth": 1
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (endpoint, outcome) (rate(ai_requests_total[5m]))",
+          "legendFormat": "{{endpoint}} — {{outcome}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "AI p95 latency by endpoint",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 7,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1
+          },
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10000 },
+              { "color": "red", "value": 30000 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, endpoint) (rate(ai_request_duration_ms_bucket[5m])))",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["sergeant", "ai"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": { "selected": false, "text": "3.00", "value": "3.00" },
+        "hide": 0,
+        "name": "usd_per_1m_tokens",
+        "options": [
+          { "selected": true, "text": "3.00", "value": "3.00" }
+        ],
+        "query": "3.00",
+        "type": "textbox",
+        "label": "USD per 1M tokens"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Sergeant — AI Cost",
+  "uid": "sergeant-ai-cost",
+  "version": 1
+}
