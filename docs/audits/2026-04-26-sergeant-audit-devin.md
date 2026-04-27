@@ -181,7 +181,7 @@
 
 - `PR-5.A` ✅ closed — [#863](https://github.com/Skords-01/Sergeant/pull/863) `ci(server): migration linter — fail PR if a NNN_*.sql contains DROP COLUMN/TABLE without a sibling NNN_*.add_*.sql in a previous merged PR`. Реалізація: Node-скрипт `scripts/lint-migrations.mjs` із escape-hatch коментарем `-- ALLOW_DROP: <reason> (due: YYYY-MM-DD)`.
 - `PR-5.B` — `ci(server): apply down.sql in test job after up.sql, then re-apply up.sql` (catch-all sanity check, що `down` принаймні виконується).
-- `PR-5.C` — `docs/playbooks/pre-merge-migration-checklist.md` — як шаблон у PR для будь-якого PR з `apps/server/src/migrations/`.
+- `PR-5.C` ✅closed — `docs/playbooks/pre-merge-migration-checklist.md` — реалізовано: чек-лист на 10 секцій (numbering, two-phase DROP, bigint coercion, api-client sync, idempotency, performance, RLS, local & CI verification, rollout-readiness) + reviewer responsibilities + common mistakes table. Покликається з PR template для будь-якого PR з `apps/server/src/migrations/`.
 
 ---
 

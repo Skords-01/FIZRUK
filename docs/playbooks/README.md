@@ -16,6 +16,7 @@ Each playbook is a checklist that **AI agents and human developers** can follow 
 | [add-monobank-event-handler.md](add-monobank-event-handler.md)                 | "Треба обробити нову подію X від Monobank" / новий тип webhook event                                            |
 | [bump-dep-safely.md](bump-dep-safely.md)                                       | "Оновити X до версії Y" / Renovate major-bump / security advisory                                               |
 | [add-sql-migration.md](add-sql-migration.md)                                   | "Додати нове поле / таблицю в БД" / зміна схеми PostgreSQL                                                      |
+| [pre-merge-migration-checklist.md](pre-merge-migration-checklist.md)           | PR із `apps/server/src/migrations/` готовий до merge / рев'юер валідує міграцію                                 |
 | [rotate-secrets.md](rotate-secrets.md)                                         | "Secret leaked" / планова ротація / security audit                                                              |
 | [add-new-page-route.md](add-new-page-route.md)                                 | "Додати нову сторінку в apps/web" / новий route для SPA                                                         |
 | [migrate-localstorage-to-typedstore.md](migrate-localstorage-to-typedstore.md) | Мігрувати файл з прямого localStorage на typedStore (tech debt #2)                                              |
