@@ -338,6 +338,35 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_COMMENTS: false
 
+  actionlint:
+    name: Workflow lint (actionlint)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Catches GitHub Actions YAML mistakes that GitHub silently fails on
+    # (e.g. `secrets` context in `jobs.<job_id>.if`, which makes the entire
+    # workflow file invalid and prevents schedule cron triggers from firing).
+    # actionlint runs locally — no network calls beyond the binary download.
+    steps:
+      # actions/checkout v6.0.2 (SHA-pinned for supply-chain hardening)
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Install actionlint v1.7.7 (checksum-pinned)
+        run: |
+          set -euo pipefail
+          ACTIONLINT_VERSION=1.7.7
+          ACTIONLINT_SHA256=023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757
+          curl -fsSL \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            -o /tmp/actionlint.tar.gz
+          echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
+          sudo mv /tmp/actionlint /usr/local/bin/actionlint
+          actionlint --version
+
+      - name: Lint .github/workflows
+        run: actionlint -color
+
   pipeline-duration-summary:
     name: Pipeline duration (p95 trend)
     runs-on: ubuntu-latest
