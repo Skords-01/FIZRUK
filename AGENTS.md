@@ -375,6 +375,14 @@ Real regressions we've shipped — do not repeat:
 - When changing DB / API: `apps/server` tests must be green.
 - When changing UI: take a screenshot and attach it to the PR description.
 
+## CI workflows
+
+| Workflow                    | Trigger                     | Blocks PR? | Purpose                                                                                                                                                                                                          |
+| --------------------------- | --------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`                    | push / PR                   | Yes        | Lint, typecheck, test, build, audit (`--audit-level=high`), license check, bundle size                                                                                                                           |
+| `security-sla-reminder.yml` | Monday 08:00 UTC / dispatch | No         | Comments on open `security:*` issues that breach SLA deadlines                                                                                                                                                   |
+| `nightly-audit.yml`         | Daily 03:00 UTC / dispatch  | No         | Full `pnpm audit` (all severities) + OSV-Scanner dependency check + optional Snyk. Fails on critical/high; creates GitHub issue on failure. See [docs/security/nightly-audit.md](docs/security/nightly-audit.md) |
+
 ## Deployment
 
 - **Frontend**: Vercel (preview deploy on each PR; free tier may rate-limit).
