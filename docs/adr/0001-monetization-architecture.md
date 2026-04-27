@@ -546,7 +546,7 @@ return "free";
 
 ## Open questions (для подальших ADR)
 
-- ADR-0002 (TBD): plan-cache eviction strategy на multi-instance deploy (Railway scales horizontally?).
-- ADR-0003 (TBD): refund / dispute handling — манально через Stripe Dashboard чи через app-side flow?
-- ADR-0004 (TBD): family / team plans — shared subscription чи per-seat? (Phase 8.)
-- ADR-0005 (TBD): referral / promo-code system. (Phase 8.)
+- Plan-cache eviction strategy на multi-instance deploy (Railway scales horizontally?). TBD.
+- ~~Refund / dispute handling~~ → закрито у [ADR-0003](./0003-refund-and-dispute-handling.md): manual via Stripe Dashboard + dispute auto-deactivation на webhook-event, з 90-day fraud-blocklist для chargeback-pattern-у.
+- Family / team plans — shared subscription чи per-seat? (Phase 8.) TBD.
+- Referral / promo-code system. (Phase 8.) TBD.

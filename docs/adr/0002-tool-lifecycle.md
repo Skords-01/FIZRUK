@@ -276,7 +276,7 @@ n/a (operational reference).
 
 - **Tool authoring style** (іменування, opinionated input shapes) — це operational guidance у `docs/playbooks/add-hubchat-tool.md`.
 - **System prompt tuning** — окремий playbook `docs/playbooks/tune-system-prompt.md`.
-- **Anthropic version bumps / model selection** — окремий ADR (TBD).
+- **Anthropic version bumps / model selection** — закрито у [ADR-0005](./0005-anthropic-model-selection-and-prompt-caching.md) (`claude-sonnet-4-6` як єдиний tier; cache breakpoint policy; `SYSTEM_PROMPT_VERSION`-bump-rule).
 - **Quotas і monetization gating** — ADR-0001 + `requireAiQuota` middleware.
 - **Безпека ширше за tool boundary** (XSS, CSRF, secrets management) — repo-wide AGENTS.md hard rules.
 
