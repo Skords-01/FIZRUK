@@ -421,10 +421,8 @@ export const paths: ZodOpenApiPathsObject = {
         "401": unauthorized,
       },
     },
-  },
-  "/api/push/unsubscribe": {
-    post: {
-      summary: "Web-push unsubscribe (legacy alias)",
+    delete: {
+      summary: "Web-push unsubscribe (legacy alias для /push/unregister web)",
       tags: ["push"],
       security: cookieOrBearer,
       requestBody: {
@@ -481,7 +479,7 @@ export const paths: ZodOpenApiPathsObject = {
   },
 
   // ────────────────────── Bank proxies ──────────────────────
-  "/api/banks/mono": {
+  "/api/mono": {
     get: {
       summary: "Mono bank API proxy (через server-side token)",
       tags: ["banks"],
@@ -494,7 +492,7 @@ export const paths: ZodOpenApiPathsObject = {
       },
     },
   },
-  "/api/banks/privat": {
+  "/api/privat": {
     get: {
       summary: "PrivatBank API proxy",
       tags: ["banks"],

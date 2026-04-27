@@ -1311,11 +1311,9 @@
             }
           }
         }
-      }
-    },
-    "/api/push/unsubscribe": {
-      "post": {
-        "summary": "Web-push unsubscribe (legacy alias)",
+      },
+      "delete": {
+        "summary": "Web-push unsubscribe (legacy alias для /push/unregister web)",
         "tags": [
           "push"
         ],
@@ -1468,7 +1466,7 @@
         }
       }
     },
-    "/api/banks/mono": {
+    "/api/mono": {
       "get": {
         "summary": "Mono bank API proxy (через server-side token)",
         "tags": [
@@ -1530,7 +1528,7 @@
         }
       }
     },
-    "/api/banks/privat": {
+    "/api/privat": {
       "get": {
         "summary": "PrivatBank API proxy",
         "tags": [

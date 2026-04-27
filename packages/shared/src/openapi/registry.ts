@@ -95,11 +95,11 @@ const SyncPushAll = schemas.SyncPushAllSchema.meta({
 });
 const MonoQuery = schemas.MonoQuerySchema.meta({
   id: "MonoQuery",
-  description: "Query для GET /api/banks/mono.",
+  description: "Query для GET /api/mono.",
 });
 const PrivatQuery = schemas.PrivatQuerySchema.meta({
   id: "PrivatQuery",
-  description: "Query для GET /api/banks/privat.",
+  description: "Query для GET /api/privat.",
 });
 const PushSubscribe = schemas.PushSubscribeSchema.meta({
   id: "PushSubscribe",
