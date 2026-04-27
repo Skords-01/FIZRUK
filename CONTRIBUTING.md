@@ -29,21 +29,7 @@ Repo pins `"packageManager": "pnpm@9.15.1"` — Corepack автоматично 
 
 1. Прочитайте [`AGENTS.md`](AGENTS.md), якщо змінюєте код або правила проєкту. Там зібрані hard rules, module ownership map, performance budgets і anti-patterns з минулих багів.
 2. Визначте area/scope зміни: `web`, `server`, `mobile`, `api-client`, domain package, docs тощо.
-3. Якщо задача збігається з playbook trigger — спочатку відкрийте відповідний playbook і йдіть по checklist:
-
-| Task type                  | Playbook                                                                               |
-| -------------------------- | -------------------------------------------------------------------------------------- |
-| Новий API endpoint         | [`docs/playbooks/add-api-endpoint.md`](docs/playbooks/add-api-endpoint.md)             |
-| SQL migration              | [`docs/playbooks/add-sql-migration.md`](docs/playbooks/add-sql-migration.md)           |
-| Feature flag               | [`docs/playbooks/add-feature-flag.md`](docs/playbooks/add-feature-flag.md)             |
-| React Query hook           | [`docs/playbooks/add-react-query-hook.md`](docs/playbooks/add-react-query-hook.md)     |
-| HubChat tool               | [`docs/playbooks/add-hubchat-tool.md`](docs/playbooks/add-hubchat-tool.md)             |
-| Нова web route             | [`docs/playbooks/add-new-page-route.md`](docs/playbooks/add-new-page-route.md)         |
-| External API integration   | [`docs/playbooks/onboard-external-api.md`](docs/playbooks/onboard-external-api.md)     |
-| Dependency bump            | [`docs/playbooks/bump-dep-safely.md`](docs/playbooks/bump-dep-safely.md)               |
-| Production incident/hotfix | [`docs/playbooks/hotfix-prod-regression.md`](docs/playbooks/hotfix-prod-regression.md) |
-
-Повний список: [`docs/playbooks/README.md`](docs/playbooks/README.md).
+3. Якщо задача збігається з playbook trigger — спочатку відкрийте відповідний playbook і йдіть по checklist. Повний індекс із тригерами та 🌳-маркерами decision-tree формату — в [`docs/playbooks/README.md`](docs/playbooks/README.md) (single source of truth — щоб не дрейфувало). Часті entry-points: `add-api-endpoint`, `add-sql-migration`, `add-feature-flag`, `add-react-query-hook`, `add-hubchat-tool`, `add-new-page-route`, `bump-dep-safely`, `onboard-external-api`, `hotfix-prod-regression`, `rotate-secrets`, `investigate-alert`.
 
 ---
 
@@ -273,11 +259,14 @@ If a legitimate feature needs a higher limit, bump the number in the same PR and
 
 ### Known flaky mobile tests
 
-These three tests fail on `main` and **should not block merge** if your PR does not touch `apps/mobile`:
+These two tests fail on `main` and **should not block merge** if your PR does not touch `apps/mobile`:
 
-- `apps/mobile/src/core/OnboardingWizard.test.tsx`
 - `apps/mobile/src/core/dashboard/WeeklyDigestFooter.test.tsx`
 - `apps/mobile/src/core/settings/HubSettingsPage.test.tsx`
+
+> `OnboardingWizard.test.tsx` was de-flaked in commit [`53853e00`](https://github.com/Skords-01/Sergeant/commit/53853e00) (PR-7.E 1/3) — replacing the never-resolving `AccessibilityInfo.isReduceMotionEnabled()` mock with `mockResolvedValue(false)` settled the unsettled microtask that interacted with React `act()` flushing under CI load.
+
+The canonical list lives in [`AGENTS.md` → _Pre-existing flaky tests_](AGENTS.md#pre-existing-flaky-tests-do-not-block-merge); update both files together when stabilising or adding entries.
 
 ### Audit exception workflow
 
