@@ -18,16 +18,12 @@ function resetStore() {
 describe("OnboardingWizard", () => {
   beforeEach(() => {
     resetStore();
-    // Swallow the async reduce-motion probe so tests don't leak React
-    // act warnings. Matches the pattern used by Sheet/Skeleton tests.
     jest
       .spyOn(AccessibilityInfo, "isReduceMotionEnabled")
-      .mockImplementation(() => new Promise<boolean>(() => {}));
+      .mockResolvedValue(false);
     jest
       .spyOn(AccessibilityInfo, "addEventListener")
-      .mockReturnValue({ remove: () => {} } as ReturnType<
-        typeof AccessibilityInfo.addEventListener
-      >);
+      .mockImplementation(() => ({ remove: () => {} }) as never);
   });
 
   afterEach(() => {

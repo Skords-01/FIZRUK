@@ -29,7 +29,7 @@ Quick lookup before editing: which path uses which test stack and which conventi
 | `apps/server/src/modules/**`                          | Vitest + Testcontainers (real Postgres) | n/a                                   | Always coerce bigint→number in serializers (rule #1). Update `api-client` types.                                                                                |
 | `apps/server/src/modules/chat/**`                     | Vitest                                  | n/a                                   | Anthropic tool defs split per domain in `toolDefs/`. See Architecture section.                                                                                  |
 | `apps/server/src/migrations/**`                       | n/a                                     | n/a                                   | Sequential `NNN_*.sql` (currently 001–008). No gaps. Two-phase for DROP — see rule #4.                                                                          |
-| `apps/mobile/src/core/**`                             | Vitest (3 known flaky — see below)      | (mobile RQ uses module-local keys)    | NativeWind (not Tailwind). MMKV (not localStorage). No DOM.                                                                                                     |
+| `apps/mobile/src/core/**`                             | Jest (2 known flaky — see below)        | (mobile RQ uses module-local keys)    | NativeWind (not Tailwind). MMKV (not localStorage). No DOM.                                                                                                     |
 | `apps/mobile/app/**`                                  | Vitest                                  | n/a                                   | Expo Router routes. Each `_layout.tsx` is a navigator.                                                                                                          |
 | `apps/mobile-shell/**`                                | none                                    | n/a                                   | Capacitor wrapper around `apps/web`. No app code lives here, only build glue.                                                                                   |
 | `packages/shared/**`                                  | Vitest                                  | n/a                                   | Zod schemas, types, business logic. Used by all apps — change with care.                                                                                        |
@@ -383,11 +383,10 @@ Real regressions we've shipped — do not repeat:
 
 ## Pre-existing flaky tests (do not block merge)
 
-- `apps/mobile/src/core/OnboardingWizard.test.tsx`
 - `apps/mobile/src/core/dashboard/WeeklyDigestFooter.test.tsx`
 - `apps/mobile/src/core/settings/HubSettingsPage.test.tsx`
 
-These three fail on `main`. Ignore them if your PR does not touch `apps/mobile`.
+These two fail on `main`. Ignore them if your PR does not touch `apps/mobile`.
 
 ## Test users
 
