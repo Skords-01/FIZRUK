@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createModuleStorage } from "./createModuleStorage";
 
-let storage;
+let storage: ReturnType<typeof createModuleStorage>;
 
 beforeEach(() => {
   localStorage.clear();
