@@ -23,10 +23,21 @@ vi.mock("../lib/anthropic.js", () => ({
   ),
 }));
 
+// Мокаємо prometheus counter-и, щоб можна було перевірити виклики `inc()`
+// без тягнення глобального реєстру між тестами (prom-client Counter —
+// singleton у модулі). Ті метрики, які мають фактично інкрементуватися у
+// цьому тесті, присутні як `{ inc: vi.fn() }`; решта — фейки.
+vi.mock("../obs/metrics.js", () => ({
+  anthropicPromptCacheHitTotal: { inc: vi.fn() },
+  chatToolInvocationsTotal: { inc: vi.fn() },
+}));
+
 import { anthropicMessages as _anthropicMessages } from "../lib/anthropic.js";
+import { chatToolInvocationsTotal as _toolMetric } from "../obs/metrics.js";
 import handler from "./chat.js";
 
 const anthropicMessages = _anthropicMessages as unknown as Mock;
+const toolMetricInc = (_toolMetric as unknown as { inc: Mock }).inc;
 
 interface TestRes {
   statusCode: number;
@@ -64,6 +75,7 @@ beforeEach(() => {
   // Інакше leftover-моки з попереднього тесту (наприклад cap-тест queue-ить 5, а
   // консьюмить лише 4) залежать у наступному.
   anthropicMessages.mockReset();
+  toolMetricInc.mockReset();
 });
 
 describe("chat handler — tool_use parsing", () => {
@@ -737,5 +749,177 @@ describe("chat handler — auto-continuation на stop_reason=max_tokens", () =>
     expect(anthropicMessages).toHaveBeenCalledTimes(2);
     expect(res.statusCode).toBe(200);
     expect(asRec(res.body).text).toBe("Перша частина… ");
+  });
+});
+
+describe("chat handler — ADR-0002 tool_invocations metric", () => {
+  it("`proposed` — інкрементує per-tool коли модель повертає tool_use", async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: {
+        content: [
+          { type: "text", text: "Виконую…" },
+          {
+            type: "tool_use",
+            id: "toolu_1",
+            name: "delete_transaction",
+            input: { tx_id: "m_1" },
+          },
+          {
+            type: "tool_use",
+            id: "toolu_2",
+            name: "briefing",
+            input: {},
+          },
+        ],
+      },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "Видали транзакцію і дай брифінг" }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(toolMetricInc).toHaveBeenCalledTimes(2);
+    expect(toolMetricInc).toHaveBeenCalledWith({
+      tool: "delete_transaction",
+      outcome: "proposed",
+    });
+    expect(toolMetricInc).toHaveBeenCalledWith({
+      tool: "briefing",
+      outcome: "proposed",
+    });
+  });
+
+  it("`proposed` — повний text-only response БЕЗ tool_use не інкрементує", async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: { content: [{ type: "text", text: "Просто текст" }] },
+    });
+
+    await handler(
+      makeReq({ messages: [{ role: "user", content: "Привіт" }] }),
+      makeRes(),
+    );
+
+    expect(toolMetricInc).not.toHaveBeenCalled();
+  });
+
+  it("`executed` — інкрементує per-tool коли клієнт повертає tool_results", async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: { content: [{ type: "text", text: "Готово" }] },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "Видали m_abc" }],
+      tool_calls_raw: [
+        {
+          type: "tool_use",
+          id: "toolu_1",
+          name: "delete_transaction",
+          input: { tx_id: "m_abc" },
+        },
+      ],
+      tool_results: [{ tool_use_id: "toolu_1", content: "видалено" }],
+    });
+    await handler(req, makeRes());
+
+    expect(toolMetricInc).toHaveBeenCalledTimes(1);
+    expect(toolMetricInc).toHaveBeenCalledWith({
+      tool: "delete_transaction",
+      outcome: "executed",
+    });
+  });
+
+  it('`executed` — tool_use_id без matching tool_use → tool="unknown"', async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: { content: [{ type: "text", text: "Готово" }] },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "?" }],
+      // tool_calls_raw без `tool_use` блоку (тільки text) — не формує мапи.
+      tool_calls_raw: [{ type: "text", text: "something" }],
+      tool_results: [{ tool_use_id: "toolu_orphan", content: "result" }],
+    });
+    await handler(req, makeRes());
+
+    expect(toolMetricInc).toHaveBeenCalledWith({
+      tool: "unknown",
+      outcome: "executed",
+    });
+  });
+
+  it("`executed` — кілька tool_results у батчі інкрементує по одному на кожен", async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: { content: [{ type: "text", text: "Готово" }] },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "Двома tools" }],
+      tool_calls_raw: [
+        {
+          type: "tool_use",
+          id: "toolu_a",
+          name: "delete_transaction",
+          input: { tx_id: "m_a" },
+        },
+        {
+          type: "tool_use",
+          id: "toolu_b",
+          name: "briefing",
+          input: {},
+        },
+      ],
+      tool_results: [
+        { tool_use_id: "toolu_a", content: "видалено" },
+        { tool_use_id: "toolu_b", content: "briefing text" },
+      ],
+    });
+    await handler(req, makeRes());
+
+    expect(toolMetricInc).toHaveBeenCalledTimes(2);
+    expect(toolMetricInc).toHaveBeenCalledWith({
+      tool: "delete_transaction",
+      outcome: "executed",
+    });
+    expect(toolMetricInc).toHaveBeenCalledWith({
+      tool: "briefing",
+      outcome: "executed",
+    });
+  });
+
+  it("`executed` інкрементується ДО Anthropic-виклику (навіть якщо другий крок зламається)", async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: false, status: 500 },
+      data: { error: { message: "Anthropic 500" } },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "?" }],
+      tool_calls_raw: [
+        {
+          type: "tool_use",
+          id: "toolu_1",
+          name: "delete_transaction",
+          input: { tx_id: "m_1" },
+        },
+      ],
+      tool_results: [{ tool_use_id: "toolu_1", content: "ok" }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(500);
+    // Metric записана до Anthropic-виклику — не залежить від upstream-успіху.
+    expect(toolMetricInc).toHaveBeenCalledWith({
+      tool: "delete_transaction",
+      outcome: "executed",
+    });
   });
 });

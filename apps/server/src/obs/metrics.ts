@@ -109,6 +109,24 @@ export const chatToolResultTruncatedTotal = new client.Counter({
   registers: [register],
 });
 
+// Per-tool lifecycle лічильник для ADR-0002 KPI-панелі:
+//   `tool_rejected_rate` = 1 - sum(outcome=executed) / sum(outcome=proposed)
+// на вікні 7 днів per-tool.
+//
+// Label `outcome`:
+//   - `proposed` — модель повернула `tool_use`-блок (перший крок chat-handler-а).
+//   - `executed` — клієнт повернув `tool_result` із `tool_use_id`, який
+//     матчиться з `tool_calls_raw` (другий крок). Це і є «пропозиція дійсно
+//     виконана».
+// `tool` label — `tool_use.name` (наприклад `delete_transaction`, `briefing`).
+// Unknown tool (rare: tool_result без matching tool_use) → `tool="unknown"`.
+export const chatToolInvocationsTotal = new client.Counter({
+  name: "chat_tool_invocations_total",
+  help: "HubChat tool lifecycle events (ADR-0002): proposed by model vs executed by client",
+  labelNames: ["tool", "outcome"], // outcome=proposed|executed
+  registers: [register],
+});
+
 export const aiQuotaBlocksTotal = new client.Counter({
   name: "ai_quota_blocks_total",
   help: "AI quota refusals",

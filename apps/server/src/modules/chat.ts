@@ -14,7 +14,10 @@ import {
 import type { WithAiQuotaRefund } from "./aiQuota.js";
 import { TOOLS, SYSTEM_PREFIX, SYSTEM_PROMPT_VERSION } from "./chat/tools.js";
 import { truncateToolResults } from "./chat/toolResultTruncation.js";
-import { anthropicPromptCacheHitTotal } from "../obs/metrics.js";
+import {
+  anthropicPromptCacheHitTotal,
+  chatToolInvocationsTotal,
+} from "../obs/metrics.js";
 import { als } from "../obs/requestContext.js";
 
 type WithAnthropicKey = Request & { anthropicKey?: string };
@@ -79,6 +82,48 @@ function applyToolsCacheBreakpoint(
 }
 
 const TOOLS_WITH_CACHE = applyToolsCacheBreakpoint(TOOLS);
+
+/**
+ * Інкрементує `chat_tool_invocations_total` без шансу зламати запит.
+ * Anthropic іноді повертає tool_use без `name` (broken stream), і `unknown`
+ * label зберігає cardinality обмеженою — не дозволяємо сирому input потрапити
+ * у Prometheus-label.
+ */
+function recordToolInvocation(
+  tool: string | undefined,
+  outcome: "proposed" | "executed",
+): void {
+  try {
+    chatToolInvocationsTotal.inc({
+      tool: tool && tool.length > 0 ? tool : "unknown",
+      outcome,
+    });
+  } catch {
+    /* metrics must never break a request */
+  }
+}
+
+/**
+ * Map `tool_use_id` → `tool_use.name` із `tool_calls_raw`, які клієнт
+ * повернув разом з `tool_results`. Потрібно, щоб executed-метрика мала
+ * ідентичний `tool`-label з proposed-метрикою (інакше counter-и не сходяться
+ * у PromQL `sum by (tool)`).
+ */
+function buildToolUseIdToNameMap(
+  toolCallsRaw: unknown[] | undefined,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!Array.isArray(toolCallsRaw)) return map;
+  for (const block of toolCallsRaw) {
+    if (!block || typeof block !== "object") continue;
+    const b = block as { type?: unknown; id?: unknown; name?: unknown };
+    if (b.type !== "tool_use") continue;
+    if (typeof b.id !== "string" || !b.id) continue;
+    if (typeof b.name !== "string" || !b.name) continue;
+    map.set(b.id, b.name);
+  }
+  return map;
+}
 
 /**
  * Якщо Anthropic повернув не-2xx або виклик упав (timeout/abort), викликаємо
@@ -311,6 +356,15 @@ export default async function handler(
     const normalizedToolResults = truncateToolResults(tool_results, {
       requestId,
     });
+
+    // ADR-0002 tool lifecycle: `executed` — клієнт фактично повернув результат
+    // на конкретний `tool_use_id`. Це рахуємо ДО Anthropic-виклику, щоб
+    // сигнал не залежав від того, чи другий крок upstream зможе завершитися.
+    const toolUseIdToName = buildToolUseIdToNameMap(tool_calls_raw);
+    for (const r of normalizedToolResults) {
+      recordToolInvocation(toolUseIdToName.get(r.tool_use_id), "executed");
+    }
+
     const toolResultMessages = normalizedToolResults.map((r) => ({
       type: "tool_result" as const,
       tool_use_id: r.tool_use_id,
@@ -441,6 +495,12 @@ export default async function handler(
     .join("\n");
 
   if (toolUses.length > 0) {
+    // ADR-0002 tool lifecycle: `proposed` — модель запропонувала tool_use.
+    // Рахуємо окремо від `executed`: різниця (proposed - executed) — це
+    // `tool_rejected_rate` у KPI-панелі.
+    for (const t of toolUses) {
+      recordToolInvocation(t.name, "proposed");
+    }
     res.status(200).json({
       text: textParts || null,
       tool_calls: toolUses.map((t) => ({
