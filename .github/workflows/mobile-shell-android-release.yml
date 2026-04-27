@@ -62,14 +62,14 @@ jobs:
     steps:
       # actions/checkout v4.3.1 (SHA-pinned for supply-chain hardening,
       # matches `mobile-shell-android.yml`).
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       # pnpm/action-setup v4.1.0 (SHA-pinned). Version resolved from the
       # `packageManager` field in root package.json (pnpm@9.15.1).
-      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2
+      - uses: pnpm/action-setup@903f9c1a6ebcba6cf41d87230be49611ac97822e
 
       # actions/setup-node v4.4.0 (SHA-pinned).
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: "20"
           cache: pnpm
@@ -80,7 +80,7 @@ jobs:
       # apps/mobile-shell/android/app/capacitor.build.gradle — header
       # explicitly says "DO NOT EDIT"). Anything below 21 trips
       # `error: invalid source release: 21` during javac.
-      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           distribution: temurin
           java-version: "21"
@@ -103,7 +103,7 @@ jobs:
       # back-to-back on the same runner class.
       - name: Cache Gradle
         # actions/cache v4.2.0 (SHA-pinned).
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: |
             ~/.gradle/caches
@@ -154,7 +154,7 @@ jobs:
 
       - name: Upload release AAB
         # actions/upload-artifact v4.4.3 (SHA-pinned).
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: sergeant-shell-release-aab
           path: apps/mobile-shell/android/app/build/outputs/bundle/release/*.aab
@@ -164,7 +164,7 @@ jobs:
       - name: Upload release APK
         # Separate artefact so sideload-consumers can grab just the APK
         # from the run summary without also pulling the bundle.
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: sergeant-shell-release-apk
           path: apps/mobile-shell/android/app/build/outputs/apk/release/*.apk

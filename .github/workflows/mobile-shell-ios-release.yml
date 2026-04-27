@@ -70,8 +70,8 @@ jobs:
       # is named differently in the Apple Developer portal.
       IOS_PROVISIONING_PROFILE_NAME: ${{ vars.IOS_PROVISIONING_PROFILE_NAME || 'Sergeant Shell App Store' }}
     steps:
-      # actions/checkout v4.3.1 (SHA-pinned for supply-chain hardening)
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      # actions/checkout v6.0.2 (SHA-pinned for supply-chain hardening)
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Detect whether iOS release secrets are configured
         id: secrets
@@ -93,10 +93,10 @@ jobs:
           fi
 
       # pnpm/action-setup v4.1.0 (SHA-pinned)
-      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2
+      - uses: pnpm/action-setup@903f9c1a6ebcba6cf41d87230be49611ac97822e
 
       # actions/setup-node v4.4.0 (SHA-pinned)
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: "20"
           cache: pnpm
@@ -126,7 +126,7 @@ jobs:
 
       - name: Cache CocoaPods
         # actions/cache v4.2.0 (SHA-pinned)
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: |
             ~/.cocoapods
@@ -160,7 +160,7 @@ jobs:
       # ─────────────────────────── Signed release path ────────────────────
       - name: Import code signing certificates
         if: steps.secrets.outputs.configured == 'true'
-        uses: apple-actions/import-codesign-certs@63fff01cd422d4b7b855d40ca1e9d34d2de9427d # v3
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466 # v7.0.0
         with:
           p12-file-base64: ${{ env.APPLE_BUILD_CERTIFICATE_BASE64 }}
           p12-password: ${{ env.APPLE_P12_PASSWORD }}
@@ -183,7 +183,7 @@ jobs:
 
       - name: Download provisioning profiles (App Store Connect API)
         if: steps.secrets.outputs.configured == 'true' && env.APP_STORE_CONNECT_API_KEY_ID != ''
-        uses: apple-actions/download-provisioning-profiles@6d47d6dfaaece280647ee215957fb23acfe1fa7c # v2
+        uses: apple-actions/download-provisioning-profiles@c62019de00bb4395ed414e4a17c98f4e279636de # v6.0.0
         with:
           bundle-id: ${{ env.IOS_BUNDLE_ID }}
           profile-type: IOS_APP_STORE
@@ -238,7 +238,7 @@ jobs:
       - name: Upload .ipa artifact
         if: steps.secrets.outputs.configured == 'true'
         # actions/upload-artifact v4.4.3 (SHA-pinned)
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: sergeant-shell-ipa
           path: apps/mobile-shell/ios/App/build/*.ipa
@@ -253,7 +253,7 @@ jobs:
           steps.secrets.outputs.configured == 'true'
           && env.APP_STORE_CONNECT_API_KEY_ID != ''
           && (github.event_name != 'workflow_dispatch' || inputs.upload_testflight)
-        uses: apple-actions/upload-testflight-build@54dc215b4cd5529730db39f11c84efdb71414e07 # v1
+        uses: apple-actions/upload-testflight-build@9af5bd758aaff3f82a372079a38f029d60a7163b # v5.0.0
         with:
           app-path: apps/mobile-shell/ios/App/build/App.ipa
           issuer-id: ${{ env.APP_STORE_CONNECT_API_ISSUER_ID }}
