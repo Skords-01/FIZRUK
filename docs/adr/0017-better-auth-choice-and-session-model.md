@@ -1,4 +1,4 @@
-# ADR-0007: Better Auth choice and session model
+# ADR-0017: Better Auth choice and session model
 
 - **Status:** accepted
 - **Date:** 2026-04-27
@@ -10,8 +10,8 @@
   - [`apps/server/src/routes/auth.ts`](../../apps/server/src/routes/auth.ts) — `/api/auth/*` mount + rate limit.
   - [`apps/server/src/http/authMiddleware.ts`](../../apps/server/src/http/authMiddleware.ts) — `requireSession` middleware.
   - [`apps/server/src/migrations/003_baseline_schema.sql`](../../apps/server/src/migrations/003_baseline_schema.sql) — таблиці `user`/`session`/`account`/`verification`.
-  - [`docs/adr/0006-user-deletion-and-pii-handling.md`](./0006-user-deletion-and-pii-handling.md) — взаємодія з deleteUser-flow.
-  - [`docs/adr/0008-api-versioning-policy.md`](./0008-api-versioning-policy.md) — чому `/api/auth/*` поза версіонуванням.
+  - [`docs/adr/0016-user-deletion-and-pii-handling.md`](./0016-user-deletion-and-pii-handling.md) — взаємодія з deleteUser-flow.
+  - [`docs/adr/0018-api-versioning-policy.md`](./0018-api-versioning-policy.md) — чому `/api/auth/*` поза версіонуванням.
 
 ---
 
@@ -65,7 +65,7 @@ audit log. Build-from-scratch — мінімум 4-6 тижнів роботи +
 | NextAuth (Auth.js) | $0                   | yes        | yes       | partial (web-first) | повна                  |
 
 Sergeant — single-founder, single-region, low-volume у перші 6 місяців.
-Ми хочемо: $0 на MVP, повний контроль на даними (GDPR, see ADR-0006),
+Ми хочемо: $0 на MVP, повний контроль на даними (GDPR, see ADR-0016),
 TypeScript-native, Expo-friendly, Postgres self-hosted.
 
 ### Decision
@@ -86,7 +86,7 @@ TypeScript-native, Expo-friendly, Postgres self-hosted.
 **Позитивні:**
 
 - $0 на MVP. Save-up на Stripe/Anthropic.
-- Postgres = single source of truth для user/session — ADR-0006 cascade-cleanup
+- Postgres = single source of truth для user/session — ADR-0016 cascade-cleanup
   тривіальний.
 - Mobile Bearer-token + Web Cookie з одного `auth`-instance — нічого
   додаткового.
@@ -199,7 +199,7 @@ Trade-off `cookieCache`: revoke-затримка до 5 хв. Якщо юзер 
 
 ### Alternatives considered
 
-- **JWT-only (option 1):** revoke-проблеми (cleanup-flow ADR-0006 не працює).
+- **JWT-only (option 1):** revoke-проблеми (cleanup-flow ADR-0016 не працює).
 - **Stateful only (option 2):** 10-30ms session-check на кожен hit — на 100
   RPS = 1-3s/sec БД-time, 10% capacity використано лише на auth.
 - **30-second cookie cache:** маленьке вікно, високий cache-miss rate.
@@ -357,7 +357,7 @@ accepted.
   для shared family-budget use-case.
 - **Audit log авторизаційних подій.** Better Auth не зберігає `auth_event`
   таблицю; ми зберігаємо metric-counter (`auth_attempts_total{op, outcome}`)
-  у Prometheus. Audit log як окремий ADR — після ADR-0008.
+  у Prometheus. Audit log як окремий ADR — після ADR-0018.
 - **Account merging (sign-up з email, що вже є з OAuth).** Edge case;
   TBD коли OAuth активний.
 - **CSRF token rotation на every state-change.** Better Auth handles

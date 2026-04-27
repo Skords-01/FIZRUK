@@ -1,4 +1,4 @@
-# ADR-0011: Memory Bank — local-first AI user-fact store
+# ADR-0021: Memory Bank — local-first AI user-fact store
 
 - **Status:** accepted
 - **Date:** 2026-04-27

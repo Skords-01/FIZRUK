@@ -1,4 +1,4 @@
-# ADR-0010: Testing pyramid — unit / integration / a11y / smoke-e2e
+# ADR-0020: Testing pyramid — unit / integration / a11y / smoke-e2e
 
 - **Status:** accepted
 - **Date:** 2026-04-27
