@@ -39,6 +39,7 @@ import { useHubNavigation } from "./hooks/useHubNavigation";
 import { useHubUIState } from "./hooks/useHubUIState";
 import { usePwaActions, type PwaAction } from "./hooks/usePwaActions";
 import { ShellDeepLinkBridge } from "./app/ShellDeepLinkBridge";
+import { PageviewTracker } from "./observability/PageviewTracker";
 import { HintsOrchestrator } from "./hints/HintsOrchestrator";
 
 const AuthPage = lazy(() =>
@@ -92,6 +93,12 @@ export default function App() {
           /reset-password, /design тощо) — deep link може прилетіти у
           будь-який із цих станів. */}
       <ShellDeepLinkBridge />
+      {/* PostHog `$pageview` tracker: монтуємо тут (всередині
+          BrowserRouter, поза AuthProvider), щоб фіксувати pathname і
+          в unauthenticated-шляхах (`/sign-in`, `/welcome`,
+          `/reset-password`) — без цього onboarding / auth funnels
+          у PostHog були б сліпими перед login-ом. */}
+      <PageviewTracker />
       <ApiClientProvider client={apiClient}>
         <AuthProvider>
           <AppInner />
