@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { chartPaletteList as COLORS } from "../constants/chartPalette";
+import { chartPaletteList as COLORS } from "../chartPalette/chartPalette";
 
 // Чиста презентаційна діаграма: рендер залежить лише від `data` та `onBarClick`.
 // `memo` уникає перерендеру, коли батько оновлюється, а ці пропси не змінилися
