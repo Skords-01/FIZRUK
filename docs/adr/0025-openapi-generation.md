@@ -10,7 +10,7 @@
   - [`docs/api/openapi.json`](../api/openapi.json) — згенерований spec (committed).
   - [`scripts/api/generate-openapi.mjs`](../../scripts/api/generate-openapi.mjs) — generator.
   - [`scripts/api/check-openapi-fresh.mjs`](../../scripts/api/check-openapi-fresh.mjs) — CI freshness check.
-  - [`.github/workflows/openapi-freshness.yml`](../../.github/workflows/openapi-freshness.yml) — PR gate.
+  - `.github/workflows/openapi-freshness.yml` — PR gate (додасть user manually після merge цього PR; шаблон у тілі цього ADR).
   - AGENTS.md → "Hard rules" → rule #3 — API contract drift.
   - PR-історія: PR-4.D (audit `docs/audits/2026-04-26-sergeant-audit-devin.md`).
 
@@ -98,3 +98,50 @@ pnpm api:check-openapi
 # Дивитись зміни:
 git diff docs/api/openapi.json
 ```
+
+## 8. Workflow-шаблон (потребує `workflow` OAuth scope для коміту)
+
+Devin не може створювати файли у `.github/workflows/` через OAuth App без `workflow` scope (GitHub policy). Шаблон нижче — додай вручну у `.github/workflows/openapi-freshness.yml`:
+
+```yaml
+name: OpenAPI freshness check
+
+on:
+  pull_request:
+    paths:
+      - "packages/shared/src/schemas/**"
+      - "packages/shared/src/openapi/**"
+      - "docs/api/openapi.json"
+      - "scripts/api/**"
+      - ".github/workflows/openapi-freshness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/shared/src/schemas/**"
+      - "packages/shared/src/openapi/**"
+      - "docs/api/openapi.json"
+      - "scripts/api/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openapi-freshness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: docs/api/openapi.json ≡ zod-schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: pnpm/action-setup@903f9c1a6ebcba6cf41d87230be49611ac97822e
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "20"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm api:check-openapi
+```
+
+Альтернатива: додати крок `pnpm api:check-openapi` у вже існуючий `ci.yml` (job `check` після `pnpm install`). Це не вимагає окремого workflow.

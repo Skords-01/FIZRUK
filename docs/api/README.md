@@ -8,7 +8,7 @@
 
 - **Diff-friendly review**: PR показує semantic API change в одному файлі.
 - **External integrators**: можна імпортувати в Postman/Insomnia/Swagger UI без додаткового build-step.
-- **CI gate**: PR що змінює zod-схему, але не оновив spec — fail у [`openapi-freshness.yml`](../../.github/workflows/openapi-freshness.yml).
+- **CI gate**: PR що змінює zod-схему, але не оновив spec — fail через `pnpm api:check-openapi` (workflow `.github/workflows/openapi-freshness.yml` додається вручну, шаблон у [ADR-0023 §8](../adr/0023-openapi-generation.md)).
 
 Drift-protection — мотивація, описана в [ADR-0023](../adr/0023-openapi-generation.md).
 
@@ -26,7 +26,7 @@ pnpm api:generate-openapi
 pnpm api:check-openapi
 ```
 
-Цей же скрипт запускається у CI (`.github/workflows/openapi-freshness.yml`). Якщо коммітнутий файл відстає від generator output — exit 1 з підказкою, що запустити.
+Скрипт призначений для CI (workflow-шаблон у [ADR-0023 §8](../adr/0023-openapi-generation.md)). Якщо коммітнутий файл відстає від generator output — exit 1 з підказкою, що запустити.
 
 ## Як переглянути в браузері
 
