@@ -1,18 +1,45 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signUp } from "@/auth/authClient";
-import { colors, radius, spacing } from "@/theme";
+import { colors, spacing } from "@/theme";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+
+function PasswordStrength({ password }: { password: string }) {
+  if (!password) return null;
+  const len = password.length;
+  const level = len < 6 ? 0 : len < 10 ? 1 : 2;
+  const labels = ["Слабкий", "Середній", "Надійний"];
+  const levelColors = [colors.danger, "#f59e0b", "#84cc16"];
+  const widths = ["33%", "66%", "100%"] as const;
+
+  return (
+    <View style={{ marginTop: 6 }}>
+      <View
+        style={{
+          height: 4,
+          backgroundColor: colors.surface,
+          borderRadius: 4,
+          overflow: "hidden",
+        }}
+      >
+        <View
+          style={{
+            height: "100%",
+            width: widths[level],
+            backgroundColor: levelColors[level],
+            borderRadius: 4,
+          }}
+        />
+      </View>
+      <Text style={{ color: levelColors[level], fontSize: 11, marginTop: 4, fontWeight: "600" }}>
+        {labels[level]}
+      </Text>
+    </View>
+  );
+}
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -40,67 +67,57 @@ export default function SignUpScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={s.container} edges={["bottom"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.form}
+        style={s.form}
       >
-        <Text style={styles.title}>Створити акаунт</Text>
-        <Text style={styles.subtitle}>
-          Мінімум 10 символів пароль (NIST SP 800-63B).
-        </Text>
+        <Text style={s.title}>Створити акаунт</Text>
+        <Text style={s.subtitle}>Безкоштовно. Без зайвого.</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Ім'я"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="words"
-          textContentType="name"
+        <Input
+          placeholder="Твоє ім'я"
           value={name}
           onChangeText={setName}
+          autoCapitalize="words"
+          textContentType="name"
+          size="lg"
         />
-        <TextInput
-          style={styles.input}
-          placeholder="email@example.com"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          textContentType="emailAddress"
+        <Input
+          type="email"
+          placeholder="ваш@email.com"
           value={email}
           onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="пароль (10+ символів)"
-          placeholderTextColor={colors.textMuted}
-          secureTextEntry
-          textContentType="newPassword"
-          value={password}
-          onChangeText={setPassword}
+          size="lg"
         />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <View>
+          <Input
+            type="password"
+            placeholder="Придумай надійний пароль"
+            value={password}
+            onChangeText={setPassword}
+            size="lg"
+          />
+          <PasswordStrength password={password} />
+        </View>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            (pressed || loading) && styles.buttonPressed,
-          ]}
+        {error ? <Text style={s.error}>{error}</Text> : null}
+
+        <Button
+          variant="primary"
+          size="lg"
+          loading={loading}
+          disabled={!name || !email || password.length < 10}
           onPress={onSubmit}
-          disabled={loading || !name || !email || password.length < 10}
         >
-          {loading ? (
-            <ActivityIndicator color={colors.text} />
-          ) : (
-            <Text style={styles.buttonText}>Зареєструватися</Text>
-          )}
-        </Pressable>
+          Зареєструватися
+        </Button>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Вже є акаунт?</Text>
-          <Link href="/(auth)/sign-in" style={styles.footerLink}>
-            <Text style={styles.footerLinkText}>Увійти</Text>
+        <View style={s.footer}>
+          <Text style={s.footerText}>Вже є акаунт?</Text>
+          <Link href="/(auth)/sign-in" style={s.footerLink}>
+            <Text style={s.footerLinkText}>Увійти</Text>
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -108,48 +125,20 @@ export default function SignUpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  form: {
-    flex: 1,
-    padding: spacing.xl,
-    justifyContent: "center",
-    gap: spacing.md,
-  },
+  form: { flex: 1, padding: spacing.xl, justifyContent: "center", gap: spacing.md },
   title: { color: colors.text, fontSize: 28, fontWeight: "700" },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginBottom: spacing.lg,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    color: colors.text,
-    fontSize: 16,
-  },
+  subtitle: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.lg },
   error: { color: colors.danger, fontSize: 13 },
-  button: {
-    backgroundColor: colors.accent,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    alignItems: "center",
-    marginTop: spacing.sm,
-  },
-  buttonPressed: { opacity: 0.7 },
-  buttonText: { color: colors.text, fontSize: 16, fontWeight: "600" },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     marginTop: spacing.lg,
-    gap: spacing.xs,
+    gap: 6,
   },
   footerText: { color: colors.textMuted, fontSize: 14 },
-  footerLink: { paddingHorizontal: spacing.xs },
+  footerLink: { paddingHorizontal: 4 },
   footerLinkText: { color: colors.accent, fontSize: 14, fontWeight: "500" },
 });
