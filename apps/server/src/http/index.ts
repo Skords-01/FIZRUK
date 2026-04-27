@@ -42,7 +42,3 @@ export { requireApiSecret } from "./requireApiSecret.js";
 export { requireAnthropicKey } from "./requireAnthropicKey.js";
 export { requireGroqKey } from "./requireGroqKey.js";
 export { requireAiQuota } from "./requireAiQuota.js";
-export {
-  requireNutritionToken,
-  requireNutritionTokenIfConfigured,
-} from "./requireNutritionToken.js";
