@@ -57,6 +57,33 @@ function getAdvancedCookieOptions(): AdvancedCookieOptions | null {
 
 const advancedCookies = getAdvancedCookieOptions();
 
+/**
+ * Збираємо `socialProviders` тільки коли пара
+ * `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` обидві задані. Якщо
+ * хоча б одна порожня — кидати конфіг до Better Auth не можна
+ * (він зразу падає при старті, бо валідатор сприймає це як
+ * misconfigured provider). Тому у dev/CI без credentials просто не
+ * вмикаємо провайдера: фронтова кнопка отримає `Provider not
+ * configured` через стандартний `authError` (див. `loginWithGoogle`
+ * у `apps/web/src/core/auth/AuthContext.tsx`), а сервер стартує без
+ * сюрпризів.
+ */
+function getSocialProviders():
+  | { google: { clientId: string; clientSecret: string } }
+  | undefined {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return undefined;
+  return {
+    google: {
+      clientId,
+      clientSecret,
+    },
+  };
+}
+
+const socialProviders = getSocialProviders();
+
 export const auth = betterAuth({
   database: pool,
   baseURL: getBaseURL(),
@@ -66,6 +93,7 @@ export const auth = betterAuth({
       enabled: true,
     },
   },
+  ...(socialProviders ? { socialProviders } : {}),
   emailAndPassword: {
     enabled: true,
     // NIST SP 800-63B рекомендує мінімум 8 символів; 10 — розумний trade-off,

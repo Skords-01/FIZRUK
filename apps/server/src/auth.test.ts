@@ -58,6 +58,47 @@ describe("auth config — bearer plugin інтегрований у Better Auth"
     expect(options.emailAndPassword?.enabled).toBe(true);
   });
 
+  /**
+   * `socialProviders.google` має вмикатися ТІЛЬКИ коли пара
+   * `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` обидві задані.
+   * У тестовому середовищі ці env-и порожні — тож конфіг має
+   * стартувати без `socialProviders`, інакше Better Auth впав би
+   * на старті з валідаційною помилкою.
+   */
+  it("без env-ів socialProviders НЕ передається у Better Auth", () => {
+    const options = (
+      auth as unknown as { options: { socialProviders?: unknown } }
+    ).options;
+    expect(options.socialProviders).toBeUndefined();
+  });
+
+  it("із заданими GOOGLE_CLIENT_ID/SECRET вмикається google-провайдер", async () => {
+    vi.resetModules();
+    vi.stubEnv("GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent.com");
+    vi.stubEnv("GOOGLE_CLIENT_SECRET", "GOCSPX-test-secret");
+    try {
+      const { auth: authWithGoogle } = await import("./auth.js");
+      const options = (
+        authWithGoogle as unknown as {
+          options: {
+            socialProviders?: {
+              google?: { clientId?: string; clientSecret?: string };
+            };
+          };
+        }
+      ).options;
+      expect(options.socialProviders?.google?.clientId).toBe(
+        "test-client-id.apps.googleusercontent.com",
+      );
+      expect(options.socialProviders?.google?.clientSecret).toBe(
+        "GOCSPX-test-secret",
+      );
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+
   it("налаштовані sendResetPassword та emailVerification (Resend у рантаймі)", () => {
     const options = (
       auth as unknown as {
