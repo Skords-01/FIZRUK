@@ -4,7 +4,66 @@
 
 ---
 
-## Steps
+## Decision Tree
+
+> Follow this tree from Q1 downward. Each leaf node (→ **ACTION**) links to the detailed steps below.
+
+**Q1: Який тип алерту?**
+
+- `HttpErrorBudgetBurn` (5xx spike) → перейди до Q2
+- `DbPoolSaturation` → **ACTION**: перевір slow queries, додай індекс → [§4 DB saturated](#4-класифікувати-root-cause)
+- `AiQuotaBudgetBurn` → **ACTION**: збільш ліміт або оптимізуй промпти → [§4 AI quota](#4-класифікувати-root-cause)
+- `PushDeliveryDegradation` → перевір VAPID keys + push service status → [§4](#4-класифікувати-root-cause)
+- `ExternalApiCircuitOpen` → **WAIT**: circuit breaker auto-recovery (30s) → якщо не відновилось → [§5 Ескалація](#5-виправити-або-ескалувати)
+- `HighMemoryUsage` → перевір RSS trend → профілюй з `--inspect` → [§5](#5-виправити-або-ескалувати)
+- Невідомий / інший → [§2 Перевір /metrics](#2-перевірити-metrics) → повтори Q1
+
+**Q2: 5xx — це code bug чи зовнішня залежність?**
+
+- Stack trace вказує на конкретний path у `apps/server/` → **Code bug** → [hotfix-prod-regression.md](hotfix-prod-regression.md)
+- `circuit_open` outcome для зовнішнього API (Mono, Anthropic) → **External** → circuit breaker auto-recovery, чекай
+- DB-related (pool exhaustion, slow queries) → [add-sql-migration.md](add-sql-migration.md) для індексу / оптимізації
+- Незрозуміло → збери більше даних: [§2 /metrics](#2-перевірити-metrics) + [§3 Pino логи](#3-перевірити-pino-логи) → повтори Q2
+
+**Q3: Чи інцидент значний (downtime > 5 хв / data loss / user impact)?**
+
+- Так → обов'язковий post-mortem → [§6 Документувати](#6-документувати)
+- Ні → задокументуй у логі, закрий алерт
+
+```mermaid
+flowchart TD
+    Q1{"Q1: Тип алерту?"}
+    Q1 -- "HttpErrorBudgetBurn" --> Q2
+    Q1 -- "DbPoolSaturation" --> DB_FIX["Slow queries\n→ add index"]
+    Q1 -- "AiQuotaBudgetBurn" --> AI_FIX["Збільш ліміт /\nоптимізуй промпти"]
+    Q1 -- "ExternalApiCircuitOpen" --> CB_WAIT["⏳ Circuit breaker\nauto-recovery 30s"]
+    Q1 -- "HighMemoryUsage" --> MEM["Профілюй\n--inspect"]
+    Q1 -- "PushDeliveryDegradation" --> PUSH["Перевір VAPID keys\n+ push service"]
+    Q1 -- "Unknown" --> METRICS["§2 /metrics"] --> Q1
+
+    Q2{"Q2: Code bug чи external?"}
+    Q2 -- "Code bug\n(stack trace)" --> HOTFIX["→ hotfix-prod-\nregression.md"]
+    Q2 -- "External API\n(circuit_open)" --> CB_WAIT2["⏳ Wait for\ncircuit recovery"]
+    Q2 -- "DB-related" --> DB_MIG["→ add-sql-\nmigration.md"]
+    Q2 -- "Unclear" --> LOGS["§2 + §3\nMore data"] --> Q2
+
+    DB_FIX --> Q3
+    AI_FIX --> Q3
+    CB_WAIT --> Q3
+    MEM --> Q3
+    PUSH --> Q3
+    HOTFIX --> Q3
+    CB_WAIT2 --> Q3
+    DB_MIG --> Q3
+
+    Q3{"Q3: Значний інцидент?"}
+    Q3 -- "Так" --> PM["§6 Post-mortem"]
+    Q3 -- "Ні" --> CLOSE["Закрий алерт"]
+```
+
+---
+
+## Background (Original Steps)
 
 ### 1. Визначити тип алерту
 

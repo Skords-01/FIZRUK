@@ -1,5 +1,7 @@
 # Мінімальні Grafana dashboards (Prometheus)
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 Це “starter pack” панелей, яких достатньо, щоб швидко зрозуміти: **що саме горить**
 (HTTP / DB / Auth / Sync / AI / upstream), **де** і **чому**.
 
@@ -57,3 +59,17 @@
 
 - **blocked/allowed**:
   - `sum by (key, outcome) (rate(rate_limit_hits_total[5m]))`
+
+---
+
+## Importable Grafana dashboard JSONs
+
+Ready-to-import JSON dashboards live in [`dashboards/`](./dashboards/):
+
+| File                                                    | Scope                                                                 |
+| ------------------------------------------------------- | --------------------------------------------------------------------- |
+| [`http-red.json`](./dashboards/http-red.json)           | HTTP RED (rate, errors, duration p50/p95/p99) with module/path filter |
+| [`db-use.json`](./dashboards/db-use.json)               | Postgres pool USE, query duration, slow queries, DB errors            |
+| [`slo-burn-rate.json`](./dashboards/slo-burn-rate.json) | Multi-window multi-burn-rate SLO overview (all domains)               |
+
+Import via Grafana UI: **Dashboards → Import → Upload JSON**. See [`dashboards/README.md`](./dashboards/README.md) for details on datasource variables and expected labels.

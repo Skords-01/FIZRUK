@@ -24,7 +24,9 @@ async function seedLocalStorage(page: Page) {
   }, SEEDED_LS);
 }
 
-test("dashboard: renders without console errors", async ({ page }) => {
+test("@critical dashboard: renders without console errors", async ({
+  page,
+}) => {
   await seedLocalStorage(page);
 
   const errors: string[] = [];
@@ -46,7 +48,9 @@ test("dashboard: renders without console errors", async ({ page }) => {
   expect(fatal, "Unexpected console errors on dashboard").toEqual([]);
 });
 
-test("dashboard: API health endpoint responds", async ({ request }) => {
+test("@critical dashboard: API health endpoint responds", async ({
+  request,
+}) => {
   const res = await request.get(
     (process.env.VITE_API_BASE_URL || "http://127.0.0.1:3000") + "/health",
   );

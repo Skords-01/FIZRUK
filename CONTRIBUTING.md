@@ -1,5 +1,7 @@
 # Contributing to Sergeant
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 > **Ціль:** zero-to-running за ≤ 5 хвилин на будь-якій машині з Docker.
 
 ---
