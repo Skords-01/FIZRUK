@@ -170,7 +170,7 @@ export function PermissionsPrompt({
         </p>
       </div>
 
-      <ul className="w-full space-y-2 text-left" role="list">
+      <ul className="w-full space-y-2 text-left">
         {ROWS.map((row) => {
           const state = states[row.id];
           return (
@@ -217,7 +217,7 @@ export function PermissionsPrompt({
                     className={cn(state === "asking" && "opacity-60")}
                     aria-label={`Дозволити ${row.title.toLowerCase()}`}
                   >
-                    {state === "asking" ? "..." : "Дозволити"}
+                    {state === "asking" ? "…" : "Дозволити"}
                   </Button>
                 )}
               </div>
