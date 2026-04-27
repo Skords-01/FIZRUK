@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { bankProxyFetch } from "../lib/bankProxy.js";
-import { validateQuery } from "../http/validate.js";
-import { PrivatQuerySchema } from "../http/schemas.js";
+import { bankProxyFetch } from "../../lib/bankProxy.js";
+import { validateQuery } from "../../http/validate.js";
+import { PrivatQuerySchema } from "../../http/schemas.js";
 
 /**
  * `/api/privat` — проксі до PrivatBank merchant API. CORS/rate-limit/tag

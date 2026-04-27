@@ -4,22 +4,19 @@ import type { Request, Response } from "express";
 // експортує тип з ім'ям `Response`. Розрізняємо явно через alias, інакше TS
 // підставляє Express-type у віддалені від HTTP-ендпоінту місця.
 type FetchResponse = globalThis.Response;
-import { validateBody } from "../http/validate.js";
-import { ChatRequestSchema } from "../http/schemas.js";
+import { validateBody } from "../../http/validate.js";
+import { ChatRequestSchema } from "../../http/schemas.js";
 import {
   anthropicMessages,
   anthropicMessagesStream,
   extractAnthropicText,
-} from "../lib/anthropic.js";
+} from "../../lib/anthropic.js";
 import type { WithAiQuotaRefund } from "./aiQuota.js";
-import { TOOLS, SYSTEM_PREFIX, SYSTEM_PROMPT_VERSION } from "./chat/tools.js";
-import {
-  recordToolProposals,
-  recordToolExecutions,
-} from "./chat/toolMetrics.js";
-import { truncateToolResults } from "./chat/toolResultTruncation.js";
-import { anthropicPromptCacheHitTotal } from "../obs/metrics.js";
-import { als } from "../obs/requestContext.js";
+import { TOOLS, SYSTEM_PREFIX, SYSTEM_PROMPT_VERSION } from "./tools.js";
+import { recordToolProposals, recordToolExecutions } from "./toolMetrics.js";
+import { truncateToolResults } from "./toolResultTruncation.js";
+import { anthropicPromptCacheHitTotal } from "../../obs/metrics.js";
+import { als } from "../../obs/requestContext.js";
 
 type WithAnthropicKey = Request & { anthropicKey?: string };
 

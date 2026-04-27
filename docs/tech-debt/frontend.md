@@ -312,7 +312,7 @@ Ref: PR-6.F (sergeant-audit-devin.md).
 | `apps/web/src/modules/finyk/hooks/useFinykPersonalization.ts`       | `as unknown as` | 6         |
 | `apps/web/src/core/lib/hubChatUtils.ts`                             | `as unknown as` | 2         |
 | `apps/web/src/core/App.tsx`                                         | `as unknown as` | 3         |
-| `apps/server/src/modules/chat.ts`                                   | `as unknown as` | 1         |
+| `apps/server/src/modules/chat/chat.ts`                              | `as unknown as` | 1         |
 | `apps/server/src/lib/anthropic.ts`                                  | `as unknown as` | 1         |
 | `apps/server/src/lib/bankProxy.ts`                                  | `as unknown as` | 1         |
 | `apps/server/src/lib/webpushSend.ts`                                | `as unknown as` | 1         |

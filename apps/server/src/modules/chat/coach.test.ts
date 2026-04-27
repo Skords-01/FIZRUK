@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Request, Response } from "express";
 import type { Mock } from "vitest";
 
-vi.mock("../db.js", () => {
+vi.mock("../../db.js", () => {
   const pool = { query: vi.fn() };
   return { default: pool, pool };
 });
 
-vi.mock("../lib/anthropic.js", () => ({
+vi.mock("../../lib/anthropic.js", () => ({
   anthropicMessages: vi.fn(),
   // Дзеркалимо реальну реалізацію з `server/lib/anthropic.js`, включно з
   // `.trim()` — без нього LLM-відповіді з trailing newline-ами проходили б у
@@ -22,10 +22,10 @@ vi.mock("../lib/anthropic.js", () => ({
   ),
 }));
 
-import _pool from "../db.js";
-import { anthropicMessages as _anthropicMessages } from "../lib/anthropic.js";
+import _pool from "../../db.js";
+import { anthropicMessages as _anthropicMessages } from "../../lib/anthropic.js";
 import { coachInsight, coachMemoryGet, coachMemoryPost } from "./coach.js";
-import { MAX_BLOB_SIZE } from "./sync.js";
+import { MAX_BLOB_SIZE } from "../sync/sync.js";
 
 const pool = _pool as unknown as { query: Mock };
 const anthropicMessages = _anthropicMessages as unknown as Mock;

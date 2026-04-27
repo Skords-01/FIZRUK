@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 import webpush from "web-push";
-import pool from "../db.js";
-import { sendWebPush } from "../lib/webpushSend.js";
-import { logger } from "../obs/logger.js";
-import { pushSendsTotal } from "../obs/metrics.js";
-import { sendToUser } from "../push/send.js";
-import { validateBody } from "../http/validate.js";
+import pool from "../../db.js";
+import { sendWebPush } from "../../lib/webpushSend.js";
+import { logger } from "../../obs/logger.js";
+import { pushSendsTotal } from "../../obs/metrics.js";
+import { sendToUser } from "../../push/send.js";
+import { validateBody } from "../../http/validate.js";
 import {
   PushRegisterSchema,
   PushSendSchema,
@@ -13,7 +13,7 @@ import {
   PushTestRequestSchema,
   PushUnregisterSchema,
   PushUnsubscribeSchema,
-} from "../http/schemas.js";
+} from "../../http/schemas.js";
 
 type WithSessionUser = Request & { user?: { id: string } };
 

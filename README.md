@@ -187,7 +187,7 @@ server/
 
 ## HubChat (AI-чат)
 
-**Архітектура:** клієнт `src/core/hub/HubChat.tsx` + `src/core/lib/hubChatActions.ts` (виконавець tool-calls) ↔ сервер `server/modules/chat.js` (Anthropic tool-use, Claude Sonnet 4.6). Користувач керує всіма 4 модулями голосом або текстом без переходу в UI.
+**Архітектура:** клієнт `src/core/hub/HubChat.tsx` + `src/core/lib/hubChatActions.ts` (виконавець tool-calls) ↔ сервер `server/modules/chat/chat.js` (Anthropic tool-use, Claude Sonnet 4.6). Користувач керує всіма 4 модулями голосом або текстом без переходу в UI.
 
 **Інструменти (32):**
 
@@ -222,7 +222,7 @@ server/
 
 **Квоти:** кожен виклик `/api/chat` (перший крок та tool-result-продовження) інкрементує `aiQuota` через `requireAiQuota()`-middleware. Ліміти — `AI_DAILY_USER_LIMIT` / `AI_DAILY_ANON_LIMIT`.
 
-**Тести:** `src/core/lib/hubChatActions.test.ts` + `hubChatActionsExtended.test.ts` (клієнтські обробники, localStorage mutations), `server/modules/chat.test.js` (tool-parsing з мок-Anthropic).
+**Тести:** `src/core/lib/hubChatActions.test.ts` + `hubChatActionsExtended.test.ts` (клієнтські обробники, localStorage mutations), `server/modules/chat/chat.test.js` (tool-parsing з мок-Anthropic).
 
 ## PWA
 

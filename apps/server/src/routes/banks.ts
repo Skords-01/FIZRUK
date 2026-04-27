@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { asyncHandler, rateLimitExpress, setModule } from "../http/index.js";
-import monoHandler from "../modules/mono.js";
-import privatHandler from "../modules/privat.js";
+import monoHandler from "../modules/mono/mono.js";
+import privatHandler from "../modules/mono/privat.js";
 
 /**
  * Bank-proxy endpoints: Monobank та Privatbank. Обидва просто проксують до

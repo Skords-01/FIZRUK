@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { bankProxyFetch } from "../lib/bankProxy.js";
-import { validateQuery } from "../http/validate.js";
-import { MonoQuerySchema } from "../http/schemas.js";
+import { bankProxyFetch } from "../../lib/bankProxy.js";
+import { validateQuery } from "../../http/validate.js";
+import { MonoQuerySchema } from "../../http/schemas.js";
 
 /**
  * `/api/mono` — проксі до Monobank personal API. CORS/rate-limit/module-tag

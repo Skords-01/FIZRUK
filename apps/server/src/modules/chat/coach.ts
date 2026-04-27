@@ -1,10 +1,16 @@
 import type { Request, Response } from "express";
-import pool from "../db.js";
-import { anthropicMessages, extractAnthropicText } from "../lib/anthropic.js";
-import { sendToUserQuietly } from "../push/send.js";
-import { MAX_BLOB_SIZE } from "./sync.js";
-import { validateBody } from "../http/validate.js";
-import { CoachInsightSchema, CoachMemoryPostSchema } from "../http/schemas.js";
+import pool from "../../db.js";
+import {
+  anthropicMessages,
+  extractAnthropicText,
+} from "../../lib/anthropic.js";
+import { sendToUserQuietly } from "../../push/send.js";
+import { MAX_BLOB_SIZE } from "../sync/sync.js";
+import { validateBody } from "../../http/validate.js";
+import {
+  CoachInsightSchema,
+  CoachMemoryPostSchema,
+} from "../../http/schemas.js";
 
 type WithSessionUser = Request & { user?: { id: string } };
 type WithAnthropicKey = Request & { anthropicKey?: string };

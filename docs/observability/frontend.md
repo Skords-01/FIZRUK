@@ -107,7 +107,7 @@ blockAllMedia: true   — медіа заблоковані (PII/розмір)
 
 - **Rate limit**: 60 req/min/IP.
 - **Відповідь**: завжди `204 No Content` (sendBeacon ігнорує body).
-- **Валідація**: Zod (`apps/server/src/modules/web-vitals.ts:36–49`):
+- **Валідація**: Zod (`apps/server/src/modules/observability/web-vitals.ts:36–49`):
   timing — `0..120_000 ms`, CLS — `0..10`.
 - **Payload**: `{ metrics: [{ name, value, rating }] }` (1..10 items).
 - Невалідні записи логуються з `sample=1%`.

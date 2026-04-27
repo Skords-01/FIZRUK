@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import { FoodSearchQuerySchema } from "../http/schemas.js";
-import { validateQuery } from "../http/validate.js";
+import { FoodSearchQuerySchema } from "../../http/schemas.js";
+import { validateQuery } from "../../http/validate.js";
 import {
   normalizeOFFSearch,
   normalizeUSDASearch,
   type OFFSearchProduct,
   type USDASearchFood,
-} from "../lib/normalizers/index.js";
+} from "../../lib/normalizers/index.js";
 
 const OFF_SEARCH = "https://world.openfoodfacts.org/api/v2/search";
 const OFF_FIELDS =

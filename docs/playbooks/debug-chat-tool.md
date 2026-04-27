@@ -194,4 +194,4 @@ Response **другого** `/api/chat` запиту повертає `{ type: "
 - [tune-system-prompt.md](tune-system-prompt.md) — зміна системного промпту без поломки tool-calling
 - [AGENTS.md](../../AGENTS.md) — секції _Architecture: AI tool execution path_, _max_tokens budget per request_, anti-pattern #6 про `localStorage.setItem`
 - `apps/web/src/core/lib/hubChatActions.ts` — `executeAction` entry point
-- `apps/server/src/modules/chat.ts` — `/api/chat` handler і continuation logic
+- `apps/server/src/modules/chat/chat.ts` — `/api/chat` handler і continuation logic

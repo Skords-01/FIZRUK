@@ -133,7 +133,7 @@ pnpm --filter @sergeant/mobile-shell open:android
   `{ platform, token }`, а `createPushEndpoints.register`
   (`packages/api-client/src/endpoints/push.ts`) — discriminated union
   на `platform: "web" | "ios" | "android"`, серверний handler
-  (`apps/server/src/modules/push.ts → register`) маршрутизує у
+  (`apps/server/src/modules/push/push.ts → register`) маршрутизує у
   `push_devices` для native-токенів. Залишається лише реальний
   APNs/FCM **send**-pipeline — див. `docs/mobile/overview.md#push-notifications`.
 - ~~**Deep-link навігація у React Router.** `parseDeepLink()` у

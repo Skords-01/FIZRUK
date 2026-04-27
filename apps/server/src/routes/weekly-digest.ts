@@ -6,7 +6,7 @@ import {
   requireAnthropicKey,
   setModule,
 } from "../http/index.js";
-import weeklyDigest from "../modules/weekly-digest.js";
+import weeklyDigest from "../modules/digest/weekly-digest.js";
 
 export function createWeeklyDigestRouter(): Router {
   const r = Router();

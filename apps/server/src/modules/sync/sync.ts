@@ -1,18 +1,18 @@
 import type { Request, Response } from "express";
-import pool from "../db.js";
-import { validateBody } from "../http/validate.js";
+import pool from "../../db.js";
+import { validateBody } from "../../http/validate.js";
 import {
   SyncPullSchema,
   SyncPushAllSchema,
   SyncPushSchema,
-} from "../http/schemas.js";
-import { logger } from "../obs/logger.js";
+} from "../../http/schemas.js";
+import { logger } from "../../obs/logger.js";
 import {
   syncConflictsTotal,
   syncDurationMs,
   syncOperationsTotal,
   syncPayloadBytes,
-} from "../obs/metrics.js";
+} from "../../obs/metrics.js";
 
 type WithSessionUser = Request & { user?: { id: string } };
 

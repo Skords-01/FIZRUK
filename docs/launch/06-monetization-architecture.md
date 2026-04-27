@@ -239,7 +239,7 @@ WHERE u.created_at < '2026-05-01T00:00:00+00:00'::TIMESTAMPTZ
 ### 3.4 effectiveLimits ↔ requireAiQuota (зміна v1 §2.7)
 
 ```ts
-// apps/server/src/modules/aiQuota.ts (правка існуючого файла)
+// apps/server/src/modules/chat/aiQuota.ts (правка існуючого файла)
 
 export async function effectiveLimits(userId: string | null): Promise<Limits> {
   if (!userId) return ANONYMOUS_LIMITS;
@@ -470,7 +470,7 @@ export const billingKeys = {
 │         · server-test snapshot + api-client unit-test           │
 │                                                                 │
 │ PR-M.6  feat(server): refactor effectiveLimits to use plan      │  ~200 LOC, medium risk
-│         · apps/server/src/modules/aiQuota.ts                    │
+│         · apps/server/src/modules/chat/aiQuota.ts                    │
 │         · Pro → null limit (unlimited skip)                     │
 │         · Free → PLAN_GATES.free.aiChatPerDay (5)               │
 │         · Backward-compat snapshot tests                        │

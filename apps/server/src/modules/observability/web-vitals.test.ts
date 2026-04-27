@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { Request, Response } from "express";
 import webVitalsHandler from "./web-vitals.js";
-import { register, webVitalsCls, webVitalsDurationMs } from "../obs/metrics.js";
+import {
+  register,
+  webVitalsCls,
+  webVitalsDurationMs,
+} from "../../obs/metrics.js";
 
 interface TestRes {
   statusCode: number;

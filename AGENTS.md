@@ -312,7 +312,7 @@ The HubChat assistant uses Anthropic tool-calling. Tools are **defined on the se
 
 ### `max_tokens` budget per request
 
-`apps/server/src/modules/chat.ts` uses two distinct `max_tokens` values, intentionally:
+`apps/server/src/modules/chat/chat.ts` uses two distinct `max_tokens` values, intentionally:
 
 | Request                      | `max_tokens` | Where (chat.ts)                 | Why                                                                                                                                              |
 | ---------------------------- | ------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |

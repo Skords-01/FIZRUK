@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler, rateLimitExpress, setModule } from "../http/index.js";
-import barcodeHandler from "../modules/barcode.js";
+import barcodeHandler from "../modules/nutrition/barcode.js";
 
 export function createBarcodeRouter(): Router {
   const r = Router();

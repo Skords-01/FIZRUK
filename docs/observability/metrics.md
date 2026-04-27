@@ -93,12 +93,12 @@ sum(rate(auth_attempts_total{outcome="error"}[5m])) / sum(rate(auth_attempts_tot
 
 ## 4. Sync
 
-| Metric                  | Type      | Labels                      | Emitter                                                 |
-| ----------------------- | --------- | --------------------------- | ------------------------------------------------------- |
-| `sync_operations_total` | Counter   | `op` · `module` · `outcome` | [sync.ts:91](../../apps/server/src/modules/sync.ts#L91) |
-| `sync_duration_ms`      | Histogram | `op` · `module`             | [sync.ts:92](../../apps/server/src/modules/sync.ts#L92) |
-| `sync_payload_bytes`    | Histogram | `op` · `module`             | [sync.ts:93](../../apps/server/src/modules/sync.ts#L93) |
-| `sync_conflicts_total`  | Counter   | `module`                    | [sync.ts:66](../../apps/server/src/modules/sync.ts#L66) |
+| Metric                  | Type      | Labels                      | Emitter                                                      |
+| ----------------------- | --------- | --------------------------- | ------------------------------------------------------------ |
+| `sync_operations_total` | Counter   | `op` · `module` · `outcome` | [sync.ts:91](../../apps/server/src/modules/sync/sync.ts#L91) |
+| `sync_duration_ms`      | Histogram | `op` · `module`             | [sync.ts:92](../../apps/server/src/modules/sync/sync.ts#L92) |
+| `sync_payload_bytes`    | Histogram | `op` · `module`             | [sync.ts:93](../../apps/server/src/modules/sync/sync.ts#L93) |
+| `sync_conflicts_total`  | Counter   | `module`                    | [sync.ts:66](../../apps/server/src/modules/sync/sync.ts#L66) |
 
 `op`: `push` · `pull` · `push_all` · `pull_all`. `module`: `finyk` · `fizruk` · `routine` · `nutrition` · `profile`. `outcome`: `ok` · `empty` · `conflict` · `invalid` · `too_large` · `unauthorized` · `error`. Buckets duration: `10…10000` ms; bytes: `1024…5242880` (MAX_BLOB_SIZE = 5 MB).
 
@@ -134,14 +134,14 @@ rate(rate_limit_hits_total{key="api:auth:sensitive",outcome="blocked"}[5m])    #
 
 ## 6. AI (Anthropic)
 
-| Metric                             | Type      | Labels                                        | Emitter                                                                             |
-| ---------------------------------- | --------- | --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `ai_requests_total`                | Counter   | `provider` · `model` · `endpoint` · `outcome` | [anthropic.ts:82](../../apps/server/src/lib/anthropic.ts#L82)                       |
-| `ai_request_duration_ms`           | Histogram | `provider` · `model` · `endpoint`             | [anthropic.ts:89](../../apps/server/src/lib/anthropic.ts#L89)                       |
-| `ai_tokens_total`                  | Counter   | `provider` · `model` · `kind`                 | [anthropic.ts:131](../../apps/server/src/lib/anthropic.ts#L131)                     |
-| `anthropic_prompt_cache_hit_total` | Counter   | `version` · `outcome`                         | [anthropic.ts:161](../../apps/server/src/lib/anthropic.ts#L161)                     |
-| `ai_quota_blocks_total`            | Counter   | `reason`                                      | [aiQuota.ts:168](../../apps/server/src/modules/aiQuota.ts#L168)                     |
-| `ai_quota_fail_open_total`         | Counter   | `reason`                                      | [aiQuota.ts](../../apps/server/src/modules/aiQuota.ts) `logQuotaStoreUnavailable()` |
+| Metric                             | Type      | Labels                                        | Emitter                                                                                  |
+| ---------------------------------- | --------- | --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ai_requests_total`                | Counter   | `provider` · `model` · `endpoint` · `outcome` | [anthropic.ts:82](../../apps/server/src/lib/anthropic.ts#L82)                            |
+| `ai_request_duration_ms`           | Histogram | `provider` · `model` · `endpoint`             | [anthropic.ts:89](../../apps/server/src/lib/anthropic.ts#L89)                            |
+| `ai_tokens_total`                  | Counter   | `provider` · `model` · `kind`                 | [anthropic.ts:131](../../apps/server/src/lib/anthropic.ts#L131)                          |
+| `anthropic_prompt_cache_hit_total` | Counter   | `version` · `outcome`                         | [anthropic.ts:161](../../apps/server/src/lib/anthropic.ts#L161)                          |
+| `ai_quota_blocks_total`            | Counter   | `reason`                                      | [aiQuota.ts:168](../../apps/server/src/modules/chat/aiQuota.ts#L168)                     |
+| `ai_quota_fail_open_total`         | Counter   | `reason`                                      | [aiQuota.ts](../../apps/server/src/modules/chat/aiQuota.ts) `logQuotaStoreUnavailable()` |
 
 `outcome` (requests): `ok` · `rate_limited` · `timeout` · `error` · `bad_response`. `kind` (tokens): `prompt` · `completion` · `cache_write` · `cache_read`. `outcome` (cache): `hit` · `miss`. `reason` (quota blocks): `limit` · `disabled` · `tool_disabled`. `reason` (fail-open): `database_url_missing` · `db_error`. Buckets duration: `100…60000` ms.
 
@@ -226,9 +226,9 @@ histogram_quantile(0.95, sum by (le) (rate(mono_webhook_duration_ms_bucket[5m]))
 
 ## 11. Barcode
 
-| Metric                  | Type    | Labels               | Emitter                                                         |
-| ----------------------- | ------- | -------------------- | --------------------------------------------------------------- |
-| `barcode_lookups_total` | Counter | `source` · `outcome` | [barcode.ts:153](../../apps/server/src/modules/barcode.ts#L153) |
+| Metric                  | Type    | Labels               | Emitter                                                                   |
+| ----------------------- | ------- | -------------------- | ------------------------------------------------------------------------- |
+| `barcode_lookups_total` | Counter | `source` · `outcome` | [barcode.ts:153](../../apps/server/src/modules/nutrition/barcode.ts#L153) |
 
 `source`: `off` · `usda` · `upcitemdb`. `outcome`: `hit` · `miss` · `error`. Свідоме дублювання з `external_http_requests_total`. **Cardinality**: **9**.
 
@@ -240,10 +240,10 @@ sum by (source) (rate(barcode_lookups_total{outcome="hit"}[5m])) / sum by (sourc
 
 ## 12. Frontend CWV
 
-| Metric                   | Type      | Labels              | Emitter                                                             |
-| ------------------------ | --------- | ------------------- | ------------------------------------------------------------------- |
-| `web_vitals_duration_ms` | Histogram | `metric` · `rating` | [web-vitals.ts:72](../../apps/server/src/modules/web-vitals.ts#L72) |
-| `web_vitals_cls`         | Histogram | `rating`            | [web-vitals.ts:70](../../apps/server/src/modules/web-vitals.ts#L70) |
+| Metric                   | Type      | Labels              | Emitter                                                                           |
+| ------------------------ | --------- | ------------------- | --------------------------------------------------------------------------------- |
+| `web_vitals_duration_ms` | Histogram | `metric` · `rating` | [web-vitals.ts:72](../../apps/server/src/modules/observability/web-vitals.ts#L72) |
+| `web_vitals_cls`         | Histogram | `rating`            | [web-vitals.ts:70](../../apps/server/src/modules/observability/web-vitals.ts#L70) |
 
 `metric`: `LCP` · `INP` · `FCP` · `TTFB`. `rating`: `good` · `needs-improvement` · `poor`. Endpoint `POST /api/metrics/web-vitals` (anonymous, `sendBeacon`). Buckets duration: `50…10000` ms; CLS: `0.01…1`. **Cardinality**: 4 × 3 × 11 + 3 × 7 = **153**.
 

@@ -1,8 +1,11 @@
 import type { Request, Response } from "express";
-import { anthropicMessages, extractAnthropicText } from "../lib/anthropic.js";
-import { validateBody } from "../http/validate.js";
-import { WeeklyDigestSchema } from "../http/schemas.js";
-import { ExternalServiceError, ValidationError } from "../obs/errors.js";
+import {
+  anthropicMessages,
+  extractAnthropicText,
+} from "../../lib/anthropic.js";
+import { validateBody } from "../../http/validate.js";
+import { WeeklyDigestSchema } from "../../http/schemas.js";
+import { ExternalServiceError, ValidationError } from "../../obs/errors.js";
 
 type WithAnthropicKey = Request & { anthropicKey?: string };
 

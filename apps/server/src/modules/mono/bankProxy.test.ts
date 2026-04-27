@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Request, Response } from "express";
 import monoHandler from "./mono.js";
 import privatHandler from "./privat.js";
-import { bankProxyFetch, __bankProxyTestHooks } from "../lib/bankProxy.js";
+import { bankProxyFetch, __bankProxyTestHooks } from "../../lib/bankProxy.js";
 
 interface TestRes {
   statusCode: number;

@@ -55,7 +55,7 @@ SMOKE OK
 
 ### 1. Перетвори `system` з string на блоки
 
-`apps/server/src/modules/chat.ts` має передавати `system` як масив — кешований префікс і динамічний контекст:
+`apps/server/src/modules/chat/chat.ts` має передавати `system` як масив — кешований префікс і динамічний контекст:
 
 ```ts
 interface AnthropicSystemBlock {
@@ -184,7 +184,7 @@ if (Number.isFinite(usage.cache_read_input_tokens)) {
 
 ### 6. Тести
 
-Мінімальний набір для `apps/server/src/modules/chat.test.ts`:
+Мінімальний набір для `apps/server/src/modules/chat/chat.test.ts`:
 
 - `system` — масив: cached `SYSTEM_PREFIX` + non-cached `context`.
 - Empty `context` не створює empty text block.
@@ -280,5 +280,5 @@ sum(rate(anthropic_prompt_cache_hit_total{outcome="miss"}[5m])) by (version)
 - [tune-system-prompt.md](tune-system-prompt.md) — як міняти `SYSTEM_PREFIX` без поломки tool-calling (виконуй до або в окремому PR від caching rollout)
 - [AGENTS.md](../../AGENTS.md) — секції _Architecture: AI tool execution path_ і _SYSTEM_PREFIX is a prompt-cache candidate_
 - `apps/server/src/lib/anthropic.ts` — `anthropicMessages` / `anthropicMessagesStream` / `recordUsage`
-- `apps/server/src/modules/chat.ts` — `buildSystem`, `applyToolsCacheBreakpoint`, request payload-и.
+- `apps/server/src/modules/chat/chat.ts` — `buildSystem`, `applyToolsCacheBreakpoint`, request payload-и.
 - Anthropic docs: https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching

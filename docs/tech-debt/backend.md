@@ -31,21 +31,21 @@
 
 ## Summary — per-category
 
-| Категорія               | Статус               | Короткий висновок                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ----------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Валідація (zod)         | ~~Високий~~ → **OK** | ✅ PR A. `RefinePhotoSchema` синхронізована з handler-ом (`prior_result`/`portion_grams`/`qna`). `mono`/`privat`/`sync` використовують централізовані `*QuerySchema`/`*BodySchema`. Ручна перевірка `req.body` не знайдена у `apps/server/src` (grep `req\.body\.` поза `validate*` → 0).                                                                                                                              |
-| Error handling          | ~~Високий~~ → **OK** | ✅ PR A. Широкі `catch { res.status(500).json({ error: e.message }) }` не знайдені (grep `catch\s*\([^)]*\)\s*\{[^}]*res\.(status\|json)` у `apps/server/src` → 0). Handler-и йдуть через `asyncHandler` + `ExternalServiceError`/`ValidationError`/`RateLimitError` + central `errorHandler` (рідкісні прямі `res.status` у edge-case гілках — див. `modules/chat.ts`).                                               |
-| Банки (mono/privat)     | ~~Блокер~~ → **OK**  | ✅ PR B. `apps/server/src/lib/bankProxy.ts` — timeout=15s (`BANK_FETCH_TIMEOUT_MS`), retry з jitter (5xx/timeout/network, respect `Retry-After`), circuit breaker 5-fails / 30s per-upstream, TTL-cache 60s для GET. `modules/mono.ts` / `modules/privat.ts` — тонкі адаптери.                                                                                                                                         |
-| Web-push (sendPush)     | ~~Блокер~~ → **OK**  | ✅ [PR #335](https://github.com/Skords-01/Sergeant/pull/335). `apps/server/src/lib/webpushSend.ts` — timeout=10s (AbortController+Promise.race), retry [0, 500ms+jitter] на 5xx/timeout, per-origin circuit breaker 5-fails / 30s (FCM/Apple/Mozilla ізольовані). Outcome-класифікація: `ok`/`invalid_endpoint`/`rate_limited`/`timeout`/`circuit_open`/`error` → `external_http_requests_total{upstream="push"}`.     |
-| AI-квоти                | ~~Високий~~ → **OK** | ✅ PR C. `consumeQuota` — один атомарний `INSERT … ON CONFLICT DO UPDATE WHERE t.request_count + EXCLUDED.request_count <= $5 RETURNING request_count`. Pre-check `cost > limit` → 429 без TX. Per-cost параметр імплементовано (tool-use = 2, text-only = 1).                                                                                                                                                         |
-| SQL / параметризація    | **OK**               | Усі `pool.query` параметризовані. Ризикових місць не знайдено.                                                                                                                                                                                                                                                                                                                                                         |
-| N+1                     | **OK**               | `syncPushAll` робить 1 statement на модуль у BEGIN/COMMIT — за дизайном. `sendPush` — `SELECT` + паралельний webpush.send — не N+1.                                                                                                                                                                                                                                                                                    |
-| Індекси / soft-delete   | **Середній**         | Всього 3 міграції; покриття достатнє для поточних query-патернів. `deleted_at` / soft-delete ніде не використовується — в інвентарі як tech-debt-seed, а не блокер.                                                                                                                                                                                                                                                    |
-| Логи                    | **Переважно OK**     | Структурний Pino + ALS (`requestId`/`userId`/`module`) підтягуються автоматично. `X-Request-Id` в response-header + у JSON-тілі помилки. Метрики RED/USE по маршрутах — покриті.                                                                                                                                                                                                                                       |
-| Таймаути / retry (HTTP) | **OK**               | ✅ Anthropic: `timeoutMs` + 3 retry. Barcode/food-search: `AbortSignal.timeout`. Банки: `bankProxy.ts` timeout+retry+breaker+cache. Web-push: [PR #335](https://github.com/Skords-01/Sergeant/pull/335) timeout+retry+per-origin breaker.                                                                                                                                                                              |
-| Дублювання логіки       | **Середній**         | OFF/USDA нормалізатори, pantry→string map, dual-metric `record*` — повторюються у 2–3 файлах.                                                                                                                                                                                                                                                                                                                          |
-| Секрети в логах         | **OK**               | Sentry `sendDefaultPii=false` + `beforeSend` стрипає body/cookies. Логер не дампить headers. Email логується як SHA-256[:12]. Anthropic key не логується.                                                                                                                                                                                                                                                              |
-| Тести                   | **Середній**         | ✅ [PR #336](https://github.com/Skords-01/Sergeant/pull/336) + розширення: `apps/server/src/smoke.test.ts`, `modules/chat.test.ts`, `modules/push.test.ts`, `lib/webpushSend.test.ts`, `push/send.test.ts`, `modules/food-search.test.ts`, `modules/sync.test.ts` тощо. Залишок: **SSE chat end-to-end**, **barcode handler**, **контракти nutrition** (окрім unit на `nutritionResponse`) — PR F / інкрементальні PR. |
+| Категорія               | Статус               | Короткий висновок                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Валідація (zod)         | ~~Високий~~ → **OK** | ✅ PR A. `RefinePhotoSchema` синхронізована з handler-ом (`prior_result`/`portion_grams`/`qna`). `mono`/`privat`/`sync` використовують централізовані `*QuerySchema`/`*BodySchema`. Ручна перевірка `req.body` не знайдена у `apps/server/src` (grep `req\.body\.` поза `validate*` → 0).                                                                                                                                                       |
+| Error handling          | ~~Високий~~ → **OK** | ✅ PR A. Широкі `catch { res.status(500).json({ error: e.message }) }` не знайдені (grep `catch\s*\([^)]*\)\s*\{[^}]*res\.(status\|json)` у `apps/server/src` → 0). Handler-и йдуть через `asyncHandler` + `ExternalServiceError`/`ValidationError`/`RateLimitError` + central `errorHandler` (рідкісні прямі `res.status` у edge-case гілках — див. `modules/chat/chat.ts`).                                                                   |
+| Банки (mono/privat)     | ~~Блокер~~ → **OK**  | ✅ PR B. `apps/server/src/lib/bankProxy.ts` — timeout=15s (`BANK_FETCH_TIMEOUT_MS`), retry з jitter (5xx/timeout/network, respect `Retry-After`), circuit breaker 5-fails / 30s per-upstream, TTL-cache 60s для GET. `modules/mono/mono.ts` / `modules/mono/privat.ts` — тонкі адаптери.                                                                                                                                                        |
+| Web-push (sendPush)     | ~~Блокер~~ → **OK**  | ✅ [PR #335](https://github.com/Skords-01/Sergeant/pull/335). `apps/server/src/lib/webpushSend.ts` — timeout=10s (AbortController+Promise.race), retry [0, 500ms+jitter] на 5xx/timeout, per-origin circuit breaker 5-fails / 30s (FCM/Apple/Mozilla ізольовані). Outcome-класифікація: `ok`/`invalid_endpoint`/`rate_limited`/`timeout`/`circuit_open`/`error` → `external_http_requests_total{upstream="push"}`.                              |
+| AI-квоти                | ~~Високий~~ → **OK** | ✅ PR C. `consumeQuota` — один атомарний `INSERT … ON CONFLICT DO UPDATE WHERE t.request_count + EXCLUDED.request_count <= $5 RETURNING request_count`. Pre-check `cost > limit` → 429 без TX. Per-cost параметр імплементовано (tool-use = 2, text-only = 1).                                                                                                                                                                                  |
+| SQL / параметризація    | **OK**               | Усі `pool.query` параметризовані. Ризикових місць не знайдено.                                                                                                                                                                                                                                                                                                                                                                                  |
+| N+1                     | **OK**               | `syncPushAll` робить 1 statement на модуль у BEGIN/COMMIT — за дизайном. `sendPush` — `SELECT` + паралельний webpush.send — не N+1.                                                                                                                                                                                                                                                                                                             |
+| Індекси / soft-delete   | **Середній**         | Всього 3 міграції; покриття достатнє для поточних query-патернів. `deleted_at` / soft-delete ніде не використовується — в інвентарі як tech-debt-seed, а не блокер.                                                                                                                                                                                                                                                                             |
+| Логи                    | **Переважно OK**     | Структурний Pino + ALS (`requestId`/`userId`/`module`) підтягуються автоматично. `X-Request-Id` в response-header + у JSON-тілі помилки. Метрики RED/USE по маршрутах — покриті.                                                                                                                                                                                                                                                                |
+| Таймаути / retry (HTTP) | **OK**               | ✅ Anthropic: `timeoutMs` + 3 retry. Barcode/food-search: `AbortSignal.timeout`. Банки: `bankProxy.ts` timeout+retry+breaker+cache. Web-push: [PR #335](https://github.com/Skords-01/Sergeant/pull/335) timeout+retry+per-origin breaker.                                                                                                                                                                                                       |
+| Дублювання логіки       | **Середній**         | OFF/USDA нормалізатори, pantry→string map, dual-metric `record*` — повторюються у 2–3 файлах.                                                                                                                                                                                                                                                                                                                                                   |
+| Секрети в логах         | **OK**               | Sentry `sendDefaultPii=false` + `beforeSend` стрипає body/cookies. Логер не дампить headers. Email логується як SHA-256[:12]. Anthropic key не логується.                                                                                                                                                                                                                                                                                       |
+| Тести                   | **Середній**         | ✅ [PR #336](https://github.com/Skords-01/Sergeant/pull/336) + розширення: `apps/server/src/smoke.test.ts`, `modules/chat/chat.test.ts`, `modules/push/push.test.ts`, `lib/webpushSend.test.ts`, `push/send.test.ts`, `modules/nutrition/food-search.test.ts`, `modules/sync/sync.test.ts` тощо. Залишок: **SSE chat end-to-end**, **barcode handler**, **контракти nutrition** (окрім unit на `nutritionResponse`) — PR F / інкрементальні PR. |
 
 ---
 
@@ -82,7 +82,7 @@
 
 - **OK** — `setModule` → rate-limit → `asyncHandler(handler)`.
 
-### `modules/chat.ts` + `modules/chat/tools.ts`
+### `modules/chat/chat.ts` + `modules/chat/tools.ts`
 
 - **OK / середній:** каталог **`TOOLS`** винесено в **`chat/tools.ts`** (файл великий за LOC — **середній** борг підтримуваності, не безпеки).
 - **OK** — основні шляхи помилок Anthropic мапляться на HTTP status; refund квоти при upstream-failure.
@@ -94,25 +94,25 @@
 - **OK** — **`chat.test.ts`** + **`chat.stream.test.ts`** ([#900](https://github.com/Skords-01/Sergeant/pull/900), audit PR-4.A) повністю покривають handler + 17 тестів на streaming-шлях `streamAnthropicToSse`/`streamOneIterationToSse` (line-buffer, chunk-boundaries, auto-continuation, cap, partial-text, abort).
 - **Operations:** lifecycle нових tools формалізований у [`docs/adr/0002-tool-lifecycle.md`](../adr/0002-tool-lifecycle.md) (audit PR-12.D) — Proposal / Safety / Rollout / KPIs з KPI-thresholds на `chat_tool_invocations_total`.
 
-### `modules/coach.ts` + `coach.test.ts`
+### `modules/chat/coach.ts` + `coach.test.ts`
 
 - **Середній** — `parseMemory` fallback на `raw` без warn; немає тестів на **`coachInsight`** / route-level AI.
 - **OK** — `validateBody` для memory POST.
 
-### `modules/sync.ts` + `sync.test.ts`
+### `modules/sync/sync.ts` + `sync.test.ts`
 
 - **OK** — `validateBody(SyncPushSchema | SyncPullSchema | SyncPushAllSchema)`; ручний `VALID_MODULES` **знято**.
 - **OK** — LWW, `recordSync`; **середній** — extra `SELECT` у conflict-гілці (мікро-оптимізація).
 
-### `modules/mono.ts` / `privat.ts`
+### `modules/mono/mono.ts` / `privat.ts`
 
 - **OK** — **`bankProxyFetch`** + **`validateQuery(MonoQuerySchema | PrivatQuerySchema)`**; retry/cache/breaker (PR B). Попередні три «блокери» — **архівні**.
 
-### `modules/push.ts`
+### `modules/push/push.ts`
 
 - **OK** — delegація в **`webpushSend`** (timeout + retry + breaker, PR #335); є **`push.test.ts`**. Нативний пайплайн: **`push/send.ts`** + **`send.test.ts`**.
 
-### `modules/barcode.ts`
+### `modules/nutrition/barcode.ts`
 
 - **OK** — timeouts на OFF/USDA/UPCitemdb.
 - **Високий (опц.)** — TTL in-memory кеш по штрихкоду. _Status (2026-04-26):_
@@ -122,11 +122,11 @@
   заплановано в тому ж баркодному PR-і — покриває cascade (OFF → USDA →
   UPCitemdb), cache hit/miss, invalid input, upstream failure.
 
-### `modules/food-search.ts` + `food-search.test.ts`
+### `modules/nutrition/food-search.ts` + `food-search.test.ts`
 
 - **Високий / середній** — великий `UK_TO_EN` inline + дубль нормалізації з barcode; часткове покриття **`food-search.test.ts`**.
 
-### `modules/weekly-digest.ts`
+### `modules/digest/weekly-digest.ts`
 
 - **OK** — **`validateBody(WeeklyDigestSchema, …)`** + `ExternalServiceError` / `ValidationError`.
 - **Середній** — довгий system prompt inline → винести в `prompts/` за бажанням.
@@ -159,7 +159,7 @@
 
 ### C2. Web-push — **✅ DONE** ([PR #335](https://github.com/Skords-01/Sergeant/pull/335))
 
-Раніше `webpush.sendNotification` у `modules/push.ts` викликався без timeout/retry/breaker — повільний FCM/Apple/Mozilla міг тримати Node-worker і pg-conn.
+Раніше `webpush.sendNotification` у `modules/push/push.ts` викликався без timeout/retry/breaker — повільний FCM/Apple/Mozilla міг тримати Node-worker і pg-conn.
 
 Тепер через `apps/server/src/lib/webpushSend.ts`:
 
@@ -182,7 +182,7 @@
 
 - `elapsedMs(start)` → винести в спільний util (зараз повторюється в 4+ файлах `apps/server/src`).
 - `pantry items → prompt string` → `apps/server/src/lib/pantryFormat.ts` (новий файл — P2).
-- OFF/USDA normalizers → уніфікувати між `modules/barcode.ts` і `modules/food-search.ts` (shared `apps/server/src/lib/foodNormalize.ts`).
+- OFF/USDA normalizers → уніфікувати між `modules/nutrition/barcode.ts` і `modules/nutrition/food-search.ts` (shared `apps/server/src/lib/foodNormalize.ts`).
 - `FNV-1a safeKeyFromToken` → `apps/server/src/lib/backupKey.ts` (зараз дубль у `nutrition/backup-upload.ts` + `nutrition/backup-download.ts`).
 
 ---
@@ -197,9 +197,9 @@
 | 60s cache (GET)            | ✅ TTL cache з ключем без збереження сирого токена                                                                                                               |                                                     |
 | Validation (zod)           | ✅ `MonoQuerySchema` / `PrivatQuerySchema` + path whitelist у handler-ах                                                                                         |                                                     |
 | Помилки upstream → клієнту | ⚠️ Частково: 429 мапиться на зрозуміле повідомлення + `Retry-After`; інші коди можуть прокидати `body` upstream у JSON — **середній** ризик leak (P2 hardening). |                                                     |
-| Наявні тести               | ✅ `modules/bankProxy.test.ts`                                                                                                                                   | Розширення: cache-hit / breaker-open — за бажанням. |
+| Наявні тести               | ✅ `modules/mono/bankProxy.test.ts`                                                                                                                              | Розширення: cache-hit / breaker-open — за бажанням. |
 
-Реалізація (фактична): **`apps/server/src/lib/bankProxy.ts`** + тонкі **`modules/mono.ts`** / **`modules/privat.ts`** (делегують `bankProxyFetch`).
+Реалізація (фактична): **`apps/server/src/lib/bankProxy.ts`** + тонкі **`modules/mono/mono.ts`** / **`modules/mono/privat.ts`** (делегують `bankProxyFetch`).
 
 ### Monobank webhook integration (Track A)
 
@@ -346,26 +346,26 @@ Webhook-based server-side integration added in PR2. Key components:
 
 Шляхи відносно **`apps/server/src/`**.
 
-| Файл / зона                     | Тест є?                                | Залишок (PR F / інкремент)                                 |
-| ------------------------------- | -------------------------------------- | ---------------------------------------------------------- |
-| `aiQuota.ts`                    | ✅ `aiQuota.test.ts`                   | Симуляція гонок під навантаженням — опційно.               |
-| `auth.ts`                       | частково `auth.test.ts`                | trustedOrigins / edge cases — розширити.                   |
-| `db.ts`                         | ❌                                     | pg mock — низький пріоритет.                               |
-| `modules/chat.ts`               | ✅ `modules/chat.test.ts`              | **Повний SSE + tool_use** end-to-end — середній пріоритет. |
-| `modules/coach.ts`              | ✅ `modules/coach.test.ts`             | `coachInsight`, route-level AI — додати.                   |
-| `modules/sync.ts`               | ✅ `modules/sync.test.ts`              | Розширені контракти push/pull/pushAll — за бажанням.       |
-| `modules/mono.ts` / `privat.ts` | через `modules/bankProxy.test.ts`      | Інтеграційні сценарії cache/breaker — опційно.             |
-| `modules/push.ts`               | ✅ `modules/push.test.ts`              | Edge cases stale endpoint / dual-write метрик — опційно.   |
-| `push/send.ts`                  | ✅ `push/send.test.ts`                 | Native APNs/FCM mocks — за потреби.                        |
-| `lib/webpushSend.ts`            | ✅ `lib/webpushSend.test.ts`           | —                                                          |
-| `modules/barcode.ts`            | ❌                                     | Каскад OFF→USDA→UPC — **середній** gap.                    |
-| `modules/food-search.ts`        | ✅ `modules/food-search.test.ts`       | Розширити UK_TO_EN / merge edge cases.                     |
-| `modules/weekly-digest.ts`      | ❌                                     | AI JSON parse / prompt fixture — **середній**.             |
-| `modules/nutrition/*`           | частково (`nutritionResponse.test.ts`) | Контракт-тести per handler (happy + invalid body) — PR F.  |
+| Файл / зона                          | Тест є?                                    | Залишок (PR F / інкремент)                                 |
+| ------------------------------------ | ------------------------------------------ | ---------------------------------------------------------- |
+| `aiQuota.ts`                         | ✅ `aiQuota.test.ts`                       | Симуляція гонок під навантаженням — опційно.               |
+| `auth.ts`                            | частково `auth.test.ts`                    | trustedOrigins / edge cases — розширити.                   |
+| `db.ts`                              | ❌                                         | pg mock — низький пріоритет.                               |
+| `modules/chat/chat.ts`               | ✅ `modules/chat/chat.test.ts`             | **Повний SSE + tool_use** end-to-end — середній пріоритет. |
+| `modules/chat/coach.ts`              | ✅ `modules/chat/coach.test.ts`            | `coachInsight`, route-level AI — додати.                   |
+| `modules/sync/sync.ts`               | ✅ `modules/sync/sync.test.ts`             | Розширені контракти push/pull/pushAll — за бажанням.       |
+| `modules/mono/mono.ts` / `privat.ts` | через `modules/mono/bankProxy.test.ts`     | Інтеграційні сценарії cache/breaker — опційно.             |
+| `modules/push/push.ts`               | ✅ `modules/push/push.test.ts`             | Edge cases stale endpoint / dual-write метрик — опційно.   |
+| `push/send.ts`                       | ✅ `push/send.test.ts`                     | Native APNs/FCM mocks — за потреби.                        |
+| `lib/webpushSend.ts`                 | ✅ `lib/webpushSend.test.ts`               | —                                                          |
+| `modules/nutrition/barcode.ts`       | ❌                                         | Каскад OFF→USDA→UPC — **середній** gap.                    |
+| `modules/nutrition/food-search.ts`   | ✅ `modules/nutrition/food-search.test.ts` | Розширити UK_TO_EN / merge edge cases.                     |
+| `modules/digest/weekly-digest.ts`    | ❌                                         | AI JSON parse / prompt fixture — **середній**.             |
+| `modules/nutrition/*`                | частково (`nutritionResponse.test.ts`)     | Контракт-тести per handler (happy + invalid body) — PR F.  |
 
 Цільове покриття (без зміни цілей):
 
-- `modules/chat.ts`, `modules/sync.ts`, `modules/coach.ts` — прагнути ≥ 80% lines/branches.
+- `modules/chat/chat.ts`, `modules/sync/sync.ts`, `modules/chat/coach.ts` — прагнути ≥ 80% lines/branches.
 - Контракт-тести: per route — (1) happy path, (2) invalid body, (3) oversize body, (4) unauthenticated, (5) rate-limited.
 
 ---
@@ -390,31 +390,31 @@ Webhook-based server-side integration added in PR2. Key components:
 
 ## Roadmap — PR breakdown
 
-| PR                  | Тема                                                                                              | Файли                                                                                                                                                                             | Залежності | Breaking                                           |
-| ------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
-| **Inventory** (цей) | Документ `docs/tech-debt/backend.md`                                                              | 1 новий файл                                                                                                                                                                      | —          | Ні                                                 |
-| **PR A** ✅         | Уніфікація zod-валідації + central errorHandler wiring                                            | `apps/server/src/http/schemas.ts`, nutrition modules, `modules/sync.ts`, `modules/mono.ts`, `modules/privat.ts`, `modules/weekly-digest.ts`, `modules/push.ts`, `modules/chat.ts` | Inventory  | Ні (вивід — той самий `{error, code, requestId}`). |
-| **PR B** ✅         | Банки: timeout + retry + jitter + circuit breaker + 60s cache                                     | `apps/server/src/lib/bankProxy.ts`, `modules/mono.ts`, `modules/privat.ts`, `modules/bankProxy.test.ts`                                                                           | —          | Ні (семантика GET лишається).                      |
-| **PR C** ✅         | AI quota: atomic upsert + per-tool cost                                                           | `apps/server/src/aiQuota.ts`, `apps/server/src/http/requireAiQuota.ts`, `apps/server/src/modules/chat.ts`, `apps/server/src/aiQuota.test.ts`                                      | —          | Ні (external contract той самий).                  |
-| **PR #335** ✅      | Web-push hardening: timeout + retry + per-origin circuit breaker                                  | `apps/server/src/lib/webpushSend.ts` + тести, `modules/push.ts`                                                                                                                   | —          | Ні (зовнішній API push-ендпоінтів незмінний).      |
-| **PR #336** ✅      | Supertest-smoke на 8 ендпоінтів через `createApp()` factory                                       | `apps/server/src/smoke.test.ts`, devDep `supertest` + `@types/supertest`                                                                                                          | —          | Ні (лише тести).                                   |
-| **PR D**            | Міграції: коментарі EXPLAIN ANALYZE, CHECK-constraints, можливий `idx_push_subscriptions_user_id` | `apps/server/src/migrations/*.sql`, оновлення `docs/tech-debt/backend.md`                                                                                                         | —          | Ні (всі зміни — additive).                         |
-| **PR E**            | Log/obs polish: відсутні метрики, `app_build_info`, оновлений `.env.example`                      | `apps/server/src/obs/metrics.ts`, `obs/logger.ts`, `.env.example`                                                                                                                 | —          | Ні.                                                |
-| **PR F (опц.)**     | Test coverage: chat/sync/coach ≥80% + contract tests                                              | `modules/chat.test.ts`, `modules/push.test.ts`, `modules/barcode.test.ts` (новий), `modules/food-search.test.ts`, `modules/nutrition/*.test.ts`                                   | PR A       | Ні.                                                |
-| **PR TS-1**         | ~~Gradual TS migration~~ **✅ Done** (код у `apps/server/src`)                                    | —                                                                                                                                                                                 | PR A–E     | Ні.                                                |
+| PR                  | Тема                                                                                              | Файли                                                                                                                                                                                                             | Залежності | Breaking                                           |
+| ------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
+| **Inventory** (цей) | Документ `docs/tech-debt/backend.md`                                                              | 1 новий файл                                                                                                                                                                                                      | —          | Ні                                                 |
+| **PR A** ✅         | Уніфікація zod-валідації + central errorHandler wiring                                            | `apps/server/src/http/schemas.ts`, nutrition modules, `modules/sync/sync.ts`, `modules/mono/mono.ts`, `modules/mono/privat.ts`, `modules/digest/weekly-digest.ts`, `modules/push/push.ts`, `modules/chat/chat.ts` | Inventory  | Ні (вивід — той самий `{error, code, requestId}`). |
+| **PR B** ✅         | Банки: timeout + retry + jitter + circuit breaker + 60s cache                                     | `apps/server/src/lib/bankProxy.ts`, `modules/mono/mono.ts`, `modules/mono/privat.ts`, `modules/mono/bankProxy.test.ts`                                                                                            | —          | Ні (семантика GET лишається).                      |
+| **PR C** ✅         | AI quota: atomic upsert + per-tool cost                                                           | `apps/server/src/aiQuota.ts`, `apps/server/src/http/requireAiQuota.ts`, `apps/server/src/modules/chat/chat.ts`, `apps/server/src/aiQuota.test.ts`                                                                 | —          | Ні (external contract той самий).                  |
+| **PR #335** ✅      | Web-push hardening: timeout + retry + per-origin circuit breaker                                  | `apps/server/src/lib/webpushSend.ts` + тести, `modules/push/push.ts`                                                                                                                                              | —          | Ні (зовнішній API push-ендпоінтів незмінний).      |
+| **PR #336** ✅      | Supertest-smoke на 8 ендпоінтів через `createApp()` factory                                       | `apps/server/src/smoke.test.ts`, devDep `supertest` + `@types/supertest`                                                                                                                                          | —          | Ні (лише тести).                                   |
+| **PR D**            | Міграції: коментарі EXPLAIN ANALYZE, CHECK-constraints, можливий `idx_push_subscriptions_user_id` | `apps/server/src/migrations/*.sql`, оновлення `docs/tech-debt/backend.md`                                                                                                                                         | —          | Ні (всі зміни — additive).                         |
+| **PR E**            | Log/obs polish: відсутні метрики, `app_build_info`, оновлений `.env.example`                      | `apps/server/src/obs/metrics.ts`, `obs/logger.ts`, `.env.example`                                                                                                                                                 | —          | Ні.                                                |
+| **PR F (опц.)**     | Test coverage: chat/sync/coach ≥80% + contract tests                                              | `modules/chat/chat.test.ts`, `modules/push/push.test.ts`, `modules/nutrition/barcode.test.ts` (новий), `modules/nutrition/food-search.test.ts`, `modules/nutrition/*.test.ts`                                     | PR A       | Ні.                                                |
+| **PR TS-1**         | ~~Gradual TS migration~~ **✅ Done** (код у `apps/server/src`)                                    | —                                                                                                                                                                                                                 | PR A–E     | Ні.                                                |
 
 ---
 
 ## Status log
 
-| Дата       | PR                                                     | Тема                                 | Результат                                                                                                                                                                                                    |
-| ---------- | ------------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-04-XX | PR A                                                   | Zod-валідація + central errorHandler | Закрив обидва рядки «Високий» у Summary. Grepped `apps/server/src` на широкі catch до res.json — 0 для доменних handler-ів; edge-case без reader у `modules/chat.ts` — § Per-file. RefinePhotoSchema synced. |
-| 2026-04-XX | PR B                                                   | Банки: timeout/retry/breaker/cache   | `apps/server/src/lib/bankProxy.ts` — 15s timeout, retry з jitter, 5/30s breaker, 60s cache для GET. mono/privat — тонкі адаптери.                                                                            |
-| 2026-04-XX | PR C                                                   | AI quota atomic upsert + cost        | `consumeQuota` — single-statement upsert з per-cost ваги. `SELECT FOR UPDATE` знято. Tool-use = cost 2.                                                                                                      |
-| 2026-04-XX | [#335](https://github.com/Skords-01/Sergeant/pull/335) | Web-push hardening                   | Новий wrapper `apps/server/src/lib/webpushSend.ts`: timeout 10s, retry [0,500ms+jitter], per-origin breaker, outcome-classification, 13 unit-тестів.                                                         |
-| 2026-04-24 | Docs                                                   | Inventory refresh                    | Вирівняно шляхи з `apps/server/src`, оновлено Per-file / Tests / Bank deep-dive / міграції / TS-план.                                                                                                        |
-| 2026-04-XX | [#336](https://github.com/Skords-01/Sergeant/pull/336) | Supertest-smoke                      | 9 smoke-тестів на 8 ендпоінтів через `createApp()` factory (`/livez`, `/health` ok/503, `/metrics`, `/api/push/vapid-public`, `/api/push/send`, `/api/mono`, `/api/chat`, unknown→404).                      |
+| Дата       | PR                                                     | Тема                                 | Результат                                                                                                                                                                                                         |
+| ---------- | ------------------------------------------------------ | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-XX | PR A                                                   | Zod-валідація + central errorHandler | Закрив обидва рядки «Високий» у Summary. Grepped `apps/server/src` на широкі catch до res.json — 0 для доменних handler-ів; edge-case без reader у `modules/chat/chat.ts` — § Per-file. RefinePhotoSchema synced. |
+| 2026-04-XX | PR B                                                   | Банки: timeout/retry/breaker/cache   | `apps/server/src/lib/bankProxy.ts` — 15s timeout, retry з jitter, 5/30s breaker, 60s cache для GET. mono/privat — тонкі адаптери.                                                                                 |
+| 2026-04-XX | PR C                                                   | AI quota atomic upsert + cost        | `consumeQuota` — single-statement upsert з per-cost ваги. `SELECT FOR UPDATE` знято. Tool-use = cost 2.                                                                                                           |
+| 2026-04-XX | [#335](https://github.com/Skords-01/Sergeant/pull/335) | Web-push hardening                   | Новий wrapper `apps/server/src/lib/webpushSend.ts`: timeout 10s, retry [0,500ms+jitter], per-origin breaker, outcome-classification, 13 unit-тестів.                                                              |
+| 2026-04-24 | Docs                                                   | Inventory refresh                    | Вирівняно шляхи з `apps/server/src`, оновлено Per-file / Tests / Bank deep-dive / міграції / TS-план.                                                                                                             |
+| 2026-04-XX | [#336](https://github.com/Skords-01/Sergeant/pull/336) | Supertest-smoke                      | 9 smoke-тестів на 8 ендпоінтів через `createApp()` factory (`/livez`, `/health` ok/503, `/metrics`, `/api/push/vapid-public`, `/api/push/send`, `/api/mono`, `/api/chat`, unknown→404).                           |
 
 ### Поточний залишок P0
 
@@ -528,11 +528,11 @@ env-набір не підхопився; переглянь Railway logs на `
 ### Legacy web-push HTTP (`/api/push/subscribe`) — прибрати після метрик
 
 Поки `POST`/`DELETE /api/push/subscribe` лишаються proxy для старих вкладок
-(див. `apps/server/src/modules/push.ts`, лог `push_deprecation`). **Після того,
+(див. `apps/server/src/modules/push/push.ts`, лог `push_deprecation`). **Після того,
 як у логах не буде викликів за розумне вікно:**
 
 1. Видалити legacy-роути та handlers (`apps/server/src/routes/push.ts`,
-   `apps/server/src/modules/push.ts`).
+   `apps/server/src/modules/push/push.ts`).
 2. Прибрати `subscribe` / `unsubscribe` з
    `packages/api-client/src/endpoints/push.ts` та оновити
    `apps/web/src/shared/hooks/usePushNotifications.test.tsx`.
