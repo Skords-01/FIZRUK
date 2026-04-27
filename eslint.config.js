@@ -391,7 +391,7 @@ export default [
       "apps/web/src/core/lib/hubChatUtils.ts",
       "apps/web/src/core/App.tsx",
       // Server
-      "apps/server/src/modules/chat.ts",
+      "apps/server/src/modules/chat/chat.ts",
       "apps/server/src/lib/anthropic.ts",
       "apps/server/src/lib/bankProxy.ts",
       "apps/server/src/lib/webpushSend.ts",

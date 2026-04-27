@@ -149,8 +149,8 @@ core/
 ### 3.1 Перенести `aiQuota.ts` у `modules/` ✅ done
 
 **Статус (2026-04-26):** Виконано — `aiQuota.ts` живе у
-`apps/server/src/modules/aiQuota.ts`, тести поряд. `routes/` та
-`http/requireAiQuota.ts` імпортують з `modules/aiQuota.js`.
+`apps/server/src/modules/chat/aiQuota.ts`, тести поряд. `routes/` та
+`http/requireAiQuota.ts` імпортують з `modules/chat/aiQuota.js`.
 
 ### 3.2 Перенести `middleware.ts` до `apps/web/` ✅ done
 

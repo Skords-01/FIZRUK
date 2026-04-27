@@ -325,14 +325,14 @@ accepted.
 
 ### Context
 
-`apps/server/src/modules/aiQuota.ts` уже має `effectiveLimits()` що читає `AI_DAILY_USER_LIMIT` з ENV. Питання: як інтегрувати monetization без дублювання middleware.
+`apps/server/src/modules/chat/aiQuota.ts` уже має `effectiveLimits()` що читає `AI_DAILY_USER_LIMIT` з ENV. Питання: як інтегрувати monetization без дублювання middleware.
 
 ### Decision
 
 `requireAiQuota` стає **plan-aware**:
 
 ```ts
-// apps/server/src/modules/aiQuota.ts (PR-M.6)
+// apps/server/src/modules/chat/aiQuota.ts (PR-M.6)
 export async function effectiveLimits(userId: string | null): Promise<Limits> {
   if (!userId) return ANONYMOUS_LIMITS;
   const sub = await getUserPlan(userId); // ← з planCache

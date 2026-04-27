@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { logger } from "../obs/logger.js";
-import { webVitalsCls, webVitalsDurationMs } from "../obs/metrics.js";
+import { logger } from "../../obs/logger.js";
+import { webVitalsCls, webVitalsDurationMs } from "../../obs/metrics.js";
 
 /**
  * POST /api/metrics/web-vitals

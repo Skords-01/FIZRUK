@@ -6,7 +6,7 @@ import {
   requireAnthropicKey,
   setModule,
 } from "../http/index.js";
-import chatHandler from "../modules/chat.js";
+import chatHandler from "../modules/chat/chat.js";
 
 export function createChatRouter(): Router {
   const r = Router();

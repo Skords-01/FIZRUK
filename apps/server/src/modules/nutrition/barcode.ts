@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
-import { recordExternalHttp } from "../lib/externalHttp.js";
-import { BarcodeQuerySchema } from "../http/schemas.js";
-import { validateQuery } from "../http/validate.js";
-import { barcodeLookupsTotal } from "../obs/metrics.js";
+import { recordExternalHttp } from "../../lib/externalHttp.js";
+import { BarcodeQuerySchema } from "../../http/schemas.js";
+import { validateQuery } from "../../http/validate.js";
+import { barcodeLookupsTotal } from "../../obs/metrics.js";
 import {
   normalizeOFFBarcode,
   normalizeUPCitemdb,
@@ -10,7 +10,7 @@ import {
   type OFFProduct,
   type UPCitemdbResponse,
   type USDAFood,
-} from "../lib/normalizers/index.js";
+} from "../../lib/normalizers/index.js";
 
 interface NormalizedProduct {
   name: string;

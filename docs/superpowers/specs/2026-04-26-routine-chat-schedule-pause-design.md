@@ -269,14 +269,14 @@ Neither tool goes into `RISKY_TOOLS` — both are reversible toggles.
     `habit_id`, missing habit.
 - `apps/web/src/core/lib/hubChatActionCards.test.ts` — title / icon /
   summary for both tools (success and `failed` variants).
-- `apps/server/src/modules/chat.test.ts` — only update if it asserts
+- `apps/server/src/modules/chat/chat.test.ts` — only update if it asserts
   against the routine tool registry; otherwise no change needed.
 
 ## Test strategy
 
 - Domain-level: vitest in `@sergeant/routine-domain`.
 - Web handlers + cards: vitest in `apps/web`.
-- Server: vitest run of `apps/server/src/modules/chat.test.ts` to
+- Server: vitest run of `apps/server/src/modules/chat/chat.test.ts` to
   catch tool-registry regressions and `SYSTEM_PROMPT_VERSION`
   snapshot changes (if any).
 - No new e2e / Playwright work — flow is exercised through the

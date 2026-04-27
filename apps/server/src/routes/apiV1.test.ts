@@ -215,7 +215,7 @@ describe("POST /api/v1/push/register", () => {
   });
 
   it("web з keys — валідно парситься і доходить до vapid-guard-а", async () => {
-    // `vapidReady` у `server/modules/push.ts` обчислюється на module-load, тож
+    // `vapidReady` у `server/modules/push/push.ts` обчислюється на module-load, тож
     // 200-case для web тут не відтворюваний без підготовки env ДО першого
     // `import` (це вже покриває `server/smoke.test.ts` на рівні subscribe).
     // Тут важливо: discriminated union валідатор приймає `web` payload —

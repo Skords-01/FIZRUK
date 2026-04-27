@@ -10,7 +10,7 @@ import {
   syncPullAll,
   syncPush,
   syncPushAll,
-} from "../modules/sync.js";
+} from "../modules/sync/sync.js";
 
 /**
  * `/api/sync/*` — всі операції потребують авторизованої сесії. `setModule` і

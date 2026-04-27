@@ -1,5 +1,5 @@
 /**
- * Unit tests для server/modules/chat.js — tool-parsing з моканим Anthropic.
+ * Unit tests для server/modules/chat/chat.js — tool-parsing з моканим Anthropic.
  *
  * Покриття:
  * - Перший крок: повертає tool_calls коли Anthropic присилає tool_use-блоки.
@@ -11,7 +11,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Request, Response } from "express";
 import type { Mock } from "vitest";
 
-vi.mock("../lib/anthropic.js", () => ({
+vi.mock("../../lib/anthropic.js", () => ({
   anthropicMessages: vi.fn(),
   anthropicMessagesStream: vi.fn(),
   extractAnthropicText: vi.fn(
@@ -23,7 +23,7 @@ vi.mock("../lib/anthropic.js", () => ({
   ),
 }));
 
-import { anthropicMessages as _anthropicMessages } from "../lib/anthropic.js";
+import { anthropicMessages as _anthropicMessages } from "../../lib/anthropic.js";
 import handler from "./chat.js";
 
 const anthropicMessages = _anthropicMessages as unknown as Mock;
@@ -167,7 +167,7 @@ describe("chat handler — tool_use parsing", () => {
   });
 
   it("інкрементить chat_tool_invocations_total{outcome=proposed} на першому кроці", async () => {
-    const { chatToolInvocationsTotal } = await import("../obs/metrics.js");
+    const { chatToolInvocationsTotal } = await import("../../obs/metrics.js");
     const before = (await chatToolInvocationsTotal.get()).values
       .filter((v) => v.labels.outcome === "proposed")
       .reduce((acc, v) => acc + v.value, 0);
@@ -211,7 +211,7 @@ describe("chat handler — tool_use parsing", () => {
   });
 
   it("інкрементить chat_tool_invocations_total{outcome=executed} на другому кроці", async () => {
-    const { chatToolInvocationsTotal } = await import("../obs/metrics.js");
+    const { chatToolInvocationsTotal } = await import("../../obs/metrics.js");
     const before = (await chatToolInvocationsTotal.get()).values
       .filter(
         (v) =>
@@ -252,7 +252,7 @@ describe("chat handler — tool_use parsing", () => {
   });
 
   it("інкрементить chat_tool_invocations_total{outcome=unknown_tool} коли tool_use_id не змаплений", async () => {
-    const { chatToolInvocationsTotal } = await import("../obs/metrics.js");
+    const { chatToolInvocationsTotal } = await import("../../obs/metrics.js");
     const before = (await chatToolInvocationsTotal.get()).values
       .filter((v) => v.labels.outcome === "unknown_tool")
       .reduce((acc, v) => acc + v.value, 0);

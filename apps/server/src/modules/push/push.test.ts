@@ -9,8 +9,8 @@ const loggerMock = {
   error: vi.fn(),
   fatal: vi.fn(),
 };
-vi.mock("../obs/logger.js", async () => {
-  const actual = await vi.importActual("../obs/logger.js");
+vi.mock("../../obs/logger.js", async () => {
+  const actual = await vi.importActual("../../obs/logger.js");
   return { ...actual, logger: loggerMock };
 });
 
@@ -19,8 +19,8 @@ vi.mock("../obs/logger.js", async () => {
 vi.mock("web-push", () => ({
   default: { setVapidDetails: vi.fn(), sendNotification: vi.fn() },
 }));
-vi.mock("../db.js", () => ({ default: { query: vi.fn() } }));
-vi.mock("../lib/webpushSend.js", () => ({ sendWebPush: vi.fn() }));
+vi.mock("../../db.js", () => ({ default: { query: vi.fn() } }));
+vi.mock("../../lib/webpushSend.js", () => ({ sendWebPush: vi.fn() }));
 
 describe("resolveVapidEmail", () => {
   const originalEnv = { ...process.env };

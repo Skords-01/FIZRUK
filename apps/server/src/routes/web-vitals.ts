@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler, rateLimitExpress } from "../http/index.js";
-import webVitalsHandler from "../modules/web-vitals.js";
+import webVitalsHandler from "../modules/observability/web-vitals.js";
 
 export function createWebVitalsRouter(): Router {
   const r = Router();

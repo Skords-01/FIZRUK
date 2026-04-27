@@ -2,28 +2,28 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Request, Response } from "express";
 import type { Mock } from "vitest";
 
-vi.mock("../auth.js", () => ({
+vi.mock("../../auth.js", () => ({
   getSessionUser: vi.fn(),
 }));
 
-vi.mock("../db.js", () => {
+vi.mock("../../db.js", () => {
   const pool = { connect: vi.fn(), query: vi.fn() };
   return { default: pool, pool };
 });
 
-vi.mock("../obs/requestContext.js", () => ({
+vi.mock("../../obs/requestContext.js", () => ({
   setRequestModule: vi.fn(),
 }));
 
-vi.mock("../obs/metrics.js", () => ({
+vi.mock("../../obs/metrics.js", () => ({
   syncConflictsTotal: { inc: vi.fn() },
   syncDurationMs: { observe: vi.fn() },
   syncOperationsTotal: { inc: vi.fn() },
   syncPayloadBytes: { observe: vi.fn() },
 }));
 
-vi.mock("../obs/logger.js", async () => {
-  const actual = await vi.importActual("../obs/logger.js");
+vi.mock("../../obs/logger.js", async () => {
+  const actual = await vi.importActual("../../obs/logger.js");
   return {
     ...actual,
     logger: {
@@ -36,13 +36,13 @@ vi.mock("../obs/logger.js", async () => {
   };
 });
 
-import { getSessionUser as _getSessionUser } from "../auth.js";
-import _pool from "../db.js";
-import { logger as _logger } from "../obs/logger.js";
+import { getSessionUser as _getSessionUser } from "../../auth.js";
+import _pool from "../../db.js";
+import { logger as _logger } from "../../obs/logger.js";
 import {
   syncConflictsTotal,
   syncOperationsTotal as _syncOperationsTotal,
-} from "../obs/metrics.js";
+} from "../../obs/metrics.js";
 import {
   MAX_BLOB_SIZE,
   syncPull,

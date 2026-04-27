@@ -25,13 +25,13 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Request, Response } from "express";
 import type { Mock } from "vitest";
 
-vi.mock("../lib/anthropic.js", () => ({
+vi.mock("../../lib/anthropic.js", () => ({
   anthropicMessages: vi.fn(),
   anthropicMessagesStream: vi.fn(),
   extractAnthropicText: vi.fn(),
 }));
 
-vi.mock("../obs/metrics.js", () => ({
+vi.mock("../../obs/metrics.js", () => ({
   anthropicPromptCacheHitTotal: { inc: vi.fn() },
   chatToolInvocationsTotal: { inc: vi.fn() },
   aiRequestDurationMs: { observe: vi.fn() },
@@ -41,8 +41,8 @@ vi.mock("../obs/metrics.js", () => ({
   externalHttpRequestsTotal: { inc: vi.fn() },
 }));
 
-import { anthropicMessagesStream as _anthropicMessagesStream } from "../lib/anthropic.js";
-import { anthropicPromptCacheHitTotal as _cacheMetric } from "../obs/metrics.js";
+import { anthropicMessagesStream as _anthropicMessagesStream } from "../../lib/anthropic.js";
+import { anthropicPromptCacheHitTotal as _cacheMetric } from "../../obs/metrics.js";
 import handler from "./chat.js";
 
 const anthropicMessagesStream = _anthropicMessagesStream as unknown as Mock;

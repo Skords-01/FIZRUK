@@ -11,7 +11,7 @@ import {
   coachInsight,
   coachMemoryGet,
   coachMemoryPost,
-} from "../modules/coach.js";
+} from "../modules/chat/coach.js";
 
 /**
  * `/api/coach/*` — розведено на окремі route-и з точним HTTP-методом і своїм

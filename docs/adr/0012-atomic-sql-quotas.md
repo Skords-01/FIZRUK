@@ -5,7 +5,7 @@
 - **Reviewers:** @Skords-01
 - **Supersedes:** —
 - **Related:**
-  - [`apps/server/src/modules/aiQuota.ts`](../../apps/server/src/modules/aiQuota.ts) — middleware + `consumeQuota`/`refundConsumed`.
+  - [`apps/server/src/modules/chat/aiQuota.ts`](../../apps/server/src/modules/chat/aiQuota.ts) — middleware + `consumeQuota`/`refundConsumed`.
   - [`apps/server/src/migrations/002_ai_usage_daily.sql`](../../apps/server/src/migrations/002_ai_usage_daily.sql) — таблиця `ai_usage_daily`.
   - [`apps/server/src/migrations/004_ai_usage_daily_tool_bucket.sql`](../../apps/server/src/migrations/004_ai_usage_daily_tool_bucket.sql) — `bucket` колонка для tool-квот.
   - [`apps/server/src/obs/metrics.ts`](../../apps/server/src/obs/metrics.ts) — `aiQuotaBlocksTotal`, `aiQuotaFailOpenTotal`.
@@ -106,7 +106,7 @@ RETURNING request_count;
 
 **Негативні:**
 
-- WHERE на `DO UPDATE` — non-trivial PG-feature; не всі знайомі. Документуємо у doc-comment-коді (`apps/server/src/modules/aiQuota.ts:306-316`).
+- WHERE на `DO UPDATE` — non-trivial PG-feature; не всі знайомі. Документуємо у doc-comment-коді (`apps/server/src/modules/chat/aiQuota.ts:306-316`).
 - `INSERT ... ON CONFLICT DO UPDATE WHERE` теоретично залежить від PG-version (≥9.5 потрібно). Sergeant target — Postgres 16, OK.
 
 ### Alternatives considered

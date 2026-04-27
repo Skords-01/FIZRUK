@@ -79,7 +79,7 @@ export interface PushEndpoints {
    *
    * @deprecated Використовуй `register({ platform: "web", token, keys })`.
    * Серверний `/api/push/subscribe` залишено proxy-адаптером (див.
-   * `apps/server/src/modules/push.ts`) на період rollout.
+   * `apps/server/src/modules/push/push.ts`) на період rollout.
    */
   subscribe: (subscription: PushSubscriptionJSON) => Promise<unknown>;
   /**
