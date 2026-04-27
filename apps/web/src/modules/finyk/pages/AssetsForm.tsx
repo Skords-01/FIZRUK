@@ -305,6 +305,7 @@ export function DebtForm({
         <VoiceMicButton
           size="md"
           label="Голосовий ввід"
+          promptHint="Пасив у гривнях: кредит 50000, борг 12000, іпотека."
           onResult={(transcript) => {
             const parsed = parseExpenseVoice(transcript);
             if (!parsed) return;
