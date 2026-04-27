@@ -66,9 +66,6 @@ export type {
 
 export { SectionHeader, SectionHeading } from "./SectionHeading";
 export type {
-  SectionHeaderProps,
-  SectionHeaderSize,
-  SectionHeaderVariant,
   SectionHeadingProps,
   SectionHeadingSize,
   SectionHeadingVariant,
