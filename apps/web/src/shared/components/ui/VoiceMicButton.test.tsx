@@ -21,16 +21,13 @@ import { VoiceMicButton } from "./VoiceMicButton";
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
-  // Прибираємо все, що тести могли поставити на window.
-  type W = typeof window & {
-    SpeechRecognition?: unknown;
-    webkitSpeechRecognition?: unknown;
-    MediaRecorder?: unknown;
-  };
-  const w = window as W;
-  delete w.SpeechRecognition;
-  delete w.webkitSpeechRecognition;
-  delete w.MediaRecorder;
+  // Прибираємо все, що тести могли поставити на window. `MediaRecorder`
+  // на `Window` мітиться як обов'язкове у lib.dom.d.ts, тож прямий
+  // `delete window.MediaRecorder` забороняється TS2790. Використовуємо
+  // `Reflect.deleteProperty`, який працює з не-optional полями.
+  Reflect.deleteProperty(window, "SpeechRecognition");
+  Reflect.deleteProperty(window, "webkitSpeechRecognition");
+  Reflect.deleteProperty(window, "MediaRecorder");
 });
 
 describe("VoiceMicButton", () => {
@@ -46,10 +43,10 @@ describe("VoiceMicButton", () => {
       interimResults = false;
       maxAlternatives = 1;
       continuous = false;
-      onstart = null;
-      onend = null;
-      onresult = null;
-      onerror = null;
+      onstart: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      onresult: ((e: unknown) => void) | null = null;
+      onerror: ((e: unknown) => void) | null = null;
       start() {}
       stop() {}
       abort() {}
