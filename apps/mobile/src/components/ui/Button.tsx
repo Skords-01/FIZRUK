@@ -59,7 +59,7 @@ export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 // RN has no hover state and scale feedback is handled via `pressed` below.
 const variantContainer: Record<ButtonVariant, string> = {
   // Core variants
-  primary: "bg-brand-500",
+  primary: "bg-brand-strong",
   secondary: "bg-panel border border-line",
   ghost: "bg-transparent",
   danger: "bg-danger/10 border border-danger/30",
@@ -67,10 +67,10 @@ const variantContainer: Record<ButtonVariant, string> = {
   success: "bg-brand-50 border border-brand-200/50",
 
   // Module-specific
-  finyk: "bg-finyk",
-  fizruk: "bg-fizruk",
-  routine: "bg-routine",
-  nutrition: "bg-nutrition",
+  finyk: "bg-finyk-strong",
+  fizruk: "bg-fizruk-strong",
+  routine: "bg-routine-strong",
+  nutrition: "bg-nutrition-strong",
 
   // Soft module variants
   "finyk-soft": "bg-brand-50 border border-brand-200/50",
