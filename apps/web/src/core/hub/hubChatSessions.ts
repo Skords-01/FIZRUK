@@ -4,10 +4,7 @@ import {
   safeRemoveLS,
   safeWriteLS,
 } from "@shared/lib/storage";
-import {
-  normalizeStoredMessages,
-  type ChatMessage,
-} from "../lib/hubChatUtils";
+import { normalizeStoredMessages, type ChatMessage } from "../lib/hubChatUtils";
 
 export const SESSIONS_STORAGE_KEY = "hub_chat_sessions_v1";
 export const ACTIVE_SESSION_KEY = "hub_chat_active_session_v1";
@@ -35,7 +32,10 @@ function newId(): string {
  * Used when the user hasn't named a session — `Бесіда від <date>` stays
  * stable so sessions stay distinguishable in the drawer.
  */
-export function deriveSessionTitle(msgs: ChatMessage[], createdAt: number): string {
+export function deriveSessionTitle(
+  msgs: ChatMessage[],
+  createdAt: number,
+): string {
   const firstUser = msgs.find((m) => m.role === "user" && m.text?.trim());
   if (firstUser) {
     const text = firstUser.text.trim().replace(/\s+/g, " ");
@@ -87,8 +87,9 @@ export function loadSessions(): HubChatSession[] {
   if (!Array.isArray(parsed)) return [];
   try {
     return parsed
-      .filter((x): x is HubChatSession =>
-        typeof x === "object" && x != null && typeof x.id === "string",
+      .filter(
+        (x): x is HubChatSession =>
+          typeof x === "object" && x != null && typeof x.id === "string",
       )
       .map((s) => ({
         ...s,

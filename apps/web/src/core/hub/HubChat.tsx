@@ -688,10 +688,7 @@ function HubChat({
             </div>
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
-            <Tooltip
-              content="Усі бесіди"
-              placement="bottom-center"
-            >
+            <Tooltip content="Усі бесіди" placement="bottom-center">
               <button
                 type="button"
                 onClick={() => setHistoryOpen(true)}
@@ -703,10 +700,7 @@ function HubChat({
                 <Icon name="list" size={14} />
               </button>
             </Tooltip>
-            <Tooltip
-              content="Почати нову бесіду"
-              placement="bottom-center"
-            >
+            <Tooltip content="Почати нову бесіду" placement="bottom-center">
               <button
                 type="button"
                 onClick={clearChat}

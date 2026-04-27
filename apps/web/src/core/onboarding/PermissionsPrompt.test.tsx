@@ -8,7 +8,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const ANALYTICS_CALLS: Array<{ name: string; props?: Record<string, unknown> }> = [];
+const ANALYTICS_CALLS: Array<{
+  name: string;
+  props?: Record<string, unknown>;
+}> = [];
 
 vi.mock("../observability/analytics", () => ({
   trackEvent: (name: string, props?: Record<string, unknown>) => {
