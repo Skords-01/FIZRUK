@@ -198,6 +198,7 @@ feat(web): add HubChat tool log_water
 
 ## See also
 
+- [`docs/adr/0002-tool-lifecycle.md`](../adr/0002-tool-lifecycle.md) — обов'язковий 4-фазний lifecycle (Proposal → Safety → Rollout → KPIs) перед merge нового tool-у.
 - [tune-system-prompt.md](tune-system-prompt.md) — як міняти системний промпт без поломки tool-calling
 - [add-api-endpoint.md](add-api-endpoint.md) — якщо tool пише у БД
 - [AGENTS.md](../../AGENTS.md) — секція «Architecture: AI tool execution path»

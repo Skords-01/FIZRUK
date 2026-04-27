@@ -13,6 +13,10 @@ import {
 } from "../lib/anthropic.js";
 import type { WithAiQuotaRefund } from "./aiQuota.js";
 import { TOOLS, SYSTEM_PREFIX, SYSTEM_PROMPT_VERSION } from "./chat/tools.js";
+import {
+  recordToolProposals,
+  recordToolExecutions,
+} from "./chat/toolMetrics.js";
 import { truncateToolResults } from "./chat/toolResultTruncation.js";
 import { anthropicPromptCacheHitTotal } from "../obs/metrics.js";
 import { als } from "../obs/requestContext.js";
@@ -304,6 +308,7 @@ export default async function handler(
 
   // Другий крок: клієнт виконав tool calls і повертає результати
   if (tool_results && tool_calls_raw) {
+    recordToolExecutions(tool_results, tool_calls_raw);
     // Великі `tool_result`-блоби (брифінги, місячні digest-и) з'їдають
     // бюджет вхідних токенів і зривають continuation. Truncate на сервері,
     // повний blob — у Sentry breadcrumb для debug-у.
@@ -441,6 +446,7 @@ export default async function handler(
     .join("\n");
 
   if (toolUses.length > 0) {
+    recordToolProposals(content);
     res.status(200).json({
       text: textParts || null,
       tool_calls: toolUses.map((t) => ({

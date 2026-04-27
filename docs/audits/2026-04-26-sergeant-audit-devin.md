@@ -181,7 +181,7 @@
 
 - `PR-5.A` ✅ closed — [#863](https://github.com/Skords-01/Sergeant/pull/863) `ci(server): migration linter — fail PR if a NNN_*.sql contains DROP COLUMN/TABLE without a sibling NNN_*.add_*.sql in a previous merged PR`. Реалізація: Node-скрипт `scripts/lint-migrations.mjs` із escape-hatch коментарем `-- ALLOW_DROP: <reason> (due: YYYY-MM-DD)`.
 - `PR-5.B` — `ci(server): apply down.sql in test job after up.sql, then re-apply up.sql` (catch-all sanity check, що `down` принаймні виконується).
-- `PR-5.C` — `docs/playbooks/pre-merge-migration-checklist.md` — як шаблон у PR для будь-якого PR з `apps/server/src/migrations/`.
+- `PR-5.C` ✅closed — `docs/playbooks/pre-merge-migration-checklist.md` — реалізовано: чек-лист на 10 секцій (numbering, two-phase DROP, bigint coercion, api-client sync, idempotency, performance, RLS, local & CI verification, rollout-readiness) + reviewer responsibilities + common mistakes table. Покликається з PR template для будь-якого PR з `apps/server/src/migrations/`.
 
 ---
 
@@ -357,7 +357,7 @@
 
 - `PR-12.A` ✅ closed — [#864](https://github.com/Skords-01/Sergeant/pull/864) `feat(server,chat): activate prompt caching for SYSTEM_PREFIX (cache_control: ephemeral) + SYSTEM_PROMPT_VERSION constant` + per-request метрика `anthropic_prompt_cache_hit_total{version, outcome}` (включно зі streaming-шляхом). Очікуваний ефект: зниження Anthropic spend на 30-50% для повторних запитів.
 - `PR-12.B` ✅ closed — [#885](https://github.com/Skords-01/Sergeant/pull/885) `test(web): contract tests for all hubChatActions handlers (happy + error path)`.
-- `PR-12.C` ✅ closed — [#930](https://github.com/Skords-01/Sergeant/pull/930) `feat(server): per-tool chat invocations metric (ADR-0002 PR-12.C)` — `chat_tool_invocations_total{tool, outcome}` з outcome `proposed` (модель повернула `tool_use`) / `executed` (клієнт повернув `tool_result` з matching `tool_use_id`). Різниця — KPI `tool_rejected_rate` з ADR-0002. Recorded server-side до Anthropic-виклику (не залежить від upstream-успіху другого кроку). 6 нових vitest cases.
+- `PR-12.C` ✅closed — [#930](https://github.com/Skords-01/Sergeant/pull/930) `feat(server,chat): per-tool metrics (chat_tool_invocations_total{tool, outcome=proposed|executed|unknown_tool}) → SLO dashboard`. Реалізовано: `apps/server/src/modules/chat/toolMetrics.ts` із whitelist-маперами на TOOLS-реєстр (anti-cardinality), wired в `chat.ts` на обидва кроки (`recordToolProposals` після першого Anthropic-виклику з tool_use-блоками, `recordToolExecutions` на другому кроці з мапу `tool_use_id → name` через `tool_calls_raw`), 13 unit + 3 integration тестів.
 - `PR-12.D` ✅closed — `docs(ai): tool lifecycle model (proposal → safety review → rollout → KPIs)` — реалізовано як [`docs/adr/0002-tool-lifecycle.md`](../adr/0002-tool-lifecycle.md): 4-фазний процес (Proposal/Safety/Rollout/KPIs) з checklist-ами для кожної фази, owner-domain map і KPI-thresholds на основі `chat_tool_invocations_total` (PR-12.C).
 - `PR-12.E` ✅closed — `feat(server,chat): truncate-aware tool_result handler` — якщо `tool_result` >N токенів, серверна частина серіалізує summary + повний blob у Sentry breadcrumb. Закриває edge case, де великі briefing/digest вибивають continuation. Реалізовано: `apps/server/src/modules/chat/toolResultTruncation.ts` (threshold 2 000 chars, head 600 + tail 400 + marker), wired у `chat.ts` перед `tool_result`-payload-ом, `chat_tool_result_truncated_total{reason}` метрика, 14 unit + 2 integration тестів.
 

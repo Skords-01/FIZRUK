@@ -34,19 +34,19 @@ export type StatSize = "sm" | "md" | "lg";
 
 const variantClass: Record<StatVariant, string> = {
   default: "text-text",
-  success: "text-success",
-  warning: "text-warning",
-  danger: "text-danger",
-  finyk: "text-finyk",
-  fizruk: "text-fizruk",
-  routine: "text-routine",
-  nutrition: "text-nutrition",
+  success: "text-success-strong",
+  warning: "text-warning-strong",
+  danger: "text-danger-strong",
+  finyk: "text-finyk-strong",
+  fizruk: "text-fizruk-strong",
+  routine: "text-routine-strong",
+  nutrition: "text-nutrition-strong",
 };
 
 const valueSize: Record<StatSize, string> = {
-  sm: "text-lg font-extrabold",
-  md: "text-2xl font-extrabold",
-  lg: "text-3xl font-black",
+  sm: "text-lg font-extrabold tabular-nums",
+  md: "text-2xl font-extrabold tabular-nums",
+  lg: "text-3xl font-black tabular-nums",
 };
 
 function cx(...classes: Array<string | false | null | undefined>): string {

@@ -74,7 +74,7 @@ describe("ConfirmDialog", () => {
     const pressables = UNSAFE_getAllByType(Pressable);
     expect(pressables.length).toBeGreaterThanOrEqual(3);
     const confirm = pressables[1];
-    expect(confirm.props.className).toContain("bg-brand-500");
+    expect(confirm.props.className).toContain("bg-brand-strong");
     expect(confirm.props.className).not.toContain("bg-danger");
   });
 });

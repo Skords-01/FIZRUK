@@ -101,7 +101,7 @@ const sizes: Record<InputSize, string> = {
 };
 
 const variantBase: Record<InputVariant, string> = {
-  default: "bg-panel border border-line",
+  default: "bg-panelHi border border-line",
   filled: "bg-panelHi border border-transparent",
   ghost: "bg-transparent border border-transparent",
 };
@@ -189,14 +189,12 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     spellCheck ?? (type && NON_PROSE_TYPES.has(type) ? false : undefined);
 
   const stateClass = error
-    ? "border-red-500"
+    ? "border-danger"
     : success
       ? "border-brand-400"
       : focused
         ? variantFocused[variant]
         : "";
-
-  const ringClass = focused && !error && !success ? "border-2" : "border";
 
   return (
     <View
@@ -205,7 +203,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         sizes[size],
         variantBase[variant],
         stateClass,
-        ringClass,
+        "border",
+        focused && !error && !success ? "ring-2 ring-brand-400/40" : "",
         !editable && "opacity-50",
         containerClassName,
       )}
@@ -273,7 +272,7 @@ export const Textarea = forwardRef<TextInput, TextareaProps>(function Textarea(
   const [focused, setFocused] = useState(false);
 
   const stateClass = error
-    ? "border-red-500"
+    ? "border-danger"
     : focused
       ? variantFocused[variant]
       : "";

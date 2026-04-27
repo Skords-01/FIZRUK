@@ -42,10 +42,17 @@ export function SessionsSection({ online }: { online: boolean }) {
     load();
   }, [load]);
 
-  const handleRevoke = async (id: string) => {
+  const handleRevoke = async (id: string, token: string) => {
     setRevoking(id);
     try {
-      const res = await revokeSession({ id });
+      // Better Auth's `/revoke-session` endpoint validates the body with
+      // `z.object({ token: z.string() })` (see
+      // `node_modules/better-auth/dist/api/routes/session.mjs`). Passing
+      // `{ id }` lands as `body.token === undefined` and surfaces as a
+      // user-visible toast: `[body.token] Invalid input: expected
+      // string, received undefined`. We use the session's `token`
+      // (already returned by `listSessions`) as the identifier.
+      const res = await revokeSession({ token });
       if (res.error) {
         toast.error(res.error.message ?? "Не вдалося завершити сесію");
         return;
@@ -112,7 +119,7 @@ export function SessionsSection({ online }: { online: boolean }) {
                     size="xs"
                     disabled={revoking === s.id}
                     loading={revoking === s.id}
-                    onClick={() => handleRevoke(s.id)}
+                    onClick={() => handleRevoke(s.id, s.token)}
                   >
                     Завершити
                   </Button>

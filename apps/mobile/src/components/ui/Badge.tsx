@@ -43,15 +43,15 @@ export type BadgeSize = "xs" | "sm" | "md";
 
 const solidVariants: Record<BadgeVariant, string> = {
   neutral: "bg-fg-muted/90",
-  accent: "bg-accent",
-  success: "bg-success",
-  warning: "bg-warning",
-  danger: "bg-danger",
-  info: "bg-info",
-  finyk: "bg-finyk",
-  fizruk: "bg-fizruk",
-  routine: "bg-routine",
-  nutrition: "bg-nutrition",
+  accent: "bg-brand-strong",
+  success: "bg-success-strong",
+  warning: "bg-warning-strong",
+  danger: "bg-danger-strong",
+  info: "bg-info-strong",
+  finyk: "bg-finyk-strong",
+  fizruk: "bg-fizruk-strong",
+  routine: "bg-routine-strong",
+  nutrition: "bg-nutrition-strong",
 };
 
 const softVariants: Record<BadgeVariant, string> = {
@@ -95,15 +95,15 @@ const solidText: Record<BadgeVariant, string> = {
 
 const softText: Record<BadgeVariant, string> = {
   neutral: "text-fg-muted",
-  accent: "text-success",
-  success: "text-success",
+  accent: "text-brand-700",
+  success: "text-brand-700",
   warning: "text-warning",
   danger: "text-danger",
   info: "text-info",
-  finyk: "text-finyk",
-  fizruk: "text-fizruk",
-  routine: "text-routine",
-  nutrition: "text-nutrition",
+  finyk: "text-finyk-strong",
+  fizruk: "text-fizruk-strong",
+  routine: "text-routine-strong",
+  nutrition: "text-nutrition-strong",
 };
 
 const outlineText: Record<BadgeVariant, string> = softText;
@@ -144,8 +144,8 @@ const solidDot: Record<BadgeVariant, string> = {
 
 const softDot: Record<BadgeVariant, string> = {
   neutral: "bg-fg-muted",
-  accent: "bg-success",
-  success: "bg-success",
+  accent: "bg-brand",
+  success: "bg-brand",
   warning: "bg-warning",
   danger: "bg-danger",
   info: "bg-info",

@@ -46,7 +46,7 @@ export interface TabsProps<Value extends string = string> {
 }
 
 const pillActive: Record<TabsVariant, string> = {
-  accent: "bg-success-soft",
+  accent: "bg-brand-50",
   finyk: "bg-finyk-soft",
   fizruk: "bg-fizruk-soft",
   routine: "bg-routine-surface",
@@ -54,7 +54,7 @@ const pillActive: Record<TabsVariant, string> = {
 };
 
 const pillActiveText: Record<TabsVariant, string> = {
-  accent: "text-success",
+  accent: "text-brand-strong",
   finyk: "text-finyk",
   fizruk: "text-fizruk",
   routine: "text-routine",
