@@ -1,0 +1,303 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "SLO.md",
+      "tooltip": "Service Level Objectives",
+      "type": "link",
+      "url": "https://github.com/Skords-01/Sergeant/blob/main/docs/observability/SLO.md"
+    },
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "runbook.md",
+      "tooltip": "Incident Runbook",
+      "type": "link",
+      "url": "https://github.com/Skords-01/Sergeant/blob/main/docs/observability/runbook.md"
+    }
+  ],
+  "panels": [
+    {
+      "title": "Sync outcomes (stacked)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "stacking": { "mode": "normal" },
+            "lineWidth": 1
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (op, module, outcome) (rate(sync_operations_total[5m]))",
+          "legendFormat": "{{op}} / {{module}} — {{outcome}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "p95 sync duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1
+          },
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1500 },
+              { "color": "red", "value": 2500 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, op, module) (rate(sync_duration_ms_bucket[5m])))",
+          "legendFormat": "{{op}} / {{module}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Payload bytes p95",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, op, module) (rate(sync_payload_bytes_bucket[5m])))",
+          "legendFormat": "{{op}} / {{module}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Conflict ratio (push/push_all)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sli:sync_conflict:ratio_rate1h",
+          "legendFormat": "conflict ratio 1h",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "SLO burn-rate — Sync error ratio",
+      "description": "Multi-window burn-rate for Sync SLO (99.5%). Budget = 0.005. Page threshold: 14.4×0.005 = 0.072. Ticket threshold: 6×0.005 = 0.03.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "id": 5,
+      "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "lineWidth": 2
+          },
+          "unit": "percentunit",
+          "max": 0.15
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "page threshold (0.072)" },
+            "properties": [
+              {
+                "id": "color",
+                "value": { "fixedColor": "red", "mode": "fixed" }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": { "fill": "dash", "dash": [10, 10] }
+              },
+              { "id": "custom.fillOpacity", "value": 0 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "ticket threshold (0.03)" },
+            "properties": [
+              {
+                "id": "color",
+                "value": { "fixedColor": "orange", "mode": "fixed" }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": { "fill": "dash", "dash": [10, 10] }
+              },
+              { "id": "custom.fillOpacity", "value": 0 }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "sli:sync_error:ratio_rate1h",
+          "legendFormat": "error ratio 1h",
+          "refId": "A"
+        },
+        {
+          "expr": "sli:sync_error:ratio_rate30m",
+          "legendFormat": "error ratio 30m",
+          "refId": "B"
+        },
+        {
+          "expr": "sli:sync_error:ratio_rate5m",
+          "legendFormat": "error ratio 5m",
+          "refId": "C"
+        },
+        {
+          "expr": "vector(0.072)",
+          "legendFormat": "page threshold (0.072)",
+          "refId": "D"
+        },
+        {
+          "expr": "vector(0.03)",
+          "legendFormat": "ticket threshold (0.03)",
+          "refId": "E"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["sergeant", "sync"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "$DS_PROMETHEUS" },
+        "definition": "label_values(sync_operations_total, module)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "module",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(sync_operations_total, module)"
+        },
+        "refresh": 2,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Sergeant — Sync",
+  "uid": "sergeant-sync",
+  "version": 1
+}

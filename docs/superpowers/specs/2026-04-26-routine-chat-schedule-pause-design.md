@@ -1,6 +1,13 @@
 # Routine chat tools: `set_habit_schedule` + `pause_habit`
 
-> Status: design
+> **Status:** shipped (PR [#797](https://github.com/Skords-01/Sergeant/pull/797),
+> catalogue rows у [#798](https://github.com/Skords-01/Sergeant/pull/798),
+> dedup у [#800](https://github.com/Skords-01/Sergeant/pull/800)).
+> `paused` доданий у `packages/routine-domain` (`types.ts`, `schedule.ts`,
+> `domain/reminders/weekday.ts`); серверні tool defs — `apps/server/src/modules/chat/toolDefs/routine.ts`;
+> client handlers — `apps/web/src/core/lib/chatActions/routineActions.ts`;
+> `SYSTEM_PROMPT_VERSION = "v6"`; cards мають `set_habit_schedule` / `pause_habit`.
+>
 > Authors: Devin (session: dbc81f8c) for @Skords-01
 > Created: 2026-04-26
 
