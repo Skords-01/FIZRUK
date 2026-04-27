@@ -596,6 +596,7 @@ export function Workouts() {
           onClose={() => setQuickStartOpen(false)}
           exercises={exercises}
           search={search}
+          primaryGroupsUk={primaryGroupsUk}
           onPickTemplate={() => {
             setQuickStartOpen(false);
             setView("templates");
