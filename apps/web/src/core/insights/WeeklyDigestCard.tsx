@@ -221,6 +221,7 @@ function DigestContent({
             "dark:from-brand-600 dark:via-brand-500 dark:to-teal-500",
             "shadow-card hover:brightness-110 active:scale-[0.98] transition-[box-shadow,filter,opacity,transform]",
             "flex items-center justify-center gap-2",
+            "focus-ring",
           )}
         >
           <svg

@@ -303,7 +303,7 @@ export default function App({
             <button
               type="button"
               onClick={() => setShowBalance((v) => !v)}
-              className="w-11 h-11 flex items-center justify-center rounded-xl text-subtle hover:text-text hover:bg-panelHi transition-colors"
+              className="focus-ring w-11 h-11 flex items-center justify-center rounded-xl text-subtle hover:text-text hover:bg-panelHi transition-colors"
               aria-label={showBalance ? "Приховати суми" : "Показати суми"}
               title={showBalance ? "Приховати суми" : "Показати суми"}
             >
