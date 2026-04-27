@@ -1,5 +1,7 @@
 # Sergeant Brandbook & Design System
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 > **Version:** 2.0
 > **Last Updated:** April 2026
 > **Design Philosophy:** Soft & Organic with Emerald/Teal accent
