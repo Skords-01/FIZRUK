@@ -365,7 +365,14 @@ jobs:
           actionlint --version
 
       - name: Lint .github/workflows
-        run: actionlint -color
+        # `-ignore` filters out shellcheck info/style noise from existing run
+        # scripts (SC2012, SC2016, SC2129 …) so the gate stays focused on
+        # workflow-schema and expression errors — e.g. the `secrets` context
+        # in `jobs.<job_id>.if` that caused this PR. shellcheck `error`/
+        # `warning` levels still fail the job.
+        run: |
+          actionlint -color \
+            -ignore 'shellcheck reported issue in this script: SC[0-9]+:(info|style):'
 
   pipeline-duration-summary:
     name: Pipeline duration (p95 trend)
