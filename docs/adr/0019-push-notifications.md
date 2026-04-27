@@ -1,4 +1,4 @@
-# ADR-0009: Push notifications — server-driven fan-out (web + APNs + FCM)
+# ADR-0019: Push notifications — server-driven fan-out (web + APNs + FCM)
 
 - **Status:** accepted
 - **Date:** 2026-04-27

@@ -14,7 +14,7 @@
   - [`docs/playbooks/add-hubchat-tool.md`](../playbooks/add-hubchat-tool.md) — операційний how-to.
   - [`docs/playbooks/tune-system-prompt.md`](../playbooks/tune-system-prompt.md).
   - [`docs/playbooks/add-feature-flag.md`](../playbooks/add-feature-flag.md) — feature-flag механіка для фази 3 (rollout) і ADR-2.10.
-  - [ADR-0005](./0005-anthropic-model-and-caching.md) — model selection + prompt caching (закриває TBD-ADR з §2.8).
+  - [ADR-0005](./0005-anthropic-model-selection-and-prompt-caching.md) — model selection + prompt caching (закриває TBD-ADR з §2.8).
 
 ---
 
@@ -302,7 +302,7 @@ n/a (operational reference).
 
 - **Tool authoring style** (іменування, opinionated input shapes) — це operational guidance у `docs/playbooks/add-hubchat-tool.md`.
 - **System prompt tuning** — окремий playbook `docs/playbooks/tune-system-prompt.md`.
-- **Anthropic version bumps / model selection / prompt caching budget** — [ADR-0005](./0005-anthropic-model-and-caching.md) (закриває TBD-ADR).
+- **Anthropic version bumps / model selection / prompt caching budget** — [ADR-0005](./0005-anthropic-model-selection-and-prompt-caching.md) (закриває TBD-ADR).
 - **Quotas і monetization gating** — ADR-0001 + `requireAiQuota` middleware.
 - **Безпека ширше за tool boundary** (XSS, CSRF, secrets management) — repo-wide AGENTS.md hard rules.
 

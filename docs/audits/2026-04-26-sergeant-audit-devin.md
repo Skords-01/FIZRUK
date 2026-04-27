@@ -33,7 +33,7 @@
 | PR-5.B   | rollback sanity для `*.down.sql` міграцій (Testcontainers)             | ✅ closed  | [#918](https://github.com/Skords-01/Sergeant/pull/918)                                                                 |
 | PR-6.B   | `noImplicitAny` phase 2 — routine + shared + nutrition (3 з 6)         | 🟡 partial | [#923](https://github.com/Skords-01/Sergeant/pull/923), [#934](https://github.com/Skords-01/Sergeant/pull/934)         |
 | PR-7.E   | de-flake `OnboardingWizard.test.tsx` (1/3 flaky triage)                | ✅ closed  | [#963](https://github.com/Skords-01/Sergeant/pull/963)                                                                 |
-| PR-11.C  | ADR template + README index + retroactive ADRs (3 з 5: Better Auth / Capacitor / Anthropic) | 🟡 partial | template+README ✅; ADR-0007/0010/0005 ✅ via [#958](https://github.com/Skords-01/Sergeant/pull/958), [#956](https://github.com/Skords-01/Sergeant/pull/956), [#962](https://github.com/Skords-01/Sergeant/pull/962); ⏳ turbo + monorepo split |
+| PR-11.C  | ADR template + README index + retroactive ADRs (3 з 5: Better Auth / Capacitor / Anthropic) | 🟡 partial | template+README ✅; ADR-0017/0010/0005 ✅ via [#958](https://github.com/Skords-01/Sergeant/pull/958), [#956](https://github.com/Skords-01/Sergeant/pull/956), [#962](https://github.com/Skords-01/Sergeant/pull/962); ⏳ turbo + monorepo split |
 | PR-8.A   | `docs(obs): error-budget policy`                                       | ✅ closed  | [#942](https://github.com/Skords-01/Sergeant/pull/942)                                                                 |
 | PR-7.D   | weekly flaky-tests dashboard workflow                                  | ✅ closed  | [#945](https://github.com/Skords-01/Sergeant/pull/945)                                                                 |
 | PR-8.B   | Prometheus `/metrics` endpoint + Grafana dashboards JSON               | ✅ closed  | [#946](https://github.com/Skords-01/Sergeant/pull/946), [#948](https://github.com/Skords-01/Sergeant/pull/948), [#953](https://github.com/Skords-01/Sergeant/pull/953) |
@@ -345,9 +345,9 @@
 - `PR-11.A` ✅ closed — [#952](https://github.com/Skords-01/Sergeant/pull/952) `docs(docs): freshness badges for top-10 docs + nightly overdue-doc issue workflow`. `**Last validated:**` бейдж додано на 11+ топ-документів, `.github/workflows/docs-freshness.yml` + `scripts/docs/check-freshness.mjs` відкриває issue на overdue.
 - `PR-11.B` ✅ closed — [#955](https://github.com/Skords-01/Sergeant/pull/955) `docs(docs): convert top-5 playbooks to decision-tree format`. Додано `docs/playbooks/_TEMPLATE-decision-tree.md` і конвертовано: `debug-chat-tool.md`, `hotfix-prod-regression.md`, `investigate-alert.md`, `rotate-secrets.md`, `stabilize-flaky-test.md`.
 - `PR-11.C` 🟡 partial (3/5) — ADR template + README ✅ ([#938](https://github.com/Skords-01/Sergeant/pull/938)) + retroactive batches:
-  - `docs/adr/0007-better-auth-choice-and-session-model.md` (Better Auth) ✅ ([#962](https://github.com/Skords-01/Sergeant/pull/962))
+  - `docs/adr/0017-better-auth-choice-and-session-model.md` (Better Auth) ✅ ([#962](https://github.com/Skords-01/Sergeant/pull/962))
   - `docs/adr/0010-mobile-dual-track-capacitor-expo.md` (Capacitor wrapper) ✅ ([#956](https://github.com/Skords-01/Sergeant/pull/956))
-  - `docs/adr/0005-anthropic-model-and-caching.md` (Anthropic tool-on-client) ✅ ([#958](https://github.com/Skords-01/Sergeant/pull/958))
+  - `docs/adr/0005-anthropic-model-selection-and-prompt-caching.md` (Anthropic tool-on-client) ✅ ([#958](https://github.com/Skords-01/Sergeant/pull/958))
   - **Залишилось ⏳:** retroactive ADRs для `turbo` (monorepo runner) і `monorepo split` (apps/* + packages/*) — 2 шт.
   - **Caveat:** паралельні ADR-пакети #956/#961/#962 створили колізії номерів 0003-0012 (10 пар файлів з однаковим NNNN). Розв'язується окремим PR-ом `docs(adr): resolve numbering collisions`.
 

@@ -1,4 +1,4 @@
-# ADR-0008: API versioning policy (`/api/v1`)
+# ADR-0018: API versioning policy (`/api/v1`)
 
 - **Status:** accepted
 - **Date:** 2026-04-27
@@ -9,7 +9,7 @@
   - [`apps/web/src/shared/lib/apiUrl.ts`](../../apps/web/src/shared/lib/apiUrl.ts) — `getApiPrefix()` web-side resolution.
   - [`packages/api-client/src/`](../../packages/api-client/src/) — `apiPrefix` config у HTTP client-і.
   - [`docs/architecture/api-v1.md`](../architecture/api-v1.md) — operational reference.
-  - [`docs/adr/0007-better-auth-choice-and-session-model.md`](./0007-better-auth-choice-and-session-model.md) — чому `/api/auth/*` поза версіонуванням.
+  - [`docs/adr/0017-better-auth-choice-and-session-model.md`](./0017-better-auth-choice-and-session-model.md) — чому `/api/auth/*` поза версіонуванням.
 
 ---
 

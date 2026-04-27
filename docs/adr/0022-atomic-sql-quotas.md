@@ -1,4 +1,4 @@
-# ADR-0012: Atomic SQL daily quotas — `INSERT ... ON CONFLICT DO UPDATE WHERE`
+# ADR-0022: Atomic SQL daily quotas — `INSERT ... ON CONFLICT DO UPDATE WHERE`
 
 - **Status:** accepted
 - **Date:** 2026-04-27
