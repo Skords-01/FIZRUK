@@ -5,7 +5,7 @@
 Repeatable step-by-step recipes for common tasks in the Sergeant monorepo.
 Each playbook is a checklist that **AI agents and human developers** can follow to reduce variance and avoid missed steps.
 
-> **Origin:** `docs/ai-coding-improvements.md` Block 2.
+> **Origin:** `docs/planning/ai-coding-improvements.md` Block 2.
 > **Format:** Option A — markdown files in-repo. If the team later wants GUI-driven execution, these can be imported into Devin webapp as `playbook-<uuid>`.
 
 ### Decision Tree Format

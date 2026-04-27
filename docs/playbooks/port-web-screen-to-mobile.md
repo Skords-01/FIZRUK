@@ -118,6 +118,6 @@ pnpm --filter @sergeant/mobile exec vitest run src/<path>/<Screen>.test.tsx
 
 ## See also
 
-- [react-native-migration.md](../react-native-migration.md) — повний план міграції
-- [mobile.md](../mobile.md) — загальна документація mobile app
+- [react-native-migration.md](../mobile/react-native-migration.md) — повний план міграції
+- [mobile.md](../mobile/overview.md) — загальна документація mobile app
 - [AGENTS.md](../../AGENTS.md) — rule #2 (RQ keys), flaky tests

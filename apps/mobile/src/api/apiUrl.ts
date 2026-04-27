@@ -7,7 +7,7 @@
  *   який Better Auth тримає на фіксованому `basePath`.
  *
  * Мобільному клієнту ми ЗАВЖДИ шлемо у `/api/v1/*` — контракт описано в
- * `docs/api-v1.md` і `docs/mobile.md`. Тому `apiUrl("/api/foo")` →
+ * `docs/architecture/api-v1.md` і `docs/mobile/overview.md`. Тому `apiUrl("/api/foo")` →
  * `${base}/api/v1/foo`, а `apiUrl("/api/auth/sign-in/email")` лишається
  * `${base}/api/auth/sign-in/email`.
  */

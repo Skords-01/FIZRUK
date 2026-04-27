@@ -15,7 +15,7 @@
 >
 > **Out of scope:** chart palettes, typography, motion, dark-mode work
 > (the dark theme already passed an audit in late 2025 — see
-> [`docs/BRANDBOOK.md`](./BRANDBOOK.md#dark-mode)).
+> [`docs/design/BRANDBOOK.md`](./BRANDBOOK.md#dark-mode)).
 
 ---
 
@@ -54,7 +54,7 @@ a two-token tier per brand colour:
 A scaffolding for `-strong` already exists for the four module colours
 (`text-finyk-strong`, `text-fizruk-strong`, `text-routine-strong`,
 `text-nutrition-strong` — see
-[`packages/design-tokens/tailwind-preset.js`](../packages/design-tokens/tailwind-preset.js)).
+[`packages/design-tokens/tailwind-preset.js`](../../packages/design-tokens/tailwind-preset.js)).
 This proposal extends the same convention to `brand` / `success` /
 `warning` / `danger` / `info` / `accent`, codifies _when_ to use which,
 and lints violations with a new ESLint rule.
@@ -88,13 +88,13 @@ nearly every screen: **Button (solid)**, **Badge (solid + soft)**,
 ### 1.2 Why the gap exists
 
 The palette in
-[`packages/design-tokens/tokens.js`](../packages/design-tokens/tokens.js)
+[`packages/design-tokens/tokens.js`](../../packages/design-tokens/tokens.js)
 was tuned for visual harmony, inspired by Duolingo / Yazio / Monobank —
 those products lean on the `-500` step the same way Sergeant does, but
 they consistently pair it with **bold ≥ 18 px** copy or with a darker
 text-on-color pair we don't currently expose as a Tailwind utility.
 
-[`docs/BRANDBOOK.md` § Color Contrast](./BRANDBOOK.md#color-contrast)
+[`docs/design/BRANDBOOK.md` § Color Contrast](./BRANDBOOK.md#color-contrast)
 already states the rule (`Text on backgrounds: Minimum 4.5:1 ratio`) —
 but the _tokens_ don't carry it. There is no lint or test that ties the
 written rule to the emitted utilities. So the rule has drifted in
@@ -106,7 +106,7 @@ practice for ~12 months.
   is on the splash screen, App Store screenshots, the marketing site,
   the Capacitor shell icon, and weekly digest emails. Changing the
   `-500` hex breaks all of that.
-- **Snapshot tests.** [`packages/design-tokens/tokens.test.js`](../packages/design-tokens/tokens.test.js)
+- **Snapshot tests.** [`packages/design-tokens/tokens.test.js`](../../packages/design-tokens/tokens.test.js)
   pins `brandColors` and `statusColors` shape via Jest snapshots; mobile
   consumes the same flat hex map. Any change to `tokens.js` ripples
   through `apps/mobile`, `apps/mobile-shell` and the canonical web SPA.
@@ -124,7 +124,7 @@ The constraint shape is therefore **add tokens, do not mutate**.
 
 The four module colours already have a `strong` field on the
 `semanticVariants` block in
-[`tailwind-preset.js`](../packages/design-tokens/tailwind-preset.js)
+[`tailwind-preset.js`](../../packages/design-tokens/tailwind-preset.js)
 (lines 119–124 for `finyk`, identical pattern for the rest). Today
 those are populated with `brandColors.{family}[700]` for `finyk` /
 `fizruk` / `routine` and `brandColors.lime[800]` for `nutrition`
@@ -328,12 +328,12 @@ reconciles WCAG AA with the existing identity.
 
 ## 5. References
 
-- [`packages/design-tokens/tokens.js`](../packages/design-tokens/tokens.js)
+- [`packages/design-tokens/tokens.js`](../../packages/design-tokens/tokens.js)
   — raw palette source.
-- [`packages/design-tokens/tailwind-preset.js`](../packages/design-tokens/tailwind-preset.js)
+- [`packages/design-tokens/tailwind-preset.js`](../../packages/design-tokens/tailwind-preset.js)
   — `*-strong` precedent at `finyk` / `fizruk` / `routine` / `nutrition`.
-- [`docs/BRANDBOOK.md` § Color Contrast](./BRANDBOOK.md#color-contrast).
-- [`apps/web/tests/a11y/axe.spec.ts`](../apps/web/tests/a11y/axe.spec.ts)
+- [`docs/design/BRANDBOOK.md` § Color Contrast](./BRANDBOOK.md#color-contrast).
+- [`apps/web/tests/a11y/axe.spec.ts`](../../apps/web/tests/a11y/axe.spec.ts)
   — gate that this proposal lets us re-arm.
 - WCAG 2.1 § 1.4.3 Contrast (Minimum) — AA: 4.5 : 1 body / 3 : 1 large.
 - PR [#851](https://github.com/Skords-01/Sergeant/pull/851) — drop

@@ -52,7 +52,7 @@ Web прокидає `apiPrefix` через `getApiPrefix()` (див. `apps/web/
 
 ## Нові endpoint-и v1
 
-- `POST /api/v1/push/register` — див. `docs/mobile.md`.
+- `POST /api/v1/push/register` — див. `docs/mobile/overview.md`.
 - `GET /api/v1/me` — уніфікований "хто я" для web cookie і mobile bearer.
 
 Усі решта endpoint-ів `v1` — це дзеркало існуючих `/api/*` без змін у

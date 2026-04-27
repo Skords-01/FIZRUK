@@ -76,7 +76,7 @@ export default [
       // WCAG-AA `-strong` tier guardrail — every saturated brand `bg-*`
       // utility paired with `text-white` regresses to ~2.4–2.8 : 1
       // contrast (the bug class fixed in PRs #854 / #855). The fix is
-      // `bg-{family}-strong text-white`. See docs/BRANDBOOK.md →
+      // `bg-{family}-strong text-white`. See docs/design/BRANDBOOK.md →
       // "WCAG-AA `-strong` Tier" for the full mapping. Promoted from
       // "warn" to "error" once the cleanup PR migrated the last 28
       // call-sites — the codebase is now clean against this rule, and
@@ -194,7 +194,7 @@ export default [
   // quota fallbacks. New web code MUST go through one of those.
   //
   // The `ignores` list below names every existing call-site as of the
-  // rule's introduction (see `docs/frontend-tech-debt.md` §2). Migrate
+  // rule's introduction (see `docs/tech-debt/frontend.md` §2). Migrate
   // a file → drop it from the list. Test files are exempt entirely:
   // they routinely seed/inspect raw `localStorage` as fixtures and are
   // already isolated from production hazards.
@@ -369,7 +369,7 @@ export default [
   // Test files are exempt (they legitimately need type-level tricks).
   //
   // The `ignores` list below names every existing call-site as of the
-  // rule's introduction (see `docs/frontend-tech-debt.md` §no-strict-bypass).
+  // rule's introduction (see `docs/tech-debt/frontend.md` §no-strict-bypass).
   // Migrate a file → drop it from the list.
   {
     files: ["apps/server/src/**/*.{js,ts}", "apps/web/src/**/*.{ts,tsx}"],

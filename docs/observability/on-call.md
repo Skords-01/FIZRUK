@@ -4,7 +4,7 @@
 
 Операційний документ для on-call інженера. Зібрано з [SLO.md](./SLO.md),
 [runbook.md](./runbook.md), [alert_rules.yml](./prometheus/alert_rules.yml),
-[AGENTS.md](../../AGENTS.md) та [railway-vercel.md](../railway-vercel.md).
+[AGENTS.md](../../AGENTS.md) та [railway-vercel.md](../integrations/railway-vercel.md).
 
 ---
 

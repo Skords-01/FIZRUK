@@ -12,7 +12,7 @@ import { cn } from "../../lib/cn";
  *   - text-2xs text-nutrition/70 font-bold uppercase tracking-wide (nutrition macros)
  *
  * Sizes drive **font scale + weight + casing + tracking** only. Colour
- * is picked via `variant` (see `docs/COMPONENT_API.md`) so the same size
+ * is picked via `variant` (see `docs/design/COMPONENT_API.md`) so the same size
  * can render in `subtle` (default eyebrow on cards), `muted`, or a
  * module-branded tint (finyk / fizruk / routine / nutrition). Semantics
  * default to <h3>.
@@ -70,7 +70,7 @@ const variants: Record<SectionHeadingVariant, string> = {
   // `accent` uses `text-brand-strong` (= emerald-700) instead of the
   // global `--c-accent` token (= emerald-500). The latter only clears
   // ~2.4:1 against the cream `bg-bg`; `-strong` clears 5.23:1. See
-  // docs/brand-palette-wcag-aa-proposal.md § 2.2 and the SectionHeading
+  // docs/design/brand-palette-wcag-aa-proposal.md § 2.2 and the SectionHeading
   // contract test that pins the className.
   accent: "text-brand-strong",
   // Module-branded tints — normalised to /70 so callers don't drift

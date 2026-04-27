@@ -85,7 +85,7 @@ const preset = {
           // clears 4.5:1 against the cream `bg-bg` and against `text-white`
           // when used as a solid fill. Use `bg-brand-strong text-white` on
           // primary CTAs and `text-brand-strong` for body-sized brand text.
-          // See docs/brand-palette-wcag-aa-proposal.md.
+          // See docs/design/brand-palette-wcag-aa-proposal.md.
           strong: brandColors.emerald[700],
           ...brandColors.emerald,
         },
@@ -100,7 +100,7 @@ const preset = {
         // `-soft` background token that resolves through CSS variables so
         // dark mode works without bespoke dark: overrides, and a `-strong`
         // companion (text-on-cream / fill-with-white) that clears WCAG AA
-        // at body sizes. See docs/brand-palette-wcag-aa-proposal.md.
+        // at body sizes. See docs/design/brand-palette-wcag-aa-proposal.md.
         // ═══════════════════════════════════════════════════════════════════
         success: statusColors.success,
         danger: statusColors.danger,

@@ -323,7 +323,7 @@ const noRawTrackedStorage = {
 // ─── ai-marker-syntax ───────────────────────────────────────────────────
 //
 // Validates AI code-marker comments follow the canonical syntax defined in
-// docs/ai-coding-improvements.md §3.1. Exactly four markers are allowed:
+// docs/planning/ai-coding-improvements.md §3.1. Exactly four markers are allowed:
 //
 //   // AI-NOTE: <text>
 //   // AI-DANGER: <text>
@@ -572,8 +572,8 @@ const validTailwindOpacity = {
 //
 // Forbid the saturated brand-fill + `text-white` combination on light
 // surfaces. The full rationale, decision matrix, and contrast measurements
-// live in `docs/BRANDBOOK.md` → "WCAG-AA `-strong` Tier" and
-// `docs/brand-palette-wcag-aa-proposal.md`.
+// live in `docs/design/BRANDBOOK.md` → "WCAG-AA `-strong` Tier" and
+// `docs/design/brand-palette-wcag-aa-proposal.md`.
 //
 // Quick recap: every saturated brand colour ships with a `-strong`
 // companion that clears WCAG AA 4.5 : 1 against `text-white`. Reaching
@@ -633,7 +633,7 @@ const RX_SATURATED_BG = new RegExp(
 const RX_TEXT_WHITE = /(?<!\S)text-white(?=\s|$)/;
 
 const LOW_CONTRAST_MESSAGE =
-  "`{{utility}}` + `text-white` fails WCAG AA (~2.4–2.8 : 1). Use `bg-{{family}}-strong` instead — see docs/BRANDBOOK.md → 'WCAG-AA `-strong` Tier'.";
+  "`{{utility}}` + `text-white` fails WCAG AA (~2.4–2.8 : 1). Use `bg-{{family}}-strong` instead — see docs/design/BRANDBOOK.md → 'WCAG-AA `-strong` Tier'.";
 
 function findLowContrastFills(value) {
   if (typeof value !== "string" || value.length === 0) return [];
@@ -1315,7 +1315,7 @@ const noAnthropicKeyInLogs = {
 //      TSAsExpression whose typeAnnotation is TSUnknownKeyword)
 //
 // Test files are exempt via eslint.config.js `ignores`.
-// Existing violations are allowlisted (see docs/frontend-tech-debt.md).
+// Existing violations are allowlisted (see docs/tech-debt/frontend.md).
 
 const NO_STRICT_BYPASS_MESSAGES = {
   tsExpectError:

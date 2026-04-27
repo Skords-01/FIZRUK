@@ -2,7 +2,7 @@
  * Pure `sergeant://` deep-link parser + builder.
  *
  * Source of truth for the URL schemes this module supports is
- * `docs/mobile.md` (section "Deep links"). Keep that table and the
+ * `docs/mobile/overview.md` (section "Deep links"). Keep that table and the
  * `SergeantDeepLink` discriminated union below in lock-step.
  *
  * Intentionally dep-free — runs in any JS environment (node tests,
