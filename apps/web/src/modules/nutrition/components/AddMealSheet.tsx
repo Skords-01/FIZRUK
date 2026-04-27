@@ -1,23 +1,51 @@
 import { useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { Sheet } from "@shared/components/ui/Sheet";
 import { useVisualKeyboardInset } from "@sergeant/shared";
 import { hapticSuccess } from "@shared/lib/haptic";
+import type {
+  Meal,
+  MealTemplate,
+  NutritionPrefs,
+  PantryItem,
+} from "@sergeant/nutrition-domain";
 import { MEAL_TYPES } from "../lib/mealTypes";
 import { ensureSeedFoods } from "../lib/foodDb/foodDb";
 import { BarcodeScanner } from "./BarcodeScanner";
-import { currentTime, emptyForm } from "./meal-sheet/mealFormUtils";
+import {
+  currentTime,
+  emptyForm,
+  type MealFormPhotoResult,
+  type MealFormState,
+} from "./meal-sheet/mealFormUtils";
 import { MealTemplatesRow } from "./meal-sheet/MealTemplatesRow";
 import { MealTypePicker } from "./meal-sheet/MealTypePicker";
 import { NameTimeRow } from "./meal-sheet/NameTimeRow";
 import { FromPantryRow } from "./meal-sheet/FromPantryRow";
-import { FoodPickerSection } from "./meal-sheet/FoodPickerSection";
+import {
+  FoodPickerSection,
+  type PickedFood,
+} from "./meal-sheet/FoodPickerSection";
 import { BarcodeSection } from "./meal-sheet/BarcodeSection";
 import { MacrosEditor } from "./meal-sheet/MacrosEditor";
 import { SaveAsFood } from "./meal-sheet/SaveAsFood";
 import { SaveAsTemplate } from "./meal-sheet/SaveAsTemplate";
 import { useFoodSearch } from "./meal-sheet/useFoodSearch";
 import { useBarcodeLookup } from "./meal-sheet/useBarcodeLookup";
+
+interface AddMealSheetProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (meal: Meal) => void;
+  photoResult?: MealFormPhotoResult | null;
+  initialMeal?: Partial<Meal> | null;
+  mealTemplates?: MealTemplate[];
+  setPrefs?: Dispatch<SetStateAction<NutritionPrefs>>;
+  pantryItems?: PantryItem[];
+  onConsumePantryItem?: (itemName: string, grams: number) => void;
+  onRequestPhoto?: () => void;
+}
 
 export function AddMealSheet({
   open,
@@ -30,13 +58,13 @@ export function AddMealSheet({
   pantryItems = [],
   onConsumePantryItem,
   onRequestPhoto,
-}) {
+}: AddMealSheetProps) {
   const kbInsetPx = useVisualKeyboardInset(open);
-  const [form, setForm] = useState(() => emptyForm(null));
+  const [form, setForm] = useState<MealFormState>(() => emptyForm(null));
   const [foodQuery, setFoodQuery] = useState("");
-  const [pickedFood, setPickedFood] = useState(null);
+  const [pickedFood, setPickedFood] = useState<PickedFood | null>(null);
   const [pickedGrams, setPickedGrams] = useState("100");
-  const [fromPantryItem, setFromPantryItem] = useState(null);
+  const [fromPantryItem, setFromPantryItem] = useState<string | null>(null);
   // Two-step flow: "source" (pick a source — template / pantry / food
   // search / barcode / photo / manual) then "fill" (name, time, macros,
   // save). Editing an existing meal or a photo import skips straight to
@@ -65,7 +93,12 @@ export function AddMealSheet({
   useEffect(() => {
     if (open) {
       if (initialMeal?.id) {
-        const mac = initialMeal.macros || {};
+        const mac = initialMeal.macros ?? {
+          kcal: null,
+          protein_g: null,
+          fat_g: null,
+          carbs_g: null,
+        };
         setForm({
           name: String(initialMeal.name || ""),
           mealType: initialMeal.mealType || "breakfast",
@@ -106,8 +139,9 @@ export function AddMealSheet({
     setScannerOpen,
   ]);
 
-  function field(key) {
-    return (v) => setForm((s) => ({ ...s, [key]: v, err: "" }));
+  function field(key: keyof MealFormState) {
+    return (v: string) =>
+      setForm((s: MealFormState) => ({ ...s, [key]: v, err: "" }));
   }
 
   // Auto-advance to fill step whenever a source selection lands (linked
@@ -178,14 +212,17 @@ export function AddMealSheet({
       macros: { kcal, protein_g, fat_g, carbs_g },
       source,
       macroSource,
-      ...(effectiveFoodId ? { foodId: effectiveFoodId } : {}),
-      ...(hasAmount ? { amount_g: Number(pickedGrams) || 100 } : {}),
+      foodId: effectiveFoodId ? String(effectiveFoodId) : null,
+      amount_g: hasAmount ? Number(pickedGrams) || 100 : null,
     });
   }
 
-  const hasPhotoMacros =
+  const hasPhotoMacros = Boolean(
     photoResult?.macros &&
-    Object.values(photoResult.macros).some((v) => v != null && v !== 0);
+    Object.values(photoResult.macros).some(
+      (v: unknown) => v != null && v !== 0,
+    ),
+  );
 
   const showBack = step === "fill" && !initialMeal?.id && !photoResult;
   const title = (

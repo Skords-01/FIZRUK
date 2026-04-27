@@ -1,8 +1,15 @@
+import type { Dispatch, SetStateAction } from "react";
 import { cn } from "@shared/lib/cn";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
-import { MEAL_TYPES } from "../../lib/mealTypes";
+import { MEAL_TYPES, type MealTypeId } from "../../lib/mealTypes";
+import type { MealFormState } from "./mealFormUtils";
 
-export function MealTypePicker({ mealType, setForm }) {
+interface MealTypePickerProps {
+  mealType: MealTypeId;
+  setForm: Dispatch<SetStateAction<MealFormState>>;
+}
+
+export function MealTypePicker({ mealType, setForm }: MealTypePickerProps) {
   return (
     <div className="mb-4">
       <SectionHeading as="div" size="xs" className="mb-2">

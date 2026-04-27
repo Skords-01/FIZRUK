@@ -1,7 +1,14 @@
 import { cn } from "@shared/lib/cn";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 
-export function MacroChip({ label, value, unit = "г", color }) {
+interface MacroChipProps {
+  label: string;
+  value: number | null | undefined;
+  unit?: string;
+  color?: string;
+}
+
+export function MacroChip({ label, value, unit = "г", color }: MacroChipProps) {
   return (
     <div className={cn("flex flex-col items-center px-3 py-2 min-w-0", color)}>
       <SectionHeading as="span" size="xs" className="text-inherit opacity-70">

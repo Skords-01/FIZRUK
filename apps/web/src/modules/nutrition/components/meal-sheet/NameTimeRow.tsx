@@ -1,11 +1,18 @@
 import { useCallback, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Input } from "@shared/components/ui/Input";
 import { VoiceMicButton } from "@shared/components/ui/VoiceMicButton";
 import { parseMealSpeech } from "@sergeant/shared";
-import { currentTime } from "./mealFormUtils";
+import { currentTime, type MealFormState } from "./mealFormUtils";
 
-export function NameTimeRow({ form, field, setForm }) {
+interface NameTimeRowProps {
+  form: MealFormState;
+  field: (key: keyof MealFormState) => (value: string) => void;
+  setForm: Dispatch<SetStateAction<MealFormState>>;
+}
+
+export function NameTimeRow({ form, field, setForm }: NameTimeRowProps) {
   // 95%+ of the time the user logs a meal «right now». Showing the time
   // input on every open forces an extra tap past the picker in the
   // default case — parallels the «Не сьогодні? Змінити дату» collapse
@@ -16,7 +23,7 @@ export function NameTimeRow({ form, field, setForm }) {
   const timeVisible = showTime || !isNow;
 
   const handleVoiceMeal = useCallback(
-    (transcript) => {
+    (transcript: string) => {
       const parsed = parseMealSpeech(transcript);
       if (!parsed) return;
       setForm((s) => ({

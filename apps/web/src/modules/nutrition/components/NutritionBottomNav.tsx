@@ -92,7 +92,15 @@ const NAV = [
   },
 ];
 
-export function NutritionBottomNav({ activePage, setActivePage }) {
+interface NutritionBottomNavProps {
+  activePage: string;
+  setActivePage: (id: string) => void;
+}
+
+export function NutritionBottomNav({
+  activePage,
+  setActivePage,
+}: NutritionBottomNavProps) {
   return (
     <ModuleBottomNav
       items={NAV}

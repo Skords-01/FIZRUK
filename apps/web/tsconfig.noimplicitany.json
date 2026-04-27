@@ -4,6 +4,11 @@
     "noImplicitAny": true,
     "noEmit": true
   },
-  "include": ["src/shared/**/*", "src/modules/routine/**/*", "src/test/**/*"],
+  "include": [
+    "src/shared/**/*",
+    "src/modules/routine/**/*",
+    "src/modules/nutrition/**/*",
+    "src/test/**/*"
+  ],
   "exclude": ["node_modules", "dist"]
 }

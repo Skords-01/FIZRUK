@@ -37,7 +37,15 @@ function AppleBadge() {
   );
 }
 
-export function NutritionHeader({ busy: _busy, onBackToHub }) {
+interface NutritionHeaderProps {
+  busy?: boolean;
+  onBackToHub?: () => void;
+}
+
+export function NutritionHeader({
+  busy: _busy,
+  onBackToHub,
+}: NutritionHeaderProps) {
   const left =
     typeof onBackToHub === "function" ? (
       <ModuleHeaderBackButton onClick={onBackToHub} />

@@ -1,8 +1,31 @@
+import type { Dispatch, SetStateAction } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { Sheet } from "@shared/components/ui/Sheet";
 import { cn } from "@shared/lib/cn";
+import type { Pantry } from "@sergeant/nutrition-domain";
+
+export interface PantryForm {
+  mode: string;
+  name: string;
+  err: string;
+}
+
+interface PantryManagerSheetProps {
+  open: boolean;
+  onClose: () => void;
+  pantries: Pantry[];
+  activePantryId: string | null;
+  setActivePantryId: (id: string) => void;
+  pantryForm: PantryForm;
+  setPantryForm: Dispatch<SetStateAction<PantryForm>>;
+  busy?: boolean;
+  onSavePantryForm: (name: string, mode: string) => void;
+  onBeginCreate: () => void;
+  onBeginRename: () => void;
+  onBeginDelete: () => void;
+}
 
 export function PantryManagerSheet({
   open,
@@ -17,7 +40,7 @@ export function PantryManagerSheet({
   onBeginCreate,
   onBeginRename,
   onBeginDelete,
-}) {
+}: PantryManagerSheetProps) {
   return (
     <Sheet
       open={open}
