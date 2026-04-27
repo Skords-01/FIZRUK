@@ -42,35 +42,42 @@ export function AssetsNetworthCard({
   showBalance,
 }: Pick<State, "networth" | "totalAssets" | "totalDebt" | "showBalance">) {
   return (
-    <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 text-white rounded-2xl p-5 mb-3 border border-white/10 shadow-float">
-      <div className="text-xs text-emerald-100/90 mb-1">Загальний нетворс</div>
+    <div className="rounded-3xl bg-finyk/[.06] dark:bg-finyk-surface-dark/10 border border-finyk/[.14] dark:border-finyk-border-dark/20 p-5 mb-3 shadow-card">
+      <p className="text-sm text-muted">Загальний нетворс</p>
       <div
         className={cn(
-          "text-3xl font-extrabold tracking-tight",
+          "text-[40px] font-bold tracking-tight leading-tight mt-2 tabular-nums text-finyk-strong dark:text-finyk",
           !showBalance && "tracking-widest",
         )}
       >
-        {showBalance
-          ? `${networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴`
-          : "\u2022\u2022\u2022\u2022\u2022\u2022"}
-      </div>
-      <div className="text-xs text-emerald-100/85 mt-1">
         {showBalance ? (
           <>
-            Активи:{" "}
-            {totalAssets.toLocaleString("uk-UA", {
-              maximumFractionDigits: 0,
-            })}{" "}
-            ₴ · Пасиви: &minus;
-            {totalDebt.toLocaleString("uk-UA", {
-              maximumFractionDigits: 0,
-            })}{" "}
-            ₴
+            {networth.toLocaleString("uk-UA", { maximumFractionDigits: 0 })}
+            <span className="text-2xl font-semibold text-finyk/60 ml-1">₴</span>
           </>
         ) : (
-          "Суми приховано"
+          "\u2022\u2022\u2022\u2022\u2022\u2022"
         )}
       </div>
+      {showBalance ? (
+        <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 pt-4 border-t border-finyk/20 text-sm">
+          <div>
+            <div className="text-xs text-subtle mb-0.5">Активи</div>
+            <div className="font-semibold tabular-nums text-text">
+              {`+${totalAssets.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴`}
+            </div>
+          </div>
+          <div className="w-px bg-finyk/20 hidden sm:block self-stretch min-h-[2.5rem]" />
+          <div>
+            <div className="text-xs text-subtle mb-0.5">Пасиви</div>
+            <div className="font-semibold tabular-nums text-text">
+              {`\u2212${totalDebt.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴`}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs text-muted mt-3">Суми приховано</p>
+      )}
       {showBalance && totalAssets + totalDebt > 0 && (
         <AssetsLiabilitiesBar assets={totalAssets} liabilities={totalDebt} />
       )}

@@ -18,19 +18,16 @@ export function AssetsLiabilitiesBar({
   const assetsPct = Math.round((assets / total) * 100);
   const liabilitiesPct = 100 - assetsPct;
   return (
-    <div className="mt-3">
+    <div className="mt-4">
       <div
-        className="flex h-1.5 w-full overflow-hidden rounded-full bg-white/10"
+        className="flex h-1.5 w-full overflow-hidden rounded-full bg-finyk/15"
         role="img"
         aria-label={`Активи ${assetsPct}% · Пасиви ${liabilitiesPct}%`}
       >
-        <div className="bg-emerald-300/90" style={{ width: `${assetsPct}%` }} />
-        <div
-          className="bg-rose-400/80"
-          style={{ width: `${liabilitiesPct}%` }}
-        />
+        <div className="bg-finyk-strong" style={{ width: `${assetsPct}%` }} />
+        <div className="bg-danger" style={{ width: `${liabilitiesPct}%` }} />
       </div>
-      <div className="flex justify-between text-[11px] text-emerald-100/80 mt-1.5">
+      <div className="flex justify-between text-[11px] text-muted mt-1.5">
         <span>Активи {assetsPct}%</span>
         <span>Пасиви {liabilitiesPct}%</span>
       </div>
