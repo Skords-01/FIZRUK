@@ -572,6 +572,13 @@ export const PushTestResponseSchema = z.object({
   errors: z.array(PushSendErrorSchema),
 });
 
+// Same shape as PushTestResponseSchema — exported under a domain-neutral
+// name so non-test push fan-out endpoints (worker, internal /api/push/send)
+// can advertise it via the OpenAPI registry without coupling to the test
+// route. Kept as a re-export rather than a duplicate declaration so the two
+// are guaranteed to stay in lock-step.
+export const PushSendSummarySchema = PushTestResponseSchema;
+
 // ────────────────────── Pagination ──────────────────────
 // Переused у будь-якому endpoint-і, що повертає список. Query-params завжди
 // приходять рядками — `z.coerce.number()` конвертує "8" → 8 автоматично.
