@@ -1,5 +1,7 @@
 # Frontend Tech Debt — Sergeant Web
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+
 Аналіз кодової бази `apps/web/src` (434 source файли, 87k рядків).
 
 > **Оновлено 2026-04-27.** Базові cifri (allowlist size, file
@@ -22,6 +24,9 @@
 
 ## 🔴 Критичне
 
+<details>
+<summary>1. ~~Зламані тести~~ — Виконано (розгорнути)</summary>
+
 ### 1. ~~Зламані тести~~ — Виконано
 
 Раніше виглядало як «141 failed test file / 29 unresolved imports». Зараз
@@ -29,6 +34,8 @@
 `@fizruk`, `@routine`, `@nutrition`), що збігається з `tsconfig.json paths`.
 `pnpm --filter @sergeant/web test` дає 80 test files / 722 теста, всі
 зелені.
+
+</details>
 
 ---
 
@@ -81,6 +88,9 @@ greppable в одному місці.
 
 ## 🟡 Бажане
 
+<details>
+<summary>3. ~~Import extensions (.js/.jsx) в TypeScript файлах~~ — Виконано (розгорнути)</summary>
+
 ### 3. ~~Import extensions (.js/.jsx) в TypeScript файлах~~ — Виконано
 
 **Раніше:** 413 рядків з імпортами виду `from "./foo.js"` /
@@ -100,6 +110,8 @@ Codemod ідемпотентний: повторний запуск дасть `
 > вимагало `eslint-plugin-import` (зараз не встановлено) і одразу б
 > пофейлило зовнішній zxing-імпорт. Поки покладаємось на codemod +
 > код-рев'ю; додамо правило окремим PR разом з імпорт-плагіном.
+
+</details>
 
 ---
 
@@ -148,6 +160,9 @@ PR на кожен файл; великі data-файли (`seedFoodsUk.ts`) —
 
 ---
 
+<details>
+<summary>5. ~~`eslint-disable react-hooks/exhaustive-deps`~~ — Виконано (розгорнути)</summary>
+
 ### 5. ~~`eslint-disable react-hooks/exhaustive-deps`~~ — Виконано (документація)
 
 21 disable-сайт залишається, але тепер кожен має явне обґрунтування поряд
@@ -155,6 +170,8 @@ PR на кожен файл; великі data-файли (`seedFoodsUk.ts`) —
 залежності щоб не зациклитись тощо). Див. зведений каталог
 [`docs/architecture/apps-web-exhaustive-deps.md`](../architecture/apps-web-exhaustive-deps.md). Якщо
 з'являється новий disable без коментаря — рев'ю має його блокувати.
+
+</details>
 
 ---
 

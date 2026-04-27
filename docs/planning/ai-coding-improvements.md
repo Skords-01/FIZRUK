@@ -1,6 +1,8 @@
 # AI-coding improvements roadmap
 
-**Статус:** in progress. Створено 2026-04-25 з ідей розмови про вайб-кодинг. Останнє оновлення: 2026-04-25 (Tier 1 + Tier 2 повністю закриті, лише Vercel paid (#4) і Visual regression / Storybook (#6, #7) залишилися — див. таблицю прогресу нижче).
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
+**Статус:** in progress. Створено 2026-04-25 з ідей розмови про вайб-кодинг. Останнє оновлення: 2026-04-27 (Tier 1 + Tier 2 повністю закриті, лише Vercel paid (#4) і Visual regression / Storybook (#6, #7) залишилися — див. таблицю прогресу нижче).
 **Скоуп:** репо-конвенції, playbooks, code markers, testing/preview infra. Це **не** про конкретні фічі продукту — це про **інфраструктуру для AI-агентів** (Devin, Cursor, Claude Code), які пишуть код у Sergeant.
 **Принцип:** менший variance результатів + більше контексту в репо = швидше і якісніше виходять PR-и від AI.
 

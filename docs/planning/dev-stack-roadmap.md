@@ -1,6 +1,8 @@
 # Dev stack roadmap — інструменти і поради по всьому ЖЦ розробки
 
-**Статус:** in progress. Створено 2026-04-25. Останнє оновлення: 2026-04-26 (12 з топ-15 закриті — Sentry уже інтегрований у web/server/mobile як DSN-gated no-op; деталі у колонці Статус нижче).
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
+**Статус:** in progress. Створено 2026-04-25. Останнє оновлення: 2026-04-27 (13 з топ-15 закриті — PostHog інтегрований у web + server, Strict TS розщеплений на server/web; Sentry DSN-gated; деталі у колонці Статус нижче).
 
 **Скоуп:** інструменти, інтеграції, практики для покращення розробки, тестування, CI/CD, проду, безпеки, performance і команди. Specifically для стеку Sergeant: pnpm + Turborepo + Vite/React + Express + Postgres + Railway + Vercel + Expo.
 **Принцип:** не «впровадити все одразу», а **поетапно** — від найдешевших і найважливіших до інвестиційних. Кожен пункт — самостійний tool / practice з ціною, effort-ом, ROI і dep-ами.
@@ -11,27 +13,28 @@
 
 Якщо є тиждень — зроби лише це:
 
-| #   | Інструмент / практика                             | Effort    | Cost             | ROI    | Статус                                                                                                  |
-| --- | ------------------------------------------------- | --------- | ---------------- | ------ | ------------------------------------------------------------------------------------------------------- |
-| 1   | **Sentry** для error tracking                     | 2 год     | $26/міс          | 🔥🔥🔥 | ✅ done (DSN-gated; потребує `SENTRY_DSN` / `VITE_SENTRY_DSN` / `EXPO_PUBLIC_SENTRY_DSN` для активації) |
-| 2   | **Knip + depcheck** — clean dead code             | 1 год     | $0               | 🔥🔥   | ✅ done [#716](https://github.com/Skords-01/Sergeant/pull/716)                                          |
-| 3   | **Strict TypeScript (incremental)**               | 1-2 тижні | $0               | 🔥🔥🔥 | ⏳ pending                                                                                              |
-| 4   | **Testcontainers** для server tests               | 4 год     | $0               | 🔥🔥🔥 | ✅ done [#728](https://github.com/Skords-01/Sergeant/pull/728)                                          |
-| 5   | **Vercel Pro plan** (рятує preview deploy)        | 5 хв      | $20/міс          | 🔥🔥   | 🟡 not started (потребує credit card мейнтейнера)                                                       |
-| 6   | **Turbo remote cache**                            | 1 год     | $0 (Vercel free) | 🔥🔥   | ✅ done (CI wiring merged; needs secrets — see §1.1)                                                    |
-| 7   | **Renovate** замість Dependabot                   | 1 год     | $0               | 🔥🔥   | ✅ done [#721](https://github.com/Skords-01/Sergeant/pull/721)                                          |
-| 8   | **AGENTS.md** (з #711)                            | 1 год     | $0               | 🔥🔥🔥 | ✅ done [#714](https://github.com/Skords-01/Sergeant/pull/714)                                          |
-| 9   | **MSW** для frontend tests                        | 4 год     | $0               | 🔥     | ✅ done [#729](https://github.com/Skords-01/Sergeant/pull/729)                                          |
-| 10  | **Snapshot tests на server serializers** (з #711) | 4 год     | $0               | 🔥🔥🔥 | ✅ done [#718](https://github.com/Skords-01/Sergeant/pull/718)                                          |
-| 11  | **Pino structured logging**                       | 4 год     | $0               | 🔥🔥   | ✅ done [#738](https://github.com/Skords-01/Sergeant/pull/738)                                          |
-| 12  | **Activate Playwright E2E на PR**                 | 2 год     | $0               | 🔥🔥   | ✅ done [#717](https://github.com/Skords-01/Sergeant/pull/717)                                          |
-| 13  | **PostHog** для product analytics                 | 4 год     | $0 (free tier)   | 🔥     | ⏳ pending                                                                                              |
-| 14  | **size-limit** + bundle-analyzer                  | 2 год     | $0               | 🔥     | ✅ done [#740](https://github.com/Skords-01/Sergeant/pull/740)                                          |
-| 15  | **CONTRIBUTING.md + 5-min quickstart**            | 2 год     | $0               | 🔥🔥   | ✅ done [#726](https://github.com/Skords-01/Sergeant/pull/726)                                          |
+| #   | Інструмент / практика                             | Effort    | Cost             | ROI    | Статус                                                                                                                                                    |
+| --- | ------------------------------------------------- | --------- | ---------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Sentry** для error tracking                     | 2 год     | $26/міс          | 🔥🔥🔥 | ✅ done (DSN-gated; потребує `SENTRY_DSN` / `VITE_SENTRY_DSN` / `EXPO_PUBLIC_SENTRY_DSN` для активації)                                                   |
+| 2   | **Knip + depcheck** — clean dead code             | 1 год     | $0               | 🔥🔥   | ✅ done [#716](https://github.com/Skords-01/Sergeant/pull/716)                                                                                            |
+| 3a  | **Strict TS — server**                            | —         | $0               | 🔥🔥🔥 | ✅ done (`apps/server/tsconfig.json` має `strict: true`)                                                                                                  |
+| 3b  | **Strict TS — web (incremental)**                 | 1-2 тижні | $0               | 🔥🔥🔥 | 🟡 in progress (Phase 1: `apps/web/tsconfig.strict.json` вмикає `strictNullChecks` для `src/shared/**`; Phase 2/3 — TODO; див. tech-debt/frontend.md §11) |
+| 4   | **Testcontainers** для server tests               | 4 год     | $0               | 🔥🔥🔥 | ✅ done [#728](https://github.com/Skords-01/Sergeant/pull/728)                                                                                            |
+| 5   | **Vercel Pro plan** (рятує preview deploy)        | 5 хв      | $20/міс          | 🔥🔥   | 🟡 not started (потребує credit card мейнтейнера)                                                                                                         |
+| 6   | **Turbo remote cache**                            | 1 год     | $0 (Vercel free) | 🔥🔥   | ✅ done (CI wiring merged; needs secrets — see §1.1)                                                                                                      |
+| 7   | **Renovate** замість Dependabot                   | 1 год     | $0               | 🔥🔥   | ✅ done [#721](https://github.com/Skords-01/Sergeant/pull/721)                                                                                            |
+| 8   | **AGENTS.md** (з #711)                            | 1 год     | $0               | 🔥🔥🔥 | ✅ done [#714](https://github.com/Skords-01/Sergeant/pull/714)                                                                                            |
+| 9   | **MSW** для frontend tests                        | 4 год     | $0               | 🔥     | ✅ done [#729](https://github.com/Skords-01/Sergeant/pull/729)                                                                                            |
+| 10  | **Snapshot tests на server serializers** (з #711) | 4 год     | $0               | 🔥🔥🔥 | ✅ done [#718](https://github.com/Skords-01/Sergeant/pull/718)                                                                                            |
+| 11  | **Pino structured logging**                       | 4 год     | $0               | 🔥🔥   | ✅ done [#738](https://github.com/Skords-01/Sergeant/pull/738)                                                                                            |
+| 12  | **Activate Playwright E2E на PR**                 | 2 год     | $0               | 🔥🔥   | ✅ done [#717](https://github.com/Skords-01/Sergeant/pull/717)                                                                                            |
+| 13  | **PostHog** для product analytics                 | 4 год     | $0 (free tier)   | 🔥     | ✅ done (web: `apps/web/src/core/observability/posthog.ts`; server: `apps/server/src/lib/posthog.ts`; gated на `VITE_POSTHOG_KEY` / `POSTHOG_KEY`)        |
+| 14  | **size-limit** + bundle-analyzer                  | 2 год     | $0               | 🔥     | ✅ done [#740](https://github.com/Skords-01/Sergeant/pull/740)                                                                                            |
+| 15  | **CONTRIBUTING.md + 5-min quickstart**            | 2 год     | $0               | 🔥🔥   | ✅ done [#726](https://github.com/Skords-01/Sergeant/pull/726)                                                                                            |
 
 **Сумарно:** ~3-5 робочих днів + ~$50/міс. Це 80% wins за 20% effort-у.
 
-**Прогрес (2026-04-26):** 12 / 15 закрито — #1 Sentry (DSN-gated, `apps/web/src/core/observability/sentry.ts`, `apps/server/src/sentry.ts`, `apps/mobile/src/lib/observability.ts`), #2 Knip+depcheck, #4 Testcontainers (#728), #6 Turbo remote cache, #7 Renovate, #8 AGENTS.md, #9 MSW (#729), #10 Snapshot tests, #11 Pino logging (#738), #12 Playwright E2E, #14 size-limit + bundle-analyzer (#740), #15 CONTRIBUTING.md (#726). Наступні кроки (без платних credentials): #3 (Strict TS incremental), #13 (PostHog free tier). #5 (Vercel Pro) чекає credentials мейнтейнера. Sentry-init вже на місці (no-op без DSN), тож активація = тільки доставити `SENTRY_DSN` / `VITE_SENTRY_DSN` / `EXPO_PUBLIC_SENTRY_DSN` у відповідні env-и.
+**Прогрес (2026-04-27):** 13 / 15 закрито (з урахуванням розщеплення #3 на 3a/3b: 3a closed, 3b in progress). Закриті: #1 Sentry (DSN-gated, `apps/web/src/core/observability/sentry.ts`, `apps/server/src/sentry.ts`, `apps/mobile/src/lib/observability.ts`), #2 Knip+depcheck, #3a Strict TS server, #4 Testcontainers (#728), #6 Turbo remote cache, #7 Renovate, #8 AGENTS.md, #9 MSW (#729), #10 Snapshot tests, #11 Pino logging (#738), #12 Playwright E2E, #13 PostHog (web + server SDK, env-gated), #14 size-limit + bundle-analyzer (#740), #15 CONTRIBUTING.md (#726). Залишається: #3b (Strict TS web — Phase 2/3), #5 (Vercel Pro — credentials/credit card мейнтейнера). Sentry/PostHog активація = тільки доставити відповідні env-и (`SENTRY_DSN`, `POSTHOG_KEY`, `VITE_POSTHOG_KEY`).
 
 ---
 
@@ -41,7 +44,6 @@
 
 | Tool                       | What                               | Cost | Effort | Tier |
 | -------------------------- | ---------------------------------- | ---- | ------ | ---- |
-| **Docker Compose**         | Local Postgres + Redis для dev     | $0   | 2 год  | must |
 | **Devcontainer** (VS Code) | Full env-as-code, `code .` → ready | $0   | 4 год  | nice |
 | **Nix flake**              | Reproducible deterministic env     | $0   | 1 день | nice |
 | **mise / proto / volta**   | Pin Node + pnpm versions           | $0   | 30 хв  | must |
@@ -82,7 +84,7 @@ read & write the shared cache.
 
 **Sergeant-specific:**
 
-- В `apps/server` зараз неясно як локально стартувати Postgres. Один `docker-compose.yml` з seed-script + `pnpm dev:db` команда — зекономить новачкам години.
+- Локальний Postgres вже піднімається через кореневий `docker-compose.yml` (`postgres:16-alpine`, `docker compose up -d` → `DATABASE_URL=postgresql://hub:hub@localhost:5432/hub`). Залишковий win — `pnpm dev:db` shortcut + seed-script, але інфраструктура вже на місці; пропозицію «додати docker-compose» прибрано як виконану.
 - Volta або mise треба, бо `package.json` зараз має `engines.node` але без enforcement.
 
 ### 1.2. CLI quality of life
@@ -585,7 +587,7 @@ CI gate: `vitest --coverage` + threshold (наприклад 70% lines) на cri
 
 ### Тиждень 2 — type safety
 
-- [ ] Strict TypeScript step 1: `strictNullChecks` для одного package
+- [x] Strict TypeScript step 1: `strictNullChecks` для одного package — done у `apps/web/tsconfig.strict.json` (`src/shared/**`)
 - [ ] Snapshot tests на server serializers (з #711)
 - [ ] Custom ESLint rule `no-bigint-string`
 - [ ] zod-to-openapi proof-of-concept
@@ -609,7 +611,7 @@ CI gate: `vitest --coverage` + threshold (наприклад 70% lines) на cri
 - [ ] Argos visual regression
 - [ ] Storybook setup для shared components
 - [ ] Strict TypeScript повне покриття
-- [ ] Devcontainer / docker-compose для local dev
+- [ ] Devcontainer для local dev (docker-compose вже на місці — кореневий `docker-compose.yml`)
 - [ ] Drizzle migration POC (один модуль)
 
 ### Maintenance (continuous)

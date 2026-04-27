@@ -1,5 +1,7 @@
 # Railway (API + PostgreSQL) + Vercel (фронт)
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 ## 1. PostgreSQL на Railway
 
 1. У [Railway](https://railway.app) створи **New project** → **Empty project** або **Deploy from GitHub** (спочатку можна лише БД).
