@@ -310,7 +310,7 @@
 **PR-ідеї:**
 
 - `PR-10.A` — `ci: add p95 pipeline-duration metric to CI summary` (script, що читає GitHub Actions API і публікує trend у PR як коментар).
-- `PR-10.B` — `ci: split smoke-e2e into critical-flow (must-pass) + extended-flow (nightly)`.
+- `PR-10.B` — `ci: split smoke-e2e into critical-flow (must-pass) + extended-flow (nightly)`. ✅ closed
 - `PR-10.C` — `ci: nightly job for full audit (critical+high blocking) + dependency-check (snyk або osv-scanner)`. Nightly не блокує PR, але дає трендовий сигнал.
 
 ---
@@ -404,12 +404,12 @@
 
 ### Спринт 3-6 (2-3 місяці) — «масштабування»
 
-| #   | PR                                                       | Effort    | Імпакт               | Status     |
-| --- | -------------------------------------------------------- | --------- | -------------------- | ---------- |
-| 13  | `PR-6.C` — strict: true full + remove allowJs            | 1 тиждень | strict TS done       | ⏳ pending |
+| #   | PR                                                       | Effort    | Імпакт               | Status              |
+| --- | -------------------------------------------------------- | --------- | -------------------- | ------------------- |
+| 13  | `PR-6.C` — strict: true full + remove allowJs            | 1 тиждень | strict TS done       | ⏳ pending          |
 | 14  | `PR-4.D` — zod-to-openapi для api-client                 | 1 тиждень | автоматизує rule #3  |
 | 15  | `PR-8.A` + `PR-8.C` — error-budget policy + tool metrics | 3-5 д     | operational maturity |
-| 16  | `PR-10.B` + `PR-10.C` — split smoke-e2e + nightly audit  | 2-3 д     | CI scaling           |
+| 16  | `PR-10.B` + `PR-10.C` — split smoke-e2e + nightly audit  | 2-3 д     | CI scaling           | `PR-10.B` ✅ closed |
 | 17  | `PR-11.A` + `PR-11.C` — freshness badges + ADR template  | 1 тиждень | doc lifecycle        |
 | 18  | `PR-3.B/C` next 5 — file decomposition next wave         | 1-2 тижні | regression-surface   |
 

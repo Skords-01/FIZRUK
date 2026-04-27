@@ -24,7 +24,9 @@ async function seedLocalStorage(page: Page) {
   }, SEEDED_LS);
 }
 
-test("auth: sign-up leads to authenticated hub surface", async ({ page }) => {
+test("@critical auth: sign-up leads to authenticated hub surface", async ({
+  page,
+}) => {
   await seedLocalStorage(page);
 
   const nonce = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
