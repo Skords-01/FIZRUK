@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
+import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Sheet } from "@shared/components/ui/Sheet";
 import { cn } from "@shared/lib/cn";
 import { useVisualKeyboardInset } from "@sergeant/shared";
@@ -20,13 +21,39 @@ import { useVisualKeyboardInset } from "@sergeant/shared";
  *     user has at least one exercise lined up.
  *
  * Header/title updates per step so screen readers announce the change.
+ *
+ * The pick step renders the catalogue grouped by primary muscle group
+ * (chest → back → shoulders → …) — the same canonical order as the
+ * full Workouts catalog — so picking from a long list reads as the
+ * familiar grouped catalogue and not as a flat random scroll. The
+ * search input is kept sticky at the top of the body so it never
+ * scrolls out of view.
  */
+
+// Canonical primary-group order, mirrors `WorkoutCatalogSection` /
+// `Workouts.tsx` `grouped` factory. Keep in sync if either side moves.
+const PRIMARY_GROUP_ORDER = [
+  "chest",
+  "back",
+  "shoulders",
+  "biceps",
+  "triceps",
+  "forearms",
+  "core",
+  "quadriceps",
+  "hamstrings",
+  "calves",
+  "glutes",
+  "full_body",
+  "cardio",
+];
 
 export function QuickStartSheet({
   open,
   onClose,
   exercises,
   search,
+  primaryGroupsUk,
   onPickTemplate,
   onConfirmExercises,
 }) {
@@ -44,10 +71,35 @@ export function QuickStartSheet({
     }
   }, [open]);
 
-  const list = useMemo(() => {
+  const groups = useMemo(() => {
     if (step !== "pick") return [];
-    return search(q).slice(0, 60);
-  }, [search, q, step]);
+    const filtered = search(q);
+    const m = new Map();
+    for (const ex of filtered) {
+      const gid = ex?.primaryGroup || "full_body";
+      if (!m.has(gid)) m.set(gid, []);
+      m.get(gid).push(ex);
+    }
+    return Array.from(m.entries())
+      .sort((a, b) => {
+        const ai = PRIMARY_GROUP_ORDER.indexOf(a[0]);
+        const bi = PRIMARY_GROUP_ORDER.indexOf(b[0]);
+        return (
+          (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi) ||
+          a[0].localeCompare(b[0])
+        );
+      })
+      .map(([gid, items]) => ({
+        id: gid,
+        label: (primaryGroupsUk && primaryGroupsUk[gid]) || gid,
+        items,
+      }));
+  }, [search, q, step, primaryGroupsUk]);
+
+  const totalCount = useMemo(
+    () => groups.reduce((sum, g) => sum + g.items.length, 0),
+    [groups],
+  );
 
   const byId = useMemo(() => {
     const m = new Map();
@@ -190,57 +242,85 @@ export function QuickStartSheet({
       }
     >
       <div className="space-y-3">
-        <Input
-          placeholder="Пошук вправи…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          aria-label="Пошук вправи в каталозі"
-        />
+        {/*
+         * Sticky-top so the search input stays anchored while the
+         * user scrolls the (potentially long) grouped catalogue
+         * instead of scrolling out of view together with the first
+         * group's rows. Background matches the sheet panel so the
+         * rounded-corner edge of the first group below it isn't
+         * clipped through a translucent bar.
+         */}
+        <div className="sticky top-0 z-10 -mx-5 px-5 pt-1 pb-2 bg-panel">
+          <Input
+            placeholder="Пошук вправи…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label="Пошук вправи в каталозі"
+          />
+        </div>
 
-        {list.length === 0 ? (
+        {totalCount === 0 ? (
           <div className="rounded-xl border border-line bg-panelHi p-4 text-center text-xs text-subtle">
             {q.trim()
               ? "Нічого не знайдено за цим запитом."
               : "Каталог поки що порожній."}
           </div>
         ) : (
-          <ul className="space-y-1.5">
-            {list.map((ex) => {
-              const id = ex.id;
-              const active = selectedIds.has(id);
-              const name = ex?.name?.uk || ex?.name?.en || id;
-              return (
-                <li key={id}>
-                  <button
-                    type="button"
-                    onClick={() => toggle(id)}
-                    aria-pressed={active}
-                    className={cn(
-                      "w-full text-left rounded-xl border p-3 min-h-[52px] flex items-center gap-3 transition-colors",
-                      active
-                        ? "border-brand-500 bg-brand-500/10"
-                        : "border-line bg-bg hover:border-muted",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full border text-[11px] font-bold",
-                        active
-                          ? "bg-brand-strong border-brand-strong text-white"
-                          : "border-line text-subtle",
-                      )}
-                      aria-hidden
-                    >
-                      {active ? "✓" : ""}
+          <div className="space-y-4">
+            {groups.map((g) => (
+              <section key={g.id} aria-label={g.label}>
+                <SectionHeading
+                  size="xs"
+                  variant="subtle"
+                  className="px-1 mb-1.5"
+                  action={
+                    <span className="text-[11px] text-muted normal-case tracking-normal font-normal">
+                      {g.items.length}
                     </span>
-                    <span className="text-sm text-text truncate flex-1">
-                      {name}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                  }
+                >
+                  {g.label}
+                </SectionHeading>
+                <ul className="space-y-1.5">
+                  {g.items.map((ex) => {
+                    const id = ex.id;
+                    const active = selectedIds.has(id);
+                    const name = ex?.name?.uk || ex?.name?.en || id;
+                    return (
+                      <li key={id}>
+                        <button
+                          type="button"
+                          onClick={() => toggle(id)}
+                          aria-pressed={active}
+                          className={cn(
+                            "w-full text-left rounded-xl border p-3 min-h-[52px] flex items-center gap-3 transition-colors",
+                            active
+                              ? "border-brand-500 bg-brand-500/10"
+                              : "border-line bg-bg hover:border-muted",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full border text-[11px] font-bold",
+                              active
+                                ? "bg-brand-strong border-brand-strong text-white"
+                                : "border-line text-subtle",
+                            )}
+                            aria-hidden
+                          >
+                            {active ? "✓" : ""}
+                          </span>
+                          <span className="text-sm text-text truncate flex-1">
+                            {name}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
         )}
       </div>
     </Sheet>
