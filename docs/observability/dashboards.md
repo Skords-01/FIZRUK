@@ -12,15 +12,15 @@
 файл — повноцінний Grafana dashboard із `datasource: $DS_PROMETHEUS`, `refresh: 30s`,
 `time: now-6h`, тегом `sergeant`.
 
-| Dashboard | Файл | Що показує |
-| --------- | ---- | ---------- |
-| HTTP RED | [`http-red.json`](./dashboards/http-red.json) | RPS, 5xx ratio, p95 latency by path, in-flight, app_errors breakdown, SLO burn-rate |
-| Sync | [`sync.json`](./dashboards/sync.json) | Outcomes by op/module/outcome, p95 duration, payload p95, conflict ratio, SLO burn-rate |
-| Auth | [`auth.json`](./dashboards/auth.json) | Auth outcomes, session lookup p95, rate-limit hits, sign-in success rate |
-| AI Cost | [`ai-cost.json`](./dashboards/ai-cost.json) | Token rate by model, daily spend estimate, cache-hit ratio, quota blocks/fail-open, AI outcomes & latency |
-| HubChat Tools | [`hubchat.json`](./dashboards/hubchat.json) | Tool invocation leaderboard, executed/proposed ratio, unknown_tool, truncations |
-| Postgres Pool | [`db-pool.json`](./dashboards/db-pool.json) | Pool total/idle/waiting, utilization %, query p95, slow queries, DB errors by SQLSTATE |
-| Frontend CWV | [`frontend-cwv.json`](./dashboards/frontend-cwv.json) | LCP/INP/FCP/TTFB/CLS — good/needs-improvement/poor ratio + p75 (baseline mode) |
+| Dashboard     | Файл                                                  | Що показує                                                                                                |
+| ------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| HTTP RED      | [`http-red.json`](./dashboards/http-red.json)         | RPS, 5xx ratio, p95 latency by path, in-flight, app_errors breakdown, SLO burn-rate                       |
+| Sync          | [`sync.json`](./dashboards/sync.json)                 | Outcomes by op/module/outcome, p95 duration, payload p95, conflict ratio, SLO burn-rate                   |
+| Auth          | [`auth.json`](./dashboards/auth.json)                 | Auth outcomes, session lookup p95, rate-limit hits, sign-in success rate                                  |
+| AI Cost       | [`ai-cost.json`](./dashboards/ai-cost.json)           | Token rate by model, daily spend estimate, cache-hit ratio, quota blocks/fail-open, AI outcomes & latency |
+| HubChat Tools | [`hubchat.json`](./dashboards/hubchat.json)           | Tool invocation leaderboard, executed/proposed ratio, unknown_tool, truncations                           |
+| Postgres Pool | [`db-pool.json`](./dashboards/db-pool.json)           | Pool total/idle/waiting, utilization %, query p95, slow queries, DB errors by SQLSTATE                    |
+| Frontend CWV  | [`frontend-cwv.json`](./dashboards/frontend-cwv.json) | LCP/INP/FCP/TTFB/CLS — good/needs-improvement/poor ratio + p75 (baseline mode)                            |
 
 ### Як імпортувати у Grafana
 

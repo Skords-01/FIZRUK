@@ -61,7 +61,11 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -128,8 +132,14 @@
           {
             "matcher": { "id": "byName", "options": "target (0.5)" },
             "properties": [
-              { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
-              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              {
+                "id": "color",
+                "value": { "fixedColor": "green", "mode": "fixed" }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": { "fill": "dash", "dash": [10, 10] }
+              },
               { "id": "custom.fillOpacity", "value": 0 }
             ]
           }
@@ -141,7 +151,7 @@
       },
       "targets": [
         {
-          "expr": "rate(anthropic_prompt_cache_hit_total{outcome=\"hit\"}[1h]) / clamp_min(rate(anthropic_prompt_cache_hit_total[1h]), 1)",
+          "expr": "sum(rate(anthropic_prompt_cache_hit_total{outcome=\"hit\"}[1h])) / clamp_min(sum(rate(anthropic_prompt_cache_hit_total[1h])), 1)",
           "legendFormat": "cache-hit ratio",
           "refId": "A"
         },
@@ -239,7 +249,11 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -276,7 +290,11 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -308,9 +326,7 @@
         "current": { "selected": false, "text": "3.00", "value": "3.00" },
         "hide": 0,
         "name": "usd_per_1m_tokens",
-        "options": [
-          { "selected": true, "text": "3.00", "value": "3.00" }
-        ],
+        "options": [{ "selected": true, "text": "3.00", "value": "3.00" }],
         "query": "3.00",
         "type": "textbox",
         "label": "USD per 1M tokens"

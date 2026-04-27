@@ -69,7 +69,10 @@
       "transformations": [
         {
           "id": "sortBy",
-          "options": { "fields": {}, "sort": [{ "field": "Value", "desc": true }] }
+          "options": {
+            "fields": {},
+            "sort": [{ "field": "Value", "desc": true }]
+          }
         },
         {
           "id": "limit",
@@ -106,7 +109,11 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean"]
+        },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -170,7 +177,11 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -207,7 +218,10 @@
         "multi": true,
         "name": "tool",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(chat_tool_invocations_total, tool)" },
+        "query": {
+          "qryType": 1,
+          "query": "label_values(chat_tool_invocations_total, tool)"
+        },
         "refresh": 2,
         "type": "query"
       }

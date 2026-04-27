@@ -61,7 +61,11 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -98,7 +102,11 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -127,7 +135,11 @@
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -188,16 +200,28 @@
           {
             "matcher": { "id": "byName", "options": "page threshold (0.072)" },
             "properties": [
-              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
-              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              {
+                "id": "color",
+                "value": { "fixedColor": "red", "mode": "fixed" }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": { "fill": "dash", "dash": [10, 10] }
+              },
               { "id": "custom.fillOpacity", "value": 0 }
             ]
           },
           {
             "matcher": { "id": "byName", "options": "ticket threshold (0.03)" },
             "properties": [
-              { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } },
-              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              {
+                "id": "color",
+                "value": { "fixedColor": "orange", "mode": "fixed" }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": { "fill": "dash", "dash": [10, 10] }
+              },
               { "id": "custom.fillOpacity", "value": 0 }
             ]
           }
@@ -261,7 +285,10 @@
         "multi": true,
         "name": "module",
         "options": [],
-        "query": { "qryType": 1, "query": "label_values(sync_operations_total, module)" },
+        "query": {
+          "qryType": 1,
+          "query": "label_values(sync_operations_total, module)"
+        },
         "refresh": 2,
         "type": "query"
       }
