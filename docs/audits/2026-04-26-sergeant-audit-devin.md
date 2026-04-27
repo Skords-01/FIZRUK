@@ -359,7 +359,7 @@
 - `PR-12.B` ✅ closed — [#885](https://github.com/Skords-01/Sergeant/pull/885) `test(web): contract tests for all hubChatActions handlers (happy + error path)`.
 - `PR-12.C` — `feat(server,chat): per-tool metrics (tool_invocations_total{tool=,outcome=}) → SLO dashboard`.
 - `PR-12.D` — `docs(ai): tool lifecycle model (proposal → safety review → rollout → KPIs)` — як одно-сторінковий ADR.
-- `PR-12.E` — `feat(server,chat): truncate-aware tool_result handler` — якщо `tool_result` >N токенів, серверна частина серіалізує summary + повний blob у Sentry breadcrumb. Закриває edge case, де великі briefing/digest вибивають continuation.
+- `PR-12.E` ✅closed — `feat(server,chat): truncate-aware tool_result handler` — якщо `tool_result` >N токенів, серверна частина серіалізує summary + повний blob у Sentry breadcrumb. Закриває edge case, де великі briefing/digest вибивають continuation. Реалізовано: `apps/server/src/modules/chat/toolResultTruncation.ts` (threshold 2 000 chars, head 600 + tail 400 + marker), wired у `chat.ts` перед `tool_result`-payload-ом, `chat_tool_result_truncated_total{reason}` метрика, 14 unit + 2 integration тестів.
 
 ---
 
