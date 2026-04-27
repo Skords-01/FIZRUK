@@ -235,7 +235,7 @@
 
 - `PR-7.A` ✅ closed — [#886](https://github.com/Skords-01/Sergeant/pull/886) `test(web): unit + integration tests for recommendationEngine and TodayFocusCard`.
 - `PR-7.B` ✅ closed — [#904](https://github.com/Skords-01/Sergeant/pull/904) `test(web,cloud-sync): integration tests for offline queue + replay on reconnect` — 17 тестів, 4 сценарії (coalesce, happy replay, server-error, MAX_OFFLINE_QUEUE overflow).
-- `PR-7.C` ✅closed — `test(web,reports): HubReports aggregation snapshot tests` для крос-модульних звітів. Витягнуто 4 чистих агрегатори з inline-замикань `useReportData` у `apps/web/src/core/hub/hubReports.aggregation.ts`; 44 snapshot-тести покривають date-helpers, per-module aggregators і повний cross-module звіт із усіма 4 модулями заповненими.
+- `PR-7.C` ✅ closed — [#913](https://github.com/Skords-01/Sergeant/pull/913) `test(web): hub-reports aggregation snapshot tests` — витягнуто 4 чисті агрегатори з inline-замикань `useReportData` у `apps/web/src/core/hub/hubReports.aggregation.ts`; 44 snapshot-тести покривають date-helpers, per-module aggregators і повний cross-module звіт із усіма 4 модулями заповненими.
 - `PR-7.D` — `ci(test): add weekly flaky-tests dashboard` (GitHub Action, що збирає `vitest --reporter json` за 7 днів і публікує markdown trend в artifact).
 - `PR-7.E` — `test(mobile): triage 3 known flaky tests one-by-one (each in own PR), document fixes`.
 

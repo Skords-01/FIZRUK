@@ -12,14 +12,14 @@ export default function AuthLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: colors.bg },
-        headerTitleStyle: { color: colors.text },
-        headerTintColor: colors.accent,
+        headerShown: false,
         contentStyle: { backgroundColor: colors.bg },
       }}
     >
-      <Stack.Screen name="sign-in" options={{ title: "Вхід" }} />
-      <Stack.Screen name="sign-up" options={{ title: "Реєстрація" }} />
+      <Stack.Screen name="index" />
+      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="sign-in" />
+      <Stack.Screen name="sign-up" />
     </Stack>
   );
 }
