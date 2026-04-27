@@ -1,5 +1,5 @@
 /**
- * Агрегати як у `apps/web/src/core/useWeeklyDigest.ts` — ті ж ключі MMKV.
+ * Агрегати як у `apps/web/src/core/insights/useWeeklyDigest.ts` — ті ж ключі MMKV.
  */
 import {
   MCC_CATEGORIES,

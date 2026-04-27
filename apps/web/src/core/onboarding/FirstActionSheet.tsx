@@ -3,7 +3,7 @@ import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Icon } from "@shared/components/ui/Icon";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
-import { trackEvent, ANALYTICS_EVENTS } from "../analytics";
+import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
 import { clearFirstActionPending, getVibePicks } from "./vibePicks";
 import { PresetSheet, getPresetModule } from "./PresetSheet";
 import { getOnboardingGoals } from "@sergeant/shared";
@@ -200,7 +200,7 @@ export function FirstActionHeroCard({ onDismiss }) {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <SectionHeading as="div" size="sm" tone="subtle">
+            <SectionHeading as="div" size="sm" variant="subtle">
               Старт
             </SectionHeading>
             <h2 className="text-base font-bold text-text mt-0.5">

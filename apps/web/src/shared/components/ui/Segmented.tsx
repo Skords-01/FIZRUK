@@ -10,15 +10,23 @@ import { cn } from "@shared/lib/cn";
  *
  * Not intended to replace `<SubTabs>` (full-width bar-style) — that
  * pattern is a separate variant kept in its own component for now.
+ *
+ * Two-axis API (see `docs/design/COMPONENT_API.md`):
+ *   - `variant` — accent colour (`brand` for the default chrome; the four
+ *                 module tokens scope the active state to a module).
+ *   - `style`   — visual treatment of the active chip.
+ *                 `solid` — filled accent background (Fizruk Workouts).
+ *                 `soft`  (default) — tinted surface + accent border
+ *                                       + accent text (Routine chips).
  */
 
-export type SegmentedAccent =
+export type SegmentedVariant =
   | "brand"
   | "fizruk"
   | "routine"
   | "nutrition"
   | "finyk";
-export type SegmentedTone = "solid" | "soft";
+export type SegmentedStyle = "solid" | "soft";
 export type SegmentedSize = "sm" | "md";
 
 export interface SegmentedItem<V extends string = string> {
@@ -32,36 +40,42 @@ export interface SegmentedProps<V extends string = string> {
   items: ReadonlyArray<SegmentedItem<V>>;
   value: V;
   onChange: (value: V) => void;
-  /** "solid" = filled accent background (used in Fizruk Workouts tabs).
-   *  "soft"  = tinted surface + accent border + accent text (Routine chips). */
-  tone?: SegmentedTone;
+  /** Visual treatment of the active chip. Defaults to `soft`.
+   *  `solid` = filled accent background (used in Fizruk Workouts tabs).
+   *  `soft`  = tinted surface + accent border + accent text (Routine chips). */
+  style?: SegmentedStyle;
   /** "sm" ≈ 36px min-height; "md" = 44px min-height (touch target). */
   size?: SegmentedSize;
-  accent?: SegmentedAccent;
+  /** Accent colour token. Defaults to `brand`. */
+  variant?: SegmentedVariant;
   /** Accessible label for the underlying role="tablist". */
   ariaLabel?: string;
   className?: string;
 }
 
-const ACCENT_SOLID: Record<SegmentedAccent, string> = {
-  brand: "bg-brand text-white border-brand",
-  fizruk: "bg-fizruk text-white border-fizruk",
-  routine: "bg-routine text-white border-routine",
-  nutrition: "bg-nutrition text-white border-nutrition",
-  finyk: "bg-finyk text-white border-finyk",
+// Solid mode pairs `bg-{c}-strong text-white` (5.0–7.0:1) so the active
+// segment label stays readable at 12 px. Border keeps the brand `*-500`
+// for visual continuity with siblings; borders aren't text. See
+// docs/design/brand-palette-wcag-aa-proposal.md § 2.2.
+const VARIANT_SOLID: Record<SegmentedVariant, string> = {
+  brand: "bg-brand-strong text-white border-brand",
+  fizruk: "bg-fizruk-strong text-white border-fizruk",
+  routine: "bg-routine-strong text-white border-routine",
+  nutrition: "bg-nutrition-strong text-white border-nutrition",
+  finyk: "bg-finyk-strong text-white border-finyk",
 };
 
-const ACCENT_SOFT: Record<SegmentedAccent, string> = {
+const VARIANT_SOFT: Record<SegmentedVariant, string> = {
   brand:
     "border-brand-200 bg-brand-50 text-brand-700 shadow-sm dark:border-brand/40 dark:bg-brand/15 dark:text-brand",
   fizruk:
-    "border-fizruk-ring bg-fizruk-surface text-fizruk-strong shadow-sm dark:border-fizruk/40 dark:bg-fizruk/15 dark:text-fizruk",
+    "border-fizruk-ring bg-fizruk-surface text-fizruk-strong shadow-sm dark:border-fizruk-border-dark/40 dark:bg-fizruk-surface-dark/15 dark:text-fizruk",
   routine:
-    "border-routine-ring bg-routine-surface text-routine-strong shadow-sm dark:border-routine/40 dark:bg-routine/15 dark:text-routine",
+    "border-routine-ring bg-routine-surface text-routine-strong shadow-sm dark:border-routine-border-dark/40 dark:bg-routine-surface-dark/15 dark:text-routine",
   nutrition:
-    "border-nutrition-ring bg-nutrition-surface text-nutrition-strong shadow-sm dark:border-nutrition/40 dark:bg-nutrition/15 dark:text-nutrition",
+    "border-nutrition-ring bg-nutrition-surface text-nutrition-strong shadow-sm dark:border-nutrition-border-dark/40 dark:bg-nutrition-surface-dark/15 dark:text-nutrition",
   finyk:
-    "border-finyk-ring bg-finyk-surface text-finyk-strong shadow-sm dark:border-finyk/40 dark:bg-finyk/15 dark:text-finyk",
+    "border-finyk-ring bg-finyk-surface text-finyk-strong shadow-sm dark:border-finyk-border-dark/40 dark:bg-finyk-surface-dark/15 dark:text-finyk",
 };
 
 const INACTIVE =
@@ -76,14 +90,14 @@ export function Segmented<V extends string = string>({
   items,
   value,
   onChange,
-  tone = "soft",
+  style = "soft",
   size = "md",
-  accent = "brand",
+  variant = "brand",
   ariaLabel,
   className,
 }: SegmentedProps<V>) {
   const activeClass =
-    tone === "solid" ? ACCENT_SOLID[accent] : ACCENT_SOFT[accent];
+    style === "solid" ? VARIANT_SOLID[variant] : VARIANT_SOFT[variant];
 
   return (
     <div

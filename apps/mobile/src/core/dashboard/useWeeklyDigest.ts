@@ -1,5 +1,5 @@
 /**
- * Мобільний `useWeeklyDigest` — дзеркалить `apps/web/src/core/useWeeklyDigest.ts`.
+ * Мобільний `useWeeklyDigest` — дзеркалить `apps/web/src/core/insights/useWeeklyDigest.ts`.
  */
 import { useCallback, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

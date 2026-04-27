@@ -12,14 +12,15 @@ import { cn } from "../../lib/cn";
  *   - text-2xs text-nutrition/70 font-bold uppercase tracking-wide (nutrition macros)
  *
  * Sizes drive **font scale + weight + casing + tracking** only. Colour
- * is picked via `tone` so the same size can render in `subtle` (default
- * eyebrow on cards), `muted`, or a module-branded tint (finyk /
- * fizruk / routine / nutrition). Semantics default to <h3>.
+ * is picked via `variant` (see `docs/design/COMPONENT_API.md`) so the same size
+ * can render in `subtle` (default eyebrow on cards), `muted`, or a
+ * module-branded tint (finyk / fizruk / routine / nutrition). Semantics
+ * default to <h3>.
  */
 
 export type SectionHeadingSize = "xs" | "sm" | "md" | "lg" | "xl";
 
-export type SectionHeadingTone =
+export type SectionHeadingVariant =
   | "subtle"
   | "muted"
   | "text"
@@ -29,21 +30,49 @@ export type SectionHeadingTone =
   | "routine"
   | "nutrition";
 
-const sizes: Record<SectionHeadingSize, string> = {
-  xs: "text-2xs font-bold uppercase tracking-widest",
-  sm: "text-xs font-bold uppercase tracking-widest",
-  md: "text-sm font-semibold",
-  lg: "text-lg font-extrabold leading-tight",
-  xl: "text-xl font-extrabold leading-tight",
+/**
+ * Font-weight override. Default is size-dependent (eyebrow sizes bold,
+ * md semibold, lg/xl extrabold). Primary use-case is the Finyk drift
+ * "text-xs text-muted uppercase tracking-wide font-semibold" — after this
+ * prop exists, call-sites can opt-in via `<SectionHeading weight="semibold">`
+ * and drop their raw-className eslint-disable.
+ */
+export type SectionHeadingWeight = "semibold" | "bold" | "extrabold";
+
+// Size-only tokens (font-scale + casing + tracking). Weight is applied
+// separately so `weight` prop overrides can compose cleanly.
+const sizeTokens: Record<SectionHeadingSize, string> = {
+  xs: "text-xs uppercase tracking-wider",
+  sm: "text-xs uppercase tracking-widest",
+  md: "text-sm",
+  lg: "text-lg leading-tight",
+  xl: "text-xl leading-tight",
 };
 
-const tones: Record<SectionHeadingTone, string> = {
+const weightTokens: Record<SectionHeadingWeight, string> = {
+  semibold: "font-semibold",
+  bold: "font-bold",
+  extrabold: "font-extrabold",
+};
+
+const defaultWeightForSize: Record<SectionHeadingSize, SectionHeadingWeight> = {
+  xs: "bold",
+  sm: "bold",
+  md: "semibold",
+  lg: "extrabold",
+  xl: "extrabold",
+};
+
+const variants: Record<SectionHeadingVariant, string> = {
   subtle: "text-subtle",
   muted: "text-muted",
   text: "text-text",
-  // `accent` uses the global --c-accent (emerald by default). Resolves
-  // per-module if a parent scopes the CSS variable.
-  accent: "text-accent",
+  // `accent` uses `text-brand-strong` (= emerald-700) instead of the
+  // global `--c-accent` token (= emerald-500). The latter only clears
+  // ~2.4:1 against the cream `bg-bg`; `-strong` clears 5.23:1. See
+  // docs/design/brand-palette-wcag-aa-proposal.md § 2.2 and the SectionHeading
+  // contract test that pins the className.
+  accent: "text-brand-strong",
   // Module-branded tints — normalised to /70 so callers don't drift
   // between /70, /80, /90.
   finyk: "text-finyk-strong dark:text-finyk/70",
@@ -52,20 +81,27 @@ const tones: Record<SectionHeadingTone, string> = {
   nutrition: "text-nutrition-strong dark:text-nutrition/70",
 };
 
-// Default tone per size — eyebrow sizes (xs/sm) are muted/subtle;
+// Default variant per size — eyebrow sizes (xs/sm) are muted/subtle;
 // body-size headings default to the foreground text colour.
-const defaultToneForSize: Record<SectionHeadingSize, SectionHeadingTone> = {
-  xs: "subtle",
-  sm: "subtle",
-  md: "text",
-  lg: "text",
-  xl: "text",
-};
+const defaultVariantForSize: Record<SectionHeadingSize, SectionHeadingVariant> =
+  {
+    xs: "subtle",
+    sm: "subtle",
+    md: "text",
+    lg: "text",
+    xl: "text",
+  };
 
 export interface SectionHeadingProps extends HTMLAttributes<HTMLElement> {
   size?: SectionHeadingSize;
   /** Colour variant. Defaults to `subtle` for xs/sm and `text` for md+. */
-  tone?: SectionHeadingTone;
+  variant?: SectionHeadingVariant;
+  /**
+   * Font-weight override. Defaults to `bold` for xs/sm (eyebrow),
+   * `semibold` for md, and `extrabold` for lg/xl. Use `semibold` to
+   * match the Finyk eyebrow tone on neutral cards.
+   */
+  weight?: SectionHeadingWeight;
   as?: ElementType;
   /** Optional right-aligned slot for actions/links. */
   action?: ReactNode;
@@ -79,14 +115,20 @@ export interface SectionHeadingProps extends HTMLAttributes<HTMLElement> {
 export function SectionHeading({
   className,
   size = "xs",
-  tone,
+  variant,
+  weight,
   as: Component = "h3",
   action,
   children,
   ...props
 }: SectionHeadingProps) {
-  const resolvedTone = tone ?? defaultToneForSize[size];
-  const base = cn(sizes[size], tones[resolvedTone]);
+  const resolvedVariant = variant ?? defaultVariantForSize[size];
+  const resolvedWeight = weight ?? defaultWeightForSize[size];
+  const base = cn(
+    sizeTokens[size],
+    weightTokens[resolvedWeight],
+    variants[resolvedVariant],
+  );
 
   if (action) {
     return (
@@ -112,6 +154,3 @@ export function SectionHeading({
  * component — prefer `SectionHeader` in new code.
  */
 export const SectionHeader = SectionHeading;
-export type SectionHeaderProps = SectionHeadingProps;
-export type SectionHeaderSize = SectionHeadingSize;
-export type SectionHeaderTone = SectionHeadingTone;

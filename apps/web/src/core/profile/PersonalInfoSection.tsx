@@ -5,7 +5,11 @@ import { Icon } from "@shared/components/ui/Icon";
 import { Input } from "@shared/components/ui/Input";
 import { useToast } from "@shared/hooks/useToast";
 import { cn } from "@shared/lib/cn";
-import { changeEmail, sendVerificationEmail, updateUser } from "../authClient";
+import {
+  changeEmail,
+  sendVerificationEmail,
+  updateUser,
+} from "../auth/authClient";
 import { assertAvatarFile, compressAvatar } from "./avatar";
 import type { ProfileUser } from "./types";
 
@@ -183,7 +187,7 @@ export function PersonalInfoSection({
               )}
             >
               {uploadingAvatar ? (
-                <span className="inline-block animate-spin">
+                <span className="inline-block motion-safe:animate-spin">
                   <Icon name="refresh-cw" size={18} className="text-white" />
                 </span>
               ) : (

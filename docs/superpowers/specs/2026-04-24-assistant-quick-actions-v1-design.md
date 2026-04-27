@@ -1,5 +1,12 @@
 # Assistant Quick Actions v1 — дизайн-спек
 
+> **Status:** shipped (PR [#743](https://github.com/Skords-01/Sergeant/pull/743)) — **superseded by**
+> [`2026-04-25-assistant-capability-catalogue-design.md`](./2026-04-25-assistant-capability-catalogue-design.md).
+> Quick action chips, `RISKY_TOOLS` і action cards живі (`apps/web/src/core/components/ChatQuickActions.tsx`,
+> `apps/web/src/core/lib/hubChatActionCards.ts`), але `hubChatQuickActions.ts` тепер тонкий
+> back-compat shim над `ASSISTANT_CAPABILITIES`. Документ лишається як історичний
+> контекст; усі майбутні зміни surface-ів — у capability-catalogue spec-у.
+
 ## Контекст
 
 HubChat уже має сильну технічну основу: Anthropic tool-use, SSE-стрімінг, голосовий ввід/озвучення, локальну історію, контекст усіх 4 модулів і 60 синхронізованих tool definitions між сервером та клієнтським `executeAction`.
@@ -240,7 +247,7 @@ const RISKY_TOOLS = new Set([
 
 Очікувані зміни:
 
-- `apps/web/src/core/HubChat.tsx`
+- `apps/web/src/core/hub/HubChat.tsx`
 - `apps/web/src/core/components/ChatQuickActions.tsx`
 - `apps/web/src/core/components/ChatMessage.tsx`
 - `apps/web/src/core/lib/hubChatQuickActions.ts`

@@ -15,7 +15,7 @@ import {
   unregister as pushUnregister,
   unsubscribe as pushUnsubscribe,
   vapidPublic,
-} from "../modules/push.js";
+} from "../modules/push/push.js";
 
 /**
  * `/api/push/vapid-public` свідомо поза rate-limiter-ом: його смикає фронт

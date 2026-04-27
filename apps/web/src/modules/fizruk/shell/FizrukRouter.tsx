@@ -53,7 +53,9 @@ export function FizrukRouter({
       return (
         <PlanCalendar
           onOpenRoutine={
-            onOpenModule ? () => onOpenModule("routine") : undefined
+            onOpenModule
+              ? () => onOpenModule("routine", { hash: "calendar" })
+              : undefined
           }
         />
       );

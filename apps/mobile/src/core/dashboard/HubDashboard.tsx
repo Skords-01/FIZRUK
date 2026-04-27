@@ -5,7 +5,7 @@
  *   1. Greeting + today label + settings button (always visible).
  *   2. Hero slot with one-hero rule: `FirstActionHeroCard` >
  *      `SoftAuthPromptCard` > `TodayFocusCard`, mirroring
- *      `apps/web/src/core/HubDashboard.tsx`.
+ *      `apps/web/src/core/hub/HubDashboard.tsx`.
  *   3. Status row stack (`DraggableDashboard`) with per-module
  *      quick-stats preview wired via `useModulePreviews`.
  *   4. `HubInsightsPanel` — collapsible secondary-recs block. Fed
@@ -20,10 +20,10 @@
  *     order still contains all four ids so a web session opening the
  *     same account keeps Nutrition in its slot — see
  *     `reorderWithHidden` in `@sergeant/shared`.
- *   - `onShowAuth` is stubbed with `Alert.alert` until the Better
- *     Auth native sheet lands in mobile nav. TODO: replace the alert
- *     with the actual sheet trigger once `packages/auth-client/expo`
- *     is wired.
+ *   - `onShowAuth` navigates to the `(auth)/sign-in` modal via
+ *     `router.push`. The `(auth)` group is presented as a modal in
+ *     `app/_layout.tsx`; after successful sign-in the modal closes
+ *     and `useUser` reactively updates the dashboard.
  *   - `useWeeklyDigest` + `useCoachInsight` (фаза 8) — після входу
  *     підтягують дайджест/інсайт; понеділкова автоген — лише для
  *     залогінених.
@@ -31,7 +31,7 @@
 
 import { router, type Href } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useUser } from "@sergeant/api-client/react";
@@ -163,13 +163,7 @@ export function HubDashboard() {
   const bumpHero = useCallback(() => setHeroTick((t) => t + 1), []);
 
   const handleShowAuth = useCallback(() => {
-    // TODO: replace with Better Auth native sheet once it lands in
-    // mobile nav. Keeping a stub alert makes the CTA discoverable in
-    // manual testing without pulling auth ahead of schedule.
-    Alert.alert(
-      "Акаунт скоро",
-      "Sign-in screen на mobile ще в розробці. Поки синхронізація запуститься автоматично, коли акаунт буде готовий.",
-    );
+    router.push("/(auth)/sign-in" as Href);
   }, []);
 
   // Insights panel is fed the `rest` slice from the shared focus
@@ -221,12 +215,12 @@ export function HubDashboard() {
       >
         <View className="flex-row items-start justify-between gap-3">
           <View className="flex-1 gap-1">
-            <Text className="text-[26px] font-bold text-stone-900">
+            <Text className="text-[26px] font-bold text-fg">
               Привіт, {greetingName}
             </Text>
             <Text
               accessibilityRole="text"
-              className="text-sm text-stone-500 capitalize"
+              className="text-sm text-fg-muted capitalize"
             >
               {todayLabel}
             </Text>
@@ -269,14 +263,14 @@ export function HubDashboard() {
         </View>
 
         <View className="gap-2">
-          <Text className="text-sm font-semibold text-stone-600">Статус</Text>
+          <Text className="text-sm font-semibold text-fg-muted">Статус</Text>
           <DraggableDashboard
             modules={visibleOrder}
             onReorder={reorderVisible}
             onOpenModule={openModule}
             previews={previews}
           />
-          <Text className="mt-1 text-[11px] leading-snug text-stone-400">
+          <Text className="mt-1 text-[11px] leading-snug text-fg-subtle">
             Утримай і потягни, щоб змінити порядок модулів. Порядок
             синхронізується з вебом.
           </Text>

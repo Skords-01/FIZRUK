@@ -29,7 +29,7 @@ export type PushPlatform = PushRegisterRequest["platform"];
 /**
  * Runtime-схема відповіді `POST /api/v1/push/register`. Сервер відповідає
  * `200 { ok: true, platform }` як на web, так і на native (див.
- * `docs/mobile.md`).
+ * `docs/mobile/overview.md`).
  */
 export const PushRegisterResponseSchema = z.object({
   ok: z.literal(true),
@@ -79,7 +79,7 @@ export interface PushEndpoints {
    *
    * @deprecated Використовуй `register({ platform: "web", token, keys })`.
    * Серверний `/api/push/subscribe` залишено proxy-адаптером (див.
-   * `apps/server/src/modules/push.ts`) на період rollout.
+   * `apps/server/src/modules/push/push.ts`) на період rollout.
    */
   subscribe: (subscription: PushSubscriptionJSON) => Promise<unknown>;
   /**

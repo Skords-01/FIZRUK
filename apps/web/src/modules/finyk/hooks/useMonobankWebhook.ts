@@ -12,7 +12,10 @@ import { authAwareRetry } from "@shared/lib/queryClient";
 import { normalizeTransaction } from "@sergeant/finyk-domain/domain/transactions";
 import type { Transaction } from "@sergeant/finyk-domain/domain/types";
 import { CURRENCY } from "../constants";
-import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
+import {
+  trackEvent,
+  ANALYTICS_EVENTS,
+} from "../../../core/observability/analytics";
 import { fetchAllMonoTransactions } from "./monoTransactionsLoader";
 
 const SYNC_STATE_STALE = 30_000;

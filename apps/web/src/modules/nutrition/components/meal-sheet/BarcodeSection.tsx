@@ -1,6 +1,17 @@
+import type { Dispatch, SetStateAction } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
+
+interface BarcodeSectionProps {
+  barcode: string;
+  setBarcode: Dispatch<SetStateAction<string>>;
+  barcodeStatus: string;
+  setBarcodeStatus: Dispatch<SetStateAction<string>>;
+  handleBarcodeLookup: (barcode: string) => void | Promise<void>;
+  handleBarcodeBind: (barcode: string) => void | Promise<void>;
+  setScannerOpen: Dispatch<SetStateAction<boolean>>;
+}
 
 export function BarcodeSection({
   barcode,
@@ -10,7 +21,7 @@ export function BarcodeSection({
   handleBarcodeLookup,
   handleBarcodeBind,
   setScannerOpen,
-}) {
+}: BarcodeSectionProps) {
   return (
     <div className="mb-4 rounded-2xl border border-line bg-panel/40 px-3 py-3">
       <SectionHeading as="div" size="xs" className="mb-2">

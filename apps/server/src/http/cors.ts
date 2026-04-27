@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "http";
+import { logger } from "../obs/logger.js";
 
 /**
  * CORS origins. Додаткові домени: змінна ALLOWED_ORIGINS (через кому).
@@ -63,13 +64,10 @@ function getAllowedOriginRegex(): RegExp | null {
     cachedRegex = null;
     if (process.env.NODE_ENV !== "test") {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(
-        JSON.stringify({
-          level: "error",
-          msg: "cors_invalid_allowed_origin_regex",
-          err: { message },
-        }),
-      );
+      logger.error({
+        msg: "cors_invalid_allowed_origin_regex",
+        err: { message },
+      });
     }
   }
   return cachedRegex;

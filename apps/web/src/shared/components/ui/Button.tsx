@@ -17,6 +17,9 @@ import { cn } from "../../lib/cn";
  * - fizruk: Teal fitness theme
  * - routine: Coral habit theme
  * - nutrition: Lime nutrition theme
+ *
+ * Touch: `xs` / `sm` / icon-only sizes get `min 44×44px` under `@media (pointer: coarse)`
+ * so primary controls stay tappable on phones while staying visually compact on desktop.
  */
 
 export type ButtonVariant =
@@ -40,7 +43,7 @@ export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 const variants: Record<ButtonVariant, string> = {
   // Core variants
   primary:
-    "bg-brand-500 text-white shadow-sm hover:bg-brand-600 hover:shadow-glow active:bg-brand-700 active:scale-[0.98]",
+    "bg-brand-strong text-white shadow-sm hover:bg-brand-600 hover:shadow-glow active:bg-brand-700 active:scale-[0.98]",
   secondary:
     "bg-panel text-text border border-line shadow-sm hover:bg-panelHi hover:border-brand-200 active:scale-[0.98]",
   ghost:
@@ -48,19 +51,19 @@ const variants: Record<ButtonVariant, string> = {
   danger:
     "bg-danger-soft text-danger border border-danger/30 hover:bg-danger/15 hover:border-danger/50 active:scale-[0.98]",
   destructive:
-    "bg-danger text-white shadow-sm hover:brightness-110 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.15)] active:scale-[0.98]",
+    "bg-danger-strong text-white shadow-sm hover:brightness-110 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.15)] active:scale-[0.98]",
   success:
     "bg-brand-50 text-brand-700 border border-brand-200/50 hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:border-brand-500/30 dark:hover:bg-brand-500/25 active:scale-[0.98]",
 
   // Module-specific branded buttons
   finyk:
-    "bg-finyk text-white shadow-sm hover:bg-finyk-hover hover:shadow-glow active:scale-[0.98]",
+    "bg-finyk-strong text-white shadow-sm hover:bg-finyk-hover hover:shadow-glow active:scale-[0.98]",
   fizruk:
-    "bg-fizruk text-white shadow-sm hover:bg-fizruk-hover hover:shadow-glow-teal active:scale-[0.98]",
+    "bg-fizruk-strong text-white shadow-sm hover:bg-fizruk-hover hover:shadow-glow-teal active:scale-[0.98]",
   routine:
-    "bg-routine text-white shadow-sm hover:bg-routine-hover hover:shadow-glow-coral active:scale-[0.98]",
+    "bg-routine-strong text-white shadow-sm hover:bg-routine-hover hover:shadow-glow-coral active:scale-[0.98]",
   nutrition:
-    "bg-nutrition text-white shadow-sm hover:bg-nutrition-hover hover:shadow-glow-lime active:scale-[0.98]",
+    "bg-nutrition-strong text-white shadow-sm hover:bg-nutrition-hover hover:shadow-glow-lime active:scale-[0.98]",
 
   // Soft module variants (for secondary actions within modules).
   // Dark mode swaps the light pastel surface for the saturated accent at
@@ -117,6 +120,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) {
     const isDisabled = disabled || loading;
+    const needsCoarseMinTarget = iconOnly || size === "xs" || size === "sm";
 
     return (
       <button
@@ -127,10 +131,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         aria-live={loading ? "polite" : undefined}
         className={cn(
           // Base styles
-          "inline-flex items-center justify-center",
-          "transition-interactive",
+          "inline-flex items-center justify-center touch-manipulation",
+          "motion-safe:transition-all motion-safe:duration-200 motion-safe:ease-smooth",
+          "motion-reduce:transition-none motion-reduce:active:!scale-100",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-panel",
           "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
+          // Touch / coarse pointer: WCAG 2.5.5 / HIG ≥44×44px for compact controls.
+          needsCoarseMinTarget &&
+            "[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]",
           // Variant
           variants[variant],
           // Size

@@ -14,7 +14,7 @@
  *    Видалення — через `ConfirmDialog`, щоб не зʼєсти запис
  *    випадковим тапом (аналог `AttentionModal` + fade у web).
  *
- * Deferred (див. `docs/react-native-migration.md` Phase 2 /
+ * Deferred (див. `docs/mobile/react-native-migration.md` Phase 2 /
  * Hub-core, §2.4) — рендериться як `DeferredNotice`-карточка:
  *  - **Monobank: статус, очистка кешу, disconnect.** Web читає
  *    `finyk_info_cache` + `finyk_token` (одне підʼєднане через
@@ -61,7 +61,7 @@ function makeCategoryId(): string {
 function DeferredNotice({ children }: { children: string }) {
   return (
     <Card variant="flat" radius="md" padding="md" className="border-dashed">
-      <Text className="text-xs text-stone-500 leading-snug">{children}</Text>
+      <Text className="text-xs text-fg-muted leading-snug">{children}</Text>
     </Card>
   );
 }
@@ -117,7 +117,7 @@ export function FinykSection() {
       />
 
       <SettingsSubGroup title="Власні категорії витрат">
-        <Text className="text-xs text-stone-500 leading-snug">
+        <Text className="text-xs text-fg-muted leading-snug">
           Додаються до списку категорій у транзакціях, сплітах і лімітах (можна
           вказати емодзі на початку назви).
         </Text>
@@ -156,7 +156,7 @@ export function FinykSection() {
                 testID={`finyk-custom-cat-row-${item.id}`}
               >
                 <Text
-                  className="text-sm font-medium text-stone-900 flex-1 min-w-0"
+                  className="text-sm font-medium text-fg flex-1 min-w-0"
                   numberOfLines={1}
                 >
                   {item.label}
@@ -176,7 +176,7 @@ export function FinykSection() {
             )}
           />
         ) : (
-          <Text className="text-xs text-stone-500">
+          <Text className="text-xs text-fg-muted">
             Поки немає власних категорій.
           </Text>
         )}

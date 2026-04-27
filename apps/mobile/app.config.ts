@@ -40,7 +40,7 @@ const updatesUrl = process.env.EXPO_PUBLIC_EAS_UPDATES_URL;
  *   - `E2E_BUILD=1`        — explicit override for prebuild pipelines
  *     that don't want to leak `EXPO_PUBLIC_*` into the bundled JS.
  *
- * Docs: `docs/react-native-migration.md` §8 / §13 Q8.
+ * Docs: `docs/mobile/react-native-migration.md` §8 / §13 Q8.
  */
 const isDetoxBuild =
   process.env.EXPO_PUBLIC_E2E === "1" || process.env.E2E_BUILD === "1";

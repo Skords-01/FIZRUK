@@ -13,6 +13,10 @@ export * from "./lib/storageKeys";
 // Hub dashboard module ordering (pure helpers; storage I/O is per-platform).
 export * from "./lib/dashboard";
 
+// Assistant capability catalogue — single source of truth for chat
+// quick actions, the catalogue UI, and (PR 2) the system-prompt tool list.
+export * from "./lib/assistantCatalogue";
+
 // Platform-agnostic key/value store contract consumed by shared helpers
 // below (web → localStorage adapter, mobile → MMKV adapter).
 export * from "./lib/kvStore";
@@ -69,6 +73,9 @@ export * from "./lib/platform";
 
 // DOM-free file-download contract (platform adapters register at app bootstrap).
 export * from "./lib/fileDownload";
+
+// DOM-free file-import contract (platform adapters register at app bootstrap).
+export * from "./lib/fileImport";
 
 // DOM-free visual-keyboard-inset hook contract (platform adapters register at
 // app bootstrap).

@@ -43,8 +43,8 @@ export function HabitLeadersBlock({
         Лідери та аутсайдери (30 днів)
       </SectionHeading>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div className="rounded-xl border border-routine-line/40 dark:border-routine/20 bg-routine-surface/30 dark:bg-routine/8 p-3">
-          <SectionHeading as="p" size="xs" tone="subtle" className="mb-1">
+        <div className="rounded-xl border border-routine-line/40 dark:border-routine-border-dark/20 bg-routine-surface/30 dark:bg-routine-surface-dark/8 p-3">
+          <SectionHeading as="p" size="xs" variant="subtle" className="mb-1">
             Найстабільніша
           </SectionHeading>
           <p className="text-sm font-semibold text-text truncate">
@@ -56,7 +56,7 @@ export function HabitLeadersBlock({
         </div>
         {worst && (
           <div className="rounded-xl border border-line bg-panel p-3">
-            <SectionHeading as="p" size="xs" tone="subtle" className="mb-1">
+            <SectionHeading as="p" size="xs" variant="subtle" className="mb-1">
               Найслабша
             </SectionHeading>
             <p className="text-sm font-semibold text-text truncate">

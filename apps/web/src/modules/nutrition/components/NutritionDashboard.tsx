@@ -1,26 +1,43 @@
 import { useMemo } from "react";
+import { chartHex } from "@sergeant/design-tokens/tokens";
 import { Card } from "@shared/components/ui/Card";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { cn } from "@shared/lib/cn";
 import { pluralUa } from "@sergeant/shared";
+import type { NutritionLog, NutritionPrefs } from "@sergeant/nutrition-domain";
 import {
   getDayMacros,
   getDaySummary,
   getMacrosForDateRange,
   toLocalISODate,
+  type MacrosRow,
 } from "../lib/nutritionStorage";
 import { WaterTrackerCard } from "./WaterTrackerCard";
 
-function todayISO() {
+type MacroKey = "kcal" | "protein_g" | "fat_g" | "carbs_g";
+type MacroTargetKey =
+  | "dailyTargetKcal"
+  | "dailyTargetProtein_g"
+  | "dailyTargetFat_g"
+  | "dailyTargetCarbs_g";
+
+type WeekRow = MacrosRow;
+
+function todayISO(): string {
   return toLocalISODate(new Date());
 }
 
-function pct(cur, target) {
+function pct(cur: number, target: number): number {
   if (!(target > 0)) return 0;
   return Math.min(100, (cur / target) * 100);
 }
 
-function ring(percent, color, size = 56, stroke = 5) {
+function ring(
+  percent: number,
+  color: string,
+  size = 56,
+  stroke = 5,
+): JSX.Element {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const dash = (Math.min(percent, 100) / 100) * circ;
@@ -50,38 +67,52 @@ function ring(percent, color, size = 56, stroke = 5) {
   );
 }
 
-const MACRO_DEFS = [
+interface MacroDef {
+  key: MacroKey;
+  label: string;
+  color: string;
+  prefKey: MacroTargetKey;
+  unit: string;
+}
+
+const MACRO_DEFS: MacroDef[] = [
   {
     key: "kcal",
     label: "Ккал",
-    color: "#f97316",
+    color: chartHex.kcal,
     prefKey: "dailyTargetKcal",
     unit: "",
   },
   {
     key: "protein_g",
     label: "Білки",
-    color: "#3b82f6",
+    color: chartHex.protein,
     prefKey: "dailyTargetProtein_g",
     unit: "г",
   },
   {
     key: "fat_g",
     label: "Жири",
-    color: "#eab308",
+    color: chartHex.fat,
     prefKey: "dailyTargetFat_g",
     unit: "г",
   },
   {
     key: "carbs_g",
     label: "Вуглев.",
-    color: "#22c55e",
+    color: chartHex.carbs,
     prefKey: "dailyTargetCarbs_g",
     unit: "г",
   },
 ];
 
-function MiniBar({ rows, targetKcal }) {
+function MiniBar({
+  rows,
+  targetKcal,
+}: {
+  rows: WeekRow[];
+  targetKcal: number;
+}) {
   const max = Math.max(targetKcal || 1, ...rows.map((r) => r.kcal || 0));
   const dayLabels = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
   return (
@@ -123,6 +154,17 @@ function MiniBar({ rows, targetKcal }) {
   );
 }
 
+interface NutritionDashboardProps {
+  log: NutritionLog;
+  prefs: NutritionPrefs;
+  onGoToLog?: () => void;
+  onGoToDailyPlan?: () => void;
+  onAddMeal?: () => void;
+  onFetchDayHint?: () => void | Promise<void>;
+  dayHintText?: string;
+  dayHintBusy?: boolean;
+}
+
 export function NutritionDashboard({
   log,
   prefs,
@@ -132,7 +174,7 @@ export function NutritionDashboard({
   onFetchDayHint,
   dayHintText,
   dayHintBusy,
-}) {
+}: NutritionDashboardProps) {
   const today = todayISO();
 
   const macros = useMemo(() => getDayMacros(log, today), [log, today]);
@@ -217,7 +259,7 @@ export function NutritionDashboard({
                   <SectionHeading
                     as="div"
                     size="xs"
-                    tone="nutrition"
+                    variant="nutrition"
                     className="leading-none mb-1"
                   >
                     {m.label}

@@ -1,5 +1,8 @@
 import { useMemo, useEffect, useRef, useState, useCallback } from "react";
-import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
+import {
+  trackEvent,
+  ANALYTICS_EVENTS,
+} from "../../../core/observability/analytics";
 import {
   calcDebtRemaining,
   calcReceivableRemaining,
@@ -402,6 +405,8 @@ export function Overview({ mono, storage, onNavigate, showBalance = true }) {
           firstName={firstName}
           dateLabel={dateLabel}
           showBalance={showBalance}
+          dayBudget={dayBudget}
+          spendPlanRatio={spendPlanRatio}
         />
 
         <p className="text-xs text-subtle px-1 -mt-1 leading-relaxed">

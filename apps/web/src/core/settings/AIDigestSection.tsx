@@ -3,7 +3,7 @@ import { Button } from "@shared/components/ui/Button";
 import { useToast } from "@shared/hooks/useToast";
 import { safeReadLS, safeWriteLS } from "@shared/lib/storage";
 import { STORAGE_KEYS } from "@sergeant/shared";
-import { useWeeklyDigest } from "../useWeeklyDigest";
+import { useWeeklyDigest } from "../insights/useWeeklyDigest";
 import { SettingsGroup, ToggleRow } from "./SettingsPrimitives";
 
 export function AIDigestSection() {

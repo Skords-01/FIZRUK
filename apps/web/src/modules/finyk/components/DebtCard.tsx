@@ -32,6 +32,7 @@ interface DebtCardProps {
   linkedCount?: number;
   isReceivable?: boolean;
   dueDate?: string | null;
+  showBalance?: boolean;
 }
 
 // Чиста картка боргу / заборгованості — рендер повністю керується пропсами,
@@ -47,6 +48,7 @@ function DebtCardComponent({
   linkedCount,
   isReceivable,
   dueDate,
+  showBalance = true,
 }: DebtCardProps) {
   const pct = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
   const dueText = formatDueDate(dueDate);
@@ -65,8 +67,9 @@ function DebtCardComponent({
               isReceivable ? "text-success" : "text-danger",
             )}
           >
-            {isReceivable ? "+" : "−"}
-            {remaining.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴
+            {showBalance
+              ? `${isReceivable ? "+" : "−"}${remaining.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} ₴`
+              : "••••"}
           </span>
           {onDelete && (
             <button
@@ -89,8 +92,9 @@ function DebtCardComponent({
       </div>
       <div className="text-xs text-subtle mt-2">
         {isReceivable ? "Отримано" : "Сплачено"}{" "}
-        {paid.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} з{" "}
-        {total.toLocaleString("uk-UA")} ₴
+        {showBalance
+          ? `${paid.toLocaleString("uk-UA", { maximumFractionDigits: 0 })} з ${total.toLocaleString("uk-UA")} ₴`
+          : "••••"}
       </div>
       {dueText && (
         <div

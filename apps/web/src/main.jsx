@@ -12,13 +12,17 @@ import "@shared/lib/haptic";
 // Registers the web Blob + <a download>-based adapter on the shared
 // file-download contract (`@sergeant/shared`). Import for side effects only.
 import "@shared/lib/fileDownload";
+// Registers the web <input type="file">-based adapter on the shared
+// file-import contract (`@sergeant/shared`). Import for side effects only.
+import "@shared/lib/fileImport";
 // Registers the web `window.visualViewport`-based adapter on the shared
 // visual-keyboard-inset contract (`@sergeant/shared`). Import for side
 // effects only.
 import "@shared/hooks/useVisualKeyboardInset";
 import { ErrorBoundary } from "./core/ErrorBoundary.jsx";
-import { initSentry } from "./core/sentry.js";
-import { initWebVitals } from "./core/webVitals.js";
+import { initSentry } from "./core/observability/sentry.js";
+import { initWebVitals } from "./core/observability/webVitals.js";
+import { initPostHog } from "./core/observability/posthog.js";
 import { runDemoCleanupOnce } from "./core/onboarding/cleanupDemoData.js";
 import { runDemoSeedFromUrl } from "./core/onboarding/seedDemoData.js";
 import { isCapacitor } from "@sergeant/shared";
@@ -93,6 +97,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 const scheduleInit = () => {
   void initSentry();
   void initWebVitals();
+  void initPostHog();
 };
 if (typeof window !== "undefined") {
   if ("requestIdleCallback" in window) {

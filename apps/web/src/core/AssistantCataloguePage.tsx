@@ -1,0 +1,402 @@
+import { useCallback, useMemo, useState } from "react";
+import { Button } from "@shared/components/ui/Button";
+import { Icon } from "@shared/components/ui/Icon";
+import { SectionHeading } from "@shared/components/ui/SectionHeading";
+import { useLocalStorageState } from "@shared/hooks";
+import { cn } from "@shared/lib/cn";
+import {
+  ASSISTANT_CAPABILITIES,
+  CAPABILITY_MODULE_META,
+  CAPABILITY_MODULE_ORDER,
+  groupCapabilitiesByModule,
+  searchCapabilities,
+  type AssistantCapability,
+  type CapabilityModule,
+} from "@sergeant/shared";
+import { CapabilityDetailModal } from "./components/CapabilityDetailModal";
+
+interface AssistantCataloguePageProps {
+  onClose: () => void;
+}
+
+// AI-NOTE: bumping the suffix invalidates older shapes if we change semantics.
+const COLLAPSED_GROUPS_LS_KEY = "assistant_catalogue_collapsed_v1";
+
+const isCapabilityModule = (v: unknown): v is CapabilityModule =>
+  typeof v === "string" &&
+  (CAPABILITY_MODULE_ORDER as readonly string[]).includes(v);
+
+const isCollapsedShape = (v: unknown): v is CapabilityModule[] =>
+  Array.isArray(v) && v.every(isCapabilityModule);
+
+/**
+ * Send a chat message via the global `hub:openChat` event. Avoids importing
+ * the chat module directly from this page (and the cycle that would create).
+ *
+ * - `autoSend=true` ⇒ assistant sends the message immediately;
+ * - `autoSend=false` ⇒ message is prefilled into the input, waiting for the
+ *   user to add details and hit enter.
+ */
+function dispatchOpenChat(message: string, autoSend: boolean): void {
+  window.dispatchEvent(
+    new CustomEvent("hub:openChat", { detail: { message, autoSend } }),
+  );
+}
+
+export function AssistantCataloguePage({
+  onClose,
+}: AssistantCataloguePageProps) {
+  const [query, setQuery] = useState("");
+  const [detail, setDetail] = useState<AssistantCapability | null>(null);
+  // AI-CONTEXT: persisting collapsed groups (not expanded) keeps "everything
+  // open" the default — adding a new module to the registry stays visible
+  // until the user explicitly collapses it.
+  const [collapsedModules, setCollapsedModules] = useLocalStorageState<
+    CapabilityModule[]
+  >(COLLAPSED_GROUPS_LS_KEY, [], { validate: isCollapsedShape });
+
+  const filtered = useMemo(
+    () => (query.trim() ? searchCapabilities(query) : ASSISTANT_CAPABILITIES),
+    [query],
+  );
+  const groups = useMemo(() => groupCapabilitiesByModule(filtered), [filtered]);
+  const isSearching = query.trim().length > 0;
+
+  const collapsedSet = useMemo(
+    () => new Set(collapsedModules),
+    [collapsedModules],
+  );
+  // While searching we always show matches expanded so the user can read
+  // results without re-toggling each section. The persisted state is left
+  // untouched so the previous layout returns once the query is cleared.
+  const isModuleCollapsed = (module: CapabilityModule) =>
+    !isSearching && collapsedSet.has(module);
+
+  const toggleModule = useCallback(
+    (module: CapabilityModule) => {
+      setCollapsedModules((prev) =>
+        prev.includes(module)
+          ? prev.filter((m) => m !== module)
+          : [...prev, module],
+      );
+    },
+    [setCollapsedModules],
+  );
+
+  const allCollapsed =
+    groups.length > 0 && groups.every((g) => collapsedSet.has(g.module));
+
+  const toggleAll = useCallback(() => {
+    if (allCollapsed) {
+      setCollapsedModules([]);
+    } else {
+      setCollapsedModules(CAPABILITY_MODULE_ORDER.slice());
+    }
+  }, [allCollapsed, setCollapsedModules]);
+
+  const handleActivate = (cap: AssistantCapability) => {
+    if (cap.requiresInput) {
+      setDetail(cap);
+      return;
+    }
+    onClose();
+    dispatchOpenChat(cap.prompt, true);
+  };
+
+  const handleTryFromDetail = (cap: AssistantCapability) => {
+    setDetail(null);
+    onClose();
+    dispatchOpenChat(cap.prompt, false);
+  };
+
+  return (
+    <div
+      className="min-h-dvh bg-bg"
+      style={{
+        paddingTop: "max(1.25rem, env(safe-area-inset-top))",
+        paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))",
+      }}
+    >
+      <div className="max-w-2xl mx-auto px-5 pb-8">
+        <div className="flex items-center gap-3 pt-6 pb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            onClick={onClose}
+            aria-label="Назад"
+          >
+            <Icon name="chevron-left" size={20} />
+          </Button>
+          <h1 className="text-xl font-bold text-text">Можливості асистента</h1>
+        </div>
+
+        <p className="text-sm text-subtle mb-3">
+          Усе, що вміє робити асистент. Натисни картку щоб запустити сценарій
+          або побачити приклади.
+        </p>
+
+        <CapabilityLegend />
+
+        <div className="relative mb-3">
+          <span
+            aria-hidden
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle"
+          >
+            <Icon name="search" size={16} />
+          </span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Пошук — наприклад, «витрата», «звичка», «1RM»…"
+            className="w-full bg-panel border border-line rounded-2xl pl-9 pr-3 py-3 text-sm text-text placeholder:text-subtle focus:outline-none focus:border-brand-500/50"
+            aria-label="Пошук можливостей"
+          />
+        </div>
+
+        {!isSearching && groups.length > 0 && (
+          <div className="flex justify-end mb-3">
+            <button
+              type="button"
+              onClick={toggleAll}
+              data-testid="catalogue-toggle-all"
+              className={cn(
+                "inline-flex items-center gap-1.5 text-xs font-semibold text-muted",
+                "rounded-full px-2.5 py-1 hover:bg-panel hover:text-text transition-colors",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
+              )}
+            >
+              <Icon
+                name={allCollapsed ? "chevron-down" : "chevron-up"}
+                size={12}
+                aria-hidden
+              />
+              {allCollapsed ? "Розгорнути все" : "Згорнути все"}
+            </button>
+          </div>
+        )}
+
+        {filtered.length === 0 && (
+          <div className="text-center text-subtle py-12 text-sm">
+            Нічого не знайдено за «{query}». Спробуй інший термін.
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {groups.map((g) => (
+            <ModuleGroup
+              key={g.module}
+              module={g.module}
+              capabilities={g.capabilities}
+              collapsed={isModuleCollapsed(g.module)}
+              onToggle={() => toggleModule(g.module)}
+              onActivate={handleActivate}
+            />
+          ))}
+        </div>
+      </div>
+
+      <CapabilityDetailModal
+        capability={detail}
+        onClose={() => setDetail(null)}
+        onTryInChat={handleTryFromDetail}
+      />
+    </div>
+  );
+}
+
+interface ModuleGroupProps {
+  module: CapabilityModule;
+  capabilities: readonly AssistantCapability[];
+  collapsed: boolean;
+  onToggle: () => void;
+  onActivate: (cap: AssistantCapability) => void;
+}
+
+function ModuleGroup({
+  module,
+  capabilities,
+  collapsed,
+  onToggle,
+  onActivate,
+}: ModuleGroupProps) {
+  const meta = CAPABILITY_MODULE_META[module];
+  const headingId = `catalogue-module-${module}`;
+  const listId = `catalogue-module-${module}-list`;
+  return (
+    <section aria-labelledby={headingId}>
+      <button
+        type="button"
+        onClick={onToggle}
+        data-testid={`catalogue-module-${module}-toggle`}
+        aria-expanded={!collapsed}
+        aria-controls={listId}
+        className={cn(
+          "w-full flex items-center gap-2 text-left rounded-lg",
+          "-mx-1 px-1 py-0.5 mb-2 hover:bg-panel/60 transition-colors",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
+        )}
+      >
+        <Icon name={meta.icon} size={14} aria-hidden />
+        <SectionHeading
+          as="span"
+          size="sm"
+          variant="text"
+          id={headingId}
+          className="flex items-center gap-2 m-0"
+        >
+          {meta.title}
+          <span className="text-subtle font-normal normal-case tracking-normal">
+            ({capabilities.length})
+          </span>
+        </SectionHeading>
+        <Icon
+          name="chevron-down"
+          size={14}
+          aria-hidden
+          className={cn(
+            "ml-auto text-muted transition-transform",
+            collapsed ? "-rotate-90" : "rotate-0",
+          )}
+        />
+      </button>
+      {!collapsed && (
+        <ul id={listId} className="space-y-2">
+          {capabilities.map((cap) => (
+            <li key={cap.id}>
+              <CapabilityRow capability={cap} onActivate={onActivate} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+interface CapabilityRowProps {
+  capability: AssistantCapability;
+  onActivate: (cap: AssistantCapability) => void;
+}
+
+function CapabilityRow({ capability, onActivate }: CapabilityRowProps) {
+  return (
+    <button
+      type="button"
+      data-testid={`catalogue-capability-${capability.id}`}
+      onClick={() => onActivate(capability)}
+      className={cn(
+        "w-full text-left bg-panel border border-line rounded-2xl px-4 py-3",
+        "hover:border-muted hover:bg-panel/80 transition-colors",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
+        "flex items-start gap-3",
+      )}
+    >
+      <span
+        aria-hidden
+        className="shrink-0 w-9 h-9 rounded-full bg-bg flex items-center justify-center text-text"
+      >
+        <Icon name={capability.icon} size={16} />
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-semibold text-text">
+            {capability.label}
+          </span>
+          {capability.isNew && (
+            <BadgeChip
+              tone="success"
+              icon="sparkles"
+              label="Новинка"
+              title="Нещодавно додана можливість"
+            />
+          )}
+          {capability.isQuickAction && (
+            <BadgeChip
+              tone="brand"
+              icon="zap"
+              label="Чіп"
+              title="Швидкий сценарій (показується chip-ом у чаті)"
+            />
+          )}
+          {capability.risky && (
+            <BadgeChip
+              tone="warning"
+              icon="alert-triangle"
+              label="Ризик"
+              title="Критична дія — скасувати не можна"
+            />
+          )}
+        </span>
+        <span className="block text-xs text-subtle mt-0.5">
+          {capability.description}
+        </span>
+      </span>
+      <span aria-hidden className="shrink-0 text-subtle pt-1">
+        <Icon
+          name={capability.requiresInput ? "chevron-right" : "send"}
+          size={14}
+        />
+      </span>
+    </button>
+  );
+}
+
+function CapabilityLegend() {
+  return (
+    <div
+      data-testid="catalogue-legend"
+      className={cn(
+        "mb-4 bg-panel/60 border border-line rounded-2xl px-3 py-2.5",
+        "flex flex-wrap items-center gap-x-3 gap-y-2",
+      )}
+      aria-label="Що означають позначки"
+    >
+      <span className="text-xs font-semibold text-muted">Позначки:</span>
+      <span className="inline-flex items-center gap-1.5 text-xs text-subtle">
+        <BadgeChip tone="brand" icon="zap" label="ЧІП" />
+        швидкий сценарій
+      </span>
+      <span className="inline-flex items-center gap-1.5 text-xs text-subtle">
+        <BadgeChip tone="warning" icon="alert-triangle" label="РИЗИК" />
+        критична дія
+      </span>
+      <span className="inline-flex items-center gap-1.5 text-xs text-subtle">
+        <BadgeChip tone="success" icon="sparkles" label="НОВИНКА" />
+        нещодавно додано
+      </span>
+    </div>
+  );
+}
+
+interface BadgeChipProps {
+  tone: "brand" | "warning" | "success";
+  icon: string;
+  label: string;
+  title?: string;
+}
+
+function BadgeChip({ tone, icon, label, title }: BadgeChipProps) {
+  const cls =
+    tone === "brand"
+      ? "text-brand-600 bg-brand-500/10 border-brand-500/40"
+      : tone === "warning"
+        ? "text-warning bg-warning/10 border-warning/40"
+        : "text-success bg-success/10 border-success/40";
+  return (
+    <span
+      title={title}
+      className={cn(
+        "inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-bold",
+        "border rounded-full px-1.5 py-0.5",
+        cls,
+      )}
+    >
+      <Icon name={icon} size={10} aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+// Re-export module order for tests / future deep-links.
+export { CAPABILITY_MODULE_ORDER };

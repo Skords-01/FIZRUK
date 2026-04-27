@@ -20,7 +20,7 @@
  *    scheduler (Phase 5) it can pick this flag up without a data
  *    migration.
  *
- * Deferred (tracked in `docs/react-native-migration.md` Phase 2 /
+ * Deferred (tracked in `docs/mobile/react-native-migration.md` Phase 2 /
  * Hub-core, section 2.4) — rendered as `DeferredNotice` cards mirroring
  * `GeneralSection`:
  *  - **Routine scheduler.** The toggle above only flips the pref; the
@@ -85,7 +85,7 @@ interface RoutinePrefs {
 function DeferredNotice({ children }: { children: string }) {
   return (
     <Card variant="flat" radius="md" padding="md" className="border-dashed">
-      <Text className="text-xs text-stone-500 leading-snug">{children}</Text>
+      <Text className="text-xs text-fg-muted leading-snug">{children}</Text>
     </Card>
   );
 }
@@ -150,7 +150,7 @@ export function NotificationsSection() {
       <Card variant="flat" radius="md" padding="md">
         <View className="flex-row items-center justify-between gap-3">
           <View className="flex-1 min-w-0">
-            <Text className="text-sm font-semibold text-stone-900">
+            <Text className="text-sm font-semibold text-fg">
               Push-сповіщення
             </Text>
             <Text
@@ -181,7 +181,7 @@ export function NotificationsSection() {
           ) : null}
         </View>
         {permStatus === "denied" ? (
-          <Text className="text-xs text-stone-500 mt-2 leading-snug">
+          <Text className="text-xs text-fg-muted mt-2 leading-snug">
             Сповіщення заблоковано у системних налаштуваннях. Увімкни їх там,
             щоб отримувати нагадування.
           </Text>

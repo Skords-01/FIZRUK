@@ -6,7 +6,21 @@ import {
   upsertMemoryFact,
   writeMemoryEntries,
 } from "../../profile/memoryBank";
-import { resolveExpenseCategoryMeta } from "../../../modules/finyk/utils";
+import {
+  calcCategorySpent,
+  getTxStatAmount,
+} from "../../../modules/finyk/utils";
+import {
+  mergeExpenseCategoryDefinitions,
+  INTERNAL_TRANSFER_ID,
+} from "../../../modules/finyk/constants";
+import {
+  aggregateFinyk,
+  aggregateFizruk,
+  aggregateNutrition,
+  aggregateRoutine,
+  getWeekKey,
+} from "../../insights/useWeeklyDigest";
 import type {
   SetGoalAction,
   SpendingTrendAction,
@@ -19,11 +33,75 @@ import type {
   RememberAction,
   ForgetAction,
   MyProfileAction,
+  CompareWeeksAction,
+  CompareWeeksModule,
   HabitState,
   Workout,
   NutritionDay,
   ChatAction,
 } from "./types";
+
+/**
+ * Convert an ISO-8601 week label `YYYY-Www` (e.g. `2026-W17`) to the
+ * `YYYY-MM-DD` of that week's Monday — the format `aggregate*` functions
+ * expect. Also accepts a bare `YYYY-MM-DD` for resilience: when the model
+ * "guesses" today's day key instead of the week key, we still do the right
+ * thing by snapping to that week's Monday.
+ *
+ * Returns `null` if the input cannot be parsed.
+ */
+function weekLabelToMondayKey(input: string): string | null {
+  const wwwMatch = /^(\d{4})-W(\d{1,2})$/.exec(input.trim());
+  if (wwwMatch) {
+    const year = Number(wwwMatch[1]);
+    const week = Number(wwwMatch[2]);
+    if (!Number.isFinite(year) || !Number.isFinite(week)) return null;
+    if (week < 1 || week > 53) return null;
+    const jan4 = new Date(year, 0, 4);
+    const jan4Day = jan4.getDay() || 7;
+    const week1Monday = new Date(jan4);
+    week1Monday.setDate(jan4.getDate() - (jan4Day - 1));
+    const target = new Date(week1Monday);
+    target.setDate(week1Monday.getDate() + (week - 1) * 7);
+    return [
+      target.getFullYear(),
+      String(target.getMonth() + 1).padStart(2, "0"),
+      String(target.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+  const dayMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input.trim());
+  if (dayMatch) {
+    const d = new Date(`${input.trim()}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return null;
+    return getWeekKey(d);
+  }
+  return null;
+}
+
+function previousWeekKey(weekKey: string): string {
+  const monday = new Date(`${weekKey}T00:00:00`);
+  monday.setDate(monday.getDate() - 7);
+  return [
+    monday.getFullYear(),
+    String(monday.getMonth() + 1).padStart(2, "0"),
+    String(monday.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function formatWeekRangeLabel(weekKey: string): string {
+  const monday = new Date(`${weekKey}T00:00:00`);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("uk-UA", { day: "numeric", month: "short" });
+  return `${fmt(monday)} – ${fmt(sunday)}`;
+}
+
+function diffLine(label: string, a: number, b: number, unit: string): string {
+  const delta = a - b;
+  const sign = delta > 0 ? "+" : "";
+  return `${label}: ${a}${unit} vs ${b}${unit} (${sign}${delta}${unit})`;
+}
 
 export function handleCrossAction(action: ChatAction): string | undefined {
   switch (action.name) {
@@ -161,14 +239,21 @@ export function handleCrossAction(action: ChatAction): string | undefined {
         parts.push(`Калорії: ~${avg} ккал/день (${weekKcal.length} днів)`);
       }
       const txCache = ls<{
-        txs?: Array<{ amount: number; time?: number }>;
+        txs?: Array<{
+          id: string;
+          amount: number;
+          time?: number;
+          description?: string;
+          mcc?: number;
+        }>;
       } | null>("finyk_tx_cache", null);
+      const txSplits = ls<Record<string, unknown>>("finyk_tx_splits", {});
       if (txCache?.txs) {
         const weekTs = weekAgo.getTime() / 1000;
         const weekTxs = txCache.txs.filter((t) => (t.time || 0) > weekTs);
         const spent = weekTxs
           .filter((t) => t.amount < 0)
-          .reduce((s, t) => s + Math.abs(t.amount / 100), 0);
+          .reduce((s, t) => s + getTxStatAmount(t, txSplits), 0);
         parts.push(`Витрати: ${Math.round(spent)} грн`);
       }
       return parts.join("\n");
@@ -240,13 +325,18 @@ export function handleCrossAction(action: ChatAction): string | undefined {
       const currentStart = now - days * 86400000;
       const prevStart = currentStart - days * 86400000;
       const txCache = ls<{
-        txs?: Array<{ amount: number; time?: number; description?: string }>;
+        txs?: Array<{
+          id: string;
+          amount: number;
+          time?: number;
+          description?: string;
+          mcc?: number;
+        }>;
       } | null>("finyk_tx_cache", null);
       const allTxs = txCache?.txs || [];
       const hiddenTxIds = ls<string[]>("finyk_hidden_txs", []);
-      const txs = allTxs.filter(
-        (t) => !hiddenTxIds.includes((t as { id?: string }).id || ""),
-      );
+      const trendSplits = ls<Record<string, unknown>>("finyk_tx_splits", {});
+      const txs = allTxs.filter((t) => !hiddenTxIds.includes(t.id || ""));
       const currentPeriod = txs.filter((t) => {
         const ts = (t.time || 0) * 1000;
         return ts >= currentStart && ts <= now;
@@ -258,7 +348,7 @@ export function handleCrossAction(action: ChatAction): string | undefined {
       const sumExpenses = (arr: typeof txs) =>
         arr
           .filter((t) => t.amount < 0)
-          .reduce((s, t) => s + Math.abs(t.amount / 100), 0);
+          .reduce((s, t) => s + getTxStatAmount(t, trendSplits), 0);
       const sumIncome = (arr: typeof txs) =>
         arr.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount / 100, 0);
       const curExp = sumExpenses(currentPeriod);
@@ -283,42 +373,50 @@ export function handleCrossAction(action: ChatAction): string | undefined {
       const cutoff = Date.now() - days * 86400000;
       const txCache = ls<{
         txs?: Array<{
-          id?: string;
+          id: string;
           amount: number;
           time?: number;
-          categoryId?: string;
+          description?: string;
+          mcc?: number;
         }>;
       } | null>("finyk_tx_cache", null);
       const hiddenTxIds = ls<string[]>("finyk_hidden_txs", []);
       const customC = ls<unknown[]>("finyk_custom_cats_v1", []);
       const catMap = ls<Record<string, string>>("finyk_tx_cats", {});
+      const breakdownSplits = ls<Record<string, unknown>>(
+        "finyk_tx_splits",
+        {},
+      );
       const expenses = (txCache?.txs || []).filter((t) => {
         if (hiddenTxIds.includes(t.id || "")) return false;
         const ts = (t.time || 0) * 1000;
         return t.amount < 0 && ts >= cutoff;
       });
-      const byCategory: Record<string, number> = {};
-      for (const tx of expenses) {
-        const catId = catMap[tx.id || ""] || tx.categoryId || "other";
-        byCategory[catId] =
-          (byCategory[catId] || 0) + Math.abs(tx.amount / 100);
+      interface CatDef {
+        id: string;
+        label: string;
       }
-      const total = Object.values(byCategory).reduce((a, b) => a + b, 0);
-      const sorted = Object.entries(byCategory)
-        .map(([id, amount]) => {
-          const meta = resolveExpenseCategoryMeta(id, customC);
-          return {
-            label: meta?.label || id,
-            amount,
-            pct: total > 0 ? Math.round((amount / total) * 100) : 0,
-          };
-        })
+      const sorted = (mergeExpenseCategoryDefinitions(customC) as CatDef[])
+        .filter((c) => c.id !== "income" && c.id !== INTERNAL_TRANSFER_ID)
+        .map((c) => ({
+          label: c.label,
+          amount: calcCategorySpent(
+            expenses,
+            c.id,
+            catMap,
+            breakdownSplits,
+            customC,
+          ),
+        }))
+        .filter((c) => c.amount > 0)
         .sort((a, b) => b.amount - a.amount);
+      const total = sorted.reduce((s, c) => s + c.amount, 0);
       const parts: string[] = [
         `Витрати по категоріях за ${days} днів (${Math.round(total)} грн):`,
       ];
       for (const c of sorted.slice(0, 15)) {
-        parts.push(`  ${c.label}: ${Math.round(c.amount)} грн (${c.pct}%)`);
+        const pct = total > 0 ? Math.round((c.amount / total) * 100) : 0;
+        parts.push(`  ${c.label}: ${Math.round(c.amount)} грн (${pct}%)`);
       }
       return parts.join("\n");
     }
@@ -330,13 +428,15 @@ export function handleCrossAction(action: ChatAction): string | undefined {
       const cutoff = Date.now() - days * 86400000;
       const txCache = ls<{
         txs?: Array<{
-          id?: string;
+          id: string;
           amount: number;
           time?: number;
           description?: string;
+          mcc?: number;
         }>;
       } | null>("finyk_tx_cache", null);
       const hiddenTxIds = ls<string[]>("finyk_hidden_txs", []);
+      const anomalySplits = ls<Record<string, unknown>>("finyk_tx_splits", {});
       const expenses = (txCache?.txs || []).filter((t) => {
         if (hiddenTxIds.includes(t.id || "")) return false;
         const ts = (t.time || 0) * 1000;
@@ -344,11 +444,19 @@ export function handleCrossAction(action: ChatAction): string | undefined {
       });
       if (expenses.length < 3)
         return "Недостатньо транзакцій для аналізу аномалій.";
-      const amounts = expenses.map((t) => Math.abs(t.amount / 100));
+      const amounts = expenses
+        .map((t) => getTxStatAmount(t, anomalySplits))
+        .filter((a) => a > 0);
+      if (amounts.length < 3)
+        return "Недостатньо транзакцій для аналізу аномалій.";
       const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
       const anomalies = expenses
-        .filter((t) => Math.abs(t.amount / 100) > avg * threshold)
-        .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+        .filter((t) => getTxStatAmount(t, anomalySplits) > avg * threshold)
+        .sort(
+          (a, b) =>
+            getTxStatAmount(b, anomalySplits) -
+            getTxStatAmount(a, anomalySplits),
+        )
         .slice(0, 5);
       if (anomalies.length === 0) {
         return `За ${days} днів аномалій не виявлено (середня витрата: ${Math.round(avg)} грн, поріг: ${Math.round(avg * threshold)} грн).`;
@@ -361,7 +469,7 @@ export function handleCrossAction(action: ChatAction): string | undefined {
           ? new Date(tx.time * 1000).toLocaleDateString("uk-UA")
           : "?";
         parts.push(
-          `  ${d}: ${Math.round(Math.abs(tx.amount / 100))} грн — ${tx.description || "(без опису)"}`,
+          `  ${d}: ${Math.round(getTxStatAmount(tx, anomalySplits))} грн — ${tx.description || "(без опису)"}`,
         );
       }
       return parts.join("\n");
@@ -527,6 +635,112 @@ export function handleCrossAction(action: ChatAction): string | undefined {
         default:
           return `Невідомий модуль: ${mod}. Доступні: finyk, fizruk, routine, nutrition.`;
       }
+    }
+    case "compare_weeks": {
+      const { week_a, week_b, modules } = (action as CompareWeeksAction).input;
+      const allModules: CompareWeeksModule[] = [
+        "finyk",
+        "fizruk",
+        "routine",
+        "nutrition",
+      ];
+      const selected: CompareWeeksModule[] =
+        Array.isArray(modules) && modules.length > 0
+          ? (modules.filter((m) =>
+              allModules.includes(m as CompareWeeksModule),
+            ) as CompareWeeksModule[])
+          : allModules;
+      if (selected.length === 0) {
+        return "Не вказано жодного валідного модуля. Доступні: finyk, fizruk, routine, nutrition.";
+      }
+
+      const aKey = week_a
+        ? weekLabelToMondayKey(week_a)
+        : getWeekKey(new Date());
+      if (!aKey) {
+        return `Некоректний week_a: "${week_a}". Очікую YYYY-Www (наприклад 2026-W17).`;
+      }
+      const bKey = week_b
+        ? weekLabelToMondayKey(week_b)
+        : previousWeekKey(aKey);
+      if (!bKey) {
+        return `Некоректний week_b: "${week_b}". Очікую YYYY-Www (наприклад 2026-W16).`;
+      }
+
+      const aLabel = formatWeekRangeLabel(aKey);
+      const bLabel = formatWeekRangeLabel(bKey);
+      const lines: string[] = [`Порівняння тижнів: ${aLabel} vs ${bLabel}`];
+
+      if (selected.includes("finyk")) {
+        const fa = aggregateFinyk(aKey);
+        const fb = aggregateFinyk(bKey);
+        const aSpent = Math.round(fa.totalSpent);
+        const bSpent = Math.round(fb.totalSpent);
+        lines.push("");
+        lines.push("Фінік:");
+        lines.push(`  ${diffLine("Витрати", aSpent, bSpent, " грн")}`);
+        lines.push(`  ${diffLine("Транзакцій", fa.txCount, fb.txCount, "")}`);
+        const topA = fa.topCategories[0];
+        const topB = fb.topCategories[0];
+        if (topA || topB) {
+          lines.push(
+            `  Топ категорія: ${topA ? `${topA.name} (${Math.round(topA.amount)} грн)` : "—"} vs ${topB ? `${topB.name} (${Math.round(topB.amount)} грн)` : "—"}`,
+          );
+        }
+      }
+
+      if (selected.includes("fizruk")) {
+        const za = aggregateFizruk(aKey);
+        const zb = aggregateFizruk(bKey);
+        lines.push("");
+        lines.push("Фізрук:");
+        if (!za && !zb) {
+          lines.push("  Немає тренувань у обидва тижні.");
+        } else {
+          const aCount = za?.workoutsCount ?? 0;
+          const bCount = zb?.workoutsCount ?? 0;
+          const aVol = za?.totalVolume ?? 0;
+          const bVol = zb?.totalVolume ?? 0;
+          lines.push(`  ${diffLine("Тренувань", aCount, bCount, "")}`);
+          lines.push(`  ${diffLine("Об'єм", aVol, bVol, " кг·повт")}`);
+        }
+      }
+
+      if (selected.includes("routine")) {
+        const ra = aggregateRoutine(aKey);
+        const rb = aggregateRoutine(bKey);
+        lines.push("");
+        lines.push("Рутина:");
+        if (!ra && !rb) {
+          lines.push("  Немає активних звичок.");
+        } else {
+          const aRate = ra?.overallRate ?? 0;
+          const bRate = rb?.overallRate ?? 0;
+          lines.push(`  ${diffLine("Виконання", aRate, bRate, "%")}`);
+          if (ra && rb) {
+            lines.push(`  Звичок: ${ra.habitCount} vs ${rb.habitCount}`);
+          }
+        }
+      }
+
+      if (selected.includes("nutrition")) {
+        const na = aggregateNutrition(aKey);
+        const nb = aggregateNutrition(bKey);
+        lines.push("");
+        lines.push("Харчування:");
+        if (!na && !nb) {
+          lines.push("  Немає логів їжі у обидва тижні.");
+        } else {
+          const aKcal = na?.avgKcal ?? 0;
+          const bKcal = nb?.avgKcal ?? 0;
+          const aDays = na?.daysLogged ?? 0;
+          const bDays = nb?.daysLogged ?? 0;
+          lines.push(`  ${diffLine("Калорії/день", aKcal, bKcal, " ккал")}`);
+          lines.push(`  Днів залоговано: ${aDays} vs ${bDays}`);
+        }
+      }
+
+      return lines.join("\n");
     }
     default:
       return undefined;

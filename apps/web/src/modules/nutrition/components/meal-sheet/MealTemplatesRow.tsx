@@ -1,6 +1,19 @@
+import type { Dispatch, SetStateAction } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
+import type { MealTemplate } from "@sergeant/nutrition-domain";
+import type { MealFormState } from "./mealFormUtils";
 
-export function MealTemplatesRow({ mealTemplates, setForm, onSelected }) {
+interface MealTemplatesRowProps {
+  mealTemplates: MealTemplate[];
+  setForm: Dispatch<SetStateAction<MealFormState>>;
+  onSelected?: () => void;
+}
+
+export function MealTemplatesRow({
+  mealTemplates,
+  setForm,
+  onSelected,
+}: MealTemplatesRowProps) {
   if (!Array.isArray(mealTemplates) || mealTemplates.length === 0) return null;
   return (
     <div className="mb-4">

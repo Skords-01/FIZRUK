@@ -1,0 +1,130 @@
+{
+  "name": "04 — Daily Backup Verification (Cron → Railway → Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 3 * * *" }]
+        }
+      },
+      "id": "cron-3am",
+      "name": "Cron 03:00 UTC",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://backboard.railway.com/graphql/v2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RAILWAY_TOKEN }}"
+            },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"query\": \"{ deployments(first: 1, input: { projectId: \\\"YOUR_PROJECT_ID\\\" }) { edges { node { id status createdAt } } } }\" }",
+        "options": {}
+      },
+      "id": "railway-api",
+      "name": "Railway → latest backup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT count(*) AS user_count FROM users; SELECT count(*) AS tx_count FROM module_data WHERE module = 'finyk';",
+        "options": {}
+      },
+      "id": "sanity-check",
+      "name": "Sanity SQL check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [680, 300],
+      "credentials": {
+        "postgres": {
+          "id": "CONFIGURE_ME",
+          "name": "Sergeant Postgres (staging)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-users",
+              "leftValue": "={{ $json.user_count }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "is-healthy",
+      "name": "Data OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ALERT_CHAT_ID }}",
+        "text": "=✅ *Backup OK* ({{ new Date().toISOString().slice(0,10) }})\n\nUsers: {{ $json.user_count }}\nTransactions: {{ $json.tx_count }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "telegram-ok",
+      "name": "Telegram → backup OK",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 200],
+      "credentials": {
+        "telegramApi": { "id": "CONFIGURE_ME", "name": "Sergeant Ops Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ALERT_CHAT_ID }}",
+        "text": "=🚨 *BACKUP FAILED* ({{ new Date().toISOString().slice(0,10) }})\n\nSanity check returned 0 users. Investigate immediately!",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "telegram-fail",
+      "name": "Telegram → CRITICAL",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1120, 400],
+      "credentials": {
+        "telegramApi": { "id": "CONFIGURE_ME", "name": "Sergeant Ops Bot" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron 03:00 UTC": {
+      "main": [
+        [{ "node": "Railway → latest backup", "type": "main", "index": 0 }]
+      ]
+    },
+    "Railway → latest backup": {
+      "main": [[{ "node": "Sanity SQL check", "type": "main", "index": 0 }]]
+    },
+    "Sanity SQL check": {
+      "main": [[{ "node": "Data OK?", "type": "main", "index": 0 }]]
+    },
+    "Data OK?": {
+      "main": [
+        [{ "node": "Telegram → backup OK", "type": "main", "index": 0 }],
+        [{ "node": "Telegram → CRITICAL", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Europe/Kyiv" },
+  "tags": [{ "name": "backup" }, { "name": "ops" }]
+}

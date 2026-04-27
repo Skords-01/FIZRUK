@@ -1,0 +1,13 @@
+# tsconfig strict guard — require review for files that affect TypeScript
+# strictness inheritance. See docs/backend-tech-debt.md.
+#
+# GitHub requires at least one approval from a CODEOWNER before merging
+# any PR that touches these paths (when the branch-protection rule
+# "Require review from Code Owners" is enabled).
+
+apps/web/tsconfig.json             @Skords-01
+apps/server/tsconfig.json          @Skords-01
+packages/config/tsconfig.base.json @Skords-01
+packages/config/tsconfig.node.json @Skords-01
+packages/config/tsconfig.react.json @Skords-01
+scripts/check-tsconfig-strict.mjs  @Skords-01

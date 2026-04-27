@@ -24,13 +24,15 @@
  *   dropped — RN has no hover state and press feedback is applied via
  *   `Pressable`'s `pressed` callback. Callers that need press feedback
  *   should wrap the Card in their own `Pressable` (or swap to `Button`).
- * - Dark-mode `dark:` modifiers on branded variants are dropped for
- *   now — mobile's semantic dark-mode tokens are not wired up yet
- *   (same caveat as Button.tsx). Branded surfaces render the light
- *   variant only until mobile CSS variables land.
- * - `CardFooter` uses `borderTopWidth: 1` via a NativeWind class; the
- *   web uses `border-t border-line`. Same visual outcome, mobile-safe
- *   class set.
+ * - Dark-mode `dark:` modifiers on branded module variants are still
+ *   dropped — module-branded surfaces render the light variant only
+ *   (same caveat as Button.tsx). Core variants and sub-components
+ *   (`CardTitle`, `CardDescription`, `CardFooter`) now resolve via
+ *   the shared semantic `fg` / `fg-muted` / `line` CSS-variable
+ *   tokens from `@sergeant/design-tokens`, so they re-tint with the
+ *   `:root` ↔ `.dark` palette in `apps/mobile/global.css`.
+ * - `CardFooter` mirrors the web `border-t border-line` divider via
+ *   the same semantic token (no more hardcoded `cream-300`).
  */
 
 import { forwardRef, type ReactNode } from "react";
@@ -71,18 +73,18 @@ const radii: Record<CardRadius, string> = {
 // Module-branded variants bake `rounded-3xl` into their class string for
 // hero surfaces, matching the web component.
 const variantContainer: Record<CardVariant, string> = {
-  default: "bg-panel border border-line",
-  interactive: "bg-panel border border-line",
+  default: "bg-panel border border-line shadow-sm",
+  interactive: "bg-panel border border-line shadow-sm",
   flat: "bg-panel border border-line",
-  elevated: "bg-panel border border-line",
+  elevated: "bg-panel border border-line shadow-md",
   ghost: "bg-transparent border border-transparent",
 
   // Module hero cards — branded surface. Mobile strips the `dark:` modifiers
   // (no dark-mode plumbing yet) but keeps the branded border + solid token.
-  finyk: "rounded-3xl border border-brand-200/50 bg-finyk",
-  fizruk: "rounded-3xl border border-teal-200/50 bg-fizruk",
-  routine: "rounded-3xl border border-coral-200/50 bg-routine",
-  nutrition: "rounded-3xl border border-lime-200/50 bg-nutrition",
+  finyk: "rounded-3xl border border-brand-200/50 bg-finyk-soft",
+  fizruk: "rounded-3xl border border-teal-200/50 bg-fizruk-soft",
+  routine: "rounded-3xl border border-coral-200/50 bg-routine-surface",
+  nutrition: "rounded-3xl border border-lime-200/50 bg-nutrition-soft",
 
   // Soft module cards — less prominent tinted surface.
   "finyk-soft": "rounded-2xl border border-brand-100 bg-brand-50/50",
@@ -176,15 +178,12 @@ export interface CardTitleProps extends Omit<TextProps, "style"> {
 
 /**
  * CardTitle — Title text for cards. Mirrors the web `text-lg font-semibold`
- * treatment; colour falls back to `stone-900` until mobile `text-text`
- * token lands (see TODO above).
+ * treatment; colour resolves through the semantic `fg` token so it
+ * automatically follows the active light/dark palette.
  */
 export function CardTitle({ className, children, ...props }: CardTitleProps) {
   return (
-    <Text
-      className={cx("text-lg font-semibold text-stone-900", className)}
-      {...props}
-    >
+    <Text className={cx("text-lg font-semibold text-fg", className)} {...props}>
       {children}
     </Text>
   );
@@ -204,7 +203,7 @@ export function CardDescription({
   ...props
 }: CardDescriptionProps) {
   return (
-    <Text className={cx("text-sm text-stone-500 mt-1", className)} {...props}>
+    <Text className={cx("text-sm text-fg-muted mt-1", className)} {...props}>
       {children}
     </Text>
   );
@@ -236,15 +235,14 @@ export interface CardFooterProps extends Omit<ViewProps, "style"> {
 }
 
 /**
- * CardFooter — Footer row for actions. Web uses `border-t border-line`;
- * mobile uses a concrete `cream-300` divider until the semantic token
- * is wired up (see TODO in `variantContainer`).
+ * CardFooter — Footer row for actions. Mirrors the web
+ * `border-t border-line` divider through the shared semantic token.
  */
 export function CardFooter({ className, children, ...props }: CardFooterProps) {
   return (
     <View
       className={cx(
-        "flex-row items-center gap-3 mt-4 pt-4 border-t border-cream-300",
+        "flex-row items-center gap-3 mt-4 pt-4 border-t border-line",
         className,
       )}
       {...props}

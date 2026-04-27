@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { ModuleAccent } from "@sergeant/design-tokens";
 import { cn } from "@shared/lib/cn";
 
 /**
@@ -29,8 +30,36 @@ export interface ModuleHeaderProps {
   right?: ReactNode;
   /** Override the default title/eyebrow/subtitle body entirely. */
   titleSlot?: ReactNode;
+  /** Optional: when provided the header gets a module-colored gradient tint and subtitle uses the module color. */
+  module?: ModuleAccent;
   className?: string;
 }
+
+const MODULE_HEADER_TOKENS: Record<
+  ModuleAccent,
+  { gradient: string; border: string; subtitle: string }
+> = {
+  finyk: {
+    gradient: "from-finyk/[.06]",
+    border: "border-finyk/[.14]",
+    subtitle: "text-finyk-strong dark:text-finyk/70",
+  },
+  fizruk: {
+    gradient: "from-fizruk/[.06]",
+    border: "border-fizruk/[.14]",
+    subtitle: "text-fizruk-strong dark:text-fizruk/70",
+  },
+  routine: {
+    gradient: "from-routine/[.06]",
+    border: "border-routine/[.14]",
+    subtitle: "text-routine-strong dark:text-routine/70",
+  },
+  nutrition: {
+    gradient: "from-nutrition/[.06]",
+    border: "border-nutrition/[.14]",
+    subtitle: "text-nutrition-strong dark:text-nutrition/70",
+  },
+};
 
 export function ModuleHeader({
   title,
@@ -39,12 +68,23 @@ export function ModuleHeader({
   left,
   right,
   titleSlot,
+  module,
   className,
 }: ModuleHeaderProps) {
+  const mt = module ? MODULE_HEADER_TOKENS[module] : null;
+
   return (
     <div
       className={cn(
-        "shrink-0 bg-panel/95 backdrop-blur-md border-b border-line z-40 relative safe-area-pt",
+        "shrink-0 backdrop-blur-md z-40 relative safe-area-pt",
+        mt
+          ? cn(
+              "bg-gradient-to-b to-panel/95",
+              mt.gradient,
+              mt.border,
+              "border-b",
+            )
+          : "bg-panel/95 border-b border-line",
         className,
       )}
     >
@@ -65,7 +105,12 @@ export function ModuleHeader({
                 </span>
               ) : null}
               {subtitle ? (
-                <span className="text-2xs text-subtle font-medium truncate">
+                <span
+                  className={cn(
+                    "text-2xs font-medium truncate",
+                    mt ? mt.subtitle : "text-subtle",
+                  )}
+                >
                   {subtitle}
                 </span>
               ) : null}

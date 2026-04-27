@@ -81,6 +81,12 @@ const preset = {
           light: brandColors.emerald[400],
           dark: brandColors.emerald[600],
           subtle: brandColors.emerald[50],
+          // `strong` is the WCAG-AA companion to `DEFAULT` — emerald-700
+          // clears 4.5:1 against the cream `bg-bg` and against `text-white`
+          // when used as a solid fill. Use `bg-brand-strong text-white` on
+          // primary CTAs and `text-brand-strong` for body-sized brand text.
+          // See docs/design/brand-palette-wcag-aa-proposal.md.
+          strong: brandColors.emerald[700],
           ...brandColors.emerald,
         },
         teal: brandColors.teal,
@@ -92,7 +98,9 @@ const preset = {
         // STATUS COLORS — Consistent semantic meanings
         // Each status has a solid accent (for fills / icons / rings) plus a
         // `-soft` background token that resolves through CSS variables so
-        // dark mode works without bespoke dark: overrides.
+        // dark mode works without bespoke dark: overrides, and a `-strong`
+        // companion (text-on-cream / fill-with-white) that clears WCAG AA
+        // at body sizes. See docs/design/brand-palette-wcag-aa-proposal.md.
         // ═══════════════════════════════════════════════════════════════════
         success: statusColors.success,
         danger: statusColors.danger,
@@ -102,6 +110,12 @@ const preset = {
         "warning-soft": "rgb(var(--c-warning-soft) / <alpha-value>)",
         "danger-soft": "rgb(var(--c-danger-soft) / <alpha-value>)",
         "info-soft": "rgb(var(--c-info-soft) / <alpha-value>)",
+        // WCAG-AA companions: `text-{c}-strong` on cream / soft surfaces,
+        // `bg-{c}-strong text-white` on solid fills (Buttons, Badges, Tabs).
+        "success-strong": brandColors.emerald[700], // #047857 — 5.23:1 on cream / 5.48:1 on white
+        "warning-strong": "#b45309", // amber-700 — 4.83:1 on cream / 5.02:1 on white
+        "danger-strong": "#b91c1c", // red-700   — 6.17:1 on cream / 6.47:1 on white
+        "info-strong": "#0369a1", // sky-700   — 5.66:1 on cream / 5.93:1 on white
 
         // ═══════════════════════════════════════════════════════════════════
         // CHART PALETTE — For pie charts, graphs, data visualization
@@ -141,6 +155,9 @@ const preset = {
           DEFAULT: moduleColors.routine.primary,
           secondary: moduleColors.routine.secondary,
           surface: moduleColors.routine.surface,
+          // Tint крок між surface (coral-50 #fff5f3) та surfaceAlt (coral-100 #ffe8e3) —
+          // використовується для виділення активного дня / виконаного слота в календарі.
+          surface2: "#ffeeeb",
           surfaceAlt: moduleColors.routine.surfaceAlt,
           hover: brandColors.coral[600],
           strong: brandColors.coral[700],
@@ -163,6 +180,54 @@ const preset = {
           ring: brandColors.lime[200],
           soft: brandColors.lime[50],
         },
+
+        // ═══════════════════════════════════════════════════════════════════
+        // MODULE DARK-MODE TOKENS — semantic surfaces & borders for dark
+        // theme. Each is a standalone CSS variable (see `.dark` block in
+        // `apps/web/src/index.css`) decoupled from the live module accent
+        // (`finyk`, `routine`, …) so that opacity tints applied in dark
+        // mode don't silently drift if the primary accent is retuned.
+        //
+        // Use them with the `dark:` variant + an opacity step on the
+        // registered scale (8 / 10 / 15 / 20 / 25 / 30 / 40 / …):
+        //
+        //   dark:bg-routine-surface-dark/10
+        //   dark:hover:bg-routine-surface-dark/25
+        //   dark:border-routine-border-dark/30
+        //   dark:ring-routine-border-dark/40
+        //
+        // AI-CONTEXT: Replaces the older `dark:bg-routine/10` /
+        // `dark:border-finyk/30` pattern. The named token makes the
+        // design intent explicit and survives accent retuning.
+        // ═══════════════════════════════════════════════════════════════════
+        "finyk-surface-dark":
+          "rgb(var(--c-finyk-surface-dark) / <alpha-value>)",
+        "finyk-border-dark": "rgb(var(--c-finyk-border-dark) / <alpha-value>)",
+        "fizruk-surface-dark":
+          "rgb(var(--c-fizruk-surface-dark) / <alpha-value>)",
+        "fizruk-border-dark":
+          "rgb(var(--c-fizruk-border-dark) / <alpha-value>)",
+        "routine-surface-dark":
+          "rgb(var(--c-routine-surface-dark) / <alpha-value>)",
+        "routine-border-dark":
+          "rgb(var(--c-routine-border-dark) / <alpha-value>)",
+        "nutrition-surface-dark":
+          "rgb(var(--c-nutrition-surface-dark) / <alpha-value>)",
+        "nutrition-border-dark":
+          "rgb(var(--c-nutrition-border-dark) / <alpha-value>)",
+      },
+
+      // ═══════════════════════════════════════════════════════════════════
+      // OPACITY — module/status tint scale
+      // ═══════════════════════════════════════════════════════════════════
+      // AI-CONTEXT: Tailwind's default opacity scale steps in 5-pt
+      // increments (5, 10, 15…), so `<color>/8` is otherwise undefined.
+      // The Sergeant palette uses an 8 % wash as the canonical "barely
+      // there" tint over panel surfaces (e.g. dark-mode module bento
+      // tiles, primary/danger row highlights). Keep this entry — many
+      // call sites depend on it.
+      opacity: {
+        8: "0.08",
       },
 
       // ═══════════════════════════════════════════════════════════════════
@@ -187,11 +252,24 @@ const preset = {
         "glow-teal": "0 0 0 3px rgba(20, 184, 166, 0.15)",
         "glow-coral": "0 0 0 3px rgba(249, 112, 102, 0.15)",
         "glow-lime": "0 0 0 3px rgba(146, 204, 23, 0.15)",
+        // Destructive hover ring (Button variant="destructive").
+        "danger-ring": "var(--shadow-danger-ring)",
         // Elevated cards (hover state)
         cardHover:
           "0 2px 4px rgba(13, 23, 38, 0.06), 0 12px 32px rgba(13, 23, 38, 0.12)",
         // Inner shadows for depth
         inner: "inset 0 2px 4px rgba(0, 0, 0, 0.05)",
+      },
+
+      // ═══════════════════════════════════════════════════════════════════
+      // DROP SHADOWS — SVG/icon glows for module bottom-nav active state.
+      // Backed by CSS variables so a token change cascades everywhere.
+      // ═══════════════════════════════════════════════════════════════════
+      dropShadow: {
+        "module-nav-finyk": "var(--shadow-finyk-nav)",
+        "module-nav-fizruk": "var(--shadow-fizruk-nav)",
+        "module-nav-routine": "var(--shadow-routine-nav)",
+        "module-nav-nutrition": "var(--shadow-nutrition-nav)",
       },
 
       // ═══════════════════════════════════════════════════════════════════
@@ -221,6 +299,14 @@ const preset = {
         "card-teal": "linear-gradient(135deg, #f0fdfa 0%, #ffffff 100%)",
         "card-coral": "linear-gradient(135deg, #fff5f3 0%, #ffffff 100%)",
         "card-lime": "linear-gradient(135deg, #f8fee7 0%, #ffffff 100%)",
+
+        // Dark-mode overlays for module hero Card variants. Layered on top
+        // of `bg-panel` so branded cards keep a faint module tint in dark
+        // mode instead of reading as a neutral warm surface.
+        "card-finyk-dark": "var(--gradient-card-finyk-dark)",
+        "card-fizruk-dark": "var(--gradient-card-fizruk-dark)",
+        "card-routine-dark": "var(--gradient-card-routine-dark)",
+        "card-nutrition-dark": "var(--gradient-card-nutrition-dark)",
 
         hero: "linear-gradient(150deg, #fdf9f3 0%, #fefdfb 100%)",
         "hero-g": "linear-gradient(150deg, #f0fdfa 0%, #ffffff 100%)",

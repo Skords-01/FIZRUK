@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler, rateLimitExpress, setModule } from "../http/index.js";
-import foodSearchHandler from "../modules/food-search.js";
+import foodSearchHandler from "../modules/nutrition/food-search.js";
 
 export function createFoodSearchRouter(): Router {
   const r = Router();

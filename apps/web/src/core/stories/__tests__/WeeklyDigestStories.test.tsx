@@ -5,7 +5,7 @@ import { cleanup, render } from "@testing-library/react";
 // Aggregate helpers read from localStorage inside `useWeeklyDigest`. We
 // stub them at the module boundary so the integration test doesn't have
 // to seed the store.
-vi.mock("../../useWeeklyDigest", () => ({
+vi.mock("../../insights/useWeeklyDigest", () => ({
   aggregateFinyk: () => null,
   aggregateFizruk: () => null,
   aggregateNutrition: () => null,

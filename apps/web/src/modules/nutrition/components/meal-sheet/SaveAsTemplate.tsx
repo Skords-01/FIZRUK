@@ -1,4 +1,18 @@
-export function SaveAsTemplate({ form, setForm, setPrefs }) {
+import type { Dispatch, SetStateAction } from "react";
+import type { NutritionPrefs } from "@sergeant/nutrition-domain";
+import type { MealFormState } from "./mealFormUtils";
+
+interface SaveAsTemplateProps {
+  form: MealFormState;
+  setForm: Dispatch<SetStateAction<MealFormState>>;
+  setPrefs?: Dispatch<SetStateAction<NutritionPrefs>>;
+}
+
+export function SaveAsTemplate({
+  form,
+  setForm,
+  setPrefs,
+}: SaveAsTemplateProps) {
   if (typeof setPrefs !== "function") return null;
   return (
     <div className="mt-3">

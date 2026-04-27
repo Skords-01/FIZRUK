@@ -16,8 +16,8 @@ import { ToastContainer } from "@shared/components/ui/Toast";
 import { HUB_OPEN_MODULE_EVENT } from "@shared/lib/hubNav";
 import { ApiClientProvider } from "@sergeant/api-client/react";
 import { apiClient } from "@shared/api";
-import { AuthProvider, useAuth } from "./AuthContext";
-import { useCloudSync } from "./useCloudSync";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { useCloudSync } from "./cloudSync/useCloudSync";
 import { PageLoader } from "./app/PageLoader";
 import { OfflineBanner } from "./app/OfflineBanner";
 import { MigrationPrompt } from "./app/MigrationPrompt";
@@ -32,20 +32,21 @@ import { HubFloatingActions } from "./app/HubFloatingActions";
 import { HubModals } from "./app/HubModals";
 import { ActiveWorkoutBanner } from "./app/ActiveWorkoutBanner";
 import { WelcomeScreen } from "./app/WelcomeScreen";
-import { shouldShowOnboarding } from "./OnboardingWizard";
+import { shouldShowOnboarding } from "./onboarding/OnboardingWizard";
 import { isFirstRealEntryDone } from "./onboarding/vibePicks";
 import { hasAnyRealEntry } from "./onboarding/firstRealEntry";
 import { useHubNavigation } from "./hooks/useHubNavigation";
 import { useHubUIState } from "./hooks/useHubUIState";
 import { usePwaActions, type PwaAction } from "./hooks/usePwaActions";
 import { ShellDeepLinkBridge } from "./app/ShellDeepLinkBridge";
+import { PageviewTracker } from "./observability/PageviewTracker";
 import { HintsOrchestrator } from "./hints/HintsOrchestrator";
 
 const AuthPage = lazy(() =>
-  import("./AuthPage").then((m) => ({ default: m.AuthPage })),
+  import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),
 );
 const ResetPasswordPage = lazy(() =>
-  import("./ResetPasswordPage").then((m) => ({
+  import("./auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
   })),
 );
@@ -53,7 +54,12 @@ const DesignShowcase = lazy(() =>
   import("./DesignShowcase").then((m) => ({ default: m.DesignShowcase })),
 );
 const ProfilePage = lazy(() =>
-  import("./ProfilePage").then((m) => ({ default: m.ProfilePage })),
+  import("./profile/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
+const AssistantCataloguePage = lazy(() =>
+  import("./AssistantCataloguePage").then((m) => ({
+    default: m.AssistantCataloguePage,
+  })),
 );
 interface ModuleAppProps {
   onBackToHub: () => void;
@@ -87,6 +93,12 @@ export default function App() {
           /reset-password, /design тощо) — deep link може прилетіти у
           будь-який із цих станів. */}
       <ShellDeepLinkBridge />
+      {/* PostHog `$pageview` tracker: монтуємо тут (всередині
+          BrowserRouter, поза AuthProvider), щоб фіксувати pathname і
+          в unauthenticated-шляхах (`/sign-in`, `/welcome`,
+          `/reset-password`) — без цього onboarding / auth funnels
+          у PostHog були б сліпими перед login-ом. */}
+      <PageviewTracker />
       <ApiClientProvider client={apiClient}>
         <AuthProvider>
           <AppInner />
@@ -104,6 +116,10 @@ export default function App() {
 // a named route also lets us link straight to sign-in from emails,
 // push-notification landing pages, etc.
 const SIGN_IN_PATH = "/sign-in";
+// Assistant capability catalogue (`/help`, Settings link, `?` button in
+// chat input all converge here). URL-addressable so it survives reload
+// and can be deep-linked from notifications / docs.
+const ASSISTANT_PATH = "/assistant";
 // URL-addressable cold-start splash. Having a real route (not just a
 // modal overlay on `/`) means the splash can be deep-linked, shows the
 // right title in history/back navigation, and — crucially — renders the
@@ -132,6 +148,7 @@ function AppInner() {
   const onWelcomeRoute = location.pathname === WELCOME_PATH;
   const onResetPasswordRoute = location.pathname === RESET_PASSWORD_PATH;
   const onProfileRoute = location.pathname === PROFILE_PATH;
+  const onAssistantRoute = location.pathname === ASSISTANT_PATH;
 
   const openAuth = useCallback(() => {
     navigate(SIGN_IN_PATH);
@@ -178,13 +195,25 @@ function AppInner() {
     }
   }, [openModule]);
 
-  // Global event to open chat from any page (e.g. ProfilePage memory bank)
+  // Global event to open chat from any page (e.g. ProfilePage memory bank,
+  // AssistantCataloguePage). Detail accepts either a plain string (legacy:
+  // prefill input) or `{message, autoSend}` (new: optional auto-send) so
+  // existing emitters keep working without modification.
   const openChatStable = ui.openChat;
   useEffect(() => {
     const handler = (e: Event) => {
-      const msg = (e as CustomEvent<string | null>).detail;
+      const detail = (e as CustomEvent).detail as
+        | string
+        | null
+        | { message: string; autoSend?: boolean };
       navigate("/", { replace: true });
-      requestAnimationFrame(() => openChatStable(msg));
+      requestAnimationFrame(() => {
+        if (detail && typeof detail === "object" && "message" in detail) {
+          openChatStable(detail.message, { autoSend: detail.autoSend });
+        } else {
+          openChatStable(detail as string | null);
+        }
+      });
     };
     window.addEventListener("hub:openChat", handler);
     return () => window.removeEventListener("hub:openChat", handler);
@@ -307,6 +336,16 @@ function AppInner() {
     );
   }
 
+  if (onAssistantRoute) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <div className="page-enter">
+          <AssistantCataloguePage onClose={() => navigate("/")} />
+        </div>
+      </Suspense>
+    );
+  }
+
   // `/welcome` is the cold-start surface. A returning user who somehow
   // lands here (stale link, auto-complete, shared URL) bounces back to
   // the dashboard instead of being asked to re-onboard.
@@ -408,6 +447,11 @@ function AppInner() {
           chatOpen={ui.chatOpen}
           onCloseChat={ui.closeChat}
           chatInitialMessage={ui.chatInitialMessage}
+          chatAutoSend={ui.chatAutoSend}
+          onOpenCatalogue={() => {
+            ui.closeChat();
+            navigate(ASSISTANT_PATH);
+          }}
           searchOpen={ui.searchOpen}
           onCloseSearch={ui.closeSearch}
           onOpenModule={openModule}

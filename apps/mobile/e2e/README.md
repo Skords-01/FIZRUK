@@ -1,7 +1,7 @@
 # `@sergeant/mobile` — Detox E2E
 
 Detox E2E harness for the mobile app (Phase 4 of
-`docs/react-native-migration.md`, §8 + §13 Q8).
+`docs/mobile/react-native-migration.md`, §8 + §13 Q8).
 
 ## Suites
 

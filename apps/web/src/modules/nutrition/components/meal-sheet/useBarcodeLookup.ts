@@ -12,10 +12,11 @@ import {
 } from "../../lib/foodDb/foodDb";
 import { useBarcodeProductLookup } from "../../hooks/useBarcodeProduct";
 import type { MealFormState } from "./mealFormUtils";
+import type { PickedFood } from "./FoodPickerSection";
 
 export interface UseBarcodeLookupParams {
-  pickedFood: FoodProduct | null;
-  setPickedFood: Dispatch<SetStateAction<FoodProduct | null>>;
+  pickedFood: PickedFood | null;
+  setPickedFood: Dispatch<SetStateAction<PickedFood | null>>;
   setPickedGrams: Dispatch<SetStateAction<string>>;
   setForm: Dispatch<SetStateAction<MealFormState>>;
 }
@@ -154,7 +155,7 @@ export function useBarcodeLookup({
         );
         return;
       }
-      const ok = await bindBarcodeToFood(code, pickedFood.id);
+      const ok = await bindBarcodeToFood(code, String(pickedFood.id));
       setBarcodeStatus(ok ? "Прив'язано ✔" : "Не вдалося прив'язати");
     },
     [pickedFood],

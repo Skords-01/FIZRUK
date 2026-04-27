@@ -1,5 +1,5 @@
 /**
- * Дзеркало `aggregateCurrentSnapshot` з `apps/web/src/core/useCoachInsight.ts`
+ * Дзеркало `aggregateCurrentSnapshot` з `apps/web/src/core/insights/useCoachInsight.ts`
  * (MMKV через `safeReadLS`).
  */
 import { safeReadLS } from "@/lib/storage";

@@ -7,7 +7,7 @@
  * `@sergeant/finyk-domain/domain/selectors` helpers the web page
  * uses — numbers match web verbatim.
  *
- * Scope of this PR (Phase 4 / PR 6 per `docs/react-native-migration.md`):
+ * Scope of this PR (Phase 4 / PR 6 per `docs/mobile/react-native-migration.md`):
  *  - Month navigation (‹ / › with "no future months" guard).
  *  - Summary card (spent / income / balance) via `getMonthlySummary`.
  *  - Comparison card (month-over-month) via `getTrendComparison`.
@@ -93,7 +93,7 @@ interface SectionProps {
 function Section({ title, children }: SectionProps) {
   return (
     <Card variant="default" radius="lg" padding="lg">
-      <Text className="text-xs font-medium text-stone-500 mb-3">{title}</Text>
+      <Text className="text-xs font-medium text-fg-muted mb-3">{title}</Text>
       {children}
     </Card>
   );
@@ -102,7 +102,7 @@ function Section({ title, children }: SectionProps) {
 function EmptyRow({ message }: { message: string }) {
   return (
     <View className="rounded-xl border border-dashed border-cream-300 bg-cream-50 px-4 py-6 items-center">
-      <Text className="text-sm text-stone-500 text-center">{message}</Text>
+      <Text className="text-sm text-fg-muted text-center">{message}</Text>
     </View>
   );
 }

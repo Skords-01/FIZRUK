@@ -8,7 +8,7 @@
  *      — отже в окремий async-чанк, який ніколи не виконається у
  *      звичайному браузерному сеансі.
  *   2. **Single source of truth.** API-клієнт (`shared/api`), Better-Auth
- *      actions (`core/authClient`) і будь-які майбутні споживачі
+ *      actions (`core/auth/authClient`) і будь-які майбутні споживачі
  *      (напр. service worker фіч-флаг на native) ходять через один і
  *      той самий хелпер — немає ризику розійтись у поводженні
  *      «веб vs shell».

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logger } from "../obs/logger.js";
 
 /**
  * Центральна валідація та документація всіх env-змінних серверу.
@@ -65,6 +66,18 @@ const envSchema = z.object({
   // ── AI (Anthropic) ─────────────────────────────────────────────────
   /** API-ключ для Anthropic Claude. Без нього /api/chat повертає 500. */
   ANTHROPIC_API_KEY: z.string().optional(),
+  /**
+   * API-ключ Groq для голосової транскрипції (`/api/transcribe`).
+   * Без нього endpoint повертає 503; фронт автоматично відкочується
+   * на Web Speech API (бачить це з `GET /api/transcribe/health`).
+   */
+  GROQ_API_KEY: z.string().optional(),
+  /**
+   * Whisper-модель Groq для транскрипції. За замовчуванням
+   * `whisper-large-v3-turbo` — найдешевший варіант з адекватною
+   * якістю українською. Альтернатива: `whisper-large-v3`.
+   */
+  GROQ_TRANSCRIBE_MODEL: z.string().default("whisper-large-v3-turbo"),
   /** `"1"` — повністю вимкнути AI-квоту (fail-open без перевірки). */
   AI_QUOTA_DISABLED: z.string().optional(),
   /** Денний ліміт AI-запитів для автентифікованого юзера. */
@@ -113,6 +126,21 @@ const envSchema = z.object({
   LOG_PRETTY: z.string().optional(),
   /** Bearer token для захисту `GET /metrics`. */
   METRICS_TOKEN: z.string().optional(),
+  /**
+   * Personal API key для server-side PostHog cleanup (ADR-0016 ADR-6.3).
+   * Має project-level scope із write-доступом до `persons`. БЕЗ нього
+   * `deletePostHogPerson()` повертає `outcome: "skipped"` — GDPR worker
+   * markує row як completed (no-op).
+   */
+  POSTHOG_API_KEY: z.string().optional(),
+  /** Числовий ID PostHog-проєкту (Settings → Project → ID). */
+  POSTHOG_PROJECT_ID: z.string().optional(),
+  /**
+   * Server-side host для PostHog API. EU Cloud: `https://eu.i.posthog.com`
+   * (default), US: `https://us.i.posthog.com`, self-hosted: власна URL.
+   * Парний до клієнтського `VITE_POSTHOG_HOST`.
+   */
+  POSTHOG_HOST: z.string().optional(),
 
   // ── Security ───────────────────────────────────────────────────────
   /** `"1"` — вимкнути Content-Security-Policy (Replit dev). */
@@ -220,6 +248,6 @@ export function assertStartupEnv(): void {
   }
 
   if (warnings.length > 0) {
-    for (const w of warnings) console.warn(`[env] ${w}`);
+    for (const w of warnings) logger.warn({ msg: "env_warning", detail: w });
   }
 }

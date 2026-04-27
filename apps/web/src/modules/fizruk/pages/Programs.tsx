@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
-import { subtleNavButtonClass } from "@shared/components/ui/buttonPresets";
+import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
 import { useExerciseCatalog } from "../hooks/useExerciseCatalog";
 import { BUILTIN_PROGRAMS } from "@sergeant/fizruk-domain";
@@ -32,13 +32,14 @@ export function Programs({
             </p>
           </div>
           {activeProgram && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={deactivateProgram}
-              className={subtleNavButtonClass}
+              className="text-xs font-semibold text-subtle hover:text-text"
             >
               Зупинити
-            </button>
+            </Button>
           )}
         </div>
 
@@ -93,7 +94,7 @@ export function Programs({
                             "flex-1 text-center rounded py-1 text-3xs font-bold transition-colors",
                             hasSession
                               ? isToday && isActive
-                                ? "bg-success text-white"
+                                ? "bg-success-strong text-white"
                                 : "bg-success/15 text-success"
                               : "bg-line/30 text-subtle/40",
                           )}
@@ -108,7 +109,7 @@ export function Programs({
                     {!isActive ? (
                       <button
                         type="button"
-                        className="flex-1 py-2.5 rounded-xl bg-success text-white text-sm font-semibold transition-[background-color,opacity,transform] active:scale-[0.98]"
+                        className="flex-1 py-2.5 rounded-xl bg-success-strong text-white text-sm font-semibold transition-[background-color,opacity,transform] active:scale-[0.98]"
                         onClick={() => activateProgram(prog.id)}
                       >
                         Активувати
@@ -118,7 +119,7 @@ export function Programs({
                         {todaySession && onStartWorkout && (
                           <button
                             type="button"
-                            className="flex-1 py-2.5 rounded-xl bg-fizruk text-white text-sm font-semibold transition-[background-color,opacity,transform] active:scale-[0.98]"
+                            className="flex-1 py-2.5 rounded-xl bg-fizruk-strong text-white text-sm font-semibold transition-[background-color,opacity,transform] active:scale-[0.98]"
                             onClick={() => {
                               const session =
                                 prog.sessions[todaySession.sessionKey];

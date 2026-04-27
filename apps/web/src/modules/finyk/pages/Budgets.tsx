@@ -34,7 +34,12 @@ import { MonthlyPlanCard } from "../components/budgets/MonthlyPlanCard";
 import { AddBudgetForm } from "../components/budgets/AddBudgetForm";
 import { readJSON, writeJSON } from "../lib/finykStorage";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState";
-import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
+import { useToast } from "@shared/hooks/useToast";
+import { showUndoToast } from "@shared/lib/undoToast";
+import {
+  trackEvent,
+  ANALYTICS_EVENTS,
+} from "../../../core/observability/analytics";
 
 // ─── React Query integration for AI chat lookups ──────────────────────────
 //
@@ -106,6 +111,7 @@ export function Budgets({
   showBalance = true,
   focusLimitCategoryId = null,
 }) {
+  const toast = useToast();
   const { realTx, loadingTx, transactions } = mono;
   const {
     budgets,
@@ -421,19 +427,31 @@ export function Budgets({
           type="button"
           onClick={toggleLimits}
           aria-expanded={limitsOpen}
-          className="w-full flex items-center justify-between gap-3 -mb-1 px-1 py-2 text-left rounded-md hover:bg-panelHi transition-colors"
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left bg-panel border border-line rounded-2xl shadow-card hover:bg-panelHi transition-colors"
         >
-          <SectionHeading as="span" size="sm">
-            Ліміти · {monthStart.toLocaleDateString("uk-UA", { month: "long" })}
-            {limitBudgets.length > 0 && (
-              <span className="ml-1 text-subtle">({limitBudgets.length})</span>
-            )}
-          </SectionHeading>
+          <span className="flex items-center gap-2 min-w-0">
+            <span className="text-muted" aria-hidden>
+              <Icon name="calendar" size={16} />
+            </span>
+            <SectionHeading
+              as="span"
+              size="sm"
+              className="!mb-0 normal-case tracking-normal"
+            >
+              Ліміти ·{" "}
+              {monthStart.toLocaleDateString("uk-UA", { month: "long" })}
+              {limitBudgets.length > 0 && (
+                <span className="ml-1 text-subtle font-normal">
+                  ({limitBudgets.length})
+                </span>
+              )}
+            </SectionHeading>
+          </span>
           <Icon
             name="chevron-down"
             size={14}
             className={cn(
-              "transition-transform text-muted",
+              "transition-transform text-muted shrink-0",
               limitsOpen ? "rotate-180" : "",
             )}
           />
@@ -538,8 +556,19 @@ export function Budgets({
                   }
                   onSave={() => setEditIdx(null)}
                   onDelete={() => {
-                    setBudgets((bs) => bs.filter((_, j) => j !== globalIdx));
+                    const removed = b;
+                    const removedIdx = globalIdx;
+                    setBudgets((bs) => bs.filter((_, j) => j !== removedIdx));
                     setEditIdx(null);
+                    showUndoToast(toast, {
+                      msg: "Видалено ліміт",
+                      onUndo: () =>
+                        setBudgets((bs) => {
+                          const next = [...bs];
+                          next.splice(removedIdx, 0, removed);
+                          return next;
+                        }),
+                    });
                   }}
                 />
               </div>
@@ -551,19 +580,30 @@ export function Budgets({
           type="button"
           onClick={toggleGoals}
           aria-expanded={goalsOpen}
-          className="w-full flex items-center justify-between gap-3 -mb-1 px-1 py-2 text-left rounded-md hover:bg-panelHi transition-colors"
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left bg-panel border border-line rounded-2xl shadow-card hover:bg-panelHi transition-colors"
         >
-          <SectionHeading as="span" size="sm">
-            Цілі накопичення
-            {goalBudgets.length > 0 && (
-              <span className="ml-1 text-subtle">({goalBudgets.length})</span>
-            )}
-          </SectionHeading>
+          <span className="flex items-center gap-2 min-w-0">
+            <span className="text-muted" aria-hidden>
+              <Icon name="target" size={16} />
+            </span>
+            <SectionHeading
+              as="span"
+              size="sm"
+              className="!mb-0 normal-case tracking-normal"
+            >
+              Цілі накопичення
+              {goalBudgets.length > 0 && (
+                <span className="ml-1 text-subtle font-normal">
+                  ({goalBudgets.length})
+                </span>
+              )}
+            </SectionHeading>
+          </span>
           <Icon
             name="chevron-down"
             size={14}
             className={cn(
-              "transition-transform text-muted",
+              "transition-transform text-muted shrink-0",
               goalsOpen ? "rotate-180" : "",
             )}
           />
@@ -616,8 +656,19 @@ export function Budgets({
                 }
                 onSave={() => setEditIdx(null)}
                 onDelete={() => {
-                  setBudgets((bs) => bs.filter((_, j) => j !== globalIdx));
+                  const removed = b;
+                  const removedIdx = globalIdx;
+                  setBudgets((bs) => bs.filter((_, j) => j !== removedIdx));
                   setEditIdx(null);
+                  showUndoToast(toast, {
+                    msg: "Видалено ціль",
+                    onUndo: () =>
+                      setBudgets((bs) => {
+                        const next = [...bs];
+                        next.splice(removedIdx, 0, removed);
+                        return next;
+                      }),
+                  });
                 }}
               />
             );

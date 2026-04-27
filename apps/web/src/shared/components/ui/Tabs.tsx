@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import type { ModuleAccent } from "@sergeant/design-tokens";
 import { cn } from "@shared/lib/cn";
 
 /**
@@ -20,14 +21,19 @@ import { cn } from "@shared/lib/cn";
  *                  navigation, supports controlled panels.
  *   - `Segmented`— compact mode/view switcher (chips). No panels, shorter.
  *
- * Tones:
- *   - `underline` — minimal underline under active tab (default)
- *   - `pill`      — soft tinted pill background on active tab
+ * Two-axis API (see `docs/design/COMPONENT_API.md`):
+ *   - `variant` — accent colour (`brand` is the navigation default; the
+ *                 four module tokens scope the active state to a module).
+ *   - `style`   — visual treatment of the active tab.
+ *                 `underline` (default) — thin border under the active
+ *                                          label; works in dense layouts.
+ *                 `pill`                 — soft tinted pill on the active
+ *                                          label; better when isolated.
  */
 
-export type TabsTone = "underline" | "pill";
+export type TabsStyle = "underline" | "pill";
 
-export type TabsAccent = "brand" | "finyk" | "fizruk" | "routine" | "nutrition";
+export type TabsVariant = "brand" | ModuleAccent;
 
 export type TabsSize = "sm" | "md";
 
@@ -45,26 +51,42 @@ export interface TabsProps<V extends string = string> {
   items: ReadonlyArray<TabItem<V>>;
   value: V;
   onChange: (value: V) => void;
-  tone?: TabsTone;
-  accent?: TabsAccent;
+  /** Visual treatment of the active tab. Defaults to `underline`. */
+  style?: TabsStyle;
+  /** Accent colour token. Defaults to `brand`. */
+  variant?: TabsVariant;
   size?: TabsSize;
   /** Stretch tabs to fill the container width. */
   fill?: boolean;
   /** Accessible label for the tablist. */
   ariaLabel?: string;
+  /**
+   * Returns the DOM `id` of the panel each tab controls. Pass this when
+   * the consumer renders `<div role="tabpanel" id="…">` siblings — Tabs
+   * will then emit `aria-controls={getPanelId(value)}`. Omit if the page
+   * doesn't render real panels (e.g. tabs that drive route changes or
+   * design-system showcases): without a target we'd produce dangling
+   * IDREFs (axe `aria-valid-attr-value`), which is worse than no
+   * `aria-controls` at all.
+   */
+  getPanelId?: (value: V) => string;
   className?: string;
   tabsClassName?: string;
 }
 
-const ACCENT_TEXT: Record<TabsAccent, string> = {
-  brand: "text-brand",
-  finyk: "text-finyk",
-  fizruk: "text-fizruk",
-  routine: "text-routine",
-  nutrition: "text-nutrition",
+// Active-tab text on the page background. The brand `*-500` shade only
+// clears ~2.5:1 on cream `bg-bg`; the `*-strong` companion (= `[700]`,
+// or lime-800 for nutrition) clears ≥4.5:1. See
+// docs/design/brand-palette-wcag-aa-proposal.md § 2.2.
+const VARIANT_TEXT: Record<TabsVariant, string> = {
+  brand: "text-brand-strong",
+  finyk: "text-finyk-strong",
+  fizruk: "text-fizruk-strong",
+  routine: "text-routine-strong",
+  nutrition: "text-nutrition-strong",
 };
 
-const ACCENT_UNDERLINE: Record<TabsAccent, string> = {
+const VARIANT_UNDERLINE: Record<TabsVariant, string> = {
   brand: "border-brand",
   finyk: "border-finyk",
   fizruk: "border-fizruk",
@@ -72,18 +94,19 @@ const ACCENT_UNDERLINE: Record<TabsAccent, string> = {
   nutrition: "border-nutrition",
 };
 
-const ACCENT_PILL: Record<TabsAccent, string> = {
+const VARIANT_PILL: Record<TabsVariant, string> = {
   brand: "bg-brand-50 text-brand-700 dark:bg-brand/15 dark:text-brand",
-  finyk: "bg-finyk-soft text-finyk-strong dark:bg-finyk/15 dark:text-finyk",
+  finyk:
+    "bg-finyk-soft text-finyk-strong dark:bg-finyk-surface-dark/15 dark:text-finyk",
   fizruk:
-    "bg-fizruk-soft text-fizruk-strong dark:bg-fizruk/15 dark:text-fizruk",
+    "bg-fizruk-soft text-fizruk-strong dark:bg-fizruk-surface-dark/15 dark:text-fizruk",
   routine:
-    "bg-routine-surface text-routine-strong dark:bg-routine/15 dark:text-routine",
+    "bg-routine-surface text-routine-strong dark:bg-routine-surface-dark/15 dark:text-routine",
   nutrition:
-    "bg-nutrition-soft text-nutrition-strong dark:bg-nutrition/15 dark:text-nutrition",
+    "bg-nutrition-soft text-nutrition-strong dark:bg-nutrition-surface-dark/15 dark:text-nutrition",
 };
 
-const ACCENT_RING: Record<TabsAccent, string> = {
+const VARIANT_RING: Record<TabsVariant, string> = {
   brand: "focus-visible:ring-brand-500/45",
   finyk: "focus-visible:ring-finyk/45",
   fizruk: "focus-visible:ring-fizruk/45",
@@ -100,11 +123,12 @@ export function Tabs<V extends string = string>({
   items,
   value,
   onChange,
-  tone = "underline",
-  accent = "brand",
+  style = "underline",
+  variant = "brand",
   size = "md",
   fill = false,
   ariaLabel,
+  getPanelId,
   className,
   tabsClassName,
 }: TabsProps<V>) {
@@ -168,7 +192,7 @@ export function Tabs<V extends string = string>({
       aria-label={ariaLabel}
       className={cn(
         "flex items-stretch",
-        tone === "underline"
+        style === "underline"
           ? "gap-1 border-b border-line"
           : "gap-1 p-1 rounded-2xl bg-surface-muted",
         fill && "w-full",
@@ -181,24 +205,24 @@ export function Tabs<V extends string = string>({
           "inline-flex items-center justify-center gap-2 font-semibold",
           "transition-colors outline-none",
           "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-          ACCENT_RING[accent],
+          VARIANT_RING[variant],
           SIZE[size],
           fill && "flex-1 min-w-0",
           item.disabled && "opacity-50 cursor-not-allowed",
         );
 
-        const toneClasses =
-          tone === "underline"
+        const styleClasses =
+          style === "underline"
             ? cn(
                 "rounded-none border-b-2 -mb-px",
                 isActive
-                  ? cn(ACCENT_UNDERLINE[accent], ACCENT_TEXT[accent])
+                  ? cn(VARIANT_UNDERLINE[variant], VARIANT_TEXT[variant])
                   : "border-transparent text-fg-muted hover:text-fg",
               )
             : cn(
                 "rounded-xl",
                 isActive
-                  ? ACCENT_PILL[accent]
+                  ? VARIANT_PILL[variant]
                   : "text-fg-muted hover:text-fg hover:bg-surface",
               );
 
@@ -210,12 +234,12 @@ export function Tabs<V extends string = string>({
             id={`${baseId}-tab-${item.value}`}
             data-value={String(item.value)}
             aria-selected={isActive}
-            aria-controls={`${baseId}-panel-${item.value}`}
+            aria-controls={getPanelId ? getPanelId(item.value) : undefined}
             tabIndex={isActive ? 0 : -1}
             disabled={item.disabled}
             onClick={() => !item.disabled && onChange(item.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
-            className={cn(commonClasses, toneClasses, tabsClassName)}
+            className={cn(commonClasses, styleClasses, tabsClassName)}
           >
             {item.icon}
             <span className="truncate">{item.label}</span>

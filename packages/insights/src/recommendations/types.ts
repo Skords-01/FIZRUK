@@ -8,6 +8,8 @@
 // `document`. Споживачі (apps/web, apps/mobile) будують `Ctx` локально
 // і передають у правила.
 
+import type { ModuleAccent, StatusColor } from "@sergeant/design-tokens";
+
 /**
  * Імперативна CTA-дія для рекомендації. Повторює літерали
  * `HubModuleAction` з `apps/web/src/shared/lib/hubNav.ts` — джерелом
@@ -20,12 +22,14 @@ export type HubModuleAction =
   | "add_meal_photo"
   | "add_habit";
 
-export type Module = "finyk" | "fizruk" | "routine" | "nutrition" | "hub";
+export type Module = ModuleAccent | "hub";
+export type RecSeverity = StatusColor;
 
 export interface Rec {
   id: string;
   module: Module;
   priority: number;
+  severity?: RecSeverity;
   icon: string;
   title: string;
   body: string;

@@ -45,6 +45,10 @@ const SURFACES: Array<{ name: string; path: string }> = [
   { name: "fizruk-dashboard", path: "/?module=fizruk" },
   { name: "nutrition-dashboard", path: "/?module=nutrition" },
   { name: "routine-dashboard", path: "/?module=routine" },
+  /** Auth form: labels, errors, primary actions — high regression risk for a11y. */
+  { name: "auth-sign-in", path: "/sign-in" },
+  /** Design system showcase: module accents, buttons, states — contrast & pattern coverage. */
+  { name: "design-showcase", path: "/design" },
 ];
 
 for (const { name, path } of SURFACES) {

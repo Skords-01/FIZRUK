@@ -1,6 +1,34 @@
+import type { ModuleAccent } from "@sergeant/design-tokens";
+
 export interface ChangeCategoryAction {
   name: "change_category";
   input: { tx_id: string; category_id: string };
+}
+
+export interface FindTransactionAction {
+  name: "find_transaction";
+  input: {
+    query?: string;
+    amount?: number | string;
+    amount_tolerance?: number | string;
+    date_from?: string;
+    date_to?: string;
+    limit?: number | string;
+  };
+}
+
+export interface BatchCategorizeAction {
+  name: "batch_categorize";
+  input: {
+    pattern: string;
+    category_id: string;
+    dry_run?: boolean;
+    amount?: number | string;
+    amount_tolerance?: number | string;
+    date_from?: string;
+    date_to?: string;
+    limit?: number | string;
+  };
 }
 
 export interface CreateDebtAction {
@@ -317,6 +345,16 @@ export interface HabitStatsAction {
   input: { habit_id: string; period_days?: number | string };
 }
 
+export interface SetHabitScheduleAction {
+  name: "set_habit_schedule";
+  input: { habit_id: string; days: string[] };
+}
+
+export interface PauseHabitAction {
+  name: "pause_habit";
+  input: { habit_id: string; paused?: boolean };
+}
+
 export interface SuggestMealAction {
   name: "suggest_meal";
   input: { focus?: string; meal_type?: string };
@@ -385,6 +423,17 @@ export interface HabitTrendAction {
   input: { habit_id?: string; period_days?: number | string };
 }
 
+export type CompareWeeksModule = ModuleAccent;
+
+export interface CompareWeeksAction {
+  name: "compare_weeks";
+  input: {
+    week_a?: string;
+    week_b?: string;
+    modules?: CompareWeeksModule[];
+  };
+}
+
 export interface Calculate1rmAction {
   name: "calculate_1rm";
   input: {
@@ -431,6 +480,8 @@ export interface MyProfileAction {
 
 export type ChatAction =
   | ChangeCategoryAction
+  | FindTransactionAction
+  | BatchCategorizeAction
   | CreateDebtAction
   | CreateReceivableAction
   | HideTransactionAction
@@ -471,6 +522,8 @@ export type ChatAction =
   | EditHabitAction
   | ReorderHabitsAction
   | HabitStatsAction
+  | SetHabitScheduleAction
+  | PauseHabitAction
   | SuggestMealAction
   | CopyMealFromDateAction
   | PlanMealsForDayAction
@@ -482,6 +535,7 @@ export type ChatAction =
   | CategoryBreakdownAction
   | DetectAnomaliesAction
   | HabitTrendAction
+  | CompareWeeksAction
   | Calculate1rmAction
   | ConvertUnitsAction
   | SaveNoteAction

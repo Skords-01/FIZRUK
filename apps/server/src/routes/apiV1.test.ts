@@ -4,7 +4,7 @@ import request from "supertest";
 /**
  * Supertest-покриття нового `/api/v1/*` префікса і bearer-auth шляху.
  *
- * Ми покриваємо ключові гарантії з `docs/api-v1.md`:
+ * Ми покриваємо ключові гарантії з `docs/architecture/api-v1.md`:
  *   1. роут працює і на `/api/*`, і на `/api/v1/*` (дзеркало 1:1);
  *   2. `/api/v1/me` резолвить юзера і через cookie, і через
  *      `Authorization: Bearer`;
@@ -215,7 +215,7 @@ describe("POST /api/v1/push/register", () => {
   });
 
   it("web з keys — валідно парситься і доходить до vapid-guard-а", async () => {
-    // `vapidReady` у `server/modules/push.ts` обчислюється на module-load, тож
+    // `vapidReady` у `server/modules/push/push.ts` обчислюється на module-load, тож
     // 200-case для web тут не відтворюваний без підготовки env ДО першого
     // `import` (це вже покриває `server/smoke.test.ts` на рівні subscribe).
     // Тут важливо: discriminated union валідатор приймає `web` payload —

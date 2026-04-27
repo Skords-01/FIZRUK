@@ -14,9 +14,49 @@ import type {
   ReorderHabitsAction,
   HabitStatsAction,
   HabitTrendAction,
+  SetHabitScheduleAction,
+  PauseHabitAction,
   HabitState,
   ChatAction,
 } from "./types";
+
+// Mon-first 0..6 — matches `@sergeant/routine-domain` `isoWeekdayFromDateKey`
+// and `WEEKDAY_LABELS`. Both English short names and Ukrainian short names
+// are accepted from the LLM tool input.
+const DAY_NAME_TO_INDEX: Readonly<Record<string, number>> = {
+  mon: 0,
+  tue: 1,
+  wed: 2,
+  thu: 3,
+  fri: 4,
+  sat: 5,
+  sun: 6,
+  пн: 0,
+  вт: 1,
+  ср: 2,
+  чт: 3,
+  пт: 4,
+  сб: 5,
+  нд: 6,
+};
+
+const WEEKDAY_LABEL_UK: readonly string[] = [
+  "Пн",
+  "Вт",
+  "Ср",
+  "Чт",
+  "Пт",
+  "Сб",
+  "Нд",
+];
+
+function normalizeDayToken(token: unknown): number | null {
+  if (typeof token !== "string") return null;
+  const key = token.trim().toLowerCase();
+  if (!key) return null;
+  const idx = DAY_NAME_TO_INDEX[key];
+  return typeof idx === "number" ? idx : null;
+}
 
 export function handleRoutineAction(action: ChatAction): string | undefined {
   switch (action.name) {
@@ -242,6 +282,76 @@ export function handleRoutineAction(action: ChatAction): string | undefined {
       habits[hIdx] = updated;
       lsSet("hub_routine_v1", { ...state, habits });
       return `Звичку "${updated.name || id}" оновлено: ${changes.join(", ")}`;
+    }
+    case "set_habit_schedule": {
+      const { habit_id, days } = (action as SetHabitScheduleAction).input;
+      const id = String(habit_id || "").trim();
+      if (!id) return "Потрібен habit_id.";
+      if (!Array.isArray(days) || days.length === 0)
+        return "Потрібен непорожній масив days.";
+      const seen = new Set<number>();
+      const normalized: number[] = [];
+      const unknown: string[] = [];
+      for (const raw of days) {
+        const idx = normalizeDayToken(raw);
+        if (idx === null) {
+          if (typeof raw === "string" && raw.trim()) unknown.push(raw.trim());
+          continue;
+        }
+        if (seen.has(idx)) continue;
+        seen.add(idx);
+        normalized.push(idx);
+      }
+      if (normalized.length === 0)
+        return `Не вдалось розпізнати дні: ${unknown.join(", ") || "(порожньо)"}. Очікую mon/tue/…/sun або пн/вт/…/нд.`;
+      normalized.sort((a, b) => a - b);
+      const state = ls<{
+        habits?: Array<{
+          id: string;
+          name?: string;
+          recurrence?: string;
+          weekdays?: number[];
+        }>;
+      }>("hub_routine_v1", {});
+      const habits = Array.isArray(state.habits) ? state.habits.slice() : [];
+      const hIdx = habits.findIndex((h) => h.id === id);
+      if (hIdx < 0) return `Звичку ${id} не знайдено.`;
+      habits[hIdx] = {
+        ...habits[hIdx],
+        recurrence: "weekly",
+        weekdays: normalized,
+      };
+      lsSet("hub_routine_v1", { ...state, habits });
+      const labels = normalized.map((n) => WEEKDAY_LABEL_UK[n]).join(", ");
+      return `Розклад звички "${habits[hIdx].name || id}" — ${labels}`;
+    }
+    case "pause_habit": {
+      const { habit_id, paused } = (action as PauseHabitAction).input;
+      const id = String(habit_id || "").trim();
+      if (!id) return "Потрібен habit_id.";
+      const target = paused !== false;
+      const state = ls<{
+        habits?: Array<{
+          id: string;
+          name?: string;
+          paused?: boolean;
+        }>;
+      }>("hub_routine_v1", {});
+      const habits = Array.isArray(state.habits) ? state.habits.slice() : [];
+      const hIdx = habits.findIndex((h) => h.id === id);
+      if (hIdx < 0) return `Звичку ${id} не знайдено.`;
+      const current = habits[hIdx].paused === true;
+      const habitName = habits[hIdx].name || id;
+      if (current === target) {
+        return target
+          ? `Звичка "${habitName}" вже на паузі.`
+          : `Звичка "${habitName}" вже активна.`;
+      }
+      habits[hIdx] = { ...habits[hIdx], paused: target };
+      lsSet("hub_routine_v1", { ...state, habits });
+      return target
+        ? `Звичку "${habitName}" поставлено на паузу.`
+        : `Звичку "${habitName}" знято з паузи.`;
     }
     case "reorder_habits": {
       const { habit_ids } = (action as ReorderHabitsAction).input;

@@ -1,23 +1,23 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signIn } from "@/auth/authClient";
-import { colors, radius, spacing } from "@/theme";
+import { colors, spacing } from "@/theme";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 export default function SignInScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,56 +39,60 @@ export default function SignInScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={s.container} edges={["bottom"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.form}
+        style={s.form}
       >
-        <Text style={styles.title}>З поверненням</Text>
-        <Text style={styles.subtitle}>Увійди в свій Sergeant-акаунт</Text>
+        <Text style={s.title}>З поверненням 👋</Text>
+        <Text style={s.subtitle}>Раді бачити тебе знову</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="email@example.com"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          textContentType="emailAddress"
+        <Input
+          type="email"
+          placeholder="ваш@email.com"
           value={email}
           onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="пароль"
-          placeholderTextColor={colors.textMuted}
-          secureTextEntry
-          textContentType="password"
-          value={password}
-          onChangeText={setPassword}
+          size="lg"
         />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <View>
+          <View style={s.passHeader}>
+            <Text style={s.label}>Пароль</Text>
+            <Link href="/(auth)/forgot-password">
+              <Text style={s.forgotLink}>Забув пароль?</Text>
+            </Link>
+          </View>
+          <Input
+            type="password"
+            placeholder="••••••••••"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPass}
+            size="lg"
+            suffix={
+              <Text onPress={() => setShowPass((v) => !v)} style={s.eyeBtn}>
+                {showPass ? "🙈" : "👁️"}
+              </Text>
+            }
+          />
+        </View>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            (pressed || loading) && styles.buttonPressed,
-          ]}
+        {error ? <Text style={s.error}>{error}</Text> : null}
+
+        <Button
+          variant="primary"
+          size="lg"
+          loading={loading}
+          disabled={!email || !password}
           onPress={onSubmit}
-          disabled={loading || !email || !password}
         >
-          {loading ? (
-            <ActivityIndicator color={colors.text} />
-          ) : (
-            <Text style={styles.buttonText}>Увійти</Text>
-          )}
-        </Pressable>
+          Увійти
+        </Button>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Ще не маєш акаунта?</Text>
-          <Link href="/(auth)/sign-up" style={styles.footerLink}>
-            <Text style={styles.footerLinkText}>Створити</Text>
+        <View style={s.footer}>
+          <Text style={s.footerText}>Ще не маєш акаунта?</Text>
+          <Link href="/(auth)/sign-up" style={s.footerLink}>
+            <Text style={s.footerLinkText}>Створити</Text>
           </Link>
         </View>
       </KeyboardAvoidingView>
@@ -96,7 +100,7 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   form: {
     flex: 1,
@@ -105,31 +109,17 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   title: { color: colors.text, fontSize: 28, fontWeight: "700" },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginBottom: spacing.lg,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    color: colors.text,
-    fontSize: 16,
-  },
-  error: { color: colors.danger, fontSize: 13 },
-  button: {
-    backgroundColor: colors.accent,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
+  subtitle: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.lg },
+  passHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    marginTop: spacing.sm,
+    marginBottom: 6,
   },
-  buttonPressed: { opacity: 0.7 },
-  buttonText: { color: colors.text, fontSize: 16, fontWeight: "600" },
+  label: { color: colors.textMuted, fontSize: 13 },
+  forgotLink: { color: colors.accent, fontSize: 13, fontWeight: "500" },
+  eyeBtn: { fontSize: 18, paddingHorizontal: 4 },
+  error: { color: colors.danger, fontSize: 13 },
   footer: {
     flexDirection: "row",
     justifyContent: "center",

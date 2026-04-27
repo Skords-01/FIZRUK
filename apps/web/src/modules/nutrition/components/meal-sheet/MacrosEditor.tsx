@@ -1,8 +1,31 @@
 import { useState } from "react";
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
-import { emptyForm } from "./mealFormUtils";
+import type { PickedFood } from "./FoodPickerSection";
+import {
+  emptyForm,
+  type MealFormPhotoResult,
+  type MealFormState,
+} from "./mealFormUtils";
+
+type MacroFieldKey = "kcal" | "protein_g" | "fat_g" | "carbs_g";
+
+interface PendingUnlink {
+  key: MacroFieldKey | null;
+  value: string | null;
+}
+
+interface MacrosEditorProps {
+  form: MealFormState;
+  field: (key: keyof MealFormState) => (value: string) => void;
+  setForm: Dispatch<SetStateAction<MealFormState>>;
+  pickedFood: PickedFood | null;
+  setPickedFood: Dispatch<SetStateAction<PickedFood | null>>;
+  photoResult?: MealFormPhotoResult | null;
+  hasPhotoMacros: boolean;
+}
 
 export function MacrosEditor({
   form,
@@ -12,20 +35,23 @@ export function MacrosEditor({
   setPickedFood,
   photoResult,
   hasPhotoMacros,
-}) {
+}: MacrosEditorProps) {
   // Guarded edit: when a food is linked from the DB, direct macro edits
   // used to silently drop the `foodId`. Now the first edit opens a
   // confirmation panel and the user must explicitly unlink before editing.
-  const [pendingUnlink, setPendingUnlink] = useState(null);
+  const [pendingUnlink, setPendingUnlink] = useState<PendingUnlink | null>(
+    null,
+  );
 
-  const handleMacroChange = (key) => (e) => {
-    const v = e.target.value;
-    if (pickedFood) {
-      setPendingUnlink({ key, value: v });
-      return;
-    }
-    field(key)(v);
-  };
+  const handleMacroChange =
+    (key: MacroFieldKey) => (e: ChangeEvent<HTMLInputElement>) => {
+      const v = e.target.value;
+      if (pickedFood) {
+        setPendingUnlink({ key, value: v });
+        return;
+      }
+      field(key)(v);
+    };
 
   const confirmUnlink = () => {
     if (!pendingUnlink) return;
@@ -63,12 +89,14 @@ export function MacrosEditor({
         )}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {[
-          { key: "kcal", label: "Ккал", placeholder: "350" },
-          { key: "protein_g", label: "Білки г", placeholder: "12" },
-          { key: "fat_g", label: "Жири г", placeholder: "6" },
-          { key: "carbs_g", label: "Вуглев. г", placeholder: "60" },
-        ].map(({ key, label, placeholder }) => (
+        {(
+          [
+            { key: "kcal", label: "Ккал", placeholder: "350" },
+            { key: "protein_g", label: "Білки г", placeholder: "12" },
+            { key: "fat_g", label: "Жири г", placeholder: "6" },
+            { key: "carbs_g", label: "Вуглев. г", placeholder: "60" },
+          ] as const
+        ).map(({ key, label, placeholder }) => (
           <div key={key}>
             <SectionHeading as="div" size="xs" className="mb-1">
               {label}

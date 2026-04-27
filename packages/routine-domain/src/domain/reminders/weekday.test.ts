@@ -193,6 +193,19 @@ describe("habitActiveRoutineWeekdays", () => {
     ).toEqual([]);
   });
 
+  it("returns [] for a paused habit regardless of recurrence", () => {
+    expect(
+      habitActiveRoutineWeekdays({ recurrence: "daily", paused: true }),
+    ).toEqual([]);
+    expect(
+      habitActiveRoutineWeekdays({
+        recurrence: "weekly",
+        weekdays: [0, 2, 4],
+        paused: true,
+      }),
+    ).toEqual([]);
+  });
+
   it("defaults recurrence=undefined to 'daily' (all weekdays)", () => {
     expect(habitActiveRoutineWeekdays({})).toEqual([0, 1, 2, 3, 4, 5, 6]);
   });

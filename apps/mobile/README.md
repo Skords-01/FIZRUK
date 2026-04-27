@@ -25,10 +25,12 @@
 
 - Expo Router (tabs + (auth) модалка), `app.config.ts` з
   `bundleIdentifier` / `androidPackage` = `com.sergeant.app`;
-- Better Auth Expo-клієнт (bearer у `expo-secure-store`, `docs/mobile.md`);
+- Better Auth Expo-клієнт (bearer у `expo-secure-store`, `docs/mobile/overview.md`);
 - `PushRegistrar` шле native APNs/FCM токен у `POST /api/v1/push/register`
   з ідемпотентним кешем у `AsyncStorage`;
 - CloudSync + MMKV-офлайн-черга + React Query warm-start (фаза 3);
+- JSON-бекап експорт/імпорт Hub (`expo-file-system` + `expo-sharing` +
+  `expo-document-picker`, Phase 4+);
 - Detox e2e конфіги для iOS і Android у CI (поки smoke-build, реальні
   сценарії треба дописати).
 
@@ -40,9 +42,9 @@
 - **Store-listing** (іконки, privacy manifest iOS, data safety Android).
 
 **Серверний push (APNs/FCM/web):** fan-out у `apps/server/src/push/send.ts`;
-у проді ще потрібні credentials — `docs/backend-tech-debt.md#push-credentials`.
+у проді ще потрібні credentials — `docs/tech-debt/backend.md#push-credentials`.
 
-Повний статус-репорт по всіх трьох поверхнях — `docs/platforms.md`.
+Повний статус-репорт по всіх трьох поверхнях — `docs/architecture/platforms.md`.
 
 ## Запуск
 
@@ -198,14 +200,14 @@ apps/mobile
 
 ## Deep links
 
-Схема `sergeant://`, повний перелік маршрутів — у `docs/mobile.md`
+Схема `sergeant://`, повний перелік маршрутів — у `docs/mobile/overview.md`
 (`sergeant://workout/{id}`, `sergeant://finance/tx/{id}`, тощо). Наразі
 закомітено лише tab-роути; глибокі посилання на конкретні сутності
 зроблю разом з портом відповідних модулів.
 
 ## API
 
-Усі запити — у `/api/v1/*`, як описано в `docs/api-v1.md`. У
+Усі запити — у `/api/v1/*`, як описано в `docs/architecture/api-v1.md`. У
 продакшн-коді ходи у сервер через `@sergeant/api-client`:
 
 - `useApiClient()` + хуки з `@sergeant/api-client/react` (`useUser`,
@@ -248,7 +250,7 @@ pnpm --filter @sergeant/mobile start --dev-client
 # повторний запуск з тим самим токеном не шле запит
 ```
 
-Серверний контракт і приклади payload-ів — у `docs/mobile.md`
+Серверний контракт і приклади payload-ів — у `docs/mobile/overview.md`
 (секція «Push notifications»).
 
 ## Монорепо-правила

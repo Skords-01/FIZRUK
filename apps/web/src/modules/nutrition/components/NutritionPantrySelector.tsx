@@ -1,11 +1,30 @@
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
+import type { Pantry } from "@sergeant/nutrition-domain";
+import type { useNutritionPantries } from "../hooks/useNutritionPantries";
 
-export function NutritionPantrySelector({ pantry, busy }) {
-  const pantries = Array.isArray(pantry.pantries) ? pantry.pantries : [];
+type PantryController = ReturnType<typeof useNutritionPantries>;
+
+interface NutritionPantrySelectorProps {
+  pantry: PantryController;
+  busy?: boolean;
+}
+
+export function NutritionPantrySelector({
+  pantry,
+  busy,
+}: NutritionPantrySelectorProps) {
+  const pantries: Pantry[] = Array.isArray(pantry.pantries)
+    ? pantry.pantries
+    : [];
   return (
     <div className="rounded-2xl bg-nutrition/10 border border-nutrition/20 px-4 py-3 mb-4 flex items-center gap-3">
       <div className="min-w-0 flex-1">
-        <SectionHeading as="div" size="xs" tone="nutrition" className="mb-0.5">
+        <SectionHeading
+          as="div"
+          size="xs"
+          variant="nutrition"
+          className="mb-0.5"
+        >
           Активний склад
         </SectionHeading>
         <div className="text-base font-extrabold text-text leading-tight">

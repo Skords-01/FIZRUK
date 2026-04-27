@@ -12,12 +12,12 @@ import { cn } from "../../lib/cn";
  *   <div className="text-2xl font-extrabold text-text mt-1 tabular-nums">82 кг</div>
  *   <div className="text-xs text-subtle mt-1">+0.4 кг</div>
  *
- * Tones tint the value: default (text-text), success, warning, danger,
- * and each module's brand token (finyk/fizruk/routine/nutrition) for the
- * rare branded metric readouts.
+ * `variant` tints the value (see `docs/design/COMPONENT_API.md`): default
+ * (text-text), success, warning, danger, and each module's brand token
+ * (finyk/fizruk/routine/nutrition) for the rare branded metric readouts.
  */
 
-export type StatTone =
+export type StatVariant =
   | "default"
   | "success"
   | "warning"
@@ -29,15 +29,21 @@ export type StatTone =
 
 export type StatSize = "sm" | "md" | "lg";
 
-const toneClass: Record<StatTone, string> = {
+// `text-{c}-strong` (= `[700]`, lime-800 for nutrition) keeps Stat
+// numbers readable at body sizes against cream `bg-bg`. The previous
+// `text-{c}` (= `[500]`) only cleared ~2.4:1 — the `text-2xl` size
+// nominally exempts it from the 4.5:1 rule (large-text 3:1), but the
+// nested `<span>` value isn't `font-bold`, so axe applies the regular
+// threshold. See docs/design/brand-palette-wcag-aa-proposal.md.
+const variantClass: Record<StatVariant, string> = {
   default: "text-text",
-  success: "text-success",
-  warning: "text-warning",
-  danger: "text-danger",
-  finyk: "text-finyk",
-  fizruk: "text-fizruk",
-  routine: "text-coral-500",
-  nutrition: "text-lime-600 dark:text-lime-400",
+  success: "text-success-strong",
+  warning: "text-warning-strong",
+  danger: "text-danger-strong",
+  finyk: "text-finyk-strong",
+  fizruk: "text-fizruk-strong",
+  routine: "text-routine-strong",
+  nutrition: "text-nutrition-strong",
 };
 
 const valueSize: Record<StatSize, string> = {
@@ -50,7 +56,8 @@ export interface StatProps {
   label: ReactNode;
   value: ReactNode;
   sublabel?: ReactNode;
-  tone?: StatTone;
+  /** Colour variant for the value. Defaults to `default` (text-text). */
+  variant?: StatVariant;
   size?: StatSize;
   /** Optional leading icon / emoji rendered left of the value. */
   icon?: ReactNode;
@@ -63,7 +70,7 @@ export function Stat({
   label,
   value,
   sublabel,
-  tone = "default",
+  variant = "default",
   size = "md",
   icon,
   align = "left",
@@ -87,7 +94,7 @@ export function Stat({
           align === "center" && "justify-center",
           align === "right" && "justify-end",
           valueSize[size],
-          toneClass[tone],
+          variantClass[variant],
         )}
       >
         {icon && (

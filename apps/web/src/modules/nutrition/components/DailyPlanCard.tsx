@@ -1,9 +1,47 @@
 import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Card } from "@shared/components/ui/Card";
 import { Button } from "@shared/components/ui/Button";
 import { Input } from "@shared/components/ui/Input";
 import { cn } from "@shared/lib/cn";
+import type {
+  MealTypeId,
+  NutritionPrefs,
+  PantryItem,
+} from "@sergeant/nutrition-domain";
+import type {
+  NutritionDayPlan,
+  NutritionWeekPlan,
+} from "../hooks/useNutritionUiState";
+
+interface PlanMeal {
+  type?: MealTypeId | string;
+  label?: string;
+  name?: string;
+  description?: string;
+  kcal?: number | null;
+  protein_g?: number | null;
+  fat_g?: number | null;
+  carbs_g?: number | null;
+  ingredients?: string[];
+  [key: string]: unknown;
+}
+
+interface Preset {
+  id: string;
+  label: string;
+  kcal: number;
+  protein_g: number;
+  fat_g: number;
+  carbs_g: number;
+}
+
+interface WeekPlanDay {
+  label?: string;
+  note?: string;
+  meals?: string[];
+}
 
 const PRESETS = [
   {
@@ -32,21 +70,26 @@ const PRESETS = [
   },
 ];
 
-const MEAL_TYPE_ORDER = ["breakfast", "lunch", "dinner", "snack"];
-const MEAL_TYPE_LABELS = {
+const MEAL_TYPE_ORDER: readonly string[] = [
+  "breakfast",
+  "lunch",
+  "dinner",
+  "snack",
+];
+const MEAL_TYPE_LABELS: Record<string, string> = {
   breakfast: "Сніданок",
   lunch: "Обід",
   dinner: "Вечеря",
   snack: "Перекус",
 };
-const MEAL_TYPE_ICONS = {
+const MEAL_TYPE_ICONS: Record<string, string> = {
   breakfast: "☀️",
   lunch: "🥗",
   dinner: "🍽️",
   snack: "🍎",
 };
 
-function MacroRatioBar({ prefs }) {
+function MacroRatioBar({ prefs }: { prefs: NutritionPrefs }) {
   const prot = prefs.dailyTargetProtein_g ?? 0;
   const fat = prefs.dailyTargetFat_g ?? 0;
   const carb = prefs.dailyTargetCarbs_g ?? 0;
@@ -138,7 +181,14 @@ function MacroBadge({
   );
 }
 
-function MealRow({ meal, onAddToLog, onRegen, busy }) {
+interface MealRowProps {
+  meal: PlanMeal;
+  onAddToLog: (meal: PlanMeal) => void | Promise<void>;
+  onRegen: (mealType: string) => void | Promise<void>;
+  busy?: boolean;
+}
+
+function MealRow({ meal, onAddToLog, onRegen, busy }: MealRowProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -147,10 +197,10 @@ function MealRow({ meal, onAddToLog, onRegen, busy }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-0.5">
             <span className="text-base leading-none" aria-hidden>
-              {MEAL_TYPE_ICONS[meal.type] || "🍴"}
+              {MEAL_TYPE_ICONS[String(meal.type ?? "")] || "🍴"}
             </span>
-            <SectionHeading as="span" size="sm" tone="nutrition">
-              {MEAL_TYPE_LABELS[meal.type] || meal.label}
+            <SectionHeading as="span" size="sm" variant="nutrition">
+              {MEAL_TYPE_LABELS[String(meal.type ?? "")] || meal.label}
             </SectionHeading>
           </div>
           <div className="text-sm font-semibold text-text leading-tight">
@@ -189,14 +239,14 @@ function MealRow({ meal, onAddToLog, onRegen, busy }) {
             type="button"
             variant="ghost"
             className="h-8 text-xs px-2 text-subtle"
-            onClick={() => onRegen(meal.type)}
+            onClick={() => onRegen(String(meal.type ?? ""))}
             disabled={busy}
           >
             ↻ Замінити
           </Button>
         </div>
       </div>
-      {meal.ingredients?.length > 0 && (
+      {(meal.ingredients?.length ?? 0) > 0 && (
         <button
           type="button"
           className="mt-2 text-xs text-nutrition-strong/90 dark:text-nutrition/70 hover:text-nutrition-strong dark:text-nutrition transition-colors"
@@ -205,15 +255,31 @@ function MealRow({ meal, onAddToLog, onRegen, busy }) {
           {expanded ? "▲ Сховати інгредієнти" : "▼ Інгредієнти"}
         </button>
       )}
-      {expanded && meal.ingredients?.length > 0 && (
+      {expanded && (meal.ingredients?.length ?? 0) > 0 && (
         <ul className="mt-1.5 text-xs text-text list-disc pl-4 space-y-0.5">
-          {meal.ingredients.map((ing, i) => (
+          {meal.ingredients!.map((ing: string, i: number) => (
             <li key={i}>{ing}</li>
           ))}
         </ul>
       )}
     </div>
   );
+}
+
+interface DailyPlanCardProps {
+  prefs: NutritionPrefs;
+  setPrefs: Dispatch<SetStateAction<NutritionPrefs>>;
+  pantryItems?: PantryItem[];
+  busy?: boolean;
+  dayPlan?: NutritionDayPlan | null;
+  dayPlanBusy?: boolean;
+  fetchDayPlan: () => void | Promise<void>;
+  regenMeal: (mealType: string) => void | Promise<void>;
+  addMealToLog: (meal: PlanMeal) => void | Promise<void>;
+  weekPlan?: NutritionWeekPlan | null;
+  weekPlanRaw?: string;
+  weekPlanBusy?: boolean;
+  fetchWeekPlan: () => void | Promise<void>;
 }
 
 export function DailyPlanCard({
@@ -230,7 +296,7 @@ export function DailyPlanCard({
   weekPlanRaw,
   weekPlanBusy,
   fetchWeekPlan,
-}) {
+}: DailyPlanCardProps) {
   const [showManual, setShowManual] = useState(false);
 
   const activePreset = PRESETS.find(
@@ -241,7 +307,7 @@ export function DailyPlanCard({
       p.carbs_g === prefs.dailyTargetCarbs_g,
   );
 
-  const applyPreset = (preset) => {
+  const applyPreset = (preset: Preset) => {
     setPrefs((p) => ({
       ...p,
       dailyTargetKcal: preset.kcal,
@@ -253,10 +319,11 @@ export function DailyPlanCard({
 
   const hasTargets = prefs.dailyTargetKcal != null;
 
-  const sortedMeals = dayPlan?.meals
-    ? [...dayPlan.meals].sort(
-        (a, b) =>
-          MEAL_TYPE_ORDER.indexOf(a.type) - MEAL_TYPE_ORDER.indexOf(b.type),
+  const sortedMeals: PlanMeal[] = dayPlan?.meals
+    ? [...(dayPlan.meals as PlanMeal[])].sort(
+        (a: PlanMeal, b: PlanMeal) =>
+          MEAL_TYPE_ORDER.indexOf(String(a.type ?? "")) -
+          MEAL_TYPE_ORDER.indexOf(String(b.type ?? "")),
       )
     : [];
 
@@ -308,32 +375,34 @@ export function DailyPlanCard({
 
           {showManual && (
             <div className="mt-3 grid grid-cols-2 gap-2">
-              {[
-                {
-                  key: "dailyTargetKcal",
-                  label: "Ккал/день",
-                  unit: "",
-                  color: null,
-                },
-                {
-                  key: "dailyTargetProtein_g",
-                  label: "Білки",
-                  unit: "г",
-                  color: "text-blue-400",
-                },
-                {
-                  key: "dailyTargetFat_g",
-                  label: "Жири",
-                  unit: "г",
-                  color: "text-yellow-400",
-                },
-                {
-                  key: "dailyTargetCarbs_g",
-                  label: "Вуглеводи",
-                  unit: "г",
-                  color: "text-green-400",
-                },
-              ].map(({ key, label, unit, color }) => (
+              {(
+                [
+                  {
+                    key: "dailyTargetKcal",
+                    label: "Ккал/день",
+                    unit: "",
+                    color: null,
+                  },
+                  {
+                    key: "dailyTargetProtein_g",
+                    label: "Білки",
+                    unit: "г",
+                    color: "text-blue-400",
+                  },
+                  {
+                    key: "dailyTargetFat_g",
+                    label: "Жири",
+                    unit: "г",
+                    color: "text-yellow-400",
+                  },
+                  {
+                    key: "dailyTargetCarbs_g",
+                    label: "Вуглеводи",
+                    unit: "г",
+                    color: "text-green-400",
+                  },
+                ] as const
+              ).map(({ key, label, unit, color }) => (
                 <div key={key}>
                   <div
                     className={cn(
@@ -474,36 +543,41 @@ export function DailyPlanCard({
           </div>
         )}
 
-        {weekPlan?.days?.length > 0 && (
+        {(weekPlan?.days?.length ?? 0) > 0 && (
           <div className="rounded-2xl border border-line bg-panel p-4 space-y-3">
             <div className="text-sm font-semibold text-text">Тижневий план</div>
-            {weekPlan.days.map((d, i) => (
-              <div
-                key={i}
-                className="text-sm border-b border-line/40 pb-2 last:border-0"
-              >
-                <div className="font-semibold text-nutrition-strong dark:text-nutrition">
-                  {d.label}
+            {(weekPlan!.days as WeekPlanDay[]).map(
+              (d: WeekPlanDay, i: number) => (
+                <div
+                  key={i}
+                  className="text-sm border-b border-line/40 pb-2 last:border-0"
+                >
+                  <div className="font-semibold text-nutrition-strong dark:text-nutrition">
+                    {d.label}
+                  </div>
+                  {d.note && (
+                    <div className="text-xs text-subtle mt-0.5">{d.note}</div>
+                  )}
+                  {Array.isArray(d.meals) && d.meals.length > 0 && (
+                    <ul className="list-disc pl-4 mt-1 text-xs text-text space-y-0.5">
+                      {d.meals.map((line: string, j: number) => (
+                        <li key={j}>{line}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                {d.note && (
-                  <div className="text-xs text-subtle mt-0.5">{d.note}</div>
-                )}
-                {Array.isArray(d.meals) && d.meals.length > 0 && (
-                  <ul className="list-disc pl-4 mt-1 text-xs text-text space-y-0.5">
-                    {d.meals.map((line, j) => (
-                      <li key={j}>{line}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-            {weekPlan.shoppingList?.length > 0 && (
+              ),
+            )}
+            {((weekPlan!.shoppingList as string[] | undefined)?.length ?? 0) >
+              0 && (
               <div>
                 <div className="text-xs text-subtle mb-1">Список покупок</div>
                 <ul className="list-disc pl-4 text-sm text-text space-y-0.5">
-                  {weekPlan.shoppingList.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
+                  {(weekPlan!.shoppingList as string[]).map(
+                    (s: string, i: number) => (
+                      <li key={i}>{s}</li>
+                    ),
+                  )}
                 </ul>
               </div>
             )}

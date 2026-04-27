@@ -13,7 +13,7 @@
  *    `fizruk_rest_settings_v1` використовує web — payload рідe під
  *    тим самим cloud-sync-конвертом, нічого мігрувати не треба).
  *
- * Deferred (див. `docs/react-native-migration.md` Phase 2 / Hub-core,
+ * Deferred (див. `docs/mobile/react-native-migration.md` Phase 2 / Hub-core,
  * §2.4) — рендериться як `DeferredNotice`-карточка:
  *  - **Резервні копії та дані** (`WorkoutBackupBar` на web).
  *    Експорт / імпорт тренувань чекають реальний mobile-адаптер
@@ -51,7 +51,7 @@ function cx(...classes: Array<string | false | null | undefined>): string {
 function DeferredNotice({ children }: { children: string }) {
   return (
     <Card variant="flat" radius="md" padding="md" className="border-dashed">
-      <Text className="text-xs text-stone-500 leading-snug">{children}</Text>
+      <Text className="text-xs text-fg-muted leading-snug">{children}</Text>
     </Card>
   );
 }
@@ -74,7 +74,7 @@ export function FizrukSection() {
   return (
     <SettingsGroup title="Фізрук" emoji="🏋️">
       <SettingsSubGroup title="Таймер відпочинку">
-        <Text className="text-xs text-stone-500 leading-snug">
+        <Text className="text-xs text-fg-muted leading-snug">
           Рекомендований час відпочинку підбирається автоматично за типом
           вправи. Ці значення з&apos;являться як кнопка за замовчуванням у
           кожній вправі.
@@ -86,9 +86,7 @@ export function FizrukSection() {
               className="flex-row items-center gap-3"
               testID={`fizruk-rest-row-${cat}`}
             >
-              <Text className="text-xs text-stone-900 flex-1 min-w-0">
-                {label}
-              </Text>
+              <Text className="text-xs text-fg flex-1 min-w-0">{label}</Text>
               <View className="flex-row items-center gap-1 flex-wrap justify-end">
                 {REST_PRESETS.map((sec) => {
                   const selected = resolved[cat] === sec;
@@ -112,7 +110,7 @@ export function FizrukSection() {
                       <Text
                         className={cx(
                           "text-xs font-semibold",
-                          selected ? "text-brand-700" : "text-stone-500",
+                          selected ? "text-brand-700" : "text-fg-muted",
                         )}
                       >
                         {sec}с

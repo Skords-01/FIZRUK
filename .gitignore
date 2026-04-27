@@ -23,9 +23,18 @@ test-results/
 # Cursor / local IDE settings
 .cursor/
 
+# Local screenshots / scratch assets (use external storage like Notion/Figma)
+attached_assets/
+
 # Mobile / EAS
 apps/mobile/google-services.json
 apps/mobile/GoogleService-Info.plist
 apps/mobile/.expo/
 apps/mobile/ios/
 apps/mobile/android/
+
+# Ops stack secrets (n8n)
+ops/.env.ops
+
+# Sandbox / experimental prototypes
+artifacts/

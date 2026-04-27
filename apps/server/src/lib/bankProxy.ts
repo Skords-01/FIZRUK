@@ -9,7 +9,7 @@ import { ExternalServiceError } from "../obs/errors.js";
  * помилок, per-upstream circuit breaker та in-memory TTL-кеш для ідентичних GET.
  *
  * Розподіл відповідальності: path-whitelist і sanitizing заголовків залишаються в
- * handler-ах (`modules/mono.js`, `modules/privat.js`) — це policy, не transport.
+ * handler-ах (`modules/mono/mono.js`, `modules/mono/privat.js`) — це policy, не transport.
  *
  * Стан (breakers, cache) — module-level. `__bankProxyTestHooks()` експортується тільки
  * для unit-тестів (скидання стану, конфіг retry-затримок/TTL).

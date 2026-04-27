@@ -8,6 +8,8 @@
 // єдина точка, де контекст «запікається» з Web-LS.
 
 import { getCategory } from "../../../modules/finyk/utils";
+import { getCategorySpendList } from "@sergeant/finyk-domain/domain/categories";
+import type { TxSplitsLike } from "@sergeant/finyk-domain/lib/transactions";
 import { manualCategoryToCanonicalId } from "@sergeant/finyk-domain/domain/personalization";
 import { Recommendations } from "@sergeant/insights";
 
@@ -40,6 +42,16 @@ function startOfCurrentMonth(): Date {
   return d;
 }
 
+interface TxSplit {
+  categoryId?: string;
+  amount?: number;
+}
+
+function readSplits(txSplits: TxSplitsLike, id: string): readonly TxSplit[] {
+  const v = txSplits[id];
+  return Array.isArray(v) ? (v as readonly TxSplit[]) : [];
+}
+
 export function buildFinanceContext(): FinanceContext {
   const now = new Date();
   const monthStart = startOfCurrentMonth();
@@ -66,6 +78,9 @@ export function buildFinanceContext(): FinanceContext {
     "finyk_manual_expenses_v1",
     [],
   );
+  const txSplitsRaw = safeLS<TxSplitsLike>("finyk_tx_splits", {});
+  const txSplits: TxSplitsLike =
+    txSplitsRaw && typeof txSplitsRaw === "object" ? txSplitsRaw : {};
 
   const thisMonthTx = transactions.filter((tx) => {
     if (hiddenTxIds.has(tx.id)) return false;
@@ -73,15 +88,25 @@ export function buildFinanceContext(): FinanceContext {
     return txTimestamp(tx) >= monthStartMs;
   });
 
-  // Legacy categorySpend (raw keys) — залишаємо для сумісності з існуючими
-  // правилами budget_over/budget_warn, які працюють з raw `txCategories` /
-  // manual labels. Це ЯВНА тимчасова двоякість — див. canonicalMonthSpend.
+  // Legacy categorySpend (raw override keys) — збережено для сумісності з
+  // правилами, де categoryId бюджету може не збігатися з canonical id.
+  // budgetLimitsRule використовує як fallback після canonicalMonthSpend.
   const categorySpend: Record<string, number> = {};
   for (const tx of thisMonthTx) {
     if ((tx.amount ?? 0) >= 0) continue;
-    const catId = txCategories[tx.id] || "other";
-    categorySpend[catId] =
-      (categorySpend[catId] || 0) + Math.abs(tx.amount / 100);
+    const splits = readSplits(txSplits, tx.id);
+    if (splits.length > 0) {
+      for (const s of splits) {
+        if (!s.categoryId || s.categoryId === "internal_transfer") continue;
+        const amt = Math.abs(Number(s.amount) || 0);
+        if (amt <= 0) continue;
+        categorySpend[s.categoryId] = (categorySpend[s.categoryId] || 0) + amt;
+      }
+    } else {
+      const catId = txCategories[tx.id] || "other";
+      categorySpend[catId] =
+        (categorySpend[catId] || 0) + Math.abs(tx.amount / 100);
+    }
   }
   for (const me of manualExpenses) {
     const ts = new Date(me.date).getTime();
@@ -90,39 +115,61 @@ export function buildFinanceContext(): FinanceContext {
     categorySpend[catId] = (categorySpend[catId] || 0) + Math.abs(me.amount);
   }
 
-  // Canonical-id сумарні — для правил, що оперують МСС-резолвом.
+  // Canonical-id витрати — делегуємо до getCategorySpendList (єдине
+  // джерело правди для Finyk Overview, Budgets і Hub).
+  const spendList = getCategorySpendList(thisMonthTx, {
+    txCategories,
+    txSplits,
+    customCategories,
+  });
   const canonicalMonthSpend = new Map<string, number>();
+  for (const { id, spent } of spendList) {
+    canonicalMonthSpend.set(id, spent);
+  }
+  // Ручні витрати — додаємо поверх результатів getCategorySpendList.
+  for (const me of manualExpenses) {
+    if (new Date(me.date).getTime() < monthStartMs) continue;
+    const canonKey = manualCategoryToCanonicalId(me.category) || "other";
+    if (canonKey === "internal_transfer") continue;
+    canonicalMonthSpend.set(
+      canonKey,
+      (canonicalMonthSpend.get(canonKey) || 0) +
+        Math.abs(Number(me.amount) || 0),
+    );
+  }
+
+  // canonicalTotalCount — лічильник транзакцій за ВСЕ завантажене (не лише
+  // поточний місяць); використовується правилом `frequentNoBudget`.
   const canonicalTotalCount = new Map<string, number>();
   for (const tx of transactions) {
     if (hiddenTxIds.has(tx.id) || transferIds.has(tx.id)) continue;
     if ((tx.amount ?? 0) >= 0) continue;
-    const override = txCategories[tx.id] || null;
-    const cat = getCategory(
-      tx.description || "",
-      tx.mcc || 0,
-      override,
-      customCategories,
-    );
-    const catId = cat?.id;
-    if (!catId || catId === "internal_transfer") continue;
-    canonicalTotalCount.set(catId, (canonicalTotalCount.get(catId) || 0) + 1);
-    if (txTimestamp(tx) >= monthStartMs) {
-      canonicalMonthSpend.set(
-        catId,
-        (canonicalMonthSpend.get(catId) || 0) + Math.abs(tx.amount / 100),
+    const splits = readSplits(txSplits, tx.id);
+    if (splits.length > 0) {
+      for (const s of splits) {
+        if (!s.categoryId || s.categoryId === "internal_transfer") continue;
+        canonicalTotalCount.set(
+          s.categoryId,
+          (canonicalTotalCount.get(s.categoryId) || 0) + 1,
+        );
+      }
+    } else {
+      const override = txCategories[tx.id] || null;
+      const cat = getCategory(
+        tx.description || "",
+        tx.mcc || 0,
+        override,
+        customCategories,
       );
+      const catId = cat?.id;
+      if (!catId || catId === "internal_transfer") continue;
+      canonicalTotalCount.set(catId, (canonicalTotalCount.get(catId) || 0) + 1);
     }
   }
   for (const me of manualExpenses) {
     const key = manualCategoryToCanonicalId(me.category) || "other";
     if (key === "internal_transfer") continue;
     canonicalTotalCount.set(key, (canonicalTotalCount.get(key) || 0) + 1);
-    if (new Date(me.date).getTime() >= monthStartMs) {
-      canonicalMonthSpend.set(
-        key,
-        (canonicalMonthSpend.get(key) || 0) + Math.abs(Number(me.amount) || 0),
-      );
-    }
   }
 
   const limits = budgets.filter((b) => b.type === "limit");

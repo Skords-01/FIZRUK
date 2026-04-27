@@ -2,9 +2,9 @@ import { lazy, Suspense, useEffect } from "react";
 import { ErrorBoundary } from "../ErrorBoundary";
 
 const HubSearch = lazy(() =>
-  import("../HubSearch").then((m) => ({ default: m.HubSearch })),
+  import("../hub/HubSearch").then((m) => ({ default: m.HubSearch })),
 );
-const HubChat = lazy(() => import("../HubChat"));
+const HubChat = lazy(() => import("../hub/HubChat"));
 
 // Коли модалка крешиться, `ErrorBoundary` рендерить `null`, але стан
 // `chatOpen` / `searchOpen` у `useHubUIState` лишається `true` — усі
@@ -29,6 +29,8 @@ export function HubModals({
   chatOpen,
   onCloseChat,
   chatInitialMessage,
+  chatAutoSend,
+  onOpenCatalogue,
   searchOpen,
   onCloseSearch,
   onOpenModule,
@@ -41,6 +43,8 @@ export function HubModals({
             <HubChat
               onClose={onCloseChat}
               initialMessage={chatInitialMessage}
+              autoSendInitial={chatAutoSend}
+              onOpenCatalogue={onOpenCatalogue}
             />
           </Suspense>
         </ErrorBoundary>

@@ -56,7 +56,7 @@ function localDateKey(d: Date): string {
  * Resolve the ISO-week key for a given date. The key is the date of
  * the *Monday* of that week in local time, formatted as YYYY-MM-DD.
  *
- * Matches `apps/web/src/core/useWeeklyDigest.ts → getWeekKey`
+ * Matches `apps/web/src/core/insights/useWeeklyDigest.ts → getWeekKey`
  * verbatim so a digest generated on web is visible on mobile (and
  * vice versa) without a migration.
  */

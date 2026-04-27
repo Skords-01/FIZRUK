@@ -9,7 +9,7 @@
 import { detectFirstRealEntry as sharedDetectFirstRealEntry } from "@sergeant/shared";
 import { hasAnyRealEntry as sharedHasAnyRealEntry } from "@sergeant/shared";
 import type { KVStore } from "@sergeant/shared";
-import { trackEvent } from "../analytics";
+import { trackEvent } from "../observability/analytics";
 
 const localStorageStore: KVStore = {
   getString(key) {

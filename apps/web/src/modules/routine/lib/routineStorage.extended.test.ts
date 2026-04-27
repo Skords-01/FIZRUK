@@ -522,7 +522,7 @@ describe("edge cases: loadRoutineState sanitization", () => {
   it("коерсить completions як не-об'єкт у порожню мапу", () => {
     const raw = {
       schemaVersion: 3,
-      habits: [],
+      habits: [] as unknown[],
       completions: "not-an-object",
     };
     localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(raw));

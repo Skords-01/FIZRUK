@@ -64,7 +64,7 @@ function Group({
 }) {
   return (
     <div>
-      <SectionHeading size="xs" tone="subtle" className="mb-3">
+      <SectionHeading size="xs" variant="subtle" className="mb-3">
         {label}
       </SectionHeading>
       <div className={row ? "flex flex-wrap items-center gap-3" : ""}>
@@ -125,10 +125,13 @@ export function DesignShowcase() {
       {/* ── Sticky nav ──────────────────────────────────────────── */}
       <header className="sticky top-0 z-[100] bg-panel/90 backdrop-blur-md border-b border-line">
         <div className="max-w-3xl mx-auto px-5 h-12 flex items-center gap-4">
-          <span className="font-extrabold text-text text-sm shrink-0">
+          <h1 className="font-extrabold text-text text-sm shrink-0">
             Design System
-          </span>
-          <nav className="flex items-center gap-0.5 overflow-x-auto flex-1 min-w-0 scrollbar-hide">
+          </h1>
+          <nav
+            aria-label="Розділи дизайн-системи"
+            className="flex items-center gap-0.5 overflow-x-auto flex-1 min-w-0 scrollbar-hide"
+          >
             {NAV_SECTIONS.map((s) => (
               <a
                 key={s.id}
@@ -323,28 +326,28 @@ export function DesignShowcase() {
           </Group>
 
           <Group label="SectionHeading — тони" row>
-            <SectionHeading size="xs" tone="subtle">
+            <SectionHeading size="xs" variant="subtle">
               subtle
             </SectionHeading>
-            <SectionHeading size="xs" tone="muted">
+            <SectionHeading size="xs" variant="muted">
               muted
             </SectionHeading>
-            <SectionHeading size="xs" tone="text">
+            <SectionHeading size="xs" variant="text">
               text
             </SectionHeading>
-            <SectionHeading size="xs" tone="accent">
+            <SectionHeading size="xs" variant="accent">
               accent
             </SectionHeading>
-            <SectionHeading size="xs" tone="finyk">
+            <SectionHeading size="xs" variant="finyk">
               finyk
             </SectionHeading>
-            <SectionHeading size="xs" tone="fizruk">
+            <SectionHeading size="xs" variant="fizruk">
               fizruk
             </SectionHeading>
-            <SectionHeading size="xs" tone="routine">
+            <SectionHeading size="xs" variant="routine">
               routine
             </SectionHeading>
-            <SectionHeading size="xs" tone="nutrition">
+            <SectionHeading size="xs" variant="nutrition">
               nutrition
             </SectionHeading>
           </Group>
@@ -446,8 +449,8 @@ export function DesignShowcase() {
 
         {/* ── 4. BADGES ──────────────────────────────────────────── */}
         <Sec id="badges" title="Бейджі">
-          {(["soft", "solid", "outline"] as const).map((tone) => (
-            <Group key={tone} label={`tone="${tone}"`} row>
+          {(["soft", "solid", "outline"] as const).map((badgeTone) => (
+            <Group key={badgeTone} label={`tone="${badgeTone}"`} row>
               {(
                 [
                   "neutral",
@@ -462,7 +465,7 @@ export function DesignShowcase() {
                   "nutrition",
                 ] as const
               ).map((variant) => (
-                <Badge key={variant} variant={variant} tone={tone}>
+                <Badge key={variant} variant={variant} tone={badgeTone}>
                   {variant}
                 </Badge>
               ))}
@@ -622,12 +625,21 @@ export function DesignShowcase() {
 
           <Group label="Select — розміри та error" row>
             {(["sm", "md", "lg"] as const).map((size) => (
-              <Select key={size} size={size} className="w-40">
+              <Select
+                key={size}
+                size={size}
+                className="w-40"
+                aria-label={`Приклад Select, розмір ${size}`}
+              >
                 <option>Варіант 1</option>
                 <option>Варіант 2</option>
               </Select>
             ))}
-            <Select className="w-40" error>
+            <Select
+              className="w-40"
+              error
+              aria-label="Приклад Select, стан error"
+            >
               <option>Error стан</option>
             </Select>
           </Group>
@@ -659,7 +671,7 @@ export function DesignShowcase() {
 
         {/* ── 7. DATA DISPLAY ────────────────────────────────────── */}
         <Sec id="data" title="Відображення даних">
-          <Group label="Stat — тони">
+          <Group label="Stat — варіанти">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {(
                 [
@@ -672,9 +684,14 @@ export function DesignShowcase() {
                   "routine",
                   "nutrition",
                 ] as const
-              ).map((tone) => (
-                <Card key={tone} variant="default" padding="md" radius="lg">
-                  <Stat label={tone} value="1 234" sublabel="+5%" tone={tone} />
+              ).map((variant) => (
+                <Card key={variant} variant="default" padding="md" radius="lg">
+                  <Stat
+                    label={variant}
+                    value="1 234"
+                    sublabel="+5%"
+                    variant={variant}
+                  />
                 </Card>
               ))}
             </div>
@@ -774,7 +791,7 @@ export function DesignShowcase() {
               ]}
               value={tabVal}
               onChange={setTabVal}
-              tone="underline"
+              style="underline"
             />
           </Group>
 
@@ -782,10 +799,10 @@ export function DesignShowcase() {
             <div className="space-y-3">
               {(
                 ["brand", "finyk", "fizruk", "routine", "nutrition"] as const
-              ).map((accent) => (
-                <div key={accent} className="flex items-center gap-3">
+              ).map((variant) => (
+                <div key={variant} className="flex items-center gap-3">
                   <span className="text-2xs text-subtle font-mono w-20 shrink-0">
-                    {accent}
+                    {variant}
                   </span>
                   <Tabs
                     items={[
@@ -801,8 +818,8 @@ export function DesignShowcase() {
                         : tabVal
                     }
                     onChange={setTabVal}
-                    tone="pill"
-                    accent={accent}
+                    style="pill"
+                    variant={variant}
                   />
                 </div>
               ))}
@@ -811,10 +828,10 @@ export function DesignShowcase() {
 
           <Group label="Segmented — solid та soft">
             <div className="space-y-5">
-              {(["solid", "soft"] as const).map((tone) => (
-                <div key={tone}>
+              {(["solid", "soft"] as const).map((segStyle) => (
+                <div key={segStyle}>
                   <div className="text-2xs text-subtle font-mono mb-2">
-                    tone=&quot;{tone}&quot;
+                    style=&quot;{segStyle}&quot;
                   </div>
                   <div className="flex flex-wrap gap-3">
                     {(
@@ -825,9 +842,9 @@ export function DesignShowcase() {
                         "routine",
                         "nutrition",
                       ] as const
-                    ).map((accent) => (
+                    ).map((variant) => (
                       <Segmented
-                        key={accent}
+                        key={variant}
                         items={[
                           { value: "day", label: "День" },
                           { value: "week", label: "Тиждень" },
@@ -837,8 +854,8 @@ export function DesignShowcase() {
                         onChange={(v) =>
                           setSegVal(v as "day" | "week" | "month")
                         }
-                        tone={tone}
-                        accent={accent}
+                        style={segStyle}
+                        variant={variant}
                       />
                     ))}
                   </div>
@@ -857,6 +874,7 @@ export function DesignShowcase() {
                   >
                     <ModuleBottomNav
                       module={mod}
+                      ariaLabel={`ModuleBottomNav (${mod})`}
                       items={[
                         {
                           id: "home",
@@ -1033,7 +1051,7 @@ export function DesignShowcase() {
                 variant="default"
                 padding="sm"
                 radius="lg"
-                className="motion-safe:animate-pulse-soft text-xs font-mono text-muted"
+                className="motion-safe:animate-pulse-soft text-xs font-mono text-text"
               >
                 pulse-soft
               </Card>

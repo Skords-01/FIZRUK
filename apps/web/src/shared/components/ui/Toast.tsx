@@ -3,8 +3,8 @@ import { cn } from "@shared/lib/cn";
 
 const VARIANT: Record<ToastType, string> = {
   success: "bg-brand-700 text-white",
-  error: "bg-danger text-white",
-  warning: "bg-warning text-white",
+  error: "bg-danger-strong text-white",
+  warning: "bg-warning-strong text-white",
   info: "bg-primary text-bg",
 };
 
@@ -100,7 +100,7 @@ export function ToastContainer() {
           key={t.id}
           className={cn(
             "pointer-events-auto w-full px-4 py-3 rounded-2xl text-sm font-semibold shadow-float flex items-center gap-2.5",
-            "animate-in fade-in slide-in-from-top-2 duration-200",
+            "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-200",
             VARIANT[t.type] || VARIANT.info,
           )}
           role="alert"

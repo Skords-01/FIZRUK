@@ -3,7 +3,7 @@
  * Prevents magic strings scattered across the codebase.
  *
  * When adding a new key, also consider whether it should be part of cloud
- * sync — if yes, add it to `SYNC_MODULES` in `src/core/useCloudSync.js`.
+ * sync — if yes, add it to `SYNC_MODULES` in `src/core/cloudSync/useCloudSync.js`.
  */
 export const STORAGE_KEYS = {
   // ─── Hub ──────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ export const STORAGE_KEYS = {
   // Mobile-only sync-subsystem keys. Prefixed with `mobile:` to avoid
   // colliding with web keys in shared tests / fixtures, and to make it
   // obvious at a glance that these live in MMKV (not localStorage).
-  // See `docs/react-native-migration.md` § 6.1.
+  // See `docs/mobile/react-native-migration.md` § 6.1.
   MOBILE_SYNC_VERSIONS: "mobile:sync_versions",
   MOBILE_SYNC_DIRTY_MODULES: "mobile:sync_dirty_modules",
   MOBILE_SYNC_MODULE_MODIFIED: "mobile:sync_module_modified",

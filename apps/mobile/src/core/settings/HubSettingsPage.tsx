@@ -1,14 +1,16 @@
 /**
  * Sergeant Hub-core — HubSettingsPage shell (React Native, first cut)
  *
- * Mobile port of `apps/web/src/core/HubSettingsPage.tsx`.
+ * Mobile port of `apps/web/src/core/hub/HubSettingsPage.tsx`.
  *
  * Scope of this cut (Phase 2 / Hub-core — remaining sections PR):
  *  - Shell with a screen title ("Налаштування") and a vertical stack of
  *    collapsible `SettingsGroup` cards, one per section.
- *  - All seven Hub-core sections now porting in: `GeneralSection`,
+ *  - All eight Hub-core sections now porting in: `GeneralSection`,
  *    `NotificationsSection`, `RoutineSection`, `FinykSection`,
- *    `FizrukSection`, `AIDigestSection`, `ExperimentalSection`.
+ *    `FizrukSection`, `AIDigestSection`, `AssistantCatalogueSection`,
+ *    `ExperimentalSection`. The catalogue section is a thin launcher
+ *    for the `/assistant` modal route — see `app/assistant.tsx`.
  *
  * Intentional differences from the web shell:
  *  - No `Tabs` group switcher and no fuzzy search input yet — both
@@ -30,6 +32,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AccountSection } from "./AccountSection";
 import { AIDigestSection } from "./AIDigestSection";
+import { AssistantCatalogueSection } from "./AssistantCatalogueSection";
 import { ExperimentalSection } from "./ExperimentalSection";
 import { FinykSection } from "./FinykSection";
 import { FizrukSection } from "./FizrukSection";
@@ -45,9 +48,7 @@ export function HubSettingsPage() {
         contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text className="text-[22px] font-bold text-stone-900 mb-1">
-          Налаштування
-        </Text>
+        <Text className="text-[22px] font-bold text-fg mb-1">Налаштування</Text>
 
         <GeneralSection />
         <NotificationsSection />
@@ -55,6 +56,7 @@ export function HubSettingsPage() {
         <FinykSection />
         <FizrukSection />
         <AIDigestSection />
+        <AssistantCatalogueSection />
         <ExperimentalSection />
         <AccountSection />
       </ScrollView>

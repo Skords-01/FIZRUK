@@ -1,5 +1,7 @@
 # Observability Runbook
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+
 Інструкції "що робити, коли спрацював алерт" для правил з
 [`prometheus/alert_rules.yml`](./prometheus/alert_rules.yml). Тримай коротко:
 перший крок завжди `/metrics` + логи Pino за той же інтервал.
@@ -71,7 +73,7 @@
 1. `sum by (module) (rate(sync_conflicts_total[1h]))` — хто конфліктить.
 2. Типово: два девайси одного user-а пишуть незалежно, `lastPulledAt`
    старий. Якщо вибух на одному module — регресія в логіці merge-у.
-3. Подивись чи не було недавнього деплою `server/modules/sync.js`.
+3. Подивись чи не було недавнього деплою `server/modules/sync/sync.js`.
 
 ## AuthErrorBudgetBurn
 

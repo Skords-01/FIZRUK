@@ -5,7 +5,7 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
-import sergeantDesign from "./eslint-plugins/sergeant-design/index.js";
+import sergeantDesign from "./packages/eslint-plugin-sergeant-design/index.js";
 
 const tsRecommendedScoped = tseslint.configs.recommended.map((cfg) => ({
   ...cfg,
@@ -66,6 +66,22 @@ export default [
       // "warn" initially so it doesn't block CI; promote to "error" once
       // the codebase is clean.
       "sergeant-design/ai-marker-syntax": "warn",
+      // Tailwind opacity guardrail — `<color>/<N>` only renders when N
+      // is in `theme.opacity`. Sergeant's preset registers 0/5/8/10/…/100
+      // (see `packages/design-tokens/tailwind-preset.js`); any other
+      // step (e.g. `/7`, `/12`, `/18`) is silently dropped and the
+      // surrounding `dark:` / `hover:` override falls through to the
+      // light-mode background — this is what bug #814 was.
+      "sergeant-design/valid-tailwind-opacity": "error",
+      // WCAG-AA `-strong` tier guardrail — every saturated brand `bg-*`
+      // utility paired with `text-white` regresses to ~2.4–2.8 : 1
+      // contrast (the bug class fixed in PRs #854 / #855). The fix is
+      // `bg-{family}-strong text-white`. See docs/design/BRANDBOOK.md →
+      // "WCAG-AA `-strong` Tier" for the full mapping. Promoted from
+      // "warn" to "error" once the cleanup PR migrated the last 28
+      // call-sites — the codebase is now clean against this rule, and
+      // any new violation must be intentional.
+      "sergeant-design/no-low-contrast-text-on-fill": "error",
       "no-empty": ["error", { allowEmptyCatch: true }],
       "no-unused-vars": [
         "error",
@@ -125,9 +141,21 @@ export default [
   // own error message + docs — it would be tautological to lint
   // itself.
   {
-    files: ["eslint-plugins/sergeant-design/**/*.js"],
+    files: ["packages/eslint-plugin-sergeant-design/**/*.js"],
     rules: {
       "sergeant-design/no-ellipsis-dots": "off",
+    },
+  },
+  // The plugin's own __tests__ feed offending Tailwind opacity strings
+  // (`bg-finyk/7`, `text-danger/18`, …) into the linter as fixtures — the
+  // rule would otherwise self-flag every fixture. The same applies to
+  // `no-low-contrast-text-on-fill`, whose test fixtures contain the
+  // very `bg-brand text-white` patterns the rule is meant to flag.
+  {
+    files: ["packages/eslint-plugin-sergeant-design/**/*.{js,mjs}"],
+    rules: {
+      "sergeant-design/valid-tailwind-opacity": "off",
+      "sergeant-design/no-low-contrast-text-on-fill": "off",
     },
   },
   // Jest setup / test files need jest globals.
@@ -166,7 +194,7 @@ export default [
   // quota fallbacks. New web code MUST go through one of those.
   //
   // The `ignores` list below names every existing call-site as of the
-  // rule's introduction (see `docs/frontend-tech-debt.md` §2). Migrate
+  // rule's introduction (see `docs/tech-debt/frontend.md` §2). Migrate
   // a file → drop it from the list. Test files are exempt entirely:
   // they routinely seed/inspect raw `localStorage` as fixtures and are
   // already isolated from production hazards.
@@ -204,26 +232,23 @@ export default [
       // `safeReadLS` / `useLocalStorageState` / `createModuleStorage`
       // and remove the entry below.
       "apps/web/src/core/App.tsx",
-      "apps/web/src/core/AssistantAdviceCard.tsx",
-      "apps/web/src/core/HubChat.tsx",
-      "apps/web/src/core/HubDashboard.tsx",
-      "apps/web/src/core/HubReports.tsx",
-      "apps/web/src/core/HubSearch.tsx",
-      "apps/web/src/core/OnboardingWizard.tsx",
-      "apps/web/src/core/ProfilePage.tsx",
-      "apps/web/src/core/TodayFocusCard.tsx",
-      "apps/web/src/core/analytics.ts",
+      "apps/web/src/core/insights/AssistantAdviceCard.tsx",
+      "apps/web/src/core/hub/HubChat.tsx",
+      "apps/web/src/core/hub/HubReports.tsx",
+      "apps/web/src/core/hub/HubSearch.tsx",
+      "apps/web/src/core/onboarding/OnboardingWizard.tsx",
+      "apps/web/src/core/insights/TodayFocusCard.tsx",
+      "apps/web/src/core/observability/analytics.ts",
       "apps/web/src/core/app/pwaAction.ts",
       "apps/web/src/core/app/useIosInstallBanner.ts",
       "apps/web/src/core/app/usePwaInstall.ts",
       "apps/web/src/core/hints/HintsOrchestrator.tsx",
       "apps/web/src/core/hooks/usePwaActions.ts",
       "apps/web/src/core/hub/useFinykHubPreview.ts",
-      "apps/web/src/core/hubBackup.ts",
-      "apps/web/src/core/hubSearchEngine.ts",
+      "apps/web/src/core/hub/hubBackup.ts",
+      "apps/web/src/core/hub/hubSearchEngine.ts",
       "apps/web/src/core/lib/chatActions/crossActions.ts",
       "apps/web/src/core/lib/chatActions/finykActions.ts",
-      "apps/web/src/core/lib/chatActions/fizrukActions.ts",
       "apps/web/src/core/lib/dailyFinykSummary.ts",
       "apps/web/src/core/lib/hubChatContext.ts",
       "apps/web/src/core/lib/hubChatUtils.ts",
@@ -239,13 +264,11 @@ export default [
       "apps/web/src/core/onboarding/presetApply.ts",
       "apps/web/src/core/onboarding/seedDemoData.ts",
       "apps/web/src/core/onboarding/vibePicks.ts",
-      "apps/web/src/core/settings/FinykSection.tsx",
       "apps/web/src/core/settings/GeneralSection.tsx",
       "apps/web/src/core/settings/hubPrefs.ts",
-      "apps/web/src/core/useCoachInsight.ts",
-      "apps/web/src/core/useWeeklyDigest.ts",
+      "apps/web/src/core/insights/useCoachInsight.ts",
+      "apps/web/src/core/insights/useWeeklyDigest.ts",
       "apps/web/src/modules/finyk/pages/Overview.tsx",
-      "apps/web/src/modules/finyk/pages/Transactions.tsx",
       "apps/web/src/modules/fizruk/components/TodayPlanCard.tsx",
       "apps/web/src/modules/fizruk/hooks/useExerciseCatalog.ts",
       "apps/web/src/modules/fizruk/hooks/useFizrukProgramStart.ts",
@@ -274,7 +297,7 @@ export default [
   // re-export `useSession` (see the note in that file).
   {
     files: ["apps/web/src/**/*.{js,jsx,ts,tsx}"],
-    ignores: ["apps/web/src/core/authClient.ts"],
+    ignores: ["apps/web/src/core/auth/authClient.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -284,11 +307,97 @@ export default [
               name: "better-auth/react",
               importNames: ["useSession"],
               message:
-                "Use `useAuth()` from `core/AuthContext` (backed by `useUser()` from `@sergeant/api-client/react` → GET /api/v1/me). `useSession` from Better Auth is only for the actions layer inside `core/authClient.ts`.",
+                "Use `useAuth()` from `core/auth/AuthContext` (backed by `useUser()` from `@sergeant/api-client/react` → GET /api/v1/me). `useSession` from Better Auth is only for the actions layer inside `core/auth/authClient.ts`.",
             },
           ],
         },
       ],
+    },
+  },
+  // Server bigint→string guardrail — the `pg` driver returns `int8` /
+  // `bigint` columns as JavaScript strings; every `.rows.map(…)` that
+  // constructs a response object must wrap numeric-looking columns in
+  // `Number(…)`. See AGENTS.md hard rule #1 and issue #708.
+  //
+  // Scoped to `apps/server/src/**` only — the web app never queries
+  // pg directly.
+  {
+    files: ["apps/server/src/**/*.{js,ts}"],
+    ignores: [
+      "apps/server/src/**/*.test.{js,ts}",
+      "apps/server/src/**/__tests__/**",
+    ],
+    rules: {
+      "sergeant-design/no-bigint-string": "error",
+    },
+  },
+  // React Query keys factory guardrail — AGENTS.md hard rule #2: all
+  // `queryKey` / `mutationKey` values must come from the centralized
+  // factory in `apps/web/src/shared/lib/queryKeys.ts`. Inline array
+  // literals break bulk invalidation and let typos compile silently.
+  // The factory file itself is exempt (it defines the arrays).
+  {
+    files: ["apps/web/src/**/*.{ts,tsx}"],
+    ignores: [
+      "apps/web/src/shared/lib/queryKeys.ts",
+      "apps/web/src/**/*.test.{ts,tsx}",
+      "apps/web/src/**/__tests__/**",
+    ],
+    rules: {
+      "sergeant-design/rq-keys-only-from-factory": "error",
+    },
+  },
+  // Anthropic key logging guardrail — prevents accidental logging of
+  // `process.env.ANTHROPIC_API_KEY` or secret-like identifiers via
+  // console.* / logger.* / pino.* / log.*. See AGENTS.md security rules.
+  // Scoped to both server (where the key lives) and web (defense in depth).
+  {
+    files: ["apps/server/src/**/*.{js,ts}", "apps/web/src/**/*.{ts,tsx}"],
+    ignores: [
+      "apps/server/src/**/*.test.{js,ts}",
+      "apps/server/src/**/__tests__/**",
+      "apps/web/src/**/*.test.{ts,tsx}",
+      "apps/web/src/**/__tests__/**",
+    ],
+    rules: {
+      "sergeant-design/no-anthropic-key-in-logs": "error",
+    },
+  },
+  // Type-safety bypass guardrail — PR-6.E: forbid new `@ts-expect-error`,
+  // `@ts-ignore`, `as any`, and `as unknown as X` in production code.
+  // These patterns erode type safety and make refactoring dangerous.
+  // Test files are exempt (they legitimately need type-level tricks).
+  //
+  // The `ignores` list below names every existing call-site as of the
+  // rule's introduction (see `docs/tech-debt/frontend.md` §no-strict-bypass).
+  // Migrate a file → drop it from the list.
+  {
+    files: ["apps/server/src/**/*.{js,ts}", "apps/web/src/**/*.{ts,tsx}"],
+    ignores: [
+      // Tests can use type bypasses freely as fixtures.
+      "apps/server/src/**/*.test.{js,ts}",
+      "apps/server/src/**/__tests__/**",
+      "apps/web/src/**/*.test.{ts,tsx}",
+      "apps/web/src/**/__tests__/**",
+      "apps/web/src/**/test/**",
+      "apps/web/src/**/*.spec.{ts,tsx}",
+      // ── Existing `as unknown as` call-sites (do not add new ones) ──
+      // Web app
+      "apps/web/src/shared/components/ui/VoiceMicButton.tsx",
+      "apps/web/src/modules/fizruk/pages/Workouts.tsx",
+      "apps/web/src/modules/nutrition/hooks/useBarcodeScanner.ts",
+      "apps/web/src/modules/nutrition/hooks/useNutritionRemoteActions.ts",
+      "apps/web/src/modules/finyk/hooks/useFinykPersonalization.ts",
+      "apps/web/src/core/lib/hubChatUtils.ts",
+      "apps/web/src/core/App.tsx",
+      // Server
+      "apps/server/src/modules/chat/chat.ts",
+      "apps/server/src/lib/anthropic.ts",
+      "apps/server/src/lib/bankProxy.ts",
+      "apps/server/src/lib/webpushSend.ts",
+    ],
+    rules: {
+      "sergeant-design/no-strict-bypass": "error",
     },
   },
   eslintConfigPrettier,

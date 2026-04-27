@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { Icon } from "@shared/components/ui/Icon";
 import { Button } from "@shared/components/ui/Button";
-import { trackEvent, ANALYTICS_EVENTS } from "../analytics";
+import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
 import {
   dismissNudge,
   type NudgeDefinition,

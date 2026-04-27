@@ -24,6 +24,12 @@ export const UserSchema = z.object({
   name: z.string().nullable(),
   image: z.string().nullable(),
   emailVerified: z.boolean(),
+  // Better Auth's `user.createdAt` (час реєстрації акаунта) — ISO-8601
+  // рядок. Потрібен PostHog `identify` для трейту `signup_date` і для
+  // майбутніх "за днем життя акаунта" сегментацій. Nullable, бо для
+  // legacy-юзерів, у яких поле відсутнє у БД, краще лишити null, ніж
+  // валити `/api/v1/me` для всієї сесії.
+  createdAt: z.string().datetime({ offset: true }).nullable(),
 });
 export type User = z.infer<typeof UserSchema>;
 
@@ -296,7 +302,7 @@ const RoutineDigestSchema = z
 
 // Клієнтські агрегатори повертають `null`, коли у модулі немає даних за
 // тиждень (див. `aggregateFizruk`/`aggregateNutrition`/`aggregateRoutine` у
-// `src/core/useWeeklyDigest.ts`). `.nullish()` приймає і `null`, і
+// `src/core/insights/useWeeklyDigest.ts`). `.nullish()` приймає і `null`, і
 // `undefined`, тож запит проходить валідацію незалежно від того, чи
 // клієнт пропускає поле, чи надсилає його як `null`.
 export const WeeklyDigestSchema = z.object({
@@ -307,8 +313,28 @@ export const WeeklyDigestSchema = z.object({
   routine: RoutineDigestSchema.nullish(),
 });
 
+// AI-NOTE: `dateContext` обов'язковий для адекватного темпорального
+// обрамлення інсайту (без нього модель імпровізує "середина тижня" в неділю).
+// Поля: `todayKey` — Kyiv-time `YYYY-MM-DD`; `weekDayUk` — день тижня
+// українською ("понеділок"…"неділя"); `dayOfWeekIso` — 1 (пн)…7 (нд);
+// `daysIntoWeek` — скільки днів тижня вже пройшло (= `dayOfWeekIso`);
+// `weekRange` — людиночитабельний діапазон тижня для контексту.
+const CoachDateContextSchema = z
+  .object({
+    todayKey: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+    weekDayUk: z.string().max(20).optional(),
+    dayOfWeekIso: z.number().int().min(1).max(7).optional(),
+    daysIntoWeek: z.number().int().min(1).max(7).optional(),
+    weekRange: z.string().max(80).optional(),
+  })
+  .partial();
+
 const CoachSnapshotSchema = z
   .object({
+    dateContext: CoachDateContextSchema.nullish(),
     finyk: FinykDigestSchema.nullish(),
     fizruk: FizrukDigestSchema.nullish(),
     nutrition: NutritionDigestSchema.nullish(),
@@ -536,7 +562,7 @@ export const PushSendErrorSchema = z.object({
   platform: PushSendPlatformSchema,
   reason: z.string(),
 });
-export const PushSendSummarySchema = z.object({
+export const PushTestResponseSchema = z.object({
   delivered: z.object({
     ios: z.number().int().nonnegative(),
     android: z.number().int().nonnegative(),
@@ -546,7 +572,11 @@ export const PushSendSummarySchema = z.object({
   errors: z.array(PushSendErrorSchema),
 });
 
-export const PushTestResponseSchema = PushSendSummarySchema;
+// `/api/push/send` (worker fan-out) повертає той самий summary, що й
+// `/api/push/test`. OpenAPI registry віддає їх як окремі іменовані схеми
+// `PushSendSummary` / `PushTestResponse`, тож тримаємо явний alias —
+// рефактор може розщепити їх у майбутньому без зміни контракту.
+export const PushSendSummarySchema = PushTestResponseSchema;
 
 // ────────────────────── Pagination ──────────────────────
 // Переused у будь-якому endpoint-і, що повертає список. Query-params завжди

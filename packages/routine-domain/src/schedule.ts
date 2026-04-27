@@ -16,6 +16,7 @@ import type { Habit } from "./types.js";
 
 export function habitScheduledOnDate(habit: Habit, dateKey: string): boolean {
   if (habit.archived) return false;
+  if (habit.paused) return false;
   const start =
     habit.startDate ||
     (habit.createdAt ? String(habit.createdAt).slice(0, 10) : dateKey);

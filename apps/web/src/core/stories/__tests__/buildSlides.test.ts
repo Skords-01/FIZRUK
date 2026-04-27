@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
 
-vi.mock("../../useWeeklyDigest", () => ({
+vi.mock("../../insights/useWeeklyDigest", () => ({
   aggregateFinyk: vi.fn(() => null),
   aggregateFizruk: vi.fn(() => null),
   aggregateNutrition: vi.fn(() => null),
@@ -14,7 +14,7 @@ import {
   aggregateFizruk,
   aggregateNutrition,
   aggregateRoutine,
-} from "../../useWeeklyDigest";
+} from "../../insights/useWeeklyDigest";
 
 const mFinyk = vi.mocked(aggregateFinyk);
 const mFizruk = vi.mocked(aggregateFizruk);

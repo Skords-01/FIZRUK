@@ -1,5 +1,16 @@
+import type { Dispatch, SetStateAction } from "react";
 import { cn } from "@shared/lib/cn";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
+import type { PantryItem } from "@sergeant/nutrition-domain";
+import type { MealFormState } from "./mealFormUtils";
+
+interface FromPantryRowProps {
+  pantryItems: PantryItem[];
+  fromPantryItem: string | null;
+  setFromPantryItem: Dispatch<SetStateAction<string | null>>;
+  setForm: Dispatch<SetStateAction<MealFormState>>;
+  setFoodQuery: Dispatch<SetStateAction<string>>;
+}
 
 export function FromPantryRow({
   pantryItems,
@@ -7,7 +18,7 @@ export function FromPantryRow({
   setFromPantryItem,
   setForm,
   setFoodQuery,
-}) {
+}: FromPantryRowProps) {
   if (!pantryItems || pantryItems.length === 0) return null;
   return (
     <div className="mb-4 rounded-2xl border border-line bg-panel/40 px-3 py-3">

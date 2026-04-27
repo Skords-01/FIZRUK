@@ -7,8 +7,8 @@
  * secrets). No user-PII capture, no HTTP breadcrumbs, no performance
  * tracing — those land in follow-up phases.
  *
- * @see docs/react-native-migration.md §4 (Phase 12)
- * @see apps/web/src/core/sentry.ts — web-side analogue
+ * @see docs/mobile/react-native-migration.md §4 (Phase 12)
+ * @see apps/web/src/core/observability/sentry.ts — web-side analogue
  */
 
 import * as Sentry from "@sentry/react-native";

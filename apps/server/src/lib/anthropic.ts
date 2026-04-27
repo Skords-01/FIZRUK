@@ -2,6 +2,7 @@ import {
   aiRequestDurationMs,
   aiRequestsTotal,
   aiTokensTotal,
+  anthropicPromptCacheHitTotal,
   externalHttpDurationMs,
   externalHttpRequestsTotal,
 } from "../obs/metrics.js";
@@ -18,6 +19,12 @@ export interface AnthropicCallOptions {
    * caller вирішив перервати.
    */
   signal?: AbortSignal;
+  /**
+   * Версія system prompt (SYSTEM_PROMPT_VERSION). Якщо передано, `recordUsage`
+   * інкрементує `anthropic_prompt_cache_hit_total{version, outcome}` —
+   * per-request лічильник cache hit/miss.
+   */
+  promptVersion?: string;
 }
 
 /**
@@ -96,6 +103,14 @@ function recordOutcome(outcome: string, meta: RecordOutcomeMeta): void {
 interface AnthropicUsage {
   input_tokens?: number;
   output_tokens?: number;
+  /**
+   * Anthropic prompt-caching: токени які були записані в кеш (перший хіт або
+   * post-invalidation refresh). `cache_read_input_tokens` — токени які були
+   * віддані з кешу без передавання в LLM (основний джерело економії).
+   * Див. https://docs.claude.com/en/docs/build-with-claude/prompt-caching.
+   */
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
 }
 
 interface AnthropicResponseData {
@@ -104,7 +119,11 @@ interface AnthropicResponseData {
   [key: string]: unknown;
 }
 
-function recordUsage(model: string, data: AnthropicResponseData | null): void {
+function recordUsage(
+  model: string,
+  data: AnthropicResponseData | null,
+  promptVersion?: string,
+): void {
   try {
     const usage = data?.usage;
     if (!usage) return;
@@ -120,6 +139,30 @@ function recordUsage(model: string, data: AnthropicResponseData | null): void {
         usage.output_tokens,
       );
     }
+    // Prompt-caching: окремі series, щоб в Grafana був явний cache hit/miss
+    // без реконструкції з різниці prompt − cache. `cache_write` биває
+    // при першому хіті в вікні життя кешу (або після бампу SYSTEM_PROMPT_VERSION),
+    // `cache_read` — при кожному наступному хіті.
+    if (Number.isFinite(usage.cache_creation_input_tokens)) {
+      aiTokensTotal.inc(
+        { provider: "anthropic", model, kind: "cache_write" },
+        usage.cache_creation_input_tokens,
+      );
+    }
+    if (Number.isFinite(usage.cache_read_input_tokens)) {
+      aiTokensTotal.inc(
+        { provider: "anthropic", model, kind: "cache_read" },
+        usage.cache_read_input_tokens,
+      );
+    }
+    // Per-request cache outcome counter for Grafana dashboards.
+    if (promptVersion) {
+      const cacheRead = usage.cache_read_input_tokens ?? 0;
+      anthropicPromptCacheHitTotal.inc({
+        version: promptVersion,
+        outcome: cacheRead > 0 ? "hit" : "miss",
+      });
+    }
   } catch {
     /* ignore */
   }
@@ -132,6 +175,7 @@ export async function anthropicMessages(
     timeoutMs = 20000,
     endpoint = "unknown",
     signal: externalSignal,
+    promptVersion,
   }: AnthropicCallOptions = {},
 ): Promise<AnthropicMessagesResult> {
   const maxAttempts = 3;
@@ -181,7 +225,7 @@ export async function anthropicMessages(
       const ms = Number(process.hrtime.bigint() - overallStart) / 1e6;
       if (response.ok) {
         recordOutcome("ok", { model, endpoint, ms });
-        recordUsage(model, data);
+        recordUsage(model, data, promptVersion);
       } else {
         recordOutcome(response.status === 429 ? "rate_limited" : "error", {
           model,

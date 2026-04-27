@@ -44,12 +44,6 @@ export type { AvatarProps, AvatarSize, AvatarStatus } from "./Avatar";
 export { EmptyState } from "./EmptyState";
 export type { EmptyStateProps } from "./EmptyState";
 
-export { EmptyStateIllustration } from "./EmptyStateIllustration";
-export type {
-  EmptyStateIllustrationProps,
-  IllustrationVariant,
-} from "./EmptyStateIllustration";
-
 export { FormField, Label } from "./FormField";
 export type { FormFieldProps, LabelProps } from "./FormField";
 
@@ -66,19 +60,18 @@ export type {
 
 export { SectionHeader, SectionHeading } from "./SectionHeading";
 export type {
-  SectionHeaderProps,
-  SectionHeaderSize,
   SectionHeadingProps,
   SectionHeadingSize,
+  SectionHeadingVariant,
 } from "./SectionHeading";
 
 export { Segmented } from "./Segmented";
 export type {
-  SegmentedAccent,
   SegmentedItem,
   SegmentedProps,
   SegmentedSize,
-  SegmentedTone,
+  SegmentedStyle,
+  SegmentedVariant,
 } from "./Segmented";
 
 export { Select } from "./Select";
@@ -90,6 +83,13 @@ export type {
   PopoverPlacement,
   PopoverProps,
 } from "./Popover";
+
+export { ProgressRing } from "./ProgressRing";
+export type {
+  ProgressRingProps,
+  ProgressRingSize,
+  ProgressRingVariant,
+} from "./ProgressRing";
 
 export { Skeleton, SkeletonText } from "./Skeleton";
 export type { SkeletonProps } from "./Skeleton";
@@ -107,15 +107,20 @@ export { Switch } from "./Switch";
 export type { SwitchProps } from "./Switch";
 
 export { Stat } from "./Stat";
-export type { StatProps, StatSize, StatTone } from "./Stat";
+export type { StatProps, StatSize, StatVariant } from "./Stat";
 
 export { Tabs } from "./Tabs";
 export type {
   TabItem,
-  TabsAccent,
   TabsProps,
   TabsSize,
-  TabsTone,
+  TabsStyle,
+  TabsVariant,
 } from "./Tabs";
 
 export { ToastContainer } from "./Toast";
+
+export { Tooltip } from "./Tooltip";
+export type { TooltipPlacement, TooltipProps } from "./Tooltip";
+
+export type { FormVariant, SmallMediumLarge } from "./types";

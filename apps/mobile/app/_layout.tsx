@@ -11,13 +11,17 @@ import { ApiClientProvider } from "@sergeant/api-client/react";
 
 import { apiClient } from "@/api/apiClient";
 import { SyncStatusOverlay } from "@/core/SyncStatusOverlay";
+import { ColorSchemeBridge } from "@/core/theme/ColorSchemeBridge";
 import { PushRegistrar } from "@/features/push/PushRegistrar";
 // Registers the mobile `expo-haptics`-based adapter on the shared
 // haptic contract (`@sergeant/shared`). Import for side effects only.
 import "@/lib/haptic";
-// Registers the mobile file-download stub on the shared contract.
-// Replaced with an `expo-file-system` + `expo-sharing` adapter in Phase 4+.
+// Registers the mobile `expo-file-system` + `expo-sharing` adapter on the
+// shared file-download contract (`@sergeant/shared`). Import for side effects only.
 import "@/lib/fileDownload";
+// Registers the mobile `expo-document-picker` + `expo-file-system` adapter on
+// the shared file-import contract (`@sergeant/shared`). Import for side effects only.
+import "@/lib/fileImport";
 // Registers the mobile `Keyboard.addListener`-based adapter on the shared
 // visual-keyboard-inset contract (`@sergeant/shared`). Import for side
 // effects only.
@@ -42,6 +46,7 @@ function RootShell() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" options={{ presentation: "modal" }} />
         <Stack.Screen name="settings" options={{ presentation: "modal" }} />
+        <Stack.Screen name="assistant" options={{ presentation: "modal" }} />
         <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
@@ -62,6 +67,7 @@ export default function RootLayout() {
           <ApiClientProvider client={apiClient}>
             <CloudSyncProvider>
               <ToastProvider>
+                <ColorSchemeBridge />
                 <StatusBar style="light" />
                 <RootShell />
                 <ToastContainer />

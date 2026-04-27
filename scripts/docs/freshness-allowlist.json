@@ -1,0 +1,24 @@
+[
+  { "path": "AGENTS.md", "cadenceDays": 90 },
+  { "path": "README.md", "cadenceDays": 90 },
+  { "path": "CONTRIBUTING.md", "cadenceDays": 90 },
+  { "path": "docs/observability/SLO.md", "cadenceDays": 90 },
+  { "path": "docs/observability/runbook.md", "cadenceDays": 60 },
+  { "path": "docs/observability/dashboards.md", "cadenceDays": 90 },
+  { "path": "docs/design/BRANDBOOK.md", "cadenceDays": 90 },
+  { "path": "docs/playbooks/README.md", "cadenceDays": 90 },
+  { "path": "docs/playbooks/hotfix-prod-regression.md", "cadenceDays": 60 },
+  { "path": "docs/playbooks/rotate-secrets.md", "cadenceDays": 60 },
+  { "path": "docs/planning/dev-stack-roadmap.md", "cadenceDays": 90 },
+  { "path": "docs/planning/ai-coding-improvements.md", "cadenceDays": 90 },
+  { "path": "docs/planning/structure-refactor-plan.md", "cadenceDays": 90 },
+  { "path": "docs/integrations/monobank-roadmap.md", "cadenceDays": 90 },
+  { "path": "docs/integrations/railway-vercel.md", "cadenceDays": 90 },
+  { "path": "docs/integrations/renovate-usage.md", "cadenceDays": 90 },
+  {
+    "path": "docs/audits/2026-04-26-sergeant-audit-devin.md",
+    "cadenceDays": 180
+  },
+  { "path": "docs/tech-debt/frontend.md", "cadenceDays": 60 },
+  { "path": "docs/tech-debt/backend.md", "cadenceDays": 60 }
+]

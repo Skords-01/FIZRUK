@@ -116,5 +116,3 @@ export function RecentWorkoutsSection({
     </Card>
   );
 }
-
-export default RecentWorkoutsSection;

@@ -1,20 +1,60 @@
 import { useEffect, useRef, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
+import { useToast } from "@shared/hooks/useToast";
+import { showUndoToast } from "@shared/lib/undoToast";
 import { toLocalISODate } from "@sergeant/shared";
+import type {
+  Meal,
+  MealTypeId,
+  NutritionPrefs,
+  Pantry,
+} from "@sergeant/nutrition-domain";
+import type { NullableMacros } from "@sergeant/shared";
 import {
   deleteSavedRecipe,
   listSavedRecipes,
   saveRecipeToBook,
   scaleMacros,
+  type SavedRecipe,
 } from "../lib/recipeBook";
+import type { RecipeCacheEntry as StoredRecipeCacheEntry } from "../lib/recipeCache";
 import { MEAL_TYPES } from "../lib/mealTypes";
 
-function guessMealTypeIdNow() {
+interface RecipeLike {
+  id?: string;
+  title?: string;
+  timeMinutes?: number | null;
+  servings?: number | null;
+  ingredients?: string[];
+  steps?: string[];
+  tips?: string[];
+  macros?: NullableMacros | null;
+  [key: string]: unknown;
+}
+
+interface RecipesCardProps {
+  busy?: boolean;
+  activePantry?: Pantry | null;
+  prefs: NutritionPrefs;
+  setPrefs: Dispatch<SetStateAction<NutritionPrefs>>;
+  recommendRecipes: () => void | Promise<void>;
+  recipes: RecipeLike[];
+  recipesTried?: boolean;
+  recipesRaw?: string;
+  err?: string | null;
+  fmtMacro: (v: unknown) => string | number;
+  recipeCacheEntry?: StoredRecipeCacheEntry<unknown> | null;
+  addMealToLog?: (meal: Meal) => void | Promise<void>;
+  selectedDate?: string;
+}
+
+function guessMealTypeIdNow(): MealTypeId {
   const h = new Date().getHours();
   if (h >= 5 && h < 11) return "breakfast";
   if (h >= 11 && h < 16) return "lunch";
@@ -22,7 +62,7 @@ function guessMealTypeIdNow() {
   return "snack";
 }
 
-function ChevronIcon({ open }) {
+function ChevronIcon({ open }: { open: boolean }) {
   return (
     <Icon
       name="chevron-right"
@@ -50,12 +90,14 @@ export function RecipesCard({
   recipeCacheEntry,
   addMealToLog,
   selectedDate,
-}) {
-  const [saved, setSaved] = useState([]);
+}: RecipesCardProps) {
+  const toast = useToast();
+  const [saved, setSaved] = useState<SavedRecipe[]>([]);
   const [savedBusy, setSavedBusy] = useState(false);
-  const [portionById, setPortionById] = useState({});
-  const [deleteRecipeConfirm, setDeleteRecipeConfirm] = useState(null);
-  const [openSavedId, setOpenSavedId] = useState(null);
+  const [portionById, setPortionById] = useState<Record<string, string>>({});
+  const [deleteRecipeConfirm, setDeleteRecipeConfirm] =
+    useState<SavedRecipe | null>(null);
+  const [openSavedId, setOpenSavedId] = useState<string | null>(null);
   const [savedOpen, setSavedOpen] = useState(false);
   const prevSavedLen = useRef(0);
 
@@ -92,12 +134,15 @@ export function RecipesCard({
     }
   }
 
-  async function saveOne(r) {
+  async function saveOne(r: RecipeLike) {
     const res = await saveRecipeToBook(r);
     if (res.ok) await refreshSaved();
   }
 
-  async function addRecipeAsMeal(r, idKey) {
+  async function addRecipeAsMeal(
+    r: RecipeLike | SavedRecipe,
+    idKey: string,
+  ): Promise<void> {
     if (typeof addMealToLog !== "function") return;
     const key = String(idKey || r?.id || r?.title || "");
     const factorRaw = portionById[key];
@@ -133,6 +178,8 @@ export function RecipesCard({
       },
       source: "manual",
       macroSource: "recipeAI",
+      foodId: null,
+      amount_g: null,
     });
   }
 
@@ -510,9 +557,19 @@ export function RecipesCard({
         confirmLabel="Видалити"
         danger
         onConfirm={async () => {
-          if (deleteRecipeConfirm?.id) {
-            await deleteSavedRecipe(deleteRecipeConfirm.id);
+          const removed = deleteRecipeConfirm;
+          if (removed?.id) {
+            await deleteSavedRecipe(removed.id);
             await refreshSaved();
+            showUndoToast(toast, {
+              msg: `Видалено рецепт «${removed.title}»`,
+              onUndo: () => {
+                void (async () => {
+                  await saveRecipeToBook(removed);
+                  await refreshSaved();
+                })();
+              },
+            });
           }
           setDeleteRecipeConfirm(null);
         }}

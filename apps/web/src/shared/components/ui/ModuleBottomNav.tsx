@@ -19,6 +19,7 @@ import { cn } from "../../lib/cn";
  *
  * Accessibility:
  * - Default role is <nav> with <button aria-current="page">.
+ * - Visible text label provides the accessible name (no duplicate aria-label).
  * - Pass `role="tablist"` to render as tabs (role="tab", aria-selected,
  *   tabIndex, aria-controls via `panelId`). Matches routine settings
  *   tabs semantics.
@@ -119,11 +120,10 @@ export function ModuleBottomNav({
               }
               aria-controls={isTablist ? item.panelId : undefined}
               tabIndex={isTablist ? (active ? 0 : -1) : undefined}
-              aria-label={item.label}
               onClick={() => onChange(item.id)}
               className={cn(
                 "relative flex-1 flex flex-col items-center justify-center gap-1",
-                "transition-[background-color,color,box-shadow,opacity,transform] duration-200 min-h-[48px] active:scale-95",
+                "transition-all duration-200 min-h-[48px] active:scale-95",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-panel",
                 active ? "text-text" : "text-muted hover:text-text/70",
               )}
@@ -140,7 +140,7 @@ export function ModuleBottomNav({
               )}
               <span
                 className={cn(
-                  "relative transition-[background-color,color,opacity,transform] duration-200",
+                  "relative transition-all duration-200",
                   active && tokens.text,
                   active && tokens.glow,
                 )}

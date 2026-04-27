@@ -133,5 +133,3 @@ export function KpiRow({ kpis, className }: KpiRowProps) {
     </Card>
   );
 }
-
-export default KpiRow;

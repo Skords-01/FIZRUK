@@ -4,6 +4,7 @@ import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
+import { Tooltip } from "@shared/components/ui/Tooltip";
 import { useToast } from "@shared/hooks/useToast";
 import { showUndoToast } from "@shared/lib/undoToast";
 
@@ -259,7 +260,7 @@ export function WorkoutTemplatesSection({
                       {groupSelectMode && (
                         <button
                           type="button"
-                          className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-success border-success text-white" : "border-line bg-bg"}`}
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-success-strong border-success-strong text-white" : "border-line bg-bg"}`}
                           onClick={() => handleToggleGroupSelect(id)}
                         >
                           {isSelected && (
@@ -295,14 +296,19 @@ export function WorkoutTemplatesSection({
                         </span>
                       )}
                       {group && !groupSelectMode && (
-                        <button
-                          type="button"
-                          className="text-2xs text-danger/60 hover:text-danger px-1"
-                          title="Прибрати з групи"
-                          onClick={() => handleRemoveGroup(group.id)}
+                        <Tooltip
+                          content="Прибрати з групи"
+                          placement="top-center"
                         >
-                          ⊗
-                        </button>
+                          <button
+                            type="button"
+                            className="text-2xs text-danger/60 hover:text-danger px-1"
+                            aria-label="Прибрати з групи"
+                            onClick={() => handleRemoveGroup(group.id)}
+                          >
+                            ⊗
+                          </button>
+                        </Tooltip>
                       )}
                       {!groupSelectMode && (
                         <>
@@ -397,7 +403,7 @@ export function WorkoutTemplatesSection({
                 {typeof onStartTemplate === "function" && (
                   <Button
                     size="sm"
-                    className="h-10 min-h-[44px] px-3 bg-fizruk text-white border-fizruk hover:bg-fizruk/90"
+                    className="h-10 min-h-[44px] px-3 bg-fizruk-strong text-white border-fizruk-strong hover:bg-fizruk-strong/90"
                     onClick={() => onStartTemplate(t)}
                     disabled={!(t.exerciseIds || []).length}
                   >

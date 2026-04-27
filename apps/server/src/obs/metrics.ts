@@ -91,7 +91,43 @@ export const dbPoolWaiting = new client.Gauge({
 export const aiTokensTotal = new client.Counter({
   name: "ai_tokens_total",
   help: "AI tokens consumed",
-  labelNames: ["provider", "model", "kind"], // kind=prompt|completion
+  labelNames: ["provider", "model", "kind"], // kind=prompt|completion|cache_write|cache_read
+  registers: [register],
+});
+
+export const anthropicPromptCacheHitTotal = new client.Counter({
+  name: "anthropic_prompt_cache_hit_total",
+  help: "Anthropic prompt cache hit/miss per request",
+  labelNames: ["version", "outcome"], // outcome=hit|miss
+  registers: [register],
+});
+
+/**
+ * Per-tool інвокейшнів-метрика (PR-12.C аудиту 2026-04-26).
+ *
+ * `tool` — ім'я Anthropic-tool-у (`delete_transaction`, `start_workout` тощо).
+ * `outcome` — стадія life-cycle:
+ *   - `proposed` — модель повернула `tool_use`-блок у першому кроці (клієнт
+ *     ще не виконав; може й не виконати, якщо юзер скасує).
+ *   - `executed` — клієнт надіслав `tool_result` у другому кроці, і його
+ *     корелювали з відповідним `tool_use_id` із `tool_calls_raw`.
+ *   - `unknown_tool` — `tool_use_id` із `tool_results` не змапився на
+ *     жодне ім'я в `tool_calls_raw` (порушення контракту клієнт↔сервер).
+ *
+ * SLO/dashboards: `proposed - executed` дає кількість запропонованих, але
+ * не виконаних tool-call-ів (юзер скасував / клієнт впав посеред виконання).
+ */
+export const chatToolInvocationsTotal = new client.Counter({
+  name: "chat_tool_invocations_total",
+  help: "Anthropic tool invocations per tool name and lifecycle outcome",
+  labelNames: ["tool", "outcome"], // outcome=proposed|executed|unknown_tool
+  registers: [register],
+});
+
+export const chatToolResultTruncatedTotal = new client.Counter({
+  name: "chat_tool_result_truncated_total",
+  help: "tool_result content truncated server-side before Anthropic call",
+  labelNames: ["reason"], // reason=size_threshold
   registers: [register],
 });
 

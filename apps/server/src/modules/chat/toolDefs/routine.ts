@@ -169,4 +169,38 @@ export const ROUTINE_TOOLS: AnthropicTool[] = [
       required: ["habit_id"],
     },
   },
+  {
+    name: "set_habit_schedule",
+    description:
+      "Виставити точні дні тижня для звички (recurrence='weekly'). Передавай дні англ. ('mon','tue','wed','thu','fri','sat','sun') або укр. коротко ('пн','вт','ср','чт','пт','сб','нд'). Регістр і порядок не важливі. Приклад: 'тренування пн/ср/пт' → days=['mon','wed','fri'].",
+    input_schema: {
+      type: "object",
+      properties: {
+        habit_id: { type: "string", description: "ID звички" },
+        days: {
+          type: "array",
+          description:
+            "Дні тижня: англ. ('mon','tue',…,'sun') або укр. ('пн','вт','ср','чт','пт','сб','нд').",
+          items: { type: "string" },
+        },
+      },
+      required: ["habit_id", "days"],
+    },
+  },
+  {
+    name: "pause_habit",
+    description:
+      "Тимчасово поставити звичку на паузу (або зняти з паузи). Не видаляє і не архівує — звичка зберігає історію виконань. Ідемпотентно: повторний виклик з тим самим прапором — no-op.",
+    input_schema: {
+      type: "object",
+      properties: {
+        habit_id: { type: "string", description: "ID звички" },
+        paused: {
+          type: "boolean",
+          description: "true=поставити на паузу (default), false=зняти з паузи",
+        },
+      },
+      required: ["habit_id"],
+    },
+  },
 ];

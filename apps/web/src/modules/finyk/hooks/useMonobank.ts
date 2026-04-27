@@ -18,7 +18,10 @@ import {
 import { normalizeTransaction } from "@sergeant/finyk-domain/domain/transactions";
 import type { Transaction } from "@sergeant/finyk-domain/domain/types";
 import { mergeTxByIdDesc } from "../lib/mergeTx";
-import { trackEvent, ANALYTICS_EVENTS } from "../../../core/analytics";
+import {
+  trackEvent,
+  ANALYTICS_EVENTS,
+} from "../../../core/observability/analytics";
 import { useMonoStatements, enqueueStatementCall } from "./useMonoStatements";
 import { useFlag } from "../../../core/lib/featureFlags";
 import { useMonobankWebhook } from "./useMonobankWebhook";

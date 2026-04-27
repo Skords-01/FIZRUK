@@ -1,5 +1,7 @@
 # Service Level Objectives & Burn-Rate Alerts
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 > Автор: obs-team. Огляд щокварталу, або коли міняється архітектура.
 
 Цей документ визначає **SLI/SLO** для Sergeant і прив'язує до них **multi-window
@@ -19,7 +21,8 @@ multi-burn-rate** алерти (Google SRE Workbook, Ch. 5). Формули SLI 
 | External HTTP  | outcome ∈ {`ok`,`hit`,`miss`} / total (per-upstream)                        | 95.0 % | —                          |
 
 **Вікно**: 30 діб rolling. **Error budget** = `1 - SLO`. Наприклад для HTTP API
-1 % бюджету ≈ 7h12m downtime / місяць.
+1 % бюджету ≈ 7h12m downtime / місяць. Що робити, коли бюджет вигорає —
+див. [`error-budget-policy.md`](./error-budget-policy.md).
 
 ---
 
@@ -178,7 +181,7 @@ sum(rate(web_vitals_duration_ms_count{metric="LCP"}[w]))
 `rating="good"` або кращому) — повернемось до формалізації алертів коли
 набереться дата.
 
-**Джерело**: `web-vitals` npm пакет на клієнті (див. `src/core/webVitals.js`),
+**Джерело**: `web-vitals` npm пакет на клієнті (див. `src/core/observability/webVitals.js`),
 батч через `navigator.sendBeacon` на `visibilitychange=hidden` / `pagehide`,
 бекенд-ендпоінт `POST /api/metrics/web-vitals` (rate-limited 60 req/min/IP),
 запис у `web_vitals_duration_ms{metric,rating}` і `web_vitals_cls{rating}`.

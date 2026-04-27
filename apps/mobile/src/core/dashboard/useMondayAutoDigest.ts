@@ -1,6 +1,6 @@
 /**
  * Mobile port of `useMondayAutoDigest` (see
- * `apps/web/src/core/HubDashboard.tsx`).
+ * `apps/web/src/core/hub/HubDashboard.tsx`).
  *
  * The web hook auto-fires the weekly-digest generate mutation the
  * first time the hub mounts on a Monday when the user has opted in
