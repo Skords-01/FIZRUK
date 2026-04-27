@@ -166,6 +166,116 @@ describe("chat handler — tool_use parsing", () => {
     });
   });
 
+  it("інкрементить chat_tool_invocations_total{outcome=proposed} на першому кроці", async () => {
+    const { chatToolInvocationsTotal } = await import("../obs/metrics.js");
+    const before = (await chatToolInvocationsTotal.get()).values
+      .filter((v) => v.labels.outcome === "proposed")
+      .reduce((acc, v) => acc + v.value, 0);
+
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: {
+        content: [
+          { type: "text", text: "Видаляю…" },
+          {
+            type: "tool_use",
+            id: "toolu_p1",
+            name: "delete_transaction",
+            input: {},
+          },
+          {
+            type: "tool_use",
+            id: "toolu_p2",
+            name: "start_workout",
+            input: {},
+          },
+        ],
+      },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "Видали і починай тренування" }],
+    });
+    await handler(req, makeRes());
+
+    const samples = (await chatToolInvocationsTotal.get()).values.filter(
+      (v) => v.labels.outcome === "proposed",
+    );
+    const after = samples.reduce((acc, v) => acc + v.value, 0);
+    expect(after - before).toBe(2);
+    const byTool = Object.fromEntries(
+      samples.map((v) => [v.labels.tool, v.value]),
+    );
+    expect(byTool.delete_transaction).toBeGreaterThanOrEqual(1);
+    expect(byTool.start_workout).toBeGreaterThanOrEqual(1);
+  });
+
+  it("інкрементить chat_tool_invocations_total{outcome=executed} на другому кроці", async () => {
+    const { chatToolInvocationsTotal } = await import("../obs/metrics.js");
+    const before = (await chatToolInvocationsTotal.get()).values
+      .filter(
+        (v) =>
+          v.labels.outcome === "executed" &&
+          v.labels.tool === "delete_transaction",
+      )
+      .reduce((acc, v) => acc + v.value, 0);
+
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: { content: [{ type: "text", text: "Готово." }] },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "Видали m_xyz" }],
+      tool_calls_raw: [
+        {
+          type: "tool_use",
+          id: "toolu_e1",
+          name: "delete_transaction",
+          input: { tx_id: "m_xyz" },
+        },
+      ],
+      tool_results: [
+        { tool_use_id: "toolu_e1", content: "Транзакцію m_xyz видалено" },
+      ],
+    });
+    await handler(req, makeRes());
+
+    const after = (await chatToolInvocationsTotal.get()).values
+      .filter(
+        (v) =>
+          v.labels.outcome === "executed" &&
+          v.labels.tool === "delete_transaction",
+      )
+      .reduce((acc, v) => acc + v.value, 0);
+    expect(after - before).toBe(1);
+  });
+
+  it("інкрементить chat_tool_invocations_total{outcome=unknown_tool} коли tool_use_id не змаплений", async () => {
+    const { chatToolInvocationsTotal } = await import("../obs/metrics.js");
+    const before = (await chatToolInvocationsTotal.get()).values
+      .filter((v) => v.labels.outcome === "unknown_tool")
+      .reduce((acc, v) => acc + v.value, 0);
+
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: { content: [{ type: "text", text: "Не знаю про це." }] },
+    });
+
+    const req = makeReq({
+      messages: [{ role: "user", content: "Зроби щось" }],
+      // tool_calls_raw порожній → tool_use_id orphan
+      tool_calls_raw: [],
+      tool_results: [{ tool_use_id: "toolu_orphan", content: "?" }],
+    });
+    await handler(req, makeRes());
+
+    const after = (await chatToolInvocationsTotal.get()).values
+      .filter((v) => v.labels.outcome === "unknown_tool")
+      .reduce((acc, v) => acc + v.value, 0);
+    expect(after - before).toBe(1);
+  });
+
   it("400 коли немає повідомлень", async () => {
     const req = makeReq({ messages: [] });
     const res = makeRes();

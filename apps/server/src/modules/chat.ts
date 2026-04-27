@@ -13,6 +13,10 @@ import {
 } from "../lib/anthropic.js";
 import type { WithAiQuotaRefund } from "./aiQuota.js";
 import { TOOLS, SYSTEM_PREFIX, SYSTEM_PROMPT_VERSION } from "./chat/tools.js";
+import {
+  recordToolProposals,
+  recordToolExecutions,
+} from "./chat/toolMetrics.js";
 import { anthropicPromptCacheHitTotal } from "../obs/metrics.js";
 
 type WithAnthropicKey = Request & { anthropicKey?: string };
@@ -302,6 +306,7 @@ export default async function handler(
 
   // Другий крок: клієнт виконав tool calls і повертає результати
   if (tool_results && tool_calls_raw) {
+    recordToolExecutions(tool_results, tool_calls_raw);
     const toolResultMessages = tool_results.map((r) => ({
       type: "tool_result" as const,
       tool_use_id: r.tool_use_id,
@@ -432,6 +437,7 @@ export default async function handler(
     .join("\n");
 
   if (toolUses.length > 0) {
+    recordToolProposals(content);
     res.status(200).json({
       text: textParts || null,
       tool_calls: toolUses.map((t) => ({

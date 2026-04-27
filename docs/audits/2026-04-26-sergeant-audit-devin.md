@@ -357,7 +357,7 @@
 
 - `PR-12.A` ✅ closed — [#864](https://github.com/Skords-01/Sergeant/pull/864) `feat(server,chat): activate prompt caching for SYSTEM_PREFIX (cache_control: ephemeral) + SYSTEM_PROMPT_VERSION constant` + per-request метрика `anthropic_prompt_cache_hit_total{version, outcome}` (включно зі streaming-шляхом). Очікуваний ефект: зниження Anthropic spend на 30-50% для повторних запитів.
 - `PR-12.B` ✅ closed — [#885](https://github.com/Skords-01/Sergeant/pull/885) `test(web): contract tests for all hubChatActions handlers (happy + error path)`.
-- `PR-12.C` — `feat(server,chat): per-tool metrics (tool_invocations_total{tool=,outcome=}) → SLO dashboard`.
+- `PR-12.C` ✅closed — `feat(server,chat): per-tool metrics (chat_tool_invocations_total{tool, outcome=proposed|executed|unknown_tool}) → SLO dashboard`. Реалізовано: `apps/server/src/modules/chat/toolMetrics.ts` із whitelist-маперами на TOOLS-реєстр (anti-cardinality), wired в `chat.ts` на обидва кроки (`recordToolProposals` після першого Anthropic-виклику з tool_use-блоками, `recordToolExecutions` на другому кроці з мапу `tool_use_id → name` через `tool_calls_raw`), 13 unit + 3 integration тестів.
 - `PR-12.D` — `docs(ai): tool lifecycle model (proposal → safety review → rollout → KPIs)` — як одно-сторінковий ADR.
 - `PR-12.E` — `feat(server,chat): truncate-aware tool_result handler` — якщо `tool_result` >N токенів, серверна частина серіалізує summary + повний blob у Sentry breadcrumb. Закриває edge case, де великі briefing/digest вибивають continuation.
 
