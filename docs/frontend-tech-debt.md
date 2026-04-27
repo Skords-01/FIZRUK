@@ -242,6 +242,25 @@ Production код чистий. Тестові `any` — фабрики фікт
 
 ---
 
+### 12. Strict TS coverage tracking (CI)
+
+**Скрипт:** [`scripts/strict-coverage.mjs`](../scripts/strict-coverage.mjs) —
+сканує всі `tsconfig.json` у `apps/*/` та `packages/*/`, резолвить `extends`
+ланцюги, виводить markdown-таблицю з прапорами `strict`, `strictNullChecks`,
+`noImplicitAny`, `allowJs` для кожного пакету.
+
+**CI:** job `strict-coverage` у `.github/workflows/ci.yml` — інформативний
+(не блокує CI), пише результат у `$GITHUB_STEP_SUMMARY`. Видно на вкладці
+Summary кожного workflow run.
+
+**Локально:** `pnpm strict:coverage` або `node scripts/strict-coverage.mjs --json`.
+
+**Тести:** `node --test scripts/__tests__/strict-coverage.test.mjs`.
+
+Ref: PR-6.F (sergeant-audit-devin.md).
+
+---
+
 ## Recently completed
 
 - ✅ Vitest path aliases — 80/80 файлів зелені
