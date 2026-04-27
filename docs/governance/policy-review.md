@@ -109,7 +109,7 @@ playbook-у. Один рядок на кандидата.
 
 - **>= 2 порушення** за період АБО **1 серйозне** (зловживання, безпековий ризик).
 - Можна виявити **детермінованим інструментом** (AST, regex, lint, CI-крок).
-- Не дублює існуюче правило (`packages/eslint-plugin-sergeant-design/lib/rules/`).
+- Не дублює існуюче правило (`packages/eslint-plugin-sergeant-design/index.js`).
 
 ### Critique-чек
 
