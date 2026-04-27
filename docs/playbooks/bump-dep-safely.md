@@ -86,4 +86,4 @@ pnpm lint        # має пройти
 ## See also
 
 - [AGENTS.md](../../AGENTS.md) — soft rule про dependency bumps
-- [renovate-usage.md](../renovate-usage.md) — як працює Renovate в цьому репо
+- [renovate-usage.md](../integrations/renovate-usage.md) — як працює Renovate в цьому репо

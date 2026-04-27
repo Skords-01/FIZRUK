@@ -1,8 +1,8 @@
 # Статус трьох поверхонь — web / native / capacitor-shell
 
 Короткий репорт «що готово до запуску, що треба доробити» по трьох
-варіантах Sergeant-а. Живе поруч з `docs/mobile.md` (API-контракт) і
-`docs/react-native-migration.md` (роадмап порту web → RN).
+варіантах Sergeant-а. Живе поруч з `docs/mobile/overview.md` (API-контракт) і
+`docs/mobile/react-native-migration.md` (роадмап порту web → RN).
 
 | Поверхня                       | Де живе             | Технології                 | Реліз-готовність                                                             |
 | ------------------------------ | ------------------- | -------------------------- | ---------------------------------------------------------------------------- |
@@ -13,7 +13,7 @@
 Сервер (`apps/server`) — спільний для всіх трьох, деплой на Railway,
 `/api/v1/*` з Better Auth (cookies для web, bearer для native/shell).
 Конкретний статус сервера тримати тут не будемо — він просто `Production`,
-деталі у `docs/api-v1.md` і `docs/backend-tech-debt.md`.
+деталі у `docs/architecture/api-v1.md` і `docs/tech-debt/backend.md`.
 
 ---
 
@@ -104,7 +104,7 @@ dashboard (див. `apps/mobile/src/core/dashboard/dashboardModuleConfig.ts`).
   Software Mansion ([docs](https://docs.swmansion.com/react-native-worklets/docs/guides/compatibility/)).
 - Не забути згенерувати `google-services.json` для FCM і покласти
   його як EAS secret (`GOOGLE_SERVICES_JSON`, type: `file`). Без нього
-  Android-push не стартує (`docs/mobile.md`).
+  Android-push не стартує (`docs/mobile/overview.md`).
 - На фізичному iOS-девайсі потрібен `development-device` EAS-профіль
   без `ios.simulator: true` — зараз є тільки simulator-build у
   `development`.
@@ -112,7 +112,7 @@ dashboard (див. `apps/mobile/src/core/dashboard/dashboardModuleConfig.ts`).
 **Blocking для релізу:** глибша parity Харчування з web (pantry, рецепти,
 AI), store-listing. До store — здебільшого internal dev-client. Push-send
 pipeline (APNs + FCM HTTP v1) — уже в коді; у проді потрібні credentials
-(див. `docs/backend-tech-debt.md#push-credentials`).
+(див. `docs/tech-debt/backend.md#push-credentials`).
 
 ---
 
@@ -142,9 +142,9 @@ Android-частина (`android/`) закомічена, `applicationId`
   має TODO: `.github/workflows/mobile-shell-android.yml` треба
   закомітити мейнтейнеру вручну (Devin OAuth app не має `workflow`
   scope). Без нього — локальний Android SDK обовʼязковий.~~ Зроблено:
-  [`mobile-shell-android.yml`](../.github/workflows/mobile-shell-android.yml)
+  [`mobile-shell-android.yml`](../../.github/workflows/mobile-shell-android.yml)
   збирає debug-APK на PR, а release-сторона
-  ([`mobile-shell-android-release.yml`](../.github/workflows/mobile-shell-android-release.yml))
+  ([`mobile-shell-android-release.yml`](../../.github/workflows/mobile-shell-android-release.yml))
   продукує два артефакти — `sergeant-shell-release-aab` (Play Store)
   та `sergeant-shell-release-apk` (direct sideload via `adb install`).
   Підпис читається з `SERGEANT_RELEASE_*` env/`gradle.properties` у
@@ -153,7 +153,7 @@ Android-частина (`android/`) закомічена, `applicationId`
   як smoke-test ProGuard/R8 + Capacitor sync на PR-ах. ProGuard/R8
   keep-rules для всіх `@capacitor/*` плагінів — у
   `android/app/proguard-rules.pro`. Setup-інструкція (keytool → base64
-  → GitHub Secrets) — у [`mobile-shell.md#release--android`](./mobile-shell.md#release--android).
+  → GitHub Secrets) — у [`mobile/shell.md#release--android`](../mobile/shell.md#release--android).
 - **Play Store upload workflow (internal track).** Release-signing pipeline
   уже стоїть; автоматичний upload через `google-github-actions/upload-google-play`
   - service-account JSON (новий secret `ANDROID_PLAY_SERVICE_ACCOUNT_JSON`)
@@ -167,7 +167,7 @@ Android-частина (`android/`) закомічена, `applicationId`
   `workflow_dispatch`): архів → `.ipa` → TestFlight через
   `apple-actions/upload-testflight-build@v1`. Для першого реального
   запуску потрібні Apple-секрети (контракт у
-  [`mobile-shell.md` → Release — iOS](./mobile-shell.md#release--ios)). Без них
+  [`mobile/shell.md` → Release — iOS](../mobile/shell.md#release--ios)). Без них
   job падає в unsigned-Simulator-фолбек і не ламається.
 - ~~**Native push.** `usePushNotifications` у web користується Service
   Worker-ом + VAPID — у WebView це працює кульгаво (iOS тільки 16.4+,
@@ -189,7 +189,7 @@ Android-частина (`android/`) закомічена, `applicationId`
   `@parse/node-apn`), FCM HTTP v1 (через `google-auth-library`) та web-push
   паралельно, з dead-token cleanup у `push_devices` / `push_subscriptions` і
   retry-policy для транзієнтних 5xx/429. Конфіг і payload-контракт — у
-  `docs/mobile.md#сервер-пристрій`.
+  `docs/mobile/overview.md#сервер-пристрій`.
 - ~~**Deep links.** `parseDeepLink()` в `src/index.ts` є, але
   `App.addListener('appUrlOpen', ...)` ще не звʼязаний з React Router
   всередині `apps/web` — треба exported `navigate()` прокинути.~~ Готово:
@@ -203,7 +203,7 @@ Android-частина (`android/`) закомічена, `applicationId`
   `apps/mobile-shell/src/index.ts`), `AndroidManifest.xml` має
   `autoVerify="true"` intent-filter, у `apps/web/public/.well-known/`
   лежать шаблони `assetlinks.json` та `apple-app-site-association`.
-  Повний setup-гайд — `docs/capacitor-deep-links.md`.
+  Повний setup-гайд — `docs/mobile/capacitor-deep-links.md`.
 - **Safe-area / keyboard avoidance** на iOS усе ще покладаються на
   CSS `env(safe-area-inset-*)` — працює, але не 100% якщо splash
   тримається довше за `hide()`.
@@ -254,7 +254,7 @@ Android-частина (`android/`) закомічена, `applicationId`
    блокує справжній App Store / Play реліз. **4–6 PR-ів.**
 3. ~~**Native push-send (APNs + FCM)**~~ — готово, лишилось
    провізіонувати credentials у Railway (див.
-   `docs/backend-tech-debt.md#push-credentials`).
+   `docs/tech-debt/backend.md#push-credentials`).
 4. **iOS shell** — потрібен Mac у CI (EAS / GitHub Actions macOS
    runner), досі заблоковано відсутністю Xcode-env.
 5. **Detox e2e coverage** — зараз білди-smoke; треба реальні сценарії

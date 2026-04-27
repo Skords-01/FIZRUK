@@ -46,10 +46,10 @@
               Android підставу відкривати посилання в app-і БЕЗ chooser-діалогу
               ("Complete action using…"). Host-и синхронізовані з
               `DEEP_LINK_HTTPS_HOSTS` в `apps/mobile-shell/src/index.ts` і
-              секцією «prod»-хостів у `docs/mobile.md`.
+              секцією «prod»-хостів у `docs/mobile/overview.md`.
 
               Інструкція як згенерувати assetlinks.json і куди покласти —
-              `docs/capacitor-deep-links.md`.
+              `docs/mobile/capacitor-deep-links.md`.
 
               Перевірити локально:
                 adb shell am start -a android.intent.action.VIEW \

@@ -36,7 +36,7 @@ function TabIcon({ emoji }: { emoji: string }) {
  * never set this variable — the check compiles away in release binaries
  * because `process.env.EXPO_PUBLIC_*` is statically inlined by Metro.
  *
- * Docs: `docs/react-native-migration.md` §8 / §13 Q8.
+ * Docs: `docs/mobile/react-native-migration.md` §8 / §13 Q8.
  */
 const E2E_AUTH_BYPASS = process.env.EXPO_PUBLIC_E2E === "1";
 

@@ -12,7 +12,7 @@
 ## 2. API на Railway (той самий репозиторій)
 
 1. **Add service** → **GitHub repo** → обери репозиторій Hub.
-2. У налаштуваннях сервісу: **Settings** → якщо не підхопився Dockerfile, вкажи **Dockerfile path**: `Dockerfile.api` (або використай [railway.toml](../railway.toml) у корені — вже налаштований).
+2. У налаштуваннях сервісу: **Settings** → якщо не підхопився Dockerfile, вкажи **Dockerfile path**: `Dockerfile.api` (або використай [railway.toml](../../railway.toml) у корені — вже налаштований).
 3. У **Variables** додай:
 
 | Змінна                           | Значення                                                                                                                                                                                                   |

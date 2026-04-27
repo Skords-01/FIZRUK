@@ -135,7 +135,7 @@
 - `PR-3.B` ✅ closed — [#887](https://github.com/Skords-01/Sergeant/pull/887) `refactor(web,finyk): decompose Assets.tsx (1147 LOC) into smaller modules` — пілот для top-10 list.
 - `PR-3.C` ✅ closed — [#898](https://github.com/Skords-01/Sergeant/pull/898) `refactor(web,nutrition): split seedFoodsUk.ts (1614 LOC) by category (meat/fish/dairy/grains/...)` — чисто data-split, 19 per-category файлів, всі 390 елементів структурно ідентичні.
 - `PR-3.D` ✅ closed — [#865](https://github.com/Skords-01/Sergeant/pull/865) `chore(web,storage): migrate top-3 high-call-site localStorage files to safe wrappers` (`core/settings/FinykSection.tsx` -20, `core/lib/chatActions/fizrukActions.ts` -7, `core/hub/HubDashboard.tsx` -5) — burn-down list.
-- `PR-3.E` ✅ closed — [#907](https://github.com/Skords-01/Sergeant/pull/907) `ci(ci): freshness gate for docs/frontend-tech-debt.md` (`scripts/check-tech-debt-freshness.mjs`, wired у `pnpm lint:tech-debt-freshness` → root `pnpm lint`). Парсить `> **Оновлено YYYY-MM-DD.**` маркер, fail коли > `FRESHNESS_THRESHOLD_DAYS` (default 60). Маркер, а не git mtime, — тому format-only edit не «reset-ить» свіжість.
+- `PR-3.E` ✅ closed — [#907](https://github.com/Skords-01/Sergeant/pull/907) `ci(ci): freshness gate for docs/tech-debt/frontend.md` (`scripts/check-tech-debt-freshness.mjs`, wired у `pnpm lint:tech-debt-freshness` → root `pnpm lint`). Парсить `> **Оновлено YYYY-MM-DD.**` маркер, fail коли > `FRESHNESS_THRESHOLD_DAYS` (default 60). Маркер, а не git mtime, — тому format-only edit не «reset-ить» свіжість.
 
 ---
 
@@ -408,9 +408,9 @@
 
 ### Спринт 3-6 (2-3 місяці) — «масштабування»
 
-| #   | PR                                                       | Effort    | Імпакт               | Status                                                                     |
-| --- | -------------------------------------------------------- | --------- | -------------------- | -------------------------------------------------------------------------- |
-| 13  | `PR-6.C` — strict: true full + remove allowJs            | 1 тиждень | strict TS done       | ⏳ pending                                                                 |
+| #   | PR                                                       | Effort    | Імпакт               | Status                                                                                            |
+| --- | -------------------------------------------------------- | --------- | -------------------- | ------------------------------------------------------------------------------------------------- |
+| 13  | `PR-6.C` — strict: true full + remove allowJs            | 1 тиждень | strict TS done       | ⏳ pending                                                                                        |
 | 14  | `PR-4.D` — zod-to-openapi для api-client                 | 1 тиждень | автоматизує rule #3  |
 | 15  | `PR-8.A` + `PR-8.C` — error-budget policy + tool metrics | 3-5 д     | operational maturity |
 | 16  | `PR-10.B` + `PR-10.C` — split smoke-e2e + nightly audit  | 2-3 д     | CI scaling           | `PR-10.B` ✅ closed; `PR-10.C` ✅ closed — [#944](https://github.com/Skords-01/Sergeant/pull/944) |

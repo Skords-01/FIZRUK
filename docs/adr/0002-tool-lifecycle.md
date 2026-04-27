@@ -10,7 +10,7 @@
   - [`apps/server/src/modules/chat/tools.ts`](../../apps/server/src/modules/chat/tools.ts) — реєстр Anthropic tools.
   - [`apps/server/src/modules/chat/toolMetrics.ts`](../../apps/server/src/modules/chat/toolMetrics.ts) — `chat_tool_invocations_total{tool, outcome}` (PR-12.C, [#924](https://github.com/Skords-01/Sergeant/pull/924)).
   - [`apps/web/src/core/lib/chatActions/`](../../apps/web/src/core/lib/chatActions/) — клієнтські handler-и tool-call-ів.
-  - [`docs/ai-coding-improvements.md`](../ai-coding-improvements.md) § «Блок 3. Code markers» — визначення `AI-DANGER`-маркерів.
+  - [`docs/planning/ai-coding-improvements.md`](../planning/ai-coding-improvements.md) § «Блок 3. Code markers» — визначення `AI-DANGER`-маркерів.
   - [`docs/playbooks/add-hubchat-tool.md`](../playbooks/add-hubchat-tool.md) — операційний how-to.
   - [`docs/playbooks/tune-system-prompt.md`](../playbooks/tune-system-prompt.md).
   - [`docs/playbooks/add-feature-flag.md`](../playbooks/add-feature-flag.md) — feature-flag механіка для фази 3 (rollout) і ADR-2.10.
@@ -136,7 +136,7 @@ accepted.
 
 ---
 
-<!-- AI-DANGER markers — визначення у `docs/ai-coding-improvements.md` §«Блок 3. Code markers». Inline comment виду `// AI-DANGER: <опис ризику>`, флагується в PR-review і видимий в .github/PULL_REQUEST_TEMPLATE.md чеклісті. -->
+<!-- AI-DANGER markers — визначення у `docs/planning/ai-coding-improvements.md` §«Блок 3. Code markers». Inline comment виду `// AI-DANGER: <опис ризику>`, флагується в PR-review і видимий в .github/PULL_REQUEST_TEMPLATE.md чеклісті. -->
 
 ## ADR-2.3 — Фаза 2: Safety review
 
@@ -180,7 +180,7 @@ PR з кодом нового tool-у (`apps/server/src/modules/chat/toolDefs/<s
 
 ### Markers
 
-- [ ] [AI-DANGER marker](../ai-coding-improvements.md) на handler-функції, якщо вона мутує дані.
+- [ ] [AI-DANGER marker](../planning/ai-coding-improvements.md) на handler-функції, якщо вона мутує дані.
 - [ ] Inline comment пояснює, чому tool необхідний (не просто wrap над існуючим API).
 ```
 

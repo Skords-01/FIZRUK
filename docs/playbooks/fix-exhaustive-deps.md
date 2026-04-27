@@ -13,7 +13,7 @@
 pnpm --filter @sergeant/web exec eslint . --rule 'react-hooks/exhaustive-deps: warn' 2>&1 | grep "exhaustive-deps"
 
 # Або перевірити документ-трекер
-cat docs/apps-web-exhaustive-deps.md
+cat docs/architecture/apps-web-exhaustive-deps.md
 ```
 
 ### 2. Класифікувати кожен warning
@@ -71,7 +71,7 @@ useEffect(() => {
 
 ### 5. Оновити трекер
 
-Оновити `docs/apps-web-exhaustive-deps.md` — видалити або позначити виправлені файли.
+Оновити `docs/architecture/apps-web-exhaustive-deps.md` — видалити або позначити виправлені файли.
 
 ### 6. Створити PR
 
@@ -87,7 +87,7 @@ useEffect(() => {
 - [ ] `pnpm typecheck` — green
 - [ ] Тести — green
 - [ ] Немає infinite re-render loops (перевірити в dev-mode)
-- [ ] `docs/apps-web-exhaustive-deps.md` оновлено
+- [ ] `docs/architecture/apps-web-exhaustive-deps.md` оновлено
 - [ ] `eslint-disable` використано тільки для обґрунтованих mount-only effects
 
 ## Notes
@@ -99,6 +99,6 @@ useEffect(() => {
 
 ## See also
 
-- [apps-web-exhaustive-deps.md](../apps-web-exhaustive-deps.md) — повний список warnings
-- [frontend-tech-debt.md](../frontend-tech-debt.md) — загальний фронтенд tech debt
+- [apps-web-exhaustive-deps.md](../architecture/apps-web-exhaustive-deps.md) — повний список warnings
+- [frontend-tech-debt.md](../tech-debt/frontend.md) — загальний фронтенд tech debt
 - [AGENTS.md](../../AGENTS.md) — загальні конвенції

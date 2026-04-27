@@ -9,7 +9,7 @@
   - [`packages/shared/src/lib/kvStore.ts`](../../packages/shared/src/lib/kvStore.ts) — DOM-free `KVStore` контракт.
   - [`apps/web/src/core/cloudSync/config.ts`](../../apps/web/src/core/cloudSync/config.ts) — `SYNC_MODULES` реєстр.
   - [`apps/web/src/core/cloudSync/useCloudSync.ts`](../../apps/web/src/core/cloudSync/useCloudSync.ts) — LWW-reconciler + offline queue.
-  - [`docs/react-native-migration.md`](../react-native-migration.md) §6 — mobile sync-subsystem.
+  - [`docs/mobile/react-native-migration.md`](../mobile/react-native-migration.md) §6 — mobile sync-subsystem.
   - ADR-0010 — mobile dual-track (platform storage адаптери).
   - ADR-0012 — RLS як authz-межа (server-side чекає `user_id`-filter).
 

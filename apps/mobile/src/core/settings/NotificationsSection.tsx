@@ -20,7 +20,7 @@
  *    scheduler (Phase 5) it can pick this flag up without a data
  *    migration.
  *
- * Deferred (tracked in `docs/react-native-migration.md` Phase 2 /
+ * Deferred (tracked in `docs/mobile/react-native-migration.md` Phase 2 /
  * Hub-core, section 2.4) — rendered as `DeferredNotice` cards mirroring
  * `GeneralSection`:
  *  - **Routine scheduler.** The toggle above only flips the pref; the

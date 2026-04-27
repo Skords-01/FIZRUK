@@ -138,7 +138,7 @@ RN consumers that style via `StyleSheet.create({ color: ... })`,
 `successStrong` / `warningStrong` / `dangerStrong` / `infoStrong` with
 the same hex values (see `packages/design-tokens/mobile.js`).
 
-See [`docs/brand-palette-wcag-aa-proposal.md`](./brand-palette-wcag-aa-proposal.md)
+See [`docs/design/brand-palette-wcag-aa-proposal.md`](./brand-palette-wcag-aa-proposal.md)
 for the full rationale, contrast measurements, and the migration
 history (PR #851 → PR #855).
 
@@ -536,7 +536,7 @@ Full dark mode support with warm undertones:
 > Scope: `apps/mobile` only. This section **extends** the existing brand
 > identity with native-specific guidance; web look & feel is unchanged —
 > same tokens, same palette, same voice. See
-> [`react-native-migration.md` §13, Q9](./react-native-migration.md#13-прийняті-рішення-q1q10)
+> [`react-native-migration.md` §13, Q9](../mobile/react-native-migration.md#13-прийняті-рішення-q1q10)
 > for the decision that produced this section.
 
 ### Safe area & layout

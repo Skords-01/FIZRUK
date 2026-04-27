@@ -89,7 +89,7 @@ pnpm db:down                # stop & remove the Postgres container (data persist
 - `ANTHROPIC_API_KEY` потрібен тільки для AI features; без нього базовий local dev має запускатися.
 - `VITE_*` змінні потрапляють у frontend bundle. Не кладіть у `VITE_*` DB URLs, private API keys, session secrets або приватні tokens.
 - Frontend secrets живуть у Vercel тільки якщо вони справді публічні для browser bundle; backend secrets — у Railway.
-- Для VAPID, Resend, USDA, Sentry і production CORS дивіться коментарі в [`.env.example`](.env.example) та [`docs/railway-vercel.md`](docs/railway-vercel.md).
+- Для VAPID, Resend, USDA, Sentry і production CORS дивіться коментарі в [`.env.example`](.env.example) та [`docs/integrations/railway-vercel.md`](docs/integrations/railway-vercel.md).
 
 ---
 
@@ -359,7 +359,7 @@ Sergeant/
 | **Frontend** | Vercel   | Preview deploy on every PR; free tier may rate-limit.                   |
 | **Backend**  | Railway  | `Dockerfile.api`. Pre-deploy runs `pnpm db:migrate`. Health: `/health`. |
 
-See [`docs/railway-vercel.md`](docs/railway-vercel.md) for step-by-step deployment instructions.
+See [`docs/integrations/railway-vercel.md`](docs/integrations/railway-vercel.md) for step-by-step deployment instructions.
 
 ---
 

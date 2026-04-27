@@ -165,7 +165,7 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
 - `src/shared/components/ui/SkeletonList.tsx` _(видалено в
   PR [#439](https://github.com/Skords-01/Sergeant/pull/439) — dead code)_
 - `src/core/hub/hubSearchEngine.ts`
-- `docs/ux-audit-2025.md`
+- `docs/design/ux-audit-2025.md`
 
 ### Змінені (основні)
 

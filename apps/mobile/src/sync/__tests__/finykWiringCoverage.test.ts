@@ -74,7 +74,7 @@ const WIRED: Record<string, string> = {
 const PENDING_NO_WRITER: Record<string, string> = {
   // Monobank OAuth flow + cached account/info blob — written by the
   // mobile Monobank client when ported (Phase 4+, see
-  // `docs/react-native-migration.md` §6.2).
+  // `docs/mobile/react-native-migration.md` §6.2).
   [STORAGE_KEYS.FINYK_TOKEN]: "Monobank port (Phase 4+)",
   [STORAGE_KEYS.FINYK_INFO_CACHE]: "Monobank port (Phase 4+)",
   [STORAGE_KEYS.FINYK_TX_CACHE]: "Monobank port (Phase 4+)",

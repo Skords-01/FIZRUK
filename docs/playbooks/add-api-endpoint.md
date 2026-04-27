@@ -105,6 +105,6 @@ pnpm --filter @sergeant/server exec vitest run apps/server/src/modules/<module>/
 ## See also
 
 - [add-sql-migration.md](add-sql-migration.md) — якщо потрібна міграція БД
-- [backend-tech-debt.md](../backend-tech-debt.md) — конвенції серверного коду
+- [backend-tech-debt.md](../tech-debt/backend.md) — конвенції серверного коду
 - [AGENTS.md](../../AGENTS.md) — rule #1 (bigint), rule #3 (API contract)
-- [api-v1.md](../api-v1.md) — документація API
+- [api-v1.md](../architecture/api-v1.md) — документація API
