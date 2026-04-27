@@ -73,18 +73,18 @@ const radii: Record<CardRadius, string> = {
 // Module-branded variants bake `rounded-3xl` into their class string for
 // hero surfaces, matching the web component.
 const variantContainer: Record<CardVariant, string> = {
-  default: "bg-panel border border-line",
-  interactive: "bg-panel border border-line",
+  default: "bg-panel border border-line shadow-sm",
+  interactive: "bg-panel border border-line shadow-sm",
   flat: "bg-panel border border-line",
-  elevated: "bg-panel border border-line",
+  elevated: "bg-panel border border-line shadow-md",
   ghost: "bg-transparent border border-transparent",
 
   // Module hero cards — branded surface. Mobile strips the `dark:` modifiers
   // (no dark-mode plumbing yet) but keeps the branded border + solid token.
-  finyk: "rounded-3xl border border-brand-200/50 bg-finyk",
-  fizruk: "rounded-3xl border border-teal-200/50 bg-fizruk",
-  routine: "rounded-3xl border border-coral-200/50 bg-routine",
-  nutrition: "rounded-3xl border border-lime-200/50 bg-nutrition",
+  finyk: "rounded-3xl border border-brand-200/50 bg-finyk-soft",
+  fizruk: "rounded-3xl border border-teal-200/50 bg-fizruk-soft",
+  routine: "rounded-3xl border border-coral-200/50 bg-routine-surface",
+  nutrition: "rounded-3xl border border-lime-200/50 bg-nutrition-soft",
 
   // Soft module cards — less prominent tinted surface.
   "finyk-soft": "rounded-2xl border border-brand-100 bg-brand-50/50",

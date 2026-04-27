@@ -191,10 +191,10 @@ export function useToast(): ToastContextValue {
 }
 
 const VARIANT_BG: Record<ToastType, string> = {
-  success: "bg-brand-600",
+  success: "bg-brand-strong",
   error: "bg-red-600",
   warning: "bg-amber-500",
-  info: "bg-brand-500",
+  info: "bg-info",
 };
 
 // Unicode glyph placeholders until `react-native-svg` is wired in at

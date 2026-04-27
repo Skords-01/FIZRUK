@@ -40,7 +40,7 @@ export type SectionHeadingWeight = "semibold" | "bold" | "extrabold";
 // elsewhere must still go through <SectionHeading>.
 const sizeTokens: Record<SectionHeadingSize, string> = {
   // eslint-disable-next-line sergeant-design/no-eyebrow-drift -- primitive owner
-  xs: "text-2xs uppercase tracking-widest",
+  xs: "text-xs uppercase tracking-wider",
   // eslint-disable-next-line sergeant-design/no-eyebrow-drift -- primitive owner
   sm: "text-xs uppercase tracking-widest",
   md: "text-sm",
@@ -66,11 +66,11 @@ const variants: Record<SectionHeadingVariant, string> = {
   subtle: "text-subtle",
   muted: "text-muted",
   text: "text-text",
-  accent: "text-accent",
-  finyk: "text-finyk",
-  fizruk: "text-fizruk",
-  routine: "text-routine",
-  nutrition: "text-nutrition",
+  accent: "text-brand-strong",
+  finyk: "text-finyk-strong dark:text-finyk/70",
+  fizruk: "text-fizruk-strong dark:text-fizruk/70",
+  routine: "text-routine-strong dark:text-routine/70",
+  nutrition: "text-nutrition-strong dark:text-nutrition/70",
 };
 
 const defaultVariantForSize: Record<SectionHeadingSize, SectionHeadingVariant> =
