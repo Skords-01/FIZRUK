@@ -163,7 +163,7 @@ export function AuthPage({ onContinueWithoutAccount }) {
                     setForgotEmail((cur) => cur || email || "");
                     setShowForgot((v) => !v);
                   }}
-                  className="text-xs text-brand-600 dark:text-brand-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 rounded"
+                  className="text-xs text-brand-strong dark:text-brand-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 rounded"
                 >
                   Забули пароль?
                 </button>
@@ -344,7 +344,7 @@ export function AuthPage({ onContinueWithoutAccount }) {
           <button
             type="button"
             onClick={switchMode}
-            className="text-sm text-brand-600 dark:text-brand-400 hover:underline px-2 py-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45"
+            className="text-sm text-brand-strong dark:text-brand-400 hover:underline px-2 py-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45"
           >
             {mode === "login"
               ? "Немає акаунту? Зареєструватися"

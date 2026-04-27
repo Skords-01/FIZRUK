@@ -49,7 +49,7 @@ const variants: Record<ButtonVariant, string> = {
   ghost:
     "bg-transparent text-muted hover:bg-panelHi hover:text-text active:bg-line/50",
   danger:
-    "bg-danger-soft text-danger border border-danger/30 hover:bg-danger/15 hover:border-danger/50 active:scale-[0.98]",
+    "bg-danger-soft text-danger-strong border border-danger/30 hover:bg-danger/15 hover:border-danger/50 active:scale-[0.98]",
   destructive:
     "bg-danger-strong text-white shadow-sm hover:brightness-110 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.15)] active:scale-[0.98]",
   success:
