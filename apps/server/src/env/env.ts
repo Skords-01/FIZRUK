@@ -66,6 +66,18 @@ const envSchema = z.object({
   // ── AI (Anthropic) ─────────────────────────────────────────────────
   /** API-ключ для Anthropic Claude. Без нього /api/chat повертає 500. */
   ANTHROPIC_API_KEY: z.string().optional(),
+  /**
+   * API-ключ Groq для голосової транскрипції (`/api/transcribe`).
+   * Без нього endpoint повертає 503; фронт автоматично відкочується
+   * на Web Speech API (бачить це з `GET /api/transcribe/health`).
+   */
+  GROQ_API_KEY: z.string().optional(),
+  /**
+   * Whisper-модель Groq для транскрипції. За замовчуванням
+   * `whisper-large-v3-turbo` — найдешевший варіант з адекватною
+   * якістю українською. Альтернатива: `whisper-large-v3`.
+   */
+  GROQ_TRANSCRIBE_MODEL: z.string().default("whisper-large-v3-turbo"),
   /** `"1"` — повністю вимкнути AI-квоту (fail-open без перевірки). */
   AI_QUOTA_DISABLED: z.string().optional(),
   /** Денний ліміт AI-запитів для автентифікованого юзера. */
