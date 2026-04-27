@@ -343,7 +343,9 @@ Web Browser              Server                    Mobile App
 
 ### 3.2 Monitoring та alerting для платного продукту
 
-Sentry + Prometheus вже є. Потрібно додати **бізнес-алерти**:
+Sentry + Prometheus вже є. Потрібно додати **бізнес-алерти**.
+Про те, де саме жити Grafana/Loki (managed vs self-host) і коли мігрувати —
+див. [`docs/architecture/hosting-evolution.md`](../architecture/hosting-evolution.md).
 
 | Алерт               | Тригер                                  | Поріг                             | Де вимірюється               | Канал                |
 | ------------------- | --------------------------------------- | --------------------------------- | ---------------------------- | -------------------- |
