@@ -38,14 +38,21 @@ function PasswordStrengthBar({ password }: { password: string }) {
 }
 
 export function AuthPage({ onContinueWithoutAccount }) {
-  const { login, register, requestPasswordReset, authError, setAuthError } =
-    useAuth();
+  const {
+    login,
+    loginWithGoogle,
+    register,
+    requestPasswordReset,
+    authError,
+    setAuthError,
+  } = useAuth();
   const toast = useToast();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   // "idle" → the panel renders the reset form; "sending" disables the
@@ -73,6 +80,15 @@ export function AuthPage({ onContinueWithoutAccount }) {
     setForgotState("sending");
     const ok = await requestPasswordReset(target);
     setForgotState(ok ? "sent" : "idle");
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    await loginWithGoogle();
+    // У сценарії success браузер вже перейшов на Google і цей код не
+    // виконається. Скидаємо локальний спіннер тільки на випадок, якщо
+    // OAuth не запустився (помилка вже в `authError`).
+    setGoogleLoading(false);
   };
 
   const handleSubmit = async (e) => {
@@ -314,10 +330,9 @@ export function AuthPage({ onContinueWithoutAccount }) {
           variant="secondary"
           size="lg"
           className="w-full"
-          onClick={() => {
-            // TODO: initiate Google OAuth via better-auth
-            // authClient.signIn.social({ provider: "google" })
-          }}
+          loading={googleLoading}
+          disabled={loading || googleLoading}
+          onClick={handleGoogleSignIn}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
             <path

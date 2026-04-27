@@ -14,6 +14,11 @@ const signInEmail: ReturnType<
     (args: { email: string; password: string }) => Promise<AuthResult>
   >
 > = vi.fn(async () => ok());
+const signInSocial: ReturnType<
+  typeof vi.fn<
+    (args: { provider: string; callbackURL?: string }) => Promise<AuthResult>
+  >
+> = vi.fn(async () => ok());
 const signUpEmail: ReturnType<
   typeof vi.fn<
     (args: {
@@ -35,6 +40,8 @@ const forgetPassword: ReturnType<
 vi.mock("./authClient.js", () => ({
   signIn: {
     email: (args: { email: string; password: string }) => signInEmail(args),
+    social: (args: { provider: string; callbackURL?: string }) =>
+      signInSocial(args),
   },
   signUp: {
     email: (args: { email: string; password: string; name: string }) =>
@@ -116,6 +123,7 @@ const SAMPLE_USER = {
 describe("AuthContext", () => {
   beforeEach(() => {
     signInEmail.mockClear();
+    signInSocial.mockClear();
     signUpEmail.mockClear();
     signOut.mockClear();
     forgetPassword.mockClear();
@@ -241,6 +249,41 @@ describe("AuthContext", () => {
     expect(invalidateSpy).not.toHaveBeenCalledWith({
       queryKey: apiQueryKeys.me.current(),
     });
+  });
+
+  it("loginWithGoogle delegates to signIn.social with provider=google", async () => {
+    setUser({ data: undefined });
+    const { Wrapper, invalidateSpy } = makeWrapper();
+    const { result } = renderHook(() => useAuth(), { wrapper: Wrapper });
+    await act(async () => {
+      const okResult = await result.current.loginWithGoogle();
+      expect(okResult).toBe(true);
+    });
+    expect(signInSocial).toHaveBeenCalledWith({
+      provider: "google",
+      callbackURL: "/",
+    });
+    // Successful social sign-in normally redirects to the provider; the
+    // me-cache will be re-fetched after the OAuth callback round-trips,
+    // not here. Invalidation explicitly should NOT happen on the kickoff.
+    expect(invalidateSpy).not.toHaveBeenCalledWith({
+      queryKey: apiQueryKeys.me.current(),
+    });
+  });
+
+  it("loginWithGoogle surfaces provider errors via authError", async () => {
+    setUser({ data: undefined });
+    signInSocial.mockResolvedValueOnce({
+      data: null,
+      error: { message: "Provider not configured" },
+    } as unknown as Awaited<ReturnType<typeof signInSocial>>);
+    const { Wrapper } = makeWrapper();
+    const { result } = renderHook(() => useAuth(), { wrapper: Wrapper });
+    await act(async () => {
+      const okResult = await result.current.loginWithGoogle();
+      expect(okResult).toBe(false);
+    });
+    expect(result.current.authError).toBe("Provider not configured");
   });
 
   it("useAuth() throws when used outside AuthProvider", () => {
