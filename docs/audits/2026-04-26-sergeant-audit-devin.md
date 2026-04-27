@@ -32,7 +32,8 @@
 | PR-7.B   | cloud-sync offline-queue + replay-on-reconnect integration tests       | ✅ closed  | [#904](https://github.com/Skords-01/Sergeant/pull/904)                                                                 |
 | PR-5.B   | rollback sanity для `*.down.sql` міграцій (Testcontainers)             | ✅ closed  | [#918](https://github.com/Skords-01/Sergeant/pull/918)                                                                 |
 | PR-6.B   | `noImplicitAny` phase 2 — routine + shared + nutrition (3 з 6)         | 🟡 partial | [#923](https://github.com/Skords-01/Sergeant/pull/923), [#934](https://github.com/Skords-01/Sergeant/pull/934)         |
-| PR-11.C  | ADR template + README index                                          | 🟡 partial | template+README зроблено, retroactive ADRs ⏳ |
+| PR-7.E   | de-flake `OnboardingWizard.test.tsx` (1/3 flaky triage)                | ✅ closed  | [#TBD](https://github.com/Skords-01/Sergeant/pull/TBD)                                                                 |
+| PR-11.C  | ADR template + README index                                            | 🟡 partial | template+README зроблено, retroactive ADRs ⏳                                                                          |
 | Інші     | див. inline-теги нижче                                                 | ⏳ pending | —                                                                                                                      |
 
 > Sprint-таблиці нижче (`Спринт 0`, `Спринт 1-2`, `Спринт 3-6`) також оновлені
