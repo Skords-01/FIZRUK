@@ -1,5 +1,10 @@
 # Finyk HubChat Tools — `find_transaction` + `batch_categorize`
 
+> **Status:** shipped (PR [#794](https://github.com/Skords-01/Sergeant/pull/794)).
+> Серверні tool defs — `apps/server/src/modules/chat/toolDefs/finyk.ts`; client
+> handlers — `apps/web/src/core/lib/chatActions/finykActions.ts`; обидва tools є у
+> `KNOWN_TOOLS` і `RISKY_TOOLS` (`hubChatActionCards.ts`).
+
 ## Контекст
 
 PR 5 додає два Фінік tools у HubChat. Сервер лише описує tools для Anthropic, а side effects виконуються на клієнті через `executeAction`, тому перша версія працює з локальними Finyk даними (`finyk_manual_expenses_v1`, `finyk_tx_cache`, `finyk_tx_cats`, hidden ids і transaction context, який уже є у клієнта).
