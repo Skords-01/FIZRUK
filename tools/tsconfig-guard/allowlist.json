@@ -1,0 +1,9 @@
+[
+  {
+    "path": "apps/web",
+    "option": "strict",
+    "value": false,
+    "reason": "PR-6.C in flight — migrating apps/web to strict: true",
+    "expires": "2026-05-27"
+  }
+]

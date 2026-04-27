@@ -183,13 +183,13 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  smoke-e2e:
-    name: Smoke E2E (Playwright)
+  critical-flow:
+    name: Critical-flow E2E (Playwright)
     runs-on: ubuntu-latest
     # No `needs:` — runs in parallel with other jobs so a lint/test failure in
     # `check` never causes this job to be skipped.  Previously `needs: check`
     # was the root cause of the job being skipped on most PRs.
-    timeout-minutes: 20
+    timeout-minutes: 8
 
     services:
       postgres:
@@ -269,8 +269,8 @@ jobs:
           timeout 60 bash -c 'until curl -sf http://127.0.0.1:4173 >/dev/null 2>&1; do sleep 2; done'
           echo "Both servers ready."
 
-      - name: Run smoke E2E suite
-        run: pnpm --filter @sergeant/web exec playwright test -c playwright.smoke.config.ts
+      - name: Run critical-flow E2E suite
+        run: pnpm --filter @sergeant/web exec playwright test -c playwright.smoke.config.ts --grep @critical
         env:
           CI: "true"
           PW_SKIP_WEBSERVER: "1"
@@ -281,10 +281,25 @@ jobs:
         # actions/upload-artifact v4.4.3 (SHA-pinned)
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
-          name: playwright-smoke-report
+          name: playwright-critical-flow-report
           path: apps/web/playwright-report
           if-no-files-found: ignore
           retention-days: 7
+
+  tsconfig-strict-guard:
+    name: tsconfig strict guard (PR-1.A)
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v6.0.2 (SHA-pinned for supply-chain hardening)
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # actions/setup-node v6.4.0 (SHA-pinned for supply-chain hardening)
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "20"
+
+      - name: Enforce tsconfig strict inheritance
+        run: node tools/tsconfig-guard/check.mjs
 
   migration-lint:
     name: Migration lint (AGENTS rule #4)

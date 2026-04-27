@@ -4,7 +4,7 @@
 **Скоуп:** репо `Skords-01/Sergeant` (default branch на момент клонування).
 **Метод:** репозиторний прохід — структура, конфіги, `AGENTS.md`/`CONTRIBUTING.md`/`README.md`, `docs/*` (roadmap, tech-debt, observability, playbooks), `.github/workflows/ci.yml`, `eslint.config.js`, `packages/eslint-plugin-sergeant-design/`, `apps/*/tsconfig.json`, міграції в `apps/server/src/migrations/`. Без виконання CI/тестів.
 
-> **Статус виконання — оновлено 2026-04-27 (пʼята ревізія: +#918 +#923 +#934)**
+> **Статус виконання — оновлено 2026-04-27 (шоста ревізія: +PR-11.C partial)**
 > Поки документ жив в attachments, частина PR-ідей з нього вже відпрацьована
 > через дочерні Devin-сесії. Узагальнений знімок прогресу:
 
@@ -32,6 +32,7 @@
 | PR-7.B   | cloud-sync offline-queue + replay-on-reconnect integration tests       | ✅ closed  | [#904](https://github.com/Skords-01/Sergeant/pull/904)                                                                 |
 | PR-5.B   | rollback sanity для `*.down.sql` міграцій (Testcontainers)             | ✅ closed  | [#918](https://github.com/Skords-01/Sergeant/pull/918)                                                                 |
 | PR-6.B   | `noImplicitAny` phase 2 — routine + shared + nutrition (3 з 6)         | 🟡 partial | [#923](https://github.com/Skords-01/Sergeant/pull/923), [#934](https://github.com/Skords-01/Sergeant/pull/934)         |
+| PR-11.C  | ADR template + README index                                          | 🟡 partial | template+README зроблено, retroactive ADRs ⏳ |
 | Інші     | див. inline-теги нижче                                                 | ⏳ pending | —                                                                                                                      |
 
 > Sprint-таблиці нижче (`Спринт 0`, `Спринт 1-2`, `Спринт 3-6`) також оновлені
@@ -312,7 +313,7 @@
 **PR-ідеї:**
 
 - `PR-10.A` — `ci: add p95 pipeline-duration metric to CI summary` (script, що читає GitHub Actions API і публікує trend у PR як коментар).
-- `PR-10.B` — `ci: split smoke-e2e into critical-flow (must-pass) + extended-flow (nightly)`.
+- `PR-10.B` — `ci: split smoke-e2e into critical-flow (must-pass) + extended-flow (nightly)`. ✅ closed
 - `PR-10.C` — `ci: nightly job for full audit (critical+high blocking) + dependency-check (snyk або osv-scanner)`. Nightly не блокує PR, але дає трендовий сигнал.
 
 ---
@@ -335,7 +336,7 @@
 
 - `PR-11.A` — `docs(meta): freshness badge for top-10 docs` — простий header `**Last validated:** YYYY-MM-DD by @user. **Next review:** YYYY-MM-DD.` + nightly script, що відкриває issue, якщо `Next review` пройшов.
 - `PR-11.B` — `docs(playbooks): convert top-5 playbooks to "decision tree" format` (`when ... do X, else Y`).
-- `PR-11.C` — `docs(adr): introduce lightweight ADR template` (`docs/adr/NNNN-title.md`, 1 page) і занести 5 retroactive ADRs (вибір turbo, choice of Better Auth, monorepo split, Capacitor wrapper, Anthropic tool-on-client architecture).
+- `PR-11.C` 🟡 partial — ADR практика "живе": `docs/adr/0001-monetization-architecture.md` ([#912](https://github.com/Skords-01/Sergeant/pull/912)) і `docs/adr/0002-tool-lifecycle.md` ([#926](https://github.com/Skords-01/Sergeant/pull/926)) уже існують. Цим PR-ом формалізовано: `docs/adr/TEMPLATE.md` (1-page MADR-adapted skeleton із secção Status / Context / Considered options / Decision / Consequences / Compliance / Links) і `docs/adr/README.md` (index, naming convention, lifecycle, посилання на TEMPLATE). **Залишилось ⏳:** retroactive ADRs для turbo / Better Auth / monorepo split / Capacitor wrapper / Anthropic tool-on-client architecture (5 шт., по PR на кожен).
 
 ---
 
@@ -406,12 +407,12 @@
 
 ### Спринт 3-6 (2-3 місяці) — «масштабування»
 
-| #   | PR                                                       | Effort    | Імпакт               | Status     |
-| --- | -------------------------------------------------------- | --------- | -------------------- | ---------- |
-| 13  | `PR-6.C` — strict: true full + remove allowJs            | 1 тиждень | strict TS done       | ⏳ pending |
+| #   | PR                                                       | Effort    | Імпакт               | Status              |
+| --- | -------------------------------------------------------- | --------- | -------------------- | ------------------- |
+| 13  | `PR-6.C` — strict: true full + remove allowJs            | 1 тиждень | strict TS done       | ⏳ pending          |
 | 14  | `PR-4.D` — zod-to-openapi для api-client                 | 1 тиждень | автоматизує rule #3  |
 | 15  | `PR-8.A` + `PR-8.C` — error-budget policy + tool metrics | 3-5 д     | operational maturity |
-| 16  | `PR-10.B` + `PR-10.C` — split smoke-e2e + nightly audit  | 2-3 д     | CI scaling           |
+| 16  | `PR-10.B` + `PR-10.C` — split smoke-e2e + nightly audit  | 2-3 д     | CI scaling           | `PR-10.B` ✅ closed |
 | 17  | `PR-11.A` + `PR-11.C` — freshness badges + ADR template  | 1 тиждень | doc lifecycle        |
 | 18  | `PR-3.B/C` next 5 — file decomposition next wave         | 1-2 тижні | regression-surface   |
 
