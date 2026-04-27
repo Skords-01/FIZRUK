@@ -4,6 +4,17 @@ import { MONTHLY_PLAN_STORAGE_KEY } from "@sergeant/fizruk-domain";
 
 const STORAGE_KEY = MONTHLY_PLAN_STORAGE_KEY;
 
+interface DayEntry {
+  templateId: string;
+}
+
+interface MonthlyPlanState {
+  reminderEnabled: boolean;
+  reminderHour: number;
+  reminderMinute: number;
+  days: Record<string, DayEntry>;
+}
+
 function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -36,7 +47,7 @@ function loadState() {
   }
 }
 
-function saveState(s) {
+function saveState(s: MonthlyPlanState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     window.dispatchEvent(new CustomEvent("fizruk-storage-monthly-plan"));
@@ -48,7 +59,7 @@ export function useMonthlyPlan() {
 
   useEffect(() => {
     const sync = () => setState(loadState());
-    const onStorage = (e) => {
+    const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY || e.key === null) sync();
     };
     window.addEventListener("storage", onStorage);
@@ -59,7 +70,7 @@ export function useMonthlyPlan() {
     };
   }, []);
 
-  const setReminder = useCallback((hour, minute) => {
+  const setReminder = useCallback((hour: number, minute: number) => {
     setState((prev) => {
       const next = {
         ...prev,
@@ -71,7 +82,7 @@ export function useMonthlyPlan() {
     });
   }, []);
 
-  const setReminderEnabled = useCallback((enabled) => {
+  const setReminderEnabled = useCallback((enabled: boolean) => {
     setState((prev) => {
       const next = { ...prev, reminderEnabled: !!enabled };
       saveState(next);
@@ -79,22 +90,25 @@ export function useMonthlyPlan() {
     });
   }, []);
 
-  const setDayTemplate = useCallback((dateKey, templateId) => {
-    setState((prev) => {
-      const days = { ...prev.days };
-      if (templateId == null || templateId === "") {
-        delete days[dateKey];
-      } else {
-        days[dateKey] = { templateId };
-      }
-      const next = { ...prev, days };
-      saveState(next);
-      return next;
-    });
-  }, []);
+  const setDayTemplate = useCallback(
+    (dateKey: string, templateId: string | null) => {
+      setState((prev) => {
+        const days = { ...prev.days };
+        if (templateId == null || templateId === "") {
+          delete days[dateKey];
+        } else {
+          days[dateKey] = { templateId };
+        }
+        const next = { ...prev, days };
+        saveState(next);
+        return next;
+      });
+    },
+    [],
+  );
 
   const getTemplateForDate = useCallback(
-    (dateKey) => state.days[dateKey]?.templateId ?? null,
+    (dateKey: string) => state.days[dateKey]?.templateId ?? null,
     [state.days],
   );
 

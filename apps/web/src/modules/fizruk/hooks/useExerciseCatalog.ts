@@ -6,7 +6,9 @@ import {
   serializeCustomExercisesToStorage,
 } from "@sergeant/fizruk-domain";
 
-function norm(s) {
+type RawExerciseDef = FizrukData.RawExerciseDef;
+
+function norm(s: unknown) {
   return (s || "").toString().trim().toLowerCase();
 }
 
@@ -17,7 +19,7 @@ function norm(s) {
  */
 export function useExerciseCatalog() {
   const catalogData = FizrukData.EXERCISE_CATALOG;
-  const [customExercises, setCustomExercises] = useState([]);
+  const [customExercises, setCustomExercises] = useState<RawExerciseDef[]>([]);
 
   const primaryGroupsUk = FizrukData.PRIMARY_GROUPS_UK;
   const equipmentUk = FizrukData.EQUIPMENT_UK;
@@ -28,11 +30,11 @@ export function useExerciseCatalog() {
     try {
       const raw = localStorage.getItem(CUSTOM_EXERCISES_KEY);
       const parsed = parseCustomExercisesFromStorage(raw);
-      if (Array.isArray(parsed)) setCustomExercises(parsed);
+      if (Array.isArray(parsed)) setCustomExercises(parsed as RawExerciseDef[]);
     } catch {}
   }, []);
 
-  const persistCustom = useCallback((next) => {
+  const persistCustom = useCallback((next: RawExerciseDef[]) => {
     setCustomExercises(next);
     try {
       localStorage.setItem(
@@ -49,7 +51,7 @@ export function useExerciseCatalog() {
   );
 
   const search = useCallback(
-    (query) => {
+    (query: string) => {
       const q = norm(query);
       if (!q) return exercises;
 
@@ -74,7 +76,7 @@ export function useExerciseCatalog() {
   );
 
   const addExercise = useCallback(
-    (ex) => {
+    (ex: RawExerciseDef) => {
       if (!ex?.id) throw new Error("id is required");
       if (!ex?.name?.uk) throw new Error("name.uk is required");
       const next = [
@@ -87,7 +89,7 @@ export function useExerciseCatalog() {
   );
 
   const removeExercise = useCallback(
-    (id) => {
+    (id: string) => {
       if (!id) return false;
       const next = customExercises.filter((x) => x?.id !== id);
       if (next.length === customExercises.length) return false;

@@ -87,7 +87,10 @@ describe("useWorkoutTemplates", () => {
       result.current.restoreTemplate(null, 0);
     });
     act(() => {
-      result.current.restoreTemplate({ id: "" }, 0);
+      result.current.restoreTemplate(
+        { id: "" } as Parameters<typeof result.current.restoreTemplate>[0],
+        0,
+      );
     });
     expect(result.current.templates).toHaveLength(0);
   });

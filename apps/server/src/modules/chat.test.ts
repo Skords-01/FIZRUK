@@ -166,6 +166,86 @@ describe("chat handler — tool_use parsing", () => {
     });
   });
 
+  it("великий tool_result truncate-ається перед відправкою в Anthropic", async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: { content: [{ type: "text", text: "Готово." }] },
+    });
+
+    // 5000-char tool_result blob (як briefing з RoutineSync або digest)
+    const bigBlob = "BIG_RESULT_START " + "x".repeat(4970) + " BIG_RESULT_END";
+    const req = makeReq({
+      messages: [{ role: "user", content: "Дай брифінг" }],
+      tool_calls_raw: [
+        {
+          type: "tool_use",
+          id: "toolu_briefing",
+          name: "briefing",
+          input: {},
+        },
+      ],
+      tool_results: [{ tool_use_id: "toolu_briefing", content: bigBlob }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+
+    const payload = anthropicMessages.mock.calls[0][1] as {
+      messages: Array<{
+        role: string;
+        content: Array<{
+          type: string;
+          tool_use_id?: string;
+          content?: string;
+        }>;
+      }>;
+    };
+    const sentToolResult = payload.messages[2].content[0];
+    expect(sentToolResult.type).toBe("tool_result");
+    // Контент скоротився
+    expect(sentToolResult.content).toBeDefined();
+    expect((sentToolResult.content as string).length).toBeLessThan(
+      bigBlob.length / 2,
+    );
+    // Маркер truncation присутній
+    expect(sentToolResult.content).toContain("[…truncated");
+    // Head/tail збереглися
+    expect(sentToolResult.content).toContain("BIG_RESULT_START");
+    expect(sentToolResult.content).toContain("BIG_RESULT_END");
+  });
+
+  it("малий tool_result проходить без truncation", async () => {
+    anthropicMessages.mockResolvedValueOnce({
+      response: { ok: true, status: 200 },
+      data: { content: [{ type: "text", text: "Ок." }] },
+    });
+
+    const smallContent = "Транзакцію m_xyz видалено успішно";
+    const req = makeReq({
+      messages: [{ role: "user", content: "Видали m_xyz" }],
+      tool_calls_raw: [
+        {
+          type: "tool_use",
+          id: "toolu_small",
+          name: "delete_transaction",
+          input: { tx_id: "m_xyz" },
+        },
+      ],
+      tool_results: [{ tool_use_id: "toolu_small", content: smallContent }],
+    });
+    const res = makeRes();
+    await handler(req, res);
+
+    const payload = anthropicMessages.mock.calls[0][1] as {
+      messages: Array<{
+        role: string;
+        content: Array<{ type: string; content?: string }>;
+      }>;
+    };
+    expect(payload.messages[2].content[0].content).toBe(smallContent);
+  });
+
   it("400 коли немає повідомлень", async () => {
     const req = makeReq({ messages: [] });
     const res = makeRes();
