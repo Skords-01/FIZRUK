@@ -21,6 +21,7 @@ import {
   markOnboardingDone,
   shouldShowOnboarding as sharedShouldShowOnboarding,
 } from "./onboardingGate";
+import { PermissionsPrompt } from "./PermissionsPrompt";
 import { MODULE_LABELS } from "@shared/lib/moduleLabels";
 import {
   ONBOARDING_MODULE_DESCRIPTIONS,
@@ -593,6 +594,7 @@ export function OnboardingWizard({
     goals: { ...EMPTY_GOALS },
     stepStartedAt: Date.now(),
   });
+  const [showPermissions, setShowPermissions] = useState(false);
 
   // Track wizard start
   useEffect(() => {
@@ -671,10 +673,8 @@ export function OnboardingWizard({
     );
 
     // Track completion
-    const duration = Date.now() - state.stepStartedAt;
     trackEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_COMPLETED, {
-      step: "goals",
-      durationMs: duration,
+      step: "permissions",
     });
     trackEvent(ANALYTICS_EVENTS.ONBOARDING_VIBE_PICKED, {
       picks: chosen,
@@ -690,7 +690,7 @@ export function OnboardingWizard({
     markFirstActionPending();
     markOnboardingDone();
     onDone(null, { intent: "vibe_empty", picks: chosen });
-  }, [state.picks, state.goals, state.stepStartedAt, onDone]);
+  }, [state.picks, state.goals, onDone]);
 
   const stepIdx = ONBOARDING_STEPS.indexOf(state.step);
 
@@ -710,22 +710,45 @@ export function OnboardingWizard({
     handleBack();
   }, [handleBack]);
 
-  const animatedFinish = useCallback(() => {
+  const goToPermissions = useCallback(() => {
+    setDirection("forward");
+    stepKeyRef.current += 1;
+    trackEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_COMPLETED, {
+      step: "goals",
+      durationMs: Date.now() - state.stepStartedAt,
+    });
+    trackEvent(ANALYTICS_EVENTS.ONBOARDING_STEP_VIEWED, {
+      step: "permissions",
+    });
+    setShowPermissions(true);
+  }, [state.stepStartedAt]);
+
+  const finishFromPermissions = useCallback(() => {
     setDirection("forward");
     finish();
   }, [finish]);
+
+  const backFromPermissions = useCallback(() => {
+    setDirection("backward");
+    stepKeyRef.current += 1;
+    setShowPermissions(false);
+  }, []);
 
   const transitionClass =
     direction === "forward"
       ? "motion-safe:animate-step-forward"
       : "motion-safe:animate-step-backward";
 
+  const totalSteps = ONBOARDING_STEPS.length + 1;
+  const currentStepIdx = showPermissions ? ONBOARDING_STEPS.length : stepIdx;
   const content = (
     <div className="space-y-4">
-      <StepIndicator current={stepIdx} total={ONBOARDING_STEPS.length} />
+      <StepIndicator current={currentStepIdx} total={totalSteps} />
       <div key={stepKeyRef.current} className={transitionClass}>
-        {state.step === "welcome" && <WelcomeStep onContinue={animatedNext} />}
-        {state.step === "modules" && (
+        {!showPermissions && state.step === "welcome" && (
+          <WelcomeStep onContinue={animatedNext} />
+        )}
+        {!showPermissions && state.step === "modules" && (
           <ModulesStep
             picks={state.picks}
             togglePick={togglePick}
@@ -733,13 +756,19 @@ export function OnboardingWizard({
             onBack={animatedBack}
           />
         )}
-        {state.step === "goals" && (
+        {!showPermissions && state.step === "goals" && (
           <GoalsStep
             picks={state.picks}
             goals={state.goals}
             onSetGoal={setGoal}
-            onFinish={animatedFinish}
+            onFinish={goToPermissions}
             onBack={animatedBack}
+          />
+        )}
+        {showPermissions && (
+          <PermissionsPrompt
+            onComplete={finishFromPermissions}
+            onBack={backFromPermissions}
           />
         )}
       </div>
