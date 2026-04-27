@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Card } from "@shared/components/ui/Card";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
@@ -15,7 +16,12 @@ import {
   estimateLogBytes,
   toLocalISODate,
 } from "../lib/nutritionStorage";
-import { addDaysISODate } from "@sergeant/nutrition-domain";
+import {
+  addDaysISODate,
+  type Meal,
+  type MealTypeId,
+  type NutritionLog,
+} from "@sergeant/nutrition-domain";
 import {
   MEAL_ORDER,
   MEAL_META,
@@ -31,11 +37,23 @@ import {
 } from "../lib/nutritionStats";
 import { getMealThumbnailBlob } from "../lib/mealPhotoStorage";
 
-function toISODate(d) {
+interface LogCardProps {
+  log: NutritionLog;
+  selectedDate: string;
+  setSelectedDate: Dispatch<SetStateAction<string>>;
+  onAddMeal?: () => void;
+  onAddMealFromSearch?: (meal: Meal, date?: string) => void;
+  onRemoveMeal?: (date: string, meal: Meal) => void;
+  onEditMeal?: (date: string, meal: Meal) => void;
+  onDuplicateYesterday?: () => void;
+  onTrimLog?: (keepDays: number) => void;
+}
+
+function toISODate(d: Date): string {
   return toLocalISODate(d);
 }
 
-function formatDate(isoDate) {
+function formatDate(isoDate: string): string {
   const today = toISODate(new Date());
   const yesterday = addDaysISODate(today, -1);
   const tomorrow = addDaysISODate(today, 1);
@@ -46,22 +64,22 @@ function formatDate(isoDate) {
   return `${d}.${m}.${y}`;
 }
 
-function groupByMealType(meals) {
-  const groups = {};
+function groupByMealType(meals: Meal[]): Record<MealTypeId, Meal[]> {
+  const groups: Partial<Record<MealTypeId, Meal[]>> = {};
   for (const meal of meals) {
-    const mealType = isMealTypeId(meal.mealType)
+    const mealType: MealTypeId = isMealTypeId(meal.mealType)
       ? meal.mealType
       : mealTypeFromLabel(meal.label);
     if (!groups[mealType]) groups[mealType] = [];
-    groups[mealType].push(meal);
+    groups[mealType]!.push(meal);
   }
-  return groups;
+  return groups as Record<MealTypeId, Meal[]>;
 }
 
-function MealThumb({ mealId }) {
-  const [url, setUrl] = useState(null);
+function MealThumb({ mealId }: { mealId: string }) {
+  const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
-    let u;
+    let u: string | undefined;
     (async () => {
       const b = await getMealThumbnailBlob(mealId);
       if (b) {
@@ -97,7 +115,7 @@ export function LogCard({
   onEditMeal,
   onDuplicateYesterday,
   onTrimLog,
-}) {
+}: LogCardProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [duplicateConfirm, setDuplicateConfirm] = useState(false);
@@ -143,7 +161,7 @@ export function LogCard({
   const logBytes = useMemo(() => estimateLogBytes(log), [log]);
   const logSizeWarn = logBytes > 350_000;
 
-  function shiftDate(delta) {
+  function shiftDate(delta: number) {
     const [y, m, d] = selectedDate.split("-").map(Number);
     const next = new Date(y, m - 1, d + delta);
     setSelectedDate(toISODate(next));
@@ -252,12 +270,23 @@ export function LogCard({
                       className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-nutrition/10 text-nutrition-strong dark:text-nutrition hover:bg-nutrition/20 transition-colors"
                       onClick={() => {
                         onAddMealFromSearch?.({
+                          id: `meal_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                          time: "",
                           name: meal.name,
                           mealType: meal.mealType,
                           label: meal.label,
-                          macros: meal.macros ? { ...meal.macros } : {},
+                          macros: meal.macros
+                            ? { ...meal.macros }
+                            : {
+                                kcal: null,
+                                protein_g: null,
+                                fat_g: null,
+                                carbs_g: null,
+                              },
                           source: "manual",
                           macroSource: "manual",
+                          foodId: null,
+                          amount_g: null,
                         });
                         setSearchQuery("");
                       }}
@@ -279,7 +308,7 @@ export function LogCard({
             <button
               type="button"
               className="underline font-semibold"
-              onClick={() => onTrimLog(365)}
+              onClick={() => onTrimLog?.(365)}
             >
               Залишити лише останні 365 днів
             </button>
@@ -536,16 +565,30 @@ const MEAL_ROW_HEIGHT = 68;
 const MEAL_HEADER_HEIGHT = 32;
 const MAX_MEAL_LIST_HEIGHT = MEAL_ROW_HEIGHT * 8;
 
+interface VirtualMealListProps {
+  groups: Record<MealTypeId, Meal[]>;
+  meals: Meal[];
+  selectedDate: string;
+  onRemoveMeal?: (date: string, meal: Meal) => void;
+  onEditMeal?: (date: string, meal: Meal) => void;
+}
+
+type MealListItem =
+  | { kind: "header"; type: MealTypeId }
+  | { kind: "meal"; type: MealTypeId; meal: Meal };
+
 function VirtualMealList({
   groups,
   meals,
   selectedDate,
   onRemoveMeal,
   onEditMeal,
-}) {
-  const activeTypes = MEAL_ORDER.filter((t) => groups[t]?.length);
-  const flatItems = useMemo(() => {
-    const items = [];
+}: VirtualMealListProps) {
+  const activeTypes = MEAL_ORDER.filter(
+    (t: MealTypeId) => groups[t]?.length,
+  ) as MealTypeId[];
+  const flatItems = useMemo<MealListItem[]>(() => {
+    const items: MealListItem[] = [];
     for (const type of activeTypes) {
       items.push({ kind: "header", type });
       for (const meal of groups[type]) {
@@ -579,7 +622,7 @@ function VirtualMealList({
         return (
           <div className="mb-1.5">
             <SwipeToAction
-              onSwipeLeft={() => onRemoveMeal(selectedDate, item.meal)}
+              onSwipeLeft={() => onRemoveMeal?.(selectedDate, item.meal)}
               rightLabel="🗑 Видалити"
               rightColor="bg-danger"
             >
@@ -590,7 +633,7 @@ function VirtualMealList({
                     ? () => onEditMeal(selectedDate, item.meal)
                     : undefined
                 }
-                onRemove={() => onRemoveMeal(selectedDate, item.meal)}
+                onRemove={() => onRemoveMeal?.(selectedDate, item.meal)}
               />
             </SwipeToAction>
           </div>
@@ -600,8 +643,19 @@ function VirtualMealList({
   );
 }
 
-function MealRow({ meal, onRemove, onEdit }) {
-  const mac = meal.macros || {};
+interface MealRowProps {
+  meal: Meal;
+  onRemove?: () => void;
+  onEdit?: () => void;
+}
+
+function MealRow({ meal, onRemove, onEdit }: MealRowProps) {
+  const mac = meal.macros ?? {
+    kcal: null,
+    protein_g: null,
+    fat_g: null,
+    carbs_g: null,
+  };
   const macroSource = String(meal?.macroSource || "manual");
   const sourceLabel =
     macroSource === "photoAI"

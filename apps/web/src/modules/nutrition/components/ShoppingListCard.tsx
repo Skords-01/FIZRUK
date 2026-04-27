@@ -4,8 +4,15 @@ import { Button } from "@shared/components/ui/Button";
 import { cn } from "@shared/lib/cn";
 import { openHubModule } from "@shared/lib/hubNav";
 import { getTotalCount } from "../lib/shoppingListStorage";
+import type {
+  PantryItem,
+  ShoppingCategory,
+  ShoppingItem,
+  ShoppingList,
+} from "@sergeant/nutrition-domain";
+import type { NutritionWeekPlan } from "../hooks/useNutritionUiState";
 
-const CATEGORY_ICONS = {
+const CATEGORY_ICONS: Record<string, string> = {
   "М'ясо та риба": "🥩",
   "Молочні продукти": "🥛",
   Овочі: "🥦",
@@ -20,8 +27,22 @@ const CATEGORY_ICONS = {
   Інше: "🛒",
 };
 
-function getCategoryIcon(name) {
+function getCategoryIcon(name: string): string {
   return CATEGORY_ICONS[name] || "🛒";
+}
+
+interface ShoppingListCardProps {
+  recipes?: unknown[];
+  weekPlan?: NutritionWeekPlan | null;
+  pantryItems?: PantryItem[];
+  shoppingList: ShoppingList | null;
+  shoppingBusy?: boolean;
+  onGenerate: (source: string) => void | Promise<void>;
+  onToggleItem: (categoryName: string, itemId: string) => void;
+  onClearChecked: () => void;
+  onClearAll: () => void;
+  onAddCheckedToPantry: () => void | Promise<void>;
+  checkedItems: ShoppingItem[];
 }
 
 export function ShoppingListCard({
@@ -36,13 +57,13 @@ export function ShoppingListCard({
   onClearAll,
   onAddCheckedToPantry,
   checkedItems,
-}) {
+}: ShoppingListCardProps) {
   const [source, setSource] = useState("recipes");
   const { total, checked } = getTotalCount(shoppingList);
   const hasItems = total > 0;
 
   const hasRecipes = Array.isArray(recipes) && recipes.length > 0;
-  const hasWeekPlan = weekPlan?.days?.length > 0;
+  const hasWeekPlan = (weekPlan?.days?.length ?? 0) > 0;
 
   const canGenerate =
     (source === "recipes" && hasRecipes) ||
@@ -163,7 +184,7 @@ export function ShoppingListCard({
             )}
 
             <div className="space-y-3">
-              {shoppingList.categories.map((cat) => (
+              {shoppingList!.categories.map((cat: ShoppingCategory) => (
                 <div
                   key={cat.name}
                   className="rounded-2xl border border-line bg-bg/30 overflow-hidden"
@@ -177,13 +198,16 @@ export function ShoppingListCard({
                         {cat.name}
                       </span>
                       <span className="text-xs text-muted ml-auto">
-                        {cat.items.filter((i) => i.checked).length}/
-                        {cat.items.length}
+                        {
+                          cat.items.filter((i: ShoppingItem) => i.checked)
+                            .length
+                        }
+                        /{cat.items.length}
                       </span>
                     </div>
                   </div>
                   <div className="divide-y divide-line/30">
-                    {cat.items.map((item) => (
+                    {cat.items.map((item: ShoppingItem) => (
                       <button
                         key={item.id}
                         type="button"

@@ -1,10 +1,43 @@
 import { useCallback, useEffect } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Input } from "@shared/components/ui/Input";
 import { cn } from "@shared/lib/cn";
+import type { FoodSearchProduct } from "@shared/api";
 import { FoodHitRow } from "./FoodHitRow";
 import { MacroChip } from "./MacroChip";
-import { macrosForGrams } from "../../lib/foodDb/foodDb";
+import { macrosForGrams, type FoodProduct } from "../../lib/foodDb/foodDb";
+import type { MealFormState } from "./mealFormUtils";
+
+export interface PickedFood {
+  id?: string | number;
+  name?: string;
+  brand?: string;
+  defaultGrams?: number;
+  per100?: {
+    kcal?: number | null;
+    protein_g?: number | null;
+    fat_g?: number | null;
+    carbs_g?: number | null;
+  };
+  source?: string;
+}
+
+interface FoodPickerSectionProps {
+  form: MealFormState;
+  setForm: Dispatch<SetStateAction<MealFormState>>;
+  foodQuery: string;
+  setFoodQuery: Dispatch<SetStateAction<string>>;
+  foodHits: FoodProduct[];
+  offHits: FoodSearchProduct[];
+  foodBusy: boolean;
+  offBusy: boolean;
+  foodErr: string;
+  pickedFood: PickedFood | null;
+  setPickedFood: Dispatch<SetStateAction<PickedFood | null>>;
+  pickedGrams: string;
+  setPickedGrams: Dispatch<SetStateAction<string>>;
+}
 
 export function FoodPickerSection({
   form,
@@ -20,9 +53,9 @@ export function FoodPickerSection({
   setPickedFood,
   pickedGrams,
   setPickedGrams,
-}) {
+}: FoodPickerSectionProps) {
   const applyPickedFood = useCallback(
-    (p, gramsRaw) => {
+    (p: PickedFood | null, gramsRaw: string | number) => {
       const g = Number(
         String(gramsRaw || "")
           .trim()
@@ -101,10 +134,9 @@ export function FoodPickerSection({
                         p={p}
                         badge="🌍"
                         onPick={() => {
-                          setPickedFood(p);
-                          setPickedGrams(
-                            String(Math.round(p.defaultGrams || 100)),
-                          );
+                          setPickedFood(p as PickedFood);
+                          const grams = Number(p.defaultGrams) || 100;
+                          setPickedGrams(String(Math.round(grams)));
                           setFoodQuery("");
                         }}
                       />

@@ -1,10 +1,32 @@
+import type { Dispatch, SetStateAction } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { Sheet } from "@shared/components/ui/Sheet";
 import { normalizeUnit } from "../lib/pantryTextParser";
 
-export function ItemEditSheet({ itemEdit, setItemEdit, onClose, onSave }) {
+export interface ItemEditState {
+  open: boolean;
+  idx: number;
+  name: string;
+  qty: string;
+  unit: string;
+  err: string;
+}
+
+interface ItemEditSheetProps {
+  itemEdit: ItemEditState;
+  setItemEdit: Dispatch<SetStateAction<ItemEditState>>;
+  onClose: () => void;
+  onSave: (idx: number, qty: number | null, unit: string | null) => void;
+}
+
+export function ItemEditSheet({
+  itemEdit,
+  setItemEdit,
+  onClose,
+  onSave,
+}: ItemEditSheetProps) {
   return (
     <Sheet
       open={!!itemEdit.open}

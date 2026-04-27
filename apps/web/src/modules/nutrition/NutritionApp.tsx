@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Meal } from "@sergeant/nutrition-domain";
 import { NutritionHeader } from "./components/NutritionHeader";
 import { NutritionBottomNav } from "./components/NutritionBottomNav";
 import { SubTabs } from "./components/SubTabs";
@@ -320,7 +321,7 @@ export default function NutritionApp({
   );
 
   const wrappedSaveMeal = useCallback(
-    async (meal) => {
+    async (meal: Meal) => {
       const isEdit = !!editingMeal?.id;
       if (isEdit) {
         log.handleEditMeal(editingMeal.date, meal);

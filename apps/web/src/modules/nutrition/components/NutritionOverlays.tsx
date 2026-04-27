@@ -1,9 +1,44 @@
+import type { Dispatch, SetStateAction } from "react";
+import type { Meal, NutritionPrefs } from "@sergeant/nutrition-domain";
 import { PantryManagerSheet } from "./PantryManagerSheet";
 import { ItemEditSheet } from "./ItemEditSheet";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { AddMealSheet } from "./AddMealSheet";
 import { InputDialog } from "@shared/components/ui/InputDialog";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
+import type {
+  BackupPasswordDialogState,
+  EditingMealState,
+  RestoreConfirmState,
+} from "../hooks/useNutritionUiState";
+import type { useNutritionPantries } from "../hooks/useNutritionPantries";
+import type { useNutritionLog } from "../hooks/useNutritionLog";
+
+type PantryController = ReturnType<typeof useNutritionPantries>;
+type LogController = ReturnType<typeof useNutritionLog>;
+
+interface NutritionOverlaysProps {
+  pantry: PantryController;
+  log: LogController;
+  busy?: boolean;
+  pantryScannerOpen: boolean;
+  setPantryScannerOpen: Dispatch<SetStateAction<boolean>>;
+  handlePantryBarcodeDetected: (barcode: string) => void | Promise<void>;
+  editingMeal: EditingMealState | null;
+  setEditingMeal: Dispatch<SetStateAction<EditingMealState | null>>;
+  wrappedSaveMeal: (meal: Meal) => void | Promise<void>;
+  prefs: NutritionPrefs;
+  setPrefs: Dispatch<SetStateAction<NutritionPrefs>>;
+  backupPasswordDialog: BackupPasswordDialogState | null;
+  setBackupPasswordDialog: Dispatch<
+    SetStateAction<BackupPasswordDialogState | null>
+  >;
+  handleBackupPasswordConfirm: (password: string) => void | Promise<void>;
+  restoreConfirm: RestoreConfirmState | null;
+  setRestoreConfirm: Dispatch<SetStateAction<RestoreConfirmState | null>>;
+  applyRestorePayload: (payload: unknown) => void | Promise<void>;
+  onRequestMealPhoto?: () => void;
+}
 
 export function NutritionOverlays({
   pantry,
@@ -24,7 +59,7 @@ export function NutritionOverlays({
   setRestoreConfirm,
   applyRestorePayload,
   onRequestMealPhoto,
-}) {
+}: NutritionOverlaysProps) {
   return (
     <>
       <PantryManagerSheet
@@ -71,7 +106,12 @@ export function NutritionOverlays({
       <ItemEditSheet
         itemEdit={pantry.itemEdit}
         setItemEdit={pantry.setItemEdit}
-        onClose={() => pantry.setItemEdit((s) => ({ ...s, open: false }))}
+        onClose={() =>
+          pantry.setItemEdit((s) => ({
+            ...s,
+            open: false,
+          }))
+        }
         onSave={pantry.onSaveItemEdit}
       />
 

@@ -10,13 +10,15 @@ import {
 } from "./waterStorage";
 
 function createLocalStorageMock() {
-  const store = new Map();
+  const store = new Map<string, string>();
   return {
-    getItem: (k) => (store.has(String(k)) ? store.get(String(k)) : null),
-    setItem: (k, v) => void store.set(String(k), String(v)),
-    removeItem: (k) => void store.delete(String(k)),
-    clear: () => void store.clear(),
-    _dump: () => Object.fromEntries(store.entries()),
+    getItem: (k: string): string | null =>
+      store.has(String(k)) ? (store.get(String(k)) ?? null) : null,
+    setItem: (k: string, v: string): void =>
+      void store.set(String(k), String(v)),
+    removeItem: (k: string): void => void store.delete(String(k)),
+    clear: (): void => void store.clear(),
+    _dump: (): Record<string, string> => Object.fromEntries(store.entries()),
   };
 }
 

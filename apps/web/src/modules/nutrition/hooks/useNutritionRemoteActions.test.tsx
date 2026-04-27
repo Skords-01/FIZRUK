@@ -60,11 +60,13 @@ function makeHarness(overrides: Partial<UseNutritionRemoteActionsParams> = {}) {
   const setShoppingBusy = vi.fn();
   const setGeneratedList = vi.fn();
 
-  const base = {
+  const base: UseNutritionRemoteActionsParams = {
     setBusy,
     setErr,
     setStatusText,
-    pantry: { effectiveItems: [{ name: "яйця", qty: 10, unit: "шт" }] },
+    pantry: {
+      effectiveItems: [{ name: "яйця", qty: 10, unit: "шт", notes: null }],
+    },
     prefs: {
       goal: "balanced",
       servings: 2,
@@ -390,7 +392,9 @@ describe("useNutritionRemoteActions", () => {
       };
 
       const merged = updater(latestPrev);
-      const byType = Object.fromEntries(merged.meals.map((m) => [m.type, m]));
+      const byType = Object.fromEntries(
+        merged.meals.map((m: { type: string }) => [m.type, m]),
+      );
 
       // Breakfast + dinner preserved from prev.
       expect(byType.breakfast.name).toBe("Омлет");

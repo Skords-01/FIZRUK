@@ -1,7 +1,37 @@
+import type { Dispatch, Ref, SetStateAction } from "react";
 import { Card } from "@shared/components/ui/Card";
 import { Input } from "@shared/components/ui/Input";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { cn } from "@shared/lib/cn";
+import type { NullableMacros } from "@sergeant/shared";
+
+interface PhotoIngredient {
+  name?: string;
+}
+
+interface PhotoAnalyzeResult {
+  dishName?: string | null;
+  macros?: Partial<NullableMacros> | null;
+  confidence?: number | null;
+  ingredients?: PhotoIngredient[];
+  questions?: string[];
+}
+
+interface PhotoAnalyzeCardProps {
+  busy?: boolean;
+  analyzePhoto: () => void | Promise<void>;
+  fileRef: Ref<HTMLInputElement>;
+  onPickPhoto: (file?: File) => void | Promise<void>;
+  photoPreviewUrl?: string | null;
+  photoResult?: PhotoAnalyzeResult | null;
+  fmtMacro: (v: unknown) => string | number;
+  portionGrams: string;
+  setPortionGrams: Dispatch<SetStateAction<string>>;
+  refinePhoto: () => void | Promise<void>;
+  answers: Record<string, string>;
+  setAnswers: Dispatch<SetStateAction<Record<string, string>>>;
+  onSaveToLog?: () => void | Promise<void>;
+}
 
 export function PhotoAnalyzeCard({
   busy,
@@ -17,7 +47,7 @@ export function PhotoAnalyzeCard({
   answers,
   setAnswers,
   onSaveToLog,
-}) {
+}: PhotoAnalyzeCardProps) {
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between gap-3 mb-4">
@@ -163,7 +193,7 @@ export function PhotoAnalyzeCard({
               <div className="text-xs text-subtle">
                 <span className="font-semibold text-text">Інгредієнти: </span>
                 {photoResult.ingredients
-                  .map((x) => x.name)
+                  .map((x: PhotoIngredient) => x.name)
                   .filter(Boolean)
                   .join(", ")}
               </div>
@@ -204,7 +234,7 @@ export function PhotoAnalyzeCard({
                   </div>
                 </div>
 
-                {photoResult.questions.slice(0, 6).map((q) => (
+                {photoResult.questions.slice(0, 6).map((q: string) => (
                   <div key={q}>
                     <div className="text-xs text-subtle mb-1">{q}</div>
                     <Input

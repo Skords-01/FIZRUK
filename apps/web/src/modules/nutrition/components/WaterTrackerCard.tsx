@@ -6,18 +6,22 @@ import { Input } from "@shared/components/ui/Input";
 
 const QUICK_ML = [200, 300, 500, 750];
 
-function fmt(ml) {
+function fmt(ml: number) {
   return ml >= 1000 ? `${(ml / 1000).toFixed(1)} л` : `${ml} мл`;
 }
 
-export function WaterTrackerCard({ goalMl = 2000 }) {
+interface WaterTrackerCardProps {
+  goalMl?: number;
+}
+
+export function WaterTrackerCard({ goalMl = 2000 }: WaterTrackerCardProps) {
   const { todayMl, add, subtract, reset } = useWaterTracker();
   const [resetPending, setResetPending] = useState(false);
   const resetTimerRef = useRef(null);
   const [customMl, setCustomMl] = useState("");
   const [lastAddedMl, setLastAddedMl] = useState(0);
 
-  const handleAdd = (ml) => {
+  const handleAdd = (ml: number) => {
     const n = Number(ml);
     if (!Number.isFinite(n) || n <= 0) return;
     const clamped = Math.min(Math.floor(n), 5000);
