@@ -149,8 +149,9 @@ Lightweight product analytics sink: **console logger + localStorage ring-buffer*
 fire-and-forget, ніколи не кидає.
 
 **Event names** визначені в `@sergeant/shared` →
-`packages/shared/src/lib/analyticsEvents.ts` → `ANALYTICS_EVENTS` (~40 подій:
-onboarding, finyk, FTUX, auth, nudges, hints). Typo не компілюється.
+`packages/shared/src/lib/analyticsEvents.ts` → `ANALYTICS_EVENTS` (~50 подій:
+onboarding, finyk, FTUX, auth, nudges, hints, hubchat, cloudsync, subscription).
+Typo не компілюється.
 
 **Sentry зв'язок**: analytics не емітить breadcrumbs напряму, але
 `console.log("[analytics]", event)` потрапляє у Sentry console-breadcrumbs
@@ -204,6 +205,72 @@ auto-pageview стріляє на будь-яку мутацію URL (включ
 чутливі query-ключі (`token`, `code`, `state`, `access_token`,
 `refresh_token`, `magic`, `auth`, `password`, `secret`, `api_key`)
 редактуються до `[redacted]`. Без `VITE_POSTHOG_KEY` ефект no-op.
+
+### HubChat events
+
+**Файл:** `apps/web/src/core/hub/HubChat.tsx`.
+
+Трекаємо факт взаємодії з асистентом, НЕ текст повідомлень. Три події:
+
+| Event                  | Коли                                              | Payload                                                                        |
+| ---------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `hubchat_message_sent` | Юзер відправив повідомлення (після всіх guard-ів) | `{ length, fromVoice, module? }`                                               |
+| `hubchat_tool_invoked` | На кожен `tool_call` із відповіді LLM             | `{ tool, module? }`                                                            |
+| `hubchat_error`        | Будь-яка помилка у `send()` catch-блоці           | `{ kind, status? }` де `kind ∈ http \| parse \| aborted \| network \| unknown` |
+
+`length` — кількість символів, не текст; `fromVoice: boolean` — дає розділити
+voice vs typed сценарії у funnels; `tool` — канонічне ім'я `ChatAction`
+(напр. `add_expense`, `log_workout`). Для `hubchat_error` `status` заповнюється
+тільки для `kind=http` (HTTP-код сервера), щоб алерт-и ловили spike-и 5xx
+окремо від 4xx.
+
+### CloudSync events
+
+**Файл:** `apps/web/src/core/cloudSync/hook/useSyncCallbacks.ts` — lifecycle
+(start/success/fail). **Файли:** `engine/push.ts`, `engine/initialSync.ts` —
+conflict-резолюція.
+
+| Event                    | Коли                                                      | Payload                                        |
+| ------------------------ | --------------------------------------------------------- | ---------------------------------------------- |
+| `sync_started`           | `onStart` у `makeBoundCallbacks`                          | `{}`                                           |
+| `sync_succeeded`         | `onSuccess` — успішний прогін `runExclusive`              | `{ duration_ms }`                              |
+| `sync_failed`            | `onError` — після класифікації `toSyncError`              | `{ error_type, retryable, duration_ms }`       |
+| `sync_conflict_resolved` | `conflicted.length > 0` у `pushAll` / `initialSync.merge` | `{ kind: "push" \| "initial-merge", modules }` |
+
+`error_type` — категорія з `SyncError["type"]` (`network` / `auth` / `conflict`
+/ `validation` / `unknown`). `retryable` — boolean з того самого normalizer-а;
+дозволяє відокремити транзієнтні помилки від терміналу (4xx без авто-retry).
+`modules` у `sync_conflict_resolved` — лічильник, не імена модулів: кардинальність
+у PostHog залишається маленькою, але spike-и LWW-loss детектуються.
+
+### Subscription events (placeholders)
+
+Білінг ще не підключений, але канонічні імена вже зафіксовані в
+`ANALYTICS_EVENTS` (`SUBSCRIPTION_STARTED`, `SUBSCRIPTION_CANCELED`,
+`SUBSCRIPTION_RENEWED`) — щоб у момент підключення Stripe/IAP не винаходити
+нові імена і не розвалити PostHog-funnel-и між першим і другим релізом.
+Очікувані payload-и (для майбутнього implementor-а):
+
+```ts
+trackEvent(ANALYTICS_EVENTS.SUBSCRIPTION_STARTED, {
+  plan: "monthly" | "yearly",
+  source: "paywall" | "deeplink" | "cta",
+  price_cents: number,
+  currency: string, // ISO-4217, "UAH" / "USD" / …
+});
+trackEvent(ANALYTICS_EVENTS.SUBSCRIPTION_CANCELED, {
+  plan: string,
+  reason: "user" | "billing" | "expired",
+});
+trackEvent(ANALYTICS_EVENTS.SUBSCRIPTION_RENEWED, {
+  plan: string,
+  period: number, // кількість успішних renewal-ів
+});
+```
+
+Revenue-аналітика (MRR/ARR у PostHog) рахується через super-property
+`$revenue` на `subscription_started` / `subscription_renewed` — окремий
+task коли білінг оживе.
 
 ### Identify / reset
 

@@ -34,6 +34,7 @@ import type { ChatActionCard } from "../lib/hubChatActionCards";
 import { ChatMessage, TypingIndicator } from "../components/ChatMessage";
 import { ChatInput } from "../components/ChatInput";
 import { ChatQuickActions } from "../components/ChatQuickActions";
+import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
 
 function HubChat({
   onClose,
@@ -245,6 +246,15 @@ function HubChat({
     setInput("");
     setLoading(true);
 
+    // PostHog-telemetry: фіксуємо факт відправки без тексту повідомлення.
+    // `length` і `fromVoice` дають змогу відокремити voice-сценарії у
+    // дашбордах і слідкувати за розподілом довжин, не експортуючи body.
+    trackEvent(ANALYTICS_EVENTS.HUBCHAT_MESSAGE_SENT, {
+      length: msg.length,
+      fromVoice: Boolean(fromVoice),
+      module: activeModule,
+    });
+
     const history = next
       .filter((m) => m.role === "user" || m.role === "assistant")
       .slice(-10)
@@ -298,6 +308,15 @@ function HubChat({
       }
 
       if (data.tool_calls && data.tool_calls.length > 0) {
+        // PostHog: окрема подія на кожен tool_call, щоб breakdown
+        // по назві інструмента працював як кардинальність у funnels
+        // (напр. "скільки add_expense → successful response").
+        for (const tc of data.tool_calls) {
+          trackEvent(ANALYTICS_EVENTS.HUBCHAT_TOOL_INVOKED, {
+            tool: tc.name,
+            module: activeModule,
+          });
+        }
         const handlerResults = await executeActions(data.tool_calls);
         const toolResults = data.tool_calls.map((tc, idx) => ({
           tool_use_id: tc.id,
@@ -418,6 +437,20 @@ function HubChat({
       } else {
         setMessages((m) => [...m, makeAssistantMsg(friendlyChatError(e))]);
       }
+      // PostHog: класифікована помилка без message body. Kind-и збігаються
+      // з `ApiError.kind` + "unknown" fallback. `aborted` трекаємо теж —
+      // spike-и abort-ів сигналізують про негативну UX (юзер масово ріже
+      // запити, бо відповіді занадто повільні).
+      const kind = isApiError(e)
+        ? e.kind
+        : (e as { name?: string } | null)?.name === "AbortError"
+          ? "aborted"
+          : "unknown";
+      const status = isApiError(e) && e.kind === "http" ? e.status : undefined;
+      trackEvent(ANALYTICS_EVENTS.HUBCHAT_ERROR, {
+        kind,
+        ...(status !== undefined ? { status } : {}),
+      });
     } finally {
       if (abortRef.current === ac) abortRef.current = null;
       setLoading(false);
