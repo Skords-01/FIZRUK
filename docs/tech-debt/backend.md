@@ -1,5 +1,7 @@
 # Backend Tech Debt Inventory
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+
 > Scope: **`apps/server/src/`** (Node.js 20 ESM, Express 4, PostgreSQL, Better Auth, Anthropic, Monobank/Privat, web-push, Pino, Prometheus, Sentry). У тексті нижче історично згадувався tree `server/*.js` — той самий продукт після переносу в monorepo; нові PR мають посилатися лише на `apps/server/src/**/*.ts`.
 >
 > Методологія: пофайловий аудит + зведення по категоріях. Перший PR — лише цей документ. Виправлення йдуть окремими тематичними PR (A–E, див. Roadmap).
@@ -141,6 +143,9 @@
 
 ## Consolidated issue groups
 
+<details>
+<summary><strong>✅ Done — A / B / C / D / C2 (розгорнути історичний запис)</strong></summary>
+
 ### A. Валідація (zod) — ~~потребує PR A~~ **✅ DONE**
 
 Чекліст PR A виконано у **`apps/server/src`**: nutrition handler-и з `validateBody`, `RefinePhotoSchema` узгоджена з body, `sync` на `SyncPushSchema`/`SyncPullSchema`/`SyncPushAllSchema`, `mono`/`privat` з `MonoQuerySchema`/`PrivatQuerySchema`, `weekly-digest` з `WeeklyDigestSchema`, `backup-upload` з `BackupUploadSchema`. Деталі — § [Per-file findings](#per-file-findings).
@@ -169,6 +174,8 @@
 - **Outcome classification**: `ok`/`invalid_endpoint`/`rate_limited`/`timeout`/`circuit_open`/`error`.
 - **Метрики**: `external_http_requests_total{upstream="push", outcome="…"}` + історичний `push_sends_total{outcome}`.
 - 13 unit-тестів (happy / класифікація / retry / timeout / breaker per-origin isolation).
+
+</details>
 
 ### E. Міграції / індекси — потребує PR D
 

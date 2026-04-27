@@ -1,5 +1,14 @@
 # Sergeant — незалежний аудит (Devin)
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-10-25.
+
+> **STATUS — historical record (2026-04-27):** **30 з 31** PR-ID закриті,
+> 1 partial (`PR-6.B`). Документ зберігається як історичний запис
+> аудиту й трекер мерджу. Активний роадмеп для нових ідей —
+> `docs/planning/dev-stack-roadmap.md` та `docs/planning/ai-coding-improvements.md`.
+> Не використовуйте цей файл як «що робити далі» — статус-таблиця
+> внизу є зведенням «що було зроблено».
+
 **Дата:** 2026-04-26
 **Скоуп:** репо `Skords-01/Sergeant` (default branch на момент клонування).
 **Метод:** репозиторний прохід — структура, конфіги, `AGENTS.md`/`CONTRIBUTING.md`/`README.md`, `docs/*` (roadmap, tech-debt, observability, playbooks), `.github/workflows/ci.yml`, `eslint.config.js`, `packages/eslint-plugin-sergeant-design/`, `apps/*/tsconfig.json`, міграції в `apps/server/src/migrations/`. Без виконання CI/тестів.

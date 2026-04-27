@@ -1,5 +1,7 @@
 # Frontend Tech Debt — Sergeant Web
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+
 Аналіз кодової бази `apps/web/src` (434 source файли, 87k рядків).
 
 > **Оновлено 2026-04-27.** Базові cifri (allowlist size, file
@@ -20,9 +22,10 @@
 
 ---
 
-## 🔴 Критичне
+## ✅ Done (згорнуто)
 
-### 1. ~~Зламані тести~~ — Виконано
+<details>
+<summary><strong>1. Зламані тести — Виконано (розгорнути)</strong></summary>
 
 Раніше виглядало як «141 failed test file / 29 unresolved imports». Зараз
 `apps/web/vitest.config.js` має повний alias-блок (`@shared`, `@finyk`,
@@ -30,7 +33,34 @@
 `pnpm --filter @sergeant/web test` дає 80 test files / 722 теста, всі
 зелені.
 
+</details>
+
+<details>
+<summary><strong>3. Import extensions (.js/.jsx) в TypeScript файлах — Виконано (розгорнути)</strong></summary>
+
+**Раніше:** 413 рядків з імпортами виду `from "./foo.js"` /
+`from "./bar.jsx"` у `.ts`/`.tsx` файлах — працювало через Vite resolve, але
+плутало IDE auto-imports і нових контриб'юторів.
+
+**Зараз:** виконано codemod
+[`scripts/strip-js-extensions.mjs`](../../scripts/strip-js-extensions.mjs) —
+видалив `.js`/`.jsx` з 436 first-party-імпортів у 180 файлах. Зачіпає тільки
+шляхи, що починаються з `.`, `@shared/`, `@finyk/`, `@fizruk/`, `@routine/`,
+`@nutrition/` або `@sergeant/`. Зовнішні пакети (`@zxing/...`) спеціально
+не торкається — їхні subpath-імпорти можуть вимагати реальної `.js`.
+
+Codemod ідемпотентний: повторний запуск дасть `would rewrite 0 import(s)`.
+
+> **Не робилось:** ESLint-правило `import/extensions: never`. Воно б
+> вимагало `eslint-plugin-import` (зараз не встановлено) і одразу б
+> пофейлило зовнішній zxing-імпорт. Поки покладаємося на codemod +
+> код-рев'ю; додамо правило окремим PR разом з імпорт-плагіном.
+
+</details>
+
 ---
+
+## 🔴 Критичне (active)
 
 ### 2. Прямі `localStorage` виклики — guardrail додано, міграція в процесі
 
@@ -80,28 +110,6 @@ greppable в одному місці.
 ---
 
 ## 🟡 Бажане
-
-### 3. ~~Import extensions (.js/.jsx) в TypeScript файлах~~ — Виконано
-
-**Раніше:** 413 рядків з імпортами виду `from "./foo.js"` /
-`from "./bar.jsx"` у `.ts`/`.tsx` файлах — працювало через Vite resolve, але
-плутало IDE auto-imports і нових контриб'юторів.
-
-**Зараз:** виконано codemod
-[`scripts/strip-js-extensions.mjs`](../../scripts/strip-js-extensions.mjs) —
-видалив `.js`/`.jsx` з 436 first-party-імпортів у 180 файлах. Зачіпає тільки
-шляхи, що починаються з `.`, `@shared/`, `@finyk/`, `@fizruk/`, `@routine/`,
-`@nutrition/` або `@sergeant/`. Зовнішні пакети (`@zxing/...`) спеціально
-не торкається — їхні subpath-імпорти можуть вимагати реальної `.js`.
-
-Codemod ідемпотентний: повторний запуск дасть `would rewrite 0 import(s)`.
-
-> **Не робилось:** ESLint-правило `import/extensions: never`. Воно б
-> вимагало `eslint-plugin-import` (зараз не встановлено) і одразу б
-> пофейлило зовнішній zxing-імпорт. Поки покладаємось на codemod +
-> код-рев'ю; додамо правило окремим PR разом з імпорт-плагіном.
-
----
 
 ### 4. Великі файли (>600 рядків) — 24 файли
 
