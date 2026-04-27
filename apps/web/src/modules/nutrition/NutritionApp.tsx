@@ -453,11 +453,20 @@ export default function NutritionApp({
                       setPantryText={pantry.setPantryText}
                       effectiveItems={pantry.effectiveItems}
                       editItemAt={pantry.editItemAt}
-                      removeItemAtOrByName={(idx, name) =>
-                        pantry.pantryItems.length > 0
-                          ? pantry.removeItemAt(idx)
-                          : pantry.removeItem(name)
-                      }
+                      removeItemAtOrByName={(idx, name) => {
+                        if (pantry.pantryItems.length > 0) {
+                          const removed = pantry.pantryItems[idx];
+                          pantry.removeItemAt(idx);
+                          if (removed) {
+                            showUndoToast(toast, {
+                              msg: `Прибрано «${removed.name}» з комори`,
+                              onUndo: () => pantry.upsertItem(removed),
+                            });
+                          }
+                        } else {
+                          pantry.removeItem(name);
+                        }
+                      }}
                       pantryItemsLength={pantry.pantryItems.length}
                       pantrySummary={pantry.pantrySummary}
                       onScanBarcode={() => {
