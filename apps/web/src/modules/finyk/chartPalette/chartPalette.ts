@@ -2,7 +2,7 @@
  * Re-export of shared Sergeant design tokens for convenient access from
  * inside the web app. The authoritative source of truth lives in
  * `@sergeant/design-tokens/tokens`; this file exists so existing
- * imports from `./constants/chartPalette` keep working and to preserve
+ * imports from `./chartPalette/chartPalette` keep working and to preserve
  * the documented design philosophy comment alongside web-only code.
  *
  * Design Philosophy:

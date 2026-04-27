@@ -176,7 +176,7 @@ core/
 **Статус (2026-04-26):**
 
 - `chartPalette` ✅ переведено на `.ts`
-  (`apps/web/src/modules/finyk/constants/chartPalette.ts`).
+  (`apps/web/src/modules/finyk/chartPalette/chartPalette.ts`).
 - `setup.js` — більше не існує у `apps/web/src/`.
 - `sw.js` ✅ переведено на `.ts` (`apps/web/src/sw.ts`,
   service worker через Workbox).
