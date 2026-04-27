@@ -198,6 +198,31 @@ export default function RoutineApp({
       validate: (v): v is RoutineMainTab => v === "calendar" || v === "stats",
     },
   );
+
+  // Deep-link: коли модуль відкритий з hash `#calendar` чи `#stats`
+  // (напр. з Fizruk → «Запланувати тренування»), форсуємо вкладку
+  // незалежно від попередньо збереженої у localStorage. Прибираємо
+  // hash після застосування, щоб back-навігація / refresh не
+  // повторювали стрибок.
+  useEffect(() => {
+    let raw = "";
+    try {
+      raw = (window.location.hash || "").replace(/^#\/?/, "").toLowerCase();
+    } catch {
+      return;
+    }
+    if (raw !== "calendar" && raw !== "stats") return;
+    setMainTab(raw);
+    try {
+      const next = `${window.location.pathname}${window.location.search}`;
+      window.history.replaceState(null, "", next);
+    } catch {
+      /* noop */
+    }
+    // Один раз на mount — наступні переходи між вкладками — через
+    // RoutineBottomNav, без url hash.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [timeMode, setTimeMode] = useState<RoutineTimeMode>("today");
   const now = todayDate();
   const [monthCursor, setMonthCursor] = useState<MonthCursor>(() => ({
