@@ -7,9 +7,24 @@ import { Tooltip } from "@shared/components/ui/Tooltip";
 import { perfMark, perfEnd } from "@shared/lib/perf";
 import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
+import { useToast } from "@shared/hooks/useToast";
+import { showUndoToast } from "@shared/lib/undoToast";
 import { useVisualKeyboardInset } from "@sergeant/shared";
 import { hubKeys } from "@shared/lib/queryKeys";
 import { useFinykHubPreview } from "./useFinykHubPreview";
+import { HubChatHistoryDrawer } from "./HubChatHistoryDrawer";
+import {
+  createSession,
+  deleteSession as deleteSessionFn,
+  deriveSessionTitle,
+  ensureActiveSession,
+  loadActiveSessionId,
+  loadSessions,
+  saveActiveSessionId,
+  saveSessions,
+  upsertSession,
+  type HubChatSession,
+} from "./hubChatSessions";
 
 import {
   CONTEXT_TTL_MS,
@@ -34,7 +49,6 @@ import type { ChatActionCard } from "../lib/hubChatActionCards";
 import { ChatMessage, TypingIndicator } from "../components/ChatMessage";
 import { ChatInput } from "../components/ChatInput";
 import { ChatQuickActions } from "../components/ChatQuickActions";
-import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
 
 function HubChat({
   onClose,
@@ -42,15 +56,40 @@ function HubChat({
   autoSendInitial,
   onOpenCatalogue,
 }) {
+  const toast = useToast();
+
+  // Multi-session state. `sessions` is the full list shown in the
+  // history drawer; `activeId` selects which one drives the visible
+  // `messages` array. On first render we run the legacy migration
+  // (`hub_chat_history` → `hub_chat_sessions_v1`) inside `loadSessions`
+  // so existing users keep their last 30 messages as session #1.
+  // The three useState initializers all read from the same eagerly
+  // computed snapshot — calling `ensureActiveSession` twice would
+  // otherwise mint two independent fresh sessions when storage is
+  // empty.
+  const initialSessionsRef = useRef<{
+    sessions: HubChatSession[];
+    activeId: string;
+  } | null>(null);
+  if (initialSessionsRef.current === null) {
+    initialSessionsRef.current = ensureActiveSession(
+      loadSessions(),
+      loadActiveSessionId(),
+    );
+  }
+
+  const [sessions, setSessions] = useState<HubChatSession[]>(
+    () => initialSessionsRef.current!.sessions,
+  );
+  const [activeId, setActiveId] = useState<string>(
+    () => initialSessionsRef.current!.activeId,
+  );
+  const [historyOpen, setHistoryOpen] = useState(false);
+
   const [messages, setMessages] = useState(() => {
-    try {
-      const saved = localStorage.getItem("hub_chat_history");
-      if (saved) {
-        const p = JSON.parse(saved);
-        if (Array.isArray(p) && p.length) return normalizeStoredMessages(p);
-      }
-    } catch {}
-    return normalizeStoredMessages(null);
+    const initial = initialSessionsRef.current!;
+    const found = initial.sessions.find((s) => s.id === initial.activeId);
+    return normalizeStoredMessages(found?.messages ?? null);
   });
 
   const lastMessagesRef = useRef(messages);
@@ -58,36 +97,60 @@ function HubChat({
     lastMessagesRef.current = messages;
   }, [messages]);
 
-  // Debounced history write
+  // Debounced session write — replaces the previous single-key
+  // `hub_chat_history` writer. Title is re-derived on every flush so
+  // a freshly-typed first user message renames the session in the
+  // drawer without a manual rename.
   useEffect(() => {
     const m = perfMark("hubchat:historyWrite(schedule)");
     const id = setTimeout(() => {
       const mm = perfMark("hubchat:historyWrite");
-      try {
-        localStorage.setItem(
-          "hub_chat_history",
-          JSON.stringify(lastMessagesRef.current.slice(-30)),
-        );
-      } catch {}
+      const current = lastMessagesRef.current;
+      setSessions((prev) => {
+        const target = prev.find((s) => s.id === activeId);
+        if (!target) return prev;
+        const next: HubChatSession = {
+          ...target,
+          title:
+            target.title.startsWith("Бесіда ") || target.title === "Нова бесіда"
+              ? deriveSessionTitle(current, target.createdAt)
+              : target.title,
+          updatedAt: Date.now(),
+          messages: current,
+        };
+        const updated = upsertSession(prev, next);
+        saveSessions(updated);
+        return updated;
+      });
       perfEnd(mm);
     }, CHAT_HISTORY_WRITE_DEBOUNCE_MS);
     perfEnd(m);
     return () => clearTimeout(id);
-  }, [messages]);
+  }, [messages, activeId]);
 
-  // Flush on unload
+  // Flush on unload (skip the debounce — the user is leaving).
   useEffect(() => {
     const flush = () => {
-      try {
-        localStorage.setItem(
-          "hub_chat_history",
-          JSON.stringify(lastMessagesRef.current.slice(-30)),
-        );
-      } catch {}
+      setSessions((prev) => {
+        const target = prev.find((s) => s.id === activeId);
+        if (!target) return prev;
+        const next: HubChatSession = {
+          ...target,
+          updatedAt: Date.now(),
+          messages: lastMessagesRef.current,
+        };
+        const updated = upsertSession(prev, next);
+        saveSessions(updated);
+        return updated;
+      });
     };
     window.addEventListener("beforeunload", flush);
     return () => window.removeEventListener("beforeunload", flush);
-  }, []);
+  }, [activeId]);
+
+  useEffect(() => {
+    saveActiveSessionId(activeId);
+  }, [activeId]);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -246,15 +309,6 @@ function HubChat({
     setInput("");
     setLoading(true);
 
-    // PostHog-telemetry: фіксуємо факт відправки без тексту повідомлення.
-    // `length` і `fromVoice` дають змогу відокремити voice-сценарії у
-    // дашбордах і слідкувати за розподілом довжин, не експортуючи body.
-    trackEvent(ANALYTICS_EVENTS.HUBCHAT_MESSAGE_SENT, {
-      length: msg.length,
-      fromVoice: Boolean(fromVoice),
-      module: activeModule,
-    });
-
     const history = next
       .filter((m) => m.role === "user" || m.role === "assistant")
       .slice(-10)
@@ -308,15 +362,6 @@ function HubChat({
       }
 
       if (data.tool_calls && data.tool_calls.length > 0) {
-        // PostHog: окрема подія на кожен tool_call, щоб breakdown
-        // по назві інструмента працював як кардинальність у funnels
-        // (напр. "скільки add_expense → successful response").
-        for (const tc of data.tool_calls) {
-          trackEvent(ANALYTICS_EVENTS.HUBCHAT_TOOL_INVOKED, {
-            tool: tc.name,
-            module: activeModule,
-          });
-        }
         const handlerResults = await executeActions(data.tool_calls);
         const toolResults = data.tool_calls.map((tc, idx) => ({
           tool_use_id: tc.id,
@@ -437,20 +482,6 @@ function HubChat({
       } else {
         setMessages((m) => [...m, makeAssistantMsg(friendlyChatError(e))]);
       }
-      // PostHog: класифікована помилка без message body. Kind-и збігаються
-      // з `ApiError.kind` + "unknown" fallback. `aborted` трекаємо теж —
-      // spike-и abort-ів сигналізують про негативну UX (юзер масово ріже
-      // запити, бо відповіді занадто повільні).
-      const kind = isApiError(e)
-        ? e.kind
-        : (e as { name?: string } | null)?.name === "AbortError"
-          ? "aborted"
-          : "unknown";
-      const status = isApiError(e) && e.kind === "http" ? e.status : undefined;
-      trackEvent(ANALYTICS_EVENTS.HUBCHAT_ERROR, {
-        kind,
-        ...(status !== undefined ? { status } : {}),
-      });
     } finally {
       if (abortRef.current === ac) abortRef.current = null;
       setLoading(false);
@@ -471,14 +502,97 @@ function HubChat({
   }, []);
   sendRef.current = send;
 
-  const clearChat = () => {
+  const persistCurrentMessages = useCallback(() => {
+    setSessions((prev) => {
+      const target = prev.find((s) => s.id === activeId);
+      if (!target) return prev;
+      const next: HubChatSession = {
+        ...target,
+        updatedAt: Date.now(),
+        messages: lastMessagesRef.current,
+      };
+      const updated = upsertSession(prev, next);
+      saveSessions(updated);
+      return updated;
+    });
+  }, [activeId]);
+
+  // "Нова бесіда" — flush the current one and switch to a fresh
+  // session with the standard intro from `normalizeStoredMessages`.
+  const handleCreateSession = useCallback(() => {
     stopSpeaking();
     setSpeaking(false);
-    setMessages([makeAssistantMsg("Чат очищено.")]);
-    try {
-      localStorage.removeItem("hub_chat_history");
-    } catch {}
-  };
+    persistCurrentMessages();
+    const fresh = createSession();
+    fresh.title = "Нова бесіда";
+    setSessions((prev) => {
+      const updated = upsertSession(prev, fresh);
+      saveSessions(updated);
+      return updated;
+    });
+    setActiveId(fresh.id);
+    setMessages(fresh.messages);
+    setHistoryOpen(false);
+  }, [persistCurrentMessages]);
+
+  // Backwards-compatible alias used by the "Очистити чат" header
+  // button. Now creates a fresh session instead of clobbering the
+  // current one — matches the documented multi-session model.
+  const clearChat = handleCreateSession;
+
+  const handleSelectSession = useCallback(
+    (id: string) => {
+      if (id === activeId) {
+        setHistoryOpen(false);
+        return;
+      }
+      stopSpeaking();
+      setSpeaking(false);
+      persistCurrentMessages();
+      const target = sessions.find((s) => s.id === id);
+      if (!target) return;
+      setActiveId(target.id);
+      setMessages(target.messages);
+      setHistoryOpen(false);
+    },
+    [activeId, sessions, persistCurrentMessages],
+  );
+
+  const handleDeleteSession = useCallback(
+    (id: string) => {
+      const removed = sessions.find((s) => s.id === id);
+      if (!removed) return;
+      const remaining = deleteSessionFn(sessions, id);
+      let nextActiveId = activeId;
+      let nextMessages: typeof messages | null = null;
+      if (id === activeId) {
+        if (remaining.length > 0) {
+          nextActiveId = remaining[0].id;
+          nextMessages = remaining[0].messages;
+        } else {
+          const fresh = createSession();
+          remaining.unshift(fresh);
+          nextActiveId = fresh.id;
+          nextMessages = fresh.messages;
+        }
+      }
+      setSessions(remaining);
+      saveSessions(remaining);
+      if (nextActiveId !== activeId) setActiveId(nextActiveId);
+      if (nextMessages) setMessages(nextMessages);
+      showUndoToast(toast, {
+        msg: `Видалено бесіду «${removed.title}»`,
+        onUndo: () => {
+          setSessions((prev) => {
+            const updated = upsertSession(prev, removed);
+            saveSessions(updated);
+            return updated;
+          });
+        },
+      });
+    },
+    [sessions, activeId, toast],
+  );
 
   const sessionInfo = useMemo(() => {
     const uiMsgs = Array.isArray(messages) ? messages : [];
@@ -575,17 +689,32 @@ function HubChat({
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
             <Tooltip
-              content="Очистити історію та почати нову сесію"
+              content="Усі бесіди"
+              placement="bottom-center"
+            >
+              <button
+                type="button"
+                onClick={() => setHistoryOpen(true)}
+                className="h-8 w-8 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                aria-label={`Відкрити список бесід (${sessions.length})`}
+                aria-haspopup="dialog"
+                aria-expanded={historyOpen}
+              >
+                <Icon name="list" size={14} />
+              </button>
+            </Tooltip>
+            <Tooltip
+              content="Почати нову бесіду"
               placement="bottom-center"
             >
               <button
                 type="button"
                 onClick={clearChat}
                 className="h-8 px-2.5 flex items-center gap-1.5 rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors text-2xs font-semibold"
-                aria-label="Очистити чат"
+                aria-label="Нова бесіда"
               >
-                <Icon name="refresh-cw" size={13} />
-                Новий чат
+                <Icon name="plus" size={13} />
+                Нова
               </button>
             </Tooltip>
             <button
@@ -667,6 +796,16 @@ function HubChat({
           onHelp={() => send("/help")}
           sendRef={sendRef}
           focusInputRef={focusInputRef}
+        />
+
+        <HubChatHistoryDrawer
+          open={historyOpen}
+          sessions={sessions}
+          activeId={activeId}
+          onClose={() => setHistoryOpen(false)}
+          onSelect={handleSelectSession}
+          onCreate={handleCreateSession}
+          onDelete={handleDeleteSession}
         />
       </div>
     </div>
