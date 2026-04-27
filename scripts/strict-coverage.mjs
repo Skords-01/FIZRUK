@@ -157,8 +157,12 @@ export function scanStrictCoverage(rootDir) {
     const name = relPath.replace("/tsconfig.json", "");
 
     const strict = opts.strict === true;
-    const strictNullChecks = strict || opts.strictNullChecks === true;
-    const noImplicitAny = strict || opts.noImplicitAny === true;
+    const strictNullChecks =
+      opts.strictNullChecks !== undefined
+        ? opts.strictNullChecks === true
+        : strict;
+    const noImplicitAny =
+      opts.noImplicitAny !== undefined ? opts.noImplicitAny === true : strict;
     const allowJs = opts.allowJs === true;
 
     packages.push({

@@ -90,6 +90,28 @@ describe("scanStrictCoverage", () => {
       rmSync(root, { recursive: true });
     }
   });
+
+  test("explicit sub-flag override takes precedence over strict: true", () => {
+    const root = createTmpRepo({
+      "apps/api/tsconfig.json": {
+        compilerOptions: {
+          strict: true,
+          strictNullChecks: false,
+          noImplicitAny: false,
+        },
+      },
+    });
+
+    try {
+      const result = scanStrictCoverage(root);
+      const api = result.packages.find((p) => p.name === "apps/api");
+      assert.equal(api.strict, true);
+      assert.equal(api.strictNullChecks, false);
+      assert.equal(api.noImplicitAny, false);
+    } finally {
+      rmSync(root, { recursive: true });
+    }
+  });
 });
 
 describe("formatMarkdown", () => {
