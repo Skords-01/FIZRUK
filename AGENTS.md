@@ -30,7 +30,7 @@ Quick lookup before editing: which path uses which test stack and which conventi
 | `apps/server/src/modules/chat/**`                     | `@Skords-01` | Vitest                                  | n/a                                   | Anthropic tool defs split per domain in `toolDefs/`. See Architecture section.                                                                                  |
 | `apps/server/src/migrations/**`                       | `@Skords-01` | n/a                                     | n/a                                   | Sequential `NNN_*.sql` (currently 001–008). No gaps. Two-phase for DROP — see rule #4.                                                                          |
 | `apps/mobile/src/core/**`                             | `@Skords-01` | Jest (2 known flaky — see below)        | (mobile RQ uses module-local keys)    | NativeWind (not Tailwind). MMKV (not localStorage). No DOM.                                                                                                     |
-| `apps/mobile/app/**`                                  | `@Skords-01` | Vitest                                  | n/a                                   | Expo Router routes. Each `_layout.tsx` is a navigator.                                                                                                          |
+| `apps/mobile/app/**`                                  | `@Skords-01` | Jest                                    | n/a                                   | Expo Router routes. Each `_layout.tsx` is a navigator.                                                                                                          |
 | `apps/mobile-shell/**`                                | `@Skords-01` | none                                    | n/a                                   | Capacitor wrapper around `apps/web`. No app code lives here, only build glue.                                                                                   |
 | `packages/shared/**`                                  | `@Skords-01` | Vitest                                  | n/a                                   | Zod schemas, types, business logic. Used by all apps — change with care.                                                                                        |
 | `packages/api-client/**`                              | `@Skords-01` | Vitest                                  | n/a                                   | HTTP clients + types. Must mirror `apps/server/src/modules/*` response shapes.                                                                                  |
@@ -322,7 +322,7 @@ The HubChat assistant uses Anthropic tool-calling. Tools are **defined on the se
 Do **not** lower these without testing the worst-case `/help` response and the largest tool-result blob (briefing + weekly summary go through the continuation path).
 When Anthropic returns `stop_reason: "max_tokens"`, the model may truncate **mid-JSON-tool-call** — the client `executeAction` then throws a parse error and the user sees "Невідома дія". On the continuation path it instead truncates the user-facing markdown mid-sentence (this is what motivated the bump from 400→2500 / 600→1500 in PR #804). If you need a longer system prompt or more tools, raise `max_tokens` first; do not silently squeeze the budget.
 
-**Auto-continuation (PR #-): сервер сам дотягує обірвані текстові відповіді.** Якщо upstream віддав `stop_reason: "max_tokens"` і в `content` лише `text`-блоки (без `tool_use`), `callAnthropicWithContinuation` (non-stream) і `streamAnthropicToSse` (SSE) додають partial-text як останнє `assistant`-повідомлення і б'ють ще один upstream-виклик — Anthropic продовжить рівно з обриву. Cap — `MAX_TEXT_CONTINUATIONS = 3` (env `CHAT_MAX_TEXT_CONTINUATIONS`), бо runaway-генерація на N×max_tokens — це баг у промпті, а не легітимний кейс. **Не вимикай continuation як «оптимізацію»**: воно безпечне (паритет з ручним «продовж»), і саме воно ховає коротко-cap-нуті відповіді, поки `max_tokens` встановлений правильно. Якщо `tool_use` присутній у відповіді — continuation НЕ відбувається (бо далі має йти `tool_result` від клієнта, не assistant-text).
+**Auto-continuation ([PR #813](https://github.com/Skords-01/Sergeant/pull/813)): сервер сам дотягує обірвані текстові відповіді.** Якщо upstream віддав `stop_reason: "max_tokens"` і в `content` лише `text`-блоки (без `tool_use`), `callAnthropicWithContinuation` (non-stream) і `streamAnthropicToSse` (SSE) додають partial-text як останнє `assistant`-повідомлення і б'ють ще один upstream-виклик — Anthropic продовжить рівно з обриву. Cap — `MAX_TEXT_CONTINUATIONS = 3` (env `CHAT_MAX_TEXT_CONTINUATIONS`), бо runaway-генерація на N×max_tokens — це баг у промпті, а не легітимний кейс. **Не вимикай continuation як «оптимізацію»**: воно безпечне (паритет з ручним «продовж»), і саме воно ховає коротко-cap-нуті відповіді, поки `max_tokens` встановлений правильно. Якщо `tool_use` присутній у відповіді — continuation НЕ відбувається (бо далі має йти `tool_result` від клієнта, не assistant-text).
 
 ### `SYSTEM_PREFIX` is a prompt-cache candidate
 
@@ -371,11 +371,13 @@ Real regressions we've shipped — do not repeat:
 
 ## Verification before PR
 
+- `pnpm format:check` — must be green (Prettier; CI uses this exact command).
 - `pnpm lint` — must be green.
 - `pnpm typecheck` — must be green.
 - `pnpm --filter <package> exec vitest run <path>` — for affected tests.
 - When changing DB / API: `apps/server` tests must be green.
 - When changing UI: take a screenshot and attach it to the PR description.
+- **When bumping deps or shipping a heavy import:** `pnpm licenses:check` and `pnpm --filter @sergeant/web size` (bundle-size guard, budgets in `apps/web/package.json` → `size-limit`). Both are blocking CI steps.
 
 ## CI workflows
 
@@ -404,10 +406,11 @@ These two fail on `main`. Ignore them if your PR does not touch `apps/mobile`.
 
 ## See also
 
+- [`docs/playbooks/README.md`](docs/playbooks/README.md) — full index of procedural recipes (with triggers and 🌳 decision-tree markers)
+- [`.agents/skills/`](.agents/skills/) — `SKILL.md` files for Devin agents (better-auth, supabase, react-native, ui/ux, etc.)
+- [`docs/security/audit-exceptions.md`](docs/security/audit-exceptions.md) — tracked vulnerabilities with no available fix (audit-exception label workflow)
 - `docs/planning/ai-coding-improvements.md` — full roadmap for AI coding infra
 - `docs/planning/dev-stack-roadmap.md` — top-15 dev-stack roadmap with progress
-- `docs/playbooks/` — procedural recipes for recurring tasks
 - `docs/integrations/monobank-roadmap.md`
-- `docs/monobank-webhook-migration.md`
 - `docs/tech-debt/frontend.md`
 - `docs/tech-debt/backend.md`
