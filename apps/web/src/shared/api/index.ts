@@ -1,11 +1,10 @@
 /**
- * `@shared/api` — легасі-бареl для веб-додатку.
+ * `@shared/api` — легасі-барел для веб-додатку.
  *
  * Усі реальні сутності живуть у пакеті `@sergeant/api-client`; тут ми лише
  * створюємо дефолтний інстанс `createApiClient(...)`, конфігуємо його під
- * Vite-середовище (baseUrl із `VITE_API_BASE_URL`, токен nutrition із
- * `VITE_NUTRITION_API_TOKEN`) і реекспортуємо окремі групи методів під
- * іменами, що вже використовуються по всьому `apps/web/src`.
+ * Vite-середовище (baseUrl із `VITE_API_BASE_URL`) і реекспортуємо окремі
+ * групи методів під іменами, що вже використовуються по всьому `apps/web/src`.
  *
  * Для нового коду краще брати клієнт через `useApiClient()` з
  * `@sergeant/api-client/react` (DI через провайдер), але існуючі
@@ -17,25 +16,11 @@ import { createApiClient } from "@sergeant/api-client";
 import { apiUrl, getApiPrefix } from "@shared/lib/apiUrl";
 import { getBearerToken } from "@shared/lib/bearerToken";
 
-function readNutritionToken(): string {
-  try {
-    const token =
-      typeof import.meta !== "undefined" &&
-      import.meta.env?.VITE_NUTRITION_API_TOKEN
-        ? String(import.meta.env.VITE_NUTRITION_API_TOKEN)
-        : "";
-    return token;
-  } catch {
-    return "";
-  }
-}
-
 export const apiClient = createApiClient({
   baseUrl: apiUrl(""),
   // `apiPrefix` синхронізує api-client із `apiUrl()` прямих `fetch`-викликів:
   // обидва канали шлють у `/api/v1/*` (default) або `/api/*` (VITE_API_VERSION=none).
   apiPrefix: getApiPrefix(),
-  getNutritionToken: () => readNutritionToken(),
   // У Capacitor WebView cookie-сесія ненадійна (Android cold-start, iOS ITP),
   // тож шлемо `Authorization: Bearer <token>` — Better Auth `bearer()`
   // плагін резолвить його у сесію нарівно з cookie. У браузері
@@ -108,7 +93,6 @@ export type {
   NutritionShoppingCategory,
   NutritionShoppingItem,
   NutritionShoppingListResponse,
-  NutritionTokenProvider,
   NutritionWeekDay,
   NutritionWeekPlan,
   NutritionWeekPlanResponse,
