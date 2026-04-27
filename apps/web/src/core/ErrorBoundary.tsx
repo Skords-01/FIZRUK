@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { captureException } from "./observability/sentry";
+import { isChunkLoadError, reloadOnceForChunkError } from "./lib/chunkReload";
 
 interface FallbackProps {
   error: Error;
@@ -40,10 +41,18 @@ export class ErrorBoundary extends Component<
   }
 
   static getDerivedStateFromError(error: Error) {
+    // Stale-bundle recovery: якщо це `Failed to fetch dynamically imported
+    // module` після деплою (нові хеші чанків), пробуємо одноразовий
+    // `location.reload()` — cooldown через sessionStorage страхує від
+    // нескінченного циклу, якщо це не stale-кеш, а реальна поломка.
+    if (isChunkLoadError(error) && reloadOnceForChunkError()) {
+      return { error: null };
+    }
     return { error };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    if (isChunkLoadError(error)) return;
     // Lazy-forward: якщо Sentry SDK ще не підтягнувся, це no-op;
     // якщо вже підтягнувся — піде у Sentry.captureException.
     try {
