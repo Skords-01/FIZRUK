@@ -4,7 +4,7 @@
 **Скоуп:** репо `Skords-01/Sergeant` (default branch на момент клонування).
 **Метод:** репозиторний прохід — структура, конфіги, `AGENTS.md`/`CONTRIBUTING.md`/`README.md`, `docs/*` (roadmap, tech-debt, observability, playbooks), `.github/workflows/ci.yml`, `eslint.config.js`, `packages/eslint-plugin-sergeant-design/`, `apps/*/tsconfig.json`, міграції в `apps/server/src/migrations/`. Без виконання CI/тестів.
 
-> **Статус виконання — оновлено 2026-04-27 (шоста ревізія: +PR-11.C partial)**
+> **Статус виконання — оновлено 2026-04-27 (шоста ревізія: +PR-11.C partial, +PR-3.A subsumed)**
 > Поки документ жив в attachments, частина PR-ідей з нього вже відпрацьована
 > через дочерні Devin-сесії. Узагальнений знімок прогресу:
 
@@ -34,6 +34,7 @@
 | PR-6.B   | `noImplicitAny` phase 2 — routine + shared + nutrition (3 з 6)         | 🟡 partial | [#923](https://github.com/Skords-01/Sergeant/pull/923), [#934](https://github.com/Skords-01/Sergeant/pull/934)         |
 | PR-7.E   | de-flake `OnboardingWizard.test.tsx` (1/3 flaky triage)                | ✅ closed  | [#963](https://github.com/Skords-01/Sergeant/pull/963)                                                                 |
 | PR-11.C  | ADR template + README index                                            | 🟡 partial | template+README зроблено, retroactive ADRs ⏳                                                                          |
+| PR-3.A   | strict + noImplicitAny на apps/web (phase 1: shared/+core/)            | 🔄 subsumed | by PR-6.A/6.B/6.C — окремого PR не буде                                                                                |
 | Інші     | див. inline-теги нижче                                                 | ⏳ pending | —                                                                                                                      |
 
 > Sprint-таблиці нижче (`Спринт 0`, `Спринт 1-2`, `Спринт 3-6`) також оновлені
@@ -131,7 +132,7 @@
 
 **PR-ідеї:**
 
-- `PR-3.A` — `feat(web,tsconfig): enable strict + noImplicitAny on apps/web (phase 1: shared/+ core/)` із expected baseline error-count і `// @ts-expect-error` baseline-файлом. Конкретно: спершу strict тільки в `apps/web/src/shared/**` і `apps/web/src/core/lib/**` через project references.
+- `PR-3.A` 🔄 subsumed — closed without separate PR. Phase-by-phase strict rollout було перенесено у §6 і виконується через PR-6.A ([#870](https://github.com/Skords-01/Sergeant/pull/870), strictNullChecks на shared/), PR-6.B ([#923](https://github.com/Skords-01/Sergeant/pull/923), [#934](https://github.com/Skords-01/Sergeant/pull/934), noImplicitAny на shared/routine/nutrition; залишилось core/finyk/fizruk), PR-6.C (фінал: `strict: true` + remove `allowJs`). Окремого PR-3.A не буде.
 - `PR-3.B` ✅ closed — [#887](https://github.com/Skords-01/Sergeant/pull/887) `refactor(web,finyk): decompose Assets.tsx (1147 LOC) into smaller modules` — пілот для top-10 list.
 - `PR-3.C` ✅ closed — [#898](https://github.com/Skords-01/Sergeant/pull/898) `refactor(web,nutrition): split seedFoodsUk.ts (1614 LOC) by category (meat/fish/dairy/grains/...)` — чисто data-split, 19 per-category файлів, всі 390 елементів структурно ідентичні.
 - `PR-3.D` ✅ closed — [#865](https://github.com/Skords-01/Sergeant/pull/865) `chore(web,storage): migrate top-3 high-call-site localStorage files to safe wrappers` (`core/settings/FinykSection.tsx` -20, `core/lib/chatActions/fizrukActions.ts` -7, `core/hub/HubDashboard.tsx` -5) — burn-down list.
