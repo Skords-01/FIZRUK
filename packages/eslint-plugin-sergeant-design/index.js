@@ -182,6 +182,7 @@ const TRACKED_STORAGE_KEY_NAMES = new Set([
   "FIZRUK_PLAN_TEMPLATE",
   "FIZRUK_MONTHLY_PLAN",
   "FIZRUK_WELLBEING",
+  "FIZRUK_DAILY_LOG",
   // routine
   "ROUTINE",
   // nutrition
@@ -225,6 +226,7 @@ const TRACKED_STORAGE_KEY_VALUES = new Set([
   "fizruk_plan_template_v1",
   "fizruk_monthly_plan_v1",
   "fizruk_wellbeing_v1",
+  "fizruk_daily_log_v1",
   // routine
   "hub_routine_v1",
   // nutrition
