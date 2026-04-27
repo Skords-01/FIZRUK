@@ -38,6 +38,7 @@ docs/adr/
 
 ## Поточні ADR
 
-| #    | Назва                     | Статус   | Створено   | Контекст                                                                            |
-| ---- | ------------------------- | -------- | ---------- | ----------------------------------------------------------------------------------- |
-| 0001 | Monetization architecture | proposed | 2026-04-27 | 10 рішень перед стартом monetization-MVP (provider, cache, grandfather, trial, ...) |
+| #    | Назва                     | Статус   | Створено   | Контекст                                                                          |
+| ---- | ------------------------- | -------- | ---------- | --------------------------------------------------------------------------------- |
+| 0001 | Monetization architecture | proposed | 2026-04-27 | 10 рішень перед стартом monetization-MVP (provider, cache, grandfather, trial, …) |
+| 0002 | AI tool lifecycle         | accepted | 2026-04-27 | 4-фазний процес для Anthropic tools: Proposal → Safety → Rollout → KPIs.          |
