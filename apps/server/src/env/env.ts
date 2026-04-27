@@ -114,6 +114,21 @@ const envSchema = z.object({
   LOG_PRETTY: z.string().optional(),
   /** Bearer token для захисту `GET /metrics`. */
   METRICS_TOKEN: z.string().optional(),
+  /**
+   * Personal API key для server-side PostHog cleanup (ADR-0016 ADR-6.3).
+   * Має project-level scope із write-доступом до `persons`. БЕЗ нього
+   * `deletePostHogPerson()` повертає `outcome: "skipped"` — GDPR worker
+   * markує row як completed (no-op).
+   */
+  POSTHOG_API_KEY: z.string().optional(),
+  /** Числовий ID PostHog-проєкту (Settings → Project → ID). */
+  POSTHOG_PROJECT_ID: z.string().optional(),
+  /**
+   * Server-side host для PostHog API. EU Cloud: `https://eu.i.posthog.com`
+   * (default), US: `https://us.i.posthog.com`, self-hosted: власна URL.
+   * Парний до клієнтського `VITE_POSTHOG_HOST`.
+   */
+  POSTHOG_HOST: z.string().optional(),
 
   // ── Security ───────────────────────────────────────────────────────
   /** `"1"` — вимкнути Content-Security-Policy (Replit dev). */
