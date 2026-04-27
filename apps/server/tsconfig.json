@@ -1,6 +1,7 @@
 {
   "extends": "@sergeant/config/tsconfig.node.json",
   "compilerOptions": {
+    "strict": true,
     "allowJs": true,
     "checkJs": false,
     "paths": {
