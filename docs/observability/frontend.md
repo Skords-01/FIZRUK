@@ -232,6 +232,72 @@ JSDoc). PostHog-distinctId — `user.id` (UUID Better Auth), ніколи не e
 і не bearer-токен. `sanitize_properties` додатково страхує від `$cookies`,
 якщо autocapture у майбутньому увімкнуть.
 
+### Release annotations (GitHub Actions → PostHog API)
+
+**Файл:** `scripts/ci/posthog-release-annotation.mjs`,
+**Workflow:** `.github/workflows/posthog-release-annotation.yml`.
+
+Кожен merge у `main` триггерить production deploy (Vercel + Railway). У
+той самий момент GitHub Actions постить release annotation у PostHog
+([REST API](https://posthog.com/docs/data/annotations)) — анотація
+відмалюється вертикальною лінією поверх **усіх** PostHog-дашбордів (DAU,
+funnel, retention, paywall, error-rate, CWV insights). Сенс — миттєва
+кореляція «дроп DAU о 14:30» ⇄ «релізний реф abc1234, commit
+`feat(web): …`» без ходіння у GitHub.
+
+**Тригер:** `push` у `main` + `workflow_dispatch` (ручна анотація з
+`dry_run` опцією).
+
+**Payload, що шлеться:**
+
+```json
+POST {POSTHOG_HOST}/api/projects/{POSTHOG_PROJECT_ID}/annotations/
+Authorization: Bearer {POSTHOG_PERSONAL_API_KEY}
+Content-Type: application/json
+
+{
+  "content": "Release abc1234 (main): feat(web): … [run #12345]",
+  "scope": "project",
+  "date_marker": "2026-04-27T17:00:00.000Z"
+}
+```
+
+`content`-рядок будується з `GITHUB_SHA` (короткий 7-ch), `GITHUB_REF_NAME`,
+першого рядка commit-message (`head_commit.message` з push event payload)
+і `GITHUB_RUN_ID`. Обрізається до 400 символів з ellipsis, щоб не впертись
+у server-side ліміти.
+
+**Repo secrets (`Settings → Secrets and variables → Actions`):**
+
+| Секрет                     | Опис                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `POSTHOG_PERSONAL_API_KEY` | **Personal API key**, не публічний `phc_*` project key. Доступний у `phx_…` префіксі. |
+| `POSTHOG_PROJECT_ID`       | Числовий project id з URL у PostHog UI (`/project/<id>/…`).                           |
+| `POSTHOG_HOST`             | Опційно. Дефолт `https://eu.posthog.com`. Для US: `https://us.posthog.com`.           |
+
+Якщо `POSTHOG_PERSONAL_API_KEY` або `POSTHOG_PROJECT_ID` не виставлені
+(форки, нові середовища) — скрипт логує warning і виходить з exit 0
+(graceful no-op), workflow не червонітиме.
+
+**Як отримати Personal API key:** PostHog UI → user menu → _Personal API
+keys_ → Create. Мінімальний scope: `annotation:write` + `project:read`.
+
+**Локальний smoke (без секретів):**
+
+```bash
+POSTHOG_DRY_RUN=1 \
+POSTHOG_PERSONAL_API_KEY=phx_test \
+POSTHOG_PROJECT_ID=42 \
+GITHUB_SHA=abcdef0123 GITHUB_REF_NAME=main GITHUB_RUN_ID=999 \
+node scripts/ci/posthog-release-annotation.mjs
+```
+
+`POSTHOG_DRY_RUN=1` лише логує payload, без HTTP-виклику.
+
+**Як шукати анотацію в UI:** PostHog → будь-який insight з time-axis →
+вертикальна лінія з підписом `Release abc1234 …`. Або
+`Project → Annotations` → таблиця всіх анотацій + фільтр по scope/dates.
+
 ---
 
 ## 5. Mobile — Sentry status
