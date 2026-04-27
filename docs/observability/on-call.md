@@ -47,51 +47,18 @@
 
 ## 2. Routing
 
-`alertmanager.yml` наразі **не присутній у репо** — налаштовується на стороні інфраструктури.
+Alertmanager-конфіг живе у [`alertmanager.yml`](./alertmanager.yml). Реальний webhook URL не комітиться в репо — підставляється з env-vars при деплої.
 
-**Очікуваний сетап Alertmanager:**
+**Поточний routing (Slack):**
 
-| Severity | Receiver                               | Канал                                                            |
-| -------- | -------------------------------------- | ---------------------------------------------------------------- |
-| `page`   | `pagerduty-oncall` / `telegram-oncall` | PagerDuty webhook → on-call rotation; Telegram bot у on-call чат |
-| `ticket` | `email-team` / `sentry-tickets`        | Email на команду; Sentry створює issue автоматично               |
+| Severity | Receiver        | Канал             | Repeat interval |
+| -------- | --------------- | ----------------- | --------------- |
+| `page`   | `slack-page`    | `#alerts-page`    | 1h              |
+| `ticket` | `slack-tickets` | `#alerts-tickets` | 4h              |
 
-```yaml
-# alertmanager.yml (очікуваний)
-route:
-  receiver: email-team
-  group_by: [alertname, slo]
-  group_wait: 30s
-  group_interval: 5m
-  repeat_interval: 4h
-  routes:
-    - match:
-        severity: page
-      receiver: pagerduty-oncall
-      continue: true
-    - match:
-        severity: page
-      receiver: telegram-oncall
-    - match:
-        severity: ticket
-      receiver: sentry-tickets
+Обидва receiver-и шлють у Slack через `$SLACK_WEBHOOK_URL` (підставляється з env при деплої — наприклад, `envsubst < alertmanager.yml > alertmanager.rendered.yml`). Inhibit-rule пригнічує `ticket`, якщо вже горить `page` з тим самим `alertname` + `slo`.
 
-receivers:
-  - name: pagerduty-oncall
-    pagerduty_configs:
-      - service_key: "$PD_SERVICE_KEY"
-  - name: telegram-oncall
-    webhook_configs:
-      - url: "$TELEGRAM_ALERT_WEBHOOK"
-  - name: email-team
-    email_configs:
-      - to: "oncall@sergeant.team"
-  - name: sentry-tickets
-    webhook_configs:
-      - url: "$SENTRY_WEBHOOK_URL"
-```
-
-Джерело routing-правила: [`SLO.md` рядки 217-219](./SLO.md).
+Джерело routing-правила: [`SLO.md` рядки 217-219](./SLO.md). Визначення алертів і severity лейблів: [`prometheus/alert_rules.yml`](./prometheus/alert_rules.yml).
 
 ---
 
@@ -99,20 +66,20 @@ receivers:
 
 Витягнуто з [`AGENTS.md` → Module ownership map](../../AGENTS.md).
 
-| Домен                                | Шлях (ключовий)                                                                           | Owner |
-| ------------------------------------ | ----------------------------------------------------------------------------------------- | ----- |
-| HTTP / платформа                     | `apps/server/src/http/**`, `apps/server/src/routes/**`                                    | TBD   |
-| DB pool                              | `apps/server/src/db/**`                                                                   | TBD   |
-| Finyk (mono, budgets, tx)            | `apps/web/src/modules/finyk/**`, `packages/finyk-domain/**`                               | TBD   |
-| Fizruk (workouts, local-first)       | `apps/web/src/modules/fizruk/**`, `packages/fizruk-domain/**`                             | TBD   |
-| Nutrition (OFF, barcode)             | `apps/web/src/modules/nutrition/**`, `packages/nutrition-domain/**`                       | TBD   |
-| Routine (streaks)                    | `apps/web/src/modules/routine/**`, `packages/routine-domain/**`                           | TBD   |
-| HubChat / Coach / Weekly Digest (AI) | `apps/web/src/core/**` (hubChat, coach, digest), `apps/server/src/modules/chat/**`        | TBD   |
-| Auth (better-auth, sessions)         | `apps/server/src/modules/auth/**`, `apps/web/src/core/Auth*`                              | TBD   |
-| Sync (cross-module)                  | `apps/server/src/modules/sync/**`, `apps/web/src/core/useCloudSync*`                      | TBD   |
-| Push                                 | `apps/server/src/modules/push/**`, `apps/web/src/core/components/PushNotificationToggle*` | TBD   |
+| Домен                                | Шлях (ключовий)                                                                           | Owner        |
+| ------------------------------------ | ----------------------------------------------------------------------------------------- | ------------ |
+| HTTP / платформа                     | `apps/server/src/http/**`, `apps/server/src/routes/**`                                    | `@Skords-01` |
+| DB pool                              | `apps/server/src/db/**`                                                                   | `@Skords-01` |
+| Finyk (mono, budgets, tx)            | `apps/web/src/modules/finyk/**`, `packages/finyk-domain/**`                               | `@Skords-01` |
+| Fizruk (workouts, local-first)       | `apps/web/src/modules/fizruk/**`, `packages/fizruk-domain/**`                             | `@Skords-01` |
+| Nutrition (OFF, barcode)             | `apps/web/src/modules/nutrition/**`, `packages/nutrition-domain/**`                       | `@Skords-01` |
+| Routine (streaks)                    | `apps/web/src/modules/routine/**`, `packages/routine-domain/**`                           | `@Skords-01` |
+| HubChat / Coach / Weekly Digest (AI) | `apps/web/src/core/**` (hubChat, coach, digest), `apps/server/src/modules/chat/**`        | `@Skords-01` |
+| Auth (better-auth, sessions)         | `apps/server/src/modules/auth/**`, `apps/web/src/core/Auth*`                              | `@Skords-01` |
+| Sync (cross-module)                  | `apps/server/src/modules/sync/**`, `apps/web/src/core/useCloudSync*`                      | `@Skords-01` |
+| Push                                 | `apps/server/src/modules/push/**`, `apps/web/src/core/components/PushNotificationToggle*` | `@Skords-01` |
 
-> **Примітка:** `AGENTS.md` не містить іменних owner-ів модулів — лише шляхи та тест-стеки. Заповніть колонку Owner після розподілу відповідальності. Див. [Open questions](#open-questions).
+> **Примітка:** усі модулі наразі належать `@Skords-01` (L2 on-call, single maintainer). Per-module делегування буде додано тут і в `AGENTS.md` → Module ownership map одночасно, коли з'являться sub-owner-и.
 
 ---
 
@@ -218,7 +185,7 @@ Next update: 03:30 UTC
 
 ## Open questions
 
-- [ ] **Module owners** (§3): `AGENTS.md` не містить іменних owner-ів — усі модулі позначені TBD. Потрібно заповнити після розподілу on-call відповідальності.
-- [ ] **Alertmanager config** (§2): `alertmanager.yml` відсутній у репо. Описано очікуваний сетап — потрібно створити і задеплоїти.
-- [ ] **Dashboards** (§5): каталог `docs/observability/dashboards/` планується в окремому PR.
+- [x] **Module owners** (§3): owner-и заповнено — усі модулі належать `@Skords-01` (single maintainer); продубльовано у [`AGENTS.md` → Module ownership map](../../AGENTS.md).
+- [x] **Alertmanager config** (§2): [`alertmanager.yml`](./alertmanager.yml) додано до репо — Slack receiver через `$SLACK_WEBHOOK_URL` (env-substitution при деплої).
+- [x] **Dashboards** (§5): каталог [`docs/observability/dashboards/`](./dashboards/) наповнено — 8 Grafana JSON дашбордів (`http-red`, `db-use`, `slo-burn-rate`, `auth`, `ai-cost`, `hubchat`, `sync`, `frontend-cwv`) + README з інструкцією по імпорту.
 - [x] **Postmortem template** (§8): `docs/postmortems/TEMPLATE.md` створено в цьому PR.
