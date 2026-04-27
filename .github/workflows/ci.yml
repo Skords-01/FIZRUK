@@ -342,7 +342,7 @@ jobs:
     name: Pipeline duration (p95 trend)
     runs-on: ubuntu-latest
     # Run after all main jobs; report even when some fail.
-    needs: [check, coverage, a11y, smoke-e2e]
+    needs: [check, coverage, a11y, critical-flow]
     if: always()
     permissions:
       contents: read
