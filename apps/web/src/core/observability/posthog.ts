@@ -29,6 +29,7 @@ type QueuedCall =
 
 let posthogModule: PostHogLib | null = null;
 let initPromise: Promise<void> | null = null;
+let initFailed = false;
 let queue: QueuedCall[] = [];
 
 const MAX_QUEUE = 100;
@@ -104,8 +105,11 @@ export function initPostHog(): Promise<void> {
       posthogModule = posthog;
       flushQueue();
     } catch {
-      // SDK не завантажився — лишаємось у no-op режимі. Події з queue
-      // просто відкидаємо, щоб не тримати memory leak.
+      // SDK не завантажився — лишаємось у true no-op режимі. Події з
+      // queue відкидаємо, а флаг `initFailed` блокує подальші enqueue,
+      // щоб `capture/identify/reset` не churn-или shift() по MAX_QUEUE
+      // до кінця сесії (див. огляд Devin Review на #972).
+      initFailed = true;
       queue = [];
     }
   })();
@@ -131,9 +135,12 @@ export function capturePostHogEvent(
     }
     return;
   }
-  // Без VITE_POSTHOG_KEY initPromise resolve-иться без SDK — у цьому
-  // випадку не буферизуємо, бо ніхто вже не прийде flush-ити чергу.
+  // Без VITE_POSTHOG_KEY initPromise resolve-иться без SDK, і якщо
+  // динамічний `import()` впав — `initFailed === true`. У цих випадках
+  // не буферизуємо: flushQueue ніхто вже не викличе, queue росла б
+  // безцільно (навіть за умови bounded-shift у enqueue).
   if (!import.meta.env.VITE_POSTHOG_KEY) return;
+  if (initFailed) return;
   enqueue({ kind: "capture", name, payload });
 }
 
@@ -155,6 +162,7 @@ export function identifyPostHogUser(
     return;
   }
   if (!import.meta.env.VITE_POSTHOG_KEY) return;
+  if (initFailed) return;
   enqueue({ kind: "identify", userId, traits });
 }
 
@@ -172,6 +180,7 @@ export function resetPostHog(): void {
     return;
   }
   if (!import.meta.env.VITE_POSTHOG_KEY) return;
+  if (initFailed) return;
   enqueue({ kind: "reset" });
 }
 
@@ -180,5 +189,6 @@ export function resetPostHog(): void {
 export function __resetForTests(): void {
   posthogModule = null;
   initPromise = null;
+  initFailed = false;
   queue = [];
 }

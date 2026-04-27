@@ -242,4 +242,32 @@ describe("error resilience", () => {
     await mod.initPostHog();
     expect(() => mod.capturePostHogEvent("boom", {})).not.toThrow();
   });
+
+  it("після init-помилки capture/identify/reset — true no-op (без enqueue)", async () => {
+    // Регресія на Devin Review finding (PR #972): після catch у initPostHog
+    // `initPromise` резолвиться, але `posthogModule === null` назавжди.
+    // Без `initFailed` флага наступні виклики падали б у enqueue і тихо
+    // churn-или shift() до кінця сесії.
+    posthogInit.mockImplementationOnce(() => {
+      throw new Error("kaboom");
+    });
+    const mod = await import("./posthog");
+    await mod.initPostHog();
+
+    // Капчер/ідентифай/ресет після збою не мають викликати SDK і не мають
+    // лишати нічого у внутрішній черзі — інакше flushQueue ніколи не
+    // обробить їх, а пам'ять буде безцільно займатися.
+    mod.capturePostHogEvent("after_fail", { ok: true });
+    mod.identifyPostHogUser("user-456");
+    mod.resetPostHog();
+
+    expect(posthogCapture).not.toHaveBeenCalled();
+    expect(posthogIdentify).not.toHaveBeenCalled();
+    expect(posthogReset).not.toHaveBeenCalled();
+
+    // Повторний initPostHog — той самий вже-resolved promise, flushQueue
+    // не викликається (queue порожня і має залишатися такою).
+    await mod.initPostHog();
+    expect(posthogCapture).not.toHaveBeenCalled();
+  });
 });
