@@ -34,6 +34,7 @@
 | PR-6.B   | `noImplicitAny` phase 2 — routine + shared + nutrition (3 з 6)         | 🟡 partial | [#923](https://github.com/Skords-01/Sergeant/pull/923), [#934](https://github.com/Skords-01/Sergeant/pull/934)         |
 | PR-7.E   | de-flake `OnboardingWizard.test.tsx` (1/3 flaky triage)                | ✅ closed  | [#963](https://github.com/Skords-01/Sergeant/pull/963)                                                                 |
 | PR-11.C  | ADR template + README index                                            | 🟡 partial | template+README зроблено, retroactive ADRs ⏳                                                                          |
+| PR-8.A   | `docs(obs): error-budget policy`                                       | ✅ closed  | [#942](https://github.com/Skords-01/Sergeant/pull/942)                                                                 |
 | Інші     | див. inline-теги нижче                                                 | ⏳ pending | —                                                                                                                      |
 
 > Sprint-таблиці нижче (`Спринт 0`, `Спринт 1-2`, `Спринт 3-6`) також оновлені
@@ -260,7 +261,7 @@
 
 **PR-ідеї:**
 
-- `PR-8.A` — `docs(obs): error-budget policy` — який тип фіч freeze, коли HTTP API budget вигорає; які ні (security fixes, hotfixes).
+- `PR-8.A` ✅ closed — [#942](https://github.com/Skords-01/Sergeant/pull/942) `docs(obs): error-budget policy` — який тип фіч freeze, коли HTTP API budget вигорає; які ні (security fixes, hotfixes).
 - `PR-8.B` — `feat(obs): expose Prometheus /metrics from apps/server` (якщо ще не) + Grafana dashboard import JSON у `docs/observability/dashboards/`.
 - `PR-8.C` — `feat(server,chat): SYSTEM_PROMPT_VERSION constant + cache-hit metric` — підготовка до prompt-cache rollout.
 
