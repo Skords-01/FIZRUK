@@ -80,7 +80,7 @@
 **PR-ідеї:**
 
 - `PR-1.A` — `chore(config): enforce inheritance of strict from tsconfig.base in apps/web,server (codeowner-blocking comment)`.
-- `PR-1.B` ✅ closed — [#931](https://github.com/Skords-01/Sergeant/pull/931) `docs(docs): per-app status matrix` (`docs/architecture/apps-status-matrix.md`) — одна сторінка, 4 apps + 10 packages з `active/stabilize/migration/legacy`-легендою, дата ревалідації (`Last revalidated: 2026-04-27`, наступна — квартально).
+- `PR-1.B` ✅ closed — [#932](https://github.com/Skords-01/Sergeant/pull/932) `docs(docs): per-app status matrix` (`docs/architecture/apps-status-matrix.md`) — одна сторінка, 4 apps + 10 packages з `active/stabilize/migration/legacy`-легендою, дата ревалідації (`Last revalidated: 2026-04-27`, наступна — квартально).
 
 ---
 
