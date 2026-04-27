@@ -1,8 +1,18 @@
 // Utility functions shared across HubChat modules
 
 import { friendlyApiError as baseFriendlyApiError } from "@shared/lib/friendlyApiError";
+import type { CapabilityModule } from "@sergeant/shared";
 import type { ChatActionCard } from "./hubChatActionCards";
-import type { QuickActionModule } from "./hubChatQuickActions";
+
+/**
+ * Subset of `CapabilityModule` that has its own URL hash / nav surface.
+ * Cross-cutting modules (`cross`, `analytics`, `utility`, `memory`) live
+ * under the generic hub view, so they are represented by `null`.
+ */
+export type ActiveModule = Extract<
+  CapabilityModule,
+  "finyk" | "fizruk" | "routine" | "nutrition"
+>;
 
 export const CONTEXT_TTL_MS = 15_000;
 export const CHAT_HISTORY_WRITE_DEBOUNCE_MS = 600;
@@ -25,7 +35,7 @@ export interface ChatMessage {
  * та подальших helper-ах. Якщо hash не вказує на жоден з відомих
  * модулів — повертає `null`.
  */
-export function getActiveModule(): QuickActionModule | null {
+export function getActiveModule(): ActiveModule | null {
   try {
     const hash = (globalThis.window?.location?.hash || "")
       .replace(/^#\/?/, "")

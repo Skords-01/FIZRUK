@@ -6,7 +6,12 @@ import {
   getCapabilityServerTool,
   getQuickActionCapabilities,
   groupCapabilitiesByModule,
+  isActiveQuickActionModule,
+  isIncompletePrompt,
+  pickTopQuickActions,
   searchCapabilities,
+  sortQuickActionsForModule,
+  type AssistantCapability,
   type CapabilityModule,
 } from "./assistantCatalogue";
 
@@ -167,6 +172,125 @@ describe("getQuickActionCapabilities", () => {
         qa[i - 1]!.quickActionPriority ?? 999,
       );
     }
+  });
+
+  it("includes at least one entry per active module bucket", () => {
+    const qa = getQuickActionCapabilities();
+    const modules = new Set(qa.map((c) => c.module));
+    expect(modules.has("finyk")).toBe(true);
+    expect(modules.has("fizruk")).toBe(true);
+    expect(modules.has("routine")).toBe(true);
+    expect(modules.has("nutrition")).toBe(true);
+  });
+});
+
+describe("isIncompletePrompt", () => {
+  it("returns true for prompts ending in ': '", () => {
+    expect(isIncompletePrompt("Додай витрату: ")).toBe(true);
+    expect(isIncompletePrompt("Додай підхід: ")).toBe(true);
+  });
+
+  it("returns false for complete prompts", () => {
+    expect(isIncompletePrompt("Що важливого на сьогодні?")).toBe(false);
+    expect(isIncompletePrompt("Підсумуй мій день")).toBe(false);
+  });
+
+  it("does not confuse mid-sentence colons with the trailing marker", () => {
+    expect(isIncompletePrompt("Звіт: загальний по тижню")).toBe(false);
+  });
+
+  it("agrees with requiresInput across the registry", () => {
+    for (const c of ASSISTANT_CAPABILITIES) {
+      expect(isIncompletePrompt(c.prompt)).toBe(c.requiresInput);
+    }
+  });
+});
+
+describe("sortQuickActionsForModule", () => {
+  const QA = getQuickActionCapabilities();
+
+  it("places the active domain module first, then hub-like, then others", () => {
+    const sorted = sortQuickActionsForModule(QA, "fizruk");
+    const modules = sorted.map((a) => a.module);
+    const fizrukIdx = modules.indexOf("fizruk");
+    const lastFizrukIdx = modules.lastIndexOf("fizruk");
+    expect(fizrukIdx).toBe(0);
+    // Any hub-like module should land after the fizruk block.
+    const HUB_LIKE = new Set<CapabilityModule>([
+      "cross",
+      "analytics",
+      "utility",
+      "memory",
+    ]);
+    const firstHubLikeIdx = modules.findIndex((m) => HUB_LIKE.has(m));
+    if (firstHubLikeIdx >= 0) {
+      expect(firstHubLikeIdx).toBeGreaterThan(lastFizrukIdx);
+    }
+  });
+
+  it("with null active module starts with a hub-like bucket", () => {
+    const sorted = sortQuickActionsForModule(QA, null);
+    const HUB_LIKE = new Set<CapabilityModule>([
+      "cross",
+      "analytics",
+      "utility",
+      "memory",
+    ]);
+    expect(sorted[0]).toBeDefined();
+    expect(HUB_LIKE.has(sorted[0]!.module)).toBe(true);
+  });
+
+  it("orders entries within a module by quickActionPriority asc", () => {
+    const sorted = sortQuickActionsForModule(QA, "finyk");
+    const finykOnly = sorted.filter((a) => a.module === "finyk");
+    for (let i = 1; i < finykOnly.length; i++) {
+      const prev = finykOnly[i - 1]!.quickActionPriority ?? 999;
+      const curr = finykOnly[i]!.quickActionPriority ?? 999;
+      expect(curr).toBeGreaterThanOrEqual(prev);
+    }
+  });
+
+  it("is stable for ties on priority", () => {
+    const a: AssistantCapability = {
+      id: "x1",
+      module: "utility",
+      label: "X1",
+      icon: "sun",
+      description: "x",
+      examples: ["x"],
+      prompt: "x1",
+      requiresInput: false,
+      isQuickAction: true,
+      quickActionPriority: 1,
+      requiresOnline: true,
+    };
+    const b: AssistantCapability = { ...a, id: "x2", label: "X2" };
+    const sorted = sortQuickActionsForModule([a, b], null);
+    expect(sorted.map((q) => q.id)).toEqual(["x1", "x2"]);
+  });
+});
+
+describe("pickTopQuickActions", () => {
+  const QA = getQuickActionCapabilities();
+
+  it("limits to the requested count", () => {
+    expect(pickTopQuickActions(QA, null, 4)).toHaveLength(4);
+  });
+
+  it("default limit is 6", () => {
+    expect(pickTopQuickActions(QA, null)).toHaveLength(6);
+  });
+});
+
+describe("isActiveQuickActionModule", () => {
+  it("true only when capability.module matches a domain active module", () => {
+    const finyk = ASSISTANT_CAPABILITIES.find((c) => c.module === "finyk")!;
+    const cross = ASSISTANT_CAPABILITIES.find((c) => c.module === "cross")!;
+    expect(isActiveQuickActionModule(finyk, "finyk")).toBe(true);
+    expect(isActiveQuickActionModule(finyk, "fizruk")).toBe(false);
+    expect(isActiveQuickActionModule(finyk, null)).toBe(false);
+    // Hub-like modules are never highlighted as "active".
+    expect(isActiveQuickActionModule(cross, "finyk")).toBe(false);
   });
 });
 
