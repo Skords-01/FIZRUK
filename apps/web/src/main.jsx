@@ -22,6 +22,7 @@ import "@shared/hooks/useVisualKeyboardInset";
 import { ErrorBoundary } from "./core/ErrorBoundary.jsx";
 import { initSentry } from "./core/observability/sentry.js";
 import { initWebVitals } from "./core/observability/webVitals.js";
+import { initPostHog } from "./core/observability/posthog.js";
 import { runDemoCleanupOnce } from "./core/onboarding/cleanupDemoData.js";
 import { runDemoSeedFromUrl } from "./core/onboarding/seedDemoData.js";
 import { isCapacitor } from "@sergeant/shared";
@@ -96,6 +97,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 const scheduleInit = () => {
   void initSentry();
   void initWebVitals();
+  void initPostHog();
 };
 if (typeof window !== "undefined") {
   if ("requestIdleCallback" in window) {
