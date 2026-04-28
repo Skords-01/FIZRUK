@@ -37,7 +37,7 @@
  */
 
 import { forwardRef, useState, type ReactNode } from "react";
-import { TextInput, type TextInputProps, View } from "react-native";
+import { Text, TextInput, type TextInputProps, View } from "react-native";
 
 export type InputSize = "sm" | "md" | "lg";
 export type InputVariant = "default" | "filled" | "ghost";
@@ -142,6 +142,10 @@ export interface InputProps extends Omit<
   className?: string;
   /** Extra classes applied to the wrapper `View` (slot container). */
   containerClassName?: string;
+  /** Helper text shown below the input. Turns red on `error`. */
+  helperText?: string;
+  /** Label rendered above the input field. */
+  label?: string;
   /**
    * Explicit RN overrides — the caller's value always wins over the
    * `type`-derived defaults.
@@ -162,6 +166,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     suffix,
     className,
     containerClassName,
+    helperText,
+    label,
     keyboardType,
     autoCapitalize,
     autoComplete,
@@ -197,44 +203,61 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         : "";
 
   return (
-    <View
-      className={cx(
-        "flex-row items-center",
-        sizes[size],
-        variantBase[variant],
-        stateClass,
-        "border",
-        focused && !error && !success ? "ring-2 ring-brand-400/40" : "",
-        !editable && "opacity-50",
-        containerClassName,
-      )}
-    >
-      {icon ? <View className="mr-2">{icon}</View> : null}
-      <TextInput
-        ref={ref}
-        editable={editable}
-        keyboardType={resolvedKeyboard}
-        autoComplete={resolvedAutoComplete}
-        autoCapitalize={resolvedAutoCapitalize}
-        secureTextEntry={resolvedSecure}
-        spellCheck={resolvedSpellCheck}
-        placeholderTextColor="#a8a29e"
-        accessibilityState={
-          error ? { disabled: !editable, busy: false } : undefined
-        }
-        aria-invalid={error ? true : undefined}
-        onFocus={(event) => {
-          setFocused(true);
-          onFocus?.(event);
-        }}
-        onBlur={(event) => {
-          setFocused(false);
-          onBlur?.(event);
-        }}
-        className={cx("flex-1 text-base text-fg", className)}
-        {...props}
-      />
-      {suffix ? <View className="ml-2">{suffix}</View> : null}
+    <View className="gap-1">
+      {label ? (
+        <Text className="text-sm font-medium text-fg leading-snug">
+          {label}
+        </Text>
+      ) : null}
+      <View
+        className={cx(
+          "flex-row items-center",
+          sizes[size],
+          variantBase[variant],
+          stateClass,
+          "border",
+          focused && !error && !success ? "ring-2 ring-brand-400/40" : "",
+          !editable && "opacity-50",
+          containerClassName,
+        )}
+      >
+        {icon ? <View className="mr-2">{icon}</View> : null}
+        <TextInput
+          ref={ref}
+          editable={editable}
+          keyboardType={resolvedKeyboard}
+          autoComplete={resolvedAutoComplete}
+          autoCapitalize={resolvedAutoCapitalize}
+          secureTextEntry={resolvedSecure}
+          spellCheck={resolvedSpellCheck}
+          placeholderTextColor="#a8a29e"
+          accessibilityState={
+            error ? { disabled: !editable, busy: false } : undefined
+          }
+          aria-invalid={error ? true : undefined}
+          onFocus={(event) => {
+            setFocused(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setFocused(false);
+            onBlur?.(event);
+          }}
+          className={cx("flex-1 text-base text-fg", className)}
+          {...props}
+        />
+        {suffix ? <View className="ml-2">{suffix}</View> : null}
+      </View>
+      {helperText ? (
+        <Text
+          className={cx(
+            "text-xs leading-snug",
+            error ? "text-danger" : "text-fg-muted",
+          )}
+        >
+          {helperText}
+        </Text>
+      ) : null}
     </View>
   );
 });
@@ -249,6 +272,10 @@ export interface TextareaProps extends Omit<
   rows?: number;
   className?: string;
   containerClassName?: string;
+  /** Helper text shown below the textarea. Turns red on `error`. */
+  helperText?: string;
+  /** Label rendered above the textarea. */
+  label?: string;
 }
 
 /**
@@ -262,6 +289,8 @@ export const Textarea = forwardRef<TextInput, TextareaProps>(function Textarea(
     rows = 3,
     className,
     containerClassName,
+    helperText,
+    label,
     onFocus,
     onBlur,
     editable = true,
@@ -278,35 +307,52 @@ export const Textarea = forwardRef<TextInput, TextareaProps>(function Textarea(
       : "";
 
   return (
-    <View
-      className={cx(
-        "px-4 py-3 rounded-2xl",
-        variantBase[variant],
-        stateClass,
-        !editable && "opacity-50",
-        containerClassName,
-      )}
-    >
-      <TextInput
-        ref={ref}
-        multiline
-        numberOfLines={rows}
-        editable={editable}
-        textAlignVertical="top"
-        placeholderTextColor="#a8a29e"
-        aria-invalid={error ? true : undefined}
-        onFocus={(event) => {
-          setFocused(true);
-          onFocus?.(event);
-        }}
-        onBlur={(event) => {
-          setFocused(false);
-          onBlur?.(event);
-        }}
-        className={cx("text-base text-fg", className)}
-        style={{ minHeight: rows * 20 }}
-        {...props}
-      />
+    <View className="gap-1">
+      {label ? (
+        <Text className="text-sm font-medium text-fg leading-snug">
+          {label}
+        </Text>
+      ) : null}
+      <View
+        className={cx(
+          "px-4 py-3 rounded-2xl",
+          variantBase[variant],
+          stateClass,
+          !editable && "opacity-50",
+          containerClassName,
+        )}
+      >
+        <TextInput
+          ref={ref}
+          multiline
+          numberOfLines={rows}
+          editable={editable}
+          textAlignVertical="top"
+          placeholderTextColor="#a8a29e"
+          aria-invalid={error ? true : undefined}
+          onFocus={(event) => {
+            setFocused(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setFocused(false);
+            onBlur?.(event);
+          }}
+          className={cx("text-base text-fg", className)}
+          style={{ minHeight: rows * 20 }}
+          {...props}
+        />
+      </View>
+      {helperText ? (
+        <Text
+          className={cx(
+            "text-xs leading-snug",
+            error ? "text-danger" : "text-fg-muted",
+          )}
+        >
+          {helperText}
+        </Text>
+      ) : null}
     </View>
   );
 });
