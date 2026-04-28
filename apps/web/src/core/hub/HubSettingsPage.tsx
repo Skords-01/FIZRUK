@@ -5,12 +5,15 @@ import { Icon } from "@shared/components/ui/Icon";
 import { Tabs } from "@shared/components/ui/Tabs";
 import { AIDigestSection } from "../settings/AIDigestSection";
 import { AssistantCatalogueSection } from "../settings/AssistantCatalogueSection";
+import { DashboardSection } from "../settings/DashboardSection";
+import { DataExportSection } from "../settings/DataExportSection";
 import { ExperimentalSection } from "../settings/ExperimentalSection";
 import { FinykSection } from "../settings/FinykSection";
 import { FizrukSection } from "../settings/FizrukSection";
 import { GeneralSection } from "../settings/GeneralSection";
 import { NotificationsSection } from "../settings/NotificationsSection";
 import { NutritionSection } from "../settings/NutritionSection";
+import { PWASection } from "../settings/PWASection";
 import { RoutineSection } from "../settings/RoutineSection";
 
 interface SettingsSection {
@@ -27,7 +30,7 @@ const GROUPS = [
   {
     id: "general",
     label: "Загальні",
-    sections: ["general", "notifications", "ai", "assistant"],
+    sections: ["dashboard", "general", "notifications", "ai", "assistant"],
   },
   {
     id: "modules",
@@ -37,7 +40,7 @@ const GROUPS = [
   {
     id: "advanced",
     label: "Додатково",
-    sections: ["experimental"],
+    sections: ["pwa", "dataExport", "experimental"],
   },
 ] as const;
 
@@ -63,10 +66,17 @@ export function HubSettingsPage({
   const sections = useMemo(
     () => [
       {
-        id: "general",
-        title: "Інтерфейс і синхронізація",
+        id: "dashboard",
+        title: "Дашборд",
         keywords:
-          "загальні мова інтерфейс синхронізація акаунт sync cloud backup",
+          "дашборд dashboard підказки щільність density вигляд активні модулі порядок упорядкувати reorder hide inactive приховати",
+        render: () => <DashboardSection />,
+      },
+      {
+        id: "general",
+        title: "Загальні",
+        keywords:
+          "загальні онбординг onboarding welcome синхронізація акаунт sync cloud",
         render: () => (
           <GeneralSection
             syncing={syncing}
@@ -122,6 +132,20 @@ export function HubSettingsPage({
         keywords:
           "харчування їжа nutrition meals food kбжу калорії kcal білки жири вуглеводи вода комора pantry скан штрихкод barcode",
         render: () => <NutritionSection />,
+      },
+      {
+        id: "pwa",
+        title: "PWA та офлайн",
+        keywords:
+          "pwa офлайн offline service worker sw кеш cache діагностика скинути reset",
+        render: () => <PWASection />,
+      },
+      {
+        id: "dataExport",
+        title: "Експорт/імпорт JSON",
+        keywords:
+          "експорт імпорт export import json резервна копія backup hub дані data перенос",
+        render: () => <DataExportSection />,
       },
       {
         id: "experimental",
