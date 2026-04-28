@@ -210,3 +210,21 @@ export type {
   FABSize,
   FABVariant,
 } from "./FloatingActionButton";
+
+export {
+  KeyboardAccessory,
+  AMOUNT_CHIPS_UAH,
+  PORTION_CHIPS_GRAM,
+  WEIGHT_CHIPS_KG,
+  REP_CHIPS,
+  WATER_CHIPS_ML,
+} from "./KeyboardAccessory";
+export type {
+  KeyboardAccessoryProps,
+  QuickFillChip,
+} from "./KeyboardAccessory";
+
+export {
+  ScreenReaderAnnouncerProvider,
+  useAnnounce,
+} from "./ScreenReaderAnnouncer";

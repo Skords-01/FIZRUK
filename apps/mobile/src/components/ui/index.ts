@@ -179,3 +179,14 @@ export {
   type FABVariant,
   type FABSize,
 } from "./FloatingActionButton";
+
+export {
+  KeyboardAccessory,
+  AMOUNT_CHIPS_UAH,
+  PORTION_CHIPS_GRAM,
+  WEIGHT_CHIPS_KG,
+  REP_CHIPS,
+  WATER_CHIPS_ML,
+  type KeyboardAccessoryProps,
+  type QuickFillChip,
+} from "./KeyboardAccessory";

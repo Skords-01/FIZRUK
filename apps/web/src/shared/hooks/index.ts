@@ -77,3 +77,5 @@ export type { DarkModeSchedule, UseDarkModeReturn } from "./useDarkMode";
 
 export { useHaptic } from "./useHaptic";
 export type { UseHapticReturn } from "./useHaptic";
+
+export { useReducedMotion } from "./useReducedMotion";
