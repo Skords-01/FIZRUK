@@ -33,7 +33,7 @@ export function HubFloatingActions({ hidden = false, onOpenChat }) {
         id="hub-assistant-fab"
         title="AI-асистент"
         description="Запитай будь-що про фінанси, тренування, харчування чи рутину"
-        position="left"
+        placement="left"
         showOnce
         delay={3000}
       >

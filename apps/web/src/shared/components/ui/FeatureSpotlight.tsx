@@ -82,6 +82,9 @@ export function FeatureSpotlight({
   title,
   description,
   placement = "bottom",
+  position,
+  delay = 500,
+  showOnce,
   actionText = "Зрозуміло",
   onDismiss,
   skipPersist = false,
@@ -89,18 +92,22 @@ export function FeatureSpotlight({
 }: FeatureSpotlightProps) {
   const [visible, setVisible] = useState(false);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const targetRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const effectivePlacement = position ?? placement;
+  const persistDismissal = showOnce ?? !skipPersist;
 
   // Check if already dismissed
   useEffect(() => {
-    if (!skipPersist && isDismissed(id)) {
+    if (persistDismissal && isDismissed(id)) {
       return;
     }
 
     // Find target element
     const findTarget = () => {
-      if (!targetSelector) return;
-      const target = document.querySelector(targetSelector);
+      const target = targetSelector
+        ? document.querySelector(targetSelector)
+        : targetRef.current;
       if (target) {
         setTargetRect(target.getBoundingClientRect());
         setVisible(true);
@@ -108,17 +115,18 @@ export function FeatureSpotlight({
     };
 
     // Delay slightly to ensure DOM is ready
-    const timer = setTimeout(findTarget, 500);
+    const timer = setTimeout(findTarget, delay);
     return () => clearTimeout(timer);
-  }, [id, targetSelector, skipPersist]);
+  }, [delay, id, persistDismissal, targetSelector]);
 
   // Update position on scroll/resize
   useEffect(() => {
     if (!visible) return;
 
     const updatePosition = () => {
-      if (!targetSelector) return;
-      const target = document.querySelector(targetSelector);
+      const target = targetSelector
+        ? document.querySelector(targetSelector)
+        : targetRef.current;
       if (target) {
         setTargetRect(target.getBoundingClientRect());
       }
@@ -135,19 +143,25 @@ export function FeatureSpotlight({
   const handleDismiss = useCallback(() => {
     hapticTap();
     setVisible(false);
-    if (!skipPersist) {
+    if (persistDismissal) {
       markDismissed(id);
     }
     onDismiss?.();
-  }, [id, skipPersist, onDismiss]);
+  }, [id, persistDismissal, onDismiss]);
 
-  if (!visible || !targetRect) return null;
+  const target = children ? (
+    <span ref={targetRef} className="inline-flex">
+      {children}
+    </span>
+  ) : null;
+
+  if (!visible || !targetRect) return target;
 
   // Calculate tooltip position
   const padding = 12;
   const tooltipStyle: CSSProperties = {};
 
-  switch (placement) {
+  switch (effectivePlacement) {
     case "top":
       tooltipStyle.bottom = window.innerHeight - targetRect.top + padding;
       tooltipStyle.left = targetRect.left + targetRect.width / 2;
@@ -181,71 +195,73 @@ export function FeatureSpotlight({
   };
 
   return (
-    <div className="fixed inset-0 z-[1000]" role="dialog" aria-modal="true">
-      {/* Overlay with cutout */}
-      <svg
-        className="absolute inset-0 w-full h-full"
-        onClick={handleDismiss}
-        aria-hidden="true"
-      >
-        <defs>
-          <mask id={`spotlight-mask-${id}`}>
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            <rect
-              x={spotlightRect.left}
-              y={spotlightRect.top}
-              width={spotlightRect.width}
-              height={spotlightRect.height}
-              rx={spotlightRect.borderRadius}
-              fill="black"
-            />
-          </mask>
-        </defs>
-        <rect
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          fill="rgba(0, 0, 0, 0.6)"
-          mask={`url(#spotlight-mask-${id})`}
-          className="motion-safe:animate-fade-in"
+    <>
+      {target}
+      <div className="fixed inset-0 z-[1000]" role="dialog" aria-modal="true">
+        {/* Overlay with cutout */}
+        <svg
+          className="absolute inset-0 w-full h-full"
+          onClick={handleDismiss}
+          aria-hidden="true"
+        >
+          <defs>
+            <mask id={`spotlight-mask-${id}`}>
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              <rect
+                x={spotlightRect.left}
+                y={spotlightRect.top}
+                width={spotlightRect.width}
+                height={spotlightRect.height}
+                rx={spotlightRect.borderRadius}
+                fill="black"
+              />
+            </mask>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="rgba(0, 0, 0, 0.6)"
+            mask={`url(#spotlight-mask-${id})`}
+            className="motion-safe:animate-fade-in"
+          />
+        </svg>
+
+        {/* Spotlight ring */}
+        <div
+          className={cn(
+            "absolute pointer-events-none",
+            "rounded-xl ring-2 ring-brand-500 ring-offset-2 ring-offset-transparent",
+            "motion-safe:animate-pulse",
+          )}
+          style={{
+            top: spotlightRect.top,
+            left: spotlightRect.left,
+            width: spotlightRect.width,
+            height: spotlightRect.height,
+          }}
+          aria-hidden="true"
         />
-      </svg>
 
-      {/* Spotlight ring */}
-      <div
-        className={cn(
-          "absolute pointer-events-none",
-          "rounded-xl ring-2 ring-brand-500 ring-offset-2 ring-offset-transparent",
-          "motion-safe:animate-pulse",
-        )}
-        style={{
-          top: spotlightRect.top,
-          left: spotlightRect.left,
-          width: spotlightRect.width,
-          height: spotlightRect.height,
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Tooltip */}
-      <div
-        ref={tooltipRef}
-        className={cn(
-          "fixed w-72 p-4 rounded-2xl",
-          "bg-panel border border-line shadow-float",
-          "motion-safe:animate-slide-up",
-        )}
-        style={tooltipStyle}
-      >
-        <h3 className="text-base font-bold text-text mb-1">{title}</h3>
-        <p className="text-sm text-muted mb-4">{description}</p>
-        {children}
-        <Button size="sm" onClick={handleDismiss} className="w-full">
-          {actionText}
-        </Button>
+        {/* Tooltip */}
+        <div
+          ref={tooltipRef}
+          className={cn(
+            "fixed w-72 p-4 rounded-2xl",
+            "bg-panel border border-line shadow-float",
+            "motion-safe:animate-slide-up",
+          )}
+          style={tooltipStyle}
+        >
+          <h3 className="text-base font-bold text-text mb-1">{title}</h3>
+          <p className="text-sm text-muted mb-4">{description}</p>
+          <Button size="sm" onClick={handleDismiss} className="w-full">
+            {actionText}
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
