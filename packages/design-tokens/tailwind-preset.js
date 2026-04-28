@@ -215,6 +215,11 @@ const preset = {
           "rgb(var(--c-nutrition-surface-dark) / <alpha-value>)",
         "nutrition-border-dark":
           "rgb(var(--c-nutrition-border-dark) / <alpha-value>)",
+
+        // ─── Celebration / Gamification ──────────────────────────────────
+        celebration: "rgb(var(--c-celebration) / <alpha-value>)",
+        "streak-glow": "rgb(var(--c-streak-glow) / <alpha-value>)",
+        xp: "rgb(var(--c-xp) / <alpha-value>)",
       },
 
       // ═══════════════════════════════════════════════════════════════════
@@ -259,6 +264,15 @@ const preset = {
           "0 2px 4px rgba(13, 23, 38, 0.06), 0 12px 32px rgba(13, 23, 38, 0.12)",
         // Inner shadows for depth
         inner: "inset 0 2px 4px rgba(0, 0, 0, 0.05)",
+        // Celebration glow — warm amber for achievement moments
+        "celebration-glow":
+          "0 0 24px rgba(251, 191, 36, 0.3), 0 0 8px rgba(251, 191, 36, 0.2)",
+        // Streak glow — pulsing coral for active streaks
+        "streak-glow":
+          "0 0 16px rgba(249, 112, 102, 0.25), 0 0 4px rgba(249, 112, 102, 0.15)",
+        // Enhanced focus ring
+        "focus-ring":
+          "0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, rgba(16, 185, 129, 0.4))",
       },
 
       // ═══════════════════════════════════════════════════════════════════
