@@ -154,8 +154,11 @@ describe("webhookHandler", () => {
       expect.any(Number),
     );
 
-    // 4 DB calls: lookup + tx upsert + balance update + event update
-    expect(dbQuery).toHaveBeenCalledTimes(4);
+    // 5 DB calls: lookup + tx upsert + balance update + event update + enrichment outbox
+    expect(dbQuery).toHaveBeenCalledTimes(5);
+    expect(dbQuery.mock.calls[4][0]).toMatch(
+      /INSERT INTO mono_ai_enrichment_queue/,
+    );
   });
 
   it("fires push (fire-and-forget) on first INSERT with formatted amount + balance", async () => {
@@ -411,9 +414,9 @@ describe("webhookHandler", () => {
     expect(counter.inc).toHaveBeenCalledWith({ status: "account_autocreated" });
     expect(counter.inc).toHaveBeenCalledWith({ status: "ok" });
 
-    // 6 DB calls: lookup + failed tx upsert + account stub + retry tx upsert
-    //           + balance update + event update
-    expect(dbQuery).toHaveBeenCalledTimes(6);
+    // 7 DB calls: lookup + failed tx upsert + account stub + retry tx upsert
+    //           + balance update + event update + enrichment outbox
+    expect(dbQuery).toHaveBeenCalledTimes(7);
 
     // Verify the stub uses StatementItem currency + balance fields.
     const stubCall = dbQuery.mock.calls[2];

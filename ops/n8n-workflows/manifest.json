@@ -1,0 +1,187 @@
+{
+  "$schema": "./manifest.schema.json",
+  "sourceOfTruth": "git",
+  "workflows": {
+    "01-billing-pipeline.json": {
+      "owner": "ops",
+      "status": "prod-ready",
+      "riskTier": "P0",
+      "requiredEnv": [
+        "STRIPE_WEBHOOK_SECRET",
+        "SERVER_INTERNAL_URL",
+        "INTERNAL_API_KEY",
+        "TELEGRAM_ALERT_CHAT_ID"
+      ],
+      "requiredCredentials": ["Sergeant Postgres", "Sergeant Ops Bot"],
+      "notes": "Stripe subscription webhook. Public webhook requires raw body, HMAC verification, and idempotency."
+    },
+    "02-failed-payment-recovery.json": {
+      "owner": "ops",
+      "status": "prod-ready",
+      "riskTier": "P0",
+      "requiredEnv": [
+        "STRIPE_WEBHOOK_SECRET",
+        "SERVER_INTERNAL_URL",
+        "INTERNAL_API_KEY",
+        "TELEGRAM_ALERT_CHAT_ID"
+      ],
+      "requiredCredentials": [
+        "Sergeant Postgres",
+        "Sergeant Ops Bot",
+        "Resend (Bearer)"
+      ],
+      "notes": "Stripe failed-payment webhook. Public webhook requires raw body, HMAC verification, and idempotency."
+    },
+    "03-sentry-alert-routing.json": {
+      "owner": "ops",
+      "status": "prod-ready",
+      "riskTier": "P1",
+      "requiredEnv": ["SENTRY_WEBHOOK_SECRET", "TELEGRAM_ALERT_CHAT_ID"],
+      "requiredCredentials": [
+        "Sergeant Postgres",
+        "Sergeant Ops Bot",
+        "Anthropic (x-api-key)"
+      ],
+      "notes": "Sentry webhook alert routing with signature verification and idempotency."
+    },
+    "04-daily-backup-verification.json": {
+      "owner": "ops",
+      "status": "experimental",
+      "riskTier": "P1",
+      "requiredEnv": [
+        "RAILWAY_TOKEN",
+        "RAILWAY_PROJECT_ID",
+        "TELEGRAM_ALERT_CHAT_ID"
+      ],
+      "requiredCredentials": [
+        "Sergeant Postgres (staging)",
+        "Sergeant Ops Bot"
+      ],
+      "notes": "Backup restore smoke; keep inactive until staging restore credentials are configured."
+    },
+    "05-renovate-pr-auto-handler.json": {
+      "owner": "devex",
+      "status": "experimental",
+      "riskTier": "P1",
+      "requiredEnv": [
+        "GITHUB_WEBHOOK_SECRET",
+        "GITHUB_TOKEN",
+        "TELEGRAM_ALERT_CHAT_ID"
+      ],
+      "requiredCredentials": ["Sergeant Postgres", "Sergeant Ops Bot"],
+      "notes": "GitHub webhook for Renovate PR handling. Mutating actions must stay constrained to patch updates."
+    },
+    "06-mono-webhook-enrichment.json": {
+      "owner": "finyk",
+      "status": "experimental",
+      "riskTier": "P1",
+      "requiredEnv": ["SERVER_INTERNAL_URL", "INTERNAL_API_KEY"],
+      "requiredCredentials": ["Sergeant Postgres"],
+      "notes": "Cron worker over server-owned mono_ai_enrichment_queue. Must not expose a public Mono webhook."
+    },
+    "07-morning-briefing-push.json": {
+      "owner": "product",
+      "status": "experimental",
+      "riskTier": "P2",
+      "requiredEnv": ["PUBLIC_API_BASE_URL", "API_SECRET"],
+      "requiredCredentials": ["Sergeant Postgres"],
+      "notes": "User push workflow; requires product approval before activation."
+    },
+    "08-weekly-financial-digest.json": {
+      "owner": "finyk",
+      "status": "experimental",
+      "riskTier": "P2",
+      "requiredEnv": ["TELEGRAM_ALERT_CHAT_ID"],
+      "requiredCredentials": [
+        "Sergeant Postgres",
+        "Sergeant Ops Bot",
+        "Anthropic (x-api-key)"
+      ],
+      "notes": "Weekly AI digest; token usage must be monitored before production activation."
+    },
+    "09-habit-streak-alert.json": {
+      "owner": "product",
+      "status": "experimental",
+      "riskTier": "P2",
+      "requiredEnv": ["PUBLIC_API_BASE_URL", "API_SECRET"],
+      "requiredCredentials": ["Sergeant Postgres"],
+      "notes": "User engagement push workflow; keep inactive until notification policy is approved."
+    },
+    "10-debt-receivable-reminder.json": {
+      "owner": "finyk",
+      "status": "experimental",
+      "riskTier": "P2",
+      "requiredEnv": [
+        "PUBLIC_API_BASE_URL",
+        "API_SECRET",
+        "TELEGRAM_ALERT_CHAT_ID"
+      ],
+      "requiredCredentials": ["Sergeant Postgres", "Sergeant Ops Bot"],
+      "notes": "Debt reminders; keep inactive until debt schema and push copy are verified."
+    },
+    "15-railway-deployment-notify.json": {
+      "owner": "ops",
+      "status": "experimental",
+      "riskTier": "P2",
+      "requiredEnv": ["TELEGRAM_ALERT_CHAT_ID"],
+      "requiredCredentials": ["Sergeant Ops Bot"],
+      "notes": "Railway webhook notifications. Add signature/shared-secret if Railway supports it."
+    },
+    "16-posthog-daily-metrics.json": {
+      "owner": "growth",
+      "status": "experimental",
+      "riskTier": "P2",
+      "requiredEnv": [
+        "POSTHOG_PROJECT_ID",
+        "POSTHOG_PERSONAL_API_KEY",
+        "TELEGRAM_ALERT_CHAT_ID"
+      ],
+      "requiredCredentials": ["Sergeant Ops Bot"],
+      "notes": "Daily metrics report."
+    },
+    "17-github-pr-stale-alert.json": {
+      "owner": "devex",
+      "status": "experimental",
+      "riskTier": "P2",
+      "requiredEnv": ["GITHUB_PAT", "TELEGRAM_ALERT_CHAT_ID"],
+      "requiredCredentials": ["Sergeant Ops Bot"],
+      "notes": "PR hygiene reminder."
+    },
+    "18-nightly-security-audit.json": {
+      "owner": "security",
+      "status": "experimental",
+      "riskTier": "P1",
+      "requiredEnv": ["GITHUB_PAT", "TELEGRAM_ALERT_CHAT_ID"],
+      "requiredCredentials": ["Sergeant Ops Bot"],
+      "notes": "Nightly security audit status report."
+    },
+    "19-db-health-report.json": {
+      "owner": "ops",
+      "status": "experimental",
+      "riskTier": "P1",
+      "requiredEnv": ["TELEGRAM_ALERT_CHAT_ID"],
+      "requiredCredentials": ["Sergeant Postgres", "Sergeant Ops Bot"],
+      "notes": "DB health report. pg_stat_statements may be absent and is tolerated."
+    },
+    "98-error-handler.json": {
+      "owner": "ops",
+      "status": "prod-ready",
+      "riskTier": "P0",
+      "requiredEnv": ["TELEGRAM_ALERT_CHAT_ID", "OPS_ALERT_EMAIL"],
+      "requiredCredentials": [
+        "Sergeant Postgres",
+        "Sergeant Ops Bot",
+        "Resend (Bearer)"
+      ],
+      "notes": "Global n8n error workflow. Configure as the Error Workflow in n8n settings."
+    },
+    "99-heartbeat.json": {
+      "owner": "ops",
+      "status": "prod-ready",
+      "riskTier": "P0",
+      "requiredEnv": ["TELEGRAM_ALERT_CHAT_ID", "OPS_ALERT_EMAIL"],
+      "requiredCredentials": ["Sergeant Ops Bot", "Resend (Bearer)"],
+      "notes": "n8n liveness heartbeat with email fallback."
+    }
+  }
+}

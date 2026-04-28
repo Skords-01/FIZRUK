@@ -36,12 +36,15 @@ services:
       # Expose Prometheus metrics at /metrics
       - N8N_METRICS=true
       - N8N_METRICS_INCLUDE_DEFAULT_METRICS=true
+      - N8N_METRICS_INCLUDE_QUEUE_METRICS=true
       # Telegram (used by workflows)
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_ALERT_CHAT_ID=${TELEGRAM_ALERT_CHAT_ID:-}
       # Internal API — n8n workflows use this to call apps/server
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env.ops}
       - SERVER_INTERNAL_URL=${SERVER_INTERNAL_URL:-http://host.docker.internal:3000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - n8n-data:/home/node/.n8n
     depends_on:
@@ -75,14 +78,22 @@ services:
     restart: unless-stopped
     ports:
       - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.template.yml:/etc/prometheus/prometheus.template.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
       - prometheus-data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=30d"
-      - "--web.enable-lifecycle"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        sed "s#__METRICS_TOKEN__#${METRICS_TOKEN:?Set METRICS_TOKEN in .env.ops}#g" /etc/prometheus/prometheus.template.yml > /tmp/prometheus.yml
+        exec /bin/prometheus \
+          --config.file=/tmp/prometheus.yml \
+          --storage.tsdb.path=/prometheus \
+          --storage.tsdb.retention.time=30d \
+          --web.enable-lifecycle
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/healthy || exit 1"]
       interval: 30s

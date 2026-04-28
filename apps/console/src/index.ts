@@ -2,6 +2,13 @@ import "dotenv/config";
 import { Bot } from "grammy";
 import Anthropic from "@anthropic-ai/sdk";
 import { parseCommand, dispatchToAgent } from "./agents/router.js";
+import {
+  escapeTelegramMarkdownV2,
+  FixedWindowRateLimiter,
+  isUserAllowed,
+  parseRateLimitPerMinute,
+  splitTelegramMessage,
+} from "./security.js";
 
 const HELP_TEXT = [
   "*Sergeant Console* — твій AI-помічник по продукту",
@@ -17,15 +24,6 @@ const HELP_TEXT = [
   "_Версія: Phase 1 (Claude API + Telegram bot)_",
 ].join("\n");
 
-function checkAuth(userId: number): boolean {
-  const allowed = process.env.ALLOWED_USER_IDS;
-  if (!allowed || allowed.trim() === "") return true;
-  return allowed
-    .split(",")
-    .map((s) => s.trim())
-    .includes(String(userId));
-}
-
 async function main() {
   const botToken = process.env.CONSOLE_BOT_TOKEN;
   if (!botToken) {
@@ -40,9 +38,14 @@ async function main() {
 
   const bot = new Bot(botToken);
   const anthropic = new Anthropic({ apiKey: anthropicKey });
+  const limiter = new FixedWindowRateLimiter(
+    parseRateLimitPerMinute(process.env.CONSOLE_RATE_LIMIT_PER_MIN),
+  );
+  const checkAuth = (userId: number | undefined) =>
+    isUserAllowed(userId, process.env);
 
   bot.command("start", async (ctx) => {
-    if (!checkAuth(ctx.from?.id ?? 0)) {
+    if (!checkAuth(ctx.from?.id)) {
       await ctx.reply("Access denied.");
       return;
     }
@@ -50,13 +53,18 @@ async function main() {
   });
 
   bot.command("help", async (ctx) => {
-    if (!checkAuth(ctx.from?.id ?? 0)) return;
+    if (!checkAuth(ctx.from?.id)) return;
     await ctx.reply(HELP_TEXT, { parse_mode: "Markdown" });
   });
 
   bot.on("message:text", async (ctx) => {
-    if (!checkAuth(ctx.from?.id ?? 0)) {
+    if (!checkAuth(ctx.from?.id)) {
       await ctx.reply("Access denied.");
+      return;
+    }
+    const rateLimitKey = String(ctx.from?.id ?? ctx.chat.id);
+    if (!limiter.allow(rateLimitKey)) {
+      await ctx.reply("Rate limit exceeded. Try again in a minute.");
       return;
     }
 
@@ -68,15 +76,9 @@ async function main() {
 
     try {
       const reply = await dispatchToAgent(anthropic, agent, query);
-
-      // Telegram has a 4096-char limit per message
-      if (reply.length <= 4000) {
-        await ctx.reply(reply, { parse_mode: "Markdown" });
-      } else {
-        // Split into chunks
-        for (let i = 0; i < reply.length; i += 4000) {
-          await ctx.reply(reply.slice(i, i + 4000), { parse_mode: "Markdown" });
-        }
+      const safeReply = escapeTelegramMarkdownV2(reply);
+      for (const chunk of splitTelegramMessage(safeReply)) {
+        await ctx.reply(chunk, { parse_mode: "MarkdownV2" });
       }
     } catch (err) {
       console.error("Agent error:", err);

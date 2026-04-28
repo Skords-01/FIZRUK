@@ -1,0 +1,20 @@
+groups:
+  - name: n8n
+    rules:
+      - alert: N8nDown
+        expr: up{job="n8n"} == 0
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "n8n metrics target is down"
+          description: "Prometheus cannot scrape n8n /metrics for 5 minutes."
+
+      - alert: N8nWorkflowFailures
+        expr: increase(n8n_scaling_mode_queue_jobs_failed[15m]) > 0
+        for: 0m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "n8n workflow failure observed"
+          description: "At least one n8n workflow failed in the last 15 minutes. Check workflow 98 dead-letter log."

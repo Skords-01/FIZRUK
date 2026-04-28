@@ -93,7 +93,7 @@ export function createCategorizeInternalRouter(): Router {
       );
 
       if (!response?.ok) {
-        res.status(502).json({ error: "AI service error…" });
+        res.status(502).json({ error: "AI service error" });
         return;
       }
 
