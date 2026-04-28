@@ -13,6 +13,7 @@ import type { LucideIcon } from "lucide-react-native";
 import { useUser } from "@sergeant/api-client/react";
 import { shouldShowOnboarding } from "@sergeant/shared";
 import { OnboardingWizard, getOnboardingStore } from "@/core/OnboardingWizard";
+import { useTabBadges } from "@/hooks/useTabBadges";
 import { colors } from "@/theme";
 
 type TabIconProps = {
@@ -45,6 +46,7 @@ const E2E_AUTH_BYPASS = process.env.EXPO_PUBLIC_E2E === "1";
 
 export default function TabsLayout() {
   const { data, isLoading } = useUser();
+  const badges = useTabBadges();
   // Gate the tab bar behind the shared onboarding check. The MMKV-backed
   // store is owned by `OnboardingWizard` so the "done" flag flips
   // synchronously on `finish()` and the wizard unmounts on the next
@@ -112,6 +114,7 @@ export default function TabsLayout() {
             title: "Рутина",
             tabBarIcon: createTabIcon(CheckSquare),
             tabBarButtonTestID: "tab-routine",
+            tabBarBadge: badges.routine,
           }}
         />
         <Tabs.Screen
