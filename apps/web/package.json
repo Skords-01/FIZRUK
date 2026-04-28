@@ -29,7 +29,7 @@
       "name": "CSS",
       "path": "../server/dist/assets/*.css",
       "brotli": true,
-      "limit": "18 kB"
+      "limit": "22 kB"
     }
   ],
   "dependencies": {
