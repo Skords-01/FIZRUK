@@ -16,7 +16,7 @@
 -- етапі це всі рядки, але умова страхує повторне виконання після
 -- `down`/`up` циклу в dev).
 --
--- Ідемпотентно (`IF NOT EXISTS`). Rollback — `009_mono_mcc_categorization.down.sql`.
+-- Ідемпотентно (`IF NOT EXISTS`). Rollback — `010_mono_mcc_categorization.down.sql`.
 
 ALTER TABLE mono_transaction
   ADD COLUMN IF NOT EXISTS category_slug TEXT,
