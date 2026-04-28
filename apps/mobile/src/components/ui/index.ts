@@ -123,3 +123,59 @@ export {
   type TooltipProps,
   type TooltipTriggerProps,
 } from "./Tooltip";
+
+// Phase 3 UX Components
+export {
+  StreakFlame,
+  StreakBadge,
+  type StreakFlameProps,
+  type StreakFlameSize,
+} from "./StreakFlame";
+
+export {
+  AnimatedCheckbox,
+  HabitCheckbox,
+  type AnimatedCheckboxProps,
+  type CheckboxVariant,
+  type CheckboxSize,
+} from "./AnimatedCheckbox";
+
+export {
+  CustomRefreshControl,
+  AnimatedRefreshIndicator,
+  PullToRefreshHeader,
+  useRefreshControl,
+  usePullToRefresh,
+  type PullToRefreshProps,
+  type RefreshVariant,
+} from "./PullToRefresh";
+
+export {
+  SwipeableRow,
+  TransactionSwipeableRow,
+  HabitSwipeableRow,
+  commonActions,
+  type SwipeableRowProps,
+  type SwipeAction,
+} from "./SwipeableRow";
+
+export {
+  CoachTip,
+  CoachTipSpotlight,
+  SmartCoachTip,
+  useCoachTips,
+  type CoachTipProps,
+  type CoachTipSpotlightProps,
+  type CoachTipVariant,
+  type CoachTipPosition,
+} from "./CoachTip";
+
+export {
+  FloatingActionButton,
+  HubFAB,
+  moduleActions,
+  type FloatingActionButtonProps,
+  type FABAction,
+  type FABVariant,
+  type FABSize,
+} from "./FloatingActionButton";
