@@ -85,8 +85,11 @@ export const BentoCard = memo(function BentoCard({
           "group relative flex flex-col w-full rounded-3xl border border-line",
           "p-3.5 [@media(pointer:coarse)]:p-4",
           "min-h-[120px] [@media(pointer:coarse)]:min-h-[132px]",
-          "shadow-card transition-all duration-200 text-left",
+          "shadow-card transition-interactive text-left",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2",
+          // Hover effect for desktop - lift and glow
+          "[@media(pointer:fine)]:hover:shadow-float [@media(pointer:fine)]:hover:-translate-y-0.5",
+          "[@media(pointer:fine)]:hover:border-brand-200/50 dark:[@media(pointer:fine)]:hover:border-line/80",
           "active:scale-[0.98] [@media(pointer:coarse)]:active:scale-[0.97]",
           inactive ? "bg-panel grayscale" : config.cardBg,
           isDragging && "shadow-float cursor-grabbing",
