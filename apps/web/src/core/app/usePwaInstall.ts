@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { safeReadStringLS, safeWriteLS } from "@shared/lib/storage";
 
 const PWA_SESSIONS_KEY = "pwa_session_count";
 const PWA_DISMISSED_KEY = "pwa_install_dismissed";
@@ -11,13 +12,8 @@ export function usePwaInstall() {
   const deferredRef = useRef(null);
 
   useEffect(() => {
-    try {
-      const count =
-        parseInt(localStorage.getItem(PWA_SESSIONS_KEY) || "0", 10) + 1;
-      localStorage.setItem(PWA_SESSIONS_KEY, String(count));
-    } catch {
-      /* noop */
-    }
+    const count = parseInt(safeReadStringLS(PWA_SESSIONS_KEY) || "0", 10) + 1;
+    safeWriteLS(PWA_SESSIONS_KEY, String(count));
 
     const handler = (e) => {
       e.preventDefault();
@@ -30,18 +26,9 @@ export function usePwaInstall() {
 
   useEffect(() => {
     if (!prompt) return;
-    try {
-      if (localStorage.getItem(PWA_DISMISSED_KEY) === "1") return;
-    } catch {
-      /* noop */
-    }
+    if (safeReadStringLS(PWA_DISMISSED_KEY) === "1") return;
 
-    let sessions = 1;
-    try {
-      sessions = parseInt(localStorage.getItem(PWA_SESSIONS_KEY) || "1", 10);
-    } catch {
-      /* noop */
-    }
+    const sessions = parseInt(safeReadStringLS(PWA_SESSIONS_KEY) || "1", 10);
 
     if (sessions >= MIN_SESSIONS) {
       const timer = setTimeout(() => setReady(true), INSTALL_DELAY_MS);
@@ -62,11 +49,7 @@ export function usePwaInstall() {
   }, []);
 
   const dismiss = useCallback(() => {
-    try {
-      localStorage.setItem(PWA_DISMISSED_KEY, "1");
-    } catch {
-      /* noop */
-    }
+    safeWriteLS(PWA_DISMISSED_KEY, "1");
     setReady(false);
     setPrompt(null);
   }, []);

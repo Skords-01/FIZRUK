@@ -117,12 +117,11 @@
 ### `modules/nutrition/barcode.ts`
 
 - **OK** — timeouts на OFF/USDA/UPCitemdb.
-- **Високий (опц.)** — TTL in-memory кеш по штрихкоду. _Status (2026-04-26):_
-  заплановано в найближчому backend hardening PR (як частина hit/miss
-  TTL + bounded size).
-- **Середній** — немає **`barcode.test.ts`**. _Status (2026-04-26):_
-  заплановано в тому ж баркодному PR-і — покриває cascade (OFF → USDA →
-  UPCitemdb), cache hit/miss, invalid input, upstream failure.
+- **OK** — TTL in-memory кеш по штрихкоду з hit/miss sentinel.
+- **OK (2026-04-28)** — **`barcode.test.ts`** покриває cascade
+  (OFF → USDA → UPCitemdb), cache hit/miss, invalid input, upstream failure;
+  додано regression, що transient 429/5xx upstream відповіді не кешуються як
+  miss sentinel.
 
 ### `modules/nutrition/food-search.ts` + `food-search.test.ts`
 
@@ -136,7 +135,9 @@
 ### `modules/nutrition/*`
 
 - **OK** — ключові handler-и з **`validateBody`** (`analyze-photo`, `refine-photo`, `day-hint`, `day-plan`, `week-plan`, `shopping-list`, `recommend-recipes`, `parse-pantry`, `backup-upload`); **`backup-download`** — вузький файловий `try/catch` (ENOENT) + rethrow, без широкого `e.message` клієнту.
-- **Середній** — дубль pantry→prompt string між кількома файлами; консолідація в **`lib/pantryFormat.ts`** (або подібне) — §G.
+- **OK (2026-04-28)** — дубль pantry→prompt string між `day-plan`,
+  `week-plan`, `shopping-list`, `recommend-recipes` консолідовано в
+  **`lib/pantryFormat.ts`** + unit-тести.
 - **Низький** — переконатися, що в `parse-pantry.ts` немає shadowing імені `parsed` (перевірка ESLint).
 
 ---
@@ -188,9 +189,11 @@
 ### G. Дублювання логіки (cross-cutting)
 
 - `elapsedMs(start)` → винести в спільний util (зараз повторюється в 4+ файлах `apps/server/src`).
-- `pantry items → prompt string` → `apps/server/src/lib/pantryFormat.ts` (новий файл — P2).
+- ~~`pantry items → prompt string`~~ → **DONE 2026-04-28**:
+  `apps/server/src/lib/pantryFormat.ts` + `pantryFormat.test.ts`.
 - OFF/USDA normalizers → уніфікувати між `modules/nutrition/barcode.ts` і `modules/nutrition/food-search.ts` (shared `apps/server/src/lib/foodNormalize.ts`).
-- `FNV-1a safeKeyFromToken` → `apps/server/src/lib/backupKey.ts` (зараз дубль у `nutrition/backup-upload.ts` + `nutrition/backup-download.ts`).
+- ~~`FNV-1a safeKeyFromToken`~~ → **DONE 2026-04-28**:
+  `apps/server/src/lib/backupKey.ts` + `backupKey.test.ts`.
 
 ---
 

@@ -231,7 +231,6 @@ export default [
       // Files that haven't been migrated yet — TODO: convert each to
       // `safeReadLS` / `useLocalStorageState` / `createModuleStorage`
       // and remove the entry below.
-      "apps/web/src/core/App.tsx",
       "apps/web/src/core/insights/AssistantAdviceCard.tsx",
       "apps/web/src/core/hub/HubChat.tsx",
       "apps/web/src/core/hub/HubReports.tsx",
@@ -239,9 +238,6 @@ export default [
       "apps/web/src/core/onboarding/OnboardingWizard.tsx",
       "apps/web/src/core/insights/TodayFocusCard.tsx",
       "apps/web/src/core/observability/analytics.ts",
-      "apps/web/src/core/app/pwaAction.ts",
-      "apps/web/src/core/app/useIosInstallBanner.ts",
-      "apps/web/src/core/app/usePwaInstall.ts",
       "apps/web/src/core/hints/HintsOrchestrator.tsx",
       "apps/web/src/core/hooks/usePwaActions.ts",
       "apps/web/src/core/hub/useFinykHubPreview.ts",
