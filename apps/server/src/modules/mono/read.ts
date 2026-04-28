@@ -133,6 +133,8 @@ export async function transactionsHandler(
       t.counter_edrpou    AS "counterEdrpou",
       t.counter_iban      AS "counterIban",
       t.counter_name      AS "counterName",
+      t.category_slug     AS "categorySlug",
+      t.category_overridden AS "categoryOverridden",
       t.source,
       t.received_at       AS "receivedAt"
     FROM mono_transaction t
@@ -163,6 +165,8 @@ export async function transactionsHandler(
     counterEdrpou: string | null;
     counterIban: string | null;
     counterName: string | null;
+    categorySlug: string | null;
+    categoryOverridden: boolean;
     source: string;
     receivedAt: Date | string;
   }

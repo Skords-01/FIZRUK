@@ -131,6 +131,8 @@ describe("useMonobankWebhook", () => {
           counterEdrpou: null,
           counterIban: null,
           counterName: null,
+          categorySlug: null,
+          categoryOverridden: false,
           source: "webhook",
           receivedAt: "2024-01-15T09:00:01Z",
         },
