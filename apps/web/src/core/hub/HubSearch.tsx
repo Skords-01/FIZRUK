@@ -127,24 +127,39 @@ function pushScored(
   return acc.length >= limit;
 }
 
+interface FinykTx {
+  id?: string;
+  time?: number;
+  amount?: number;
+  description?: string;
+  comment?: string;
+}
+
+interface FinykSub {
+  id?: string;
+  name?: string;
+  amount?: number;
+}
+
 function searchFinyk(tokens: string[]): Hit[] {
   const results: Hit[] = [];
 
-  const txList = safeParseLS("finyk_tx_cache", []);
+  const txList = safeParseLS<FinykTx[]>("finyk_tx_cache", []);
   if (Array.isArray(txList)) {
     for (const tx of txList) {
       if (!tx || typeof tx !== "object") continue;
       const amtRaw = Number(tx.amount);
       const amount = (Number.isFinite(amtRaw) ? amtRaw : 0) / 100;
       const sign = amount < 0 ? "−" : "+";
+      const time = tx.time ?? 0;
       const stop = pushScored(
         results,
         {
-          id: `finyk_tx_${tx.id || tx.time}`,
+          id: `finyk_tx_${tx.id || time}`,
           module: "finyk",
           moduleLabel: "Фінік",
           title: tx.description || tx.comment || "Транзакція",
-          subtitle: `${sign}${Math.abs(amount).toLocaleString("uk-UA", { maximumFractionDigits: 2 })} ₴ · ${tx.time > 1e10 ? localDateKey(new Date(tx.time)) : localDateKey(new Date(tx.time * 1000))}`,
+          subtitle: `${sign}${Math.abs(amount).toLocaleString("uk-UA", { maximumFractionDigits: 2 })} ₴ · ${time > 1e10 ? localDateKey(new Date(time)) : localDateKey(new Date(time * 1000))}`,
           icon: "💳",
         },
         tokens,
@@ -154,7 +169,7 @@ function searchFinyk(tokens: string[]): Hit[] {
     }
   }
 
-  const subs = safeParseLS("finyk_subs", []);
+  const subs = safeParseLS<FinykSub[]>("finyk_subs", []);
   if (Array.isArray(subs)) {
     for (const s of subs) {
       if (!s || typeof s !== "object") continue;
@@ -246,9 +261,21 @@ function searchFizruk(tokens: string[]): Hit[] {
   return results.sort((a, b) => b._score - a._score).slice(0, 10);
 }
 
+interface RoutineHabit {
+  id?: string;
+  name?: string;
+  emoji?: string;
+  archived?: boolean;
+  recurrence?: string;
+}
+
+interface RoutineState {
+  habits?: RoutineHabit[];
+}
+
 function searchRoutine(tokens: string[]): Hit[] {
   const results: Hit[] = [];
-  const state = safeParseLS("hub_routine_v1", null);
+  const state = safeParseLS<RoutineState | null>("hub_routine_v1", null);
   if (!state) return results;
 
   const habits = Array.isArray(state.habits) ? state.habits : [];
@@ -273,14 +300,30 @@ function searchRoutine(tokens: string[]): Hit[] {
   return results.sort((a, b) => b._score - a._score).slice(0, 10);
 }
 
+interface NutritionMeal {
+  id?: string;
+  name?: string;
+  items?: Array<{ name?: string; emoji?: string }>;
+  note?: string;
+  type?: string;
+  macros?: { kcal?: number; protein?: number; fat?: number; carbs?: number };
+}
+
+interface NutritionDayLog {
+  meals?: NutritionMeal[];
+}
+
+type NutritionLog = Record<string, NutritionDayLog>;
+
 function searchNutrition(tokens: string[]): Hit[] {
   const results: Hit[] = [];
   const seen = new Set<string>();
-  const log = safeParseLS("nutrition_log_v1", {});
+  const log = safeParseLS<NutritionLog>("nutrition_log_v1", {});
   const dates = Object.keys(log).sort().reverse();
 
   for (const date of dates) {
-    const meals = Array.isArray(log[date]?.meals) ? log[date].meals : [];
+    const dayLog = log[date] as NutritionDayLog | undefined;
+    const meals = Array.isArray(dayLog?.meals) ? dayLog.meals : [];
     for (const m of meals) {
       if (!m || typeof m !== "object") continue;
       const key = m.name || `${date}_${m.id}`;

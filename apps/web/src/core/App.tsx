@@ -73,8 +73,8 @@ const PricingPage = lazy(() =>
 );
 interface ModuleAppProps {
   onBackToHub: () => void;
-  pwaAction?: PwaAction;
-  onPwaActionConsumed?: () => void;
+  pwaAction: PwaAction | null;
+  onPwaActionConsumed: () => void;
   onOpenModule?: (module: string) => void;
 }
 
@@ -206,7 +206,7 @@ function AppInner() {
   }, []);
 
   useEffect(() => {
-    const onMessage = (event) => {
+    const onMessage = (event: MessageEvent) => {
       if (event.data?.type === "OPEN_MODULE") {
         openModule(event.data.module);
       }
@@ -254,8 +254,16 @@ function AppInner() {
   }, [ui]);
 
   useEffect(() => {
-    const onHubOpen = (ev) => {
-      const { module, hash, action } = ev.detail || {};
+    const onHubOpen = (ev: Event) => {
+      const detail =
+        (
+          ev as CustomEvent<{
+            module?: string;
+            hash?: string;
+            action?: PwaAction;
+          }>
+        ).detail || {};
+      const { module, hash, action } = detail;
       if (action && validActions.has(action)) {
         try {
           localStorage.setItem(PWA_ACTION_KEY, action);

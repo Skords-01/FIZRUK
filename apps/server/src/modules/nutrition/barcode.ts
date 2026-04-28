@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { recordExternalHttp } from "../../lib/externalHttp.js";
+import { elapsedMs } from "../../lib/timing.js";
 import { BarcodeQuerySchema } from "../../http/schemas.js";
 import { validateQuery } from "../../http/validate.js";
 import { barcodeLookupsTotal } from "../../obs/metrics.js";
@@ -155,10 +156,6 @@ function recordLookup(source: string, outcome: string, ms: number): void {
     /* ignore */
   }
   recordExternalHttp(source, outcome, ms);
-}
-
-function elapsedMs(start: bigint): number {
-  return Number(process.hrtime.bigint() - start) / 1e6;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

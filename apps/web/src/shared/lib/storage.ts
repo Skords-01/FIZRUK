@@ -69,3 +69,19 @@ export function safeRemoveLS(key: string): boolean {
     return false;
   }
 }
+
+/**
+ * KVStore adapter for @sergeant/shared functions.
+ * Allows shared pure functions to work with web localStorage.
+ */
+import type { KVStore } from "@sergeant/shared";
+
+export const webKVStore: KVStore = {
+  getString: safeReadStringLS,
+  setString: (k, v) => {
+    safeWriteLS(k, v);
+  },
+  remove: (k) => {
+    safeRemoveLS(k);
+  },
+};

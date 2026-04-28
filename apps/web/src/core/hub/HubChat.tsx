@@ -50,12 +50,19 @@ import { ChatMessage, TypingIndicator } from "../components/ChatMessage";
 import { ChatInput } from "../components/ChatInput";
 import { ChatQuickActions } from "../components/ChatQuickActions";
 
+interface HubChatProps {
+  onClose: () => void;
+  initialMessage?: string;
+  autoSendInitial?: boolean;
+  onOpenCatalogue?: () => void;
+}
+
 function HubChat({
   onClose,
   initialMessage,
   autoSendInitial,
   onOpenCatalogue,
-}) {
+}: HubChatProps) {
   const toast = useToast();
 
   // Multi-session state. `sessions` is the full list shown in the
@@ -183,7 +190,7 @@ function HubChat({
   // Context cache
   const contextRef = useRef({ text: "", ts: 0 });
   const [contextState, setContextState] = useState({ status: "idle", ts: 0 });
-  const idleJobRef = useRef(null);
+  const idleJobRef = useRef<ReturnType<typeof requestIdle> | null>(null);
 
   const scheduleContextBuild = useCallback((reason = "auto", force = false) => {
     const now = Date.now();
@@ -263,12 +270,14 @@ function HubChat({
     return () => clearInterval(id);
   }, [speaking]);
 
-  const sendRef = useRef(null);
+  const sendRef = useRef<
+    ((text?: string, fromVoice?: boolean) => Promise<void>) | null
+  >(null);
   // Callback ref на `.focus()` ChatInput — використовується після
   // prefill з ChatQuickActions, щоб фокус приходив на input одразу.
   const focusInputRef = useRef<(() => void) | null>(null);
 
-  const maybeSpeak = useCallback((text) => {
+  const maybeSpeak = useCallback((text: string) => {
     speak(text);
     setSpeaking(true);
   }, []);
@@ -362,8 +371,17 @@ function HubChat({
       }
 
       if (data.tool_calls && data.tool_calls.length > 0) {
-        const handlerResults = await executeActions(data.tool_calls);
-        const toolResults = data.tool_calls.map((tc, idx) => ({
+        // Cast tool_calls to ChatAction[] - the API guarantees name+id+input shape
+        type ToolCall = {
+          id: string;
+          name: string;
+          input: Record<string, unknown>;
+        };
+        const toolCalls = data.tool_calls as ToolCall[];
+        const handlerResults = await executeActions(
+          toolCalls as Parameters<typeof executeActions>[0],
+        );
+        const toolResults = toolCalls.map((tc, idx) => ({
           tool_use_id: tc.id,
           content: handlerResults[idx]?.result ?? "",
         }));
@@ -375,11 +393,11 @@ function HubChat({
 
         // Будуємо action-картки для відомих tool-ів.
         // Якщо tool невідомий — повертається null, лишається лише текст.
-        const cards: ChatActionCard[] = data.tool_calls
+        const cards: ChatActionCard[] = toolCalls
           .map((tc, idx) =>
             buildActionCard({
-              name: tc.name,
-              input: tc.input,
+              name: tc.name as string,
+              input: tc.input as Record<string, unknown>,
               result: toolResults[idx]?.content || "",
             }),
           )

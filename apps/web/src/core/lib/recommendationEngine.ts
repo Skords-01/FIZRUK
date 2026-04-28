@@ -7,7 +7,7 @@ import { buildFinanceContext } from "./recommendations/financeContext";
 import { Recommendations } from "@sergeant/insights";
 
 const { FINANCE_RULES, runRules } = Recommendations;
-type Rec = Recommendations.Rec;
+export type Rec = Recommendations.Rec;
 
 interface Transaction {
   id: string;

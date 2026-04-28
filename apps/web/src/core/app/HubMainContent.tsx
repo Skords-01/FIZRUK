@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { type User } from "@sergeant/shared";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
@@ -6,13 +7,20 @@ import { ErrorBoundary } from "../ErrorBoundary";
 import { HubDashboard } from "../hub/HubDashboard";
 import { HubReports } from "../hub/HubReports";
 import { HubSettingsPage } from "../hub/HubSettingsPage";
+import type { OpenModuleOptions } from "../hooks/useHubNavigation";
 import { IOSInstallBanner } from "./IOSInstallBanner";
+
+export type HubView = "dashboard" | "reports" | "settings";
+
+interface HubSectionFallbackProps {
+  resetError: () => void;
+}
 
 // Дешевий inline-fallback для секцій хаба: повідомляємо про збій і
 // даємо кнопку `reset`, щоб спробувати перемонтувати секцію без
 // перезавантаження вкладки. Шапка/таби лишаються робочими, бо
 // ErrorBoundary стоїть навколо окремого view, а не навколо `<main>`.
-function HubSectionFallback({ resetError }) {
+function HubSectionFallback({ resetError }: HubSectionFallbackProps) {
   return (
     <div className="px-1 py-6 text-center">
       <p className="text-sm text-muted mb-3">Щось пішло не так у цій секції.</p>
@@ -25,6 +33,28 @@ function HubSectionFallback({ resetError }) {
       </button>
     </div>
   );
+}
+
+export interface HubMainContentProps {
+  updateAvailable: boolean;
+  onApplyUpdate: () => void;
+  canInstall: boolean;
+  onInstall: () => Promise<void>;
+  onDismissInstall: () => void;
+  onOpenModule: (
+    id: string | null | undefined,
+    opts?: OpenModuleOptions,
+  ) => void;
+  iosVisible: boolean;
+  onDismissIos: () => void;
+  hubView: HubView;
+  onOpenChat: () => void;
+  syncing: boolean;
+  onSync: () => void;
+  onPull: () => void;
+  user: User | null;
+  onShowAuth: () => void;
+  inFtuxSession?: boolean;
 }
 
 export const HubMainContent = memo(function HubMainContent({
@@ -44,7 +74,7 @@ export const HubMainContent = memo(function HubMainContent({
   user,
   onShowAuth,
   inFtuxSession = false,
-}) {
+}: HubMainContentProps) {
   // Banner budget: at most one chrome banner above the hub content.
   // Priority: update > install (PWA) > iOS install.
   //

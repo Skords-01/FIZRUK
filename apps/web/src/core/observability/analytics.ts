@@ -18,6 +18,7 @@
 
 import { ANALYTICS_EVENTS } from "@sergeant/shared";
 import { capturePostHogEvent } from "./posthog";
+import { safeReadLS, safeWriteLS } from "@shared/lib/storage";
 
 export { ANALYTICS_EVENTS };
 export { initPostHog, identifyPostHogUser, resetPostHog } from "./posthog";
@@ -26,22 +27,12 @@ const LOG_KEY = "hub_analytics_log_v1";
 const MAX_LOG = 200;
 
 function safeReadLog(): unknown[] {
-  try {
-    const raw = localStorage.getItem(LOG_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  const parsed = safeReadLS<unknown[]>(LOG_KEY);
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 function safeWriteLog(events: unknown[]): void {
-  try {
-    localStorage.setItem(LOG_KEY, JSON.stringify(events.slice(-MAX_LOG)));
-  } catch {
-    /* quota — ignore */
-  }
+  safeWriteLS(LOG_KEY, events.slice(-MAX_LOG));
 }
 
 /**

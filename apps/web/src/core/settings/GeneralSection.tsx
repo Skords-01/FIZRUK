@@ -20,6 +20,7 @@ import {
   type DashboardDensity,
   type DashboardModuleId,
   type KVStore,
+  type User,
 } from "@sergeant/shared";
 import { HubBackupPanel } from "../hub/HubBackupPanel";
 import {
@@ -98,7 +99,7 @@ export interface GeneralSectionProps {
   syncing: boolean;
   onSync: () => void;
   onPull: () => void;
-  user: unknown;
+  user: User | null;
 }
 
 export function GeneralSection({

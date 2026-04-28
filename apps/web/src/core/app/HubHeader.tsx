@@ -132,21 +132,29 @@ export function HubHeader({
             </Tooltip>
           </FeatureSpotlight>
 
-          {user ? (
+          {user && onSync && onPull && onLogout && onToggleDark ? (
             <UserMenuButton
               user={user}
-              syncing={syncing}
-              lastSync={lastSync}
+              syncing={syncing ?? false}
+              lastSync={
+                lastSync instanceof Date
+                  ? lastSync
+                  : lastSync
+                    ? new Date(lastSync)
+                    : null
+              }
               onSync={onSync}
               onPull={onPull}
               onLogout={onLogout}
-              dark={dark}
+              dark={dark ?? false}
               onToggleDark={onToggleDark}
             />
           ) : (
             <>
-              <DarkModeToggle dark={dark} onToggle={onToggleDark} />
-              {!authLoading && !hideAuthButton && (
+              {dark !== undefined && onToggleDark && (
+                <DarkModeToggle dark={dark} onToggle={onToggleDark} />
+              )}
+              {!authLoading && !hideAuthButton && onShowAuth && (
                 <Tooltip content="Увійти" placement="bottom-center">
                   <button
                     type="button"

@@ -2,7 +2,17 @@ import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 
-export function MigrationPrompt({ onUpload, onSkip, syncing }) {
+interface MigrationPromptProps {
+  onUpload: () => void;
+  onSkip: () => void;
+  syncing: boolean;
+}
+
+export function MigrationPrompt({
+  onUpload,
+  onSkip,
+  syncing,
+}: MigrationPromptProps) {
   return (
     <div className="min-h-dvh bg-bg flex items-center justify-center p-6 page-enter">
       <Card
