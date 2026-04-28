@@ -13,6 +13,7 @@ import { LogCard } from "./components/LogCard";
 import { NutritionPantrySelector } from "./components/NutritionPantrySelector";
 import { NutritionOverlays } from "./components/NutritionOverlays";
 import { Banner } from "@shared/components/ui/Banner";
+import { ModuleAccentProvider } from "@shared/components/layout";
 import { Icon } from "@shared/components/ui/Icon";
 import {
   loadNutritionPrefs,
@@ -351,7 +352,7 @@ export default function NutritionApp({
     .join(" ");
 
   return (
-    <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
+    <ModuleAccentProvider module="nutrition" asShellRoot>
       <NutritionHeader busy={busy} onBackToHub={onBackToHub} />
 
       <div className="flex-1 overflow-y-auto">
@@ -603,6 +604,6 @@ export default function NutritionApp({
         applyRestorePayload={applyRestorePayload}
         onRequestMealPhoto={handleRequestMealPhoto}
       />
-    </div>
+    </ModuleAccentProvider>
   );
 }

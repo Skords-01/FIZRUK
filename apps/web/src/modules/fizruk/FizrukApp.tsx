@@ -71,6 +71,7 @@ export default function FizrukApp({
 
   return (
     <ModuleShell
+      module="fizruk"
       header={
         <FizrukHeader
           page={page}

@@ -127,7 +127,15 @@ export type {
   ProgressRingVariant,
 } from "./ProgressRing";
 
-export { Skeleton, SkeletonText } from "./Skeleton";
+export {
+  Skeleton,
+  SkeletonText,
+  SkeletonTransactionRow,
+  SkeletonBudgetBar,
+  SkeletonHabitRow,
+  SkeletonWorkoutSet,
+  SkeletonMealCard,
+} from "./Skeleton";
 export type { SkeletonProps } from "./Skeleton";
 
 export { SkeletonCard, SkeletonList } from "./SkeletonCard";

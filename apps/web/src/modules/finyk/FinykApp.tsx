@@ -6,6 +6,7 @@ import { readRaw, writeRaw } from "./lib/finykStorage";
 import { FINYK_MANUAL_ONLY_KEY, enableFinykManualOnly } from "./lib/demoData";
 import { ModuleBottomNav } from "@shared/components/ui/ModuleBottomNav";
 import {
+  ModuleAccentProvider,
   ModuleHeader,
   ModuleHeaderBackButton,
 } from "@shared/components/layout";
@@ -244,7 +245,7 @@ export default function App({
 
   // ── Main app ──────────────────────────────────────────────────────────
   return (
-    <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
+    <ModuleAccentProvider module="finyk" asShellRoot>
       <ModuleHeader
         module="finyk"
         left={
@@ -497,6 +498,6 @@ export default function App({
         onChange={navigate}
         module="finyk"
       />
-    </div>
+    </ModuleAccentProvider>
   );
 }
