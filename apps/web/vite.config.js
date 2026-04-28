@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
   // (`apps/mobile-shell`): native WebView і без того ігнорує
   // `navigator.serviceWorker.register`, тому `vite-plugin-pwa`,
   // згенерований `sw.js` і `manifest.webmanifest` — dead weight у
-  // shell-бандлі. Відключаємо плагін повністю, а `main.jsx` під
+  // shell-бандлі. Відключаємо плагін повністю, а `main.tsx` під
   // build-time прапором викидає динамічний `import("virtual:pwa-register")`
   // через DCE — щоб Rollup не намагався резолвити virtual-модуль, якого
   // тепер немає у graph-і. Веб-деплой (Vercel) продовжує білдитись як
@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
   return {
     define: {
       // Пробрасуємо значення у клієнтський бандл як статичний літерал,
-      // щоб `main.jsx` міг DCE-вирізати SW-гілку у capacitor-білді.
+      // щоб `main.tsx` міг DCE-вирізати SW-гілку у capacitor-білді.
       "import.meta.env.VITE_TARGET": JSON.stringify(
         isCapacitorBuild ? "capacitor" : "web",
       ),
@@ -162,7 +162,7 @@ export default defineConfig(({ mode }) => {
               // `@sergeant/mobile-shell/barcodeNative` (→
               // `useBarcodeScanner`), `@sergeant/mobile-shell/auth-storage`
               // (→ `apps/web/src/shared/lib/bearerToken.ts`) і
-              // `@sergeant/mobile-shell` (→ `main.jsx` під guard-ом
+              // `@sergeant/mobile-shell` (→ `main.tsx` під guard-ом
               // `isCapacitor()`). Без цього catch-all нижче загнав би
               // Capacitor-код у загальний `vendor`, який жадібно
               // підвантажується браузерами.

@@ -13,7 +13,7 @@
 // legacy demo-flagged payload from earlier builds is also left alone.
 //
 // Intended for marketing screenshots / social-media captures — the
-// module is tiny, synchronous and safe to call from `main.jsx` before
+// module is tiny, synchronous and safe to call from `main.tsx` before
 // React hydrates.
 
 const DEMO_FLAG_KEY = "hub_demo_seeded_social_v1";
@@ -869,7 +869,7 @@ export function resetDemoData(): void {
 }
 
 /**
- * Called from `main.jsx` on every cold start. If the current URL has
+ * Called from `main.tsx` on every cold start. If the current URL has
  * `?demo=1` (alias: `?demo=seed`), seed the store and reload onto `/`.
  * `?demo=reset` clears the seeded payload and reloads. All other URLs
  * return immediately.
