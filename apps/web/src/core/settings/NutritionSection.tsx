@@ -228,7 +228,7 @@ export function NutritionSection() {
           label="Щоденне нагадування"
           description="Пуш-сповіщення щодня у вказаний час, щоб нагадати внести прийоми їжі."
           checked={prefs.reminderEnabled}
-          onChange={(e) => patchPrefs({ reminderEnabled: e.target.checked })}
+          onChange={(checked) => patchPrefs({ reminderEnabled: checked })}
         />
         <label className="flex items-center gap-3 min-h-[44px]">
           <span className="text-sm text-text flex-1 min-w-0">Час</span>

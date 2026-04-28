@@ -22,12 +22,13 @@ export function ProfilePage() {
     <div
       className="min-h-dvh bg-bg"
       style={{
-        paddingTop: "max(1.25rem, env(safe-area-inset-top))",
-        paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))",
+        paddingTop: "max(0px, env(safe-area-inset-top))",
+        paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
       }}
     >
-      <div className="max-w-lg mx-auto px-5 pb-8 space-y-4">
-        <div className="flex items-center gap-3 pt-6 pb-2">
+      {/* Top nav bar */}
+      <div className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-line/60">
+        <div className="max-w-lg mx-auto px-5 h-14 flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
@@ -37,9 +38,11 @@ export function ProfilePage() {
           >
             <Icon name="chevron-left" size={20} />
           </Button>
-          <h1 className="text-xl font-bold text-text">Профіль</h1>
+          <span className="text-sm font-semibold text-text">Профіль</span>
         </div>
+      </div>
 
+      <div className="max-w-lg mx-auto px-5 pb-10 space-y-3 pt-6">
         {!online && (
           <div className="flex items-center gap-2 rounded-xl bg-warning/10 border border-warning/30 px-4 py-3">
             <Icon name="wifi-off" size={16} className="text-warning shrink-0" />
@@ -50,9 +53,16 @@ export function ProfilePage() {
         )}
 
         <PersonalInfoSection user={user} online={online} onRefresh={refresh} />
+
+        {/* Section label */}
+        <p className="text-eyebrow text-muted/60 px-1 pt-2">Пам&apos;ять</p>
         <MemoryBankSection />
+
+        <p className="text-eyebrow text-muted/60 px-1 pt-2">Безпека</p>
         <ChangePasswordSection online={online} />
         <SessionsSection online={online} />
+
+        <p className="text-eyebrow text-muted/60 px-1 pt-2">Акаунт</p>
         <DangerZoneSection online={online} onLogout={logout} />
       </div>
     </div>

@@ -48,6 +48,10 @@ import { DeviceEventEmitter, Pressable, Text, View } from "react-native";
 import {
   ALL_MODULES,
   DASHBOARD_MODULE_LABELS,
+  DASHBOARD_DENSITIES,
+  DASHBOARD_DENSITY_LABELS,
+  DASHBOARD_DENSITY_DESCRIPTIONS,
+  normalizeDashboardDensity,
   downloadJson,
   getActiveModules,
   getHideInactiveModules,
@@ -56,6 +60,7 @@ import {
   setActiveModules,
   setHideInactiveModules,
   STORAGE_KEYS,
+  type DashboardDensity,
   type DashboardModuleId,
   type KVStore,
 } from "@sergeant/shared";
@@ -198,6 +203,12 @@ export function GeneralSection() {
   const showCoach = prefs.showCoach !== false;
   const dark = prefs.darkMode === true;
   const showHints = prefs.showHints !== false;
+  const [density, setDensityState] = useLocalStorage<string>(
+    STORAGE_KEYS.DASHBOARD_DENSITY,
+    "comfortable",
+  );
+  const currentDensity = normalizeDashboardDensity(density) as DashboardDensity;
+  const handleDensityChange = (d: DashboardDensity) => setDensityState(d);
 
   const [activeModules, setActiveModulesState] = useState<DashboardModuleId[]>(
     () => getActiveModules(mmkvStore),
@@ -279,6 +290,42 @@ export function GeneralSection() {
           }
           testID="general-show-hints-toggle"
         />
+      </SettingsSubGroup>
+      <SettingsSubGroup title="Щільність дашборду">
+        <Text className="text-xs text-fg-muted leading-snug">
+          Скільки простору між картками на головному екрані.
+        </Text>
+        <View className="flex-row gap-2">
+          {DASHBOARD_DENSITIES.map((d) => (
+            <Pressable
+              key={d}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: d === currentDensity }}
+              accessibilityLabel={DASHBOARD_DENSITY_LABELS[d]}
+              onPress={() => handleDensityChange(d)}
+              className={`flex-1 rounded-xl border px-3 py-2.5 ${
+                d === currentDensity
+                  ? "border-brand bg-brand/8"
+                  : "border-cream-300 bg-cream-50 active:bg-cream-100"
+              }`}
+              testID={`dashboard-density-${d}`}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  d === currentDensity ? "text-brand" : "text-fg"
+                }`}
+              >
+                {DASHBOARD_DENSITY_LABELS[d]}
+              </Text>
+              <Text
+                className="text-[11px] text-fg-muted mt-0.5"
+                numberOfLines={2}
+              >
+                {DASHBOARD_DENSITY_DESCRIPTIONS[d]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </SettingsSubGroup>
       <SettingsSubGroup title="Онбординг">
         <Text className="text-xs text-fg-muted leading-snug">

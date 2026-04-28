@@ -33,7 +33,7 @@ import { router, type Href } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings } from "lucide-react-native";
+import { Settings, Sparkles } from "lucide-react-native";
 
 import { colors } from "@/theme";
 
@@ -212,6 +212,10 @@ export function HubDashboard() {
     router.push("/settings" as Href);
   }, []);
 
+  const openAssistant = useCallback(() => {
+    router.push("/assistant" as Href);
+  }, []);
+
   const bumpHero = useCallback(() => setHeroTick((t) => t + 1), []);
 
   const handleShowAuth = useCallback(() => {
@@ -263,7 +267,7 @@ export function HubDashboard() {
     <SafeAreaView className="flex-1 bg-cream-50" edges={["top", "bottom"]}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 16 }}
       >
         <View className="flex-row items-start justify-between gap-3">
           <View className="flex-1 gap-1">
@@ -356,6 +360,28 @@ export function HubDashboard() {
 
         <WeeklyDigestFooter />
       </ScrollView>
+
+      {/* Assistant FAB — thumb-reach entry to AI chat.
+          Always visible so user can reach assistant from anywhere. */}
+      <View
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: 24,
+          pointerEvents: "box-none",
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Відкрити AI-асистента"
+          onPress={openAssistant}
+          className="h-14 flex-row items-center gap-2 rounded-full bg-brand-700 pl-4 pr-5 shadow-lg active:scale-95 active:opacity-90"
+          testID="dashboard-assistant-fab"
+        >
+          <Sparkles size={20} color="#fff" strokeWidth={2.2} />
+          <Text className="text-sm font-semibold text-white">Асистент</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }

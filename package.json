@@ -41,7 +41,8 @@
     "dead-code:packages": "node scripts/ts-prune-packages.mjs",
     "knip": "knip",
     "depcheck:all": "pnpm -r exec depcheck --ignore-patterns=dist,dist-server,coverage,.turbo",
-    "prepare": "husky"
+    "prepare": "husky",
+    "gen": "plop"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.2",
@@ -57,6 +58,7 @@
     "husky": "^9.1.7",
     "knip": "^6.7.0",
     "lint-staged": "^15.5.2",
+    "plop": "^4.0.5",
     "prettier": "^3.8.2",
     "ts-prune": "^0.10.3",
     "tsx": "^4.21.0",

@@ -74,3 +74,8 @@ export type { UseFormValidationReturn } from "./useFormValidation";
 export { useCountUp, useFormattedCountUp } from "./useCountUp";
 
 export type { DarkModeSchedule, UseDarkModeReturn } from "./useDarkMode";
+
+export { useHaptic } from "./useHaptic";
+export type { UseHapticReturn } from "./useHaptic";
+
+export { useReducedMotion } from "./useReducedMotion";

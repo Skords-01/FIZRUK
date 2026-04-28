@@ -51,7 +51,10 @@ function safeWriteLog(events: unknown[]): void {
  * @param {string} eventName - Canonical event name, see `ANALYTICS_EVENTS`.
  * @param {object} [payload] - Minimal, non-sensitive metadata.
  */
-export function trackEvent(eventName, payload = {}) {
+export function trackEvent(
+  eventName: string,
+  payload: Record<string, unknown> = {},
+) {
   if (!eventName || typeof eventName !== "string") return;
   const event = {
     eventName,

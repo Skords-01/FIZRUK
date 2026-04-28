@@ -22,7 +22,13 @@ import { isCapacitor } from "@sergeant/shared";
 const ENDPOINT_PATH = "/api/metrics/web-vitals";
 export const MAX_BATCH = 10;
 
-const buffer = [];
+interface WebVitalReport {
+  name: string;
+  value: number;
+  rating?: string;
+}
+
+const buffer: WebVitalReport[] = [];
 let flushScheduled = false;
 let wiredLifecycle = false;
 let initialized = false;
@@ -101,7 +107,13 @@ export function __resetForTests() {
   initialized = false;
 }
 
-export function enqueue(metric) {
+interface MetricInput {
+  name: string;
+  value: number;
+  rating?: string;
+}
+
+export function enqueue(metric: MetricInput | null | undefined) {
   if (
     !metric ||
     typeof metric.value !== "number" ||

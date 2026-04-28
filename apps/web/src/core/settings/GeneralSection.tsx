@@ -6,11 +6,18 @@ import { useToast } from "@shared/hooks/useToast";
 import {
   ALL_MODULES,
   DASHBOARD_MODULE_LABELS as SHARED_DASHBOARD_MODULE_LABELS,
+  DASHBOARD_DENSITIES,
+  DASHBOARD_DENSITY_LABELS,
+  DASHBOARD_DENSITY_DESCRIPTIONS,
+  DEFAULT_DASHBOARD_DENSITY,
+  normalizeDashboardDensity,
+  STORAGE_KEYS,
   getActiveModules,
   getHideInactiveModules,
   resetOnboardingState,
   setActiveModules,
   setHideInactiveModules,
+  type DashboardDensity,
   type DashboardModuleId,
   type KVStore,
 } from "@sergeant/shared";
@@ -102,6 +109,23 @@ export function GeneralSection({
 }: GeneralSectionProps) {
   const [orderReset, setOrderReset] = useState(false);
   const [showHints, setShowHints] = useHubPref<boolean>("showHints", true);
+  const [density, setDensityState] = useState<DashboardDensity>(() => {
+    try {
+      return normalizeDashboardDensity(
+        localStorage.getItem(STORAGE_KEYS.DASHBOARD_DENSITY),
+      );
+    } catch {
+      return DEFAULT_DASHBOARD_DENSITY;
+    }
+  });
+  const handleDensityChange = useCallback((next: DashboardDensity) => {
+    setDensityState(next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.DASHBOARD_DENSITY, next);
+    } catch {
+      /* noop */
+    }
+  }, []);
   const [order, setOrder] = useState<ModuleId[]>(
     () => loadDashboardOrder() as ModuleId[],
   );
@@ -192,8 +216,40 @@ export function GeneralSection({
           label="Показувати підказки"
           description="Короткі підказки в моменті (без спаму)."
           checked={showHints !== false}
-          onChange={(e) => setShowHints(e.target.checked)}
+          onChange={setShowHints}
         />
+      </SettingsSubGroup>
+      <SettingsSubGroup title="Щільність дашборду">
+        <p className="text-xs text-subtle leading-snug">
+          Скільки простору між картками на головному екрані.
+        </p>
+        <div className="flex gap-2">
+          {DASHBOARD_DENSITIES.map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => handleDensityChange(d)}
+              className={cn(
+                "flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                d === density
+                  ? "border-brand bg-brand/8 ring-1 ring-brand/30"
+                  : "border-line bg-panel hover:bg-panelHi",
+              )}
+            >
+              <span
+                className={cn(
+                  "block text-sm font-medium",
+                  d === density ? "text-brand-strong" : "text-text",
+                )}
+              >
+                {DASHBOARD_DENSITY_LABELS[d]}
+              </span>
+              <span className="block text-xs text-muted mt-0.5">
+                {DASHBOARD_DENSITY_DESCRIPTIONS[d]}
+              </span>
+            </button>
+          ))}
+        </div>
       </SettingsSubGroup>
       <SettingsSubGroup title="Онбординг">
         <p className="text-xs text-subtle leading-snug">
@@ -301,7 +357,7 @@ export function GeneralSection({
           label="Приховати неактивні модулі"
           description="Повністю ховає неактивні плитки з дашборду."
           checked={hideInactive}
-          onChange={(e) => toggleHideInactive(e.target.checked)}
+          onChange={toggleHideInactive}
         />
       </SettingsSubGroup>
       <SettingsSubGroup title="Упорядкувати модулі">

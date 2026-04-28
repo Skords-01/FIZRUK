@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef } from "react";
 import {
   pickNextHint,
   recordHintShown,
+  getRetentionHintId,
+  canShowHint,
+  getFirstActionStartedAt,
   type HintContext,
   type HintId,
   type KVStore,
@@ -44,7 +47,7 @@ export interface HintsOrchestratorProps {
 export function HintsOrchestrator({
   inFtuxSession,
   hasFirstRealEntry,
-}: HintsOrchestratorProps) {
+}: HintsOrchestratorProps): null {
   const toast = useToast();
   const [showHints] = useHubPref<boolean>("showHints", true);
   const shownThisMount = useRef<HintId | null>(null);
@@ -78,8 +81,35 @@ export function HintsOrchestrator({
   useEffect(() => {
     if (!showHints) return;
     if (shownThisMount.current) return;
-    if (candidates.length === 0) return;
 
+    // ── Retention hints (Day 1 / 3 / 7) take priority over general hints
+    if (hasFirstRealEntry) {
+      const startedAt = getFirstActionStartedAt(localStorageStore);
+      if (startedAt) {
+        const retentionId = getRetentionHintId(startedAt);
+        if (retentionId) {
+          const res = canShowHint(localStorageStore, retentionId, ctx);
+          if (res.ok) {
+            shownThisMount.current = retentionId;
+            recordHintShown(localStorageStore, retentionId);
+            const def = {
+              retention_day_1:
+                "Перший день — вже здобуток! Поверніться завтра — звичка формується з трьох повторень.",
+              retention_day_3:
+                "3 дні поспіль — стрік почався. Ще кілька днів і мозок зафіксує нову звичку.",
+              retention_day_7:
+                "Тиждень — серйозна заявка! 7 днів поспіль доведено підвищують шанс закріпити звичку.",
+            }[retentionId];
+            if (def) {
+              toast.info(def, 6000);
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    if (candidates.length === 0) return;
     const next = pickNextHint(localStorageStore, candidates, ctx);
     if (!next) return;
 
@@ -148,7 +178,7 @@ export function HintsOrchestrator({
           : undefined;
 
     toast.info(msg, 5000, action);
-  }, [candidates, ctx, showHints, toast]);
+  }, [candidates, ctx, hasFirstRealEntry, showHints, toast]);
 
   return null;
 }

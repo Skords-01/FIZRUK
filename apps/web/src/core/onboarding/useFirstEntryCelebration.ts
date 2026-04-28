@@ -57,6 +57,6 @@ export function useFirstEntryCelebration(hasRealEntry) {
     // calls it synchronously in render), so the TTV value is already
     // persisted by the time we read it here.
     const ttv = getTimeToValueMs();
-    success(buildToastCopy(ttv), 4500);
+    success(buildToastCopy(ttv), 7000);
   }, [hasRealEntry, success]);
 }

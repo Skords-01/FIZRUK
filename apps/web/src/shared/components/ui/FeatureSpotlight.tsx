@@ -39,14 +39,23 @@ type Placement = "top" | "bottom" | "left" | "right";
 export interface FeatureSpotlightProps {
   /** Unique ID for localStorage persistence */
   id: string;
-  /** CSS selector for target element */
-  targetSelector: string;
+  /**
+   * CSS selector for target element. Optional — when omitted, the
+   * component anchors to its own `children` wrapper instead.
+   */
+  targetSelector?: string;
   /** Spotlight title */
   title: string;
   /** Spotlight description */
   description: string;
   /** Placement relative to target */
   placement?: Placement;
+  /** Alias for `placement`. */
+  position?: Placement;
+  /** Skip rendering after first dismissal (uses localStorage). */
+  showOnce?: boolean;
+  /** Delay in ms before the spotlight is shown. */
+  delay?: number;
   /** Custom action button text */
   actionText?: string;
   /** Callback when dismissed */
@@ -73,6 +82,9 @@ export function FeatureSpotlight({
   title,
   description,
   placement = "bottom",
+  position,
+  delay = 500,
+  showOnce,
   actionText = "Зрозуміло",
   onDismiss,
   skipPersist = false,
@@ -80,37 +92,80 @@ export function FeatureSpotlight({
 }: FeatureSpotlightProps) {
   const [visible, setVisible] = useState(false);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const targetRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const effectivePlacement = position ?? placement;
+  const persistDismissal = showOnce ?? !skipPersist;
 
   // Check if already dismissed
   useEffect(() => {
-    if (!skipPersist && isDismissed(id)) {
+    if (persistDismissal && isDismissed(id)) {
       return;
     }
 
-    // Find target element
+    // Find target element and measure it
+    const measureTarget = () => {
+      const target = targetSelector
+        ? document.querySelector(targetSelector)
+        : targetRef.current;
+      if (!target) return null;
+
+      const rect = target.getBoundingClientRect();
+      // Validate the rect is reasonable (element is in viewport)
+      if (
+        rect.width === 0 ||
+        rect.height === 0 ||
+        rect.top > window.innerHeight ||
+        rect.bottom < 0 ||
+        rect.left > window.innerWidth ||
+        rect.right < 0
+      ) {
+        return null;
+      }
+      return rect;
+    };
+
     const findTarget = () => {
-      const target = document.querySelector(targetSelector);
-      if (target) {
-        setTargetRect(target.getBoundingClientRect());
+      const rect = measureTarget();
+      if (rect) {
+        setTargetRect(rect);
         setVisible(true);
       }
     };
 
-    // Delay slightly to ensure DOM is ready
-    const timer = setTimeout(findTarget, 500);
+    // Delay slightly to ensure DOM is ready and layout is stable
+    const timer = setTimeout(findTarget, delay);
     return () => clearTimeout(timer);
-  }, [id, targetSelector, skipPersist]);
+  }, [delay, id, persistDismissal, targetSelector]);
 
-  // Update position on scroll/resize
+  // Update position on scroll/resize with debouncing
   useEffect(() => {
     if (!visible) return;
 
+    let rafId: number | null = null;
+
     const updatePosition = () => {
-      const target = document.querySelector(targetSelector);
-      if (target) {
-        setTargetRect(target.getBoundingClientRect());
-      }
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const target = targetSelector
+          ? document.querySelector(targetSelector)
+          : targetRef.current;
+        if (!target) return;
+
+        const rect = target.getBoundingClientRect();
+        // Validate the rect is reasonable (element is still in viewport)
+        if (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.top < window.innerHeight &&
+          rect.bottom > 0 &&
+          rect.left < window.innerWidth &&
+          rect.right > 0
+        ) {
+          setTargetRect(rect);
+        }
+      });
     };
 
     window.addEventListener("scroll", updatePosition, true);
@@ -118,44 +173,99 @@ export function FeatureSpotlight({
     return () => {
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [visible, targetSelector]);
 
   const handleDismiss = useCallback(() => {
     hapticTap();
     setVisible(false);
-    if (!skipPersist) {
+    if (persistDismissal) {
       markDismissed(id);
     }
     onDismiss?.();
-  }, [id, skipPersist, onDismiss]);
+  }, [id, persistDismissal, onDismiss]);
 
-  if (!visible || !targetRect) return null;
+  const target = children ? (
+    <span ref={targetRef} className="inline-flex">
+      {children}
+    </span>
+  ) : null;
 
-  // Calculate tooltip position
+  if (!visible || !targetRect) return target;
+
+  // Calculate tooltip position with edge-clamping to prevent overflow
   const padding = 12;
+  const tooltipWidth = 288; // w-72 = 18rem = 288px
+  const edgeMargin = 16;
   const tooltipStyle: CSSProperties = {};
 
-  switch (placement) {
+  switch (effectivePlacement) {
     case "top":
       tooltipStyle.bottom = window.innerHeight - targetRect.top + padding;
-      tooltipStyle.left = targetRect.left + targetRect.width / 2;
-      tooltipStyle.transform = "translateX(-50%)";
+      tooltipStyle.left = Math.max(
+        edgeMargin,
+        Math.min(
+          targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
+          window.innerWidth - tooltipWidth - edgeMargin,
+        ),
+      );
       break;
     case "bottom":
       tooltipStyle.top = targetRect.bottom + padding;
-      tooltipStyle.left = targetRect.left + targetRect.width / 2;
-      tooltipStyle.transform = "translateX(-50%)";
+      tooltipStyle.left = Math.max(
+        edgeMargin,
+        Math.min(
+          targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
+          window.innerWidth - tooltipWidth - edgeMargin,
+        ),
+      );
       break;
     case "left":
+      // Position tooltip to the left of target, clamped to viewport
       tooltipStyle.right = window.innerWidth - targetRect.left + padding;
-      tooltipStyle.top = targetRect.top + targetRect.height / 2;
-      tooltipStyle.transform = "translateY(-50%)";
+      tooltipStyle.top = Math.max(
+        edgeMargin,
+        Math.min(
+          targetRect.top + targetRect.height / 2 - 60, // ~60px half-height estimate
+          window.innerHeight - 140 - edgeMargin,
+        ),
+      );
+      // Clamp right edge so tooltip doesn't go off-screen left
+      if (tooltipStyle.right > window.innerWidth - tooltipWidth - edgeMargin) {
+        // Flip to bottom placement instead
+        delete tooltipStyle.right;
+        tooltipStyle.top = targetRect.bottom + padding;
+        tooltipStyle.left = Math.max(
+          edgeMargin,
+          Math.min(
+            targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
+            window.innerWidth - tooltipWidth - edgeMargin,
+          ),
+        );
+      }
       break;
     case "right":
       tooltipStyle.left = targetRect.right + padding;
-      tooltipStyle.top = targetRect.top + targetRect.height / 2;
-      tooltipStyle.transform = "translateY(-50%)";
+      tooltipStyle.top = Math.max(
+        edgeMargin,
+        Math.min(
+          targetRect.top + targetRect.height / 2 - 60,
+          window.innerHeight - 140 - edgeMargin,
+        ),
+      );
+      // Clamp left edge so tooltip doesn't go off-screen right
+      if (tooltipStyle.left > window.innerWidth - tooltipWidth - edgeMargin) {
+        // Flip to bottom placement instead
+        tooltipStyle.left = Math.max(
+          edgeMargin,
+          Math.min(
+            targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
+            window.innerWidth - tooltipWidth - edgeMargin,
+          ),
+        );
+        tooltipStyle.top = targetRect.bottom + padding;
+      }
       break;
   }
 
@@ -170,71 +280,73 @@ export function FeatureSpotlight({
   };
 
   return (
-    <div className="fixed inset-0 z-[1000]" role="dialog" aria-modal="true">
-      {/* Overlay with cutout */}
-      <svg
-        className="absolute inset-0 w-full h-full"
-        onClick={handleDismiss}
-        aria-hidden="true"
-      >
-        <defs>
-          <mask id={`spotlight-mask-${id}`}>
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            <rect
-              x={spotlightRect.left}
-              y={spotlightRect.top}
-              width={spotlightRect.width}
-              height={spotlightRect.height}
-              rx={spotlightRect.borderRadius}
-              fill="black"
-            />
-          </mask>
-        </defs>
-        <rect
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          fill="rgba(0, 0, 0, 0.6)"
-          mask={`url(#spotlight-mask-${id})`}
-          className="motion-safe:animate-fade-in"
+    <>
+      {target}
+      <div className="fixed inset-0 z-[1000]" role="dialog" aria-modal="true">
+        {/* Overlay with cutout */}
+        <svg
+          className="absolute inset-0 w-full h-full"
+          onClick={handleDismiss}
+          aria-hidden="true"
+        >
+          <defs>
+            <mask id={`spotlight-mask-${id}`}>
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              <rect
+                x={spotlightRect.left}
+                y={spotlightRect.top}
+                width={spotlightRect.width}
+                height={spotlightRect.height}
+                rx={spotlightRect.borderRadius}
+                fill="black"
+              />
+            </mask>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="rgba(0, 0, 0, 0.6)"
+            mask={`url(#spotlight-mask-${id})`}
+            className="motion-safe:animate-fade-in"
+          />
+        </svg>
+
+        {/* Spotlight ring */}
+        <div
+          className={cn(
+            "absolute pointer-events-none",
+            "rounded-xl ring-2 ring-brand-500 ring-offset-2 ring-offset-transparent",
+            "motion-safe:animate-pulse",
+          )}
+          style={{
+            top: spotlightRect.top,
+            left: spotlightRect.left,
+            width: spotlightRect.width,
+            height: spotlightRect.height,
+          }}
+          aria-hidden="true"
         />
-      </svg>
 
-      {/* Spotlight ring */}
-      <div
-        className={cn(
-          "absolute pointer-events-none",
-          "rounded-xl ring-2 ring-brand-500 ring-offset-2 ring-offset-transparent",
-          "motion-safe:animate-pulse",
-        )}
-        style={{
-          top: spotlightRect.top,
-          left: spotlightRect.left,
-          width: spotlightRect.width,
-          height: spotlightRect.height,
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Tooltip */}
-      <div
-        ref={tooltipRef}
-        className={cn(
-          "fixed w-72 p-4 rounded-2xl",
-          "bg-panel border border-line shadow-float",
-          "motion-safe:animate-slide-up",
-        )}
-        style={tooltipStyle}
-      >
-        <h3 className="text-base font-bold text-text mb-1">{title}</h3>
-        <p className="text-sm text-muted mb-4">{description}</p>
-        {children}
-        <Button size="sm" onClick={handleDismiss} className="w-full">
-          {actionText}
-        </Button>
+        {/* Tooltip — pointer-events-auto ensures button is clickable */}
+        <div
+          ref={tooltipRef}
+          className={cn(
+            "fixed w-72 p-4 rounded-2xl pointer-events-auto",
+            "bg-panel border border-line shadow-float",
+            "motion-safe:animate-slide-up",
+          )}
+          style={tooltipStyle}
+        >
+          <h3 className="text-base font-bold text-text mb-1">{title}</h3>
+          <p className="text-sm text-muted mb-4">{description}</p>
+          <Button size="sm" onClick={handleDismiss} className="w-full">
+            {actionText}
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
