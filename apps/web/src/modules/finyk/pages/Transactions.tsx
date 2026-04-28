@@ -4,6 +4,7 @@ import { TxListItem } from "../components/TxListItem";
 import { getCategory, getIncomeCategory, fmtAmt } from "../utils";
 import { manualExpenseToTransaction } from "@sergeant/finyk-domain/domain/transactions";
 import { mergeExpenseCategoryDefinitions, CURRENCY } from "../constants";
+import { Card } from "@shared/components/ui/Card";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { Icon } from "@shared/components/ui/Icon";
@@ -398,92 +399,149 @@ export function Transactions({
     [groupedByDate, collapsedKeys],
   );
 
-  const syncColor =
+  // Sync-meta pill: tone follows status, dot mirrors `text-*` colour so the
+  // pill remains a single-glance status chip even without reading the label.
+  const syncPillTone =
     syncState?.status === "error"
-      ? "text-danger"
+      ? "text-danger border-danger/30 bg-danger/10"
       : syncState?.status === "partial"
-        ? "text-warning"
-        : "text-subtle";
+        ? "text-warning border-warning/30 bg-warning/10"
+        : syncState?.status === "loading"
+          ? "text-subtle border-line/60 bg-panelHi/60"
+          : "text-subtle border-line/60 bg-panelHi/60";
+  const syncPillDot =
+    syncState?.status === "error"
+      ? "bg-danger"
+      : syncState?.status === "partial"
+        ? "bg-warning"
+        : syncState?.status === "loading"
+          ? "bg-muted motion-safe:animate-pulse"
+          : "bg-success";
+  const syncStatusLabel =
+    syncState?.status === "loading"
+      ? "оновлення…"
+      : syncState?.status === "success"
+        ? "синхронізовано"
+        : syncState?.status === "partial"
+          ? "частково"
+          : syncState?.status === "error"
+            ? "помилка"
+            : "";
+  const syncSourceLabel =
+    syncState?.source === "network"
+      ? "мережа"
+      : syncState?.source === "cache"
+        ? "кеш"
+        : "нема";
+  const lastUpdatedLabel = lastUpdated
+    ? lastUpdated.toLocaleTimeString("uk-UA", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+  const showSyncRow = syncState?.status !== "idle" || lastUpdated;
 
   return (
     <div ref={setScrollParent} className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 pt-4 page-tabbar-pad">
-        <TransactionsHeader
-          monthLabel={monthLabel}
-          isCurrentMonth={isCurrentMonth}
-          goMonth={goMonth}
-          selectMode={selectMode}
-          exitSelectMode={exitSelectMode}
-          setSelectMode={setSelectMode}
-          showHidden={showHidden}
-          setShowHidden={setShowHidden}
-          hiddenCount={hiddenTxIds.length}
-          refresh={refresh}
-          loading={activeLoading}
-        />
-
-        {/* Sync status */}
-        {syncState?.status !== "idle" && (
-          <div className={cn("text-xs mb-1", syncColor)}>
-            {syncState.status === "loading"
-              ? "⟳ оновлення…"
-              : syncState.status === "success"
-                ? "✓ синхронізовано"
-                : syncState.status === "partial"
-                  ? "⚠ частково"
-                  : "✕ помилка"}{" "}
-            ·{" "}
-            {syncState.source === "network"
-              ? "мережа"
-              : syncState.source === "cache"
-                ? "кеш"
-                : "нема"}{" "}
-            · {syncState.accountsOk}/{syncState.accountsTotal} акаунтів
-          </div>
-        )}
-        {lastUpdated && (
-          <div className="text-xs text-subtle mb-3">
-            Оновлено:{" "}
-            {lastUpdated.toLocaleTimeString("uk-UA", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </div>
-        )}
-
-        {/* Filters */}
-        <div
-          data-finyk-no-swipe
-          className="mb-4 -mx-4 px-4 overflow-x-auto no-scrollbar"
+        <Card
+          as="section"
+          radius="lg"
+          padding="sm"
+          aria-label="Керування операціями"
+          className="mb-4 space-y-2.5"
         >
-          <div className="flex gap-1.5 whitespace-nowrap">
-            {[
-              { id: "all", label: "Всі" },
-              { id: "expense", label: "Витрати" },
-              { id: "income", label: "Доходи" },
-              ...(creditAccIds.size > 0
-                ? [{ id: "credit", label: "💳 Кредитна" }]
-                : []),
-              ...catSpends.map((c) => ({
-                id: c.id,
-                label: c.label.split(" ")[0] + " " + c.label.slice(3),
-              })),
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className={cn(
-                  "text-xs px-4 py-2 rounded-full border transition-colors min-h-[36px] font-medium",
-                  filter === f.id
-                    ? "bg-primary border-primary text-bg shadow-sm"
-                    : "bg-panelHi border-line text-text hover:border-muted",
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+          <TransactionsHeader
+            monthLabel={monthLabel}
+            isCurrentMonth={isCurrentMonth}
+            goMonth={goMonth}
+            selectMode={selectMode}
+            exitSelectMode={exitSelectMode}
+            setSelectMode={setSelectMode}
+            showHidden={showHidden}
+            setShowHidden={setShowHidden}
+            hiddenCount={hiddenTxIds.length}
+            refresh={refresh}
+            loading={activeLoading}
+          />
+
+          {/* Compact sync + last-updated meta row.
+              Floating "✓ синхронізовано · мережа · 6/6 акаунтів" + bare
+              "Оновлено: 10:55" used to read as two stray grey lines under
+              the action cluster. Collapsed into one pill chip + inline
+              timestamp so the panel reads as a single controls tray. */}
+          {showSyncRow && (
+            <div className="flex items-center gap-2 flex-wrap text-2xs">
+              {syncState?.status !== "idle" && syncStatusLabel && (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border tabular-nums",
+                    syncPillTone,
+                  )}
+                  aria-label={`Стан синхронізації: ${syncStatusLabel}, джерело: ${syncSourceLabel}, акаунтів: ${syncState.accountsOk}/${syncState.accountsTotal}`}
+                >
+                  <span
+                    className={cn(
+                      "inline-block w-1.5 h-1.5 rounded-full shrink-0",
+                      syncPillDot,
+                    )}
+                    aria-hidden
+                  />
+                  <span>{syncStatusLabel}</span>
+                  <span className="text-line" aria-hidden>
+                    ·
+                  </span>
+                  <span>{syncSourceLabel}</span>
+                  <span className="text-line" aria-hidden>
+                    ·
+                  </span>
+                  <span>
+                    {syncState.accountsOk}/{syncState.accountsTotal}
+                  </span>
+                </span>
+              )}
+              {lastUpdatedLabel && (
+                <span className="text-subtle tabular-nums">
+                  оновлено · {lastUpdatedLabel}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Filters */}
+          <div
+            data-finyk-no-swipe
+            className="-mx-3 px-3 overflow-x-auto no-scrollbar"
+          >
+            <div className="flex gap-1.5 whitespace-nowrap">
+              {[
+                { id: "all", label: "Всі" },
+                { id: "expense", label: "Витрати" },
+                { id: "income", label: "Доходи" },
+                ...(creditAccIds.size > 0
+                  ? [{ id: "credit", label: "💳 Кредитна" }]
+                  : []),
+                ...catSpends.map((c) => ({
+                  id: c.id,
+                  label: c.label.split(" ")[0] + " " + c.label.slice(3),
+                })),
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFilter(f.id)}
+                  className={cn(
+                    "text-xs px-4 py-2 rounded-full border transition-colors min-h-[36px] font-medium",
+                    filter === f.id
+                      ? "bg-primary border-primary text-bg shadow-sm"
+                      : "bg-panelHi border-line text-text hover:border-muted",
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </Card>
 
         {/* Skeleton */}
         {activeLoading && activeTx.length === 0 && (
