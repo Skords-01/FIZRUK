@@ -126,19 +126,20 @@ export function HubSettingsPage({ syncing, onSync, onPull, user }) {
   const visible = sections.filter((s) => visibleSectionIds.includes(s.id));
 
   return (
-    <div className="flex flex-col gap-3 pt-2 pb-4">
-      <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 pt-3 pb-6">
+      {/* Search and tabs header */}
+      <div className="flex flex-col gap-3 sticky top-0 z-10 bg-bg/95 backdrop-blur-sm -mx-4 px-4 py-2 -mt-3">
         <label className="relative block">
           <span className="sr-only">Пошук по налаштуваннях</span>
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
-            <Icon name="search" size={16} />
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
+            <Icon name="search" size={18} />
           </span>
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Пошук налаштувань"
-            className="input-focus w-full min-h-[44px] pl-9 pr-10 py-3 bg-panelHi border border-line rounded-2xl text-[16px] md:text-sm text-text placeholder:text-muted"
+            placeholder="Пошук налаштувань…"
+            className="input-focus w-full min-h-[48px] pl-11 pr-11 py-3 bg-panel border border-line rounded-2xl text-[16px] md:text-sm text-text placeholder:text-muted shadow-soft"
           />
           {query && (
             <Button
@@ -147,9 +148,9 @@ export function HubSettingsPage({ syncing, onSync, onPull, user }) {
               iconOnly
               onClick={() => setQuery("")}
               aria-label="Очистити пошук"
-              className="absolute right-2 top-1/2 -translate-y-1/2"
+              className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-panelHi"
             >
-              <Icon name="close" size={14} />
+              <Icon name="close" size={16} />
             </Button>
           )}
         </label>
@@ -163,22 +164,38 @@ export function HubSettingsPage({ syncing, onSync, onPull, user }) {
             items={GROUPS.map((g) => ({ value: g.id, label: g.label }))}
             value={tab}
             onChange={(v) => setTab(v)}
-            className="overflow-x-auto border border-line"
+            className="overflow-x-auto border border-line shadow-soft"
           />
         )}
       </div>
 
-      {visible.length === 0 ? (
-        <div className="text-sm text-muted text-center py-6">
-          Нічого не знайдено за запитом «{query}»
-        </div>
-      ) : (
-        visible.map((s) => (
-          <div key={s.id} ref={(el) => (refs.current[s.id] = el)}>
-            {s.render()}
+      {/* Settings sections */}
+      <div className="flex flex-col gap-4">
+        {visible.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="w-12 h-12 rounded-full bg-panelHi flex items-center justify-center">
+              <Icon name="search" size={24} className="text-muted" />
+            </div>
+            <p className="text-sm text-muted text-center">
+              Нічого не знайдено за запитом «{query}»
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setQuery("")}
+              className="text-brand"
+            >
+              Очистити пошук
+            </Button>
           </div>
-        ))
-      )}
+        ) : (
+          visible.map((s) => (
+            <div key={s.id} ref={(el) => (refs.current[s.id] = el)}>
+              {s.render()}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
