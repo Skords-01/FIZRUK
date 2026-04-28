@@ -478,22 +478,6 @@ function AppInner() {
           onCloseSearch={ui.closeSearch}
           onOpenModule={openModule}
         />
-        {/* Assistant FAB — persistent across all module views so the user
-          can reach the AI chat without navigating back to the hub first. */}
-        <HubFloatingActions onOpenChat={ui.openChat} />
-        <HubModals
-          chatOpen={ui.chatOpen}
-          onCloseChat={ui.closeChat}
-          chatInitialMessage={ui.chatInitialMessage}
-          chatAutoSend={ui.chatAutoSend}
-          onOpenCatalogue={() => {
-            ui.closeChat();
-            navigate(ASSISTANT_PATH);
-          }}
-          searchOpen={ui.searchOpen}
-          onCloseSearch={ui.closeSearch}
-          onOpenModule={openModule}
-        />
         <KeyboardShortcutsModal
           open={keyboardShortcuts.open}
           onClose={keyboardShortcuts.onClose}
@@ -578,6 +562,22 @@ function AppInner() {
           );
         })()}
       </Suspense>
+      {/* Assistant FAB — available in all module views so the user can
+          reach the AI chat without navigating back to the hub first. */}
+      <HubFloatingActions onOpenChat={ui.openChat} />
+      <HubModals
+        chatOpen={ui.chatOpen}
+        onCloseChat={ui.closeChat}
+        chatInitialMessage={ui.chatInitialMessage}
+        chatAutoSend={ui.chatAutoSend}
+        onOpenCatalogue={() => {
+          ui.closeChat();
+          navigate(ASSISTANT_PATH);
+        }}
+        searchOpen={ui.searchOpen}
+        onCloseSearch={ui.closeSearch}
+        onOpenModule={openModule}
+      />
       <KeyboardShortcutsModal
         open={keyboardShortcuts.open}
         onClose={keyboardShortcuts.onClose}
