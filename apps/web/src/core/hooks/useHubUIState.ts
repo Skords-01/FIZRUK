@@ -29,6 +29,17 @@ export interface OpenChatOptions {
 // gating and redirects, so this hook only tracks chat/search/hub-view.
 export interface HubUIState {
   chatOpen: boolean;
+  /**
+   * When `true`, the chat dialog is mounted but visually collapsed to a
+   * floating "minimize FAB" — the conversation, draft input, and active
+   * request are preserved so the user can consult other modules without
+   * losing context. Independent of `chatOpen` so the chat can be fully
+   * dismissed (`closeChat`) without going through a minimized state.
+   */
+  chatMinimized: boolean;
+  /** Number of assistant replies that arrived while minimized; surfaces as a
+   *  badge on the FAB. Reset to 0 when the chat is restored. */
+  chatUnseenCount: number;
   chatInitialMessage: string | null;
   chatAutoSend: boolean;
   searchOpen: boolean;
@@ -37,11 +48,16 @@ export interface HubUIState {
   setSearchOpen: (value: boolean) => void;
   openChat: (message?: string | null, options?: OpenChatOptions) => void;
   closeChat: () => void;
+  minimizeChat: () => void;
+  restoreChat: () => void;
+  setChatUnseenCount: (count: number) => void;
   closeSearch: () => void;
 }
 
 export function useHubUIState(): HubUIState {
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatMinimized, setChatMinimized] = useState(false);
+  const [chatUnseenCount, setChatUnseenCount] = useState(0);
   const [chatInitialMessage, setChatInitialMessage] = useState<string | null>(
     null,
   );
@@ -79,20 +95,35 @@ export function useHubUIState(): HubUIState {
       setChatInitialMessage(message || null);
       setChatAutoSend(Boolean(options.autoSend && message));
       setChatOpen(true);
+      setChatMinimized(false);
+      setChatUnseenCount(0);
     },
     [],
   );
 
   const closeChat = useCallback(() => {
     setChatOpen(false);
+    setChatMinimized(false);
+    setChatUnseenCount(0);
     setChatInitialMessage(null);
     setChatAutoSend(false);
+  }, []);
+
+  const minimizeChat = useCallback(() => {
+    setChatMinimized(true);
+  }, []);
+
+  const restoreChat = useCallback(() => {
+    setChatMinimized(false);
+    setChatUnseenCount(0);
   }, []);
 
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
   return {
     chatOpen,
+    chatMinimized,
+    chatUnseenCount,
     chatInitialMessage,
     chatAutoSend,
     searchOpen,
@@ -101,6 +132,9 @@ export function useHubUIState(): HubUIState {
     setSearchOpen,
     openChat,
     closeChat,
+    minimizeChat,
+    restoreChat,
+    setChatUnseenCount,
     closeSearch,
   };
 }

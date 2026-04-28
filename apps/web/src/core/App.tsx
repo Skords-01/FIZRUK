@@ -481,7 +481,12 @@ function AppInner() {
 
         <HubModals
           chatOpen={ui.chatOpen}
+          chatMinimized={ui.chatMinimized}
+          chatUnseenCount={ui.chatUnseenCount}
           onCloseChat={ui.closeChat}
+          onMinimizeChat={ui.minimizeChat}
+          onRestoreChat={ui.restoreChat}
+          onUnseenChange={ui.setChatUnseenCount}
           chatInitialMessage={ui.chatInitialMessage}
           chatAutoSend={ui.chatAutoSend}
           onOpenCatalogue={() => {
@@ -582,7 +587,12 @@ function AppInner() {
       <HubFloatingActions onOpenChat={ui.openChat} compact />
       <HubModals
         chatOpen={ui.chatOpen}
+        chatMinimized={ui.chatMinimized}
+        chatUnseenCount={ui.chatUnseenCount}
         onCloseChat={ui.closeChat}
+        onMinimizeChat={ui.minimizeChat}
+        onRestoreChat={ui.restoreChat}
+        onUnseenChange={ui.setChatUnseenCount}
         chatInitialMessage={ui.chatInitialMessage}
         chatAutoSend={ui.chatAutoSend}
         onOpenCatalogue={() => {

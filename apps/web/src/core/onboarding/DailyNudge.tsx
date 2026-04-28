@@ -2,8 +2,14 @@ import { useCallback, useEffect } from "react";
 import { Icon } from "@shared/components/ui/Icon";
 import { Button } from "@shared/components/ui/Button";
 import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
-import { dismissNudge, type NudgeDefinition } from "@sergeant/shared";
+import {
+  dismissNudge,
+  snoozeNudge,
+  type NudgeDefinition,
+} from "@sergeant/shared";
 import { webKVStore } from "@shared/lib/storage";
+
+const SNOOZE_DAYS = 7;
 
 export function DailyNudge({
   nudge,
@@ -32,6 +38,16 @@ export function DailyNudge({
     onDismiss();
   }, [nudge.id, sessionDays, onDismiss]);
 
+  const handleSnooze = useCallback(() => {
+    snoozeNudge(webKVStore, nudge.id, SNOOZE_DAYS);
+    trackEvent(ANALYTICS_EVENTS.DAILY_NUDGE_DISMISSED, {
+      day: sessionDays,
+      nudgeId: nudge.id,
+      snoozeDays: SNOOZE_DAYS,
+    });
+    onDismiss();
+  }, [nudge.id, sessionDays, onDismiss]);
+
   const handleClick = useCallback(() => {
     dismissNudge(webKVStore, nudge.id);
     trackEvent(ANALYTICS_EVENTS.DAILY_NUDGE_CLICKED, {
@@ -53,7 +69,7 @@ export function DailyNudge({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm text-text leading-relaxed">{nudge.message}</p>
-          <div className="flex items-center gap-2 mt-2.5">
+          <div className="flex flex-wrap items-center gap-2 mt-2.5">
             {onAction && (
               <Button variant="primary" size="xs" onClick={handleClick}>
                 Спробувати
@@ -66,13 +82,22 @@ export function DailyNudge({
             >
               Зрозуміло
             </button>
+            <button
+              type="button"
+              onClick={handleSnooze}
+              className="text-xs text-muted hover:text-text px-2 py-1 rounded-lg transition-colors inline-flex items-center gap-1"
+              aria-label={`Нагадати через ${SNOOZE_DAYS} днів`}
+            >
+              <Icon name="clock" size={12} aria-hidden />
+              Нагадай за тиждень
+            </button>
           </div>
         </div>
         <button
           type="button"
-          onClick={handleDismiss}
+          onClick={handleSnooze}
           className="shrink-0 -mt-1 -mr-1 w-6 h-6 rounded-md flex items-center justify-center text-muted hover:text-text transition-colors"
-          aria-label="Сховати"
+          aria-label={`Сховати на ${SNOOZE_DAYS} днів`}
         >
           <Icon name="x" size={14} />
         </button>

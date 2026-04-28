@@ -396,6 +396,11 @@ const preset = {
         "fade-out": "fadeOut 0.2s ease-out forwards",
         "scale-out": "scaleOut 0.2s ease-out forwards",
         "draw-check": "drawCheck 0.4s ease-out 0.2s forwards",
+        // iOS-style "edit mode" wiggle for sortable bento cards. Looped,
+        // very subtle (±0.6°) so it signals "I am draggable" without
+        // becoming an attention sink. `motion-safe:` variants in
+        // consumers handle the reduced-motion case.
+        wiggle: "wiggle 0.45s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -469,6 +474,10 @@ const preset = {
         fadeSlideUp: {
           "0%": { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        wiggle: {
+          "0%, 100%": { transform: "rotate(-0.6deg)" },
+          "50%": { transform: "rotate(0.6deg)" },
         },
       },
 

@@ -162,7 +162,6 @@ export function Workouts() {
     }
   });
   const [finishFlash, setFinishFlash] = useState(null);
-  const [deleteWorkoutConfirm, setDeleteWorkoutConfirm] = useState(false);
   const [deleteExerciseConfirm, setDeleteExerciseConfirm] = useState(false);
   const [riskyTemplateConfirm, setRiskyTemplateConfirm] = useState(null); // stores template when risky
   const [now, setNow] = useState(Date.now());
@@ -558,7 +557,6 @@ export function Workouts() {
             removeItem={removeItemWithUndo}
             setFinishFlash={setFinishFlash}
             endWorkout={endWorkout}
-            setDeleteWorkoutConfirm={setDeleteWorkoutConfirm}
             summarizeWorkoutForFinish={summarizeWorkoutForFinish}
             submitRetroWorkout={submitRetroWorkout}
             deleteWorkout={deleteWorkout}
@@ -673,30 +671,17 @@ export function Workouts() {
         />
       </div>
 
-      {/* Confirmation dialogs */}
-      <ConfirmDialog
-        open={deleteWorkoutConfirm}
-        title="Видалити тренування?"
-        description="Можна повернути одразу після видалення."
-        confirmLabel="Видалити"
-        onConfirm={() => {
-          if (activeWorkout) {
-            // Snapshot before delete so undo can re-insert with the
-            // original startedAt/items/groups intact (chronological
-            // order preserved by `restoreWorkout`).
-            const snapshot = activeWorkout;
-            deleteWorkout(snapshot.id);
-            setActiveWorkoutId((prev) => (prev === snapshot.id ? null : prev));
-            showUndoToast(toast, {
-              msg: "Тренування видалено",
-              onUndo: () => restoreWorkout(snapshot),
-            });
-          }
-          setDeleteWorkoutConfirm(false);
-        }}
-        onCancel={() => setDeleteWorkoutConfirm(false)}
-      />
+      {/*
+        Confirmation dialogs.
 
+        The "Delete active workout" `ConfirmDialog` was removed in favour
+        of the unified soft-delete flow (`onDeleteWorkout` in
+        `WorkoutJournalSection`) that calls `deleteWorkout` immediately
+        and surfaces a 5 s undo toast via `showUndoToast`. Per the
+        unified-undo policy, only non-reversible flows (e.g. exercise
+        removal that detaches the catalog entry) keep an explicit
+        confirmation step.
+      */}
       <ConfirmDialog
         open={deleteExerciseConfirm}
         title="Видалити вправу?"

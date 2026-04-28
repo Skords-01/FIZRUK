@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
+import { Icon } from "@shared/components/ui/Icon";
+import { cn } from "@shared/lib/cn";
 import {
   countRealEntries,
   getActiveModules,
@@ -143,6 +145,12 @@ export function HubDashboard({
     () => order.some((id) => !isActiveModule(activeModules, id)),
     [order, activeModules],
   );
+  // Bento "edit mode" — toggled by the explicit "Налаштувати" button next
+  // to the Modules heading. Drives the wiggle animation, the visible drag
+  // handle on each card, and gates dnd-kit listeners to the handle so the
+  // card body can keep navigating to the module on tap.
+  const [editMode, setEditMode] = useState(false);
+  const toggleEditMode = useCallback(() => setEditMode((p) => !p), []);
   const visibleOrder = useMemo(
     () =>
       hideInactive
@@ -276,9 +284,18 @@ export function HubDashboard({
   // Stagger index counter
   let si = 0;
 
+  // ONE-HERO + ONE-SECONDARY RULE:
+  // • Returning user (7+ days inactive) → ReEngagementCard acts as the
+  //   hero, suppressing the regular TodayFocus / FirstAction / SoftAuth
+  //   candidates so we never stack two "primary" cards.
+  // • DailyNudge is the optional secondary nudge; it already hides when
+  //   re-engagement is showing (see below), and now supports a 7-day
+  //   snooze via `snoozeNudge()` on top of permanent dismiss.
+  const reengagementIsHero = reengagement.show;
+
   return (
     <div className="space-y-4">
-      {reengagement.show && (
+      {reengagementIsHero && (
         <StaggerChild index={si++}>
           <ReEngagementCard
             daysInactive={reengagement.daysInactive}
@@ -293,8 +310,8 @@ export function HubDashboard({
         <StreakIndicator />
       </StaggerChild>
 
-      {/* Hero card */}
-      <StaggerChild index={si++}>{hero}</StaggerChild>
+      {/* Hero card — suppressed while re-engagement takes the hero slot */}
+      {!reengagementIsHero && <StaggerChild index={si++}>{hero}</StaggerChild>}
 
       {/* Module onboarding checklist */}
       {showChecklist && primaryModule && (
@@ -339,9 +356,31 @@ export function HubDashboard({
       {/* MODULE CARDS — 2×2 bento grid */}
       <StaggerChild index={si++}>
         <section className="space-y-2">
-          <SectionHeading as="h2" size="xs" className="px-0.5">
-            Модулі
-          </SectionHeading>
+          <div className="flex items-center justify-between gap-2 px-0.5">
+            <SectionHeading as="h2" size="xs" className="!px-0">
+              Модулі
+            </SectionHeading>
+            <button
+              type="button"
+              onClick={toggleEditMode}
+              aria-pressed={editMode}
+              className={cn(
+                "inline-flex items-center gap-1.5 text-2xs font-medium rounded-lg px-2 py-1 transition-colors",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                editMode
+                  ? "bg-primary text-bg"
+                  : "text-muted hover:text-text hover:bg-panelHi",
+              )}
+            >
+              <Icon
+                name="grip-vertical"
+                size={12}
+                strokeWidth={2}
+                aria-hidden
+              />
+              {editMode ? "Готово" : "Налаштувати"}
+            </button>
+          </div>
 
           <DndContext
             sensors={sensors}
@@ -360,6 +399,7 @@ export function HubDashboard({
                     onOpenModule={onOpenModule}
                     quickAdd={quickAddByModule[id] || null}
                     inactive={!isActiveModule(activeModules, id)}
+                    editMode={editMode}
                   />
                 ))}
               </div>
