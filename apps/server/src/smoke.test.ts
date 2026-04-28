@@ -124,13 +124,6 @@ describe("smoke: createApp wiring", () => {
     expect(res.body).toMatchObject({ code: "NOT_CONFIGURED" });
   });
 
-  it("GET /api/mono → 401 when x-token header is missing", async () => {
-    const app = createApp();
-    const res = await request(app).get("/api/mono");
-    expect(res.status).toBe(401);
-    expect(res.body).toMatchObject({ error: expect.any(String) });
-  });
-
   it("POST /api/chat → 503 without ANTHROPIC_API_KEY env", async () => {
     const app = createApp();
     const res = await request(app)

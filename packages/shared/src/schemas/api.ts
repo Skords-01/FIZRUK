@@ -440,12 +440,6 @@ const BankApiPath = z
   .max(256)
   .regex(/^\/[A-Za-z0-9\-_/]+$/, "Некоректний шлях API");
 
-export const MonoQuerySchema = z
-  .object({
-    path: BankApiPath.optional(),
-  })
-  .passthrough();
-
 export const PrivatQuerySchema = z
   .object({
     path: BankApiPath.optional(),
