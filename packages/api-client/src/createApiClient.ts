@@ -21,9 +21,7 @@ import {
   type FoodSearchEndpoints,
 } from "./endpoints/foodSearch";
 import {
-  createMonoEndpoints,
   createMonoWebhookEndpoints,
-  type MonoEndpoints,
   type MonoWebhookEndpoints,
 } from "./endpoints/mono";
 import {
@@ -45,7 +43,7 @@ export type ApiClientConfig = HttpClientConfig;
  * Типізований API-клієнт для всіх публічних ендпоінтів Sergeant. Повертає
  * об'єкт з `http` (низькорівневі методи) та набором модульних ендпоінтів
  * (`sync`, `coach`, `chat`, `push`, `nutrition`, `barcode`, `foodSearch`,
- * `mono`, `privat`, `weeklyDigest`).
+ * `monoWebhook`, `privat`, `weeklyDigest`).
  *
  * Веб-додаток створює один інстанс на старті (див.
  * `apps/web/src/shared/api/client.ts`). RN-додаток зможе створити свій
@@ -61,7 +59,6 @@ export interface ApiClient {
   nutrition: NutritionEndpoints;
   barcode: BarcodeEndpoints;
   foodSearch: FoodSearchEndpoints;
-  mono: MonoEndpoints;
   monoWebhook: MonoWebhookEndpoints;
   privat: PrivatEndpoints;
   waitlist: WaitlistEndpoints;
@@ -80,7 +77,6 @@ export function createApiClient(config: ApiClientConfig = {}): ApiClient {
     nutrition: createNutritionEndpoints(http),
     barcode: createBarcodeEndpoints(http),
     foodSearch: createFoodSearchEndpoints(http),
-    mono: createMonoEndpoints(http),
     monoWebhook: createMonoWebhookEndpoints(http),
     privat: createPrivatEndpoints(http),
     waitlist: createWaitlistEndpoints(http),

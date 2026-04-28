@@ -93,10 +93,6 @@ const SyncPushAll = schemas.SyncPushAllSchema.meta({
   id: "SyncPushAll",
   description: "POST /api/sync/push-all (bulk).",
 });
-const MonoQuery = schemas.MonoQuerySchema.meta({
-  id: "MonoQuery",
-  description: "Query для GET /api/mono.",
-});
 const PrivatQuery = schemas.PrivatQuerySchema.meta({
   id: "PrivatQuery",
   description: "Query для GET /api/privat.",
@@ -199,7 +195,6 @@ export const namedSchemas = {
   SyncPush,
   SyncPull,
   SyncPushAll,
-  MonoQuery,
   PrivatQuery,
   PushSubscribe,
   PushUnsubscribe,

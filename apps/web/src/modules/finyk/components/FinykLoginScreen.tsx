@@ -8,9 +8,6 @@ export interface FinykLoginScreenProps {
   onTokenInputChange: (value: string) => void;
   showToken: boolean;
   onToggleShowToken: () => void;
-  rememberToken: boolean;
-  onRememberTokenChange: (value: boolean) => void;
-  webhookEnabled: boolean;
   authError: string | null;
   error: string | null;
   connecting: boolean;
@@ -24,18 +21,17 @@ export interface FinykLoginScreenProps {
  * Login screen for Finyk module.
  *
  * Shown when the user has neither a Monobank token (`!clientInfo`) nor a
- * "manual only" bypass set. Lets the user paste a Mono API token, opt to
- * remember it on this device (when webhook flag is off), or proceed without
- * a bank connection (manual expenses only).
+ * "manual only" bypass set. Lets the user paste a Mono API token or proceed
+ * without a bank connection (manual expenses only). The token is sent
+ * server-side via the Monobank webhook flow — there is no longer a
+ * "remember on this device" checkbox because tokens are never persisted in
+ * the browser after the legacy polling cleanup.
  */
 export function FinykLoginScreen({
   tokenInput,
   onTokenInputChange,
   showToken,
   onToggleShowToken,
-  rememberToken,
-  onRememberTokenChange,
-  webhookEnabled,
   authError,
   error,
   connecting,
@@ -180,23 +176,9 @@ export function FinykLoginScreen({
             </Button>
           </div>
 
-          {webhookEnabled ? (
-            <p className="text-xs text-subtle mt-2">
-              Токен відправляється на сервер і не зберігається у браузері.
-            </p>
-          ) : (
-            <label className="flex items-center gap-2.5 mt-3 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded accent-emerald-600 cursor-pointer"
-                checked={rememberToken}
-                onChange={(e) => onRememberTokenChange(e.target.checked)}
-              />
-              <span className="text-sm text-muted">
-                Запам{"'"}ятати токен на цьому пристрої
-              </span>
-            </label>
-          )}
+          <p className="text-xs text-subtle mt-2">
+            Токен відправляється на сервер і не зберігається у браузері.
+          </p>
 
           {authError && (
             <div className="mt-3 text-sm bg-warning/15 border border-warning/40 rounded-xl px-3 py-2.5 space-y-1">

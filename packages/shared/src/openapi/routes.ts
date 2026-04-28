@@ -479,19 +479,10 @@ export const paths: ZodOpenApiPathsObject = {
   },
 
   // ────────────────────── Bank proxies ──────────────────────
-  "/api/mono": {
-    get: {
-      summary: "Mono bank API proxy (через server-side token)",
-      tags: ["banks"],
-      security: cookieOrBearer,
-      requestParams: { query: namedSchemas.MonoQuery },
-      responses: {
-        "200": okEmpty,
-        "400": validationError,
-        "401": unauthorized,
-      },
-    },
-  },
+  // Monobank moved to a server-side webhook flow in roadmap-A —
+  // `/api/mono/connect`, `/api/mono/transactions` etc. live in their own
+  // OpenAPI section below. The legacy `/api/mono` token-passthrough proxy was
+  // removed when the polling pipeline was retired.
   "/api/privat": {
     get: {
       summary: "PrivatBank API proxy",

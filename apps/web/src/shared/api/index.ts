@@ -8,8 +8,8 @@
  *
  * Для нового коду краще брати клієнт через `useApiClient()` з
  * `@sergeant/api-client/react` (DI через провайдер), але існуючі
- * імпорти `import { monoApi, pushApi, ... } from "@shared/api"` продовжують
- * працювати через цей файл.
+ * імпорти `import { monoWebhookApi, pushApi, ... } from "@shared/api"`
+ * продовжують працювати через цей файл.
  */
 import { createApiClient } from "@sergeant/api-client";
 
@@ -36,7 +36,6 @@ export const pushApi = apiClient.push;
 export const nutritionApi = apiClient.nutrition;
 export const barcodeApi = apiClient.barcode;
 export const foodSearchApi = apiClient.foodSearch;
-export const monoApi = apiClient.mono;
 export const monoWebhookApi = apiClient.monoWebhook;
 export const privatApi = apiClient.privat;
 export const waitlistApi = apiClient.waitlist;
@@ -70,7 +69,6 @@ export type {
   MonoAccountDto,
   MonoConnectionStatus,
   MonoJar,
-  MonoStatementEntry,
   MonoSyncState,
   MonoTransactionDto,
   MonoTransactionsPage,

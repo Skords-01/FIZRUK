@@ -24,7 +24,6 @@ import { useHashRouter, useHashQueryParam } from "./hooks/useHashRouter";
 import { useUnifiedFinanceData } from "./hooks/useUnifiedFinanceData";
 import { useFinykPersonalization } from "./hooks/useFinykPersonalization";
 import { useMonoTokenMigration } from "./hooks/useMonoTokenMigration";
-import { useFlag } from "../../core/lib/featureFlags";
 import { consumePresetPrefill } from "../../core/onboarding/presetPrefill";
 
 const PRIVAT_ENABLED = false;
@@ -42,7 +41,6 @@ export default function App({
 }: FinykAppProps = {}) {
   const mono = useMonobank();
   const privat = usePrivatbank(PRIVAT_ENABLED);
-  const webhookEnabled = useFlag("mono_webhook");
   // One-time migration of legacy browser tokens to server-side webhook
   useMonoTokenMigration(/* isLoggedIn */ true);
   const toast = useToast();
@@ -58,9 +56,6 @@ export default function App({
   const focusLimitCategoryId = useHashQueryParam("cat");
   const [tokenInput, setTokenInput] = useState("");
   const [showToken, setShowToken] = useState(false);
-  const [rememberToken, setRememberToken] = useState(
-    () => !!readRaw("finyk_token_remembered", ""),
-  );
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [showBalance, setShowBalance] = useState(
     () => readRaw("finyk_show_balance_v1", "1") !== "0",
@@ -233,13 +228,10 @@ export default function App({
         onTokenInputChange={setTokenInput}
         showToken={showToken}
         onToggleShowToken={() => setShowToken((v) => !v)}
-        rememberToken={rememberToken}
-        onRememberTokenChange={setRememberToken}
-        webhookEnabled={webhookEnabled}
         authError={authError}
         error={error}
         connecting={connecting}
-        onConnect={() => connect(tokenInput.trim(), false, rememberToken)}
+        onConnect={() => connect(tokenInput.trim())}
         onContinueWithoutBank={() => {
           enableFinykManualOnly();
           setManualOnly(true);
