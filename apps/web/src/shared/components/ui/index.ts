@@ -44,6 +44,13 @@ export type { AvatarProps, AvatarSize, AvatarStatus } from "./Avatar";
 export { EmptyState } from "./EmptyState";
 export type { EmptyStateProps } from "./EmptyState";
 
+export {
+  FeatureSpotlight,
+  useResetSpotlight,
+  useSpotlightDismissed,
+} from "./FeatureSpotlight";
+export type { FeatureSpotlightProps } from "./FeatureSpotlight";
+
 export { FormField, Label } from "./FormField";
 export type { FormFieldProps, LabelProps } from "./FormField";
 
