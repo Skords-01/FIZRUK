@@ -138,6 +138,38 @@ docker compose -f ops/docker-compose.ops.yml logs n8n
 - Бот має бути адміном каналу
 - Тест: `curl -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" -d chat_id=<ID> -d text="test"`
 
+## Моніторинг (Prometheus + Grafana)
+
+Prometheus і Grafana включені в той самий compose-файл.
+
+| Сервіс     | URL                   | Логін             |
+| ---------- | --------------------- | ----------------- |
+| Prometheus | http://localhost:9090 | —                 |
+| Grafana    | http://localhost:3001 | `admin` / `admin` |
+
+Grafana автоматично підключає Prometheus як datasource (provisioning через `ops/grafana/datasources/prometheus.yml`).
+
+Prometheus скрейпить `GET /metrics` основного сервера (захищено Bearer token `METRICS_TOKEN`).
+
+**Потрібні змінні в `.env.ops`:**
+
+```
+METRICS_TOKEN=<той самий що у .env сервера>
+SERVER_METRICS_URL=http://host.docker.internal:3000/metrics
+```
+
+**Prometheus targets:** http://localhost:9090/targets
+
+**Troubleshooting — метрики не збираються:**
+
+1. Переконайся що `pnpm dev:server` запущений
+2. Перевір збіг `METRICS_TOKEN` у `.env.ops` і `.env`
+3. `curl -H "Authorization: Bearer <token>" http://localhost:3000/metrics`
+
+## Додавання нового workflow
+
+Дивись [`docs/playbooks/add-n8n-workflow.md`](../docs/playbooks/add-n8n-workflow.md).
+
 ## Вартість
 
 | Компонент            | Вартість/міс  |

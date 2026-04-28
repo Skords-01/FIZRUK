@@ -161,7 +161,26 @@ pnpm --filter @sergeant/web exec vitest run src/core/lib/hubChatActionCards
 pnpm --filter @sergeant/web exec vitest run src/core/lib/hubChatQuickActions
 ```
 
-### 8. PR
+### 8. Quota tuning (необов'язково, але рекомендовано)
+
+Кожен tool-use виклик списує з денної AI-квоти користувача. За замовчуванням — 3 очки (константа `DEFAULT_TOOL_COST` у `aiQuota.ts`). Щоб виставити per-tool ліміт або кастомну вартість, постав env vars на сервері:
+
+| Змінна                        | Опис                                                                                                                               | Приклад                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `AI_QUOTA_TOOL_LIMITS`        | JSON-об'єкт `{"tool_name": maxPerDay}`. Якщо tool-а немає — застосовується `AI_QUOTA_TOOL_DEFAULT_LIMIT`.                          | `{"import_monobank_range": 5, "morning_briefing": 2}` |
+| `AI_QUOTA_TOOL_DEFAULT_LIMIT` | Денний ліміт для tool-ів, яких немає у `AI_QUOTA_TOOL_LIMITS`. Якщо не задано — ліміт для tool-ів не відокремлений від загального. | `20`                                                  |
+| `AI_QUOTA_TOOL_COST`          | Вартість одного tool-use в одиницях квоти (default 3).                                                                             | `5`                                                   |
+| `AI_QUOTA_DISABLED`           | `"1"` відключає квоту повністю (dev/CI).                                                                                           | `1`                                                   |
+
+**Коли налаштовувати:**
+
+- Новий tool дорогий (великий контекст, багато DB-запитів) → підвищ `AI_QUOTA_TOOL_COST` або виставь малий ліміт у `AI_QUOTA_TOOL_LIMITS`.
+- Tool неймовірно дешевий і часто використовується → не обмежуй (виключи з JSON або поклади `null`).
+- Деструктивний tool (`import_monobank_range`, `forget`) → виставити явний низький ліміт у `AI_QUOTA_TOOL_LIMITS`.
+
+Реалізація: `apps/server/src/modules/chat/aiQuota.ts` — функція `consumeToolQuota`.
+
+### 9. PR
 
 Branch: `devin/<unix-ts>-feat-chat-<tool-name>`. Conventional commit:
 
@@ -186,6 +205,7 @@ feat(web): add HubChat tool log_water
 - [ ] Якщо destructive — додано у `RISKY_TOOLS`.
 - [ ] Якщо часта — quick action chip у `hubChatQuickActions.ts`.
 - [ ] Unit tests для handler + (опційно) action card + quick action.
+- [ ] Quota tuning: якщо tool дорогий або деструктивний — додано запис у `AI_QUOTA_TOOL_LIMITS`.
 - [ ] `pnpm lint` + `pnpm typecheck` — green.
 - [ ] Smoke-перевірка: відкрити HubChat у dev → попросити модель зробити дію → побачити action card.
 
