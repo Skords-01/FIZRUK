@@ -1,9 +1,12 @@
+import type { CSSProperties } from "react";
 import { cn } from "../../lib/cn";
 
 export interface SkeletonProps {
   className?: string;
   /** Use shimmer effect instead of pulse (more premium feel) */
   shimmer?: boolean;
+  /** Inline style passthrough (e.g. staggered `animationDelay`). */
+  style?: CSSProperties;
 }
 
 /**
@@ -11,7 +14,7 @@ export interface SkeletonProps {
  * `motion-safe:animate-pulse` respects `prefers-reduced-motion: reduce`
  * (WCAG 2.3.3 + Apple HIG reduced motion compliance).
  */
-export function Skeleton({ className, shimmer = false }: SkeletonProps) {
+export function Skeleton({ className, shimmer = false, style }: SkeletonProps) {
   return (
     <div
       className={cn(
@@ -19,6 +22,7 @@ export function Skeleton({ className, shimmer = false }: SkeletonProps) {
         shimmer ? "relative overflow-hidden" : "motion-safe:animate-pulse",
         className,
       )}
+      style={style}
       aria-hidden="true"
     >
       {shimmer && (
@@ -31,7 +35,11 @@ export function Skeleton({ className, shimmer = false }: SkeletonProps) {
   );
 }
 
-export function SkeletonText({ className, shimmer = false }: SkeletonProps) {
+export function SkeletonText({
+  className,
+  shimmer = false,
+  style,
+}: SkeletonProps) {
   return (
     <div
       className={cn(
@@ -39,6 +47,7 @@ export function SkeletonText({ className, shimmer = false }: SkeletonProps) {
         shimmer ? "relative overflow-hidden" : "motion-safe:animate-pulse",
         className,
       )}
+      style={style}
       aria-hidden="true"
     >
       {shimmer && (
@@ -55,13 +64,18 @@ export function SkeletonText({ className, shimmer = false }: SkeletonProps) {
  * Pre-composed skeleton for module cards (HubDashboard, StatusRow).
  * Matches the visual structure of real cards for seamless loading states.
  */
-export function SkeletonCard({ className, shimmer = false }: SkeletonProps) {
+export function SkeletonCard({
+  className,
+  shimmer = false,
+  style,
+}: SkeletonProps) {
   return (
     <div
       className={cn(
         "rounded-2xl border border-line bg-panel p-4 space-y-3",
         className,
       )}
+      style={style}
       aria-hidden="true"
     >
       <div className="flex items-center gap-3">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent, type SyntheticEvent } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
@@ -38,7 +38,11 @@ function PasswordStrengthBar({ password }: { password: string }) {
   );
 }
 
-export function AuthPage({ onContinueWithoutAccount }) {
+interface AuthPageProps {
+  onContinueWithoutAccount?: () => void;
+}
+
+export function AuthPage({ onContinueWithoutAccount }: AuthPageProps) {
   const {
     login,
     loginWithGoogle,
@@ -71,7 +75,7 @@ export function AuthPage({ onContinueWithoutAccount }) {
     setForgotEmail("");
   };
 
-  const handleForgotSubmit = async (e) => {
+  const handleForgotSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     const target = (forgotEmail || email || "").trim();
     if (!target) {
@@ -92,7 +96,7 @@ export function AuthPage({ onContinueWithoutAccount }) {
     setGoogleLoading(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     if (mode === "login") {
