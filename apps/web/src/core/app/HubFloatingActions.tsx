@@ -20,14 +20,27 @@ import { cn } from "@shared/lib/cn";
  *   users into a conversational flow before they've logged anything.
  * @param {() => void} props.onOpenChat - Opens the hub AI chat panel
  *   (resolves to `ui.openChat()`).
+ * @param {boolean} [props.aboveBottomNav=false] - When true, positions
+ *   the FAB above the ModuleBottomNav (64px + safe-area). Used in module
+ *   views to prevent the FAB from overlapping the navigation tabs.
  */
-export function HubFloatingActions({ hidden = false, onOpenChat }) {
+export function HubFloatingActions({
+  hidden = false,
+  onOpenChat,
+  aboveBottomNav = false,
+}) {
   if (hidden || !onOpenChat) return null;
+
+  // When inside a module with bottom nav, offset by nav height (64px on touch)
+  // plus some breathing room (12px). On hub, just use safe-area + 20px.
+  const bottomOffset = aboveBottomNav
+    ? "calc(76px + env(safe-area-inset-bottom, 0px))"
+    : "calc(1.25rem + env(safe-area-inset-bottom, 0px))";
 
   return (
     <div
       className="fixed right-5 z-40 flex flex-col items-end gap-2 pointer-events-none"
-      style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
+      style={{ bottom: bottomOffset }}
     >
       <FeatureSpotlight
         id="hub-assistant-fab"
