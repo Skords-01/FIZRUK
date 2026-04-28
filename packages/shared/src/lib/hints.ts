@@ -11,6 +11,11 @@
  */
 import { readJSON, writeJSON, type KVStore } from "./kvStore";
 
+export type RetentionHintId =
+  | "retention_day_1"
+  | "retention_day_3"
+  | "retention_day_7";
+
 export type HintId =
   | "ftux_open_search"
   | "ftux_open_chat"
@@ -25,9 +30,7 @@ export type HintId =
   // Contextual onboarding hints
   | "ftux_swipe_to_delete"
   // Retention hooks — shown once on the Nth day after first real entry
-  | "retention_day_1"
-  | "retention_day_3"
-  | "retention_day_7";
+  | RetentionHintId;
 
 export type HintSurface =
   | "welcome"
@@ -381,7 +384,7 @@ const MS_PER_DAY = 86_400_000;
 export function getRetentionHintId(
   firstEntryAt: number,
   now = Date.now(),
-): HintId | null {
+): RetentionHintId | null {
   const daysSince = Math.floor((now - firstEntryAt) / MS_PER_DAY);
   if (daysSince === 0) return "retention_day_1";
   if (daysSince === 3) return "retention_day_3";

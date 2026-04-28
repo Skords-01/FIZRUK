@@ -163,16 +163,16 @@ describe("ProfilePage", () => {
     it("shows email verification banner when emailVerified is false", () => {
       mockUser.emailVerified = false;
       renderPage();
-      expect(screen.getByText("Email не підтверджено")).toBeInTheDocument();
+      expect(screen.getByText(/Email не підтверджено/)).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Надіслати лист" }),
+        screen.getByRole("button", { name: "Надіслати" }),
       ).toBeInTheDocument();
     });
 
     it("hides email verification banner when emailVerified is true", () => {
       renderPage();
       expect(
-        screen.queryByText("Email не підтверджено"),
+        screen.queryByText(/Email не підтверджено/),
       ).not.toBeInTheDocument();
     });
 
@@ -181,7 +181,7 @@ describe("ProfilePage", () => {
       renderPage();
       const links = screen.getAllByText("Видалити фото");
       fireEvent.click(links[0]);
-      expect(screen.getByText("Видалити?")).toBeInTheDocument();
+      expect(screen.getByText("Видалити фото?")).toBeInTheDocument();
     });
 
     it("shows change email button", () => {
@@ -249,7 +249,7 @@ describe("ProfilePage", () => {
       useOnlineStatusMock.mockReturnValue(false);
       mockUser.emailVerified = false;
       renderPage();
-      const btn = screen.getByRole("button", { name: "Надіслати лист" });
+      const btn = screen.getByRole("button", { name: "Надіслати" });
       expect(btn).toBeDisabled();
     });
 
