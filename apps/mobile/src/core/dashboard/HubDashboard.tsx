@@ -30,8 +30,9 @@
  */
 
 import { router, type Href } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -105,6 +106,122 @@ const mmkvStore: KVStore = {
     }
   },
 };
+
+/**
+ * AssistantFab — floating action button with pulse glow animation.
+ */
+function AssistantFab({ onPress }: { onPress: () => void }) {
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.4)).current;
+  const shadowOpacity = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    // Subtle pulse animation for the glow ring
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulseScale, {
+            toValue: 1.15,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseOpacity, {
+            toValue: 0,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(pulseScale, {
+            toValue: 1,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseOpacity, {
+            toValue: 0.4,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+    );
+
+    // Shadow breathing animation
+    const shadowAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shadowOpacity, {
+          toValue: 0.6,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacity, {
+          toValue: 0.3,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    pulseAnimation.start();
+    shadowAnimation.start();
+
+    return () => {
+      pulseAnimation.stop();
+      shadowAnimation.stop();
+    };
+  }, [pulseScale, pulseOpacity, shadowOpacity]);
+
+  return (
+    <View
+      style={{
+        position: "absolute",
+        right: 20,
+        bottom: 24,
+        pointerEvents: "box-none",
+      }}
+    >
+      {/* Pulse glow ring */}
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: -4,
+          left: -4,
+          right: -4,
+          bottom: -4,
+          borderRadius: 32,
+          backgroundColor: colors.accent,
+          opacity: pulseOpacity,
+          transform: [{ scale: pulseScale }],
+        }}
+        pointerEvents="none"
+      />
+      {/* Shadow layer */}
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: 2,
+          left: 2,
+          right: -2,
+          bottom: -2,
+          borderRadius: 28,
+          backgroundColor: colors.accent,
+          opacity: shadowOpacity,
+        }}
+        pointerEvents="none"
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Відкрити AI-асистента"
+        onPress={onPress}
+        className="h-14 flex-row items-center gap-2 rounded-full bg-brand-700 pl-4 pr-5 shadow-xl active:scale-95 active:opacity-90"
+        testID="dashboard-assistant-fab"
+      >
+        <Sparkles size={20} color="#fff" strokeWidth={2.2} />
+        <Text className="text-sm font-semibold text-white">Асистент</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 function formatToday(now: Date): string {
   try {
@@ -393,27 +510,9 @@ export function HubDashboard() {
         <WeeklyDigestFooter />
       </ScrollView>
 
-      {/* Assistant FAB — thumb-reach entry to AI chat.
+      {/* Assistant FAB — thumb-reach entry to AI chat with pulse glow.
           Always visible so user can reach assistant from anywhere. */}
-      <View
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: 24,
-          pointerEvents: "box-none",
-        }}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Відкрити AI-асистента"
-          onPress={openAssistant}
-          className="h-14 flex-row items-center gap-2 rounded-full bg-brand-700 pl-4 pr-5 shadow-lg active:scale-95 active:opacity-90"
-          testID="dashboard-assistant-fab"
-        >
-          <Sparkles size={20} color="#fff" strokeWidth={2.2} />
-          <Text className="text-sm font-semibold text-white">Асистент</Text>
-        </Pressable>
-      </View>
+      <AssistantFab onPress={openAssistant} />
     </SafeAreaView>
   );
 }

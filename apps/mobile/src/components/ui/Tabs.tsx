@@ -40,6 +40,10 @@ export interface TabsItem<Value extends string = string> {
   value: Value;
   label: ReactNode;
   disabled?: boolean;
+  /** Badge count to show on the tab */
+  badge?: number;
+  /** Badge variant for styling */
+  badgeVariant?: "default" | "dot";
 }
 
 export interface TabsProps<Value extends string = string> {
@@ -182,24 +186,48 @@ export function Tabs<Value extends string = string>({
               item.disabled ? "opacity-50" : undefined,
             )}
           >
-            {typeof item.label === "string" ||
-            typeof item.label === "number" ? (
-              <Text
-                className={cx(
-                  "font-semibold",
-                  textSizes[size],
-                  isActive
-                    ? tabStyle === "pill"
-                      ? pillActiveText[variant]
-                      : underlineActiveText[variant]
-                    : "text-fg-muted",
-                )}
-              >
-                {item.label}
-              </Text>
-            ) : (
-              item.label
-            )}
+            <View className="flex-row items-center gap-1.5">
+              {typeof item.label === "string" ||
+              typeof item.label === "number" ? (
+                <Text
+                  className={cx(
+                    "font-semibold",
+                    textSizes[size],
+                    isActive
+                      ? tabStyle === "pill"
+                        ? pillActiveText[variant]
+                        : underlineActiveText[variant]
+                      : "text-fg-muted",
+                  )}
+                >
+                  {item.label}
+                </Text>
+              ) : (
+                item.label
+              )}
+              {/* Badge */}
+              {item.badge !== undefined && item.badge > 0 ? (
+                item.badgeVariant === "dot" ? (
+                  <View className="w-2 h-2 rounded-full bg-danger" />
+                ) : (
+                  <View
+                    className={cx(
+                      "min-w-[18px] h-[18px] px-1 rounded-full items-center justify-center",
+                      isActive ? "bg-brand" : "bg-cream-300 dark:bg-cream-600",
+                    )}
+                  >
+                    <Text
+                      className={cx(
+                        "text-[10px] font-bold tabular-nums",
+                        isActive ? "text-white" : "text-fg-muted",
+                      )}
+                    >
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </Text>
+                  </View>
+                )
+              ) : null}
+            </View>
           </Pressable>
         );
       })}
