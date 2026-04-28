@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   DASHBOARD_ORDER: "hub_dashboard_order_v1",
   HUB_PREFS: "hub_prefs_v1",
   USER_PROFILE: "hub_user_profile_v1",
+  DASHBOARD_DENSITY: "hub_dashboard_density_v1",
 
   // Hub quick-stats previews rendered on the dashboard
   FINYK_QUICK_STATS: "finyk_quick_stats",

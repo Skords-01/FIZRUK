@@ -72,6 +72,9 @@ export * from "./lib/analyticsEvents";
 // DOM-free haptic contract (platform adapters register at app bootstrap).
 export * from "./lib/haptic";
 
+// Shared animation presets — timing, easing, spring configs, stagger helpers.
+export * from "./lib/animations";
+
 // Platform feature-detect (Capacitor WebView vs browser). DOM-free; reads
 // the `Capacitor` global injected by the native runtime, so `@sergeant/web`
 // can import it without pulling `@capacitor/*` into the browser bundle.
