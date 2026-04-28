@@ -1,4 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
+import {
+  safeReadStringLS,
+  safeWriteLS,
+  safeRemoveLS,
+} from "@shared/lib/storage";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Button } from "@shared/components/ui/Button";
@@ -9,7 +14,6 @@ import {
   DASHBOARD_DENSITIES,
   DASHBOARD_DENSITY_LABELS,
   DASHBOARD_DENSITY_DESCRIPTIONS,
-  DEFAULT_DASHBOARD_DENSITY,
   normalizeDashboardDensity,
   STORAGE_KEYS,
   getActiveModules,
@@ -109,22 +113,12 @@ export function GeneralSection({
 }: GeneralSectionProps) {
   const [orderReset, setOrderReset] = useState(false);
   const [showHints, setShowHints] = useHubPref<boolean>("showHints", true);
-  const [density, setDensityState] = useState<DashboardDensity>(() => {
-    try {
-      return normalizeDashboardDensity(
-        localStorage.getItem(STORAGE_KEYS.DASHBOARD_DENSITY),
-      );
-    } catch {
-      return DEFAULT_DASHBOARD_DENSITY;
-    }
-  });
+  const [density, setDensityState] = useState<DashboardDensity>(() =>
+    normalizeDashboardDensity(safeReadStringLS(STORAGE_KEYS.DASHBOARD_DENSITY)),
+  );
   const handleDensityChange = useCallback((next: DashboardDensity) => {
     setDensityState(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.DASHBOARD_DENSITY, next);
-    } catch {
-      /* noop */
-    }
+    safeWriteLS(STORAGE_KEYS.DASHBOARD_DENSITY, next);
   }, []);
   const [order, setOrder] = useState<ModuleId[]>(
     () => loadDashboardOrder() as ModuleId[],
@@ -135,25 +129,13 @@ export function GeneralSection({
   const localStorageStore: KVStore = useMemo(
     () => ({
       getString(key) {
-        try {
-          return localStorage.getItem(key);
-        } catch {
-          return null;
-        }
+        return safeReadStringLS(key);
       },
       setString(key, value) {
-        try {
-          localStorage.setItem(key, value);
-        } catch {
-          /* noop */
-        }
+        safeWriteLS(key, value);
       },
       remove(key) {
-        try {
-          localStorage.removeItem(key);
-        } catch {
-          /* noop */
-        }
+        safeRemoveLS(key);
       },
     }),
     [],
