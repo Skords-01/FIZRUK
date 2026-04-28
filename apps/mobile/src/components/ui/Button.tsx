@@ -99,12 +99,13 @@ const variantLabel: Record<ButtonVariant, string> = {
   "nutrition-soft": "text-lime-800",
 };
 
+// Size presets — all sizes meet 44px minimum touch target (WCAG 2.5.5)
 const sizeContainer: Record<ButtonSize, string> = {
-  xs: "h-8 px-3 rounded-xl",
-  sm: "h-9 px-[14px] rounded-xl",
-  md: "h-11 px-5 rounded-2xl",
-  lg: "h-12 px-6 rounded-2xl",
-  xl: "h-14 px-8 rounded-3xl",
+  xs: "min-h-[44px] h-10 px-4 rounded-xl",
+  sm: "min-h-[44px] h-11 px-4 rounded-xl",
+  md: "min-h-[48px] h-12 px-5 rounded-2xl",
+  lg: "min-h-[52px] h-14 px-6 rounded-2xl",
+  xl: "min-h-[56px] h-16 px-8 rounded-3xl",
 };
 
 const sizeLabel: Record<ButtonSize, string> = {
@@ -115,12 +116,13 @@ const sizeLabel: Record<ButtonSize, string> = {
   xl: "text-base font-bold",
 };
 
+// Icon-only sizes — all meet 44px minimum touch target
 const iconOnlySize: Record<ButtonSize, string> = {
-  xs: "h-8 w-8 rounded-xl",
-  sm: "h-9 w-9 rounded-xl",
-  md: "h-11 w-11 rounded-2xl",
-  lg: "h-12 w-12 rounded-2xl",
-  xl: "h-14 w-14 rounded-3xl",
+  xs: "h-10 w-10 min-h-[44px] min-w-[44px] rounded-xl",
+  sm: "h-11 w-11 min-h-[44px] min-w-[44px] rounded-xl",
+  md: "h-12 w-12 min-h-[48px] min-w-[48px] rounded-2xl",
+  lg: "h-14 w-14 min-h-[52px] min-w-[52px] rounded-2xl",
+  xl: "h-16 w-16 min-h-[56px] min-w-[56px] rounded-3xl",
 };
 
 // `text-color` strings map to the Text `color` prop via NativeWind, so the
@@ -205,7 +207,9 @@ export const Button = forwardRef<RNView, ButtonProps>(function Button(
       hitSlop={hitSlop}
       className={containerClass}
       style={({ pressed }) =>
-        pressed && !isDisabled ? { transform: [{ scale: 0.98 }] } : null
+        pressed && !isDisabled
+          ? { transform: [{ scale: 0.97 }], opacity: 0.9 }
+          : undefined
       }
       {...props}
     >

@@ -82,10 +82,12 @@ export const BentoCard = memo(function BentoCard({
         }
         data-inactive={inactive ? "true" : undefined}
         className={cn(
-          "group relative flex flex-col w-full rounded-3xl border border-line p-3.5",
+          "group relative flex flex-col w-full rounded-3xl border border-line",
+          "p-3.5 [@media(pointer:coarse)]:p-4",
+          "min-h-[120px] [@media(pointer:coarse)]:min-h-[132px]",
           "shadow-card transition-all duration-200 text-left",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-          "active:scale-[0.98]",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2",
+          "active:scale-[0.98] [@media(pointer:coarse)]:active:scale-[0.97]",
           inactive ? "bg-panel grayscale" : config.cardBg,
           isDragging && "shadow-float cursor-grabbing",
         )}
@@ -162,11 +164,12 @@ export const BentoCard = memo(function BentoCard({
           aria-label={onQuickAdd.label}
           title={onQuickAdd.label}
           className={cn(
-            "absolute top-3.5 right-3.5",
-            "w-6 h-6 rounded-md flex items-center justify-center",
+            "absolute top-3.5 right-3.5 [@media(pointer:coarse)]:top-4 [@media(pointer:coarse)]:right-4",
+            "w-7 h-7 [@media(pointer:coarse)]:w-9 [@media(pointer:coarse)]:h-9",
+            "rounded-lg flex items-center justify-center",
             "text-text bg-panel/80 hover:bg-primary hover:text-bg",
-            "transition-colors",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+            "transition-colors active:scale-95",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1",
           )}
         >
           <Icon name="plus" size={13} strokeWidth={2.5} />

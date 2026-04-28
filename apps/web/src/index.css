@@ -324,7 +324,7 @@
 
   /* ═══════════════════════════════════════════════════════════════════════
      SAFE AREA PADDING — iOS notch & home indicator
-     ═══════════════════════════════════════════════════════════════════════ */
+     ══��════════════════════════════════════════════════════════════════════ */
   .page-tabbar-pad {
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
@@ -488,7 +488,7 @@
     height: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════════════���════════════════════
      SCROLLBAR UTILITIES
      ═══════════════════════════════════════════════════════════════════════ */
   .no-scrollbar::-webkit-scrollbar {
@@ -705,7 +705,7 @@
 
 /* ═══════════════════════════════════════════════════════════════════════
    FLOATING ACTION BUTTON — Quick actions
-   ═══════════════════════════════════════════════════════════════════════ */
+   ═════════════════════════════════════════════��═════════════════════════ */
 .fab {
   @apply fixed z-50 flex items-center justify-center
          w-14 h-14 rounded-full
@@ -775,4 +775,123 @@
   @apply opacity-100;
   visibility: visible;
   transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATION UTILITIES
+   Touch-friendly spacing, improved readability, and responsive helpers.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Touch target helper — ensures minimum 44x44px on touch devices */
+.touch-target {
+  @apply relative;
+}
+.touch-target::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Mobile-optimized list items with larger touch targets */
+.mobile-list-item {
+  @apply min-h-[56px] flex items-center px-4 py-3
+         active:bg-panelHi transition-colors;
+}
+
+@media (pointer: coarse) {
+  .mobile-list-item {
+    @apply min-h-[60px] py-4;
+  }
+}
+
+/* Swipeable container for mobile gestures */
+.swipeable {
+  @apply overflow-x-auto snap-x snap-mandatory scroll-smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.swipeable::-webkit-scrollbar {
+  display: none;
+}
+.swipeable > * {
+  @apply snap-center;
+}
+
+/* Mobile-first card grid — 1 column on mobile, 2 on tablet+ */
+.card-grid-mobile {
+  @apply grid grid-cols-1 gap-3;
+}
+@media (min-width: 480px) {
+  .card-grid-mobile {
+    @apply grid-cols-2;
+  }
+}
+
+/* Improved text readability on small screens */
+.mobile-readable {
+  @apply text-base leading-relaxed;
+  /* Slightly larger text on mobile for better readability */
+}
+@media (min-width: 640px) {
+  .mobile-readable {
+    @apply text-sm leading-normal;
+  }
+}
+
+/* Bottom sheet safe area padding */
+.sheet-safe-bottom {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Sticky header with safe area */
+.sticky-header-safe {
+  @apply sticky top-0 z-40 bg-bg/95 backdrop-blur-sm;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Hide on touch devices */
+@media (pointer: coarse) {
+  .hide-touch {
+    display: none !important;
+  }
+}
+
+/* Show only on touch devices */
+@media (pointer: fine) {
+  .show-touch-only {
+    display: none !important;
+  }
+}
+
+/* Optimized button spacing for mobile */
+.mobile-button-group {
+  @apply flex flex-col gap-3;
+}
+@media (min-width: 480px) {
+  .mobile-button-group {
+    @apply flex-row gap-2;
+  }
+}
+
+/* Loading placeholder with reduced motion support */
+.loading-placeholder {
+  @apply bg-line/30 rounded-lg;
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-placeholder {
+    animation: none;
+    @apply bg-line/50;
+  }
+}
+
+/* Improved focus visibility for mobile */
+@media (pointer: coarse) {
+  :focus-visible {
+    outline-offset: 4px;
+  }
 }
