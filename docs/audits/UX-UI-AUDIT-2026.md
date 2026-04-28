@@ -1,9 +1,69 @@
-# 🔍 Генеральний аудит дизайну, UI/UX та користувацького досвіду
+# Генеральний аудит дизайну, UI/UX та користувацького досвіду
 
 **Продукт:** Sergeant  
 **Дата аудиту:** 28 квітня 2026  
+**Дата оновлення:** 28 квітня 2026  
 **Версія:** 0.1.0  
-**Платформи:** React Native (iOS/Android) + Web (в розробці)
+**Платформи:** React Native (iOS/Android) + Web (в розробці)  
+**Статус:** РЕАЛІЗОВАНО
+
+---
+
+## Реалізовані покращення (28.04.2026)
+
+### Phase 1: Core UX Improvements
+
+| Покращення                 | Статус | Файли                                         |
+| -------------------------- | ------ | --------------------------------------------- |
+| Dark Mode з Theme Toggle   | Done   | `ColorSchemeBridge.tsx`, `GeneralSection.tsx` |
+| Unified BackButton         | Done   | `BackButton.tsx` (новий)                      |
+| Sheet Gesture Dismiss      | Done   | `Sheet.tsx`                                   |
+| Input Helper Icons         | Done   | `Input.tsx`                                   |
+| EmptyState Semantic Tokens | Done   | `EmptyState.tsx`                              |
+| Toast Safe Area            | Done   | `Toast.tsx`                                   |
+| Tab Badges All Modules     | Done   | `useTabBadges.ts`, `_layout.tsx`              |
+| Settings Grouping          | Done   | `HubSettingsPage.tsx`                         |
+| Forgot Password Screen     | Done   | `forgot-password.tsx` (новий)                 |
+| PageSkeleton Component     | Done   | `PageSkeleton.tsx` (новий)                    |
+
+### Phase 2: Advanced UX Improvements
+
+| Покращення                      | Статус | Файли                                                                      |
+| ------------------------------- | ------ | -------------------------------------------------------------------------- |
+| Pull-to-refresh HubDashboard    | Done   | `HubDashboard.tsx`                                                         |
+| ModuleErrorBoundary Enhanced UI | Done   | `ModuleErrorBoundary.tsx`                                                  |
+| BackButton в nutrition pages    | Done   | `RecipeDetail.tsx`, `RecipeForm.tsx`, `SavedRecipesList.tsx`, `Pantry.tsx` |
+| BackButton в fizruk pages       | Done   | `Workouts.tsx`                                                             |
+| BackButton в core pages         | Done   | `AssistantCataloguePage.tsx`                                               |
+| useReduceMotion hook            | Done   | `useReduceMotion.ts` (новий)                                               |
+| useScreenReader hook            | Done   | `useScreenReader.ts` (новий)                                               |
+| LoadingOverlay component        | Done   | `LoadingOverlay.tsx` (новий)                                               |
+| Hooks index barrel              | Done   | `hooks/index.ts` (новий)                                                   |
+
+### Phase 3: Advanced Components & Theming
+
+| Покращення                   | Статус | Файли                           |
+| ---------------------------- | ------ | ------------------------------- |
+| Mobile theme extension       | Done   | `theme.ts` (розширено)          |
+| chartColors semantic tokens  | Done   | `theme.ts`                      |
+| HabitHeatmap semantic colors | Done   | `HabitHeatmap.tsx`              |
+| MacroRing semantic colors    | Done   | `MacroRing.tsx`                 |
+| Shopping page Input fix      | Done   | `Shopping.tsx`                  |
+| FormField wrapper component  | Done   | `FormField.tsx` (новий)         |
+| ConfirmDialog enhanced       | Done   | `ConfirmDialog.tsx` (покращено) |
+| useConfirm imperative hook   | Done   | `ConfirmDialog.tsx`             |
+| SwipeableRow semantic colors | Done   | `SwipeableRow.tsx`              |
+| commonActions expanded       | Done   | `SwipeableRow.tsx`              |
+| ProgressIndicator component  | Done   | `ProgressIndicator.tsx` (новий) |
+| ProgressBar/Circle/Steps     | Done   | `ProgressIndicator.tsx`         |
+| Centralized haptics utility  | Done   | `lib/haptics.ts` (новий)        |
+| useHaptics hook              | Done   | `lib/haptics.ts`                |
+
+### Статистика
+
+- **Нових файлів:** 12
+- **Модифікованих файлів:** 26
+- **Загальна кількість покращень:** 33
 
 ---
 
@@ -381,7 +441,7 @@ export function ColorSchemeBridge() {
 #### A2. Уніфікувати Back Navigation
 
 ```tsx
-// Створити BackButton компонент
+// Створити BackButton ко��понент
 export function BackButton({ onPress }: { onPress: () => void }) {
   return (
     <Pressable

@@ -95,6 +95,8 @@ export default function TabsLayout() {
             title: "ФІНІК",
             tabBarIcon: createTabIcon(Wallet),
             tabBarButtonTestID: "tab-finyk",
+            tabBarBadge: badges.finyk,
+            tabBarBadgeStyle: { backgroundColor: colors.warning },
           }}
         />
         <Tabs.Screen
@@ -106,6 +108,8 @@ export default function TabsLayout() {
             // `app/(tabs)/fizruk/_layout.tsx`) that draws its own headers
             // per screen. Hiding the Tabs header prevents a double bar.
             headerShown: false,
+            tabBarBadge: badges.fizruk,
+            tabBarBadgeStyle: { backgroundColor: colors.info },
           }}
         />
         <Tabs.Screen
@@ -119,7 +123,12 @@ export default function TabsLayout() {
         />
         <Tabs.Screen
           name="nutrition"
-          options={{ title: "Їжа", tabBarIcon: createTabIcon(UtensilsCrossed) }}
+          options={{
+            title: "Їжа",
+            tabBarIcon: createTabIcon(UtensilsCrossed),
+            tabBarBadge: badges.nutrition,
+            tabBarBadgeStyle: { backgroundColor: colors.success },
+          }}
         />
       </Tabs>
     </>

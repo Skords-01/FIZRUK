@@ -14,7 +14,15 @@
 
 import * as Haptics from "expo-haptics";
 import type { LucideIcon } from "lucide-react-native";
-import { Edit2, MoreHorizontal, Trash2 } from "lucide-react-native";
+import {
+  Archive,
+  Check,
+  Edit2,
+  MoreHorizontal,
+  SkipForward,
+  Star,
+  Trash2,
+} from "lucide-react-native";
 import { useCallback, useRef, type ReactNode } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import {
@@ -22,6 +30,8 @@ import {
   GestureDetector,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
+
+import { semanticColors, brandColors } from "@/theme";
 
 export interface SwipeAction {
   /** Unique key for the action */
@@ -280,13 +290,14 @@ export function SwipeableRow({
 }
 
 /**
- * Pre-configured swipe actions for common use cases
+ * Pre-configured swipe actions for common use cases.
+ * Uses semantic colors from the theme for consistency.
  */
 export const commonActions = {
   edit: (onPress: () => void): SwipeAction => ({
     key: "edit",
     icon: Edit2,
-    backgroundColor: "#3b82f6", // blue-500
+    backgroundColor: semanticColors.info,
     label: "Редагувати",
     onPress,
   }),
@@ -294,7 +305,7 @@ export const commonActions = {
   delete: (onPress: () => void): SwipeAction => ({
     key: "delete",
     icon: Trash2,
-    backgroundColor: "#ef4444", // red-500
+    backgroundColor: semanticColors.danger,
     label: "Видалити",
     onPress,
     destructive: true,
@@ -303,8 +314,41 @@ export const commonActions = {
   more: (onPress: () => void): SwipeAction => ({
     key: "more",
     icon: MoreHorizontal,
-    backgroundColor: "#6b7280", // gray-500
+    backgroundColor: brandColors.cream[500],
+    iconColor: "#1c1917",
     label: "Більше",
+    onPress,
+  }),
+
+  archive: (onPress: () => void): SwipeAction => ({
+    key: "archive",
+    icon: Archive,
+    backgroundColor: "#8b5cf6", // violet-500
+    label: "Архівувати",
+    onPress,
+  }),
+
+  complete: (onPress: () => void): SwipeAction => ({
+    key: "complete",
+    icon: Check,
+    backgroundColor: semanticColors.success,
+    label: "Виконано",
+    onPress,
+  }),
+
+  skip: (onPress: () => void): SwipeAction => ({
+    key: "skip",
+    icon: SkipForward,
+    backgroundColor: semanticColors.warning,
+    label: "Пропустити",
+    onPress,
+  }),
+
+  favorite: (onPress: () => void): SwipeAction => ({
+    key: "favorite",
+    icon: Star,
+    backgroundColor: "#f59e0b", // amber-500
+    label: "Обране",
     onPress,
   }),
 };
@@ -360,13 +404,7 @@ export function HabitSwipeableRow({
   const rightActions: SwipeAction[] = [];
 
   if (onSkip) {
-    leftActions.push({
-      key: "skip",
-      icon: MoreHorizontal,
-      backgroundColor: "#f59e0b", // amber-500
-      label: "Пропустити",
-      onPress: onSkip,
-    });
+    leftActions.push(commonActions.skip(onSkip));
   }
 
   if (onEdit) {

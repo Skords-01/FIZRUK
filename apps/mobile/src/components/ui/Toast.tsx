@@ -58,6 +58,7 @@ import {
   GestureDetector,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
@@ -372,12 +373,19 @@ const toastDurations = new Map<number, number>();
 
 export function ToastContainer({ className }: ToastContainerProps) {
   const { toasts, dismiss } = useToast();
+  const insets = useSafeAreaInsets();
 
   if (toasts.length === 0) return null;
 
   return (
     <GestureHandlerRootView
-      style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 50 }}
+      style={{
+        position: "absolute",
+        top: insets.top,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+      }}
     >
       <View
         accessibilityLiveRegion="polite"

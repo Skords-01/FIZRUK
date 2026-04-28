@@ -32,5 +32,6 @@ const authClient = createAuthClient({
 // `useUser()` з `@sergeant/api-client/react` (GET `/api/v1/me`), щоб
 // mobile і web читали ту саму ідентичність. Див. `docs/mobile/overview.md` і
 // `app/_layout.tsx`, де піднято `ApiClientProvider`.
-export const { signIn, signUp, signOut, getSession } = authClient;
+export const { signIn, signUp, signOut, getSession, forgetPassword } =
+  authClient;
 export { authClient };
