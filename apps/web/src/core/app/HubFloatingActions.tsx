@@ -1,5 +1,4 @@
 import { Icon } from "@shared/components/ui/Icon";
-import { FeatureSpotlight } from "@shared/components/ui/FeatureSpotlight";
 import { cn } from "@shared/lib/cn";
 
 /**
@@ -71,20 +70,7 @@ export function HubFloatingActions({
       )}
       style={{ bottom: bottomOffset }}
     >
-      {compact ? (
-        fabButton
-      ) : (
-        <FeatureSpotlight
-          id="hub-assistant-fab"
-          title="AI-асистент"
-          description="Запитай будь-що про фінанси, тренування, харчування чи рутину"
-          placement="left"
-          showOnce
-          delay={3000}
-        >
-          {fabButton}
-        </FeatureSpotlight>
-      )}
+      {fabButton}
     </div>
   );
 }
