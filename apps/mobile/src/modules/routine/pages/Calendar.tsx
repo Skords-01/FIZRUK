@@ -555,7 +555,7 @@ export function Calendar({ testID }: CalendarProps = {}) {
   return (
     <ScrollView
       testID={testID ? `${testID}-scroll` : "routine-calendar-scroll"}
-      className="flex-1 bg-cream-50"
+      className="flex-1 bg-bg dark:bg-bg"
       contentContainerClassName="gap-4 px-4 pt-4 pb-8"
     >
       <View className="gap-1">

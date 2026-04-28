@@ -24,6 +24,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
+import { useColorScheme } from "nativewind";
 import { AnimatedCounter } from "./AnimatedCounter";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -61,7 +62,8 @@ const variantColors: Record<ProgressRingVariant, string> = {
   carbs: "#22c55e", // green-500
 };
 
-const trackColor = "#e5e7eb"; // gray-200
+const trackColorLight = "#e5e5e5"; // cream-200
+const trackColorDark = "#44403c"; // cream-700
 
 const sizePx: Record<ProgressRingSize, number> = {
   sm: 48,
@@ -118,6 +120,8 @@ export function ProgressRing({
 }: ProgressRingProps) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const prevValue = useRef(value);
+  const { colorScheme } = useColorScheme();
+  const trackColor = colorScheme === "dark" ? trackColorDark : trackColorLight;
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled()
@@ -178,12 +182,12 @@ export function ProgressRing({
         <AnimatedCounter
           value={percentText}
           suffix="%"
-          className={cx("font-semibold text-slate-800", labelTextSize[size])}
+          className={cx("font-semibold text-fg", labelTextSize[size])}
         />
       ) : (
         <Animated.Text
           className={cx(
-            "font-semibold tabular-nums text-slate-800",
+            "font-semibold tabular-nums text-fg",
             labelTextSize[size],
           )}
         >
@@ -266,6 +270,8 @@ export function ProgressRingGroup({
   size?: ProgressRingSize;
   className?: string;
 }) {
+  const { colorScheme } = useColorScheme();
+  const trackColor = colorScheme === "dark" ? trackColorDark : trackColorLight;
   const diameter = sizePx[size];
   const baseStroke = Math.max(2, Math.round(diameter / 16));
 

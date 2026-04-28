@@ -223,7 +223,7 @@ export function PageSkeleton({
 
   return (
     <SafeAreaView
-      className={cx("flex-1 bg-bg dark:bg-cream-950", className)}
+      className={cx("flex-1 bg-bg dark:bg-bg", className)}
       edges={["top"]}
     >
       {showHeader && <HeaderSkeleton />}

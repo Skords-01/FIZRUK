@@ -28,11 +28,11 @@ const MODULE_ACCENT_CLASS = {
 } as const;
 
 const MODULE_WASH_CLASS = {
-  finyk: "bg-brand-50/60",
-  fizruk: "bg-teal-50/60",
-  routine: "bg-coral-50/60",
-  nutrition: "bg-lime-50/60",
-  hub: "bg-cream-100",
+  finyk: "bg-brand-50/60 hero-gradient-finyk",
+  fizruk: "bg-cyan-50/60 hero-gradient-fizruk",
+  routine: "bg-coral-50/60 hero-gradient-routine",
+  nutrition: "bg-lime-50/60 hero-gradient-nutrition",
+  hub: "bg-cream-100 hero-gradient-brand",
 } as const;
 
 const MODULE_OPEN_CTA = {

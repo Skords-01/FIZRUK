@@ -47,6 +47,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Text,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -173,24 +174,30 @@ export function Sheet({
       ) * scrimOpacity.value,
   }));
 
-  const animatedIndicatorStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        scaleX: interpolate(
-          translateY.value,
-          [0, DISMISS_THRESHOLD],
-          [1, 1.2],
-          Extrapolation.CLAMP,
-        ),
-      },
-    ],
-    opacity: interpolate(
+  const animatedIndicatorStyle = useAnimatedStyle(() => {
+    const progress = interpolate(
       translateY.value,
       [0, DISMISS_THRESHOLD],
-      [0.5, 1],
+      [0, 1],
       Extrapolation.CLAMP,
-    ),
-  }));
+    );
+
+    return {
+      width: interpolate(progress, [0, 1], [40, 56]),
+      height: interpolate(progress, [0, 1], [4, 6]),
+      opacity: interpolate(progress, [0, 0.5, 1], [0.4, 0.7, 1]),
+      backgroundColor:
+        interpolate(
+          progress,
+          [0, 1],
+          [1, 1], // Keep same color, just for the structure
+        ) > 0
+          ? progress > 0.5
+            ? "rgb(16, 185, 129)" // brand color when near dismiss
+            : "rgb(168, 162, 158)" // cream-400
+          : "rgb(168, 162, 158)",
+    };
+  });
 
   // Gesture handler for swipe-to-dismiss
   const panGesture = Gesture.Pan()
@@ -273,10 +280,9 @@ export function Sheet({
                 <View className="flex items-center pt-3 pb-1">
                   <GestureDetector gesture={panGesture}>
                     <Animated.View
-                      style={animatedIndicatorStyle}
+                      style={[animatedIndicatorStyle, { borderRadius: 3 }]}
                       accessibilityLabel="Потягніть вниз щоб закрити"
                       accessibilityHint="Проведіть пальцем вниз для закриття панелі"
-                      className="w-10 h-1 bg-cream-400 dark:bg-cream-600 rounded-full"
                     />
                   </GestureDetector>
                 </View>

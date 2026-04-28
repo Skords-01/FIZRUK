@@ -22,6 +22,7 @@ import {
   type View as RNView,
 } from "react-native";
 import { ChevronRight } from "lucide-react-native";
+import { useColorScheme } from "nativewind";
 
 import { hapticTap } from "@sergeant/shared";
 import { colors } from "@/theme";
@@ -96,6 +97,7 @@ export const ListItem = forwardRef<RNView, ListItemProps>(function ListItem(
   ref,
 ) {
   const sizeStyles = sizes[size];
+  const { colorScheme } = useColorScheme();
 
   const handlePress = (
     event: Parameters<NonNullable<PressableProps["onPress"]>>[0],
@@ -105,6 +107,10 @@ export const ListItem = forwardRef<RNView, ListItemProps>(function ListItem(
     }
     onPress?.(event);
   };
+
+  // Use different pressed overlay for light vs dark mode
+  const pressedBg =
+    colorScheme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
 
   return (
     <Pressable
@@ -121,9 +127,7 @@ export const ListItem = forwardRef<RNView, ListItemProps>(function ListItem(
         className,
       )}
       style={({ pressed }) =>
-        pressed && !disabled
-          ? { backgroundColor: "rgba(0,0,0,0.05)" }
-          : undefined
+        pressed && !disabled ? { backgroundColor: pressedBg } : undefined
       }
       {...props}
     >

@@ -311,7 +311,7 @@ export function StreakFlame({
         >
           <Flame
             size={iconSize}
-            color={isInactive ? "#d1d5db" : flameColor}
+            color={isInactive ? "#a8a29e" : flameColor}
             fill={isInactive ? "transparent" : flameColor}
             strokeWidth={1.5}
           />
@@ -339,14 +339,14 @@ export function StreakFlame({
             className={cx(
               "font-bold tabular-nums",
               labelSize[size],
-              isInactive ? "text-slate-400" : "text-slate-800",
+              isInactive ? "text-fg-subtle" : "text-fg",
             )}
           />
           <Text
             className={cx(
               "font-medium",
               size === "sm" ? "text-xs" : "text-xs",
-              isInactive ? "text-slate-400" : "text-slate-500",
+              isInactive ? "text-fg-subtle" : "text-fg-muted",
             )}
           >
             {getLabelText()}
@@ -376,22 +376,22 @@ export function StreakBadge({
         "flex-row items-center gap-1 px-2 py-1 rounded-full",
         isActive
           ? isMilestone
-            ? "bg-orange-100 border border-orange-300"
-            : "bg-amber-50 border border-amber-200"
-          : "bg-slate-100 border border-slate-200",
+            ? "bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700"
+            : "bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700"
+          : "bg-cream-100 dark:bg-cream-800 border border-line",
         className,
       )}
     >
       <Flame
         size={14}
-        color={isActive ? "#f97316" : "#9ca3af"}
+        color={isActive ? "#f97316" : "#a8a29e"}
         fill={isActive ? "#f97316" : "transparent"}
         strokeWidth={2}
       />
       <Text
         className={cx(
           "text-xs font-semibold tabular-nums",
-          isActive ? "text-orange-700" : "text-slate-500",
+          isActive ? "text-orange-700 dark:text-orange-400" : "text-fg-muted",
         )}
       >
         {days}

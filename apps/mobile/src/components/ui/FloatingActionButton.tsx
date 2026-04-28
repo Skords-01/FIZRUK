@@ -295,7 +295,7 @@ export function FloatingActionButton({
         <Pressable onPress={toggleExpanded} className="absolute inset-0">
           <Animated.View
             style={{ opacity: backdropOpacity }}
-            className="absolute inset-0 bg-black/30"
+            className="absolute inset-0 bg-overlay"
           />
         </Pressable>
       )}
@@ -325,8 +325,8 @@ export function FloatingActionButton({
                 className="flex-row items-center gap-3"
               >
                 {/* Label */}
-                <View className="px-3 py-1.5 rounded-lg bg-white shadow-sm">
-                  <Text className="text-sm font-medium text-slate-700">
+                <View className="px-3 py-1.5 rounded-lg bg-surface dark:bg-cream-800 shadow-sm">
+                  <Text className="text-sm font-medium text-fg">
                     {action.label}
                   </Text>
                 </View>
