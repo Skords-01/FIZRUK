@@ -8,16 +8,17 @@
  * @see apps/web/src/shared/components/ui/Button.tsx — canonical source of truth
  *
  * Parity notes:
- * - Same variant enum (primary/secondary/ghost/danger/destructive/success
- *   plus module-specific `finyk`/`fizruk`/`routine`/`nutrition` and their
- *   `-soft` variants).
+ * - Same variant enum (primary/secondary/ghost/danger/destructive/warning/
+ *   success plus module-specific `finyk`/`fizruk`/`routine`/`nutrition` and
+ *   their `-soft` variants).
  * - Same size enum (xs / sm / md / lg / xl) and `iconOnly` flag.
  *   With `iconOnly`, pass `accessibilityLabel` (Web Interface Guidelines /
  *   parity with web `aria-label` on icon-only controls).
  * - `loading` swaps the label for an `ActivityIndicator` while preserving
  *   button width (label is still laid out invisibly underneath).
- * - Icons are supplied via `children` (matches web). Caller is responsible
- *   for providing the right platform icon component.
+ * - Icons can be supplied via `children` (matches web) or via the
+ *   `leftIcon` / `rightIcon` slots when the caller wants the label kept
+ *   as plain text (used by error boundaries, dialog actions, etc.).
  *
  * Differences from web (intentional — see PR body):
  * - Hover / focus-ring classes are omitted (no hover on mobile; RN focus
@@ -42,6 +43,7 @@ export type ButtonVariant =
   | "ghost"
   | "danger"
   | "destructive"
+  | "warning"
   | "success"
   | "finyk"
   | "fizruk"
@@ -64,6 +66,7 @@ const variantContainer: Record<ButtonVariant, string> = {
   ghost: "bg-transparent",
   danger: "bg-danger/10 border border-danger/30",
   destructive: "bg-danger",
+  warning: "bg-warning-strong",
   success: "bg-brand-50 border border-brand-200/50",
 
   // Module-specific
@@ -86,6 +89,7 @@ const variantLabel: Record<ButtonVariant, string> = {
   ghost: "text-muted",
   danger: "text-danger",
   destructive: "text-white",
+  warning: "text-white",
   success: "text-brand-700",
 
   finyk: "text-white",
@@ -134,6 +138,7 @@ const indicatorColor: Record<ButtonVariant, string> = {
   ghost: "#78716c",
   danger: "#ef4444",
   destructive: "#ffffff",
+  warning: "#ffffff",
   success: "#047857",
   finyk: "#ffffff",
   fizruk: "#ffffff",
@@ -155,6 +160,13 @@ export interface ButtonProps extends Omit<
   loading?: boolean;
   className?: string;
   textClassName?: string;
+  /**
+   * Optional leading icon, rendered before the label.
+   * For icon-only buttons keep using `children` + `iconOnly`.
+   */
+  leftIcon?: ReactNode;
+  /** Optional trailing icon, rendered after the label. */
+  rightIcon?: ReactNode;
   children?: ReactNode;
 }
 
@@ -171,6 +183,8 @@ export const Button = forwardRef<RNView, ButtonProps>(function Button(
     disabled,
     className,
     textClassName,
+    leftIcon,
+    rightIcon,
     children,
     hitSlop = 8,
     accessibilityLabel,
@@ -191,10 +205,24 @@ export const Button = forwardRef<RNView, ButtonProps>(function Button(
   const labelClass = cx(sizeLabel[size], variantLabel[variant], textClassName);
 
   const renderChildren = () => {
-    if (typeof children === "string" || typeof children === "number") {
-      return <Text className={labelClass}>{children}</Text>;
+    const label =
+      typeof children === "string" || typeof children === "number" ? (
+        <Text className={labelClass}>{children}</Text>
+      ) : (
+        children
+      );
+
+    if (iconOnly || (!leftIcon && !rightIcon)) {
+      return label;
     }
-    return children;
+
+    return (
+      <>
+        {leftIcon ? <View className="mr-2">{leftIcon}</View> : null}
+        {label}
+        {rightIcon ? <View className="ml-2">{rightIcon}</View> : null}
+      </>
+    );
   };
 
   return (
