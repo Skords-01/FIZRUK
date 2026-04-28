@@ -39,6 +39,12 @@ export interface StatusRowProps {
    * gaps.
    */
   preview?: ModulePreview | null;
+  /**
+   * When `true`, the row is rendered in a muted/greyed-out state and
+   * the preview block is replaced by a hint pointing the user at Hub
+   * Settings. Driven by the user's onboarding "vibe picks".
+   */
+  inactive?: boolean;
 }
 
 /** Clamp a loose percentage to the [0, 100] bounds used by the bar. */
@@ -62,35 +68,58 @@ export const StatusRow = memo(function StatusRow({
   disabled,
   testID,
   preview,
+  inactive,
 }: StatusRowProps) {
   const config = DASHBOARD_MODULE_RENDER[id];
-  const showPreview = hasPreviewContent(preview);
+  const showPreview = !inactive && hasPreviewContent(preview);
   const showProgress = showPreview && typeof preview?.progress === "number";
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${config.label}: ${config.description}`}
+      accessibilityLabel={
+        inactive
+          ? `${config.label} — неактивний. Увімкнути в налаштуваннях.`
+          : `${config.label}: ${config.description}`
+      }
       accessibilityHint="Двічі торкнись, щоб відкрити модуль. Утримай і потягни, щоб змінити порядок."
       accessibilityState={{ disabled: Boolean(disabled) }}
       onPress={() => onPress?.(id)}
       disabled={disabled}
       testID={testID ?? `dashboard-row-${id}`}
-      className="flex-row items-stretch overflow-hidden rounded-2xl border border-cream-300 bg-cream-50 active:opacity-80"
+      className={`flex-row items-stretch overflow-hidden rounded-2xl border border-cream-300 bg-cream-50 active:opacity-80 ${
+        inactive ? "opacity-60" : ""
+      }`}
     >
-      <View className={`w-1.5 ${config.accentClass}`} />
+      <View
+        className={`w-1.5 ${inactive ? "bg-cream-300" : config.accentClass}`}
+      />
       <View className="flex-1 flex-row items-center gap-3 px-3 py-3">
         <View
-          className={`h-11 w-11 items-center justify-center rounded-xl ${config.iconBgClass}`}
+          className={`h-11 w-11 items-center justify-center rounded-xl ${
+            inactive ? "bg-cream-100" : config.iconBgClass
+          }`}
         >
           <Text className="text-xl">{config.glyph}</Text>
         </View>
         <View className="flex-1">
-          <Text className="text-base font-semibold text-fg" numberOfLines={1}>
+          <Text
+            className={`text-base font-semibold ${
+              inactive ? "text-fg-muted" : "text-fg"
+            }`}
+            numberOfLines={1}
+          >
             {config.label}
           </Text>
-          <Text className="text-xs text-fg-muted" numberOfLines={1}>
-            {config.description}
+          <Text
+            className={`text-xs ${
+              inactive ? "text-fg-subtle" : "text-fg-muted"
+            }`}
+            numberOfLines={1}
+          >
+            {inactive
+              ? "Неактивний — увімкнути в налаштуваннях"
+              : config.description}
           </Text>
           {showProgress ? (
             <View
