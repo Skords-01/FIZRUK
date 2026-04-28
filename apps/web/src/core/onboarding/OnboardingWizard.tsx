@@ -8,6 +8,7 @@ import {
 } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
+import { Card, type CardVariant } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 import { BrandLogo } from "../app/BrandLogo";
 import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
@@ -463,6 +464,33 @@ const GOAL_KEY_MAP: Record<string, keyof OnboardingGoals> = {
   nutrition_goal: "nutritionGoal",
 };
 
+/** Per-module card style hooks for the goal-step soft cards. */
+const GOAL_MODULE_STYLES: Record<
+  string,
+  { variant: CardVariant; iconBg: string; iconColor: string }
+> = {
+  finyk: {
+    variant: "finyk-soft",
+    iconBg: "bg-finyk/15",
+    iconColor: "text-finyk",
+  },
+  fizruk: {
+    variant: "fizruk-soft",
+    iconBg: "bg-fizruk/15",
+    iconColor: "text-fizruk",
+  },
+  routine: {
+    variant: "routine-soft",
+    iconBg: "bg-routine/15",
+    iconColor: "text-routine",
+  },
+  nutrition: {
+    variant: "nutrition-soft",
+    iconBg: "bg-nutrition/15",
+    iconColor: "text-nutrition",
+  },
+};
+
 function GoalsStep({
   picks,
   goals,
@@ -493,13 +521,15 @@ function GoalsStep({
       </div>
 
       {hasQuestions && (
-        <div className="w-full space-y-4 text-left">
+        <div className="w-full space-y-2.5 text-left">
           {questions.map((q) => {
             const goalKey = GOAL_KEY_MAP[q.id];
-            if (q.type === "radio") {
-              return (
+            const style = GOAL_MODULE_STYLES[q.module];
+            const moduleIcon = ONBOARDING_VIBE_ICONS[q.module];
+            const moduleLabel = MODULE_LABELS[q.module];
+            const inner =
+              q.type === "radio" ? (
                 <GoalRadioGroup
-                  key={q.id}
                   question={q}
                   value={(goals[goalKey] as string | null) ?? null}
                   onChange={(v) => {
@@ -511,22 +541,45 @@ function GoalsStep({
                     });
                   }}
                 />
+              ) : (
+                <GoalSlider
+                  question={q}
+                  value={(goals[goalKey] as number | null) ?? null}
+                  onChange={(v) => {
+                    onSetGoal(goalKey, v);
+                    trackEvent(ANALYTICS_EVENTS.ONBOARDING_GOAL_SET, {
+                      module: q.module,
+                      goalType: q.id,
+                      value: v,
+                    });
+                  }}
+                />
               );
-            }
             return (
-              <GoalSlider
+              <Card
                 key={q.id}
-                question={q}
-                value={(goals[goalKey] as number | null) ?? null}
-                onChange={(v) => {
-                  onSetGoal(goalKey, v);
-                  trackEvent(ANALYTICS_EVENTS.ONBOARDING_GOAL_SET, {
-                    module: q.module,
-                    goalType: q.id,
-                    value: v,
-                  });
-                }}
-              />
+                variant={style?.variant ?? "flat"}
+                radius="md"
+                padding="sm"
+                className="space-y-2.5"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "shrink-0 w-7 h-7 rounded-lg flex items-center justify-center",
+                      style?.iconBg ?? "bg-panelHi",
+                      style?.iconColor ?? "text-muted",
+                    )}
+                    aria-hidden
+                  >
+                    <Icon name={moduleIcon} size={14} strokeWidth={2.25} />
+                  </span>
+                  <span className="text-xs font-semibold text-subtle">
+                    {moduleLabel}
+                  </span>
+                </div>
+                {inner}
+              </Card>
             );
           })}
         </div>
