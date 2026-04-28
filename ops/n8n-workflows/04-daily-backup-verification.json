@@ -15,25 +15,25 @@
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "=https://backboard.railway.com/graphql/v2",
+        "method": "POST",
+        "url": "https://backboard.railway.com/graphql/v2",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.RAILWAY_TOKEN }}"
+              "name": "Project-Access-Token",
+              "value": "={{ $env.RAILWAY_TOKEN }}"
             },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={ \"query\": \"{ deployments(first: 1, input: { projectId: \\\"YOUR_PROJECT_ID\\\" }) { edges { node { id status createdAt } } } }\" }",
+        "jsonBody": "={\n  \"query\": \"query LatestDeployments($projectId: String!) { project(id: $projectId) { services { edges { node { name deployments(first: 1) { edges { node { id status createdAt } } } } } } } }\",\n  \"variables\": { \"projectId\": \"{{ $env.RAILWAY_PROJECT_ID }}\" }\n}",
         "options": {}
       },
       "id": "railway-api",
-      "name": "Railway → latest backup",
+      "name": "Railway → latest deployments",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [460, 300]
@@ -41,7 +41,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT count(*) AS user_count FROM users; SELECT count(*) AS tx_count FROM module_data WHERE module = 'finyk';",
+        "query": "SELECT (SELECT count(*) FROM \"user\")::int AS user_count, (SELECT count(*) FROM module_data WHERE module = 'finyk')::int AS tx_count;",
         "options": {}
       },
       "id": "sanity-check",
@@ -62,7 +62,7 @@
           "conditions": [
             {
               "id": "has-users",
-              "leftValue": "={{ $json.user_count }}",
+              "leftValue": "={{ Number($json.user_count) }}",
               "rightValue": 0,
               "operator": { "type": "number", "operation": "gt" }
             }
@@ -109,10 +109,16 @@
   "connections": {
     "Cron 03:00 UTC": {
       "main": [
-        [{ "node": "Railway → latest backup", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Railway → latest deployments",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Railway → latest backup": {
+    "Railway → latest deployments": {
       "main": [[{ "node": "Sanity SQL check", "type": "main", "index": 0 }]]
     },
     "Sanity SQL check": {
