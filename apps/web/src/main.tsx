@@ -1,3 +1,4 @@
+/// <reference types="vite-plugin-pwa/client" />
 import { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -57,7 +58,12 @@ runDemoSeedFromUrl();
 storageManager.runAll();
 runDemoCleanupOnce();
 
-function ErrorFallback({ error, resetError }) {
+interface ErrorFallbackProps {
+  error: Error;
+  resetError: () => void;
+}
+
+function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   return (
     <div className="p-8 font-sans">
       <h2 className="text-lg font-semibold text-text">Щось пішло не так</h2>
@@ -78,7 +84,7 @@ function ErrorFallback({ error, resetError }) {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <ErrorBoundary fallback={ErrorFallback}>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
