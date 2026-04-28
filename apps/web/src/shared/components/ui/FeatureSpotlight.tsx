@@ -39,14 +39,23 @@ type Placement = "top" | "bottom" | "left" | "right";
 export interface FeatureSpotlightProps {
   /** Unique ID for localStorage persistence */
   id: string;
-  /** CSS selector for target element */
-  targetSelector: string;
+  /**
+   * CSS selector for target element. Optional — when omitted, the
+   * component anchors to its own `children` wrapper instead.
+   */
+  targetSelector?: string;
   /** Spotlight title */
   title: string;
   /** Spotlight description */
   description: string;
   /** Placement relative to target */
   placement?: Placement;
+  /** Alias for `placement`. */
+  position?: Placement;
+  /** Skip rendering after first dismissal (uses localStorage). */
+  showOnce?: boolean;
+  /** Delay in ms before the spotlight is shown. */
+  delay?: number;
   /** Custom action button text */
   actionText?: string;
   /** Callback when dismissed */
@@ -90,6 +99,7 @@ export function FeatureSpotlight({
 
     // Find target element
     const findTarget = () => {
+      if (!targetSelector) return;
       const target = document.querySelector(targetSelector);
       if (target) {
         setTargetRect(target.getBoundingClientRect());
@@ -107,6 +117,7 @@ export function FeatureSpotlight({
     if (!visible) return;
 
     const updatePosition = () => {
+      if (!targetSelector) return;
       const target = document.querySelector(targetSelector);
       if (target) {
         setTargetRect(target.getBoundingClientRect());

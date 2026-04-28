@@ -47,7 +47,7 @@ export interface HintsOrchestratorProps {
 export function HintsOrchestrator({
   inFtuxSession,
   hasFirstRealEntry,
-}: HintsOrchestratorProps) {
+}: HintsOrchestratorProps): null {
   const toast = useToast();
   const [showHints] = useHubPref<boolean>("showHints", true);
   const shownThisMount = useRef<HintId | null>(null);
