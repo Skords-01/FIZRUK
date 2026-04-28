@@ -131,10 +131,12 @@ export function useFormValidation<T extends Record<string, unknown>>(
         }
       }
 
-      setFields((prev) => ({
-        ...prev,
-        [name]: { ...prev[name], error: null, touched: true },
-      }));
+      setFields(
+        (prev): FormState<T> => ({
+          ...prev,
+          [name]: { ...prev[name], error: null, touched: true },
+        }),
+      );
       return true;
     },
     [config],

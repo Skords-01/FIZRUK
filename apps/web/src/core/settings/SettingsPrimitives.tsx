@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Card } from "@shared/components/ui/Card";
@@ -109,7 +109,7 @@ export interface ToggleRowProps {
   label: ReactNode;
   description?: ReactNode;
   checked: boolean;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onChange: (checked: boolean) => void;
 }
 
 export function ToggleRow({
