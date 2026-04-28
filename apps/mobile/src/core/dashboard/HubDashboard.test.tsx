@@ -141,6 +141,18 @@ describe("HubDashboard one-hero rule", () => {
     expect(router.push).toHaveBeenCalledWith("/(tabs)/routine");
   });
 
+  it("renders Nutrition in the dashboard stack and quick-add chips", () => {
+    const { getByTestId } = renderDashboard();
+
+    expect(getByTestId("dashboard-module-row-nutrition")).toBeTruthy();
+    fireEvent.press(getByTestId("today-focus-chip-nutrition"));
+
+    const { router } = jest.requireMock("expo-router") as {
+      router: { push: jest.Mock };
+    };
+    expect(router.push).toHaveBeenCalledWith("/(tabs)/nutrition");
+  });
+
   it("navigates to sign-in when SoftAuthPromptCard CTA is tapped", () => {
     const mmkv = _getMMKVInstance();
     mmkv.set(FIRST_REAL_ENTRY_KEY, "1");

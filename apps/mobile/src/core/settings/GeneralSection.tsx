@@ -15,8 +15,7 @@
  *    `expo-file-system` + `expo-sharing` + `expo-document-picker`.
  *
  * Dashboard reorder list:
- *  - Рендерить **видимий** підмножину модулей (без `nutrition` у
- *    `VISIBLE_DASHBOARD_MODULES`, поки Phase 7 Hub-gate) з ↑/↓ — a11y fallback
+ *  - Рендерить **видимий** підмножину модулей з ↑/↓ — a11y fallback
  *    for the long-press drag on the dashboard itself. State is shared
  *    with the dashboard via `useDashboardOrder` and persisted through
  *    the same `STORAGE_KEYS.DASHBOARD_ORDER` slice used by web.

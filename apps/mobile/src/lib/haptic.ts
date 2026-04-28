@@ -23,17 +23,11 @@ import { AccessibilityInfo } from "react-native";
 
 import { setHapticAdapter, type HapticAdapter } from "@sergeant/shared";
 
-// Re-export all utilities from the centralized haptics module
+// Re-export utilities that are only defined in the centralized haptics module.
 export {
-  hapticLight,
-  hapticMedium,
-  hapticHeavy,
-  hapticSoft,
-  hapticRigid,
   hapticSuccess,
   hapticWarning,
   hapticError,
-  hapticSelection,
   haptics,
   useHaptics,
   isHapticsSupported,

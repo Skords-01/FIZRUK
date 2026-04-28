@@ -16,10 +16,8 @@
  *      current digest is live.
  *
  * Scope notes:
- *   - Nutrition is hidden until Phase 7 (Food & Water). The persisted
- *     order still contains all four ids so a web session opening the
- *     same account keeps Nutrition in its slot — see
- *     `reorderWithHidden` in `@sergeant/shared`.
+ *   - Nutrition now renders in the Hub status stack alongside the other
+ *     native module tabs.
  *   - `onShowAuth` navigates to the `(auth)/sign-in` modal via
  *     `router.push`. The `(auth)` group is presented as a modal in
  *     `app/_layout.tsx`; after successful sign-in the modal closes
