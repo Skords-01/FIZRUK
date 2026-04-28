@@ -80,7 +80,7 @@ pnpm --filter @sergeant/server exec vitest run apps/server/src/modules/mono/
 
 ### 7. Оновити документацію
 
-- Оновити `docs/monobank-webhook-migration.md` якщо нова подія змінює архітектурну діаграму.
+- Оновити `docs/integrations/monobank-roadmap.md` якщо нова подія змінює архітектурну діаграму.
 - Оновити `docs/integrations/monobank-roadmap.md` якщо подія була у плані.
 
 ### 8. Створити PR
@@ -120,6 +120,6 @@ pnpm typecheck  # має бути зеленим
 ## See also
 
 - [monobank-roadmap.md](../integrations/monobank-roadmap.md) — план покращень Monobank-інтеграції
-- [monobank-webhook-migration.md](../monobank-webhook-migration.md) — архітектура webhook pipeline
+- [monobank-roadmap.md](../integrations/monobank-roadmap.md) — архітектура Monobank-інтеграції та roadmap
 - [AGENTS.md](../../AGENTS.md) — hard rules
 - [cleanup-dead-code.md](cleanup-dead-code.md) — якщо старий handler потрібно видалити

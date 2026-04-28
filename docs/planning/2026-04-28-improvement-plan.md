@@ -1,5 +1,7 @@
 # План Виправлень та Покращень Sergeant
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Дата створення:** 2026-04-28
 > **Базовий аудит:** `docs/audits/2026-04-28-sergeant-comprehensive-audit.md`
 > **Власник:** @Skords-01

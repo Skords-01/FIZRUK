@@ -9,6 +9,7 @@ const SCOPES = [
   "server",
   "mobile",
   "mobile-shell",
+  "console",
   "shared",
   "api-client",
   "finyk-domain",

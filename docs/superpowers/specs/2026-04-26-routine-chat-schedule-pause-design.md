@@ -1,5 +1,7 @@
 # Routine chat tools: `set_habit_schedule` + `pause_habit`
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Status:** shipped (PR [#797](https://github.com/Skords-01/Sergeant/pull/797),
 > catalogue rows у [#798](https://github.com/Skords-01/Sergeant/pull/798),
 > dedup у [#800](https://github.com/Skords-01/Sergeant/pull/800)).

@@ -181,5 +181,5 @@ curl -sS https://<prod-domain>/health | jq .
 ## See also
 
 - [AGENTS.md](../../AGENTS.md) — hard rules
-- [monobank-webhook-migration.md](../monobank-webhook-migration.md) — якщо регресія пов'язана з Monobank webhook pipeline
+- [monobank-roadmap.md](../integrations/monobank-roadmap.md) — якщо регресія пов'язана з Monobank webhook pipeline
 - [cleanup-dead-code.md](cleanup-dead-code.md) — якщо hotfix виявить мертвий код що заважав

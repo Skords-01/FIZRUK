@@ -12,11 +12,39 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/architecture/api-v1.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/apps-status-matrix.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/apps-web-exhaustive-deps.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/frontend-overview.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/platforms.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/audits/2026-04-26-sergeant-audit-devin.md",
     "cadenceDays": 180
   },
   {
     "path": "docs/design/BRANDBOOK.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/design-system.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/governance/policy-review.md",
     "cadenceDays": 90
   },
   {
@@ -29,6 +57,50 @@
   },
   {
     "path": "docs/integrations/renovate-usage.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/01-monetization-and-pricing.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/02-go-to-market.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/03-services-and-toolstack.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/04-launch-readiness.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/05-operations-and-automation.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/06-monetization-architecture.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/README.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/mobile/capacitor-deep-links.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/mobile/overview.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/mobile/react-native-migration.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/mobile/shell.md",
     "cadenceDays": 90
   },
   {
@@ -57,6 +129,10 @@
   },
   {
     "path": "docs/observability/runbook.md",
+    "cadenceDays": 60
+  },
+  {
+    "path": "docs/ops/n8n-recovery.md",
     "cadenceDays": 60
   },
   {
@@ -181,6 +257,10 @@
   },
   {
     "path": "docs/playbooks/tune-system-prompt.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/security/audit-exceptions.md",
     "cadenceDays": 90
   },
   {

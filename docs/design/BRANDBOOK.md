@@ -569,7 +569,7 @@ carry destructive meaning.
 | Long-press       | Transaction row, habit cell, workout item          | Opens contextual menu (edit / duplicate / delete).                 |
 | Swipe-to-delete  | Finyk `Transactions`, Routine habits, pantry items | Requires confirm step for items older than today.                  |
 
-See [`hub-modules-roadmap.md`](./hub-modules-roadmap.md) for the per-module
+See [`docs/architecture/platforms.md`](../architecture/platforms.md) for the per-module
 screen list these map onto.
 
 ### Haptics

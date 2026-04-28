@@ -1,5 +1,7 @@
 # n8n Backup and Recovery Runbook
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 ## What must be backed up
 
 - The `n8n-db` Postgres database. It contains workflow definitions, credentials metadata, and execution history.
