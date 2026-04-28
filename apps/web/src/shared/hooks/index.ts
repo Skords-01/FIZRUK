@@ -65,3 +65,5 @@ export type {
   PullToRefreshState,
   UsePullToRefreshOptions,
 } from "./usePullToRefresh";
+
+export { useFocusTrap } from "./useFocusTrap";

@@ -9,6 +9,7 @@ import {
 import { cn } from "@shared/lib/cn";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
+import { useFocusTrap } from "@shared/hooks/useFocusTrap";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CELEBRATION MODAL — Success/Achievement/Level Up Modal System
@@ -166,6 +167,20 @@ export const CelebrationModal = memo(function CelebrationModal({
     }
   }, [open, type, confettiIntensity, generateParticles]);
 
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsExiting(false);
+      onClose();
+    }, 200);
+  }, [onClose]);
+
+  // Focus trap for accessibility — traps Tab within modal and handles Escape
+  const modalRef = useFocusTrap<HTMLDivElement>(
+    open && !isExiting,
+    handleClose,
+  );
+
   // Auto-close timer
   useEffect(() => {
     if (!open || !autoCloseMs) return;
@@ -176,14 +191,6 @@ export const CelebrationModal = memo(function CelebrationModal({
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [open, autoCloseMs, handleClose]);
-
-  const handleClose = useCallback(() => {
-    setIsExiting(true);
-    setTimeout(() => {
-      setIsExiting(false);
-      onClose();
-    }, 200);
-  }, [onClose]);
 
   const handleAction = useCallback(() => {
     onAction?.();
@@ -331,6 +338,7 @@ export const CelebrationModal = memo(function CelebrationModal({
 
       {/* Modal card */}
       <div
+        ref={modalRef}
         className={cn(
           "relative z-10 w-full max-w-sm",
           "bg-panel/95 backdrop-blur-xl rounded-3xl shadow-float",
@@ -515,7 +523,7 @@ export function useCelebration() {
   };
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ═══════════════��═══════════════════════════════════════════════════════════
    MINI SUCCESS TOAST — Малий toast з галочкою що пульсує
    ═══════════════════════════════════════���═══════════════════════════════════ */
 
