@@ -543,6 +543,35 @@ export const paths: ZodOpenApiPathsObject = {
     },
   },
 
+  // ────────────────────── Waitlist (Phase 0 monetization) ───────────────────
+  "/api/v1/waitlist": {
+    post: {
+      summary: "Sign-up на waitlist для майбутнього Pro-тіру (анонімний)",
+      tags: ["monetization"],
+      requestBody: {
+        content: {
+          "application/json": { schema: namedSchemas.WaitlistSubmit },
+        },
+      },
+      responses: {
+        "200": {
+          description:
+            "Submitted (created=true) або уже був у списку (created=false)",
+          content: {
+            "application/json": { schema: namedSchemas.WaitlistSubmitResponse },
+          },
+        },
+        "400": validationError,
+        "429": {
+          description: "Too many requests — rate-limit перевищено.",
+          content: {
+            "application/json": { schema: namedSchemas.ApiError },
+          },
+        },
+      },
+    },
+  },
+
   // ────────────────────── Food search / barcode ──────────────────────
   "/api/food-search": {
     get: {

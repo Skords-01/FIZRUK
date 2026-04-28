@@ -124,6 +124,21 @@ export const ANALYTICS_EVENTS = Object.freeze({
   SUBSCRIPTION_STARTED: "subscription_started",
   SUBSCRIPTION_CANCELED: "subscription_canceled",
   SUBSCRIPTION_RENEWED: "subscription_renewed",
+
+  // Pricing / waitlist (Phase 0 monetization rails). Без активного білінгу:
+  // вимірюємо попит до того, як вкладатись у Stripe / Mono jar інтеграцію.
+  // Очікувані payload-контракти:
+  //
+  //   PRICING_VIEWED         { source?: "settings" | "paywall" | "direct" }
+  //   PRICING_CTA_CLICKED    { tier: "free" | "plus" | "pro",
+  //                            cta: "waitlist" | "primary" }
+  //   WAITLIST_SUBMITTED     { tier_interest: "free" | "plus" | "pro" | "unsure",
+  //                            source: "pricing_page" | "paywall" | "settings"
+  //                                   | "onboarding",
+  //                            created: boolean }
+  PRICING_VIEWED: "pricing_viewed",
+  PRICING_CTA_CLICKED: "pricing_cta_clicked",
+  WAITLIST_SUBMITTED: "waitlist_submitted",
 } as const);
 
 export type AnalyticsEventName =

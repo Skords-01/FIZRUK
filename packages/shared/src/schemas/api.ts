@@ -609,4 +609,50 @@ export const MonoTransactionsQuerySchema = z.object({
   cursor: z.string().min(3).optional(),
 });
 
+// ────────────────────── Waitlist (Phase 0 monetization rails) ───────────────
+// Простий sign-up для майбутнього Pro-тіру. Валідується тут, щоб і клієнт
+// (через `@sergeant/api-client`) і сервер (через `validateBody`) мали одне
+// джерело правди. Tier-и навмисно матчать `docs/launch/01-monetization-and-pricing.md`.
+
+export const WaitlistTierSchema = z.enum(["free", "plus", "pro", "unsure"]);
+export type WaitlistTier = z.infer<typeof WaitlistTierSchema>;
+
+export const WaitlistSourceSchema = z.enum([
+  "pricing_page",
+  "paywall",
+  "settings",
+  "onboarding",
+]);
+export type WaitlistSource = z.infer<typeof WaitlistSourceSchema>;
+
+export const WaitlistSubmitSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("Некоректна email-адреса")
+    .max(254),
+  tier_interest: WaitlistTierSchema.default("unsure"),
+  source: WaitlistSourceSchema.default("pricing_page"),
+  // ISO-639-1, два символи: "uk", "en". Опційний — UI може не знати.
+  locale: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z]{2}$/, "locale має бути 2-літерний ISO-639-1")
+    .optional(),
+});
+export type WaitlistSubmitPayload = z.infer<typeof WaitlistSubmitSchema>;
+
+export const WaitlistSubmitResponseSchema = z.object({
+  ok: z.literal(true),
+  // `created` — true якщо це новий запис; false якщо email уже був у списку.
+  // Дозволяє UI показати «ми памʼятаємо твій інтерес» замість «дякуємо що
+  // підписався» — без розкриття конкретики.
+  created: z.boolean(),
+});
+export type WaitlistSubmitResponse = z.infer<
+  typeof WaitlistSubmitResponseSchema
+>;
+
 export { z };

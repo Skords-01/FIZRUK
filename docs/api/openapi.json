@@ -1783,6 +1783,55 @@
         }
       }
     },
+    "/api/v1/waitlist": {
+      "post": {
+        "summary": "Sign-up на waitlist для майбутнього Pro-тіру (анонімний)",
+        "tags": [
+          "monetization"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaitlistSubmit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Submitted (created=true) або уже був у списку (created=false)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitlistSubmitResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — payload не пройшов zod-валідацію.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests — rate-limit перевищено.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/food-search": {
       "get": {
         "summary": "OpenFoodFacts search proxy",
@@ -3880,6 +3929,45 @@
         ],
         "description": "POST /api/push/test."
       },
+      "WaitlistSubmit": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email",
+            "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "tier_interest": {
+            "default": "unsure",
+            "type": "string",
+            "enum": [
+              "free",
+              "plus",
+              "pro",
+              "unsure"
+            ]
+          },
+          "source": {
+            "default": "pricing_page",
+            "type": "string",
+            "enum": [
+              "pricing_page",
+              "paywall",
+              "settings",
+              "onboarding"
+            ]
+          },
+          "locale": {
+            "type": "string",
+            "pattern": "^[a-z]{2}$"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "description": "POST /api/v1/waitlist — sign-up на майбутній Pro-тір (Phase 0 monetization)."
+      },
       "MeResponse": {
         "type": "object",
         "properties": {
@@ -4120,6 +4208,24 @@
         ],
         "additionalProperties": false,
         "description": "POST /api/push/test response."
+      },
+      "WaitlistSubmitResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "created": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "created"
+        ],
+        "additionalProperties": false,
+        "description": "Відповідь на POST /api/v1/waitlist — `created` розрізняє новий запис vs duplicate."
       }
     },
     "securitySchemes": {

@@ -150,6 +150,16 @@ const Pagination = schemas.PaginationSchema.meta({
   description:
     "Стандартні query-params для list-endpoints (limit/offset, coerced).",
 });
+const WaitlistSubmit = schemas.WaitlistSubmitSchema.meta({
+  id: "WaitlistSubmit",
+  description:
+    "POST /api/v1/waitlist — sign-up на майбутній Pro-тір (Phase 0 monetization).",
+});
+const WaitlistSubmitResponse = schemas.WaitlistSubmitResponseSchema.meta({
+  id: "WaitlistSubmitResponse",
+  description:
+    "Відповідь на POST /api/v1/waitlist — `created` розрізняє новий запис vs duplicate.",
+});
 
 /** Стандартна 400-помилка для validateBody. */
 const ApiError = z
@@ -203,6 +213,8 @@ export const namedSchemas = {
   BarcodeQuery,
   MonoTransactionsQuery,
   Pagination,
+  WaitlistSubmit,
+  WaitlistSubmitResponse,
   ApiError,
 } as const;
 

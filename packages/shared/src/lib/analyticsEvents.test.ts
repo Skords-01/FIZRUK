@@ -39,4 +39,10 @@ describe("ANALYTICS_EVENTS registry", () => {
     );
     expect(ANALYTICS_EVENTS.SUBSCRIPTION_RENEWED).toBe("subscription_renewed");
   });
+
+  it("exposes the Pricing / Waitlist (Phase 0 monetization) group verbatim", () => {
+    expect(ANALYTICS_EVENTS.PRICING_VIEWED).toBe("pricing_viewed");
+    expect(ANALYTICS_EVENTS.PRICING_CTA_CLICKED).toBe("pricing_cta_clicked");
+    expect(ANALYTICS_EVENTS.WAITLIST_SUBMITTED).toBe("waitlist_submitted");
+  });
 });

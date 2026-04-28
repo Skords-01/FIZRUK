@@ -61,6 +61,9 @@ const AssistantCataloguePage = lazy(() =>
     default: m.AssistantCataloguePage,
   })),
 );
+const PricingPage = lazy(() =>
+  import("./PricingPage").then((m) => ({ default: m.PricingPage })),
+);
 interface ModuleAppProps {
   onBackToHub: () => void;
   pwaAction?: PwaAction;
@@ -332,6 +335,19 @@ function AppInner() {
     return (
       <Suspense fallback={<PageLoader />}>
         <DesignShowcase />
+      </Suspense>
+    );
+  }
+
+  // `/pricing` — Phase 0 monetization рейки: статична сторінка з тарифами
+  // і waitlist-формою. Анонімна (auth не вимагається), бо основний
+  // траффік — неавторизовані відвідувачі, які ще не зробили sign-up.
+  if (location.pathname === "/pricing") {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <div className="page-enter">
+          <PricingPage />
+        </div>
       </Suspense>
     );
   }

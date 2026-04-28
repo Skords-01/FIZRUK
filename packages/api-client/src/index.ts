@@ -143,6 +143,15 @@ export {
 } from "./endpoints/privat";
 
 export {
+  createWaitlistEndpoints,
+  WaitlistSubmitRequestSchema,
+  WaitlistSubmitResponseSchema,
+  type WaitlistEndpoints,
+  type WaitlistSubmitRequest,
+  type WaitlistSubmitResponse,
+} from "./endpoints/waitlist";
+
+export {
   createWeeklyDigestEndpoints,
   type WeeklyDigestEndpoints,
   type WeeklyDigestPayload,
