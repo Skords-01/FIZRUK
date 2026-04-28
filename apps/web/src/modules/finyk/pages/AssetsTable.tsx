@@ -4,7 +4,6 @@ import { RecurringSuggestions } from "../components/RecurringSuggestions";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Icon } from "@shared/components/ui/Icon";
 import {
-  getAccountLabel,
   getMonoDebt,
   getDebtPaid,
   getRecvPaid,
@@ -13,6 +12,7 @@ import {
   getDebtEffectiveTotal,
   getReceivableEffectiveTotal,
 } from "../utils";
+import { getAccountVisual } from "../lib/accountVisual";
 import { cn } from "@shared/lib/cn";
 import { openHubModule } from "@shared/lib/hubNav";
 import { useToast } from "@shared/hooks/useToast";
@@ -216,37 +216,48 @@ export function AssetsAssetsSection({ state }: { state: State }) {
       </SectionHeading>
       {accounts
         .filter((a) => !hiddenAccounts.includes(a.id))
-        .map((a, i) => (
-          <div
-            key={i}
-            className="flex items-center justify-between py-2.5 px-1 border-b border-line last:border-0"
-          >
-            <div className="flex items-center gap-3">
-              <span
-                className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-surface-muted text-muted"
-                aria-hidden
-              >
-                <Icon name="credit-card" size={16} />
-              </span>
-              <div>
-                <div className="text-sm font-medium">{getAccountLabel(a)}</div>
-                <div className="text-xs text-subtle mt-0.5">
+        .map((a, i) => {
+          const visual = getAccountVisual(a);
+          const currencySymbol =
+            a.currencyCode === 980
+              ? "\u20B4"
+              : a.currencyCode === 840
+                ? "$"
+                : "\u20AC";
+          return (
+            <div
+              key={i}
+              className="flex items-center justify-between gap-3 rounded-xl border border-line bg-panel/60 p-3 hover:bg-panelHi transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span
+                  className={cn(
+                    "inline-flex h-10 w-10 items-center justify-center rounded-xl shrink-0",
+                    visual.tone,
+                  )}
+                  aria-hidden
+                >
+                  <Icon name={visual.iconName} size={18} />
+                </span>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">
+                    {visual.name}
+                  </div>
+                  <div className="text-[11px] text-subtle mt-0.5">Monobank</div>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-sm font-bold tabular-nums text-text">
                   {showBalance
                     ? `${(a.balance / 100).toLocaleString("uk-UA", {
                         minimumFractionDigits: 2,
-                      })} ${
-                        a.currencyCode === 980
-                          ? "₴"
-                          : a.currencyCode === 840
-                            ? "$"
-                            : "€"
-                      }`
+                      })} ${currencySymbol}`
                     : "\u2022\u2022\u2022\u2022"}
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
       <SectionHeading as="div" size="sm" className="pt-2">
         <span className="inline-flex items-center gap-1.5">
@@ -254,6 +265,12 @@ export function AssetsAssetsSection({ state }: { state: State }) {
           Мені винні
         </span>
       </SectionHeading>
+      {receivables.length === 0 && !showRecvForm && (
+        <p className="text-xs text-muted px-1">
+          Зберігайте облік боргів і дат повернення — прив&apos;язуйте вхідні
+          транзакції, щоб автоматично рахувати повернене.
+        </p>
+      )}
       {receivables.map((r) => (
         <DebtCard
           key={r.id}
@@ -299,6 +316,30 @@ export function AssetsAssetsSection({ state }: { state: State }) {
           Інші активи
         </span>
       </SectionHeading>
+      {manualAssets.length === 0 && !showAssetForm && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted px-1">
+            Готівка, заощадження, депозит, інвестиції, нерухомість, авто — усе,
+            що не на картці Monobank.
+          </p>
+          <div className="flex flex-wrap gap-1.5 px-1">
+            {[
+              "\uD83D\uDCB5 Готівка",
+              "\uD83C\uDFE6 Депозит",
+              "\uD83D\uDCC8 Інвестиції",
+              "\uD83C\uDFE0 Нерухомість",
+              "\uD83D\uDE97 Авто",
+            ].map((chip) => (
+              <span
+                key={chip}
+                className="inline-flex items-center text-[11px] text-muted bg-panelHi border border-line rounded-full px-2 py-0.5"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       {showAssetForm ? (
         <AssetForm
           newAsset={newAsset}
@@ -319,21 +360,26 @@ export function AssetsAssetsSection({ state }: { state: State }) {
       {manualAssets.map((a, i) => (
         <div
           key={i}
-          className="flex items-center justify-between py-2.5 border-b border-text"
+          className="flex items-center justify-between gap-3 rounded-xl border border-line bg-panel/60 p-3 hover:bg-panelHi transition-colors"
         >
-          <div className="flex items-center gap-3">
-            <span className="text-xl leading-none">{a.emoji}</span>
-            <div>
-              <div className="text-sm font-medium">{a.name}</div>
-              <div className="text-xs text-subtle">{a.currency}</div>
+          <div className="flex items-center gap-3 min-w-0">
+            <span
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-panelHi text-xl leading-none shrink-0"
+              aria-hidden
+            >
+              {a.emoji}
+            </span>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold truncate">{a.name}</div>
+              <div className="text-[11px] text-subtle mt-0.5">{a.currency}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-success">
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm font-bold tabular-nums text-success">
               {showBalance
                 ? `${Number(a.amount).toLocaleString("uk-UA")} ${
                     a.currency === "UAH"
-                      ? "₴"
+                      ? "\u20B4"
                       : a.currency === "USD"
                         ? "$"
                         : a.currency
@@ -388,8 +434,35 @@ export function AssetsLiabilitiesSection({ state }: { state: State }) {
     showBalance,
   } = state;
 
+  const liabilitiesEmpty =
+    monoDebtAccounts.length === 0 && manualDebts.length === 0 && !showDebtForm;
+
   return (
     <div className="mb-3 space-y-0">
+      {liabilitiesEmpty && (
+        <div className="space-y-2 mb-3">
+          <p className="text-xs text-muted px-1">
+            Кредити, розстрочки, позики, комунальні борги — додавайте з датою
+            повернення, прив&apos;язуйте транзакції-платежі, і картка сама
+            покаже прогрес «Сплачено N з M».
+          </p>
+          <div className="flex flex-wrap gap-1.5 px-1">
+            {[
+              "\uD83D\uDCB3 Кредит",
+              "\uD83D\uDCC5 Розстрочка",
+              "\uD83E\uDD1D Позика",
+              "\uD83D\uDCA1 Комуналка",
+            ].map((chip) => (
+              <span
+                key={chip}
+                className="inline-flex items-center text-[11px] text-muted bg-panelHi border border-line rounded-full px-2 py-0.5"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       {showDebtForm ? (
         <DebtForm
           newDebt={newDebt}
@@ -414,11 +487,12 @@ export function AssetsLiabilitiesSection({ state }: { state: State }) {
           .reduce((s, t) => s + Math.abs(t.amount / 100), 0);
         const remaining = getMonoDebt(a);
         const volatileTotal = paidFromLinked + remaining;
+        const visual = getAccountVisual(a);
         return (
           <DebtCard
             key={i}
-            name={getAccountLabel(a)}
-            emoji={"\u{1F5A4}"}
+            name={visual.name}
+            emoji={"\u{1F4B3}"}
             remaining={remaining}
             paid={paidFromLinked}
             total={volatileTotal}
