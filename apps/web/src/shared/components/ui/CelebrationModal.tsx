@@ -421,7 +421,7 @@ export function useCelebration() {
   // Shorthand helpers
   const success = useCallback(
     (title: string, description?: string) => {
-      celebrate({ type: "success", title, description, autoCloseMs: 3000 });
+      celebrate({ type: "success", title, description, autoCloseMs: 4500 });
     },
     [celebrate],
   );
@@ -432,7 +432,13 @@ export function useCelebration() {
       description?: string,
       rewards?: CelebrationConfig["rewards"],
     ) => {
-      celebrate({ type: "achievement", title, description, rewards });
+      celebrate({
+        type: "achievement",
+        title,
+        description,
+        rewards,
+        autoCloseMs: 6000,
+      });
     },
     [celebrate],
   );
@@ -451,6 +457,7 @@ export function useCelebration() {
         unit,
         theme,
         description: "Ціль досягнуто!",
+        autoCloseMs: 5500,
       });
     },
     [celebrate],
@@ -470,6 +477,7 @@ export function useCelebration() {
         unit: "рівень",
         progress,
         rewards,
+        autoCloseMs: 6000,
       });
     },
     [celebrate],
@@ -483,6 +491,7 @@ export function useCelebration() {
         value: days,
         unit: "днів",
         description: days >= 30 ? "Ти справжня легенда!" : "Так тримати!",
+        autoCloseMs: 5000,
       });
     },
     [celebrate],
@@ -499,6 +508,7 @@ export function useCelebration() {
         title,
         description,
         confettiIntensity: intensity || "high",
+        autoCloseMs: 5500,
       });
     },
     [celebrate],
@@ -523,7 +533,7 @@ export function useCelebration() {
   };
 }
 
-/* ═══════════════��═══════════════════════════════════════════════════════════
+/* ══════════���════��═══════════════════════════════════════════════════════════
    MINI SUCCESS TOAST — Малий toast з галочкою що пульсує
    ═══════════════════════════════════════���═══════════════════════════════════ */
 
