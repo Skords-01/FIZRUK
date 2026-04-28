@@ -4,14 +4,14 @@ Backend API Sergeant — Node 20, Express, PostgreSQL (`pg`), Better Auth, Anthr
 
 ## Стек
 
-| Шар         | Технологія                                       |
-| ----------- | ------------------------------------------------ |
-| Runtime     | Node 20, TypeScript 6                            |
-| HTTP        | Express, Helmet, CORS, rate limiting             |
-| DB          | PostgreSQL 16, `pg` driver, SQL-міграції         |
-| Auth        | Better Auth (cookie-сесії, bearer для mobile)    |
-| AI          | Anthropic Claude (tool-use, streaming)           |
-| Тести       | Vitest + Testcontainers (real Postgres)          |
+| Шар     | Технологія                                    |
+| ------- | --------------------------------------------- |
+| Runtime | Node 20, TypeScript 6                         |
+| HTTP    | Express, Helmet, CORS, rate limiting          |
+| DB      | PostgreSQL 16, `pg` driver, SQL-міграції      |
+| Auth    | Better Auth (cookie-сесії, bearer для mobile) |
+| AI      | Anthropic Claude (tool-use, streaming)        |
+| Тести   | Vitest + Testcontainers (real Postgres)       |
 
 ## Структура
 

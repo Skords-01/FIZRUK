@@ -4,15 +4,15 @@
 
 ## Стек
 
-| Шар     | Технологія                                                  |
-| ------- | ----------------------------------------------------------- |
-| Збірка  | Vite 6, `@vitejs/plugin-react`                              |
-| UI      | React 18, Tailwind CSS 3, `@sergeant/design-tokens` preset  |
-| Роутинг | react-router-dom v7                                         |
-| Дані    | TanStack React Query, `@sergeant/api-client`                |
-| Auth    | Better Auth (клієнт + cookie-сесії)                         |
-| PWA     | vite-plugin-pwa + Workbox, Service Worker (`src/sw.ts`)     |
-| Тести   | Vitest + MSW + React Testing Library, Playwright (a11y)     |
+| Шар     | Технологія                                                 |
+| ------- | ---------------------------------------------------------- |
+| Збірка  | Vite 6, `@vitejs/plugin-react`                             |
+| UI      | React 18, Tailwind CSS 3, `@sergeant/design-tokens` preset |
+| Роутинг | react-router-dom v7                                        |
+| Дані    | TanStack React Query, `@sergeant/api-client`               |
+| Auth    | Better Auth (клієнт + cookie-сесії)                        |
+| PWA     | vite-plugin-pwa + Workbox, Service Worker (`src/sw.ts`)    |
+| Тести   | Vitest + MSW + React Testing Library, Playwright (a11y)    |
 
 ## Структура
 

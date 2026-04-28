@@ -244,7 +244,7 @@ SERVER_METRICS_URL=http://host.docker.internal:3000/metrics
 
 ## Додавання нового workflow
 
-Дивись [`docs/playbooks/add-n8n-workflow.md`](../docs/playbooks/add-n8n-workflow.md).
+Дивись секцію «Workflow basics» у [`docs/adr/0026-n8n-workflow-source-of-truth.md`](../docs/adr/0026-n8n-workflow-source-of-truth.md) та приклади у `ops/n8n-workflows/`.
 
 ## Вартість
 
