@@ -302,6 +302,73 @@ describe("webhookHandler", () => {
     expect(res.statusCode).toBe(404);
   });
 
+  it("маппить mcc → category_slug і передає його у INSERT (Monobank Roadmap C)", async () => {
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: true }],
+      rowCount: 1,
+    });
+    dbQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+
+    // mcc=5814 → 'restaurant' (з validPayload())
+    const res = makeRes();
+    await webhookHandler(makeReq(VALID_SECRET), res);
+    expect(res.statusCode).toBe(200);
+
+    // Друга dbQuery-call — це сам upsert; останній параметр — categorySlug.
+    const upsertCall = dbQuery.mock.calls[1];
+    const params = upsertCall[1];
+    expect(params[params.length - 1]).toBe("restaurant");
+  });
+
+  it("category_slug = null для невідомого MCC", async () => {
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: true }],
+      rowCount: 1,
+    });
+    dbQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+
+    const base = validPayload();
+    const unknownMccPayload = {
+      ...base,
+      data: {
+        ...base.data,
+        statementItem: { ...base.data.statementItem, mcc: 9999 },
+      },
+    };
+
+    const res = makeRes();
+    await webhookHandler(makeReq(VALID_SECRET, unknownMccPayload), res);
+    expect(res.statusCode).toBe(200);
+
+    const params = dbQuery.mock.calls[1][1];
+    expect(params[params.length - 1]).toBeNull();
+  });
+
+  it("ON CONFLICT-гілка SQL зберігає category_slug під захистом category_overridden", async () => {
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: false }],
+      rowCount: 1,
+    });
+    dbQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+
+    const res = makeRes();
+    await webhookHandler(makeReq(VALID_SECRET), res);
+
+    const sql = dbQuery.mock.calls[1][0];
+    // Sanity-check, що SQL містить захист category_overridden.
+    expect(sql).toMatch(/category_overridden/);
+    expect(sql).toMatch(/category_slug = CASE/);
+  });
+
   it("re-throws DB errors and records error metric", async () => {
     dbQuery.mockResolvedValueOnce({
       rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],

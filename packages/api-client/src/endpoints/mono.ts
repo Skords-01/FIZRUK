@@ -53,6 +53,21 @@ export interface MonoTransactionDto {
   counterEdrpou: string | null;
   counterIban: string | null;
   counterName: string | null;
+  /**
+   * Server-resolved expense-category slug derived from `mcc` via the
+   * `MCC_CATEGORIES` map in `@sergeant/finyk-domain/constants`. `null` when
+   * the MCC is unknown / 0 / missing — UI then falls back to its own
+   * client-side categorization (description keywords, user override).
+   */
+  categorySlug: string | null;
+  /**
+   * `true` once the user has manually set a category through the UI; the
+   * server keeps this latch sticky so subsequent webhook deliveries (e.g.
+   * Monobank refunds with a different MCC) do not silently undo the
+   * correction. Currently set by data-migrations and the (forthcoming)
+   * `PATCH /api/mono/transactions/:id/category` endpoint.
+   */
+  categoryOverridden: boolean;
   source: "webhook" | "backfill";
   receivedAt: string;
 }

@@ -8,6 +8,7 @@ import {
 } from "../../obs/metrics.js";
 import { sendToUserQuietly } from "../../push/send.js";
 import type { PushPayload } from "../../push/types.js";
+import { categorizeMcc } from "./mccCategories.js";
 
 /**
  * POST /api/mono/webhook/:secret — public Monobank delivery endpoint.
@@ -179,14 +180,24 @@ export async function webhookHandler(
     // updating transaction (non-zero). We use this to fire push notifications
     // only on first delivery and stay silent on retries — Monobank can re-send
     // the same statement item if our 200 response is lost. See AI-DANGER below.
+    // Server-side MCC → category resolution. Returns NULL for MCC 0 / null /
+    // unknown — caller stays NULL and the user can override via UI.
+    // ON CONFLICT branch refreshes `category_slug` only when the user has not
+    // manually overridden it (`category_overridden = FALSE`); otherwise
+    // Monobank's refund-with-different-MCC events would silently undo a
+    // user's correction.
+    const categorySlug = categorizeMcc(item.mcc);
+
     const upsertResult = await query<{ inserted: boolean }>(
       `INSERT INTO mono_transaction
          (user_id, mono_account_id, mono_tx_id, time, amount, operation_amount,
           currency_code, mcc, original_mcc, hold, description, comment,
           cashback_amount, commission_rate, balance, receipt_id, invoice_id,
-          counter_edrpou, counter_iban, counter_name, raw, source)
+          counter_edrpou, counter_iban, counter_name, raw, source,
+          category_slug)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-               $15, $16, $17, $18, $19, $20, $21, 'webhook')
+               $15, $16, $17, $18, $19, $20, $21, 'webhook',
+               $22)
        ON CONFLICT (user_id, mono_tx_id) DO UPDATE SET
          amount = EXCLUDED.amount,
          operation_amount = EXCLUDED.operation_amount,
@@ -195,6 +206,10 @@ export async function webhookHandler(
          description = EXCLUDED.description,
          comment = EXCLUDED.comment,
          raw = EXCLUDED.raw,
+         category_slug = CASE
+           WHEN mono_transaction.category_overridden THEN mono_transaction.category_slug
+           ELSE EXCLUDED.category_slug
+         END,
          received_at = NOW()
        RETURNING (xmax = 0) AS inserted`,
       [
@@ -219,6 +234,7 @@ export async function webhookHandler(
         item.counterIban ?? null,
         item.counterName ?? null,
         JSON.stringify(item),
+        categorySlug,
       ],
       { op: "mono_tx_upsert" },
     );

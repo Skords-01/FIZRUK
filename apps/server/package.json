@@ -20,6 +20,7 @@
     "@better-auth/expo": "^1.6.5",
     "@parse/node-apn": "^8.1.0",
     "@sentry/node": "^8.55.1",
+    "@sergeant/finyk-domain": "workspace:*",
     "@sergeant/shared": "workspace:*",
     "better-auth": "^1.6.4",
     "express": "^4.22.1",
