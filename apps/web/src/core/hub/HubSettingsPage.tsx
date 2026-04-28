@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { type User } from "@sergeant/shared";
 import { Button } from "@shared/components/ui/Button";
 import { Icon } from "@shared/components/ui/Icon";
 import { Tabs } from "@shared/components/ui/Tabs";
@@ -11,6 +12,13 @@ import { GeneralSection } from "../settings/GeneralSection";
 import { NotificationsSection } from "../settings/NotificationsSection";
 import { NutritionSection } from "../settings/NutritionSection";
 import { RoutineSection } from "../settings/RoutineSection";
+
+interface SettingsSection {
+  id: string;
+  title: string;
+  keywords: string;
+  render: () => React.JSX.Element;
+}
 
 // Group definitions: each tab collects related sections. Search terms are
 // used for fuzzy search-by-keyword; matches fall back to showing every
@@ -31,12 +39,24 @@ const GROUPS = [
     label: "Додатково",
     sections: ["experimental"],
   },
-];
+] as const;
 
-export function HubSettingsPage({ syncing, onSync, onPull, user }) {
+export interface HubSettingsPageProps {
+  syncing: boolean;
+  onSync: () => void;
+  onPull: () => void;
+  user: User | null;
+}
+
+export function HubSettingsPage({
+  syncing,
+  onSync,
+  onPull,
+  user,
+}: HubSettingsPageProps) {
   const [tab, setTab] = useState("general");
   const [query, setQuery] = useState("");
-  const refs = useRef({});
+  const refs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Sections with the keywords a user might type to find them. The labels
   // match the <h3>/<h4> headings used by each Section component.
@@ -114,14 +134,14 @@ export function HubSettingsPage({ syncing, onSync, onPull, user }) {
   );
 
   const q = query.trim().toLowerCase();
-  const matchesQuery = (s) =>
+  const matchesQuery = (s: SettingsSection): boolean =>
     !q ||
     s.title.toLowerCase().includes(q) ||
     s.keywords.toLowerCase().includes(q);
 
-  const visibleSectionIds = q
+  const visibleSectionIds: string[] = q
     ? sections.filter(matchesQuery).map((s) => s.id)
-    : GROUPS.find((g) => g.id === tab)?.sections || [];
+    : [...(GROUPS.find((g) => g.id === tab)?.sections ?? [])];
 
   const visible = sections.filter((s) => visibleSectionIds.includes(s.id));
 

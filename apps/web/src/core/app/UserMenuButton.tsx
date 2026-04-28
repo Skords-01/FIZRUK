@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { type User } from "@sergeant/shared";
 import { cn } from "@shared/lib/cn";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 import { useSyncStatus } from "../cloudSync/useCloudSync";
 
-function SyncBadge({ user, syncing }) {
+interface SyncBadgeProps {
+  user: User | null;
+  syncing: boolean;
+}
+
+function SyncBadge({ user, syncing }: SyncBadgeProps) {
   const { dirtyCount, queuedCount, isOnline } = useSyncStatus();
   if (!user) return null;
   let tone = null;
@@ -31,6 +37,17 @@ function SyncBadge({ user, syncing }) {
   );
 }
 
+export interface UserMenuButtonProps {
+  user: User;
+  syncing: boolean;
+  lastSync: Date | null;
+  onSync: () => void;
+  onPull: () => void;
+  onLogout: () => void;
+  dark: boolean;
+  onToggleDark: () => void;
+}
+
 export function UserMenuButton({
   user,
   syncing,
@@ -40,15 +57,16 @@ export function UserMenuButton({
   onLogout,
   dark,
   onToggleDark,
-}) {
+}: UserMenuButtonProps) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -63,7 +81,7 @@ export function UserMenuButton({
         onClick={() => setOpen((v) => !v)}
         aria-label="Акаунт"
         aria-expanded={open}
-        title={user.email}
+        title={user.email ?? undefined}
         className={cn(
           "relative w-11 h-11 flex items-center justify-center rounded-2xl text-sm font-bold transition-colors",
           "bg-brand-500/15 text-brand-600 dark:text-brand-400 hover:bg-brand-500/25",

@@ -2,6 +2,11 @@ import { useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
+import {
+  safeReadStringLS,
+  safeWriteLS,
+  safeRemoveLS,
+} from "@shared/lib/storage";
 
 interface AssistantAdviceCardProps {
   insight: string | null;
@@ -13,20 +18,12 @@ interface AssistantAdviceCardProps {
 const COLLAPSED_KEY = "hub_assistant_advice_collapsed";
 
 function readCollapsed(): boolean {
-  try {
-    return localStorage.getItem(COLLAPSED_KEY) === "1";
-  } catch {
-    return false;
-  }
+  return safeReadStringLS(COLLAPSED_KEY) === "1";
 }
 
 function writeCollapsed(v: boolean): void {
-  try {
-    if (v) localStorage.setItem(COLLAPSED_KEY, "1");
-    else localStorage.removeItem(COLLAPSED_KEY);
-  } catch {
-    /* noop */
-  }
+  if (v) safeWriteLS(COLLAPSED_KEY, "1");
+  else safeRemoveLS(COLLAPSED_KEY);
 }
 
 export function AssistantAdviceCard({

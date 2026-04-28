@@ -1,5 +1,6 @@
 import { logger } from "../obs/logger.js";
 import { recordExternalHttp } from "./externalHttp.js";
+import { elapsedMs, isAbortError } from "./timing.js";
 
 /**
  * Server-side PostHog cleanup helper. Реалізує `deletePostHogPerson(userId)`
@@ -52,19 +53,6 @@ export interface PostHogDeletePersonOptions {
 const DEFAULT_HOST = "https://eu.i.posthog.com";
 const DEFAULT_TIMEOUT_MS = 10_000;
 const UPSTREAM = "posthog";
-
-function elapsedMs(start: bigint): number {
-  return Number(process.hrtime.bigint() - start) / 1e6;
-}
-
-function isAbortError(e: unknown): boolean {
-  return (
-    !!e &&
-    typeof e === "object" &&
-    ((e as { name?: string }).name === "AbortError" ||
-      (e as { name?: string }).name === "TimeoutError")
-  );
-}
 
 export async function deletePostHogPerson(
   userId: string,

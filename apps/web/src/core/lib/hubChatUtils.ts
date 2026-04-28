@@ -166,20 +166,27 @@ export function fmt(n: number): string {
   return Math.round(n).toLocaleString("uk-UA");
 }
 
-type IdleHandle = number;
+// IdleHandle can be either requestIdleCallback id (number) or setTimeout id (ReturnType<typeof setTimeout>)
+// We use a union type to avoid unsafe casts
+export type IdleHandle = number | ReturnType<typeof setTimeout>;
 
 export function requestIdle(cb: () => void): IdleHandle {
-  if (typeof window === "undefined")
-    return setTimeout(cb, 0) as unknown as IdleHandle;
+  if (typeof window === "undefined") return setTimeout(cb, 0);
   if (window.requestIdleCallback)
-    return window.requestIdleCallback(cb, { timeout: 800 }) as IdleHandle;
-  return setTimeout(cb, 0) as unknown as IdleHandle;
+    return window.requestIdleCallback(cb, { timeout: 800 });
+  return setTimeout(cb, 0);
 }
 
 export function cancelIdle(id: IdleHandle): void {
-  if (typeof window === "undefined") return clearTimeout(id);
-  if (window.cancelIdleCallback) return window.cancelIdleCallback(id);
-  return clearTimeout(id);
+  if (typeof window === "undefined") {
+    clearTimeout(id as ReturnType<typeof setTimeout>);
+    return;
+  }
+  if (window.cancelIdleCallback && typeof id === "number") {
+    window.cancelIdleCallback(id);
+    return;
+  }
+  clearTimeout(id as ReturnType<typeof setTimeout>);
 }
 
 const HELP_RE = /^\/(help|допомога|команди|інструменти)\s*$/i;

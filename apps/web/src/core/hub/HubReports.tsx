@@ -46,7 +46,7 @@ function useReportData(period: Period, offset: number): ReportData {
   );
 }
 
-function formatPeriodLabel(period, offset) {
+function formatPeriodLabel(period: Period, offset: number): string {
   const { start, end } = getPeriodRange(period, offset);
   if (period === "week") {
     const opts: Intl.DateTimeFormatOptions = {
@@ -170,7 +170,13 @@ function BarChart({
   );
 }
 
-function Delta({ cur, prev, higherIsBetter = true }) {
+interface DeltaProps {
+  cur: number;
+  prev: number;
+  higherIsBetter?: boolean;
+}
+
+function Delta({ cur, prev, higherIsBetter = true }: DeltaProps) {
   if (prev === 0 && cur === 0) return null;
   if (prev === 0) return <span className="text-xs text-muted">—</span>;
   const diff = cur - prev;
@@ -190,6 +196,17 @@ function Delta({ cur, prev, higherIsBetter = true }) {
   );
 }
 
+interface StatCardProps {
+  title: string;
+  icon: string;
+  current: number | string;
+  prev: number | string;
+  unit?: string;
+  higherIsBetter?: boolean;
+  chart?: React.ReactNode;
+  storageKey: string;
+}
+
 function StatCard({
   title,
   icon,
@@ -199,7 +216,7 @@ function StatCard({
   higherIsBetter,
   chart,
   storageKey,
-}) {
+}: StatCardProps) {
   const [collapsed, setCollapsed] = useLocalStorageState<boolean>(
     storageKey,
     false,
@@ -242,7 +259,11 @@ function StatCard({
               {formattedCurrent}
               {unit}
             </span>
-            <Delta cur={current} prev={prev} higherIsBetter={higherIsBetter} />
+            <Delta
+              cur={typeof current === "number" ? current : 0}
+              prev={typeof prev === "number" ? prev : 0}
+              higherIsBetter={higherIsBetter}
+            />
           </span>
         )}
         <svg
@@ -270,7 +291,11 @@ function StatCard({
               {formattedCurrent}
               {unit}
             </span>
-            <Delta cur={current} prev={prev} higherIsBetter={higherIsBetter} />
+            <Delta
+              cur={typeof current === "number" ? current : 0}
+              prev={typeof prev === "number" ? prev : 0}
+              higherIsBetter={higherIsBetter}
+            />
           </div>
           {prev !== undefined && (
             <p className="text-xs text-muted">
@@ -285,7 +310,14 @@ function StatCard({
   );
 }
 
-function InsightCard({ emoji, title, stat, detail }) {
+interface InsightCardProps {
+  emoji: string;
+  title: string;
+  stat: string;
+  detail?: string;
+}
+
+function InsightCard({ emoji, title, stat, detail }: InsightCardProps) {
   return (
     <div className="bg-panel border border-line rounded-2xl p-4 flex gap-3 items-start">
       <span className="text-2xl shrink-0 leading-none pt-0.5">{emoji}</span>

@@ -1,6 +1,24 @@
 import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
 
+interface HubFloatingActionsProps {
+  /**
+   * When true the FAB is not rendered at all. Used during the FTUX session
+   * so the only interactive surface in view is `FirstActionHeroCard` →
+   * `PresetSheet` (the one-tap "real entry" path). A chat FAB would otherwise
+   * pull users into a conversational flow before they've logged anything.
+   */
+  hidden?: boolean;
+  /** Opens the hub AI chat panel (resolves to `ui.openChat()`). */
+  onOpenChat: () => void;
+  /**
+   * When true, renders a small circular icon-only FAB instead of the full pill.
+   * Used in module views to minimize screen real estate usage while still
+   * providing quick access to the assistant.
+   */
+  compact?: boolean;
+}
+
 /**
  * Thumb-reach entry point to the AI assistant. A single FAB that opens
  * the hub chat — the primary add surface is `TodayFocusCard`
@@ -10,25 +28,12 @@ import { cn } from "@shared/lib/cn";
  *
  * This is the only chat entry point in the hub chrome; the header no
  * longer duplicates the action next to search/dark-mode.
- *
- * @param {object} props
- * @param {boolean} [props.hidden=false] - When true the FAB is not
- *   rendered at all. Used during the FTUX session so the only
- *   interactive surface in view is `FirstActionHeroCard` → `PresetSheet`
- *   (the one-tap "real entry" path). A chat FAB would otherwise pull
- *   users into a conversational flow before they've logged anything.
- * @param {() => void} props.onOpenChat - Opens the hub AI chat panel
- *   (resolves to `ui.openChat()`).
- * @param {boolean} [props.compact=false] - When true, renders a small
- *   circular icon-only FAB instead of the full pill. Used in module
- *   views to minimize screen real estate usage while still providing
- *   quick access to the assistant.
  */
 export function HubFloatingActions({
   hidden = false,
   onOpenChat,
   compact = false,
-}) {
+}: HubFloatingActionsProps) {
   if (hidden || !onOpenChat) return null;
 
   // Compact mode positions FAB above bottom nav; full mode uses safe-area only

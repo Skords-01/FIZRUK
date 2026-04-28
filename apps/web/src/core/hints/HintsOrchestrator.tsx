@@ -7,37 +7,10 @@ import {
   getFirstActionStartedAt,
   type HintContext,
   type HintId,
-  type KVStore,
 } from "@sergeant/shared";
 import { useToast } from "@shared/hooks/useToast";
 import { ANALYTICS_EVENTS, trackEvent } from "../observability/analytics";
 import { useHubPref } from "../settings/hubPrefs";
-
-const localStorageStore: KVStore = {
-  getString(key) {
-    try {
-      return typeof localStorage !== "undefined"
-        ? localStorage.getItem(key)
-        : null;
-    } catch {
-      return null;
-    }
-  },
-  setString(key, value) {
-    try {
-      localStorage.setItem(key, value);
-    } catch {
-      /* noop */
-    }
-  },
-  remove(key) {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      /* noop */
-    }
-  },
-};
 
 export interface HintsOrchestratorProps {
   inFtuxSession: boolean;

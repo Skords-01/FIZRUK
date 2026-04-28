@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { ErrorBoundary } from "../ErrorBoundary";
+import type { OpenModuleOptions } from "../hooks/useHubNavigation";
 
 const HubSearch = lazy(() =>
   import("../hub/HubSearch").then((m) => ({ default: m.HubSearch })),
@@ -25,6 +26,20 @@ function CloseOnError({ onClose }: { onClose: () => void }) {
   return null;
 }
 
+export interface HubModalsProps {
+  chatOpen: boolean;
+  onCloseChat: () => void;
+  chatInitialMessage: string;
+  chatAutoSend: boolean;
+  onOpenCatalogue: () => void;
+  searchOpen: boolean;
+  onCloseSearch: () => void;
+  onOpenModule: (
+    id: string | null | undefined,
+    opts?: OpenModuleOptions,
+  ) => void;
+}
+
 export function HubModals({
   chatOpen,
   onCloseChat,
@@ -34,7 +49,7 @@ export function HubModals({
   searchOpen,
   onCloseSearch,
   onOpenModule,
-}) {
+}: HubModalsProps) {
   return (
     <>
       {chatOpen && (

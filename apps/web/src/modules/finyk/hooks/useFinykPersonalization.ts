@@ -3,18 +3,20 @@ import {
   getFrequentCategories,
   getFrequentMerchants,
   type ManualExpense,
-  type PersonalizationOptions as DomainPersonalizationOptions,
 } from "@sergeant/finyk-domain/domain/personalization";
-import type { Transaction } from "@sergeant/finyk-domain/domain/types";
+import type {
+  Transaction,
+  Category,
+} from "@sergeant/finyk-domain/domain/types";
 
 // Memo-обгортка навколо чистих селекторів персоналізації. Повертає список
 // найчастіших категорій і мерчантів для поточного користувача — використовується
 // у quick add, dashboard-картках та в компонентах, що сортують UI за частотою.
 interface PersonalizationOptions {
-  mono?: { realTx?: unknown[] };
+  mono?: { realTx?: readonly Transaction[] };
   storage?: {
-    manualExpenses?: unknown[];
-    customCategories?: unknown[];
+    manualExpenses?: readonly ManualExpense[];
+    customCategories?: Category[];
     txCategories?: Record<string, string>;
     excludedTxIds?: Set<string>;
   };
@@ -66,22 +68,12 @@ export function useFinykPersonalization({
   );
 
   const frequentCategories = useMemo(
-    () =>
-      getFrequentCategories(
-        transactions as unknown as readonly Transaction[],
-        manualExpenses as unknown as readonly ManualExpense[],
-        opts as unknown as DomainPersonalizationOptions,
-      ),
+    () => getFrequentCategories(transactions, manualExpenses, opts),
     [transactions, manualExpenses, opts],
   );
 
   const frequentMerchants = useMemo(
-    () =>
-      getFrequentMerchants(
-        transactions as unknown as readonly Transaction[],
-        manualExpenses as unknown as readonly ManualExpense[],
-        opts as unknown as DomainPersonalizationOptions,
-      ),
+    () => getFrequentMerchants(transactions, manualExpenses, opts),
     [transactions, manualExpenses, opts],
   );
 
