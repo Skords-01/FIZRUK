@@ -72,7 +72,7 @@ export function useThemeMode() {
   };
 
   const resolvedScheme =
-    userPreference === "system" ? systemScheme ?? "light" : userPreference;
+    userPreference === "system" ? (systemScheme ?? "light") : userPreference;
 
   return {
     mode: userPreference,
@@ -104,7 +104,7 @@ import { useThemeMode, type ThemeMode } from "../theme/ColorSchemeBridge";
 
 function ThemeToggle() {
   const { mode, setTheme } = useThemeMode();
-  
+
   const options: { value: ThemeMode; label: string; icon: string }[] = [
     { value: "light", label: "Світла", icon: "☀️" },
     { value: "dark", label: "Темна", icon: "🌙" },
@@ -123,14 +123,16 @@ function ThemeToggle() {
               "flex-1 flex-row items-center justify-center gap-2 rounded-xl border py-3",
               mode === opt.value
                 ? "border-brand-500 bg-brand-50"
-                : "border-line bg-panel"
+                : "border-line bg-panel",
             )}
           >
             <Text>{opt.icon}</Text>
-            <Text className={cx(
-              "text-sm font-medium",
-              mode === opt.value ? "text-brand-700" : "text-fg"
-            )}>
+            <Text
+              className={cx(
+                "text-sm font-medium",
+                mode === opt.value ? "text-brand-700" : "text-fg",
+              )}
+            >
               {opt.label}
             </Text>
           </Pressable>
@@ -195,11 +197,13 @@ export const BackButton = forwardRef<View, BackButtonProps>(function BackButton(
     onPress,
     ...props
   },
-  ref
+  ref,
 ) {
   const router = useRouter();
 
-  const handlePress = (e: Parameters<NonNullable<PressableProps["onPress"]>>[0]) => {
+  const handlePress = (
+    e: Parameters<NonNullable<PressableProps["onPress"]>>[0],
+  ) => {
     hapticTap();
     if (onPress) {
       onPress(e);
@@ -208,7 +212,8 @@ export const BackButton = forwardRef<View, BackButtonProps>(function BackButton(
     }
   };
 
-  const resolvedIconColor = iconColor ?? (variant === "overlay" ? "#fff" : colors.text);
+  const resolvedIconColor =
+    iconColor ?? (variant === "overlay" ? "#fff" : colors.text);
   const sizeConfig = sizes[size];
 
   return (
@@ -221,12 +226,16 @@ export const BackButton = forwardRef<View, BackButtonProps>(function BackButton(
         "items-center justify-center rounded-full active:opacity-70 active:scale-95",
         sizeConfig.button,
         variants[variant],
-        className
+        className,
       )}
       hitSlop={8}
       {...props}
     >
-      <ChevronLeft size={sizeConfig.icon} color={resolvedIconColor} strokeWidth={2} />
+      <ChevronLeft
+        size={sizeConfig.icon}
+        color={resolvedIconColor}
+        strokeWidth={2}
+      />
     </Pressable>
   );
 });
@@ -253,11 +262,11 @@ import Animated, {
 
 // Всередині Sheet компоненту:
 
-export function Sheet({ /* props */ }: SheetProps) {
+export function Sheet({} /* props */ : SheetProps) {
   const translateY = useSharedValue(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   const { height: windowHeight } = useWindowDimensions();
-  
+
   // ... existing reduceMotion effect ...
 
   const panGesture = Gesture.Pan()
@@ -289,13 +298,13 @@ export function Sheet({ /* props */ }: SheetProps) {
       <View className="flex-1 justify-end">
         {/* Scrim */}
         <Pressable onPress={onClose} className="absolute inset-0 bg-black/40" />
-        
+
         <GestureDetector gesture={panGesture}>
           <Animated.View style={animatedStyle}>
             <KeyboardAvoidingView /* ... */>
               {/* Drag indicator */}
               <View className="flex items-center pt-3 pb-1">
-                <View 
+                <View
                   className="w-10 h-1 bg-cream-300 rounded-full"
                   accessibilityLabel="Потягніть вниз щоб закрити"
                 />
@@ -329,24 +338,26 @@ export interface InputProps /* ... */ {
 }
 
 // В рендері helper text:
-{helperText ? (
-  <View className="flex-row items-center gap-1.5 mt-1">
-    {showHelperIcon && error && (
-      <AlertCircle size={14} color={colors.danger} strokeWidth={2} />
-    )}
-    {showHelperIcon && success && (
-      <CheckCircle size={14} color={colors.success} strokeWidth={2} />
-    )}
-    <Text
-      className={cx(
-        "text-xs leading-snug flex-1",
-        error ? "text-danger" : success ? "text-success" : "text-fg-muted",
+{
+  helperText ? (
+    <View className="flex-row items-center gap-1.5 mt-1">
+      {showHelperIcon && error && (
+        <AlertCircle size={14} color={colors.danger} strokeWidth={2} />
       )}
-    >
-      {helperText}
-    </Text>
-  </View>
-) : null}
+      {showHelperIcon && success && (
+        <CheckCircle size={14} color={colors.success} strokeWidth={2} />
+      )}
+      <Text
+        className={cx(
+          "text-xs leading-snug flex-1",
+          error ? "text-danger" : success ? "text-success" : "text-fg-muted",
+        )}
+      >
+        {helperText}
+      </Text>
+    </View>
+  ) : null;
+}
 ```
 
 ---
@@ -375,12 +386,15 @@ export function useTabBadges(): TabBadges {
   const routinePending = useRoutinePending();
   const nutritionAlerts = useNutritionAlerts();
 
-  return useMemo(() => ({
-    finyk: finykOverBudget > 0 ? finykOverBudget : undefined,
-    fizruk: fizrukMissed > 0 ? fizrukMissed : undefined,
-    routine: routinePending > 0 ? routinePending : undefined,
-    nutrition: nutritionAlerts > 0 ? nutritionAlerts : undefined,
-  }), [finykOverBudget, fizrukMissed, routinePending, nutritionAlerts]);
+  return useMemo(
+    () => ({
+      finyk: finykOverBudget > 0 ? finykOverBudget : undefined,
+      fizruk: fizrukMissed > 0 ? fizrukMissed : undefined,
+      routine: routinePending > 0 ? routinePending : undefined,
+      nutrition: nutritionAlerts > 0 ? nutritionAlerts : undefined,
+    }),
+    [finykOverBudget, fizrukMissed, routinePending, nutritionAlerts],
+  );
 }
 ```
 
@@ -435,14 +449,14 @@ export function useTabBadges(): TabBadges {
 // Замінити hardcoded colors на semantic tokens
 
 // ❌ Було:
-iconColor = "#94a3b8"
-className="text-slate-800"
-className="text-emerald-500"
+iconColor = "#94a3b8";
+className = "text-slate-800";
+className = "text-emerald-500";
 
 // ✅ Стало:
-iconColor = colors.muted // з @/theme
-className="text-fg"
-className="text-brand-strong"
+iconColor = colors.muted; // з @/theme
+className = "text-fg";
+className = "text-brand-strong";
 
 // Повний оновлений код:
 export function EmptyState({
@@ -456,9 +470,9 @@ export function EmptyState({
   iconColor, // Тепер optional, використовує colors.subtle
 }: EmptyStateProps) {
   const resolvedIconColor = iconColor ?? colors.subtle;
-  
+
   // ...
-  
+
   return (
     <Animated.View /* ... */>
       {IconComponent && (
@@ -477,19 +491,23 @@ export function EmptyState({
       )}
 
       {title && (
-        <Text className={cx(
-          "font-semibold text-fg text-center",
-          compact ? "text-sm" : "text-base",
-        )}>
+        <Text
+          className={cx(
+            "font-semibold text-fg text-center",
+            compact ? "text-sm" : "text-base",
+          )}
+        >
           {title}
         </Text>
       )}
 
       {description && (
-        <Text className={cx(
-          "text-fg-muted text-center leading-relaxed max-w-xs",
-          compact ? "text-xs" : "text-sm",
-        )}>
+        <Text
+          className={cx(
+            "text-fg-muted text-center leading-relaxed max-w-xs",
+            compact ? "text-xs" : "text-sm",
+          )}
+        >
           {description}
         </Text>
       )}
@@ -505,10 +523,12 @@ export function EmptyState({
                 : "bg-brand-strong",
             )}
           >
-            <Text className={cx(
-              "font-semibold text-sm",
-              action.variant === "secondary" ? "text-fg" : "text-white",
-            )}>
+            <Text
+              className={cx(
+                "font-semibold text-sm",
+                action.variant === "secondary" ? "text-fg" : "text-white",
+              )}
+            >
               {action.label}
             </Text>
           </Pressable>
@@ -555,7 +575,7 @@ const SETTING_GROUPS = [
 
 export function HubSettingsPage() {
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
-  
+
   return (
     <SafeAreaView className="flex-1 bg-cream-50" edges={["top"]}>
       {/* Sticky group tabs */}
@@ -570,13 +590,17 @@ export function HubSettingsPage() {
                 }}
                 className={cx(
                   "px-4 py-2 rounded-full",
-                  activeGroup === group.id ? "bg-brand-100" : "bg-cream-100"
+                  activeGroup === group.id ? "bg-brand-100" : "bg-cream-100",
                 )}
               >
-                <Text className={cx(
-                  "text-sm font-medium",
-                  activeGroup === group.id ? "text-brand-700" : "text-fg-muted"
-                )}>
+                <Text
+                  className={cx(
+                    "text-sm font-medium",
+                    activeGroup === group.id
+                      ? "text-brand-700"
+                      : "text-fg-muted",
+                  )}
+                >
                   {group.title}
                 </Text>
               </Pressable>
@@ -584,13 +608,13 @@ export function HubSettingsPage() {
           </View>
         </ScrollView>
       </View>
-      
+
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 24 }}
       >
         <Text className="text-[22px] font-bold text-fg">Налаштування</Text>
-        
+
         {SETTING_GROUPS.map((group) => (
           <View key={group.id} className="gap-3">
             <Text className="text-sm font-semibold text-fg-muted uppercase tracking-wide">
@@ -708,7 +732,7 @@ export default function ForgotPasswordScreen() {
       <View className="px-4 py-2">
         <BackButton />
       </View>
-      
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1 px-6 justify-center gap-4"
@@ -827,14 +851,14 @@ describe("Dark Mode", () => {
 
 ## 📈 Метрики для відстеження
 
-| Метрика | Baseline | Target | Як виміряти |
-|---------|----------|--------|-------------|
-| Dark mode adoption | 0% | 30%+ | Analytics event |
-| Sheet dismiss rate | N/A | <5% abandon | Funnel analytics |
-| Settings page scroll depth | ~40% | 80%+ | Heatmap |
-| Error recovery rate | ~60% | 90%+ | Error boundary callbacks |
-| A11y violations | Unknown | 0 critical | aXe audit |
+| Метрика                    | Baseline | Target      | Як виміряти              |
+| -------------------------- | -------- | ----------- | ------------------------ |
+| Dark mode adoption         | 0%       | 30%+        | Analytics event          |
+| Sheet dismiss rate         | N/A      | <5% abandon | Funnel analytics         |
+| Settings page scroll depth | ~40%     | 80%+        | Heatmap                  |
+| Error recovery rate        | ~60%     | 90%+        | Error boundary callbacks |
+| A11y violations            | Unknown  | 0 critical  | aXe audit                |
 
 ---
 
-*Документ є частиною UX Improvement Initiative Q2 2026*
+_Документ є частиною UX Improvement Initiative Q2 2026_
