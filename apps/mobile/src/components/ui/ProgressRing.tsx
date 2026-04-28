@@ -17,7 +17,7 @@
 
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AccessibilityInfo, View } from "react-native";
+import { AccessibilityInfo, Animated as RNAnimated, View } from "react-native";
 import Animated, {
   useAnimatedProps,
   useSharedValue,
@@ -123,6 +123,10 @@ export function ProgressRing({
   const { colorScheme } = useColorScheme();
   const trackColor = colorScheme === "dark" ? trackColorDark : trackColorLight;
 
+  // Glow animation for 100% completion
+  const glowOpacity = useRef(new RNAnimated.Value(0)).current;
+  const glowScale = useRef(new RNAnimated.Value(1)).current;
+
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled()
       .then(setReduceMotion)
@@ -142,11 +146,40 @@ export function ProgressRing({
   const progress = useSharedValue(circumference);
 
   useEffect(() => {
-    // Haptic feedback on reaching 100%
+    // Haptic feedback and glow on reaching 100%
     if (hapticOnComplete && pct >= 1 && prevValue.current / safeMax < 1) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
         () => {},
       );
+      // Trigger glow animation
+      if (!reduceMotion) {
+        RNAnimated.sequence([
+          RNAnimated.parallel([
+            RNAnimated.timing(glowOpacity, {
+              toValue: 0.6,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            RNAnimated.timing(glowScale, {
+              toValue: 1.15,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+          ]),
+          RNAnimated.parallel([
+            RNAnimated.timing(glowOpacity, {
+              toValue: 0,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            RNAnimated.timing(glowScale, {
+              toValue: 1,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]).start();
+      }
     }
     prevValue.current = value;
 
@@ -166,6 +199,8 @@ export function ProgressRing({
     safeMax,
     hapticOnComplete,
     value,
+    glowOpacity,
+    glowScale,
   ]);
 
   const animatedProps = useAnimatedProps(() => ({
@@ -208,6 +243,19 @@ export function ProgressRing({
       className={cx("items-center justify-center", className)}
       style={{ width: diameter, height: diameter }}
     >
+      {/* Glow effect on completion */}
+      <RNAnimated.View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          width: diameter,
+          height: diameter,
+          borderRadius: diameter / 2,
+          backgroundColor: variantColors[variant],
+          opacity: glowOpacity,
+          transform: [{ scale: glowScale }],
+        }}
+      />
       <Svg
         width={diameter}
         height={diameter}

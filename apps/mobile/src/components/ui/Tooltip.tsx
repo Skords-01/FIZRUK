@@ -53,6 +53,8 @@ export interface TooltipProps {
   maxWidth?: number;
   /** Custom container style */
   containerStyle?: ViewStyle;
+  /** Show on tap instead of long-press (default: false) */
+  tapToShow?: boolean;
 }
 
 export interface TooltipTriggerProps {
@@ -107,6 +109,7 @@ export function Tooltip({
   disabled = false,
   maxWidth = 250,
   containerStyle,
+  tapToShow = false,
 }: TooltipProps) {
   const [visible, setVisible] = useState(false);
   const [triggerLayout, setTriggerLayout] = useState<TriggerLayout | null>(
@@ -261,11 +264,16 @@ export function Tooltip({
     <>
       <Pressable
         ref={triggerRef}
-        onLongPress={showTooltip}
-        delayLongPress={delay || 200}
+        onPress={tapToShow ? showTooltip : undefined}
+        onLongPress={tapToShow ? undefined : showTooltip}
+        delayLongPress={tapToShow ? undefined : delay || 200}
         style={containerStyle}
         accessibilityRole="button"
-        accessibilityHint="Натисніть і тримайте для підказки"
+        accessibilityHint={
+          tapToShow
+            ? "Натисніть для підказки"
+            : "Натисніть і тримайте для підказки"
+        }
       >
         {children}
       </Pressable>

@@ -35,8 +35,10 @@
  *   the same semantic token (no more hardcoded `cream-300`).
  */
 
-import { forwardRef, type ReactNode } from "react";
+import { forwardRef, useRef, type ReactNode } from "react";
 import {
+  Animated,
+  Pressable,
   Text,
   type TextProps,
   View,
@@ -126,6 +128,63 @@ export interface CardProps extends Omit<ViewProps, "style"> {
   radius?: CardRadius;
   className?: string;
   children?: ReactNode;
+  /** For interactive variant: callback when card is pressed */
+  onPress?: () => void;
+  /** Disable press interactions */
+  disabled?: boolean;
+}
+
+/**
+ * Animated wrapper for interactive cards with scale feedback.
+ */
+function AnimatedPressable({
+  children,
+  onPress,
+  disabled,
+  className,
+  style,
+}: {
+  children: ReactNode;
+  onPress?: () => void;
+  disabled?: boolean;
+  className?: string;
+  style?: ViewProps["style"];
+}) {
+  const scaleValue = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleValue, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleValue, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled}
+    >
+      <Animated.View
+        className={className}
+        style={[style, { transform: [{ scale: scaleValue }] }]}
+      >
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
 }
 
 export const Card = forwardRef<RNView, CardProps>(function Card(
@@ -135,6 +194,8 @@ export const Card = forwardRef<RNView, CardProps>(function Card(
     radius = "xl",
     className,
     children,
+    onPress,
+    disabled,
     ...props
   },
   ref,
@@ -142,17 +203,28 @@ export const Card = forwardRef<RNView, CardProps>(function Card(
   // Module (branded) variants bake their own radius — match web behaviour.
   const radiusClass = CORE_VARIANTS.has(variant) ? radii[radius] : "";
 
+  const cardClassName = cx(
+    variantContainer[variant],
+    radiusClass,
+    paddings[padding],
+    className,
+  );
+
+  // Use animated pressable wrapper for interactive variant with onPress
+  if (variant === "interactive" && onPress) {
+    return (
+      <AnimatedPressable
+        onPress={onPress}
+        disabled={disabled}
+        className={cardClassName}
+      >
+        {children}
+      </AnimatedPressable>
+    );
+  }
+
   return (
-    <View
-      ref={ref}
-      className={cx(
-        variantContainer[variant],
-        radiusClass,
-        paddings[padding],
-        className,
-      )}
-      {...props}
-    >
+    <View ref={ref} className={cardClassName} {...props}>
       {children}
     </View>
   );

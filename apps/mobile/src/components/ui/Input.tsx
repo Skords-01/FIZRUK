@@ -37,8 +37,14 @@
  */
 
 import { forwardRef, useState, type ReactNode } from "react";
-import { Text, TextInput, type TextInputProps, View } from "react-native";
-import { AlertCircle, CheckCircle } from "lucide-react-native";
+import {
+  Pressable,
+  Text,
+  TextInput,
+  type TextInputProps,
+  View,
+} from "react-native";
+import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react-native";
 
 import { colors } from "@/theme";
 
@@ -153,6 +159,8 @@ export interface InputProps extends Omit<
   showHelperIcon?: boolean;
   /** Show character count when maxLength is set. Defaults to true when maxLength is provided. */
   showCharacterCount?: boolean;
+  /** Show password visibility toggle for password fields. Defaults to true for type="password". */
+  showPasswordToggle?: boolean;
   /**
    * Explicit RN overrides — the caller's value always wins over the
    * `type`-derived defaults.
@@ -177,6 +185,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     label,
     showHelperIcon = false,
     showCharacterCount,
+    showPasswordToggle,
     keyboardType,
     autoCapitalize,
     autoComplete,
@@ -197,9 +206,12 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   const [charCount, setCharCount] = useState(
     () => (value ?? defaultValue ?? "").length,
   );
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   // Show character count when maxLength is set, unless explicitly disabled
   const shouldShowCharCount = showCharacterCount ?? maxLength !== undefined;
+  // Show password toggle for password type unless explicitly disabled
+  const shouldShowPasswordToggle = showPasswordToggle ?? type === "password";
   const isNearLimit = maxLength !== undefined && charCount >= maxLength * 0.9;
   const isAtLimit = maxLength !== undefined && charCount >= maxLength;
 
@@ -210,8 +222,9 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     autoComplete ?? (type ? DEFAULT_AUTOCOMPLETE[type] : undefined);
   const resolvedAutoCapitalize =
     autoCapitalize ?? (type ? DEFAULT_AUTOCAPITALIZE[type] : undefined);
+  // For password fields with toggle, use internal visibility state
   const resolvedSecure =
-    secureTextEntry ?? (type === "password" ? true : undefined);
+    secureTextEntry ?? (type === "password" ? !passwordVisible : undefined);
   const resolvedSpellCheck =
     spellCheck ?? (type && NON_PROSE_TYPES.has(type) ? false : undefined);
 
@@ -273,7 +286,24 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           className={cx("flex-1 text-base text-fg", className)}
           {...props}
         />
-        {suffix ? <View className="ml-2">{suffix}</View> : null}
+        {shouldShowPasswordToggle && type === "password" ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              passwordVisible ? "Приховати пароль" : "Показати пароль"
+            }
+            onPress={() => setPasswordVisible((v) => !v)}
+            className="ml-2 w-8 h-8 items-center justify-center rounded-lg active:bg-cream-200/50"
+          >
+            {passwordVisible ? (
+              <EyeOff size={18} color={colors.textMuted} strokeWidth={2} />
+            ) : (
+              <Eye size={18} color={colors.textMuted} strokeWidth={2} />
+            )}
+          </Pressable>
+        ) : suffix ? (
+          <View className="ml-2">{suffix}</View>
+        ) : null}
       </View>
       <View className="flex-row items-center gap-1.5 mt-0.5">
         {helperText ? (

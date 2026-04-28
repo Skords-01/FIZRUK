@@ -66,6 +66,8 @@ export interface ConfirmDialogProps {
   icon?: LucideIcon;
   /** Hide the cancel button */
   hideCancel?: boolean;
+  /** Show loading state on confirm button */
+  loading?: boolean;
   onConfirm?: () => void;
   onCancel?: () => void;
   testID?: string;
@@ -116,6 +118,7 @@ export function ConfirmDialog({
   variant: variantProp,
   icon: iconProp,
   hideCancel = false,
+  loading = false,
   onConfirm,
   onCancel,
   testID = "confirm-dialog",
@@ -225,6 +228,8 @@ export function ConfirmDialog({
               variant={config.confirmVariant}
               size="lg"
               onPress={handleConfirm}
+              loading={loading}
+              disabled={loading}
               className="flex-1"
               testID={`${testID}-confirm`}
             >
@@ -249,6 +254,8 @@ interface ConfirmOptions {
   variant?: ConfirmDialogVariant;
   icon?: LucideIcon;
   hideCancel?: boolean;
+  /** Show loading state on confirm button during async operations */
+  loading?: boolean;
 }
 
 interface ConfirmState extends ConfirmOptions {
