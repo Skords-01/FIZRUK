@@ -20,6 +20,7 @@ import "@shared/lib/fileImport";
 // effects only.
 import "@shared/hooks/useVisualKeyboardInset";
 import { ErrorBoundary } from "./core/ErrorBoundary.jsx";
+import { installChunkLoadRecover } from "./core/lib/chunkReload.js";
 import { initSentry } from "./core/observability/sentry.js";
 import { initWebVitals } from "./core/observability/webVitals.js";
 import { initPostHog } from "./core/observability/posthog.js";
@@ -45,6 +46,12 @@ const ReactQueryDevtools = import.meta.env.DEV
 // reloads onto `/`. `?demo=reset` wipes it. Called BEFORE storage
 // migrations / the legacy demo-cleanup pass so the seeded payload is
 // visible to both and survives the boot.
+// Stale-bundle recovery: глобальні слухачі `vite:preloadError` /
+// `unhandledrejection` / `error`, що роблять одноразовий `location.reload()`
+// на `Failed to fetch dynamically imported module`. Має стояти максимально
+// рано — щоб упіймати rejection-и на найперших lazy-import-ах.
+installChunkLoadRecover();
+
 runDemoSeedFromUrl();
 storageManager.runAll();
 runDemoCleanupOnce();
