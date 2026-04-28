@@ -130,3 +130,17 @@ export type { UndoToastOptions } from "./undoToast";
 
 export { hasLiveWeeklyDigest, loadDigest } from "./weeklyDigestStorage";
 export type { WeeklyDigestRecord } from "./weeklyDigestStorage";
+
+export {
+  arrayToCSV,
+  dataToHTMLTable,
+  downloadString,
+  exportToCSV,
+  exportToPDF,
+  generatePDFReport,
+} from "./export";
+export type {
+  ExportColumn,
+  PDFReportOptions,
+  PDFReportSection,
+} from "./export";

@@ -51,6 +51,35 @@ export {
 } from "./FeatureSpotlight";
 export type { FeatureSpotlightProps } from "./FeatureSpotlight";
 
+export {
+  KeyboardShortcutsModal,
+  useKeyboardShortcutsModal,
+} from "./KeyboardShortcutsModal";
+export type { KeyboardShortcut } from "./KeyboardShortcutsModal";
+
+export {
+  AnimatedNumber,
+  AnimatedCurrency,
+  AnimatedPercent,
+} from "./AnimatedNumber";
+export type {} from "./AnimatedNumber";
+
+export { StreakProtection, useStreakRiskCheck } from "./StreakProtection";
+export type { StreakProtectionProps } from "./StreakProtection";
+
+export { QuickActionsMenu } from "./QuickActionsMenu";
+export type { QuickAction } from "./QuickActionsMenu";
+
+export { PageTransition } from "./PageTransition";
+export type { TransitionDirection } from "./PageTransition";
+
+export {
+  AccentColorPicker,
+  AccentColorPickerCard,
+  useAccentColor,
+} from "./AccentColorPicker";
+export type { AccentColor } from "./AccentColorPicker";
+
 export { FormField, Label } from "./FormField";
 export type { FormFieldProps, LabelProps } from "./FormField";
 
