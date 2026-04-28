@@ -15,71 +15,52 @@
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO module_data (module, user_id, data, created_at) VALUES ('finyk', '{{ $json.body.user_id }}', '{{ JSON.stringify($json.body.data) }}'::jsonb, NOW()) RETURNING id;",
-        "options": {}
-      },
-      "id": "save-to-db",
-      "name": "Save to module_data",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [460, 300],
-      "credentials": {
-        "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
-      }
-    },
-    {
-      "parameters": {
-        "model": "claude-sonnet-4-20250514",
-        "messages": {
-          "values": [
-            {
-              "role": "system",
-              "content": "You are a transaction categorizer for a Ukrainian personal finance app. Categorize the transaction into one of: groceries, transport, dining, entertainment, utilities, health, shopping, education, subscriptions, income, transfer, other. Respond with JSON: {\"category\": \"...\", \"confidence\": 0.0-1.0}"
-            },
-            {
-              "role": "user",
-              "content": "=Transaction: {{ $json.body.data.description }} Amount: {{ $json.body.data.amount / 100 }} UAH MCC: {{ $json.body.data.mcc }}"
-            }
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
           ]
         },
-        "options": { "maxTokens": 100 }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 100,\n  \"system\": \"You are a transaction categorizer for a Ukrainian personal finance app. Categorize the transaction into one of: groceries, transport, dining, entertainment, utilities, health, shopping, education, subscriptions, income, transfer, other. Respond with JSON only: {\\\"category\\\": \\\"...\\\", \\\"confidence\\\": 0.0-1.0}\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Transaction: {{ $('Mono Webhook').item.json.body.data.description }} Amount: {{ $('Mono Webhook').item.json.body.data.amount / 100 }} UAH MCC: {{ $('Mono Webhook').item.json.body.data.mcc }}\"\n    }\n  ]\n}",
+        "options": {}
       },
       "id": "ai-categorize",
       "name": "AI → categorize",
-      "type": "n8n-nodes-base.anthropic",
-      "typeVersion": 1,
-      "position": [680, 300],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
       "credentials": {
-        "anthropicApi": { "id": "CONFIGURE_ME", "name": "Anthropic" }
+        "httpHeaderAuth": { "id": "CONFIGURE_ME", "name": "Anthropic (x-api-key)" }
       }
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE module_data SET data = data || '{{ JSON.stringify({ ai_category: $json.category }) }}'::jsonb WHERE id = {{ $node['Save to module_data'].json.id }};",
-        "options": {}
+        "jsCode": "// Parse Anthropic response: response.content[0].text is JSON string like\n// {\"category\":\"groceries\",\"confidence\":0.9}\nconst raw = $input.first().json?.content?.[0]?.text ?? '{}';\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  parsed = { category: 'other', confidence: 0 };\n}\nreturn [{ json: { category: parsed.category ?? 'other', confidence: parsed.confidence ?? 0 } }];"
       },
-      "id": "update-category",
-      "name": "Update category in DB",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [900, 300],
-      "credentials": {
-        "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
-      }
+      "id": "parse-ai",
+      "name": "Parse AI response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT COALESCE(SUM(ABS((data->>'amount')::numeric / 100)), 0) AS monthly_spent FROM module_data WHERE module = 'finyk' AND user_id = '{{ $json.body.user_id }}' AND created_at >= date_trunc('month', NOW());",
+        "query": "SELECT COALESCE(SUM(ABS(amount) / 100.0), 0)::numeric AS monthly_spent FROM mono_transaction WHERE user_id = '{{ $('Mono Webhook').item.json.body.user_id }}' AND time >= date_trunc('month', NOW()) AND amount < 0;",
         "options": {}
       },
       "id": "check-budget",
       "name": "Check monthly budget",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1120, 300],
+      "position": [900, 300],
       "credentials": {
         "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
       }
@@ -90,7 +71,7 @@
           "conditions": [
             {
               "id": "over-budget",
-              "leftValue": "={{ $json.monthly_spent }}",
+              "leftValue": "={{ Number($json.monthly_spent) }}",
               "rightValue": 15000,
               "operator": { "type": "number", "operation": "gt" }
             }
@@ -101,19 +82,19 @@
       "name": "Over ₴15K threshold?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1340, 300]
+      "position": [1120, 300]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_ALERT_CHAT_ID }}",
-        "text": "=💸 *Budget alert*\n\nMonthly spending: ₴{{ Math.round($json.monthly_spent) }}\nThreshold: ₴15,000\n\nLatest: {{ $node['Mono Webhook'].json.body.data.description }} (₴{{ Math.abs($node['Mono Webhook'].json.body.data.amount / 100) }})",
+        "text": "=💸 *Budget alert*\n\nMonthly spending: ₴{{ Math.round($json.monthly_spent) }}\nThreshold: ₴15,000\n\nLatest: {{ $('Mono Webhook').item.json.body.data.description }} (₴{{ Math.abs($('Mono Webhook').item.json.body.data.amount / 100) }})\nAI category: *{{ $('Parse AI response').item.json.category }}* ({{ Math.round($('Parse AI response').item.json.confidence * 100) }}%)",
         "additionalFields": { "parse_mode": "Markdown" }
       },
       "id": "telegram-budget",
       "name": "Telegram → budget alert",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1560, 200],
+      "position": [1340, 200],
       "credentials": {
         "telegramApi": { "id": "CONFIGURE_ME", "name": "Sergeant Ops Bot" }
       }
@@ -121,17 +102,12 @@
   ],
   "connections": {
     "Mono Webhook": {
-      "main": [[{ "node": "Save to module_data", "type": "main", "index": 0 }]]
-    },
-    "Save to module_data": {
       "main": [[{ "node": "AI → categorize", "type": "main", "index": 0 }]]
     },
     "AI → categorize": {
-      "main": [
-        [{ "node": "Update category in DB", "type": "main", "index": 0 }]
-      ]
+      "main": [[{ "node": "Parse AI response", "type": "main", "index": 0 }]]
     },
-    "Update category in DB": {
+    "Parse AI response": {
       "main": [[{ "node": "Check monthly budget", "type": "main", "index": 0 }]]
     },
     "Check monthly budget": {
@@ -145,5 +121,5 @@
     }
   },
   "settings": { "executionOrder": "v1", "timezone": "Europe/Kyiv" },
-  "tags": [{ "name": "monobank" }, { "name": "finyk" }, { "name": "ai" }]
+  "tags": [{ "name": "finyk" }, { "name": "mono" }, { "name": "ai" }, { "name": "budget" }]
 }

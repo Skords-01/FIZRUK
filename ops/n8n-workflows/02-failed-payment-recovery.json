@@ -50,18 +50,22 @@
     },
     {
       "parameters": {
-        "fromEmail": "support@sergeant.app",
-        "toEmail": "={{ $json.body.data.object.customer_email }}",
-        "subject": "Sergeant: оновіть платіжну картку",
-        "htmlBody": "<h2>Оплата не пройшла</h2><p>Ваша картка не спрацювала. Будь ласка, оновіть платіжні дані у <a href=\"https://sergeant.app/settings/billing\">налаштуваннях</a>.</p><p>Якщо потрібна допомога — напишіть нам у чат.</p>"
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Sergeant <support@sergeant.app>\",\n  \"to\": [\"{{ $('Stripe Webhook').item.json.body.data.object.customer_email }}\"],\n  \"subject\": \"Sergeant: оновіть платіжну картку\",\n  \"html\": \"<h2>Оплата не пройшла</h2><p>Ваша картка не спрацювала. Будь ласка, оновіть платіжні дані у <a href=\\\"https://sergeant.app/settings/billing\\\">налаштуваннях</a>.</p><p>Якщо потрібна допомога — напишіть нам у чат.</p>\"\n}",
+        "options": {}
       },
       "id": "send-email",
       "name": "Resend → update card email",
-      "type": "n8n-nodes-base.resend",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [680, 400],
       "credentials": {
-        "resendApi": { "id": "CONFIGURE_ME", "name": "Resend" }
+        "httpHeaderAuth": { "id": "CONFIGURE_ME", "name": "Resend (Bearer)" }
       }
     },
     {
@@ -80,7 +84,7 @@
           "conditions": [
             {
               "id": "check-attempt",
-              "leftValue": "={{ $json.body.data.object.attempt_count }}",
+              "leftValue": "={{ $('Stripe Webhook').item.json.body.data.object.attempt_count }}",
               "rightValue": 4,
               "operator": { "type": "number", "operation": "gte" }
             }
@@ -96,7 +100,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE users SET plan = 'free', plan_updated_at = NOW() WHERE stripe_customer_id = '{{ $json.body.data.object.customer }}';",
+        "query": "UPDATE users SET plan = 'free', plan_updated_at = NOW() WHERE stripe_customer_id = '{{ $('Stripe Webhook').item.json.body.data.object.customer }}';",
         "options": {}
       },
       "id": "downgrade-to-free",
