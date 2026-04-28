@@ -83,9 +83,10 @@ export function UserMenuButton({
         aria-expanded={open}
         title={user.email ?? undefined}
         className={cn(
-          "relative w-11 h-11 flex items-center justify-center rounded-2xl text-sm font-bold transition-colors",
+          // Mirror `HubHeader.ICON_BUTTON_CLS`: 48 пкс mobile / 44 пкс ≥sm; solid focus-ring.
+          "relative w-12 h-12 sm:w-11 sm:h-11 flex items-center justify-center rounded-2xl text-sm font-bold transition-colors",
           "bg-brand-500/15 text-brand-600 dark:text-brand-400 hover:bg-brand-500/25",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
           syncing && "motion-safe:animate-pulse",
         )}
       >

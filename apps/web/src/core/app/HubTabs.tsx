@@ -25,8 +25,10 @@ function TabButton({
       role="tab"
       aria-selected={active}
       className={cn(
-        "flex-1 flex items-center justify-center gap-1.5 min-h-[44px] py-2 rounded-xl text-sm font-medium transition-[background-color,color,opacity]",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
+        // WCAG 2.5.5 AAA: 48 пкс на мобільному (thumb-zone), 44 пкс на ≥1sm — для desktop вводу
+        // достатньо. Focus-ring без альфи, щоб холдити ≥3:1 контраст до bg.
+        "flex-1 flex items-center justify-center gap-1.5 min-h-[48px] sm:min-h-[44px] py-2 rounded-xl text-sm font-medium transition-[background-color,color,opacity]",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
         active
           ? "bg-panel text-text shadow-card"
           : "text-muted hover:text-text",
