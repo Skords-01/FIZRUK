@@ -98,7 +98,7 @@ jobs:
 
       - name: Run Detox iOS suite
         working-directory: apps/mobile
-        run: pnpm e2e:test:ios -- --headless --record-logs all
+        run: pnpm e2e:test:ios:ci
 
       - name: Upload Detox artefacts on failure
         if: always()
