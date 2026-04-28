@@ -1,11 +1,16 @@
 import type { CSSProperties } from "react";
+
 import { cn } from "../../lib/cn";
 
 export interface SkeletonProps {
   className?: string;
   /** Use shimmer effect instead of pulse (more premium feel) */
   shimmer?: boolean;
-  /** Inline style passthrough (e.g. staggered `animationDelay`). */
+  /**
+   * Inline style — primarily used for staggered `animationDelay` on rows
+   * of skeletons (see `ModulePageLoader.RoutineLoader`). Forwarded to the
+   * outer `<div>` only.
+   */
   style?: CSSProperties;
 }
 
@@ -64,18 +69,13 @@ export function SkeletonText({
  * Pre-composed skeleton for module cards (HubDashboard, StatusRow).
  * Matches the visual structure of real cards for seamless loading states.
  */
-export function SkeletonCard({
-  className,
-  shimmer = false,
-  style,
-}: SkeletonProps) {
+export function SkeletonCard({ className, shimmer = false }: SkeletonProps) {
   return (
     <div
       className={cn(
         "rounded-2xl border border-line bg-panel p-4 space-y-3",
         className,
       )}
-      style={style}
       aria-hidden="true"
     >
       <div className="flex items-center gap-3">

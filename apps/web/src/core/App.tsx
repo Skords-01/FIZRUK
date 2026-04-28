@@ -19,6 +19,7 @@ import { apiClient } from "@shared/api";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { useCloudSync } from "./cloudSync/useCloudSync";
 import { PageLoader } from "./app/PageLoader";
+import { ModulePageLoader } from "@shared/components/ui/ModulePageLoader";
 import { OfflineBanner } from "./app/OfflineBanner";
 import { MigrationPrompt } from "./app/MigrationPrompt";
 import { usePwaInstall } from "./app/usePwaInstall";
@@ -41,6 +42,10 @@ import { usePwaActions, type PwaAction } from "./hooks/usePwaActions";
 import { ShellDeepLinkBridge } from "./app/ShellDeepLinkBridge";
 import { PageviewTracker } from "./observability/PageviewTracker";
 import { HintsOrchestrator } from "./hints/HintsOrchestrator";
+import {
+  KeyboardShortcutsModal,
+  useKeyboardShortcutsModal,
+} from "@shared/components/ui/KeyboardShortcutsModal";
 
 const AuthPage = lazy(() =>
   import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),
@@ -179,6 +184,7 @@ function AppInner() {
   const { pwaAction, setPwaAction, clearPwaAction, validActions } =
     usePwaActions(searchParams);
   const { dark, toggle: toggleDark } = useDarkMode();
+  const keyboardShortcuts = useKeyboardShortcutsModal();
   const { canInstall, install, dismiss } = usePwaInstall();
   const { visible: iosVisible, dismiss: iosDismiss } = useIosInstallBanner();
   const online = useOnlineStatus();
@@ -472,6 +478,10 @@ function AppInner() {
           onCloseSearch={ui.closeSearch}
           onOpenModule={openModule}
         />
+        <KeyboardShortcutsModal
+          open={keyboardShortcuts.open}
+          onClose={keyboardShortcuts.onClose}
+        />
       </div>
     );
   }
@@ -487,7 +497,15 @@ function AppInner() {
           requirement: switching modules mid-set must not bury the
           workout. */}
       {activeModule !== "fizruk" && <ActiveWorkoutBanner />}
-      <Suspense fallback={<PageLoader />}>
+      <Suspense
+        fallback={
+          <ModulePageLoader
+            module={
+              activeModule as "finyk" | "fizruk" | "routine" | "nutrition"
+            }
+          />
+        }
+      >
         {/* Skip-link target. We render `<main>` by default so every screen
             exposes a `main` landmark for AT users. One exception: the
             Routine module renders its own `<main id="routine-main">`
@@ -544,6 +562,10 @@ function AppInner() {
           );
         })()}
       </Suspense>
+      <KeyboardShortcutsModal
+        open={keyboardShortcuts.open}
+        onClose={keyboardShortcuts.onClose}
+      />
     </div>
   );
 }

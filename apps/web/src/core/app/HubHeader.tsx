@@ -1,6 +1,9 @@
 import { useMemo } from "react";
+import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Tooltip } from "@shared/components/ui/Tooltip";
+import { FeatureSpotlight } from "@shared/components/ui/FeatureSpotlight";
+import { useScrollHeader } from "@shared/hooks/useScrollHeader";
 import { BrandLogo } from "./BrandLogo";
 import { DarkModeToggle } from "./DarkModeToggle";
 import { UserMenuButton } from "./UserMenuButton";
@@ -67,6 +70,12 @@ export function HubHeader({
   onToggleDark,
   hideAuthButton = false,
 }: HubHeaderProps) {
+  const { isHidden, isShrunk, hasBlur } = useScrollHeader({
+    shrinkThreshold: 40,
+    hideThreshold: 120,
+    minDelta: 8,
+  });
+
   const greetingText = useMemo(() => {
     const tod = getTimeOfDay();
     const base = GREETINGS[tod];
@@ -78,8 +87,20 @@ export function HubHeader({
 
   return (
     <header
-      className="px-5 pt-10 pb-3 max-w-lg mx-auto w-full"
-      style={{ paddingTop: "max(2.5rem, env(safe-area-inset-top))" }}
+      className={cn(
+        "px-5 max-w-lg mx-auto w-full",
+        "sticky top-0 z-40",
+        "transition-all duration-300 ease-out",
+        // Progressive header states
+        isHidden && "-translate-y-full",
+        isShrunk ? "pt-3 pb-2" : "pt-10 pb-3",
+        hasBlur && "bg-bg/80 backdrop-blur-md border-b border-line/50",
+      )}
+      style={{
+        paddingTop: isShrunk
+          ? undefined
+          : "max(2.5rem, env(safe-area-inset-top))",
+      }}
     >
       {/* ── Row 1: Mark + Wordmark + Action icons ─────────────── */}
       <div className="flex items-center justify-between">
@@ -91,16 +112,25 @@ export function HubHeader({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <Tooltip content="Пошук по всіх модулях" placement="bottom-center">
-            <button
-              type="button"
-              onClick={onOpenSearch}
-              aria-label="Пошук"
-              className={ICON_BUTTON_CLS}
-            >
-              <Icon name="search" size={20} />
-            </button>
-          </Tooltip>
+          <FeatureSpotlight
+            id="hub-search-button"
+            title="Глобальний пошук"
+            description="Знаходь транзакції, тренування та їжу. Також Cmd+K"
+            position="bottom"
+            showOnce
+            delay={5000}
+          >
+            <Tooltip content="Пошук по всіх модулях" placement="bottom-center">
+              <button
+                type="button"
+                onClick={onOpenSearch}
+                aria-label="Пошук"
+                className={ICON_BUTTON_CLS}
+              >
+                <Icon name="search" size={20} />
+              </button>
+            </Tooltip>
+          </FeatureSpotlight>
 
           {user ? (
             <UserMenuButton
@@ -133,8 +163,14 @@ export function HubHeader({
         </div>
       </div>
 
-      {/* ── Row 2: Vertical bar + subtitle ────────────────────── */}
-      <div className="flex items-center gap-1.5 mt-1.5 ml-[3px]">
+      {/* ── Row 2: Vertical bar + subtitle (hidden when shrunk) ── */}
+      <div
+        className={cn(
+          "flex items-center gap-1.5 mt-1.5 ml-[3px]",
+          "transition-all duration-300",
+          isShrunk && "opacity-0 h-0 mt-0 overflow-hidden",
+        )}
+      >
         <span
           aria-hidden="true"
           className="inline-block w-[3px] h-[14px] rounded-full bg-brand-500"
@@ -144,8 +180,14 @@ export function HubHeader({
         </span>
       </div>
 
-      {/* ── Row 3: Greeting · date (single line) ──────────────── */}
-      <p className="mt-1.5 ml-[3px] text-[13px] leading-snug text-muted truncate">
+      {/* ── Row 3: Greeting · date (hidden when shrunk) ───────── */}
+      <p
+        className={cn(
+          "mt-1.5 ml-[3px] text-[13px] leading-snug text-muted truncate",
+          "transition-all duration-300",
+          isShrunk && "opacity-0 h-0 mt-0 overflow-hidden",
+        )}
+      >
         {greetingText}
         {dateStr && (
           <>

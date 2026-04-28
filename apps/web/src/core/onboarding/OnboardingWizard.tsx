@@ -10,6 +10,7 @@ import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Card, type CardVariant } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
+import { useCelebration } from "@shared/components/ui/CelebrationModal";
 import { BrandLogo } from "../app/BrandLogo";
 import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
 import {
@@ -516,7 +517,7 @@ function GoalsStep({
         <p className="text-xs text-muted">
           {hasQuestions
             ? "Необов'язково — можна пропустити."
-            : "Налаштуй деталі потім у кожному модулі."}
+            : "Налаштуй деталі потім у кожно��у модулі."}
         </p>
       </div>
 
@@ -648,6 +649,7 @@ export function OnboardingWizard({
     stepStartedAt: Date.now(),
   });
   const [showPermissions, setShowPermissions] = useState(false);
+  const { confetti, CelebrationComponent } = useCelebration();
 
   // Track wizard start
   useEffect(() => {
@@ -742,8 +744,15 @@ export function OnboardingWizard({
     markFirstActionStartedAt();
     markFirstActionPending();
     markOnboardingDone();
-    onDone(null, { intent: "vibe_empty", picks: chosen });
-  }, [state.picks, state.goals, onDone]);
+
+    // Show celebration before navigating
+    confetti("Готово!", "Твій Sergeant налаштовано. Час діяти!", "high");
+
+    // Delay navigation slightly to let celebration show
+    setTimeout(() => {
+      onDone(null, { intent: "vibe_empty", picks: chosen });
+    }, 800);
+  }, [state.picks, state.goals, onDone, confetti]);
 
   const stepIdx = ONBOARDING_STEPS.indexOf(state.step);
 
@@ -830,26 +839,32 @@ export function OnboardingWizard({
 
   if (variant === "fullPage") {
     return (
-      <div
-        className="relative w-full max-w-sm bg-panel border border-line rounded-3xl shadow-float p-6 animate-onboarding-enter"
-        aria-label="Вітальний екран"
-      >
-        {content}
-      </div>
+      <>
+        {CelebrationComponent}
+        <div
+          className="relative w-full max-w-sm bg-panel border border-line rounded-3xl shadow-float p-6 animate-onboarding-enter"
+          aria-label="Вітальний екран"
+        >
+          {content}
+        </div>
+      </>
     );
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center p-4 pb-safe"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Вітальний екран"
-    >
-      <div className="absolute inset-0 bg-bg/80 backdrop-blur-md" />
-      <div className="relative w-full max-w-sm bg-panel border border-line rounded-3xl shadow-float p-6 animate-onboarding-enter">
-        {content}
+    <>
+      {CelebrationComponent}
+      <div
+        className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center p-4 pb-safe"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Вітальний екран"
+      >
+        <div className="absolute inset-0 bg-bg/80 backdrop-blur-md" />
+        <div className="relative w-full max-w-sm bg-panel border border-line rounded-3xl shadow-float p-6 animate-onboarding-enter">
+          {content}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

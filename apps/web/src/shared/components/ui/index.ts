@@ -44,6 +44,42 @@ export type { AvatarProps, AvatarSize, AvatarStatus } from "./Avatar";
 export { EmptyState } from "./EmptyState";
 export type { EmptyStateProps } from "./EmptyState";
 
+export {
+  FeatureSpotlight,
+  useResetSpotlight,
+  useSpotlightDismissed,
+} from "./FeatureSpotlight";
+export type { FeatureSpotlightProps } from "./FeatureSpotlight";
+
+export {
+  KeyboardShortcutsModal,
+  useKeyboardShortcutsModal,
+} from "./KeyboardShortcutsModal";
+export type { KeyboardShortcut } from "./KeyboardShortcutsModal";
+
+export {
+  AnimatedNumber,
+  AnimatedCurrency,
+  AnimatedPercent,
+} from "./AnimatedNumber";
+export type {} from "./AnimatedNumber";
+
+export { StreakProtection, useStreakRiskCheck } from "./StreakProtection";
+export type { StreakProtectionProps } from "./StreakProtection";
+
+export { QuickActionsMenu } from "./QuickActionsMenu";
+export type { QuickAction } from "./QuickActionsMenu";
+
+export { PageTransition } from "./PageTransition";
+export type { TransitionDirection } from "./PageTransition";
+
+export {
+  AccentColorPicker,
+  AccentColorPickerCard,
+  useAccentColor,
+} from "./AccentColorPicker";
+export type { AccentColor } from "./AccentColorPicker";
+
 export { FormField, Label } from "./FormField";
 export type { FormFieldProps, LabelProps } from "./FormField";
 
@@ -124,3 +160,18 @@ export { Tooltip } from "./Tooltip";
 export type { TooltipPlacement, TooltipProps } from "./Tooltip";
 
 export type { FormVariant, SmallMediumLarge } from "./types";
+
+export {
+  CelebrationModal,
+  MiniSuccess,
+  useCelebration,
+} from "./CelebrationModal";
+export type {
+  CelebrationModalProps,
+  CelebrationType,
+  MiniSuccessProps,
+  ModuleTheme,
+} from "./CelebrationModal";
+
+export { StreakCelebration, useStreakCelebration } from "./StreakCelebration";
+export type { StreakCelebrationProps } from "./StreakCelebration";
