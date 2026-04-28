@@ -8,6 +8,10 @@
     "pnpm": ">=9"
   },
   "packageManager": "pnpm@9.15.1",
+  "volta": {
+    "node": "20.20.2",
+    "pnpm": "9.15.1"
+  },
   "scripts": {
     "dev": "turbo run dev --parallel",
     "dev:web": "pnpm --filter @sergeant/web dev",
@@ -35,6 +39,7 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:migrate": "pnpm --filter @sergeant/server db:migrate",
+    "dev:db": "pnpm db:up && pnpm db:migrate",
     "licenses:gen": "node scripts/generate-licenses.mjs",
     "licenses:check": "node scripts/generate-licenses.mjs check",
     "strict:coverage": "node scripts/strict-coverage.mjs",

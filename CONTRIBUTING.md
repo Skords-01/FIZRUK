@@ -23,6 +23,8 @@ pnpm --version  # має бути 9.15.1
 
 Repo pins `"packageManager": "pnpm@9.15.1"` — Corepack автоматично підхоплює точну версію pnpm. CI також працює на Node 20; Node 22 може давати engine warning і відрізнятися від CI.
 
+Якщо ти користуєшся [Volta](https://volta.sh/), `package.json` містить `volta` блок з точними версіями `node@20.20.2` + `pnpm@9.15.1` — `volta` автоматично перемикає toolchain при `cd` у репо. Альтернатива — `nvm use` (підхопить `.nvmrc`).
+
 ---
 
 ## Before you start
@@ -50,8 +52,8 @@ cp .env.example .env
 echo "AI_QUOTA_DISABLED=1" >> .env
 
 # 3. Database
-pnpm db:up                  # docker compose up -d (Postgres 16 on :5432)
-pnpm db:migrate             # run SQL migrations
+pnpm dev:db                 # docker compose up -d (Postgres 16 on :5432) + run SQL migrations
+# (or run them separately: `pnpm db:up` then `pnpm db:migrate`)
 
 # 4. Dev servers (two terminals)
 pnpm dev:server             # Express API  → http://localhost:3000
