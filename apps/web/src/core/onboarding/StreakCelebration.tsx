@@ -68,10 +68,10 @@ const STREAK_MILESTONES: StreakMilestone[] = [
 ];
 
 function getShownMilestones(): number[] {
-  const stored = safeReadLS(STREAK_STORAGE_KEY);
-  if (!stored) return [];
+  const stored = safeReadLS<string>(STREAK_STORAGE_KEY);
+  if (!stored || typeof stored !== "string") return [];
   try {
-    return JSON.parse(stored);
+    return JSON.parse(stored) as number[];
   } catch {
     return [];
   }
@@ -153,8 +153,8 @@ export function StreakCelebration({
 export function useStreakDays(): number {
   // Цей hook має інтегруватись з реальною логікою підрахунку стріку.
   // Поки що повертає значення з localStorage як placeholder.
-  const stored = safeReadLS(STREAK_DAYS_KEY);
-  return stored ? parseInt(stored, 10) : 0;
+  const stored = safeReadLS<string>(STREAK_DAYS_KEY);
+  return typeof stored === "string" ? parseInt(stored, 10) : 0;
 }
 
 /**

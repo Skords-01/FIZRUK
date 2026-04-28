@@ -8,31 +8,8 @@ import { HubDashboard } from "../hub/HubDashboard";
 import { HubReports } from "../hub/HubReports";
 import { HubSettingsPage } from "../hub/HubSettingsPage";
 import type { OpenModuleOptions } from "../hooks/useHubNavigation";
-import { IOSInstallBanner } from "./IOSInstallBanner";
 import type { HubView } from "../hooks/useHubUIState";
-import type { OpenModuleOptions } from "../hooks/useHubNavigation";
-import type { User } from "@sergeant/shared";
-
-interface HubMainContentProps {
-  updateAvailable: boolean;
-  onApplyUpdate: () => void;
-  canInstall: boolean;
-  onInstall: () => Promise<void>;
-  onDismissInstall: () => void;
-  onOpenModule: (id: string, opts?: OpenModuleOptions) => void;
-  iosVisible: boolean;
-  onDismissIos: () => void;
-  hubView: HubView;
-  onOpenChat: () => void;
-  syncing: boolean;
-  onSync: () => void;
-  onPull: () => void;
-  user: User | null;
-  onShowAuth: () => void;
-  inFtuxSession?: boolean;
-}
-
-export type HubView = "dashboard" | "reports" | "settings";
+import { IOSInstallBanner } from "./IOSInstallBanner";
 
 interface HubSectionFallbackProps {
   resetError: () => void;
@@ -175,7 +152,7 @@ export const HubMainContent = memo(function HubMainContent({
                 Встановити додаток
               </p>
               <p className="text-xs text-muted">
-                Офлайн · пуш-нагадування · ярлик на екрані
+                Офлайн · пуш-нагадування · ярлик на ��крані
               </p>
             </div>
             <Button
