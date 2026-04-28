@@ -28,3 +28,9 @@ docs/api/openapi.json
 .agents
 artifacts
 mcps
+
+# Plop Handlebars templates — `.hbs` файли містять `{{name}}`-mustache-токени
+# у TypeScript-shape (наприклад, `): Promise<{{returnType}}> {`), які Prettier
+# не може розпарсити (бачить `<{{` як HTML-тег і кидає SyntaxError). Шаблони
+# не є виконуваним кодом і їх не треба форматувати — їх рендерять через plop.
+plop-templates/**/*.hbs
