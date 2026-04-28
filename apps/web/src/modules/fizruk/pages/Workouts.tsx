@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@shared/components/ui/Button";
+import { Card } from "@shared/components/ui/Card";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { useToast } from "@shared/hooks/useToast";
@@ -796,15 +797,15 @@ function WorkoutsHome({
         </div>
       )}
 
-      <div>
-        <div className="flex items-center justify-between px-1 mb-2">
-          <h2 className="text-sm font-semibold text-text/80">
+      <Card as="section" radius="lg" aria-label="Останні тренування">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-text">
             Останні тренування
           </h2>
           {recentWorkouts.length > 0 ? (
             <button
               type="button"
-              className="text-xs font-semibold text-teal-700 hover:underline"
+              className="text-xs font-semibold text-fizruk-strong hover:underline active:opacity-70"
               onClick={onOpenJournal}
             >
               Всі →
@@ -812,41 +813,43 @@ function WorkoutsHome({
           ) : null}
         </div>
         {recentWorkouts.length > 0 ? (
-          <ul className="space-y-2">
+          <ul className="flex flex-col gap-2">
             {recentWorkouts.map((w) => (
               <li key={w.id}>
                 <button
                   type="button"
-                  className="w-full text-left rounded-xl border border-border bg-surface-2 px-3 py-3 flex items-center justify-between hover:bg-surface-3"
+                  className="w-full text-left rounded-xl border border-line bg-bg px-3 py-3 flex items-center justify-between hover:bg-panelHi transition-colors"
                   onClick={onOpenJournal}
                 >
                   <RecentWorkoutSummary workout={w} />
-                  <span className="text-subtle">›</span>
+                  <span className="text-subtle" aria-hidden>
+                    ›
+                  </span>
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <div className="rounded-xl border border-border bg-surface-2 p-4 text-xs text-subtle">
+          <div className="rounded-2xl border border-dashed border-line p-4 text-xs text-subtle text-center">
             Після першого завершеного тренування тут з&apos;являться останні
             сесії.
           </div>
         )}
-      </div>
+      </Card>
 
-      <div>
-        <h2 className="text-sm font-semibold text-text/80 px-1 mb-2">
-          Довідники
-        </h2>
+      <Card as="section" radius="lg" aria-label="Довідники">
+        <h2 className="text-sm font-semibold text-text mb-3">Довідники</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             type="button"
-            className="rounded-xl border border-border bg-surface-2 p-4 text-left hover:bg-surface-3"
+            className="rounded-2xl border border-line bg-bg p-4 text-left hover:bg-panelHi transition-colors"
             onClick={onOpenCatalog}
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📚</span>
-              <div className="flex-1">
+              <span className="text-2xl" aria-hidden>
+                📚
+              </span>
+              <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-text">
                   Каталог вправ
                 </div>
@@ -854,27 +857,33 @@ function WorkoutsHome({
                   Пошук · групи м&apos;язів · своя вправа
                 </div>
               </div>
-              <span className="text-subtle">›</span>
+              <span className="text-subtle" aria-hidden>
+                ›
+              </span>
             </div>
           </button>
           <button
             type="button"
-            className="rounded-xl border border-border bg-surface-2 p-4 text-left hover:bg-surface-3"
+            className="rounded-2xl border border-line bg-bg p-4 text-left hover:bg-panelHi transition-colors"
             onClick={onOpenTemplates}
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📋</span>
-              <div className="flex-1">
+              <span className="text-2xl" aria-hidden>
+                📋
+              </span>
+              <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-text">Шаблони</div>
                 <div className="text-xs text-subtle mt-0.5">
                   Збережені набори вправ на швидкий старт
                 </div>
               </div>
-              <span className="text-subtle">›</span>
+              <span className="text-subtle" aria-hidden>
+                ›
+              </span>
             </div>
           </button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
