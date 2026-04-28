@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@shared/components/ui/Button";
+import { Card } from "@shared/components/ui/Card";
 import { useToast } from "@shared/hooks/useToast";
 import { BrandLogo } from "../app/BrandLogo";
 import { resetPassword } from "./authClient";
@@ -77,101 +78,109 @@ export function ResetPasswordPage() {
       }}
     >
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <BrandLogo as="h1" size="md" className="justify-center mb-1" />
-          <p className="text-sm text-subtle">Новий пароль</p>
+        <div className="text-center mb-6">
+          <BrandLogo as="h1" size="md" className="justify-center" />
         </div>
 
-        {!token ? (
-          <div
-            role="alert"
-            className="text-sm text-text bg-error/10 border border-error/30 rounded-xl px-4 py-3 leading-relaxed space-y-3"
-          >
-            <p>
-              Посилання на скидання пароля неповне або протерміноване. Відкрий
-              останній лист повністю або запроси новий на сторінці входу.
+        <Card variant="elevated" radius="xl" padding="lg" className="space-y-5">
+          <div className="text-center">
+            <h2 className="text-lg font-bold text-text">Новий пароль</h2>
+            <p className="text-xs text-subtle mt-1">
+              Встанови новий пароль для свого акаунта.
             </p>
-            <Button
-              type="button"
-              variant="secondary"
-              size="md"
-              className="w-full"
-              onClick={() => navigate("/sign-in", { replace: true })}
-            >
-              На сторінку входу
-            </Button>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="reset-password-new"
-                className="block text-xs font-medium text-muted mb-1.5"
-              >
-                Новий пароль
-              </label>
-              <input
-                id="reset-password-new"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={10}
-                className={INPUT_CLS}
-                placeholder="Мінімум 10 символів"
-                autoComplete="new-password"
-              />
-            </div>
 
-            <div>
-              <label
-                htmlFor="reset-password-confirm"
-                className="block text-xs font-medium text-muted mb-1.5"
-              >
-                Підтвердження
-              </label>
-              <input
-                id="reset-password-confirm"
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                minLength={10}
-                className={INPUT_CLS}
-                placeholder="Введи пароль ще раз"
-                autoComplete="new-password"
-              />
-            </div>
-
-            {message && (
-              <div
-                role={status === "error" ? "alert" : "status"}
-                className={
-                  status === "error"
-                    ? "text-xs text-error bg-error/10 border border-error/20 rounded-xl px-4 py-2.5"
-                    : "text-xs text-text bg-brand-500/10 border border-brand-500/30 rounded-xl px-4 py-2.5"
-                }
-              >
-                {message}
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              loading={status === "sending"}
-              className="w-full"
-              disabled={status === "done"}
+          {!token ? (
+            <div
+              role="alert"
+              className="text-sm text-text bg-error/10 border border-error/30 rounded-xl px-4 py-3 leading-relaxed space-y-3"
             >
-              {status === "sending"
-                ? "Зберігаю…"
-                : status === "done"
-                  ? "Готово"
-                  : "Встановити новий пароль"}
-            </Button>
-          </form>
-        )}
+              <p>
+                Посилання на скидання пароля неповне або протерміноване. Відкрий
+                останній лист повністю або запроси новий на сторінці входу.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                className="w-full"
+                onClick={() => navigate("/sign-in", { replace: true })}
+              >
+                На сторінку входу
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="reset-password-new"
+                  className="block text-xs font-medium text-muted mb-1.5"
+                >
+                  Новий пароль
+                </label>
+                <input
+                  id="reset-password-new"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={10}
+                  className={INPUT_CLS}
+                  placeholder="Мінімум 10 символів"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="reset-password-confirm"
+                  className="block text-xs font-medium text-muted mb-1.5"
+                >
+                  Підтвердження
+                </label>
+                <input
+                  id="reset-password-confirm"
+                  type="password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  required
+                  minLength={10}
+                  className={INPUT_CLS}
+                  placeholder="Введи пароль ще раз"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              {message && (
+                <div
+                  role={status === "error" ? "alert" : "status"}
+                  className={
+                    status === "error"
+                      ? "text-xs text-error bg-error/10 border border-error/20 rounded-xl px-4 py-2.5"
+                      : "text-xs text-text bg-brand-500/10 border border-brand-500/30 rounded-xl px-4 py-2.5"
+                  }
+                >
+                  {message}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                loading={status === "sending"}
+                className="w-full"
+                disabled={status === "done"}
+              >
+                {status === "sending"
+                  ? "Зберігаю…"
+                  : status === "done"
+                    ? "Готово"
+                    : "Встановити новий пароль"}
+              </Button>
+            </form>
+          )}
+        </Card>
       </div>
     </div>
   );
