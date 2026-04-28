@@ -76,7 +76,7 @@ export function HintsOrchestrator({
               recordHintShown(webKVStore, retentionId);
               const def = {
                 retention_day_1:
-                  "Перший день — вже здобуток! Поверніться завтра — звичка формується з трьох повторень.",
+                  "Перший день — вже здобуток! Повернись завтра — звичка формується з трьох повторень.",
                 retention_day_3:
                   "3 дні поспіль — стрік почався. Ще кілька днів і мозок зафіксує нову звичку.",
                 retention_day_7:

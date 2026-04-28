@@ -216,7 +216,7 @@ export function WorkoutTemplatesSection({
                     className="text-xs px-2 py-1 rounded-lg border border-success/40 text-success disabled:opacity-40"
                     disabled={groupSelected.size < 2 || groupSelected.size > 3}
                     onClick={() => handleCreateGroup("superset")}
-                    title="Виберіть 2-3 вправи"
+                    title="Обери 2-3 вправи"
                   >
                     Суперсет ({groupSelected.size}/3)
                   </button>
@@ -225,7 +225,7 @@ export function WorkoutTemplatesSection({
                     className="text-xs px-2 py-1 rounded-lg border border-fizruk/40 text-fizruk disabled:opacity-40"
                     disabled={groupSelected.size < 2 || groupSelected.size > 3}
                     onClick={() => handleCreateGroup("circuit")}
-                    title="Виберіть 2-3 вправи"
+                    title="Обери 2-3 вправи"
                   >
                     Коло ({groupSelected.size}/3)
                   </button>

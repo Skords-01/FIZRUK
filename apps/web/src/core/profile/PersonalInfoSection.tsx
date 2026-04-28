@@ -295,7 +295,7 @@ export function PersonalInfoSection({
                 if (e.key === "Enter" && dirty && !saving && online)
                   handleSave();
               }}
-              placeholder="Ваше ім'я"
+              placeholder="Твоє ім'я"
               autoComplete="name"
               className="flex-1"
             />

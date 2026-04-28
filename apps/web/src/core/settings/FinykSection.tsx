@@ -75,7 +75,7 @@ export function FinykSection() {
     const cleanId = privatIdInput.trim();
     const cleanToken = privatTokenInput.trim();
     if (!cleanId || !cleanToken) {
-      setPrivatError("Введіть Merchant ID та токен");
+      setPrivatError("Введи Merchant ID та токен");
       return;
     }
     setPrivatConnecting(true);
@@ -148,7 +148,7 @@ export function FinykSection() {
   const connectWebhook = async () => {
     const clean = webhookTokenInput.trim();
     if (!clean) {
-      setWebhookError("Введіть токен");
+      setWebhookError("Введи токен");
       return;
     }
     setWebhookConnecting(true);

@@ -96,7 +96,7 @@ export function useVoiceInput({
       if (e.error === "not-allowed") {
         onError?.("Немає дозволу на використання мікрофону.");
       } else if (e.error === "no-speech") {
-        onError?.("Не вдалося розпізнати мову. Спробуйте ще раз.");
+        onError?.("Не вдалося розпізнати мову. Спробуй ще раз.");
       } else if (e.error !== "aborted") {
         onError?.(`Помилка розпізнавання: ${e.error}`);
       }
@@ -272,7 +272,7 @@ function useGroqVoiceInput({
         }
         if (res.status === 401) {
           onError?.(
-            "Сесія завершилась. Увійдіть знову, щоб користуватись голосом.",
+            "Сесія завершилась. Увійди знову, щоб користуватись голосом.",
           );
           return;
         }
@@ -281,16 +281,16 @@ function useGroqVoiceInput({
           return;
         }
         if (!res.ok) {
-          onError?.(`Помилка розпізнавання (${res.status}). Спробуйте ще раз.`);
+          onError?.(`Помилка розпізнавання (${res.status}). Спробуй ще раз.`);
           return;
         }
         const data = (await res.json()) as { text?: string };
         const text = (data.text || "").trim();
         if (text) onResult?.(text);
-        else onError?.("Не вдалося розпізнати мову. Спробуйте ще раз.");
+        else onError?.("Не вдалося розпізнати мову. Спробуй ще раз.");
       } catch (err) {
         if ((err as { name?: string })?.name === "AbortError") return;
-        onError?.("Не вдалося надіслати аудіо. Перевірте інтернет.");
+        onError?.("Не вдалося надіслати аудіо. Перевір інтернет.");
       } finally {
         setUploading(false);
         abortRef.current = null;

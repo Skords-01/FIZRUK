@@ -31,7 +31,7 @@ export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 /** Translate Better Auth server errors to Ukrainian. */
 function translateAuthError(raw: string): string {
   if (/user already exists/i.test(raw))
-    return "Цей email вже зареєстровано. Спробуйте увійти.";
+    return "Цей email вже зареєстровано. Спробуй увійти.";
   if (/password too short/i.test(raw)) return "Пароль занадто короткий.";
   if (/password too long/i.test(raw)) return "Пароль занадто довгий.";
   if (/invalid email/i.test(raw)) return "Невірний формат email.";

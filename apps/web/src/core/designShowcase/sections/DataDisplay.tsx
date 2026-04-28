@@ -72,7 +72,7 @@ export function DataDisplaySection() {
             <EmptyState
               icon={<Icon name="search" size={24} />}
               title="Нічого не знайдено"
-              description="Спробуйте змінити пошуковий запит або скинути фільтри."
+              description="Спробуй змінити пошуковий запит або скинути фільтри."
               action={
                 <Button size="sm" variant="secondary">
                   Скинути
