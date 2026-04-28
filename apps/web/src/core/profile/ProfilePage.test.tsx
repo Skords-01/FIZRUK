@@ -52,8 +52,13 @@ vi.mock("@shared/hooks/useOnlineStatus", () => ({
 
 const toastSuccessMock = vi.fn();
 const toastErrorMock = vi.fn();
+const toastShowMock = vi.fn();
 vi.mock("@shared/hooks/useToast", () => ({
-  useToast: () => ({ success: toastSuccessMock, error: toastErrorMock }),
+  useToast: () => ({
+    success: toastSuccessMock,
+    error: toastErrorMock,
+    show: toastShowMock,
+  }),
 }));
 
 const mockUser = {

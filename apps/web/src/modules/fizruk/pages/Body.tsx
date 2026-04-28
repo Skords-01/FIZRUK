@@ -7,6 +7,8 @@ import { cn } from "@shared/lib/cn";
 import { useDailyLog } from "../hooks/useDailyLog";
 import { Card } from "@shared/components/ui/Card";
 import { MiniLineChart } from "../components/MiniLineChart";
+import { useToast } from "@shared/hooks/useToast";
+import { showUndoToast } from "@shared/lib/undoToast";
 
 /**
  * Trend cards on this page used to be always-expanded, which meant four
@@ -419,7 +421,21 @@ function ScoreButton({ value, selected, onClick, label }) {
 }
 
 export function Body({ onOpenMeasurements }) {
-  const { entries, addEntry, deleteEntry, recentWith } = useDailyLog();
+  const { entries, addEntry, deleteEntry, restoreEntry, recentWith } =
+    useDailyLog();
+  const toast = useToast();
+  const handleDeleteJournalEntry = useCallback(
+    (id) => {
+      const snapshot = entries.find((e) => e.id === id);
+      if (!snapshot) return;
+      deleteEntry(id);
+      showUndoToast(toast, {
+        msg: "Запис журналу видалено",
+        onUndo: () => restoreEntry(snapshot),
+      });
+    },
+    [entries, deleteEntry, restoreEntry, toast],
+  );
 
   const [form, setForm] = useState({
     weightKg: "",
@@ -772,7 +788,7 @@ export function Body({ onOpenMeasurements }) {
           <JournalSection
             entries={entries.slice(0, 15)}
             totalCount={entries.length}
-            onDelete={deleteEntry}
+            onDelete={handleDeleteJournalEntry}
           />
         )}
       </div>

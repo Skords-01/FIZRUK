@@ -3,6 +3,7 @@ import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 import { useToast } from "@shared/hooks/useToast";
+import { showUndoToast } from "@shared/lib/undoToast";
 import {
   CATEGORY_META,
   groupMemoryEntries,
@@ -36,10 +37,19 @@ export function MemoryBankSection() {
 
   const handleDelete = useCallback(
     (id: string) => {
+      const previous = entries;
+      const target = entries.find((e) => e.id === id);
       const result = removeMemoryEntry(entries, id);
       saveEntries(result.entries);
+      if (!target) return;
+      const factPreview =
+        target.fact.length > 60 ? `${target.fact.slice(0, 60)}…` : target.fact;
+      showUndoToast(toast, {
+        msg: `Запис «${factPreview}» видалено`,
+        onUndo: () => saveEntries(previous),
+      });
     },
-    [entries, saveEntries],
+    [entries, saveEntries, toast],
   );
 
   const openMemoryChat = useCallback(() => {

@@ -27,6 +27,9 @@ export * from "./lib/vibePicks";
 // Active-modules helpers (derived from vibe picks) + hide-inactive toggle.
 export * from "./lib/activeModules";
 
+// Defaults shared by web/mobile undo-toast helpers.
+export * from "./lib/undoToast";
+
 // Onboarding gate helpers (first-launch detection, done flag, splash taxonomy).
 export * from "./lib/onboarding";
 

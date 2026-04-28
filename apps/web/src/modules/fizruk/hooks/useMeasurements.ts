@@ -54,9 +54,23 @@ export function useMeasurements() {
     [persist, entries],
   );
 
+  /**
+   * Re-insert a previously deleted measurement, preserving the original
+   * `id` and `at` timestamp. Used by undo flows after `deleteEntry`.
+   */
+  const restoreEntry = useCallback(
+    (entry) => {
+      if (!entry || !entry.id) return;
+      persist(
+        entries.some((e) => e.id === entry.id) ? entries : [entry, ...entries],
+      );
+    },
+    [persist, entries],
+  );
+
   const sorted = useMemo(() => {
     return [...entries].sort((a, b) => (b.at || "").localeCompare(a.at || ""));
   }, [entries]);
 
-  return { entries: sorted, addEntry, deleteEntry };
+  return { entries: sorted, addEntry, deleteEntry, restoreEntry };
 }
