@@ -14,7 +14,7 @@
 | ----- | ------------------------------------ | --------------------- | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **A** | Cleanup legacy polling               | (невидимий)           | низька     | низький  | ⏳ pending — `useMonobankLegacy()` живий у `apps/web/src/modules/finyk/hooks/useMonobank.ts:171`; `useFlag("mono_webhook")` все ще викликається у `FinykApp.tsx:45` і `useMonobank.ts:161`.                                                                                                                       |
 | **B** | Backfill UX (Діагностика + progress) | плюс                  | низька     | низький  | ⏳ pending — `apps/server/src/modules/mono/backfill.ts` без progress-DTO; блок «🔧 Діагностика» у `FinykSection.tsx` не доданий.                                                                                                                                                                                  |
-| **C** | Auto-categorization по MCC           | плюс плюс             | середня    | середній | ⏳ pending — `apps/server/src/modules/mono/mccCategories.ts` не існує; міграція `009_mono_mcc_categorization.sql` не створена.                                                                                                                                                                                    |
+| **C** | Auto-categorization по MCC           | плюс плюс             | середня    | середній | ⏳ pending — `apps/server/src/modules/mono/mccCategories.ts` не існує; міграція `010_mono_mcc_categorization.sql` не створена.                                                                                                                                                                                    |
 | **D** | Push-нотифікації                     | плюс плюс плюс        | висока     | середній | ✅ done — `apps/server/src/modules/mono/webhook.ts` після UPSERT викликає `void sendToUserQuietly(userId, payload, { module: "mono" })` з `RETURNING (xmax = 0) AS inserted` для де-дупу retry-доставок. Покриття: `webhook.test.ts` — 4 нові кейси (insert→push, update→no-push, hold-marker, idempotent retry). |
 | **E** | Webhook secret rotation              | (захист)              | низька     | низький  | ⏳ pending — `webhook.ts` робить lookup `WHERE webhook_secret = $1` без версіонування / rotation flow.                                                                                                                                                                                                            |
 
@@ -177,7 +177,7 @@ END)
 WHERE category_overridden = FALSE AND category_slug IS NULL;
 ```
 
-Запустити як SQL-міграцію `009_mono_mcc_categorization.sql`.
+Запустити як SQL-міграцію `010_mono_mcc_categorization.sql`.
 
 ### Edge cases
 

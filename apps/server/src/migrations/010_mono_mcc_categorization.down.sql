@@ -1,4 +1,4 @@
--- Rollback for 009_mono_mcc_categorization.sql. DEV-only — production never
+-- Rollback for 010_mono_mcc_categorization.sql. DEV-only — production never
 -- runs `down.sql` (див. AGENTS.md rule #4 / docs/database.md). Видаляє індекс
 -- і обидві колонки. Користувацькі override-категорії втрачаються —
 -- забекапь їх перед rollback-ом, якщо це не локальна БД.
