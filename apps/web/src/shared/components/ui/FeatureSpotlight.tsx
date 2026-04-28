@@ -166,12 +166,6 @@ export function FeatureSpotlight({
     return () => clearTimeout(timer);
   }, [delay, id, persistDismissal, targetSelector, isMyTurn]);
 
-  // Track viewport size for SVG viewBox updates
-  const [viewportSize, setViewportSize] = useState({
-    width: typeof window !== "undefined" ? window.innerWidth : 0,
-    height: typeof window !== "undefined" ? window.innerHeight : 0,
-  });
-
   // Update position on scroll/resize with debouncing
   useEffect(() => {
     if (!visible) return;
@@ -199,12 +193,6 @@ export function FeatureSpotlight({
         ) {
           setTargetRect(rect);
         }
-
-        // Update viewport size for SVG viewBox
-        setViewportSize({
-          width: window.innerWidth,
-          height: window.innerHeight,
-        });
       });
     };
 
@@ -323,9 +311,6 @@ export function FeatureSpotlight({
     borderRadius: 12,
   };
 
-  // Use a unique mask ID with a timestamp to avoid conflicts between spotlights
-  const maskId = `spotlight-mask-${id}-${Date.now()}`;
-
   return (
     <>
       {target}
@@ -336,48 +321,7 @@ export function FeatureSpotlight({
         aria-modal="true"
         aria-labelledby={`spotlight-title-${id}`}
       >
-        {/* Backdrop — intercepts clicks outside tooltip to dismiss */}
-        <div
-          className="absolute inset-0 pointer-events-auto"
-          onClick={handleDismiss}
-          aria-hidden="true"
-        />
-
-        {/* Overlay with cutout — use explicit viewBox for stable rendering */}
-        <svg
-          className="absolute inset-0 pointer-events-none"
-          width="100%"
-          height="100%"
-          viewBox={`0 0 ${viewportSize.width} ${viewportSize.height}`}
-          preserveAspectRatio="none"
-          aria-hidden="true"
-          style={{ overflow: "visible" }}
-        >
-          <defs>
-            <mask id={maskId}>
-              <rect x="0" y="0" width="100%" height="100%" fill="white" />
-              <rect
-                x={spotlightRect.left}
-                y={spotlightRect.top}
-                width={spotlightRect.width}
-                height={spotlightRect.height}
-                rx={spotlightRect.borderRadius}
-                fill="black"
-              />
-            </mask>
-          </defs>
-          <rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            fill="rgba(0, 0, 0, 0.6)"
-            mask={`url(#${maskId})`}
-            className="motion-safe:animate-fade-in"
-          />
-        </svg>
-
-        {/* Spotlight ring — purely visual */}
+        {/* Spotlight ring — draws attention to target element */}
         <div
           className={cn(
             "absolute pointer-events-none",

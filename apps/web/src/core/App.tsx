@@ -562,8 +562,8 @@ function AppInner() {
       </Suspense>
       {/* Assistant FAB — available in all module views so the user can
           reach the AI chat without navigating back to the hub first.
-          Positioned above the bottom nav to avoid overlap. */}
-      <HubFloatingActions onOpenChat={ui.openChat} aboveBottomNav />
+          Compact mode uses a small icon-only button to minimize overlap. */}
+      <HubFloatingActions onOpenChat={ui.openChat} compact />
       <HubModals
         chatOpen={ui.chatOpen}
         onCloseChat={ui.closeChat}

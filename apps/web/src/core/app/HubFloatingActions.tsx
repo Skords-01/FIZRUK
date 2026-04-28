@@ -20,56 +20,71 @@ import { cn } from "@shared/lib/cn";
  *   users into a conversational flow before they've logged anything.
  * @param {() => void} props.onOpenChat - Opens the hub AI chat panel
  *   (resolves to `ui.openChat()`).
- * @param {boolean} [props.aboveBottomNav=false] - When true, positions
- *   the FAB above the ModuleBottomNav (64px + safe-area). Used in module
- *   views to prevent the FAB from overlapping the navigation tabs.
+ * @param {boolean} [props.compact=false] - When true, renders a small
+ *   circular icon-only FAB instead of the full pill. Used in module
+ *   views to minimize screen real estate usage while still providing
+ *   quick access to the assistant.
  */
 export function HubFloatingActions({
   hidden = false,
   onOpenChat,
-  aboveBottomNav = false,
+  compact = false,
 }) {
   if (hidden || !onOpenChat) return null;
 
-  // When inside a module with bottom nav, offset by nav height (64px on touch)
-  // plus some breathing room (12px). On hub, just use safe-area + 20px.
-  const bottomOffset = aboveBottomNav
+  // Compact mode positions FAB above bottom nav; full mode uses safe-area only
+  const bottomOffset = compact
     ? "calc(76px + env(safe-area-inset-bottom, 0px))"
     : "calc(1.25rem + env(safe-area-inset-bottom, 0px))";
 
+  // Compact: small circular icon button; Full: pill with icon + label
+  const fabButton = (
+    <button
+      type="button"
+      onClick={() => onOpenChat()}
+      aria-label="Відкрити AI-асистента"
+      title="Асистент"
+      className={cn(
+        "pointer-events-auto flex items-center justify-center rounded-full",
+        // brand-700 (not brand-500) — needed for WCAG AA contrast against
+        // `text-white` at 14px regular weight (≥4.5:1).
+        "bg-brand-700 text-white shadow-float",
+        "hover:bg-brand-800 hover:shadow-glow active:scale-95 transition-[background-color,box-shadow,opacity,transform]",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        compact ? "h-12 w-12" : "h-14 pl-4 pr-5 gap-2",
+      )}
+    >
+      <Icon name="sparkle" size={compact ? 20 : 22} strokeWidth={2.2} />
+      {!compact && (
+        <span className="text-sm font-semibold whitespace-nowrap">
+          Асистент
+        </span>
+      )}
+    </button>
+  );
+
   return (
     <div
-      className="fixed right-5 z-40 flex flex-col items-end gap-2 pointer-events-none"
+      className={cn(
+        "fixed z-40 flex flex-col items-end gap-2 pointer-events-none",
+        compact ? "right-4" : "right-5",
+      )}
       style={{ bottom: bottomOffset }}
     >
-      <FeatureSpotlight
-        id="hub-assistant-fab"
-        title="AI-асистент"
-        description="Запитай будь-що про фінанси, тренування, харчування чи рутину"
-        placement="left"
-        showOnce
-        delay={3000}
-      >
-        <button
-          type="button"
-          onClick={() => onOpenChat()}
-          aria-label="Відкрити AI-асистента"
-          title="Асистент"
-          className={cn(
-            "pointer-events-auto h-14 pl-4 pr-5 flex items-center justify-center gap-2 rounded-full",
-            // brand-700 (not brand-500) — needed for WCAG AA contrast against
-            // `text-white` at 14px regular weight (≥4.5:1).
-            "bg-brand-700 text-white shadow-float",
-            "hover:bg-brand-800 hover:shadow-glow active:scale-95 transition-[background-color,box-shadow,opacity,transform]",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-          )}
+      {compact ? (
+        fabButton
+      ) : (
+        <FeatureSpotlight
+          id="hub-assistant-fab"
+          title="AI-асистент"
+          description="Запитай будь-що про фінанси, тренування, харчування чи рутину"
+          placement="left"
+          showOnce
+          delay={3000}
         >
-          <Icon name="sparkle" size={22} strokeWidth={2.2} />
-          <span className="text-sm font-semibold whitespace-nowrap">
-            Асистент
-          </span>
-        </button>
-      </FeatureSpotlight>
+          {fabButton}
+        </FeatureSpotlight>
+      )}
     </div>
   );
 }
