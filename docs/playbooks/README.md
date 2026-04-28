@@ -41,6 +41,9 @@ New playbooks should follow the decision-tree template: [`_TEMPLATE-decision-tre
 | [add-push-notification.md](add-push-notification.md)                               | «Надсилай push коли X» / нагадування / реакція на подію (Mono webhook, AI insight, scheduler)                   |
 | [enable-prompt-caching.md](enable-prompt-caching.md)                               | «Зменшити cost Anthropic» / `SYSTEM_PREFIX` повторюється на кожному запиті — ввімкнути prompt caching           |
 | 🌳 [stabilize-flaky-test.md](stabilize-flaky-test.md)                              | «Тест X падає 1 з 5 разів» / тест у AGENTS.md flaky-list                                                        |
+| [sync-rn-migration-progress.md](sync-rn-migration-progress.md)                     | RN-міграційні PR-и змерджені, треба оновити tracker `docs/mobile/react-native-migration.md`                     |
+| [prettier-pass-on-docs.md](prettier-pass-on-docs.md)                               | `format:check` червоний на `docs/**` / точковий prettier-прохід по doc-файлах                                   |
+| 🌳 [fix-failing-ci.md](fix-failing-ci.md)                                          | CI-чек червоний на PR (commitlint / format:check / lint / typecheck / test / build / a11y / smoke-e2e / bundle) |
 | [../observability/error-budget-policy.md](../observability/error-budget-policy.md) | Error budget вигорає / burn-rate alert / треба визначити чи дозволена зміна під час freeze                      |
 
 ## How to Use
