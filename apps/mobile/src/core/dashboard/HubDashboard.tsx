@@ -39,15 +39,22 @@ import { colors } from "@/theme";
 
 import { useUser } from "@sergeant/api-client/react";
 import {
+  getActiveModules,
+  getHideInactiveModules,
+  isActiveModule,
   isFirstActionPending,
   isFirstRealEntryDone,
   isSoftAuthDismissed,
+  setHideInactiveModules,
   type DashboardModuleId,
   type KVStore,
 } from "@sergeant/shared";
 
 import { DraggableDashboard } from "./DraggableDashboard";
-import { DASHBOARD_MODULE_ROUTES } from "./dashboardModuleConfig";
+import {
+  DASHBOARD_MODULE_ROUTES,
+  VISIBLE_DASHBOARD_MODULES,
+} from "./dashboardModuleConfig";
 import { FirstActionHeroCard } from "./FirstActionHeroCard";
 import { HubInsightsPanel, type InsightItem } from "./HubInsightsPanel";
 import { SoftAuthPromptCard } from "./SoftAuthPromptCard";
@@ -124,9 +131,51 @@ export function HubDashboard() {
     enabled: signedIn,
   });
 
-  const { visibleOrder, reorderVisible } = useDashboardOrder();
+  // Active vs. inactive modules — driven by the user's onboarding
+  // "vibe picks". Inactive modules render greyed-out (or hidden when
+  // the user has flipped the `hideInactive` toggle below). Computed
+  // before `useDashboardOrder` so the visibility filter can drop
+  // inactive ids when the toggle is on.
+  const activeModules = useMemo(() => getActiveModules(mmkvStore), []);
+  const [hideInactive, setHideInactive] = useState(() =>
+    getHideInactiveModules(mmkvStore),
+  );
+  const toggleHideInactive = useCallback(() => {
+    setHideInactive((prev) => {
+      const next = !prev;
+      setHideInactiveModules(mmkvStore, next);
+      return next;
+    });
+  }, []);
+  const dashboardVisibleIds = useMemo(
+    () =>
+      hideInactive
+        ? VISIBLE_DASHBOARD_MODULES.filter((id) =>
+            isActiveModule(activeModules, id),
+          )
+        : VISIBLE_DASHBOARD_MODULES,
+    [hideInactive, activeModules],
+  );
+
+  const { visibleOrder, reorderVisible } =
+    useDashboardOrder(dashboardVisibleIds);
   const { focus, rest, dismiss: dismissFocus } = useDashboardFocus();
   const previews = useModulePreviews();
+
+  const inactiveModuleSet = useMemo(
+    () =>
+      new Set<DashboardModuleId>(
+        visibleOrder.filter((id) => !isActiveModule(activeModules, id)),
+      ),
+    [visibleOrder, activeModules],
+  );
+  const hasInactive = useMemo(
+    () =>
+      VISIBLE_DASHBOARD_MODULES.some(
+        (id) => !isActiveModule(activeModules, id),
+      ),
+    [activeModules],
+  );
 
   const runDigest = useCallback(() => {
     void generate();
@@ -272,7 +321,27 @@ export function HubDashboard() {
             onReorder={reorderVisible}
             onOpenModule={openModule}
             previews={previews}
+            inactiveModules={inactiveModuleSet}
           />
+          {hasInactive ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                hideInactive
+                  ? "Показати неактивні модулі"
+                  : "Приховати неактивні модулі"
+              }
+              onPress={toggleHideInactive}
+              className="mt-1 self-center px-2 py-1 active:opacity-70"
+              testID="dashboard-toggle-hide-inactive"
+            >
+              <Text className="text-[11px] text-fg-muted underline">
+                {hideInactive
+                  ? "Показати неактивні модулі"
+                  : "Приховати неактивні модулі"}
+              </Text>
+            </Pressable>
+          ) : null}
           <Text className="mt-1 text-[11px] leading-snug text-fg-subtle">
             Утримай і потягни, щоб змін��ти порядок модулів. Порядок
             синхронізується з вебом.

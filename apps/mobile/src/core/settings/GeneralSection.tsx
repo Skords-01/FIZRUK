@@ -46,11 +46,17 @@
 import { useState } from "react";
 import { DeviceEventEmitter, Pressable, Text, View } from "react-native";
 import {
+  ALL_MODULES,
   DASHBOARD_MODULE_LABELS,
   downloadJson,
+  getActiveModules,
+  getHideInactiveModules,
   pickJson,
   resetOnboardingState,
+  setActiveModules,
+  setHideInactiveModules,
   STORAGE_KEYS,
+  type DashboardModuleId,
   type KVStore,
 } from "@sergeant/shared";
 
@@ -193,6 +199,31 @@ export function GeneralSection() {
   const dark = prefs.darkMode === true;
   const showHints = prefs.showHints !== false;
 
+  const [activeModules, setActiveModulesState] = useState<DashboardModuleId[]>(
+    () => getActiveModules(mmkvStore),
+  );
+  const [hideInactive, setHideInactiveState] = useState(() =>
+    getHideInactiveModules(mmkvStore),
+  );
+  const toggleActive = (id: DashboardModuleId) => {
+    setActiveModulesState((prev) => {
+      const isActive = prev.includes(id);
+      if (isActive && prev.length === 1) {
+        toast.error("Щонайменше один модуль має бути активним");
+        return prev;
+      }
+      const next = isActive
+        ? prev.filter((x) => x !== id)
+        : ALL_MODULES.filter((x) => prev.includes(x) || x === id);
+      setActiveModules(mmkvStore, next);
+      return next;
+    });
+  };
+  const toggleHideInactive = (next: boolean) => {
+    setHideInactiveState(next);
+    setHideInactiveModules(mmkvStore, next);
+  };
+
   const handleExport = async () => {
     try {
       const payload = buildHubBackupPayload();
@@ -265,6 +296,51 @@ export function GeneralSection() {
         >
           Перезапустити онбординг
         </Button>
+      </SettingsSubGroup>
+      <SettingsSubGroup title="Активні модулі">
+        <Text className="text-xs text-fg-muted leading-snug">
+          Неактивні модулі відображаються на дашборді приглушено — без кнопки
+          швидкого додавання. Чонайменше один модуль має залишатися активним.
+        </Text>
+        <View className="overflow-hidden rounded-xl border border-cream-300">
+          {ALL_MODULES.map((id, index) => {
+            const checked = activeModules.includes(id);
+            const label = DASHBOARD_MODULE_LABELS[id];
+            return (
+              <Pressable
+                key={id}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked }}
+                accessibilityLabel={label}
+                onPress={() => toggleActive(id)}
+                className={`flex-row items-center gap-3 bg-cream-50 px-3 py-3 active:bg-cream-100 ${
+                  index === 0 ? "" : "border-t border-cream-300"
+                }`}
+                testID={`general-active-module-${id}`}
+              >
+                <View
+                  className={`h-5 w-5 items-center justify-center rounded border ${
+                    checked
+                      ? "border-primary bg-primary"
+                      : "border-cream-300 bg-cream-50"
+                  }`}
+                >
+                  {checked ? (
+                    <Text className="text-[11px] font-bold text-bg">✓</Text>
+                  ) : null}
+                </View>
+                <Text className="flex-1 text-sm text-fg">{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <ToggleRow
+          label="Приховати неактивні модулі"
+          description="Повністю ховає неактивні плитки з дашборду."
+          checked={hideInactive}
+          onChange={toggleHideInactive}
+          testID="general-hide-inactive-toggle"
+        />
       </SettingsSubGroup>
       <SettingsSubGroup title="Упорядкувати модулі">
         <ModuleReorderList />

@@ -72,7 +72,7 @@ describe("GeneralSection", () => {
   });
 
   it("expands to reveal active toggles, dashboard reorder list, and deferred sub-group notices", () => {
-    const { getByText, getByTestId } = render(<GeneralSection />);
+    const { getByText, getAllByText, getByTestId } = render(<GeneralSection />);
 
     fireEvent.press(getByText("Загальні"));
 
@@ -80,17 +80,20 @@ describe("GeneralSection", () => {
     expect(getByText("Показувати AI-коуч")).toBeTruthy();
 
     expect(getByText("Дашборд")).toBeTruthy();
+    expect(getByText("Активні модулі")).toBeTruthy();
     expect(getByText("Упорядкувати модулі")).toBeTruthy();
     expect(getByText("Хмарна синхронізація")).toBeTruthy();
     expect(getByText("Резервна копія Hub")).toBeTruthy();
 
-    // Dashboard reorder list renders the three visible module labels
-    // (Nutrition is hidden until Phase 7) and the ↑/↓ controls.
-    expect(getByText("Фінік")).toBeTruthy();
-    expect(getByText("Фізрук")).toBeTruthy();
-    expect(getByText("Рутина")).toBeTruthy();
+    // Module labels render in both "Active modules" and the reorder
+    // list, so they appear at least twice (Nutrition only in active).
+    expect(getAllByText("Фінік").length).toBeGreaterThanOrEqual(2);
+    expect(getAllByText("Фізрук").length).toBeGreaterThanOrEqual(2);
+    expect(getAllByText("Рутина").length).toBeGreaterThanOrEqual(2);
     expect(getByTestId("dashboard-reorder-down-finyk")).toBeTruthy();
     expect(getByTestId("dashboard-reorder-up-routine")).toBeTruthy();
+    expect(getByTestId("general-active-module-finyk")).toBeTruthy();
+    expect(getByTestId("general-hide-inactive-toggle")).toBeTruthy();
   });
 
   it("rewrites the dashboard order when the reorder ▼ button is pressed", () => {

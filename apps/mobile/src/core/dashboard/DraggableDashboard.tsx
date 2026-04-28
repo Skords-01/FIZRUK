@@ -109,6 +109,12 @@ export interface DraggableDashboardProps {
    * module.
    */
   previews?: DashboardModulePreviews;
+  /**
+   * Module ids that should render in the muted/greyed-out "inactive"
+   * state. Driven by the user's onboarding picks; rows not in this
+   * set render normally.
+   */
+  inactiveModules?: ReadonlySet<DashboardModuleId>;
   testID?: string;
 }
 
@@ -121,6 +127,7 @@ interface DraggableRowProps {
   onLayoutHeight: (index: number, height: number) => void;
   reduceMotionRef: React.MutableRefObject<boolean>;
   preview?: ModulePreview | null;
+  inactive?: boolean;
   testID?: string;
 }
 
@@ -133,6 +140,7 @@ const DraggableRow = memo(function DraggableRow({
   onLayoutHeight,
   reduceMotionRef,
   preview,
+  inactive,
   testID,
 }: DraggableRowProps) {
   const translationY = useSharedValue(0);
@@ -201,6 +209,7 @@ const DraggableRow = memo(function DraggableRow({
           id={id}
           onPress={onOpenModule}
           preview={preview}
+          inactive={inactive}
           testID={testID ? `${testID}-${id}` : undefined}
         />
       </Animated.View>
@@ -213,6 +222,7 @@ export function DraggableDashboard({
   onReorder,
   onOpenModule,
   previews,
+  inactiveModules,
   testID,
 }: DraggableDashboardProps) {
   const orderRef = useRef<DashboardModuleId[]>([...modules]);
@@ -289,6 +299,7 @@ export function DraggableDashboard({
           onLayoutHeight={handleLayoutHeight}
           reduceMotionRef={reduceMotionRef}
           preview={previews?.[id] ?? null}
+          inactive={inactiveModules?.has(id) ?? false}
           testID={testID ?? "dashboard-module-row"}
         />
       ))}

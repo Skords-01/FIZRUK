@@ -58,7 +58,8 @@ function DebtCardComponent({
     <div className="bg-panel border border-line rounded-xl p-4 mb-3">
       <div className="flex items-start justify-between mb-3">
         <span className="text-sm font-semibold leading-snug">
-          {emoji} {name}
+          {emoji ? `${emoji} ` : ""}
+          {name}
         </span>
         <div className="flex items-center gap-2 shrink-0 ml-2">
           <span
