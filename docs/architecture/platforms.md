@@ -21,8 +21,9 @@
 
 **Що є:** всі чотири модулі (Фінік, Фізрук, Рутина, Харчування) і весь
 Hub-функціонал (AuthContext, HubSearch, HubChat, HubReports,
-OnboardingWizard, WeeklyDigestCard, CoachInsight, VoiceMicButton,
-HubRecommendations, HubSettingsPage), PWA з SW + Web Push через VAPID,
+OnboardingWizard, WeeklyDigestCard, AssistantAdviceCard (`useCoachInsight`),
+VoiceMicButton, TodayFocusCard + HubInsightsPanel, HubSettingsPage), PWA
+з SW + Web Push через VAPID,
 офлайн-черга через `useCloudSync`. Build artefact — `apps/server/dist`,
 деплой Vercel (статика) → Railway (`/api/*`). Це **головна продакшн-точка**
 Sergeant-а.

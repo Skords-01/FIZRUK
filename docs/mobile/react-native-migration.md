@@ -349,7 +349,7 @@
   `onBackToHub → router.replace('/')`) + 5 screen-файлів:
   `index.tsx` (Overview, `headerShown: false`), `transactions.tsx`,
   `budgets.tsx`, `analytics.tsx`, `assets.tsx` — кожен із нативним
-  header-titles з `@/theme`. Оверлі Overview — `src/modules/finyk/FinykApp.tsx`
+  header-titles з `@/theme`. Оверлі Overview — `apps/mobile/src/modules/finyk/FinykApp.tsx`
   (хірогард + 2×2 nav-grid `FinykNavGrid` з `router.push` на
   drill-down-и); решта 4 скрини — `FinykPageStub` з plan-фічами
   наступних PR-ів. `FINYK_PAGES` (DOM-free реєстр з `id`/`label`/
@@ -399,9 +399,9 @@
   `index`, `workouts`, `exercise`, `programs`, `progress`, `measurements`,
   `body`, `atlas`, `plan`). Tab-header вимкнено, кожен screen малює власний
   заголовок усередині сторінки. Route-каталог винесено у
-  `src/modules/fizruk/shell/fizrukRoute.ts` (масив `FIZRUK_PAGES`,
+  `apps/mobile/src/modules/fizruk/shell/fizrukRoute.ts` (масив `FIZRUK_PAGES`,
   `fizrukRouteFor` — 1:1 імена web-версії); nav-каталог — у
-  `shell/fizrukNav.ts`. Страницi-компоненти у `src/modules/fizruk/pages/*`:
+  `apps/mobile/src/modules/fizruk/shell/fizrukNav.ts`. Страницi-компоненти у `apps/mobile/src/modules/fizruk/pages/*`:
   `Dashboard` — перший функціональний екран (дата, «Швидкий старт» CTA
   на `/fizruk/workouts`, сітка нав-карток на всі 8 не-dashboard
   сторінок через `router.push(fizrukRouteFor(page))`), решта вісім —
@@ -436,7 +436,7 @@
   `@sergeant/fizruk-domain/lib/restSettings`), щоб хук був
   перевірюваний рукою з реального табу до повного порту
   каталогу вправ у PR-F. Unit-тести —
-  `src/modules/fizruk/__tests__/useActiveFizrukWorkout.test.ts`
+  `apps/mobile/src/modules/fizruk/__tests__/useActiveFizrukWorkout.test.ts`
   (drift-resistance обох таймерів під 30 с та 45 с JS-стальтів,
   `justFinishedNaturally` single-flip, MMKV round-trip,
   keep-awake activate/deactivate через injected adapter; fake

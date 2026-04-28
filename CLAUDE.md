@@ -7,7 +7,7 @@
 
 - **pnpm 9** + **Turborepo** monorepo, Node 20, TypeScript 6.
 - **Apps:** `apps/web` (Vite + React 18), `apps/server` (Express + PostgreSQL), `apps/mobile` (Expo 52), `apps/mobile-shell` (Capacitor).
-- **Packages:** `@sergeant/shared`, `@sergeant/api-client`, `@sergeant/config`, `@sergeant/design-tokens`, `@sergeant/insights`, 4 domain packages.
+- **Packages:** `@sergeant/shared`, `@sergeant/api-client`, `@sergeant/config`, `@sergeant/design-tokens`, `@sergeant/insights`, `eslint-plugin-sergeant-design`, 4 domain packages (10 total).
 - Language: code in English/Ukrainian mixed; prose docs in **Ukrainian** (see `AGENTS.md` § Soft rules).
 
 ## Quick commands
