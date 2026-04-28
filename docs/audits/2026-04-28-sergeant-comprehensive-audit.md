@@ -22,18 +22,18 @@
 
 ### 1.1. Загальна Оцінка
 
-| Категорія | Оцінка | Тренд |
-|-----------|--------|-------|
-| **Архітектура монорепи** | 8.5/10 | ↗ стабільна |
-| **Якість коду** | 7.5/10 | ↗ покращується |
-| **Type Safety** | 6.5/10 | ⚠️ потребує уваги |
-| **Тестове покриття** | 7.0/10 | ↗ покращується |
-| **Безпека** | 8.0/10 | ↗ сильна |
-| **Документація** | 9.0/10 | ✅ відмінна |
-| **CI/CD Pipeline** | 8.5/10 | ✅ зріла |
-| **Observability** | 7.0/10 | ⚠️ потребує розвитку |
-| **Mobile Platform** | 6.0/10 | ⚠️ потребує стабілізації |
-| **Tech Debt** | 6.5/10 | ⚠️ накопичується |
+| Категорія                | Оцінка | Тренд                    |
+| ------------------------ | ------ | ------------------------ |
+| **Архітектура монорепи** | 8.5/10 | ↗ стабільна              |
+| **Якість коду**          | 7.5/10 | ↗ покращується           |
+| **Type Safety**          | 6.5/10 | ⚠️ потребує уваги        |
+| **Тестове покриття**     | 7.0/10 | ↗ покращується           |
+| **Безпека**              | 8.0/10 | ↗ сильна                 |
+| **Документація**         | 9.0/10 | ✅ відмінна              |
+| **CI/CD Pipeline**       | 8.5/10 | ✅ зріла                 |
+| **Observability**        | 7.0/10 | ⚠️ потребує розвитку     |
+| **Mobile Platform**      | 6.0/10 | ⚠️ потребує стабілізації |
+| **Tech Debt**            | 6.5/10 | ⚠️ накопичується         |
 
 **Загальний бал: 7.5/10** — Зріла платформа з сильними guardrails, але з накопиченим технічним боргом у кількох критичних зонах.
 
@@ -81,32 +81,33 @@ sergeant/
 
 **Оцінка: 8.5/10**
 
-| ✅ Сильні сторони | ⚠️ Зони ризику |
-|------------------|----------------|
-| Чітка доменна ізоляція | `mobile-shell` без test coverage |
+| ✅ Сильні сторони                  | ⚠️ Зони ризику                      |
+| ---------------------------------- | ----------------------------------- |
+| Чітка доменна ізоляція             | `mobile-shell` без test coverage    |
 | Turborepo з правильним `dependsOn` | Cross-package type inference issues |
-| Module ownership map в AGENTS.md | Немає boundary tests для Capacitor |
+| Module ownership map в AGENTS.md   | Немає boundary tests для Capacitor  |
 
 ### 2.2. Стек Технологій
 
-| Компонент | Версія | Статус |
-|-----------|--------|--------|
-| Node.js | 20.x | ✅ LTS |
-| TypeScript | 6.0.3 | ⚠️ Bleeding edge |
-| React | 18.x | ✅ Stable |
-| Vite | Latest | ✅ Stable |
-| Express | 4.x | ✅ Stable |
-| PostgreSQL | 16 | ✅ Stable |
-| Better Auth | Latest | ✅ Active |
-| Expo SDK | 52 | ✅ Latest |
-| React Native | 0.76 | ✅ Latest |
-| Capacitor | 7 | ✅ Latest |
+| Компонент    | Версія | Статус           |
+| ------------ | ------ | ---------------- |
+| Node.js      | 20.x   | ✅ LTS           |
+| TypeScript   | 6.0.3  | ⚠️ Bleeding edge |
+| React        | 18.x   | ✅ Stable        |
+| Vite         | Latest | ✅ Stable        |
+| Express      | 4.x    | ✅ Stable        |
+| PostgreSQL   | 16     | ✅ Stable        |
+| Better Auth  | Latest | ✅ Active        |
+| Expo SDK     | 52     | ✅ Latest        |
+| React Native | 0.76   | ✅ Latest        |
+| Capacitor    | 7      | ✅ Latest        |
 
 **Ризик:** TypeScript 6.0.3 — bleeding edge версія може викликати несумісності з tooling (vitest/eslint-typescript).
 
 ### 2.3. Якість Коду
 
 #### Великі файли (>600 LOC)
+
 ```
 25 файлів > 600 LOC
 ├── seedFoodsUk.ts (1614 LOC) — ✅ Split у PR #898
@@ -117,6 +118,7 @@ sergeant/
 ```
 
 #### TODO/FIXME коментарі
+
 ```
 10 файлів з TODO/FIXME
 ├── eslint.config.js (1)
@@ -126,26 +128,27 @@ sergeant/
 
 ### 2.4. Type Safety
 
-| Пакет | strict | strictNullChecks | noImplicitAny |
-|-------|--------|------------------|---------------|
-| `apps/server` | ✅ true | ✅ | ✅ |
-| `apps/web` | ❌ false | ❌ | ❌ |
-| `apps/mobile` | ⚠️ partial | ⚠️ | ⚠️ |
-| `packages/*` | ✅ inherited | ✅ | ✅ |
+| Пакет         | strict       | strictNullChecks | noImplicitAny |
+| ------------- | ------------ | ---------------- | ------------- |
+| `apps/server` | ✅ true      | ✅               | ✅            |
+| `apps/web`    | ❌ false     | ❌               | ❌            |
+| `apps/mobile` | ⚠️ partial   | ⚠️               | ⚠️            |
+| `packages/*`  | ✅ inherited | ✅               | ✅            |
 
 **Критичний недолік:** `apps/web/tsconfig.json` явно перевизначає `strict: false`, що дозволяє type-unsafe код у найбільшій частині codebase.
 
 ### 2.5. Тестове Покриття
 
-| App/Package | Unit Tests | Integration | E2E | Coverage |
-|-------------|------------|-------------|-----|----------|
-| `apps/web` | ✅ Vitest+RTL | ✅ MSW | ✅ Playwright | ~65% |
-| `apps/server` | ✅ Vitest | ✅ Testcontainers | ⚠️ smoke only | ~70% |
-| `apps/mobile` | ⚠️ Jest (flaky) | ❌ | ⚠️ Detox | ~45% |
-| `apps/mobile-shell` | ❌ none | ❌ | ❌ | 0% |
-| `packages/*` | ✅ Vitest | ✅ | N/A | ~80% |
+| App/Package         | Unit Tests      | Integration       | E2E           | Coverage |
+| ------------------- | --------------- | ----------------- | ------------- | -------- |
+| `apps/web`          | ✅ Vitest+RTL   | ✅ MSW            | ✅ Playwright | ~65%     |
+| `apps/server`       | ✅ Vitest       | ✅ Testcontainers | ⚠️ smoke only | ~70%     |
+| `apps/mobile`       | ⚠️ Jest (flaky) | ❌                | ⚠️ Detox      | ~45%     |
+| `apps/mobile-shell` | ❌ none         | ❌                | ❌            | 0%       |
+| `packages/*`        | ✅ Vitest       | ✅                | N/A           | ~80%     |
 
 **Flaky Tests (known):**
+
 1. `apps/mobile/src/core/dashboard/WeeklyDigestFooter.test.tsx`
 2. `apps/mobile/src/core/settings/HubSettingsPage.test.tsx`
 
@@ -165,29 +168,30 @@ Workflows:
 ```
 
 **Performance Budgets:**
+
 - JS total (brotli): ≤ 615 kB ✅
 - CSS (brotli): ≤ 18 kB ✅
 
 ### 2.7. Безпека
 
-| Аспект | Статус | Деталі |
-|--------|--------|--------|
-| `pnpm audit` | ✅ Blocking (high+) | PR-9.A merged |
-| gitleaks | ✅ SHA-pinned | PR-9.B merged |
-| Vulnerability SLA | ✅ Defined | PR-9.C merged |
-| Audit exceptions | ✅ Documented | `docs/security/audit-exceptions.md` |
-| Session security | ✅ HTTP-only cookies | Better Auth |
-| SQL injection | ✅ Parameterized queries | pg driver |
+| Аспект            | Статус                   | Деталі                              |
+| ----------------- | ------------------------ | ----------------------------------- |
+| `pnpm audit`      | ✅ Blocking (high+)      | PR-9.A merged                       |
+| gitleaks          | ✅ SHA-pinned            | PR-9.B merged                       |
+| Vulnerability SLA | ✅ Defined               | PR-9.C merged                       |
+| Audit exceptions  | ✅ Documented            | `docs/security/audit-exceptions.md` |
+| Session security  | ✅ HTTP-only cookies     | Better Auth                         |
+| SQL injection     | ✅ Parameterized queries | pg driver                           |
 
 ### 2.8. Observability
 
-| Рівень | Покриття | Деталі |
-|--------|----------|--------|
-| Server metrics | ✅ Prometheus `/metrics` | PR-8.B |
-| Frontend analytics | ⚠️ PostHog basic | Release annotations only |
-| Mobile APM | ❌ None | Critical gap |
-| Error tracking | ⚠️ Console logs | No Sentry integration |
-| Tracing | ❌ None | No distributed tracing |
+| Рівень             | Покриття                 | Деталі                   |
+| ------------------ | ------------------------ | ------------------------ |
+| Server metrics     | ✅ Prometheus `/metrics` | PR-8.B                   |
+| Frontend analytics | ⚠️ PostHog basic         | Release annotations only |
+| Mobile APM         | ❌ None                  | Critical gap             |
+| Error tracking     | ⚠️ Console logs          | No Sentry integration    |
+| Tracing            | ❌ None                  | No distributed tracing   |
 
 ---
 
@@ -195,39 +199,39 @@ Workflows:
 
 ### 3.1. Критичні (P0) — Блокують Production Quality
 
-| ID | Недолік | Вплив | Поточний стан |
-|----|---------|-------|---------------|
-| **P0-1** | `apps/web` strict: false | Type errors проходять CI | 52 файли з unsafe patterns |
-| **P0-2** | localStorage migration incomplete | Quota errors, sync race conditions | 52 файли в allowlist |
-| **P0-3** | Mobile flaky tests | CI unreliable | 2 tests на main |
-| **P0-4** | No mobile APM | Production blindness | Zero observability |
+| ID       | Недолік                           | Вплив                              | Поточний стан              |
+| -------- | --------------------------------- | ---------------------------------- | -------------------------- |
+| **P0-1** | `apps/web` strict: false          | Type errors проходять CI           | 52 файли з unsafe patterns |
+| **P0-2** | localStorage migration incomplete | Quota errors, sync race conditions | 52 файли в allowlist       |
+| **P0-3** | Mobile flaky tests                | CI unreliable                      | 2 tests на main            |
+| **P0-4** | No mobile APM                     | Production blindness               | Zero observability         |
 
 ### 3.2. Високі (P1) — Значний Tech Debt
 
-| ID | Недолік | Вплив | Рекомендація |
-|----|---------|-------|--------------|
-| **P1-1** | Великі файли (>600 LOC) | Maintainability | Decompose поступово |
-| **P1-2** | TypeScript 6.0.3 | Tooling instability | Monitor + document issues |
-| **P1-3** | Capacitor без tests | Breaking changes undetected | Add boundary tests |
-| **P1-4** | Prompt cache not activated | $$$ waste | Enable per AGENTS.md |
-| **P1-5** | No distributed tracing | Debug complexity | Add OpenTelemetry |
+| ID       | Недолік                    | Вплив                       | Рекомендація              |
+| -------- | -------------------------- | --------------------------- | ------------------------- |
+| **P1-1** | Великі файли (>600 LOC)    | Maintainability             | Decompose поступово       |
+| **P1-2** | TypeScript 6.0.3           | Tooling instability         | Monitor + document issues |
+| **P1-3** | Capacitor без tests        | Breaking changes undetected | Add boundary tests        |
+| **P1-4** | Prompt cache not activated | $$$ waste                   | Enable per AGENTS.md      |
+| **P1-5** | No distributed tracing     | Debug complexity            | Add OpenTelemetry         |
 
 ### 3.3. Середні (P2) — Покращення DX
 
-| ID | Недолік | Вплив | Рекомендація |
-|----|---------|-------|--------------|
-| **P2-1** | 10 TODO/FIXME comments | Unclear ownership | Triage + create issues |
-| **P2-2** | No Sentry integration | Error context loss | Add Sentry SDK |
-| **P2-3** | Mobile debt tracker missing | Hidden accumulation | Create `docs/tech-debt/mobile.md` |
-| **P2-4** | Decision-tree playbooks incomplete | Onboarding friction | Complete top-5 |
+| ID       | Недолік                            | Вплив               | Рекомендація                      |
+| -------- | ---------------------------------- | ------------------- | --------------------------------- |
+| **P2-1** | 10 TODO/FIXME comments             | Unclear ownership   | Triage + create issues            |
+| **P2-2** | No Sentry integration              | Error context loss  | Add Sentry SDK                    |
+| **P2-3** | Mobile debt tracker missing        | Hidden accumulation | Create `docs/tech-debt/mobile.md` |
+| **P2-4** | Decision-tree playbooks incomplete | Onboarding friction | Complete top-5                    |
 
 ### 3.4. Низькі (P3) — Nice-to-Have
 
-| ID | Недолік | Вплив | Рекомендація |
-|----|---------|-------|--------------|
-| **P3-1** | No visual regression tests | UI drift | Add Chromatic/Percy |
-| **P3-2** | Manual release notes | Process overhead | Automate with changesets |
-| **P3-3** | No PR size limits | Review fatigue | Add probot/pr-size |
+| ID       | Недолік                    | Вплив            | Рекомендація             |
+| -------- | -------------------------- | ---------------- | ------------------------ |
+| **P3-1** | No visual regression tests | UI drift         | Add Chromatic/Percy      |
+| **P3-2** | Manual release notes       | Process overhead | Automate with changesets |
+| **P3-3** | No PR size limits          | Review fatigue   | Add probot/pr-size       |
 
 ---
 
@@ -254,6 +258,7 @@ Workflows:
 ```
 
 **План впровадження:**
+
 1. **Phase 1 (Day 1-3):** Enable `strictNullChecks` only
    - Run `pnpm typecheck`, collect errors
    - Fix errors in `apps/web/src/shared/**` (вже done: PR #870)
@@ -268,27 +273,30 @@ Workflows:
    - Update CI strict-coverage metric
 
 **Метрики:**
+
 - TypeScript errors: 0 → target
 - Strict-covered files: 65% → 100%
 
 #### 4.1.2. Mobile Flaky Tests (P0-3)
 
 **Файли для фіксу:**
+
 1. `apps/mobile/src/core/dashboard/WeeklyDigestFooter.test.tsx`
 2. `apps/mobile/src/core/settings/HubSettingsPage.test.tsx`
 
 **Підхід:**
+
 ```typescript
 // Pattern from OnboardingWizard fix (commit 53853e00)
 // Replace:
-jest.mock('react-native', () => ({
+jest.mock("react-native", () => ({
   AccessibilityInfo: {
     isReduceMotionEnabled: jest.fn(), // Never resolves
   },
 }));
 
 // With:
-jest.mock('react-native', () => ({
+jest.mock("react-native", () => ({
   AccessibilityInfo: {
     isReduceMotionEnabled: jest.fn().mockResolvedValue(false),
   },
@@ -314,14 +322,15 @@ jest.mock('react-native', () => ({
 | Інші | 15 | Low | case-by-case |
 
 **Приклад міграції:**
+
 ```typescript
 // Before (unsafe):
-const saved = localStorage.getItem('onboarding_step');
+const saved = localStorage.getItem("onboarding_step");
 const step = saved ? JSON.parse(saved) : 0;
 
 // After (safe):
-import { useLocalStorageState } from '@shared/hooks/useLocalStorageState';
-const [step, setStep] = useLocalStorageState('onboarding_step', 0);
+import { useLocalStorageState } from "@shared/hooks/useLocalStorageState";
+const [step, setStep] = useLocalStorageState("onboarding_step", 0);
 ```
 
 ### Етап 2: Покращення Observability (Тиждень 3-4)
@@ -329,42 +338,45 @@ const [step, setStep] = useLocalStorageState('onboarding_step', 0);
 #### 4.2.1. Mobile APM (P0-4)
 
 **Рекомендований стек:**
+
 - **Sentry React Native SDK** — crash reporting + performance
 - **PostHog RN SDK** — analytics + feature flags
 
 **Імплементація:**
+
 ```typescript
 // apps/mobile/src/lib/sentry.ts
-import * as Sentry from '@sentry/react-native';
+import * as Sentry from "@sentry/react-native";
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  environment: __DEV__ ? 'development' : 'production',
+  environment: __DEV__ ? "development" : "production",
   tracesSampleRate: 0.2,
-  integrations: [
-    Sentry.reactNativeTracingIntegration(),
-  ],
+  integrations: [Sentry.reactNativeTracingIntegration()],
 });
 
 export { Sentry };
 ```
 
 **Метрики:**
+
 - Crash-free sessions: baseline → 99.5%
 - P95 app start time: measure → optimize
 
 #### 4.2.2. Distributed Tracing (P1-5)
 
 **Рекомендований стек:**
+
 - **OpenTelemetry** — vendor-agnostic
 - **Export to:** Grafana Tempo (free tier) або Jaeger
 
 **Імплементація:**
+
 ```typescript
 // apps/server/src/lib/tracing.ts
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 
 const sdk = new NodeSDK({
   traceExporter: new OTLPTraceExporter({
@@ -380,13 +392,14 @@ sdk.start();
 
 #### 4.3.1. Великі Файли Decomposition
 
-| Файл | LOC | План |
-|------|-----|------|
-| `HubChat.tsx` | ~800 | Split: `HubChatInput`, `HubChatMessages`, `HubChatToolCard` |
-| `Overview.tsx` (Finyk) | ~750 | Extract: `AccountsPanel`, `SpendingChart`, `BudgetSummary` |
-| `Dashboard.tsx` (Fizruk) | ~650 | Extract: `WorkoutSummary`, `ProgressChart` |
+| Файл                     | LOC  | План                                                        |
+| ------------------------ | ---- | ----------------------------------------------------------- |
+| `HubChat.tsx`            | ~800 | Split: `HubChatInput`, `HubChatMessages`, `HubChatToolCard` |
+| `Overview.tsx` (Finyk)   | ~750 | Extract: `AccountsPanel`, `SpendingChart`, `BudgetSummary`  |
+| `Dashboard.tsx` (Fizruk) | ~650 | Extract: `WorkoutSummary`, `ProgressChart`                  |
 
 **Checklist для кожного split:**
+
 - [ ] Identify cohesive units (by responsibility)
 - [ ] Extract to separate file
 - [ ] Update imports
@@ -397,23 +410,24 @@ sdk.start();
 
 ```typescript
 // apps/mobile-shell/src/__tests__/webBridge.test.ts
-import { Capacitor } from '@capacitor/core';
+import { Capacitor } from "@capacitor/core";
 
-describe('Web-Native Bridge', () => {
-  it('should detect native platform', () => {
+describe("Web-Native Bridge", () => {
+  it("should detect native platform", () => {
     expect(Capacitor.isNativePlatform()).toBe(true);
   });
 
-  it('should handle deep links', async () => {
-    const result = await AppUrlListener.addListener('appUrlOpen', callback);
+  it("should handle deep links", async () => {
+    const result = await AppUrlListener.addListener("appUrlOpen", callback);
     expect(result).toBeDefined();
   });
 
-  it('should access secure storage', async () => {
-    const { SecureStoragePlugin } = await import('@nickvdh/capacitor-secure-storage-plugin');
-    await SecureStoragePlugin.set({ key: 'test', value: 'value' });
-    const { value } = await SecureStoragePlugin.get({ key: 'test' });
-    expect(value).toBe('value');
+  it("should access secure storage", async () => {
+    const { SecureStoragePlugin } =
+      await import("@nickvdh/capacitor-secure-storage-plugin");
+    await SecureStoragePlugin.set({ key: "test", value: "value" });
+    const { value } = await SecureStoragePlugin.get({ key: "test" });
+    expect(value).toBe("value");
   });
 });
 ```
@@ -425,33 +439,36 @@ describe('Web-Native Bridge', () => {
 **Поточний стан:** `SYSTEM_PREFIX` готовий до кешування (AGENTS.md)
 
 **Імплементація:**
+
 ```typescript
 // apps/server/src/modules/chat/chat.ts
 const systemMessages = [
   {
-    type: 'text',
+    type: "text",
     text: SYSTEM_PREFIX,
-    cache_control: { type: 'ephemeral' }, // Enable caching
+    cache_control: { type: "ephemeral" }, // Enable caching
   },
   {
-    type: 'text',
+    type: "text",
     text: context, // Dynamic per-user context (not cached)
   },
 ];
 ```
 
 **Очікувана економія:**
+
 - Cache hit rate: 0% → ~70-80%
 - Cost reduction: ~40-50% на Anthropic bills
 
 **Monitoring:**
+
 ```typescript
 // Track cache metrics (already prepared in PR #864)
 const cacheMetrics = {
   cache_creation_input_tokens: response.usage?.cache_creation_input_tokens,
   cache_read_input_tokens: response.usage?.cache_read_input_tokens,
 };
-logger.info('anthropic_cache_metrics', cacheMetrics);
+logger.info("anthropic_cache_metrics", cacheMetrics);
 ```
 
 ---
@@ -513,13 +530,13 @@ BUFFER: Week 11-12
 
 ### Ресурси
 
-| Етап | Зусилля (люд.-дні) | Ризик | Dependencies |
-|------|---------------------|-------|--------------|
-| Стабілізація | 14 | Medium | None |
-| Observability | 14 | Low | Sentry account |
-| Refactoring | 28 | High | Code freeze windows |
-| Optimization | 10 | Low | Anthropic cache API |
-| **Total** | **66** | — | — |
+| Етап          | Зусилля (люд.-дні) | Ризик  | Dependencies        |
+| ------------- | ------------------ | ------ | ------------------- |
+| Стабілізація  | 14                 | Medium | None                |
+| Observability | 14                 | Low    | Sentry account      |
+| Refactoring   | 28                 | High   | Code freeze windows |
+| Optimization  | 10                 | Low    | Anthropic cache API |
+| **Total**     | **66**             | —      | —                   |
 
 ---
 
@@ -527,31 +544,31 @@ BUFFER: Week 11-12
 
 ### 6.1. Технічні Метрики
 
-| Метрика | Baseline | Target | Deadline |
-|---------|----------|--------|----------|
-| TypeScript strict coverage | 65% | 100% | Week 10 |
-| localStorage allowlist files | 52 | 0 | Week 8 |
-| Flaky tests on main | 2 | 0 | Week 2 |
-| Mobile crash-free sessions | N/A | 99.5% | Week 4 |
-| Prompt cache hit rate | 0% | 70%+ | Week 10 |
-| Files > 600 LOC | 25 | 15 | Week 8 |
+| Метрика                      | Baseline | Target | Deadline |
+| ---------------------------- | -------- | ------ | -------- |
+| TypeScript strict coverage   | 65%      | 100%   | Week 10  |
+| localStorage allowlist files | 52       | 0      | Week 8   |
+| Flaky tests on main          | 2        | 0      | Week 2   |
+| Mobile crash-free sessions   | N/A      | 99.5%  | Week 4   |
+| Prompt cache hit rate        | 0%       | 70%+   | Week 10  |
+| Files > 600 LOC              | 25       | 15     | Week 8   |
 
 ### 6.2. Process Метрики
 
-| Метрика | Baseline | Target | Deadline |
-|---------|----------|--------|----------|
-| CI pipeline p95 | ~8 min | < 6 min | Week 12 |
-| PR review time p50 | N/A | < 24h | Ongoing |
-| Tech debt items closed | 30/31 | 31/31 | Week 10 |
-| Documentation freshness | 90% | 100% | Week 12 |
+| Метрика                 | Baseline | Target  | Deadline |
+| ----------------------- | -------- | ------- | -------- |
+| CI pipeline p95         | ~8 min   | < 6 min | Week 12  |
+| PR review time p50      | N/A      | < 24h   | Ongoing  |
+| Tech debt items closed  | 30/31    | 31/31   | Week 10  |
+| Documentation freshness | 90%      | 100%    | Week 12  |
 
 ### 6.3. Business Метрики
 
-| Метрика | Baseline | Target | Impact |
-|---------|----------|--------|--------|
-| Anthropic monthly cost | $X | $X × 0.5 | Prompt caching |
-| Production incidents | N/A | Measure | Observability |
-| Developer onboarding time | N/A | < 1 day | Documentation |
+| Метрика                   | Baseline | Target   | Impact         |
+| ------------------------- | -------- | -------- | -------------- |
+| Anthropic monthly cost    | $X       | $X × 0.5 | Prompt caching |
+| Production incidents      | N/A      | Measure  | Observability  |
+| Developer onboarding time | N/A      | < 1 day  | Documentation  |
 
 ---
 

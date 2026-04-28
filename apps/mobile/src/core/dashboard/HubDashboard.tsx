@@ -229,19 +229,17 @@ export function HubDashboard() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Refresh all module previews and coach insight
+    // `useModulePreviews` is fed by `useSyncExternalStore` over MMKV — it
+    // re-renders automatically whenever the underlying quick-stats keys
+    // change, so we only need to bump the hero tick to re-evaluate
+    // FTUX/coach state. There's no imperative `refresh()` to call.
     try {
-      await Promise.all([
-        // Re-trigger module preview fetches
-        previews.refresh?.(),
-        // Bump hero tick to re-evaluate FTUX states
-        bumpHero(),
-      ]);
+      bumpHero();
     } finally {
       setRefreshing(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  }, [previews, bumpHero]);
+  }, [bumpHero]);
 
   const handleShowAuth = useCallback(() => {
     router.push("/(auth)/sign-in" as Href);
