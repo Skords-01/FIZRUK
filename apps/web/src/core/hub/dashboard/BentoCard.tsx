@@ -23,6 +23,13 @@ export interface BentoCardProps {
   primaryRef?: (node: HTMLButtonElement | null) => void;
   primaryProps?: Record<string, unknown>;
   isDragging?: boolean;
+  /**
+   * When `true`, the card is rendered in a muted/greyed-out state
+   * because the user did not mark this module as important during
+   * onboarding. Quick-add is suppressed and a hint pointing at Hub
+   * Settings is shown in place of the preview numbers.
+   */
+  inactive?: boolean;
 }
 
 /**
@@ -41,25 +48,45 @@ export const BentoCard = memo(function BentoCard({
   primaryRef,
   primaryProps,
   isDragging,
+  inactive,
 }: BentoCardProps) {
   const preview = config.getPreview();
   const showProgress =
-    config.hasGoal && preview.progress !== undefined && preview.progress > 0;
+    !inactive &&
+    config.hasGoal &&
+    preview.progress !== undefined &&
+    preview.progress > 0;
   const hasData = !!(preview.main || preview.sub);
+  // Inactive modules suppress quick-add to avoid implying parity with
+  // active modules — the user has to reactivate them in Hub Settings
+  // before a quick-add affordance reappears.
+  const showQuickAdd = !inactive && !!onQuickAdd;
 
   return (
-    <div className={cn("relative", isDragging && "opacity-70 z-50")}>
+    <div
+      className={cn(
+        "relative",
+        isDragging && "opacity-70 z-50",
+        inactive && "opacity-60",
+      )}
+    >
       <button
         ref={primaryRef}
         type="button"
         onClick={onClick}
         {...primaryProps}
+        aria-label={
+          inactive
+            ? `${config.label} — неактивний модуль. Увімкнути в налаштуваннях Hub.`
+            : undefined
+        }
+        data-inactive={inactive ? "true" : undefined}
         className={cn(
           "group relative flex flex-col w-full rounded-3xl border border-line p-3.5",
           "shadow-card transition-all duration-200 text-left",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
           "active:scale-[0.98]",
-          config.cardBg,
+          inactive ? "bg-panel grayscale" : config.cardBg,
           isDragging && "shadow-float cursor-grabbing",
         )}
       >
@@ -67,7 +94,7 @@ export const BentoCard = memo(function BentoCard({
           <div
             className={cn(
               "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
-              config.iconClass,
+              inactive ? "bg-line/40 text-muted" : config.iconClass,
             )}
           >
             {config.icon}
@@ -76,14 +103,23 @@ export const BentoCard = memo(function BentoCard({
           {/* Layout placeholder for the absolutely-positioned quick-add
               sibling — keeps the label centred consistently regardless of
               whether the module exposes a quick-add action. */}
-          {onQuickAdd && <span aria-hidden className="w-6 h-6 shrink-0" />}
+          {showQuickAdd && <span aria-hidden className="w-6 h-6 shrink-0" />}
         </div>
 
-        <span className="text-xs font-semibold text-text">
+        <span
+          className={cn(
+            "text-xs font-semibold",
+            inactive ? "text-muted" : "text-text",
+          )}
+        >
           {config.emoji} {config.label}
         </span>
 
-        {hasData ? (
+        {inactive ? (
+          <span className="text-2xs text-muted mt-1 leading-snug">
+            Неактивний — увімкнути в налаштуваннях
+          </span>
+        ) : hasData ? (
           <>
             {preview.main && (
               <span className="text-lg font-bold text-text tabular-nums mt-1 truncate">
@@ -116,7 +152,7 @@ export const BentoCard = memo(function BentoCard({
         )}
       </button>
 
-      {onQuickAdd && (
+      {showQuickAdd && onQuickAdd && (
         <button
           type="button"
           onClick={(e) => {
@@ -144,6 +180,7 @@ export interface SortableCardProps {
   id: ModuleId;
   onOpenModule: (id: ModuleId) => void;
   quickAdd?: { label: string; run: () => void } | null;
+  inactive?: boolean;
 }
 
 /**
@@ -155,6 +192,7 @@ export const SortableCard = memo(function SortableCard({
   id,
   onOpenModule,
   quickAdd,
+  inactive,
 }: SortableCardProps) {
   const {
     attributes,
@@ -198,6 +236,7 @@ export const SortableCard = memo(function SortableCard({
         primaryRef={setActivatorNodeRef}
         primaryProps={primaryProps}
         isDragging={isDragging}
+        inactive={inactive}
       />
     </div>
   );
