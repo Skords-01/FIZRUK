@@ -99,17 +99,21 @@ export function useFormValidation<T extends Record<string, unknown>>(
     hapticError();
 
     // Start shake
-    setFields((prev) => ({
-      ...prev,
-      [name]: { ...prev[name], shaking: true },
-    }));
+    setFields(
+      (prev): FormState<T> => ({
+        ...prev,
+        [name]: { ...prev[name], shaking: true },
+      }),
+    );
 
     // Stop shake after animation completes
     const timeout = setTimeout(() => {
-      setFields((prev) => ({
-        ...prev,
-        [name]: { ...prev[name], shaking: false },
-      }));
+      setFields(
+        (prev): FormState<T> => ({
+          ...prev,
+          [name]: { ...prev[name], shaking: false },
+        }),
+      );
       shakeTimeouts.current.delete(name);
     }, 500);
 
@@ -123,18 +127,22 @@ export function useFormValidation<T extends Record<string, unknown>>(
 
       for (const rule of fieldConfig.rules) {
         if (!rule.validate(value)) {
-          setFields((prev) => ({
-            ...prev,
-            [name]: { ...prev[name], error: rule.message, touched: true },
-          }));
+          setFields(
+            (prev): FormState<T> => ({
+              ...prev,
+              [name]: { ...prev[name], error: rule.message, touched: true },
+            }),
+          );
           return false;
         }
       }
 
-      setFields((prev) => ({
-        ...prev,
-        [name]: { ...prev[name], error: null, touched: true },
-      }));
+      setFields(
+        (prev): FormState<T> => ({
+          ...prev,
+          [name]: { ...prev[name], error: null, touched: true },
+        }),
+      );
       return true;
     },
     [config],
@@ -192,10 +200,12 @@ export function useFormValidation<T extends Record<string, unknown>>(
         error: !!field?.error,
         className: field?.shaking ? "animate-shake" : "",
         onBlur: () => {
-          setFields((prev) => ({
-            ...prev,
-            [name]: { ...prev[name], touched: true },
-          }));
+          setFields(
+            (prev): FormState<T> => ({
+              ...prev,
+              [name]: { ...prev[name], touched: true },
+            }),
+          );
         },
       };
     },

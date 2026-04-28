@@ -116,7 +116,7 @@ export function HubHeader({
             id="hub-search-button"
             title="Глобальний пошук"
             description="Знаходь транзакції, тренування та їжу. Також Cmd+K"
-            position="bottom"
+            placement="bottom"
             showOnce
             delay={5000}
           >
