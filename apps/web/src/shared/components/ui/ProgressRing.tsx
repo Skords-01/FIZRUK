@@ -96,6 +96,8 @@ export function ProgressRing({
   showPercent = true,
   showValue,
   className,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
   ...props
 }: ProgressRingProps) {
   const showLabel = showValue ?? showPercent;
@@ -112,12 +114,25 @@ export function ProgressRing({
   const displayLabel =
     label !== undefined ? label : showLabel ? `${percentText}%` : null;
 
+  // ARIA progressbar requires an accessible name. The visible centre label
+  // is `aria-hidden`, so derive a default `aria-label` ("65%" / "65 / 100")
+  // when the caller did not pass one explicitly.
+  const accessibleLabel =
+    ariaLabel ??
+    (ariaLabelledBy
+      ? undefined
+      : max === 100
+        ? `${percentText}%`
+        : `${clamped} / ${safeMax}`);
+
   return (
     <div
       role="progressbar"
       aria-valuenow={clamped}
       aria-valuemin={0}
       aria-valuemax={safeMax}
+      aria-label={accessibleLabel}
+      aria-labelledby={ariaLabelledBy}
       className={cn(
         "relative inline-flex items-center justify-center",
         variantColor[variant],
