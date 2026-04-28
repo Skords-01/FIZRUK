@@ -135,6 +135,7 @@ function BarChart({
               <div
                 className={cn(
                   "w-full rounded-t-sm transition-[height,background-color,opacity]",
+                  "motion-safe:animate-bar-grow",
                   colorClass,
                   (isToday || isSelected) && "opacity-100",
                   !isToday && !isSelected && "opacity-60",
@@ -142,6 +143,7 @@ function BarChart({
                 style={{
                   height: `${pct}%`,
                   minHeight: v > 0 ? "2px" : "0",
+                  animationDelay: `${i * 30}ms`,
                 }}
               />
             </button>

@@ -42,6 +42,10 @@ import { usePwaActions, type PwaAction } from "./hooks/usePwaActions";
 import { ShellDeepLinkBridge } from "./app/ShellDeepLinkBridge";
 import { PageviewTracker } from "./observability/PageviewTracker";
 import { HintsOrchestrator } from "./hints/HintsOrchestrator";
+import {
+  KeyboardShortcutsModal,
+  useKeyboardShortcutsModal,
+} from "@shared/components/ui/KeyboardShortcutsModal";
 
 const AuthPage = lazy(() =>
   import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),
@@ -180,6 +184,7 @@ function AppInner() {
   const { pwaAction, setPwaAction, clearPwaAction, validActions } =
     usePwaActions(searchParams);
   const { dark, toggle: toggleDark } = useDarkMode();
+  const keyboardShortcuts = useKeyboardShortcutsModal();
   const { canInstall, install, dismiss } = usePwaInstall();
   const { visible: iosVisible, dismiss: iosDismiss } = useIosInstallBanner();
   const online = useOnlineStatus();
@@ -473,6 +478,10 @@ function AppInner() {
           onCloseSearch={ui.closeSearch}
           onOpenModule={openModule}
         />
+        <KeyboardShortcutsModal
+          open={keyboardShortcuts.open}
+          onClose={keyboardShortcuts.onClose}
+        />
       </div>
     );
   }
@@ -553,6 +562,10 @@ function AppInner() {
           );
         })()}
       </Suspense>
+      <KeyboardShortcutsModal
+        open={keyboardShortcuts.open}
+        onClose={keyboardShortcuts.onClose}
+      />
     </div>
   );
 }
