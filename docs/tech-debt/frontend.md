@@ -62,8 +62,8 @@ try/catch крашить на quota exceeded, corrupted storage або private b
   `modules/finyk/hooks/useStorage`, `modules/nutrition/domain/nutritionBackup`.
 - **TODO-список немігрованих файлів** — кожен файл, що ще
   читає/пише напряму, перерахований у `eslint.config.js` явно. Міграція
-  файла = видалення рядка зі списку. На 2026-04-26 TODO-список
-  містить 52 файли (базовий рівень при введенні був 49; оновиться вниз
+  файла = видалення рядка зі списку. На 2026-04-28 TODO-список
+  містить 49 файлів (базовий рівень при введенні був 49; оновиться вниз
   після чергових міграцій).
   Фактичних raw `localStorage.*` production-файлів
   (включно з wrappers) — ~78 (`rg -l "\blocalStorage\." apps/web/src` = 119
@@ -303,6 +303,10 @@ Ref: PR-6.F (sergeant-audit-devin.md).
   - `core/settings/FinykSection.tsx` — 20 raw calls → `safeReadStringLS`/`safeWriteLS`/`safeRemoveLS`
   - `core/lib/chatActions/fizrukActions.ts` — 7 raw calls → `safeReadLS` + `readWorkouts()` helper
   - `core/hub/HubDashboard.tsx` — вже використовував `localStorageStore` (KVStore adapter), прибрано з allowlist
+- ✅ `no-raw-local-storage` PWA + Finyk-hub burndown (52 → 49 файлів):
+  - `core/app/pwaAction.ts` — `localStorage.getItem`/`removeItem` → `safeReadStringLS` + `safeRemoveLS`
+  - `core/hooks/usePwaActions.ts` — `localStorage.setItem` у `useState` lazy-initializer → `safeWriteLS`
+  - `core/hub/useFinykHubPreview.ts` — `localStorage.getItem` + `JSON.parse` у `readHasMonoData()` → типізований `safeReadLS<{ txs?: unknown[] }>`
 
 ---
 
