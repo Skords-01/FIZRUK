@@ -1,7 +1,15 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
+import { useToast } from "@shared/hooks/useToast";
+import { safeReadStringLS, safeWriteLS } from "@shared/lib/storage";
 import type { HubView } from "../hooks/useHubUIState";
+
+// Прапор у localStorage: «звіти-таб уже разово розкривався». Зберігаємо
+// timestamp (а не bool), щоб у логах було видно дату розблокування —
+// зручно для аналітики FTUX-воронки і для діагностики «чому юзер не
+// побачив підказку».
+const REPORTS_TAB_REVEALED_AT_KEY = "sergeant.hub.reportsTabRevealedAt";
 
 interface TabButtonProps {
   active: boolean;
@@ -9,6 +17,7 @@ interface TabButtonProps {
   children: ReactNode;
   iconName?: string;
   iconBody?: ReactNode;
+  className?: string;
 }
 
 function TabButton({
@@ -17,6 +26,7 @@ function TabButton({
   children,
   iconName,
   iconBody,
+  className,
 }: TabButtonProps) {
   return (
     <button
@@ -32,6 +42,7 @@ function TabButton({
         active
           ? "bg-panel text-text shadow-card"
           : "text-muted hover:text-text",
+        className,
       )}
     >
       {iconName ? <Icon name={iconName} size={15} strokeWidth={2} /> : iconBody}
@@ -80,6 +91,50 @@ export function HubTabs({
   onChange,
   showReports = true,
 }: HubTabsProps) {
+  const toast = useToast();
+  // Чи був перехід `showReports: false → true` в межах поточного маунту.
+  // Тільки в цьому випадку ми вмикаємо bounce-анімацію + one-time toast.
+  // Якщо компонент маунтиться вже з `showReports === true` без флага в
+  // localStorage — це або легасі-користувач (виставлявся ще до цього
+  // прапора), або повне перезавантаження після розблокування. В обох
+  // сценаріях celebrate-toast у момент перезавантаження виглядав би
+  // невчасно, тож тихо ставимо флаг і нічого не показуємо.
+  const prevShowReportsRef = useRef(showReports);
+  const [animateReveal, setAnimateReveal] = useState(false);
+
+  useEffect(() => {
+    const prevShowReports = prevShowReportsRef.current;
+    prevShowReportsRef.current = showReports;
+
+    if (!showReports) return;
+    if (safeReadStringLS(REPORTS_TAB_REVEALED_AT_KEY)) return;
+
+    if (!prevShowReports) {
+      // Це справжнє розблокування «в реальному часі»: користувач
+      // зробив свій перший реальний запис у поточному сеансі, і
+      // `hasAnyRealEntry()` щойно flip-нув. Запускаємо bounce +
+      // показуємо нав'язливий, але дружній toast із прямою CTA на
+      // вкладку. Toast самозникає за 6с — звідси не лишається
+      // постійного chrome-у, тому ризик заглушити подальші важливі
+      // toast-и низький.
+      safeWriteLS(REPORTS_TAB_REVEALED_AT_KEY, String(Date.now()));
+      setAnimateReveal(true);
+      toast.info(
+        "«Звіти» тепер доступні — короткі зведення по всіх модулях.",
+        6000,
+        {
+          label: "Відкрити",
+          onClick: () => onChange("reports"),
+        },
+      );
+      return;
+    }
+
+    // Migration / cold-start path: tab уже мав бути розблокований
+    // (минулий маунт), просто на ньому не було флага. Ставимо тихо.
+    safeWriteLS(REPORTS_TAB_REVEALED_AT_KEY, String(Date.now()));
+  }, [showReports, onChange, toast]);
+
   return (
     <nav
       aria-label="Розділи хабу"
@@ -102,6 +157,7 @@ export function HubTabs({
             active={hubView === "reports"}
             onClick={() => onChange("reports")}
             iconName="bar-chart"
+            className={animateReveal ? "animate-bounce-in" : undefined}
           >
             Звіти
           </TabButton>
