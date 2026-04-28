@@ -154,8 +154,7 @@ export function ConfirmDialog({
       <Animated.View
         entering={reduceMotion ? undefined : FadeIn.duration(200)}
         exiting={reduceMotion ? undefined : FadeOut.duration(150)}
-        className="flex-1 items-center justify-center px-6"
-        style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        className="flex-1 items-center justify-center px-6 bg-overlay"
       >
         {/* Scrim */}
         <Pressable

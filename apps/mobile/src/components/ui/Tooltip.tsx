@@ -292,10 +292,10 @@ export function Tooltip({
               },
             ]}
           >
-            {/* Tooltip body */}
-            <View className="bg-slate-800 rounded-xl px-4 py-3 shadow-lg">
+            {/* Tooltip body - inverted colors for contrast */}
+            <View className="bg-cream-900 dark:bg-cream-100 rounded-xl px-4 py-3 shadow-lg">
               {typeof content === "string" ? (
-                <Text className="text-white text-sm leading-relaxed">
+                <Text className="text-cream-50 dark:text-cream-900 text-sm leading-relaxed">
                   {content}
                 </Text>
               ) : (
@@ -306,7 +306,7 @@ export function Tooltip({
             {/* Arrow */}
             <View
               style={getArrowStyle()}
-              className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-slate-800"
+              className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-cream-900 dark:border-t-cream-100"
             />
           </Animated.View>
         </Pressable>
@@ -355,9 +355,9 @@ export function TooltipLabel({
 }) {
   return (
     <View className={cx("flex-row items-center gap-1.5", className)}>
-      <Text className="text-sm font-medium text-slate-700">
+      <Text className="text-sm font-medium text-fg">
         {label}
-        {required && <Text className="text-red-500"> *</Text>}
+        {required && <Text className="text-danger"> *</Text>}
       </Text>
       <TooltipTrigger content={tooltip} size={14} />
     </View>

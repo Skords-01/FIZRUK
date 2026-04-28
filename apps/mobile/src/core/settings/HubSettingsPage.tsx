@@ -27,6 +27,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { hapticTap } from "@sergeant/shared";
+
 import { AccountSection } from "./AccountSection";
 import { AIDigestSection } from "./AIDigestSection";
 import { AssistantCatalogueSection } from "./AssistantCatalogueSection";
@@ -85,6 +87,7 @@ export function HubSettingsPage() {
   };
 
   const scrollToGroup = (groupId: string) => {
+    hapticTap();
     setActiveGroup(groupId);
     const position = groupPositions.current[groupId];
     if (position !== undefined && scrollRef.current) {
@@ -112,10 +115,7 @@ export function HubSettingsPage() {
   };
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-cream-50 dark:bg-cream-950"
-      edges={["top"]}
-    >
+    <SafeAreaView className="flex-1 bg-bg dark:bg-bg" edges={["top"]}>
       {/* Sticky Category Tabs */}
       <View className="border-b border-line bg-panel dark:bg-cream-900 px-4 py-3">
         <ScrollView

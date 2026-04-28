@@ -1,6 +1,9 @@
 /**
  * Mobile adapter for the shared haptic contract.
  *
+ * This file registers the mobile haptic adapter with the shared contract
+ * and re-exports utilities from the consolidated haptics.ts file.
+ *
  * Maps the six contract primitives to `expo-haptics`:
  *  - `tap`      → `Haptics.selectionAsync()` (subtle UI select feedback);
  *  - `success`  → `Haptics.notificationAsync(Success)`;
@@ -11,12 +14,6 @@
  *    the user still perceives;
  *  - `pattern`  → intentional no-op (see note below).
  *
- * Enhanced Features:
- *  - Impact feedback levels (light, medium, heavy, rigid, soft)
- *  - Celebration patterns for achievements
- *  - Custom haptic sequences for special events
- *  - Reduced motion awareness
- *
  * Importing this module has the side-effect of registering the mobile
  * adapter on the shared contract. Do this once from `app/_layout.tsx`.
  */
@@ -25,6 +22,22 @@ import * as Haptics from "expo-haptics";
 import { AccessibilityInfo } from "react-native";
 
 import { setHapticAdapter, type HapticAdapter } from "@sergeant/shared";
+
+// Re-export all utilities from the centralized haptics module
+export {
+  hapticLight,
+  hapticMedium,
+  hapticHeavy,
+  hapticSoft,
+  hapticRigid,
+  hapticSuccess,
+  hapticWarning,
+  hapticError,
+  hapticSelection,
+  haptics,
+  useHaptics,
+  isHapticsSupported,
+} from "./haptics";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SAFE EXECUTION WRAPPER
