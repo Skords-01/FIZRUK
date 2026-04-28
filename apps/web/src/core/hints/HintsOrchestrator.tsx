@@ -10,6 +10,7 @@ import {
   type KVStore,
 } from "@sergeant/shared";
 import { useToast } from "@shared/hooks/useToast";
+import { useSpotlightQueue } from "@shared/components/ui/SpotlightQueue";
 import { ANALYTICS_EVENTS, trackEvent } from "../observability/analytics";
 import { useHubPref } from "../settings/hubPrefs";
 
@@ -49,6 +50,7 @@ export function HintsOrchestrator({
   hasFirstRealEntry,
 }: HintsOrchestratorProps): null {
   const toast = useToast();
+  const { isAnyActive: isSpotlightActive } = useSpotlightQueue();
   const [showHints] = useHubPref<boolean>("showHints", true);
   const shownThisMount = useRef<HintId | null>(null);
 
@@ -80,6 +82,8 @@ export function HintsOrchestrator({
 
   useEffect(() => {
     if (!showHints) return;
+    // Don't show toast hints while a spotlight is active — avoids UI clutter
+    if (isSpotlightActive()) return;
     if (shownThisMount.current) return;
 
     // ── Retention hints (Day 1 / 3 / 7) take priority over general hints
@@ -178,7 +182,7 @@ export function HintsOrchestrator({
           : undefined;
 
     toast.info(msg, 5000, action);
-  }, [candidates, ctx, hasFirstRealEntry, showHints, toast]);
+  }, [candidates, ctx, hasFirstRealEntry, isSpotlightActive, showHints, toast]);
 
   return null;
 }
