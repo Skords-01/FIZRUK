@@ -45,6 +45,10 @@
 
 import { useState } from "react";
 import { DeviceEventEmitter, Pressable, Text, View } from "react-native";
+import { Sun, Moon, Smartphone } from "lucide-react-native";
+
+import { useThemeMode, type ThemeMode } from "@/core/theme/ColorSchemeBridge";
+import { colors } from "@/theme";
 import {
   ALL_MODULES,
   DASHBOARD_MODULE_LABELS,
@@ -132,6 +136,61 @@ function DeferredNotice({ children }: { children: string }) {
   );
 }
 
+const THEME_OPTIONS: { value: ThemeMode; label: string; Icon: typeof Sun }[] = [
+  { value: "light", label: "Світла", Icon: Sun },
+  { value: "dark", label: "Темна", Icon: Moon },
+  { value: "system", label: "Системна", Icon: Smartphone },
+];
+
+function ThemeToggle() {
+  const { mode, setTheme, isDark } = useThemeMode();
+
+  return (
+    <View className="gap-2">
+      <Text className="text-sm font-medium text-fg">Тема оформлення</Text>
+      <View className="flex-row gap-2">
+        {THEME_OPTIONS.map(({ value, label, Icon }) => {
+          const isSelected = mode === value;
+          return (
+            <Pressable
+              key={value}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={`Тема: ${label}`}
+              onPress={() => setTheme(value)}
+              className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl border py-3 active:scale-[0.98] ${
+                isSelected
+                  ? "border-brand bg-brand/10"
+                  : "border-cream-300 bg-cream-50 dark:border-cream-600 dark:bg-cream-800"
+              }`}
+              testID={`theme-toggle-${value}`}
+            >
+              <Icon
+                size={18}
+                color={
+                  isSelected
+                    ? colors.accent
+                    : isDark
+                      ? colors.textMuted
+                      : colors.textMuted
+                }
+                strokeWidth={2}
+              />
+              <Text
+                className={`text-sm font-medium ${
+                  isSelected ? "text-brand" : "text-fg"
+                }`}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 function ModuleReorderList() {
   const { visibleOrder, reorderVisible } = useDashboardOrder();
 
@@ -201,7 +260,6 @@ export function GeneralSection() {
   const toast = useToast();
 
   const showCoach = prefs.showCoach !== false;
-  const dark = prefs.darkMode === true;
   const showHints = prefs.showHints !== false;
   const [density, setDensityState] = useLocalStorage<string>(
     STORAGE_KEYS.DASHBOARD_DENSITY,
@@ -265,12 +323,7 @@ export function GeneralSection() {
 
   return (
     <SettingsGroup title="Загальні" emoji="⚙️">
-      <ToggleRow
-        label="Темна тема"
-        checked={dark}
-        onChange={(next) => setPrefs((prev) => ({ ...prev, darkMode: next }))}
-        testID="general-dark-mode-toggle"
-      />
+      <ThemeToggle />
       <SettingsSubGroup title="Дашборд">
         <ToggleRow
           label="Показувати AI-коуч"

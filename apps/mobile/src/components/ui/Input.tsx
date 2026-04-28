@@ -38,6 +38,9 @@
 
 import { forwardRef, useState, type ReactNode } from "react";
 import { Text, TextInput, type TextInputProps, View } from "react-native";
+import { AlertCircle, CheckCircle } from "lucide-react-native";
+
+import { colors } from "@/theme";
 
 export type InputSize = "sm" | "md" | "lg";
 export type InputVariant = "default" | "filled" | "ghost";
@@ -146,6 +149,8 @@ export interface InputProps extends Omit<
   helperText?: string;
   /** Label rendered above the input field. */
   label?: string;
+  /** Show icon in helper text for error/success states. Defaults to false. */
+  showHelperIcon?: boolean;
   /**
    * Explicit RN overrides — the caller's value always wins over the
    * `type`-derived defaults.
@@ -168,6 +173,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     containerClassName,
     helperText,
     label,
+    showHelperIcon = false,
     keyboardType,
     autoCapitalize,
     autoComplete,
@@ -249,14 +255,26 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         {suffix ? <View className="ml-2">{suffix}</View> : null}
       </View>
       {helperText ? (
-        <Text
-          className={cx(
-            "text-xs leading-snug",
-            error ? "text-danger" : "text-fg-muted",
+        <View className="flex-row items-center gap-1.5 mt-0.5">
+          {showHelperIcon && error && (
+            <AlertCircle size={14} color={colors.danger} strokeWidth={2} />
           )}
-        >
-          {helperText}
-        </Text>
+          {showHelperIcon && success && !error && (
+            <CheckCircle size={14} color={colors.success} strokeWidth={2} />
+          )}
+          <Text
+            className={cx(
+              "text-xs leading-snug flex-1",
+              error
+                ? "text-danger"
+                : success
+                  ? "text-success"
+                  : "text-fg-muted",
+            )}
+          >
+            {helperText}
+          </Text>
+        </View>
       ) : null}
     </View>
   );

@@ -19,6 +19,8 @@ import type { LucideIcon } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Pressable, Text } from "react-native";
 
+import { colors } from "@/theme";
+
 export interface EmptyStateAction {
   label: string;
   onPress: () => void;
@@ -75,10 +77,11 @@ export function EmptyState({
   className,
   compact = false,
   disableAnimation = false,
-  iconColor = "#94a3b8", // slate-400 default
+  iconColor, // uses colors.subtle by default
 }: EmptyStateProps) {
   const reduceMotion = useReduceMotion();
   const shouldAnimate = !disableAnimation && !reduceMotion;
+  const resolvedIconColor = iconColor ?? colors.subtle;
 
   // Animation values for staggered entrance
   const containerOpacity = useRef(
@@ -183,13 +186,14 @@ export function EmptyState({
             transform: [{ scale: iconScale }],
           }}
           className={cx(
-            "items-center justify-center rounded-2xl bg-cream-100 border border-cream-200",
+            "items-center justify-center rounded-2xl bg-surface-muted border border-line",
+            "dark:bg-cream-800 dark:border-cream-700",
             compact ? "w-12 h-12" : "w-16 h-16",
           )}
         >
           <IconComponent
             size={compact ? 24 : 32}
-            color={iconColor}
+            color={resolvedIconColor}
             strokeWidth={1.5}
           />
         </Animated.View>
@@ -198,7 +202,7 @@ export function EmptyState({
       {title && (
         <Text
           className={cx(
-            "font-semibold text-slate-800 text-center",
+            "font-semibold text-fg text-center",
             compact ? "text-sm" : "text-base",
           )}
         >
@@ -209,7 +213,7 @@ export function EmptyState({
       {description && (
         <Text
           className={cx(
-            "text-slate-500 text-center leading-relaxed max-w-xs",
+            "text-fg-muted text-center leading-relaxed max-w-xs",
             compact ? "text-xs" : "text-sm",
           )}
         >
@@ -232,16 +236,14 @@ export function EmptyState({
             className={cx(
               "px-5 py-2.5 rounded-xl active:scale-95",
               action.variant === "secondary"
-                ? "bg-cream-100 border border-cream-300"
-                : "bg-emerald-500",
+                ? "bg-surface-muted border border-line dark:bg-cream-800 dark:border-cream-700"
+                : "bg-brand",
             )}
           >
             <Text
               className={cx(
                 "font-semibold text-sm",
-                action.variant === "secondary"
-                  ? "text-slate-700"
-                  : "text-white",
+                action.variant === "secondary" ? "text-fg" : "text-white",
               )}
             >
               {action.label}
@@ -258,7 +260,7 @@ export function EmptyState({
  */
 export function NoDataEmptyState({
   title = "Немає даних",
-  description = "Тут поки що порожньо. Додайте перший запис!",
+  description = "Тут поки що порожньо. Додайте перши�� запис!",
   ...props
 }: Omit<EmptyStateProps, "title" | "description"> & {
   title?: string;

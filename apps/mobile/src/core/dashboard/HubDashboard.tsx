@@ -31,8 +31,15 @@
 
 import { router, type Href } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { Settings, Sparkles } from "lucide-react-native";
 
 import { colors } from "@/theme";
@@ -130,6 +137,7 @@ export function HubDashboard() {
   const { insight: coachInsightText } = useCoachInsight({
     enabled: signedIn,
   });
+  const [refreshing, setRefreshing] = useState(false);
 
   // Active vs. inactive modules — driven by the user's onboarding
   // "vibe picks". Inactive modules render greyed-out (or hidden when
@@ -218,6 +226,23 @@ export function HubDashboard() {
 
   const bumpHero = useCallback(() => setHeroTick((t) => t + 1), []);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Refresh all module previews and coach insight
+    try {
+      await Promise.all([
+        // Re-trigger module preview fetches
+        previews.refresh?.(),
+        // Bump hero tick to re-evaluate FTUX states
+        bumpHero(),
+      ]);
+    } finally {
+      setRefreshing(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  }, [previews, bumpHero]);
+
   const handleShowAuth = useCallback(() => {
     router.push("/(auth)/sign-in" as Href);
   }, []);
@@ -268,6 +293,15 @@ export function HubDashboard() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 16 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+            progressViewOffset={10}
+          />
+        }
       >
         <View className="flex-row items-start justify-between gap-3">
           <View className="flex-1 gap-1">
