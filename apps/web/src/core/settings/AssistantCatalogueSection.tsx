@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@shared/components/ui/Button";
+import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 
 /**
@@ -11,7 +12,7 @@ import { Icon } from "@shared/components/ui/Icon";
 export function AssistantCatalogueSection() {
   const navigate = useNavigate();
   return (
-    <div className="space-y-3">
+    <Card radius="lg" padding="md" className="space-y-3">
       <h3 className="text-base font-semibold text-text flex items-center gap-2">
         <Icon name="sparkles" size={16} aria-hidden />
         Можливості асистента
@@ -30,6 +31,6 @@ export function AssistantCatalogueSection() {
       >
         Відкрити каталог
       </Button>
-    </div>
+    </Card>
   );
 }
