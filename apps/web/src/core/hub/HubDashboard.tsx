@@ -59,6 +59,7 @@ import { type ModuleId } from "./dashboard/moduleConfigs";
 import { SortableCard } from "./dashboard/BentoCard";
 import {
   MotivationalFooter,
+  OnboardingProgress,
   StaggerChild,
   StreakIndicator,
   TodaySummaryStrip,
@@ -288,6 +289,16 @@ export function HubDashboard({
         </StaggerChild>
       )}
 
+      {/* Onboarding progress for new users */}
+      {sessionDays >= 0 && sessionDays <= 7 && !hasRealEntry && (
+        <StaggerChild index={si++}>
+          <OnboardingProgress
+            hasRealEntry={hasRealEntry}
+            sessionDays={sessionDays}
+          />
+        </StaggerChild>
+      )}
+
       {/* Streak indicator */}
       <StaggerChild index={si++}>
         <StreakIndicator />
@@ -373,7 +384,7 @@ export function HubDashboard({
               className="mx-auto mt-2 block text-2xs text-muted underline-offset-2 hover:text-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
               {hideInactive
-                ? "Показати неактивні модулі"
+                ? "Показати неактивні модул��"
                 : "Приховати неактивні модулі"}
             </button>
           )}

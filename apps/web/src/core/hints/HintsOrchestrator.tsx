@@ -64,13 +64,8 @@ export function HintsOrchestrator({
 
   const candidates = useMemo<readonly HintId[]>(() => {
     if (inFtuxSession) {
-      return [
-        "ftux_quick_add",
-        "ftux_switch_modules",
-        "ftux_open_search",
-        "ftux_open_chat",
-        "ftux_reports_unlock",
-      ];
+      // Removed ftux_open_search and ftux_open_chat - they incorrectly track elements
+      return ["ftux_quick_add", "ftux_switch_modules", "ftux_reports_unlock"];
     }
     if (hasFirstRealEntry) {
       return ["module_first_entry", "hub_reorder_modules"];
@@ -133,10 +128,6 @@ export function HintsOrchestrator({
 
       const msg = (() => {
         switch (next) {
-          case "ftux_open_search":
-            return "Порада: відкрий пошук (⌘K) — швидко знаходить модулі та дії.";
-          case "ftux_open_chat":
-            return "Порада: спитай у чаті «Що мені важливо сьогодні?»";
           case "ftux_switch_modules":
             return "Перемикай модулі зверху — це один хаб.";
           case "ftux_reports_unlock":
@@ -154,38 +145,7 @@ export function HintsOrchestrator({
 
       if (!msg) return;
 
-      const action =
-        next === "ftux_open_chat"
-          ? {
-              label: "Відкрити чат",
-              onClick: () => {
-                try {
-                  window.dispatchEvent(
-                    new CustomEvent("hub:openChat", {
-                      detail: "Що мені важливо сьогодні?",
-                    }),
-                  );
-                  trackEvent(ANALYTICS_EVENTS.HINT_CLICKED, { id: next });
-                } catch {
-                  /* noop */
-                }
-              },
-            }
-          : next === "ftux_open_search"
-            ? {
-                label: "Пошук",
-                onClick: () => {
-                  try {
-                    window.dispatchEvent(new CustomEvent("hub:openSearch"));
-                    trackEvent(ANALYTICS_EVENTS.HINT_CLICKED, { id: next });
-                  } catch {
-                    /* noop */
-                  }
-                },
-              }
-            : undefined;
-
-      toast.info(msg, 5000, action);
+      toast.info(msg, 5000);
     }
   }, [candidates, ctx, hasFirstRealEntry, showHints, toast]);
 

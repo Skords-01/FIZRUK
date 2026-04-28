@@ -113,20 +113,63 @@ export function StreakIndicator() {
     return streaks[0]?.days ?? 0;
   }, []);
 
+  // Motivational text based on streak length
+  const motivation = useMemo(() => {
+    if (streak >= 30) return "Неймовірно!";
+    if (streak >= 14) return "Чудова серія!";
+    if (streak >= 7) return "Тиждень!";
+    if (streak >= 3) return "Так тримати!";
+    return "";
+  }, [streak]);
+
   if (streak < 2) return null;
 
+  // Determine if this is a milestone for extra visual emphasis
+  const isMilestone = [7, 14, 21, 30, 60, 100].includes(streak);
+
   return (
-    <span
+    <div
       className={cn(
-        "inline-flex items-center gap-1 px-2.5 py-1 rounded-full",
-        "text-xs font-semibold text-text",
-        "bg-panel border border-line shadow-sm",
+        "inline-flex items-center gap-2 px-3 py-1.5 rounded-full",
+        "text-xs font-semibold",
+        "bg-panel border shadow-sm",
+        isMilestone
+          ? "border-amber-400/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20"
+          : "border-line text-text",
+        "motion-safe:animate-fade-in",
       )}
       title="Серія днів"
     >
-      <span aria-hidden>{"\uD83D\uDD25"}</span>
-      {streak} {"днів поспіль"}
-    </span>
+      <span
+        className={cn("text-base", isMilestone && "motion-safe:animate-pulse")}
+        aria-hidden
+      >
+        {"\uD83D\uDD25"}
+      </span>
+      <span className="flex items-baseline gap-1.5">
+        <span
+          className={cn(
+            "font-bold",
+            isMilestone && "text-amber-600 dark:text-amber-400",
+          )}
+        >
+          {streak}
+        </span>
+        <span className="text-muted">днів</span>
+        {motivation && (
+          <span
+            className={cn(
+              "text-2xs font-medium ml-0.5",
+              isMilestone
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-brand-600 dark:text-brand-400",
+            )}
+          >
+            {motivation}
+          </span>
+        )}
+      </span>
+    </div>
   );
 }
 
@@ -148,6 +191,92 @@ export function StaggerChild({
   return (
     <div className="motion-safe:animate-stagger-in" style={style}>
       {children}
+    </div>
+  );
+}
+
+/**
+ * Onboarding progress indicator for new users.
+ * Shows completion percentage based on key setup steps.
+ */
+export function OnboardingProgress({
+  hasRealEntry,
+  sessionDays,
+}: {
+  hasRealEntry: boolean;
+  sessionDays: number;
+}) {
+  const progress = useMemo(() => {
+    const steps = [
+      { done: true, label: "Обрав модулі" }, // Always done if they see dashboard
+      { done: hasRealEntry, label: "Перший запис" },
+      { done: sessionDays >= 2, label: "Другий день" },
+      { done: sessionDays >= 3, label: "Третій день" },
+    ];
+    const completed = steps.filter((s) => s.done).length;
+    const total = steps.length;
+    const percent = Math.round((completed / total) * 100);
+    const nextStep = steps.find((s) => !s.done);
+    return { steps, completed, total, percent, nextStep };
+  }, [hasRealEntry, sessionDays]);
+
+  // Hide when fully completed
+  if (progress.percent >= 100) return null;
+
+  return (
+    <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-panel border border-line">
+      {/* Progress ring */}
+      <div className="relative w-10 h-10 shrink-0">
+        <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+          <circle
+            cx="18"
+            cy="18"
+            r="15"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            className="text-line"
+          />
+          <circle
+            cx="18"
+            cy="18"
+            r="15"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeDasharray={`${progress.percent} 100`}
+            strokeLinecap="round"
+            className="text-brand-500 transition-all duration-500"
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-text">
+          {progress.percent}%
+        </span>
+      </div>
+
+      {/* Text */}
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-text">Налаштування хабу</p>
+        {progress.nextStep && (
+          <p className="text-xs text-muted truncate">
+            Далі: {progress.nextStep.label}
+          </p>
+        )}
+      </div>
+
+      {/* Step indicators */}
+      <div className="flex gap-1 shrink-0">
+        {progress.steps.map((step, i) => (
+          <div
+            key={i}
+            className={cn(
+              "w-2 h-2 rounded-full transition-colors",
+              step.done ? "bg-brand-500" : "bg-line",
+            )}
+            title={step.label}
+          />
+        ))}
+      </div>
     </div>
   );
 }
