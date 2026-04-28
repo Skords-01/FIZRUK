@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, chatApi, isApiError } from "@shared/api";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
+import { Popover } from "@shared/components/ui/Popover";
 import { Tooltip } from "@shared/components/ui/Tooltip";
 import { perfMark, perfEnd } from "@shared/lib/perf";
 import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
@@ -646,14 +647,34 @@ function HubChat({
           <div className="w-10 h-1 bg-line rounded-full" />
         </div>
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 px-4 pb-3 shrink-0 border-b border-line">
-          <div className="flex items-start gap-3 min-w-0">
+        {/* Header — compact: avatar + title + 1-line subtitle.
+            Context status, history counters, and the privacy
+            disclaimer collapse into the "Деталі" popover so the header
+            stays single-row on narrow phones. */}
+        <div className="flex items-center justify-between gap-3 px-4 pb-3 shrink-0 border-b border-line">
+          <div className="flex items-center gap-3 min-w-0">
             <div
-              className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0 mt-0.5"
+              className={cn(
+                "relative w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0",
+                contextState.status === "building" &&
+                  "motion-safe:animate-pulse",
+              )}
               aria-hidden
             >
               <Icon name="sparkle" size={18} className="text-brand-500" />
+              {/* Context-status dot anchored on the avatar — replaces the
+                  full pill that used to live below the title. */}
+              <span
+                className={cn(
+                  "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-bg",
+                  contextState.status === "ready"
+                    ? "bg-brand-500"
+                    : contextState.status === "building"
+                      ? "bg-warning"
+                      : "bg-line",
+                )}
+                aria-hidden
+              />
             </div>
             <div className="min-w-0">
               <div
@@ -664,7 +685,7 @@ function HubChat({
               </div>
               <div
                 className={cn(
-                  "text-2xs leading-snug mt-0.5",
+                  "text-2xs leading-snug truncate",
                   hasData ? "text-subtle" : "text-warning",
                 )}
               >
@@ -672,69 +693,87 @@ function HubChat({
                   ? "Фінік · Фізрук · Рутина · Харчування"
                   : "Mono не підключено"}
               </div>
-              <div className="inline-flex items-center gap-1.5 text-2xs text-subtle mt-1.5 px-2 py-0.5 rounded-full bg-panelHi/60 border border-line/60">
-                <span
-                  className={cn(
-                    "inline-block w-1.5 h-1.5 rounded-full",
-                    contextState.status === "ready"
-                      ? "bg-brand-500"
-                      : contextState.status === "building"
-                        ? "bg-warning motion-safe:animate-pulse"
-                        : "bg-line",
-                  )}
-                />
-                <span>
-                  {contextState.status === "building"
-                    ? "Готую контекст…"
-                    : contextState.status === "ready"
-                      ? "Контекст готовий"
-                      : "Очікую"}
-                </span>
-                <span className="text-line" aria-hidden>
-                  ·
-                </span>
-                <span>
-                  {sessionInfo.historyCount}/10 · ~
-                  {Math.round(sessionInfo.chars / 100) / 10}k
-                </span>
-              </div>
-              <p
-                id="hub-chat-privacy"
-                className="text-2xs text-muted/70 mt-1.5 leading-snug max-w-[min(100%,280px)]"
-              >
-                Контекст (фінанси, тренування, звички, харчування)
-                відправляється до AI.
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
+            <Popover
+              placement="bottom-end"
+              className="!min-w-[260px] p-3"
+              trigger={
+                <Tooltip content="Деталі контексту" placement="bottom-center">
+                  <button
+                    type="button"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                    aria-label="Деталі контексту"
+                  >
+                    <Icon name="info" size={16} />
+                  </button>
+                </Tooltip>
+              }
+            >
+              <div
+                role="status"
+                className="space-y-2 text-left"
+                id="hub-chat-privacy"
+              >
+                <div className="flex items-center gap-2 text-xs text-text">
+                  <span
+                    className={cn(
+                      "inline-block w-2 h-2 rounded-full",
+                      contextState.status === "ready"
+                        ? "bg-brand-500"
+                        : contextState.status === "building"
+                          ? "bg-warning motion-safe:animate-pulse"
+                          : "bg-line",
+                    )}
+                    aria-hidden
+                  />
+                  <span className="font-semibold">
+                    {contextState.status === "building"
+                      ? "Готую контекст…"
+                      : contextState.status === "ready"
+                        ? "Контекст готовий"
+                        : "Очікую"}
+                  </span>
+                </div>
+                <p className="text-2xs text-subtle leading-snug">
+                  В контексті: {sessionInfo.historyCount} з останніх 10
+                  повідомлень · ~{Math.round(sessionInfo.chars / 100) / 10}k
+                  символів.
+                </p>
+                <p className="text-2xs text-muted leading-snug">
+                  Контекст (фінанси, тренування, звички, харчування)
+                  відправляється до AI.
+                </p>
+              </div>
+            </Popover>
             <Tooltip content="Усі бесіди" placement="bottom-center">
               <button
                 type="button"
                 onClick={() => setHistoryOpen(true)}
-                className="h-8 w-8 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
                 aria-label={`Відкрити список бесід (${sessions.length})`}
                 aria-haspopup="dialog"
                 aria-expanded={historyOpen}
               >
-                <Icon name="list" size={14} />
+                <Icon name="list" size={15} />
               </button>
             </Tooltip>
             <Tooltip content="Почати нову бесіду" placement="bottom-center">
               <button
                 type="button"
                 onClick={clearChat}
-                className="h-8 px-2.5 flex items-center gap-1.5 rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors text-2xs font-semibold"
+                className="h-9 px-2.5 flex items-center gap-1.5 rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors text-2xs font-semibold"
                 aria-label="Нова бесіда"
               >
-                <Icon name="plus" size={13} />
+                <Icon name="plus" size={14} />
                 Нова
               </button>
             </Tooltip>
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
               aria-label="Закрити асистента"
             >
               <Icon name="close" size={16} />

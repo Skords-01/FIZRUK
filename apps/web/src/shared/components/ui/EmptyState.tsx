@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { ModuleAccent } from "@sergeant/design-tokens";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
@@ -16,7 +17,33 @@ export interface EmptyStateProps {
   hint?: string;
   /** Optional example data preview */
   examplePreview?: ReactNode;
+  /** When set, the leading icon container and hint icon are tinted with
+   *  the module accent so the empty state visually belongs to its host
+   *  module instead of the neutral grey default. */
+  module?: ModuleAccent;
 }
+
+const MODULE_ICON_TINT: Record<
+  ModuleAccent,
+  { container: string; icon: string }
+> = {
+  finyk: {
+    container: "bg-finyk/10 border-finyk/20 text-finyk",
+    icon: "text-finyk/70",
+  },
+  fizruk: {
+    container: "bg-fizruk/10 border-fizruk/20 text-fizruk",
+    icon: "text-fizruk/70",
+  },
+  routine: {
+    container: "bg-routine/10 border-routine/20 text-routine",
+    icon: "text-routine/70",
+  },
+  nutrition: {
+    container: "bg-nutrition/10 border-nutrition/20 text-nutrition",
+    icon: "text-nutrition/70",
+  },
+};
 
 export function EmptyState({
   icon,
@@ -28,7 +55,9 @@ export function EmptyState({
   disableAnimation = false,
   hint,
   examplePreview,
+  module,
 }: EmptyStateProps) {
+  const accent = module ? MODULE_ICON_TINT[module] : null;
   return (
     <div
       className={cn(
@@ -43,7 +72,8 @@ export function EmptyState({
       {icon && (
         <div
           className={cn(
-            "flex items-center justify-center rounded-2xl bg-panelHi border border-line text-subtle",
+            "flex items-center justify-center rounded-2xl border",
+            accent ? accent.container : "bg-panelHi border-line text-subtle",
             compact ? "w-10 h-10" : "w-14 h-14",
             // Staggered icon animation
             !disableAnimation &&
@@ -106,7 +136,11 @@ export function EmptyState({
               "motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300 motion-safe:delay-200",
           )}
         >
-          <Icon name="lightbulb" size={12} className="text-brand-500/70" />
+          <Icon
+            name="lightbulb"
+            size={12}
+            className={cn(accent ? accent.icon : "text-brand-500/70")}
+          />
           {hint}
         </p>
       )}
