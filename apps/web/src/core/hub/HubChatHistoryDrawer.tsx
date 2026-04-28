@@ -74,48 +74,64 @@ export function HubChatHistoryDrawer({
 
   return (
     <div
-      className="absolute inset-0 z-10 flex"
+      className="fixed inset-0 z-[60] flex safe-area-pt-pb"
       role="dialog"
       aria-modal="true"
       aria-label="Історія чатів"
     >
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm motion-safe:animate-fade-in"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm motion-safe:animate-fade-in"
         onClick={onClose}
         aria-hidden
         tabIndex={-1}
       />
       <div
         ref={panelRef}
-        className="relative flex flex-col w-[78%] max-w-xs bg-bg border-r border-line shadow-float motion-safe:animate-fade-in rounded-tr-3xl rounded-br-3xl"
+        className="relative flex flex-col w-[85%] max-w-sm h-full bg-bg border-r border-line shadow-float motion-safe:animate-fade-in"
       >
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-line shrink-0">
-          <div className="text-[15px] font-bold text-text">Бесіди</div>
+        <div className="flex items-center justify-between gap-3 px-4 h-14 border-b border-line shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className="w-8 h-8 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0"
+              aria-hidden
+            >
+              <Icon name="sparkle" size={15} className="text-brand-500" />
+            </div>
+            <div className="text-[15px] font-bold text-text">Бесіди</div>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
             aria-label="Закрити список бесід"
           >
-            <Icon name="close" size={16} />
+            <Icon name="close" size={18} />
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            onCreate();
-          }}
-          className="mx-3 mt-3 mb-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-brand-500/10 text-brand-strong hover:bg-brand-500/15 transition-colors text-sm font-semibold"
-        >
-          <Icon name="plus" size={14} />
-          Нова бесіда
-        </button>
+        <div className="px-3 pt-3 pb-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              onCreate();
+            }}
+            className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-dashed border-line text-text hover:bg-panelHi hover:border-brand-500/40 hover:text-brand-strong transition-colors text-sm font-semibold"
+          >
+            <Icon name="plus" size={15} />
+            Нова бесіда
+          </button>
+        </div>
 
-        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+        <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-1">
           {sortedSessions.length === 0 ? (
-            <div className="text-center text-muted text-xs py-6">
-              Поки немає інших бесід.
+            <div className="flex flex-col items-center justify-center gap-2 text-center text-muted text-xs py-10 px-4">
+              <div
+                className="w-12 h-12 rounded-2xl bg-panelHi flex items-center justify-center"
+                aria-hidden
+              >
+                <Icon name="sparkle" size={20} className="text-subtle" />
+              </div>
+              <div>Поки немає інших бесід.</div>
             </div>
           ) : (
             sortedSessions.map((s) => {
@@ -125,7 +141,7 @@ export function HubChatHistoryDrawer({
                 <div
                   key={s.id}
                   className={cn(
-                    "group relative flex items-start gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-colors",
+                    "group relative flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-colors",
                     isActive
                       ? "bg-brand-500/15 text-text"
                       : "hover:bg-panelHi text-text",
@@ -147,7 +163,9 @@ export function HubChatHistoryDrawer({
                     </div>
                     <div className="text-2xs text-muted mt-0.5 flex items-center gap-1.5">
                       <span>{formatStamp(s.updatedAt)}</span>
-                      <span className="text-line">·</span>
+                      <span className="text-line" aria-hidden>
+                        ·
+                      </span>
                       <span>
                         {msgs} {msgs === 1 ? "повідомлення" : "повідомлень"}
                       </span>
@@ -156,11 +174,11 @@ export function HubChatHistoryDrawer({
                   <button
                     type="button"
                     onClick={(e) => handleDelete(e, s.id)}
-                    className="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg text-subtle/60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 hover:text-danger hover:bg-danger/10 transition-[color,background-color,opacity]"
+                    className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg text-subtle/60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 hover:text-danger hover:bg-danger/10 transition-[color,background-color,opacity]"
                     aria-label={`Видалити бесіду ${s.title}`}
                     title="Видалити"
                   >
-                    <Icon name="trash" size={13} />
+                    <Icon name="trash" size={14} />
                   </button>
                 </div>
               );
