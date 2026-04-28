@@ -32,6 +32,7 @@ import {
   recordSessionDay,
 } from "../onboarding/vibePicks";
 import { useFirstEntryCelebration } from "../onboarding/useFirstEntryCelebration";
+import { CelebrationModal } from "../onboarding/CelebrationModal";
 import { DailyNudge } from "../onboarding/DailyNudge";
 import { ReEngagementCard } from "../onboarding/ReEngagementCard";
 import {
@@ -92,7 +93,7 @@ export function HubDashboard({
   );
 
   const hasRealEntry = detectFirstRealEntry();
-  useFirstEntryCelebration(hasRealEntry);
+  const celebration = useFirstEntryCelebration(hasRealEntry);
   const [sessionDays, setSessionDays] = useState(-1);
   useEffect(() => {
     setSessionDays(recordSessionDay() || getSessionDays());
@@ -376,6 +377,13 @@ export function HubDashboard({
 
       {/* Motivational footer */}
       <MotivationalFooter />
+
+      {/* First entry celebration modal */}
+      <CelebrationModal
+        open={celebration.open}
+        onClose={celebration.close}
+        ttvMs={celebration.ttvMs}
+      />
     </div>
   );
 }

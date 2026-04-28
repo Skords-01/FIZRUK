@@ -392,6 +392,10 @@ const preset = {
         // Stagger enter — children use animation-delay: ${index * 50}ms
         "stagger-in":
           "fadeSlideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both",
+        // Celebration modal animations
+        "fade-out": "fadeOut 0.2s ease-out forwards",
+        "scale-out": "scaleOut 0.2s ease-out forwards",
+        "draw-check": "drawCheck 0.4s ease-out 0.2s forwards",
       },
       keyframes: {
         fadeIn: {
@@ -443,6 +447,18 @@ const preset = {
         progressFill: {
           "0%": { strokeDashoffset: "100" },
           "100%": { strokeDashoffset: "var(--progress-offset, 0)" },
+        },
+        fadeOut: {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+        scaleOut: {
+          "0%": { opacity: "1", transform: "scale(1)" },
+          "100%": { opacity: "0", transform: "scale(0.95)" },
+        },
+        drawCheck: {
+          "0%": { strokeDashoffset: "24" },
+          "100%": { strokeDashoffset: "0" },
         },
         bounceIn: {
           "0%": { opacity: "0", transform: "scale(0.3)" },

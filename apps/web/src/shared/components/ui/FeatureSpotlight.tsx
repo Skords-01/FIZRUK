@@ -10,6 +10,7 @@ import { cn } from "../../lib/cn";
 import { safeReadStringLS, safeWriteLS, safeRemoveLS } from "../../lib/storage";
 import { Button } from "./Button";
 import { hapticTap } from "../../lib/haptic";
+import { useSpotlightQueue } from "./SpotlightQueue";
 
 /**
  * Sergeant Design System — Feature Spotlight
@@ -64,6 +65,8 @@ export interface FeatureSpotlightProps {
   skipPersist?: boolean;
   /** Children slot for custom content */
   children?: ReactNode;
+  /** Queue priority (higher = shows first) */
+  priority?: number;
 }
 
 const STORAGE_KEY_PREFIX = "sergeant_spotlight_dismissed_";
@@ -89,17 +92,42 @@ export function FeatureSpotlight({
   onDismiss,
   skipPersist = false,
   children,
+  priority = 0,
 }: FeatureSpotlightProps) {
   const [visible, setVisible] = useState(false);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [slotId, setSlotId] = useState<string | null>(null);
   const targetRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const effectivePlacement = position ?? placement;
   const persistDismissal = showOnce ?? !skipPersist;
 
-  // Check if already dismissed
+  // Queue integration — only one spotlight shows at a time
+  const { requestSlot, releaseSlot, isMyTurn } = useSpotlightQueue();
+
+  // Request queue slot on mount
   useEffect(() => {
     if (persistDismissal && isDismissed(id)) {
+      return;
+    }
+
+    const newSlotId = requestSlot(id, priority);
+    setSlotId(newSlotId);
+
+    return () => {
+      releaseSlot(newSlotId);
+    };
+  }, [id, persistDismissal, priority, requestSlot, releaseSlot]);
+
+  // Show spotlight when it's our turn in the queue
+  useEffect(() => {
+    if (persistDismissal && isDismissed(id)) {
+      return;
+    }
+
+    // Wait for our turn in the queue
+    if (!isMyTurn(id)) {
+      setVisible(false);
       return;
     }
 
@@ -136,7 +164,7 @@ export function FeatureSpotlight({
     // Delay slightly to ensure DOM is ready and layout is stable
     const timer = setTimeout(findTarget, delay);
     return () => clearTimeout(timer);
-  }, [delay, id, persistDismissal, targetSelector]);
+  }, [delay, id, persistDismissal, targetSelector, isMyTurn]);
 
   // Update position on scroll/resize with debouncing
   useEffect(() => {
@@ -183,8 +211,12 @@ export function FeatureSpotlight({
     if (persistDismissal) {
       markDismissed(id);
     }
+    // Release queue slot so next spotlight can show
+    if (slotId) {
+      releaseSlot(slotId);
+    }
     onDismiss?.();
-  }, [id, persistDismissal, onDismiss]);
+  }, [id, persistDismissal, onDismiss, slotId, releaseSlot]);
 
   const target = children ? (
     <span ref={targetRef} className="inline-flex">
@@ -282,11 +314,23 @@ export function FeatureSpotlight({
   return (
     <>
       {target}
-      <div className="fixed inset-0 z-[1000]" role="dialog" aria-modal="true">
-        {/* Overlay with cutout */}
-        <svg
-          className="absolute inset-0 w-full h-full"
+      {/* Portal to body ensures highest stacking context */}
+      <div
+        className="fixed inset-0 z-[9999] pointer-events-none"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`spotlight-title-${id}`}
+      >
+        {/* Backdrop — intercepts clicks outside tooltip to dismiss */}
+        <div
+          className="absolute inset-0 pointer-events-auto"
           onClick={handleDismiss}
+          aria-hidden="true"
+        />
+
+        {/* Overlay with cutout — purely visual, no pointer events */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
           aria-hidden="true"
         >
           <defs>
@@ -313,7 +357,7 @@ export function FeatureSpotlight({
           />
         </svg>
 
-        {/* Spotlight ring */}
+        {/* Spotlight ring — purely visual */}
         <div
           className={cn(
             "absolute pointer-events-none",
@@ -329,7 +373,7 @@ export function FeatureSpotlight({
           aria-hidden="true"
         />
 
-        {/* Tooltip — pointer-events-auto ensures button is clickable */}
+        {/* Tooltip card — interactive, receives pointer events */}
         <div
           ref={tooltipRef}
           className={cn(
@@ -337,9 +381,14 @@ export function FeatureSpotlight({
             "bg-panel border border-line shadow-float",
             "motion-safe:animate-slide-up",
           )}
-          style={tooltipStyle}
+          style={{ ...tooltipStyle, zIndex: 1 }}
         >
-          <h3 className="text-base font-bold text-text mb-1">{title}</h3>
+          <h3
+            id={`spotlight-title-${id}`}
+            className="text-base font-bold text-text mb-1"
+          >
+            {title}
+          </h3>
           <p className="text-sm text-muted mb-4">{description}</p>
           <Button size="sm" onClick={handleDismiss} className="w-full">
             {actionText}
