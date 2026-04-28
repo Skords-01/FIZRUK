@@ -35,6 +35,7 @@ import { useFirstEntryCelebration } from "../onboarding/useFirstEntryCelebration
 import { CelebrationModal } from "../onboarding/CelebrationModal";
 import { DailyNudge } from "../onboarding/DailyNudge";
 import { ReEngagementCard } from "../onboarding/ReEngagementCard";
+import { ModuleChecklist } from "../onboarding/ModuleChecklist";
 import {
   DndContext,
   PointerSensor,
@@ -239,6 +240,15 @@ export function HubDashboard({
   const isMondayOrTuesday = now.getDay() === 1 || now.getDay() === 2;
   const showDigestFooter = digestFresh || isMondayOrTuesday;
 
+  // Show checklist for first active module (only if user has no real entry yet)
+  const primaryModule = activeModules[0] as
+    | "finyk"
+    | "fizruk"
+    | "routine"
+    | "nutrition"
+    | undefined;
+  const showChecklist = primaryModule && !hasRealEntry && sessionDays <= 7;
+
   // ONE-HERO RULE
   let hero: React.ReactNode;
   if (firstActionVisible) {
@@ -285,6 +295,21 @@ export function HubDashboard({
 
       {/* Hero card */}
       <StaggerChild index={si++}>{hero}</StaggerChild>
+
+      {/* Module onboarding checklist */}
+      {showChecklist && primaryModule && (
+        <StaggerChild index={si++}>
+          <ModuleChecklist
+            moduleId={primaryModule}
+            onAction={(action) => {
+              openHubModuleWithAction(
+                primaryModule as Parameters<typeof openHubModuleWithAction>[0],
+                action as Parameters<typeof openHubModuleWithAction>[1],
+              );
+            }}
+          />
+        </StaggerChild>
+      )}
 
       {/* "Твій день" summary strip */}
       <StaggerChild index={si++}>

@@ -7,6 +7,28 @@ import { HubDashboard } from "../hub/HubDashboard";
 import { HubReports } from "../hub/HubReports";
 import { HubSettingsPage } from "../hub/HubSettingsPage";
 import { IOSInstallBanner } from "./IOSInstallBanner";
+import type { HubView } from "../hooks/useHubUIState";
+import type { OpenModuleOptions } from "../hooks/useHubNavigation";
+import type { User } from "@sergeant/shared";
+
+interface HubMainContentProps {
+  updateAvailable: boolean;
+  onApplyUpdate: () => void;
+  canInstall: boolean;
+  onInstall: () => Promise<void>;
+  onDismissInstall: () => void;
+  onOpenModule: (id: string, opts?: OpenModuleOptions) => void;
+  iosVisible: boolean;
+  onDismissIos: () => void;
+  hubView: HubView;
+  onOpenChat: () => void;
+  syncing: boolean;
+  onSync: () => void;
+  onPull: () => void;
+  user: User | null;
+  onShowAuth: () => void;
+  inFtuxSession?: boolean;
+}
 
 // Дешевий inline-fallback для секцій хаба: повідомляємо про збій і
 // даємо кнопку `reset`, щоб спробувати перемонтувати секцію без
@@ -44,7 +66,7 @@ export const HubMainContent = memo(function HubMainContent({
   user,
   onShowAuth,
   inFtuxSession = false,
-}) {
+}: HubMainContentProps) {
   // Banner budget: at most one chrome banner above the hub content.
   // Priority: update > install (PWA) > iOS install.
   //
