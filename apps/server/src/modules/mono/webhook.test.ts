@@ -22,16 +22,22 @@ vi.mock("../../obs/metrics.js", () => ({
   monoWebhookDurationMs: { observe: vi.fn() },
 }));
 
+vi.mock("../../push/send.js", () => ({
+  sendToUserQuietly: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { query as _query } from "../../db.js";
 import {
   monoWebhookReceivedTotal as _counter,
   monoWebhookDurationMs as _histogram,
 } from "../../obs/metrics.js";
+import { sendToUserQuietly as _sendToUserQuietly } from "../../push/send.js";
 import { webhookHandler } from "./webhook.js";
 
 const dbQuery = _query as unknown as Mock;
 const counter = _counter as unknown as { inc: Mock };
 const histogram = _histogram as unknown as { observe: Mock };
+const sendPushMock = _sendToUserQuietly as unknown as Mock;
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -127,8 +133,11 @@ describe("webhookHandler", () => {
       rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
     });
 
-    // INSERT transaction
-    dbQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
+    // INSERT transaction (RETURNING (xmax = 0) AS inserted → true on first delivery)
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: true }],
+      rowCount: 1,
+    });
     // UPDATE balance
     dbQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
     // UPDATE last_event_at
@@ -149,11 +158,98 @@ describe("webhookHandler", () => {
     expect(dbQuery).toHaveBeenCalledTimes(4);
   });
 
+  it("fires push (fire-and-forget) on first INSERT with formatted amount + balance", async () => {
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: true }],
+      rowCount: 1,
+    });
+    dbQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+
+    const res = makeRes();
+    await webhookHandler(makeReq(VALID_SECRET), res);
+
+    // Push must run after the 200 has been sent, so flush microtasks.
+    await Promise.resolve();
+
+    expect(sendPushMock).toHaveBeenCalledTimes(1);
+    const [userId, payload, ctx] = sendPushMock.mock.calls[0];
+    expect(userId).toBe("user_1");
+    expect(ctx).toEqual({ module: "mono" });
+    // amount = -6500 (kopecks), currency = 980 → "−65,00 ₴"
+    expect(payload.title).toBe("−65,00 ₴");
+    // description = "Кава", balance = 1500000 (kopecks) → uk-UA locale uses
+    // NBSP (U+00A0) as thousand separator and ICU `,` as decimal mark.
+    expect(payload.body).toBe("Кава · доступно 15\u00A0000,00 ₴");
+    expect(payload.url).toBe("/?module=finyk");
+    expect(payload.data).toEqual({
+      kind: "mono_tx",
+      monoTxId: "tx_001",
+      monoAccountId: "acc_uah",
+    });
+  });
+
+  it("does NOT fire push when ON CONFLICT updates an existing row (Monobank retry)", async () => {
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: false }],
+      rowCount: 1,
+    });
+    dbQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+
+    const res = makeRes();
+    await webhookHandler(makeReq(VALID_SECRET), res);
+    await Promise.resolve();
+
+    expect(res.statusCode).toBe(200);
+    expect(sendPushMock).not.toHaveBeenCalled();
+  });
+
+  it("marks `(резерв)` in body for hold transactions", async () => {
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: true }],
+      rowCount: 1,
+    });
+    dbQuery.mockResolvedValue({ rows: [], rowCount: 1 });
+
+    const base = validPayload();
+    const holdPayload = {
+      ...base,
+      data: {
+        ...base.data,
+        statementItem: {
+          ...base.data.statementItem,
+          hold: true,
+        },
+      },
+    };
+
+    const res = makeRes();
+    await webhookHandler(makeReq(VALID_SECRET, holdPayload), res);
+    await Promise.resolve();
+
+    expect(sendPushMock).toHaveBeenCalledTimes(1);
+    expect(sendPushMock.mock.calls[0][1].body).toBe(
+      "(резерв) Кава · доступно 15\u00A0000,00 ₴",
+    );
+  });
+
   it("idempotent: duplicate mono_tx_id is handled by ON CONFLICT", async () => {
     dbQuery.mockResolvedValueOnce({
       rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
     });
-    // Both calls succeed (ON CONFLICT DO UPDATE)
+    // First delivery: insert path (xmax=0 → inserted=true)
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: true }],
+      rowCount: 1,
+    });
     dbQuery.mockResolvedValue({ rows: [], rowCount: 1 });
 
     const res1 = makeRes();
@@ -163,6 +259,11 @@ describe("webhookHandler", () => {
     vi.clearAllMocks();
     dbQuery.mockResolvedValueOnce({
       rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    // Re-delivery: update path (xmax≠0 → inserted=false)
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: false }],
+      rowCount: 1,
     });
     dbQuery.mockResolvedValue({ rows: [], rowCount: 1 });
 
