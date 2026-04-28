@@ -6,7 +6,7 @@
  * CSS easing strings directly; mobile consumers feed the spring
  * configs into Reanimated / Animated.
  *
- * @see docs/ux-enhancement-plan.md — Section 6.1 (Animation Principles)
+ * @see docs/planning/ux-enhancement-plan.md — Section 6.1 (Animation Principles)
  * @see packages/design-tokens/tailwind-preset.js — CSS variable counterparts
  *
  * Usage:

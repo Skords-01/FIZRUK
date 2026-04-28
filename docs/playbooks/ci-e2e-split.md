@@ -1,5 +1,7 @@
 # CI E2E split: critical-flow vs extended-flow
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 > Added by PR-10.B (audit item #16).
 
 ## Two E2E buckets

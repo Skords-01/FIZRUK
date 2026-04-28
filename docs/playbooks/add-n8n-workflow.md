@@ -1,5 +1,7 @@
 # Playbook: Add n8n Workflow
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 **Trigger:** «Автоматизувати задачу X» / новий n8n workflow / інтеграція зовнішнього сервісу через n8n.
 
 ---

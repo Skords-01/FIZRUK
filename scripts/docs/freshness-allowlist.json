@@ -1,24 +1,194 @@
 [
-  { "path": "AGENTS.md", "cadenceDays": 90 },
-  { "path": "README.md", "cadenceDays": 90 },
-  { "path": "CONTRIBUTING.md", "cadenceDays": 90 },
-  { "path": "docs/observability/SLO.md", "cadenceDays": 90 },
-  { "path": "docs/observability/runbook.md", "cadenceDays": 60 },
-  { "path": "docs/observability/dashboards.md", "cadenceDays": 90 },
-  { "path": "docs/design/BRANDBOOK.md", "cadenceDays": 90 },
-  { "path": "docs/playbooks/README.md", "cadenceDays": 90 },
-  { "path": "docs/playbooks/hotfix-prod-regression.md", "cadenceDays": 60 },
-  { "path": "docs/playbooks/rotate-secrets.md", "cadenceDays": 60 },
-  { "path": "docs/planning/dev-stack-roadmap.md", "cadenceDays": 90 },
-  { "path": "docs/planning/ai-coding-improvements.md", "cadenceDays": 90 },
-  { "path": "docs/planning/structure-refactor-plan.md", "cadenceDays": 90 },
-  { "path": "docs/integrations/monobank-roadmap.md", "cadenceDays": 90 },
-  { "path": "docs/integrations/railway-vercel.md", "cadenceDays": 90 },
-  { "path": "docs/integrations/renovate-usage.md", "cadenceDays": 90 },
+  {
+    "path": "AGENTS.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "CONTRIBUTING.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "README.md",
+    "cadenceDays": 90
+  },
   {
     "path": "docs/audits/2026-04-26-sergeant-audit-devin.md",
     "cadenceDays": 180
   },
-  { "path": "docs/tech-debt/frontend.md", "cadenceDays": 60 },
-  { "path": "docs/tech-debt/backend.md", "cadenceDays": 60 }
+  {
+    "path": "docs/design/BRANDBOOK.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/integrations/monobank-roadmap.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/integrations/railway-vercel.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/integrations/renovate-usage.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/SLO.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/ci-pipeline-duration.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/dashboards.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/dashboards/README.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/error-budget-policy.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/flaky-tests-dashboard.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/runbook.md",
+    "cadenceDays": 60
+  },
+  {
+    "path": "docs/planning/ai-coding-improvements.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/planning/dev-stack-roadmap.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/planning/structure-refactor-plan.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/planning/ux-enhancement-plan.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/README.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-api-endpoint.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-feature-flag.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-hubchat-tool.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-monobank-event-handler.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-n8n-workflow.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-new-page-route.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-onboarding-step.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-push-notification.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-react-query-hook.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/add-sql-migration.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/bump-dep-safely.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/ci-e2e-split.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/cleanup-dead-code.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/debug-chat-tool.md",
+    "cadenceDays": 60
+  },
+  {
+    "path": "docs/playbooks/enable-prompt-caching.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/fix-exhaustive-deps.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/hotfix-prod-regression.md",
+    "cadenceDays": 60
+  },
+  {
+    "path": "docs/playbooks/investigate-alert.md",
+    "cadenceDays": 60
+  },
+  {
+    "path": "docs/playbooks/migrate-localstorage-to-typedstore.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/onboard-external-api.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/port-web-screen-to-mobile.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/pre-merge-migration-checklist.md",
+    "cadenceDays": 60
+  },
+  {
+    "path": "docs/playbooks/rotate-secrets.md",
+    "cadenceDays": 60
+  },
+  {
+    "path": "docs/playbooks/stabilize-flaky-test.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/tsconfig-strict-guard.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/tune-system-prompt.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/tech-debt/backend.md",
+    "cadenceDays": 60
+  },
+  {
+    "path": "docs/tech-debt/frontend.md",
+    "cadenceDays": 60
+  }
 ]

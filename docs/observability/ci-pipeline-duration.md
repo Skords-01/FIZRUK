@@ -1,5 +1,7 @@
 # CI Pipeline Duration Dashboard
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 > Added by audit task **PR-10.A** (`ci: add p95 pipeline-duration metric to CI summary`).
 
 ## What it shows

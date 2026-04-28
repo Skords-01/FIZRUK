@@ -1,5 +1,7 @@
 # Playbook: Pre-Merge Migration Checklist
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+
 **Trigger:** PR містить файли в `apps/server/src/migrations/` (новий `NNN_*.sql` або зміна існуючого `*.down.sql`).
 
 > Призначення цього playbook-у — це **обов'язковий чек-лист**, який має бути скопійований у PR description і відмічений до merge. Закриває аудитний пункт `PR-5.C` (`docs/audits/2026-04-26-sergeant-audit-devin.md`).

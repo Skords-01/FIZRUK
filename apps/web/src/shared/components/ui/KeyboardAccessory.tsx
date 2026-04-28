@@ -10,7 +10,7 @@
  * type and preset chip arrays so feature code can share chip sets.
  *
  * @see apps/mobile/src/components/ui/KeyboardAccessory.tsx
- * @see docs/ux-enhancement-plan.md — Section 4.3 (Keyboard & Input)
+ * @see docs/planning/ux-enhancement-plan.md — Section 4.3 (Keyboard & Input)
  */
 
 import { type ReactNode } from "react";

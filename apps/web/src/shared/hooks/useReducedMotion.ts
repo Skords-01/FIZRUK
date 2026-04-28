@@ -10,7 +10,7 @@
  * Subscribes to the `prefers-reduced-motion` media query and updates
  * reactively if the user toggles the setting while the app is open.
  *
- * @see docs/ux-enhancement-plan.md — Section 7.2 (Reduced motion)
+ * @see docs/planning/ux-enhancement-plan.md — Section 7.2 (Reduced motion)
  */
 
 import { useEffect, useState } from "react";
