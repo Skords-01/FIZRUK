@@ -55,7 +55,7 @@ apps/
 │   ├── src/config.ts            # Конфіг рантайм-режиму (порт, SPA-static, trust proxy)
 │   ├── src/auth.ts              # Better Auth (спільний pg pool з db.ts)
 │   ├── src/db.ts                # PostgreSQL pool, ensureSchema(), SQL-міграції з migrations/
-│   ├── src/migrations/          # 001_noop.sql … 010_mono_mcc_categorization.sql (sequential, no gaps)
+│   ├── src/migrations/          # 001_noop.sql … 015_n8n_failure_events.sql (sequential, no gaps)
 │   ├── src/routes/              # Express-роутери: auth, me, sync, chat, coach, push, banks, barcode,
 │   │                            #   nutrition, weekly-digest, food-search, web-vitals, transcribe, waitlist,
 │   │                            #   mono-webhook, health, frontend
@@ -65,7 +65,8 @@ apps/
 │   ├── src/http/                # Спільний HTTP-шар (helmet, errorHandler, requireSession, rateLimit)
 │   └── src/obs/, src/email/, src/env/, src/lib/, src/push/, src/test/
 ├── mobile/                      # @sergeant/mobile — Expo SDK 52 + Expo Router + RN 0.76 (internal dev-client)
-└── mobile-shell/                # @sergeant/mobile-shell — Capacitor 7 wrapper навколо @sergeant/web
+├── mobile-shell/                # @sergeant/mobile-shell — Capacitor 7 wrapper навколо @sergeant/web
+└── console/                     # @sergeant/console — Telegram bot (grammy + Anthropic), internal ops/marketing
 
 packages/
 ├── shared/                      # @sergeant/shared — Zod-схеми API, типи, утиліти
@@ -182,8 +183,19 @@ pnpm dev:web    # тільки Vite dev server (фронт, порт 5173)
 | `VITE_NUTRITION_API_TOKEN` | Ні          | Токен Nutritionix для прямих запитів з фронту                                                                                                     |
 | `USDA_FDC_API_KEY`         | Ні          | Ключ USDA FoodData Central для barcode-fallback (безкоштовний на [api.data.gov](https://api.data.gov/signup)); без ключа — `DEMO_KEY` (40 req/hr) |
 | `PORT`                     | Ні          | Порт Express-сервера (типово `3000`)                                                                                                              |
+| `GOOGLE_CLIENT_ID`         | Ні          | Google OAuth client ID — вмикає «Увійти через Google». Redirect URI: `<BETTER_AUTH_URL>/api/auth/callback/google`                                 |
+| `GOOGLE_CLIENT_SECRET`     | Ні          | Google OAuth client secret (пара до `GOOGLE_CLIENT_ID`)                                                                                           |
+| `RESEND_API_KEY`           | Ні          | Resend API-ключ для транзакційних листів (скидання пароля, верифікація email). Без нього листи не відправляються                                  |
+| `RESEND_FROM`              | Ні          | Адреса відправника для Resend (має бути з верифікованого домену)                                                                                  |
+| `GROQ_API_KEY`             | Ні          | Groq API-ключ для Whisper (голосова транскрипція в `/api/transcribe`). Без ключа — fallback на Web Speech API                                     |
+| `BACKEND_URL`              | Для Vercel  | URL Railway-API — Edge Middleware проксує `/api/*` через нього. Без нього OAuth і cookie-сесії не працюють на Vercel                              |
+| `SENTRY_DSN`               | Ні          | Sentry DSN для бекенду (Node.js error tracking)                                                                                                   |
+| `VITE_SENTRY_DSN`          | Ні          | Sentry DSN для фронтенду (React error tracking, потрапляє у бандл)                                                                                |
+| `VITE_POSTHOG_KEY`         | Ні          | PostHog project API key (`phc_…`) — product analytics. Без ключа трекінг лише в локальному ring-buffer                                            |
+| `AI_QUOTA_TOOL_COST`       | Ні          | Вартість одного tool-use виклику в одиницях квоти (за замовч. 3)                                                                                  |
+| `AI_QUOTA_TOOL_LIMITS`     | Ні          | JSON-об'єкт per-tool лімітів (напр. `{"change_category":30}`). Tools поза списком — `AI_QUOTA_TOOL_DEFAULT_LIMIT`                                 |
 
-> `DATABASE_URL` і `BETTER_AUTH_SECRET` не входять до `.env.example` (вони є секретами, а не публічними налаштуваннями). На Replit `DATABASE_URL` надається автоматично при підключенні бази даних. `BETTER_AUTH_SECRET` задається вручну через Secrets.
+> Повний перелік змінних з поясненнями — у [`.env.example`](.env.example). На Replit `DATABASE_URL` надається автоматично при підключенні бази даних. `BETTER_AUTH_SECRET` задається вручну через Secrets.
 
 > Важливо: токени типу `VITE_*` потрапляють у клієнтський бандл — не використовуй їх як повноцінний захист.
 

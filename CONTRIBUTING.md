@@ -198,29 +198,7 @@ chore(config): tune shared eslint config
 
 Allowed types: `feat`, `fix`, `docs`, `chore`, `refactor`, `perf`, `test`, `build`, `ci`.
 
-Use one of these scopes; do not invent scopes like `app`, `core`, `monorepo`, or `all`.
-
-| Scope              | When to use                                                    |
-| ------------------ | -------------------------------------------------------------- |
-| `web`              | `apps/web/**`                                                  |
-| `server`           | `apps/server/**` excluding migrations-only changes             |
-| `mobile`           | `apps/mobile/**`                                               |
-| `mobile-shell`     | `apps/mobile-shell/**`                                         |
-| `shared`           | `packages/shared/**`                                           |
-| `api-client`       | `packages/api-client/**`                                       |
-| `finyk-domain`     | `packages/finyk-domain/**`                                     |
-| `fizruk-domain`    | `packages/fizruk-domain/**`                                    |
-| `nutrition-domain` | `packages/nutrition-domain/**`                                 |
-| `routine-domain`   | `packages/routine-domain/**`                                   |
-| `insights`         | `packages/insights/**`                                         |
-| `design-tokens`    | `packages/design-tokens/**`                                    |
-| `config`           | `packages/config/**`                                           |
-| `eslint-plugins`   | `packages/eslint-plugin-sergeant-design/**`                    |
-| `migrations`       | `apps/server/src/migrations/**` only                           |
-| `deps`             | Renovate / dependency-only PRs                                 |
-| `docs`             | `docs/**`, `README.md`, `AGENTS.md`, `CONTRIBUTING.md`         |
-| `ci`               | `.github/workflows/**`, `turbo.json`, scripts under `scripts/` |
-| `root`             | Repo-level config (`pnpm-workspace.yaml`, root `package.json`) |
+Повний список дозволених scopes — у [`AGENTS.md` § Hard rules #5](AGENTS.md) (single source of truth). Також enforced через [`commitlint.config.js`](commitlint.config.js). Не вигадуй нові scopes (`app`, `core`, `monorepo`, `all`).
 
 If a PR genuinely spans multiple scopes, use the most user-visible scope and explain the rest in the PR body.
 
@@ -316,6 +294,8 @@ These are non-negotiable. Read `AGENTS.md` for full context.
 5. **Conventional Commits** with the allowed type/scope set above.
 6. **No force-push to main.** `--force-with-lease` on feature branches is fine.
 7. **Never skip pre-commit hooks** (`--no-verify` is forbidden).
+8. **Tailwind opacity steps** must be on the registered scale (`0,5,8,10,15,…,100`). Off-scale values silently drop.
+9. **Saturated brand fills behind `text-white`** must use the `-strong` companion for WCAG AA compliance.
 
 ---
 
@@ -327,7 +307,8 @@ Sergeant/
 │   ├── web/            # Vite + React 18 SPA (frontend)
 │   ├── server/         # Express + PostgreSQL + Better Auth (API)
 │   ├── mobile/         # Expo 52 + React Native 0.76
-│   └── mobile-shell/   # Capacitor wrapper for web app
+│   ├── mobile-shell/   # Capacitor wrapper for web app
+│   └── console/        # Telegram bot (grammy + Anthropic) — internal ops/marketing
 ├── packages/
 │   ├── shared/         # @sergeant/shared
 │   ├── api-client/     # @sergeant/api-client
