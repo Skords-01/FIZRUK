@@ -1,5 +1,7 @@
 # Sergeant - Детальний План Реалізації Покращень
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Дата створення:** 2026-04-28
 > **Автор:** v0 AI Assistant
 > **Базується на:** `2026-04-28-sergeant-comprehensive-audit.md`, `2026-04-26-sergeant-audit-devin.md`

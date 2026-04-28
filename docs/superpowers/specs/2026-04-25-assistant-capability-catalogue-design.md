@@ -1,5 +1,7 @@
 # Assistant Capability Catalogue — дизайн-спек
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Status:** shipped (PR [#795](https://github.com/Skords-01/Sergeant/pull/795) +
 > follow-ups [#798](https://github.com/Skords-01/Sergeant/pull/798),
 > [#799](https://github.com/Skords-01/Sergeant/pull/799),

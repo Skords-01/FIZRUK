@@ -1,5 +1,7 @@
 # Міграція на React Native (Expo)
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > Документ-"source of truth" по перенесенню Sergeant із PWA-клієнта
 > (`apps/web`, Vite + React + Tailwind + Workbox) на нативний iOS/Android
 > клієнт (`apps/mobile`, Expo + React Native + Expo Router). Пишеться

@@ -5,11 +5,12 @@
 ## Repo overview
 
 - **pnpm 9** + **Turborepo** monorepo, **Node 20**, **TypeScript 6**.
-- **Apps** (4):
+- **Apps** (5):
   - `apps/web` — Vite + React 18 SPA (frontend).
   - `apps/server` — Express + PostgreSQL (`pg`) + Better Auth (API).
   - `apps/mobile` — Expo 52 + React Native 0.76.
   - `apps/mobile-shell` — Capacitor wrapper for the web app.
+  - `apps/console` — Telegram bot (grammy + Anthropic), internal ops/marketing.
 - **Packages** (10): `@sergeant/shared`, `@sergeant/api-client`, `@sergeant/config`, `@sergeant/design-tokens`, `@sergeant/insights`, `eslint-plugin-sergeant-design`, and 4 domain packages (`@sergeant/finyk-domain`, `@sergeant/fizruk-domain`, `@sergeant/nutrition-domain`, `@sergeant/routine-domain`).
 - Pre-commit: **Husky** runs `lint-staged` (ESLint --fix + Prettier).
 
@@ -32,6 +33,7 @@ Quick lookup before editing: which path uses which test stack and which conventi
 | `apps/mobile/src/core/**`                             | `@Skords-01` | Jest                                    | (mobile RQ uses module-local keys)    | NativeWind (not Tailwind). MMKV (not localStorage). No DOM.                                                                                                     |
 | `apps/mobile/app/**`                                  | `@Skords-01` | Jest                                    | n/a                                   | Expo Router routes. Each `_layout.tsx` is a navigator.                                                                                                          |
 | `apps/mobile-shell/**`                                | `@Skords-01` | none                                    | n/a                                   | Capacitor wrapper around `apps/web`. No app code lives here, only build glue.                                                                                   |
+| `apps/console/**`                                     | `@Skords-01` | Vitest                                  | n/a                                   | Telegram bot (grammy + Anthropic). Multi-agent: ops + marketing. Internal only.                                                                                 |
 | `packages/shared/**`                                  | `@Skords-01` | Vitest                                  | n/a                                   | Zod schemas, types, business logic. Used by all apps — change with care.                                                                                        |
 | `packages/api-client/**`                              | `@Skords-01` | Vitest                                  | n/a                                   | HTTP clients + types. Must mirror `apps/server/src/modules/*` response shapes.                                                                                  |
 | `packages/insights/**`                                | `@Skords-01` | Vitest                                  | n/a                                   | Cross-module analytics. Pure functions over normalized data.                                                                                                    |
@@ -148,6 +150,7 @@ Format: `<type>(<scope>): <subject>`. Allowed types: `feat`, `fix`, `docs`, `cho
 | `server`           | `apps/server/**` (excluding migrations alone)                     |
 | `mobile`           | `apps/mobile/**`                                                  |
 | `mobile-shell`     | `apps/mobile-shell/**`                                            |
+| `console`          | `apps/console/**`                                                 |
 | `shared`           | `packages/shared/**`                                              |
 | `api-client`       | `packages/api-client/**`                                          |
 | `finyk-domain`     | `packages/finyk-domain/**`                                        |

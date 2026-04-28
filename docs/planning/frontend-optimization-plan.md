@@ -1,5 +1,7 @@
 # План оптимізації фронтенду Sergeant
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Дата аналізу:** Квітень 2026  
 > **Версія проекту:** 0.1.0  
 > **Стек:** React 18 + Vite + TypeScript + TailwindCSS + PWA (Workbox)

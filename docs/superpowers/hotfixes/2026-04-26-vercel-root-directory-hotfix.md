@@ -1,5 +1,7 @@
 # Hotfix Vercel Root Directory
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Status:** shipped (PR [#803](https://github.com/Skords-01/Sergeant/pull/803)).
 > `apps/web/vercel.json` додано з тими ж production settings (pnpm 9.15.1, build
 > `@sergeant/web`, `outputDirectory: ../server/dist`, headers, SPA rewrites,

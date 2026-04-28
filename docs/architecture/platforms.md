@@ -1,5 +1,7 @@
 # Статус трьох поверхонь — web / native / capacitor-shell
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 Короткий репорт «що готово до запуску, що треба доробити» по трьох
 варіантах Sergeant-а. Живе поруч з `docs/mobile/overview.md` (API-контракт) і
 `docs/mobile/react-native-migration.md` (роадмап порту web → RN).

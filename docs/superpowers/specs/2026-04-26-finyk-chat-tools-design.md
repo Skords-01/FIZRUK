@@ -1,5 +1,7 @@
 # Finyk HubChat Tools — `find_transaction` + `batch_categorize`
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Status:** shipped (PR [#794](https://github.com/Skords-01/Sergeant/pull/794)).
 > Серверні tool defs — `apps/server/src/modules/chat/toolDefs/finyk.ts`; client
 > handlers — `apps/web/src/core/lib/chatActions/finykActions.ts`; обидва tools є у
