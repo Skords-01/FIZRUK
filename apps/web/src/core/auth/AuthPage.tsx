@@ -81,7 +81,7 @@ export function AuthPage({ onContinueWithoutAccount }: AuthPageProps) {
     e.preventDefault();
     const target = (forgotEmail || email || "").trim();
     if (!target) {
-      setAuthError("Введіть email, на який відправити лист.");
+      setAuthError("Введи email, на який відправити лист.");
       return;
     }
     setForgotState("sending");
@@ -168,7 +168,7 @@ export function AuthPage({ onContinueWithoutAccount }: AuthPageProps) {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={"Ваше ім'я"}
+                    placeholder={"Твоє ім'я"}
                     autoComplete="name"
                   />
                 </div>

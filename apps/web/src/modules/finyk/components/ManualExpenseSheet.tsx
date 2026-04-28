@@ -254,7 +254,7 @@ export function ManualExpenseSheet({
   const handleSubmit = () => {
     const amt = parseFloat(form.amount);
     if (!form.amount || isNaN(amt) || amt <= 0) {
-      setError("Вкажіть суму більше 0");
+      setError("Вкажи суму більше 0");
       return;
     }
     // Description is now optional: if empty we fall back to the category

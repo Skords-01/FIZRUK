@@ -27,7 +27,7 @@ export interface InputDialogProps {
 
 export function InputDialog({
   open,
-  title = "Введіть значення",
+  title = "Введи значення",
   description,
   placeholder = "",
   defaultValue = "",
