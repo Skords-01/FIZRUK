@@ -8,7 +8,7 @@
 
 Загальне:
 
-- Прод entry point — `server/index.js` (режим вибирається `SERVER_MODE` або авто з `REPLIT_DOMAINS`; для Railway — `SERVER_MODE=railway` / автодефолт). Хостинг — Railway.
+- Прод entry point — `apps/server/src/index.ts` (компілюється у `apps/server/dist-server/index.js`; режим вибирається `SERVER_MODE` або авто з `REPLIT_DOMAINS`; для Railway — `SERVER_MODE=railway` / автодефолт). Хостинг — Railway.
 - Метрики за bearer-токен: `GET /metrics` з `Authorization: Bearer $METRICS_TOKEN`.
 - Логи — Pino JSON у stdout, з ALS-контекстом `{requestId, userId, module}`.
 - Sentry ловить fatal/error (включно з `err.cause` чейном).
@@ -73,7 +73,7 @@
 1. `sum by (module) (rate(sync_conflicts_total[1h]))` — хто конфліктить.
 2. Типово: два девайси одного user-а пишуть незалежно, `lastPulledAt`
    старий. Якщо вибух на одному module — регресія в логіці merge-у.
-3. Подивись чи не було недавнього деплою `server/modules/sync/sync.js`.
+3. Подивись чи не було недавнього деплою `apps/server/src/modules/sync/sync.ts`.
 
 ## AuthErrorBudgetBurn
 
