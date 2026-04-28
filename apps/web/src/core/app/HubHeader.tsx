@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Tooltip } from "@shared/components/ui/Tooltip";
-import { FeatureSpotlight } from "@shared/components/ui/FeatureSpotlight";
 import { useScrollHeader } from "@shared/hooks/useScrollHeader";
 import { BrandLogo } from "./BrandLogo";
 import { DarkModeToggle } from "./DarkModeToggle";
@@ -112,25 +111,16 @@ export function HubHeader({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <FeatureSpotlight
-            id="hub-search-button"
-            title="Глобальний пошук"
-            description="Знаходь транзакції, тренування та їжу. Також Cmd+K"
-            placement="bottom"
-            showOnce
-            delay={5000}
-          >
-            <Tooltip content="Пошук по всіх модулях" placement="bottom-center">
-              <button
-                type="button"
-                onClick={onOpenSearch}
-                aria-label="Пошук"
-                className={ICON_BUTTON_CLS}
-              >
-                <Icon name="search" size={20} />
-              </button>
-            </Tooltip>
-          </FeatureSpotlight>
+          <Tooltip content="Пошук по всіх модулях (⌘K)" placement="bottom-center">
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              aria-label="Пошук"
+              className={ICON_BUTTON_CLS}
+            >
+              <Icon name="search" size={20} />
+            </button>
+          </Tooltip>
 
           {user ? (
             <UserMenuButton
