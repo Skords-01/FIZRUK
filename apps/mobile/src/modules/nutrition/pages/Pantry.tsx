@@ -19,6 +19,8 @@ import { hapticTap } from "@sergeant/shared";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useToast } from "@/components/ui/Toast";
+import { showUndoToast } from "@/lib/showUndoToast";
 
 import { useNutritionPantries } from "../hooks/useNutritionPantries";
 
@@ -41,8 +43,10 @@ export function PantryPage({ testID }: { testID?: string }) {
     addLine,
     applyParsedItems,
     removeItemAt,
+    restoreItemAt,
     addPantry,
   } = useNutritionPantries();
+  const toast = useToast();
   const [draft, setDraft] = useState("");
   const [newPantryName, setNewPantryName] = useState("");
   const [bulkText, setBulkText] = useState("");
@@ -228,7 +232,13 @@ export function PantryPage({ testID }: { testID?: string }) {
                     <Pressable
                       onPress={() => {
                         hapticTap();
+                        const snapshot: PantryItem = it;
+                        const removedAt = idx;
                         removeItemAt(idx);
+                        showUndoToast(toast, {
+                          msg: `Видалено «${snapshot.name}»`,
+                          onUndo: () => restoreItemAt(removedAt, snapshot),
+                        });
                       }}
                       accessibilityLabel={`Видалити ${it.name}`}
                       className="px-2 py-1"

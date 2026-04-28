@@ -1,14 +1,16 @@
 import { useCallback } from "react";
-import { Alert, Pressable, ScrollView, Share, Text, View } from "react-native";
+import { Pressable, ScrollView, Share, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { hapticTap, type NullableMacros } from "@sergeant/shared";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useToast } from "@/components/ui/Toast";
+import { showUndoToast } from "@/lib/showUndoToast";
 
 import { useSavedRecipeById } from "../hooks/useSavedRecipeById";
-import { removeSavedRecipe } from "../lib/recipeBookStore";
+import { removeSavedRecipe, upsertSavedRecipe } from "../lib/recipeBookStore";
 
 function formatMacros(m: NullableMacros): { text: string; hasAny: boolean } {
   const parts = [
@@ -27,6 +29,7 @@ export function RecipeDetailPage({
 }) {
   const router = useRouter();
   const { recipe, recipeId } = useSavedRecipeById(id);
+  const toast = useToast();
   const onBack = useCallback(() => {
     hapticTap();
     router.back();
@@ -50,25 +53,21 @@ export function RecipeDetailPage({
     });
   }, [recipe, router]);
 
+  // Single-tap delete + undo-toast (parity з web). Після видалення
+  // відразу вертаємося назад, а toast живе ї є доступний у листі рецептів.
   const onDelete = useCallback(() => {
     if (!recipe) return;
-    Alert.alert(
-      "Видалити рецепт?",
-      `«${recipe.title}» буде видалено з пристрою.`,
-      [
-        { text: "Скасувати", style: "cancel" },
-        {
-          text: "Видалити",
-          style: "destructive",
-          onPress: () => {
-            removeSavedRecipe(recipe.id);
-            hapticTap();
-            router.back();
-          },
-        },
-      ],
-    );
-  }, [recipe, router]);
+    const snapshot = recipe;
+    removeSavedRecipe(recipe.id);
+    hapticTap();
+    router.back();
+    showUndoToast(toast, {
+      msg: `Рецепт «${snapshot.title}» видалено`,
+      onUndo: () => {
+        upsertSavedRecipe(snapshot);
+      },
+    });
+  }, [recipe, router, toast]);
 
   if (!recipeId) {
     return (

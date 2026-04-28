@@ -23,7 +23,7 @@ import {
 } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 
-import { haptic } from "@sergeant/shared";
+import { hapticTap } from "@sergeant/shared";
 import { colors } from "@/theme";
 import { SectionHeading } from "./SectionHeading";
 
@@ -101,7 +101,7 @@ export const ListItem = forwardRef<RNView, ListItemProps>(function ListItem(
     event: Parameters<NonNullable<PressableProps["onPress"]>>[0],
   ) => {
     if (hapticFeedback && !disabled) {
-      haptic.tap();
+      hapticTap();
     }
     onPress?.(event);
   };
