@@ -39,6 +39,7 @@ export const foodSearchApi = apiClient.foodSearch;
 export const monoApi = apiClient.mono;
 export const monoWebhookApi = apiClient.monoWebhook;
 export const privatApi = apiClient.privat;
+export const waitlistApi = apiClient.waitlist;
 export const weeklyDigestApi = apiClient.weeklyDigest;
 
 // Errors, types, HTTP primitives

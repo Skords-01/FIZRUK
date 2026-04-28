@@ -31,6 +31,10 @@ import {
   type PrivatEndpoints,
 } from "./endpoints/privat";
 import {
+  createWaitlistEndpoints,
+  type WaitlistEndpoints,
+} from "./endpoints/waitlist";
+import {
   createWeeklyDigestEndpoints,
   type WeeklyDigestEndpoints,
 } from "./endpoints/weeklyDigest";
@@ -60,6 +64,7 @@ export interface ApiClient {
   mono: MonoEndpoints;
   monoWebhook: MonoWebhookEndpoints;
   privat: PrivatEndpoints;
+  waitlist: WaitlistEndpoints;
   weeklyDigest: WeeklyDigestEndpoints;
 }
 
@@ -78,6 +83,7 @@ export function createApiClient(config: ApiClientConfig = {}): ApiClient {
     mono: createMonoEndpoints(http),
     monoWebhook: createMonoWebhookEndpoints(http),
     privat: createPrivatEndpoints(http),
+    waitlist: createWaitlistEndpoints(http),
     weeklyDigest: createWeeklyDigestEndpoints(http),
   };
 }
