@@ -29,6 +29,16 @@ export type HintId =
   | "retention_day_3"
   | "retention_day_7";
 
+/**
+ * Subset of {@link HintId} that {@link getRetentionHintId} can return.
+ * Narrower than `HintId` so callers can index a 3-key message dictionary
+ * (`{ retention_day_1, retention_day_3, retention_day_7 }`) without TS errors.
+ */
+export type RetentionHintId =
+  | "retention_day_1"
+  | "retention_day_3"
+  | "retention_day_7";
+
 export type HintSurface =
   | "welcome"
   | "hub"
@@ -381,7 +391,7 @@ const MS_PER_DAY = 86_400_000;
 export function getRetentionHintId(
   firstEntryAt: number,
   now = Date.now(),
-): HintId | null {
+): RetentionHintId | null {
   const daysSince = Math.floor((now - firstEntryAt) / MS_PER_DAY);
   if (daysSince === 0) return "retention_day_1";
   if (daysSince === 3) return "retention_day_3";

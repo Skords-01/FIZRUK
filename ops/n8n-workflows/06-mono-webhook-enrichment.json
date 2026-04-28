@@ -45,7 +45,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse Anthropic response: response.content[0].text is JSON string like\n// {\"category\":\"groceries\",\"confidence\":0.9}\nconst raw = $input.first().json?.content?.[0]?.text ?? '{}';\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  parsed = { category: 'other', confidence: 0 };\n}\nreturn [{ json: { category: parsed.category ?? 'other', confidence: parsed.confidence ?? 0 } }];"
+        "jsCode": "// Parse Anthropic response. content[0].text is supposed to be raw JSON like\n// {\"category\":\"groceries\",\"confidence\":0.9}, but Claude often wraps it in a\n// markdown fence (```json ... ```) or in prose. Strip the fence and fall back to\n// the first {...} block before parsing.\nconst raw = $input.first().json?.content?.[0]?.text ?? '';\nfunction extractJson(s) {\n  const fenced = s.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/i);\n  if (fenced) return fenced[1].trim();\n  const obj = s.match(/\\{[\\s\\S]*\\}/);\n  return obj ? obj[0] : s;\n}\nlet parsed;\ntry {\n  parsed = JSON.parse(extractJson(raw));\n} catch (e) {\n  parsed = { category: 'other', confidence: 0 };\n}\nreturn [{ json: { category: parsed.category ?? 'other', confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0 } }];"
       },
       "id": "parse-ai",
       "name": "Parse AI response",
