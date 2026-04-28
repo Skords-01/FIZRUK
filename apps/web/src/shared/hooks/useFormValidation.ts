@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { triggerHaptic } from "../lib/haptic";
+import { hapticError } from "../lib/haptic";
 
 type ValidationRule<T> = {
   validate: (value: T) => boolean;
@@ -96,7 +96,7 @@ export function useFormValidation<T extends Record<string, unknown>>(
     }
 
     // Trigger haptic feedback
-    triggerHaptic("error");
+    hapticError();
 
     // Start shake
     setFields((prev) => ({
