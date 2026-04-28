@@ -654,7 +654,7 @@ function HubChat({
                   ? "Фінік · Фізрук · Рутина · Харчування"
                   : "Mono не підключено"}
               </div>
-              <div className="flex items-center gap-1.5 text-2xs text-subtle mt-1">
+              <div className="inline-flex items-center gap-1.5 text-2xs text-subtle mt-1.5 px-2 py-0.5 rounded-full bg-panelHi/60 border border-line/60">
                 <span
                   className={cn(
                     "inline-block w-1.5 h-1.5 rounded-full",
@@ -672,7 +672,9 @@ function HubChat({
                       ? "Контекст готовий"
                       : "Очікую"}
                 </span>
-                <span className="text-line">·</span>
+                <span className="text-line" aria-hidden>
+                  ·
+                </span>
                 <span>
                   {sessionInfo.historyCount}/10 · ~
                   {Math.round(sessionInfo.chars / 100) / 10}k
@@ -680,7 +682,7 @@ function HubChat({
               </div>
               <p
                 id="hub-chat-privacy"
-                className="text-2xs text-muted/70 mt-1 leading-snug max-w-[min(100%,280px)]"
+                className="text-2xs text-muted/70 mt-1.5 leading-snug max-w-[min(100%,280px)]"
               >
                 Контекст (фінанси, тренування, звички, харчування)
                 відправляється до AI.
@@ -754,43 +756,52 @@ function HubChat({
           )}
         </div>
 
-        {/* Quick action chips (spec: assistant-quick-actions-v1) */}
-        <ChatQuickActions
-          activeModule={activeModule}
-          loading={loading}
-          online={online}
-          onSend={(prompt) => send(prompt)}
-          onPrefill={(prompt) => {
-            setInput(prompt);
-            // Невелика затримка, щоб React встиг змонтувати оновлений
-            // value у input перш ніж ми поставимо фокус.
-            setTimeout(() => focusInputRef.current?.(), 0);
-          }}
-        />
+        {/*
+          Composer block (chips + offline banner + input). Wrapped in a
+          subtle panel surface with a top divider so it visually reads
+          as a separate "send tray" instead of free-floating controls
+          on top of the chat scroll area — same pattern as iMessage /
+          ChatGPT / Claude composers.
+        */}
+        <div className="shrink-0 border-t border-line/60 bg-panel/40 backdrop-blur-sm">
+          {/* Quick action chips (spec: assistant-quick-actions-v1) */}
+          <ChatQuickActions
+            activeModule={activeModule}
+            loading={loading}
+            online={online}
+            onSend={(prompt) => send(prompt)}
+            onPrefill={(prompt) => {
+              setInput(prompt);
+              // Невелика затримка, щоб React встиг змонтувати оновлений
+              // value у input перш ніж ми поставимо фокус.
+              setTimeout(() => focusInputRef.current?.(), 0);
+            }}
+          />
 
-        {!online && (
-          <div
-            role="status"
-            className="mx-4 mb-2 mt-1 px-3 py-2 bg-warning/10 border border-warning/30 rounded-xl text-xs text-warning text-center shrink-0"
-          >
-            Асистент недоступний без інтернету. Дані модулів видно офлайн, але
-            AI-відповіді потребують підключення.
-          </div>
-        )}
+          {!online && (
+            <div
+              role="status"
+              className="mx-4 mb-2 mt-1 px-3 py-2 bg-warning/10 border border-warning/30 rounded-xl text-xs text-warning text-center shrink-0"
+            >
+              Асистент недоступний без інтернету. Дані модулів видно офлайн, але
+              AI-відповіді потребують підключення.
+            </div>
+          )}
 
-        {/* Input */}
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          loading={loading}
-          online={online}
-          speaking={speaking}
-          setSpeaking={setSpeaking}
-          onSend={() => send()}
-          onHelp={() => send("/help")}
-          sendRef={sendRef}
-          focusInputRef={focusInputRef}
-        />
+          {/* Input */}
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            loading={loading}
+            online={online}
+            speaking={speaking}
+            setSpeaking={setSpeaking}
+            onSend={() => send()}
+            onHelp={() => send("/help")}
+            sendRef={sendRef}
+            focusInputRef={focusInputRef}
+          />
+        </div>
 
         <HubChatHistoryDrawer
           open={historyOpen}
