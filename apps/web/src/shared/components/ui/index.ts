@@ -175,3 +175,38 @@ export type {
 
 export { StreakCelebration, useStreakCelebration } from "./StreakCelebration";
 export type { StreakCelebrationProps } from "./StreakCelebration";
+
+export { AnimatedCheckbox, HabitCheckbox } from "./AnimatedCheckbox";
+export type {
+  AnimatedCheckboxProps,
+  CheckboxSize,
+  CheckboxVariant,
+  HabitCheckboxProps,
+} from "./AnimatedCheckbox";
+
+export { StreakFlame, StreakBadge } from "./StreakFlame";
+export type {
+  StreakFlameProps,
+  StreakFlameSize,
+  StreakBadgeProps,
+} from "./StreakFlame";
+
+export {
+  AnimatedList,
+  AnimatedFadeIn,
+  AnimatedSlideIn,
+  AnimatedScale,
+} from "./AnimatedList";
+export type {
+  AnimatedListProps,
+  AnimatedFadeInProps,
+  AnimationStyle,
+} from "./AnimatedList";
+
+export { FloatingActionButton } from "./FloatingActionButton";
+export type {
+  FloatingActionButtonProps,
+  FABAction,
+  FABSize,
+  FABVariant,
+} from "./FloatingActionButton";
