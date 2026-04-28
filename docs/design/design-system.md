@@ -82,7 +82,7 @@ Back-compat: старі токени `panel` / `panelHi` / `line` продовж
 
 ### 2.5 Data-viz (графіки)
 
-Канонічний набір у `src/shared/charts/chartTheme.ts`:
+Канонічний набір у `apps/web/src/shared/charts/chartTheme.ts`:
 
 - `chartSeries.finyk / .fizruk / .routine / .nutrition` — бренд-акценти
   серій для модуля (primary + secondary + surface).
