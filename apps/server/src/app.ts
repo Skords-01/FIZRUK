@@ -11,9 +11,11 @@ import { pool } from "./db.js";
 import {
   apiCorsMiddleware,
   apiHelmetMiddleware,
+  createCompressionMiddleware,
   errorHandler,
   requestIdMiddleware,
   requestLogMiddleware,
+  requestTimeout,
   withRequestContext,
 } from "./http/index.js";
 import { httpLogger } from "./obs/logger.js";
@@ -98,6 +100,10 @@ export function createApp({
 
   app.use(requestIdMiddleware);
   app.use(withRequestContext);
+  // Global request timeout - prevents zombie requests from consuming resources
+  app.use(requestTimeout());
+  // Response compression (gzip/br) - must be early in the chain
+  app.use(createCompressionMiddleware());
   // pino-http: додає req.log (child logger) до кожного запиту. autoLogging
   // вимкнено — access-log генерується requestLogMiddleware (з метриками).
   app.use(httpLogger);

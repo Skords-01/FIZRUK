@@ -5,6 +5,19 @@
 @import "./styles/animations.css";
 @import "./styles/module-surfaces.css";
 
+/* ═══════════════════════════════════════════════════════════════════════
+   FONT FALLBACK — Prevent layout shift (FOUT) during font loading.
+   Size-adjusted system font stack matches DM Sans metrics closely.
+   ═══════════════════════════════════════════════════════════════════════ */
+@font-face {
+  font-family: "DM Sans Fallback";
+  src: local("Arial");
+  ascent-override: 94%;
+  descent-override: 26%;
+  line-gap-override: 0%;
+  size-adjust: 104%;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -331,7 +344,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
-     INPUT FOCUS — ring без offset (краще читається в��ередині заповненого
+     INPUT FOCUS — ring без offset (краще читається в����ередині заповненого
      input-а), лишає existing border-transition інтактним. Варіанти беруть
      module tone; базовий `.input-focus` — для загальних (brand) інпутів.
      Завжди `focus-visible:` щоб не дратувати користувачів миші.
@@ -706,7 +719,7 @@
   @apply skeleton rounded-full;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
+/* ═════════════���═════════════════════════════════════════════════════════
    GLASSMORPHISM — Premium frosted glass effects
    ═══════════════════════════════════════════════════════════════════════ */
 .glass {

@@ -59,10 +59,10 @@ vendor           — інші залежності
 
 ### Поточні ліміти розміру
 
-| Категорія | Ліміт (brotli) | Статус |
-|-----------|----------------|--------|
-| JS (всього) | 615 KB | ✅ Контролюється |
-| CSS | 22 KB | ✅ Контролюється |
+| Категорія   | Ліміт (brotli) | Статус           |
+| ----------- | -------------- | ---------------- |
+| JS (всього) | 615 KB         | ✅ Контролюється |
+| CSS         | 22 KB          | ✅ Контролюється |
 
 ### Data Fetching Pattern
 
@@ -92,7 +92,10 @@ vendor           — інші залежності
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans..." rel="stylesheet" />
+<link
+  href="https://fonts.googleapis.com/css2?family=DM+Sans..."
+  rel="stylesheet"
+/>
 ```
 
 **Проблема:** Синхронне завантаження CSS шрифтів блокує First Contentful Paint (FCP).
@@ -139,7 +142,8 @@ vendor           — інші залежності
 
 **Файл:** `apps/web/src/shared/components/ui/OptimizedImage.tsx`
 
-**Проблема:** 
+**Проблема:**
+
 - Немає `srcset` генерації для responsive images
 - Відсутній WebP/AVIF fallback
 - Немає priority loading для above-the-fold images
@@ -176,14 +180,30 @@ vendor           — інші залежності
 
 ```html
 <!-- Асинхронне завантаження з font-display: swap -->
-<link rel="preload" href="https://fonts.gstatic.com/s/dmsans/v14/..." as="font" type="font/woff2" crossorigin>
+<link
+  rel="preload"
+  href="https://fonts.gstatic.com/s/dmsans/v14/..."
+  as="font"
+  type="font/woff2"
+  crossorigin
+/>
 
 <!-- Або через JS для кращого контролю -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans...&display=swap" onload="this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans...&display=swap"></noscript>
+<link
+  rel="preload"
+  as="style"
+  href="https://fonts.googleapis.com/css2?family=DM+Sans...&display=swap"
+  onload="this.rel='stylesheet'"
+/>
+<noscript
+  ><link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans...&display=swap"
+/></noscript>
 ```
 
 **Або self-hosting:**
+
 ```bash
 # Завантажити шрифти локально
 npx @fontsource/dm-sans
@@ -198,13 +218,13 @@ npx @fontsource/dm-sans
 **Новий файл:** `apps/web/src/shared/hooks/usePrefetch.ts`
 
 ```typescript
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef } from "react";
 
 const moduleImports = {
-  finyk: () => import('../modules/finyk/FinykApp'),
-  fizruk: () => import('../modules/fizruk/FizrukApp'),
-  routine: () => import('../modules/routine/RoutineApp'),
-  nutrition: () => import('../modules/nutrition/NutritionApp'),
+  finyk: () => import("../modules/finyk/FinykApp"),
+  fizruk: () => import("../modules/fizruk/FizrukApp"),
+  routine: () => import("../modules/routine/RoutineApp"),
+  nutrition: () => import("../modules/nutrition/NutritionApp"),
 };
 
 export function usePrefetchModule() {
@@ -213,12 +233,15 @@ export function usePrefetchModule() {
   const prefetch = useCallback((module: keyof typeof moduleImports) => {
     if (prefetched.current.has(module)) return;
     prefetched.current.add(module);
-    
+
     // Prefetch after idle
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        moduleImports[module]?.();
-      }, { timeout: 2000 });
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(
+        () => {
+          moduleImports[module]?.();
+        },
+        { timeout: 2000 },
+      );
     } else {
       setTimeout(() => moduleImports[module]?.(), 100);
     }
@@ -229,9 +252,10 @@ export function usePrefetchModule() {
 ```
 
 **Інтеграція в HubTabs:**
+
 ```tsx
 // onMouseEnter/onFocus для tab buttons
-<button onMouseEnter={() => prefetch('finyk')}>Фінік</button>
+<button onMouseEnter={() => prefetch("finyk")}>Фінік</button>
 ```
 
 **Очікуваний результат:** -200ms perceived navigation time
@@ -255,11 +279,11 @@ const UnauthenticatedApp = memo(function UnauthenticatedApp({ onAuth }) {
 // Використати composition замість conditional rendering
 function AppInner() {
   const { user, isLoading } = useAuth();
-  
+
   if (isLoading) return <PageLoader />;
-  
-  return user 
-    ? <AuthenticatedApp user={user} /> 
+
+  return user
+    ? <AuthenticatedApp user={user} />
     : <UnauthenticatedApp />;
 }
 ```
@@ -306,26 +330,26 @@ const markComplete = useMutation({
   mutationFn: (habitId) => api.completeHabit(habitId),
   onMutate: async (habitId) => {
     // Cancel outgoing refetches
-    await queryClient.cancelQueries({ queryKey: ['habits'] });
-    
+    await queryClient.cancelQueries({ queryKey: ["habits"] });
+
     // Snapshot previous value
-    const previous = queryClient.getQueryData(['habits']);
-    
+    const previous = queryClient.getQueryData(["habits"]);
+
     // Optimistically update
-    queryClient.setQueryData(['habits'], (old) => ({
+    queryClient.setQueryData(["habits"], (old) => ({
       ...old,
       completions: [...old.completions, { id: habitId, date: today }],
     }));
-    
+
     // Haptic feedback
     haptic.success();
-    
+
     return { previous };
   },
   onError: (err, habitId, context) => {
     // Rollback
-    queryClient.setQueryData(['habits'], context.previous);
-    toast.error('Не вдалося зберегти');
+    queryClient.setQueryData(["habits"], context.previous);
+    toast.error("Не вдалося зберегти");
   },
 });
 ```
@@ -346,19 +370,19 @@ interface OptimizedImageProps {
   blurDataURL?: string;
 }
 
-export function OptimizedImage({ 
-  src, 
-  alt, 
+export function OptimizedImage({
+  src,
+  alt,
   priority = false,
   sizes = '100vw',
-  ...props 
+  ...props
 }: OptimizedImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  
+
   // Priority images don't lazy load
   const loading = priority ? 'eager' : 'lazy';
   const fetchPriority = priority ? 'high' : 'auto';
-  
+
   return (
     <picture>
       <source srcSet={toWebP(src)} type="image/webp" />
@@ -402,15 +426,15 @@ jobs:
       - uses: pnpm/action-setup@v3
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
-      
+          node-version: "20"
+          cache: "pnpm"
+
       - run: pnpm install
       - run: pnpm build:web
-      
+
       - name: Check bundle size
         run: pnpm --filter @sergeant/web size
-        
+
       - name: Upload bundle report
         uses: actions/upload-artifact@v4
         with:
@@ -430,14 +454,15 @@ export function trackInteraction(name: string, duration: number) {
   enqueue({
     name: `interaction_${name}`,
     value: duration,
-    rating: duration < 100 ? 'good' : duration < 300 ? 'needs-improvement' : 'poor',
+    rating:
+      duration < 100 ? "good" : duration < 300 ? "needs-improvement" : "poor",
   });
 }
 
 // Приклад використання
 const startTime = performance.now();
 await saveTransaction();
-trackInteraction('save_transaction', performance.now() - startTime);
+trackInteraction("save_transaction", performance.now() - startTime);
 ```
 
 ---
@@ -450,21 +475,21 @@ trackInteraction('save_transaction', performance.now() - startTime);
 module.exports = {
   ci: {
     collect: {
-      url: ['http://localhost:5173/', 'http://localhost:5173/?module=finyk'],
+      url: ["http://localhost:5173/", "http://localhost:5173/?module=finyk"],
       numberOfRuns: 3,
     },
     assert: {
       assertions: {
-        'categories:performance': ['error', { minScore: 0.9 }],
-        'categories:accessibility': ['error', { minScore: 0.95 }],
-        'first-contentful-paint': ['error', { maxNumericValue: 1500 }],
-        'largest-contentful-paint': ['error', { maxNumericValue: 2500 }],
-        'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }],
-        'interactive': ['error', { maxNumericValue: 3500 }],
+        "categories:performance": ["error", { minScore: 0.9 }],
+        "categories:accessibility": ["error", { minScore: 0.95 }],
+        "first-contentful-paint": ["error", { maxNumericValue: 1500 }],
+        "largest-contentful-paint": ["error", { maxNumericValue: 2500 }],
+        "cumulative-layout-shift": ["error", { maxNumericValue: 0.1 }],
+        interactive: ["error", { maxNumericValue: 3500 }],
       },
     },
     upload: {
-      target: 'temporary-public-storage',
+      target: "temporary-public-storage",
     },
   },
 };
@@ -484,7 +509,7 @@ export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: ['babel-plugin-react-compiler'],
+        plugins: ["babel-plugin-react-compiler"],
       },
     }),
   ],
@@ -499,7 +524,7 @@ export default defineConfig({
 
 ```typescript
 // Використання React.lazy з Suspense boundaries
-const FinykModule = lazy(() => 
+const FinykModule = lazy(() =>
   import('../modules/finyk/FinykApp').then(m => ({
     default: m.FinykApp,
   }))
@@ -517,8 +542,8 @@ const FinykModule = lazy(() =>
 
 ```typescript
 // apps/server/api/sync/route.ts
-export const runtime = 'edge';
-export const preferredRegion = ['fra1', 'iad1']; // Ближче до користувачів
+export const runtime = "edge";
+export const preferredRegion = ["fra1", "iad1"]; // Ближче до користувачів
 
 export async function POST(req: Request) {
   // Sync logic optimized for edge
@@ -529,17 +554,17 @@ export async function POST(req: Request) {
 
 ## Пріоритети впровадження
 
-| Пріоритет | Завдання | Вплив | Складність | Термін |
-|-----------|----------|-------|------------|--------|
-| **P0** | Font loading optimization | High | Low | 1-2 дні |
-| **P0** | Route prefetching | High | Medium | 3-4 дні |
-| **P0** | AppInner refactoring | Medium | Medium | 2-3 дні |
-| **P1** | Content-specific skeletons | Medium | Low | 2-3 дні |
-| **P1** | Optimistic UI patterns | High | Medium | 1 тиждень |
-| **P1** | Image optimization | Medium | Medium | 3-4 дні |
-| **P2** | CI performance budgets | Low | Low | 1 день |
-| **P2** | Lighthouse CI | Low | Medium | 2-3 дні |
-| **P2** | RUM dashboard | Medium | Medium | 1 тиждень |
+| Пріоритет | Завдання                   | Вплив  | Складність | Статус |
+| --------- | -------------------------- | ------ | ---------- | ------ |
+| **P0**    | Font loading optimization  | High   | Low        | DONE   |
+| **P0**    | Route prefetching          | High   | Medium     | DONE   |
+| **P0**    | AppInner refactoring       | Medium | Medium     | DONE   |
+| **P1**    | Content-specific skeletons | Medium | Low        | DONE   |
+| **P1**    | Optimistic UI patterns     | High   | Medium     | TODO   |
+| **P1**    | Image optimization         | Medium | Medium     | DONE   |
+| **P2**    | CI performance budgets     | Low    | Low        | DONE   |
+| **P2**    | Lighthouse CI              | Low    | Medium     | EXISTS |
+| **P2**    | RUM dashboard              | Medium | Medium     | EXISTS |
 
 ---
 
@@ -547,32 +572,32 @@ export async function POST(req: Request) {
 
 ### Core Web Vitals Targets
 
-| Метрика | Поточне* | Ціль | Покращення |
-|---------|----------|------|------------|
-| LCP | ~2.5s | <2.0s | -20% |
-| FID/INP | ~100ms | <100ms | Maintain |
-| CLS | ~0.05 | <0.05 | Maintain |
-| FCP | ~1.8s | <1.2s | -33% |
-| TTFB | ~200ms | <200ms | Maintain |
+| Метрика | Поточне\* | Ціль   | Покращення |
+| ------- | --------- | ------ | ---------- |
+| LCP     | ~2.5s     | <2.0s  | -20%       |
+| FID/INP | ~100ms    | <100ms | Maintain   |
+| CLS     | ~0.05     | <0.05  | Maintain   |
+| FCP     | ~1.8s     | <1.2s  | -33%       |
+| TTFB    | ~200ms    | <200ms | Maintain   |
 
-*Орієнтовні значення, потребують baseline вимірювання
+\*Орієнтовні значення, потребують baseline вимірювання
 
 ### User Experience Targets
 
-| Метрика | Ціль |
-|---------|------|
-| Module switch time | <200ms perceived |
-| Transaction save | <100ms optimistic |
-| List scroll | 60fps maintained |
+| Метрика            | Ціль              |
+| ------------------ | ----------------- |
+| Module switch time | <200ms perceived  |
+| Transaction save   | <100ms optimistic |
+| List scroll        | 60fps maintained  |
 | Offline capability | Full CRUD offline |
 
 ### Bundle Size Targets
 
-| Категорія | Поточний ліміт | Новий ліміт |
-|-----------|----------------|-------------|
-| JS (total) | 615 KB | 550 KB |
-| JS (initial) | — | 200 KB |
-| CSS | 22 KB | 20 KB |
+| Категорія    | Поточний ліміт | Новий ліміт |
+| ------------ | -------------- | ----------- |
+| JS (total)   | 615 KB         | 550 KB      |
+| JS (initial) | —              | 200 KB      |
+| CSS          | 22 KB          | 20 KB       |
 
 ---
 
@@ -587,6 +612,7 @@ export async function POST(req: Request) {
 
 ## Історія змін
 
-| Дата | Версія | Автор | Опис |
-|------|--------|-------|------|
-| 2026-04-28 | 1.0 | v0 | Початковий аналіз та план |
+| Дата       | Версія | Автор | Опис                            |
+| ---------- | ------ | ----- | ------------------------------- |
+| 2026-04-28 | 1.0    | v0    | Початковий аналіз та план       |
+| 2026-04-28 | 1.1    | v0    | Імплементація P0-P2 оптимізацій |

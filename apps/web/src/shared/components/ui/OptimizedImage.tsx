@@ -1,16 +1,23 @@
-import { useState, useCallback, type ImgHTMLAttributes } from "react";
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  type ImgHTMLAttributes,
+} from "react";
 import { cn } from "../../lib/cn";
 
 /**
  * Sergeant Design System — OptimizedImage
  *
  * Lazy-loaded image component with:
- * - Native lazy loading (loading="lazy")
+ * - Native lazy loading (loading="lazy") + IntersectionObserver fallback
  * - Automatic aspect ratio container to prevent layout shift
  * - Skeleton placeholder during load
  * - Error fallback state
  * - Optional blur-up effect on load
  * - Responsive srcSet support
+ * - fetchPriority support for LCP images
  *
  * Usage:
  * ```tsx
@@ -19,6 +26,7 @@ import { cn } from "../../lib/cn";
  *   alt="Hero image"
  *   aspectRatio="16/9"
  *   sizes="(max-width: 640px) 100vw, 50vw"
+ *   priority // for above-the-fold images
  * />
  * ```
  */
@@ -39,6 +47,10 @@ export interface OptimizedImageProps extends Omit<
   onImageLoad?: () => void;
   /** Callback when image fails to load */
   onImageError?: () => void;
+  /** Priority loading for above-the-fold images (disables lazy loading) */
+  priority?: boolean;
+  /** Root margin for intersection observer (e.g., "200px" to start loading earlier) */
+  rootMargin?: string;
 }
 
 export function OptimizedImage({
@@ -51,10 +63,35 @@ export function OptimizedImage({
   className,
   onImageLoad,
   onImageError,
+  priority = false,
+  rootMargin = "200px",
   ...props
 }: OptimizedImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isInView, setIsInView] = useState(priority);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // IntersectionObserver for preloading images before they enter viewport
+  useEffect(() => {
+    if (priority || isInView) return;
+
+    const element = containerRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin, threshold: 0 },
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [priority, isInView, rootMargin]);
 
   const handleLoad = useCallback(() => {
     setIsLoaded(true);
@@ -101,6 +138,7 @@ export function OptimizedImage({
 
   return (
     <div
+      ref={containerRef}
       className={cn("relative overflow-hidden", wrapperClassName)}
       style={aspectRatio ? { aspectRatio } : undefined}
     >
@@ -115,24 +153,27 @@ export function OptimizedImage({
         />
       )}
 
-      {/* Actual image */}
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        decoding="async"
-        onLoad={handleLoad}
-        onError={handleError}
-        className={cn(
-          "w-full h-full object-cover",
-          blurOnLoad && !isLoaded && "blur-sm scale-105",
-          blurOnLoad && isLoaded && "blur-0 scale-100",
-          "transition-[filter,transform] duration-500 ease-out",
-          "motion-reduce:transition-none motion-reduce:blur-0 motion-reduce:scale-100",
-          className,
-        )}
-        {...props}
-      />
+      {/* Actual image - only render when in view or priority */}
+      {isInView && (
+        <img
+          src={src}
+          alt={alt}
+          loading={priority ? "eager" : "lazy"}
+          decoding={priority ? "sync" : "async"}
+          fetchPriority={priority ? "high" : "auto"}
+          onLoad={handleLoad}
+          onError={handleError}
+          className={cn(
+            "w-full h-full object-cover",
+            blurOnLoad && !isLoaded && "blur-sm scale-105",
+            blurOnLoad && isLoaded && "blur-0 scale-100",
+            "transition-[filter,transform] duration-500 ease-out",
+            "motion-reduce:transition-none motion-reduce:blur-0 motion-reduce:scale-100",
+            className,
+          )}
+          {...props}
+        />
+      )}
     </div>
   );
 }

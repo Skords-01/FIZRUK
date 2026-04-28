@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
@@ -26,7 +27,7 @@ function HubSectionFallback({ resetError }) {
   );
 }
 
-export function HubMainContent({
+export const HubMainContent = memo(function HubMainContent({
   updateAvailable,
   onApplyUpdate,
   canInstall,
@@ -188,4 +189,4 @@ export function HubMainContent({
       </main>
     </>
   );
-}
+});

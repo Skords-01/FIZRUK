@@ -21,7 +21,7 @@ export const ModulePageLoader = memo(function ModulePageLoader({
   return (
     <div
       className={cn(
-        "p-4 space-y-4 motion-safe:animate-in motion-safe:fade-in",
+        "p-4 space-y-4 motion-safe:animate-in motion-safe:fade-in skeleton-stagger",
         className,
       )}
       aria-busy="true"
