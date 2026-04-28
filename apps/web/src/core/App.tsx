@@ -47,6 +47,7 @@ import {
   useKeyboardShortcutsModal,
 } from "@shared/components/ui/KeyboardShortcutsModal";
 import { SpotlightQueueProvider } from "@shared/components/ui/SpotlightQueue";
+import { prefetchCriticalModules } from "./hooks/useRoutePrefetch";
 
 const AuthPage = lazy(() =>
   import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),
@@ -194,6 +195,16 @@ function AppInner() {
   const { updateAvailable, applyUpdate } = useSWUpdate();
   const { user, isLoading: authLoading, logout } = useAuth();
   const sync = useCloudSync(user);
+
+  // Prefetch critical module chunks on idle after initial render
+  useEffect(() => {
+    // Wait for initial paint, then prefetch modules
+    const timer = setTimeout(() => {
+      prefetchCriticalModules();
+    }, 2000); // 2s delay to prioritize initial render
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const onMessage = (event) => {
       if (event.data?.type === "OPEN_MODULE") {

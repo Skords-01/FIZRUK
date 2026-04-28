@@ -21,6 +21,7 @@
     "build": "turbo run build",
     "build:web": "pnpm --filter @sergeant/web build",
     "build:analyze": "pnpm --filter @sergeant/web build:analyze",
+    "build:check-size": "node scripts/check-bundle-size.mjs",
     "preview": "pnpm --filter @sergeant/web preview",
     "lint": "turbo run lint && node scripts/check-imports.mjs && node scripts/check-tsconfig-strict.mjs && pnpm lint:plugins && pnpm lint:tech-debt-freshness",
     "lint:imports": "node scripts/check-imports.mjs",
