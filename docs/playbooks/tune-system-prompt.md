@@ -97,7 +97,7 @@ curl -X POST http://localhost:3000/api/chat \
 
 ```bash
 # Кількість символів промпту (грубо ≈ tokens × 3 для української):
-node -e "console.log(require('./apps/server/src/modules/chat/toolDefs/systemPrompt.js').SYSTEM_PREFIX.length)"
+pnpm --filter @sergeant/server exec tsx -e "import('./src/modules/chat/toolDefs/systemPrompt.ts').then(m => console.log(m.SYSTEM_PREFIX.length))"
 ```
 
 Якщо промпт виріс на >10% — це бачити на бюджеті Anthropic. Подумай, чи можна **видалити** щось зайве, перш ніж додавати.
