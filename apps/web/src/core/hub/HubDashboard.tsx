@@ -102,6 +102,14 @@ export function HubDashboard({
     setSessionDays(recordSessionDay() || getSessionDays());
   }, []);
   const SOFT_AUTH_SESSION_DAYS_THRESHOLD = 3;
+  // Скільки сеансів-днів має минути після першого реального запису, перш
+  // ніж показати SoftAuth. `1` означає «не на тому ж дні»: користувач,
+  // що щойно завершив `FirstActionHeroCard` → `CelebrationModal`, не
+  // отримує одразу прохання створити акаунт. Картка чекає наступного
+  // повернення (sessionDays ≥ 2). Це зберігає «win-момент» цілим, а
+  // самій картці дає вищий signal-to-noise: якщо юзер повернувся —
+  // він уже залучений.
+  const SOFT_AUTH_AFTER_ENTRY_MIN_SESSION_DAYS = 2;
   const [softAuthDismissed, setSoftAuthDismissed] = useState(() =>
     isSoftAuthDismissed(),
   );
@@ -110,7 +118,8 @@ export function HubDashboard({
     !user &&
     !softAuthDismissed &&
     typeof onShowAuth === "function" &&
-    (hasRealEntry || sessionDays >= SOFT_AUTH_SESSION_DAYS_THRESHOLD);
+    ((hasRealEntry && sessionDays >= SOFT_AUTH_AFTER_ENTRY_MIN_SESSION_DAYS) ||
+      sessionDays >= SOFT_AUTH_SESSION_DAYS_THRESHOLD);
 
   const [reengagement, setReengagement] = useState(() =>
     shouldShowReengagement(localStorageStore),
