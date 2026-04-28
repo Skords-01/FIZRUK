@@ -103,33 +103,69 @@ export function FeatureSpotlight({
       return;
     }
 
-    // Find target element
-    const findTarget = () => {
+    // Find target element and measure it
+    const measureTarget = () => {
       const target = targetSelector
         ? document.querySelector(targetSelector)
         : targetRef.current;
-      if (target) {
-        setTargetRect(target.getBoundingClientRect());
+      if (!target) return null;
+
+      const rect = target.getBoundingClientRect();
+      // Validate the rect is reasonable (element is in viewport)
+      if (
+        rect.width === 0 ||
+        rect.height === 0 ||
+        rect.top > window.innerHeight ||
+        rect.bottom < 0 ||
+        rect.left > window.innerWidth ||
+        rect.right < 0
+      ) {
+        return null;
+      }
+      return rect;
+    };
+
+    const findTarget = () => {
+      const rect = measureTarget();
+      if (rect) {
+        setTargetRect(rect);
         setVisible(true);
       }
     };
 
-    // Delay slightly to ensure DOM is ready
+    // Delay slightly to ensure DOM is ready and layout is stable
     const timer = setTimeout(findTarget, delay);
     return () => clearTimeout(timer);
   }, [delay, id, persistDismissal, targetSelector]);
 
-  // Update position on scroll/resize
+  // Update position on scroll/resize with debouncing
   useEffect(() => {
     if (!visible) return;
 
+    let rafId: number | null = null;
+
     const updatePosition = () => {
-      const target = targetSelector
-        ? document.querySelector(targetSelector)
-        : targetRef.current;
-      if (target) {
-        setTargetRect(target.getBoundingClientRect());
-      }
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const target = targetSelector
+          ? document.querySelector(targetSelector)
+          : targetRef.current;
+        if (!target) return;
+
+        const rect = target.getBoundingClientRect();
+        // Validate the rect is reasonable (element is still in viewport)
+        if (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.top < window.innerHeight &&
+          rect.bottom > 0 &&
+          rect.left < window.innerWidth &&
+          rect.right > 0
+        ) {
+          setTargetRect(rect);
+        }
+      });
     };
 
     window.addEventListener("scroll", updatePosition, true);
@@ -137,6 +173,7 @@ export function FeatureSpotlight({
     return () => {
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [visible, targetSelector]);
 
@@ -157,30 +194,78 @@ export function FeatureSpotlight({
 
   if (!visible || !targetRect) return target;
 
-  // Calculate tooltip position
+  // Calculate tooltip position with edge-clamping to prevent overflow
   const padding = 12;
+  const tooltipWidth = 288; // w-72 = 18rem = 288px
+  const edgeMargin = 16;
   const tooltipStyle: CSSProperties = {};
 
   switch (effectivePlacement) {
     case "top":
       tooltipStyle.bottom = window.innerHeight - targetRect.top + padding;
-      tooltipStyle.left = targetRect.left + targetRect.width / 2;
-      tooltipStyle.transform = "translateX(-50%)";
+      tooltipStyle.left = Math.max(
+        edgeMargin,
+        Math.min(
+          targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
+          window.innerWidth - tooltipWidth - edgeMargin,
+        ),
+      );
       break;
     case "bottom":
       tooltipStyle.top = targetRect.bottom + padding;
-      tooltipStyle.left = targetRect.left + targetRect.width / 2;
-      tooltipStyle.transform = "translateX(-50%)";
+      tooltipStyle.left = Math.max(
+        edgeMargin,
+        Math.min(
+          targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
+          window.innerWidth - tooltipWidth - edgeMargin,
+        ),
+      );
       break;
     case "left":
+      // Position tooltip to the left of target, clamped to viewport
       tooltipStyle.right = window.innerWidth - targetRect.left + padding;
-      tooltipStyle.top = targetRect.top + targetRect.height / 2;
-      tooltipStyle.transform = "translateY(-50%)";
+      tooltipStyle.top = Math.max(
+        edgeMargin,
+        Math.min(
+          targetRect.top + targetRect.height / 2 - 60, // ~60px half-height estimate
+          window.innerHeight - 140 - edgeMargin,
+        ),
+      );
+      // Clamp right edge so tooltip doesn't go off-screen left
+      if (tooltipStyle.right > window.innerWidth - tooltipWidth - edgeMargin) {
+        // Flip to bottom placement instead
+        delete tooltipStyle.right;
+        tooltipStyle.top = targetRect.bottom + padding;
+        tooltipStyle.left = Math.max(
+          edgeMargin,
+          Math.min(
+            targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
+            window.innerWidth - tooltipWidth - edgeMargin,
+          ),
+        );
+      }
       break;
     case "right":
       tooltipStyle.left = targetRect.right + padding;
-      tooltipStyle.top = targetRect.top + targetRect.height / 2;
-      tooltipStyle.transform = "translateY(-50%)";
+      tooltipStyle.top = Math.max(
+        edgeMargin,
+        Math.min(
+          targetRect.top + targetRect.height / 2 - 60,
+          window.innerHeight - 140 - edgeMargin,
+        ),
+      );
+      // Clamp left edge so tooltip doesn't go off-screen right
+      if (tooltipStyle.left > window.innerWidth - tooltipWidth - edgeMargin) {
+        // Flip to bottom placement instead
+        tooltipStyle.left = Math.max(
+          edgeMargin,
+          Math.min(
+            targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
+            window.innerWidth - tooltipWidth - edgeMargin,
+          ),
+        );
+        tooltipStyle.top = targetRect.bottom + padding;
+      }
       break;
   }
 
@@ -244,11 +329,11 @@ export function FeatureSpotlight({
           aria-hidden="true"
         />
 
-        {/* Tooltip */}
+        {/* Tooltip — pointer-events-auto ensures button is clickable */}
         <div
           ref={tooltipRef}
           className={cn(
-            "fixed w-72 p-4 rounded-2xl",
+            "fixed w-72 p-4 rounded-2xl pointer-events-auto",
             "bg-panel border border-line shadow-float",
             "motion-safe:animate-slide-up",
           )}
