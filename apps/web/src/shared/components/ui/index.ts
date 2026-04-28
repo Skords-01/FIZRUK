@@ -124,3 +124,18 @@ export { Tooltip } from "./Tooltip";
 export type { TooltipPlacement, TooltipProps } from "./Tooltip";
 
 export type { FormVariant, SmallMediumLarge } from "./types";
+
+export {
+  CelebrationModal,
+  MiniSuccess,
+  useCelebration,
+} from "./CelebrationModal";
+export type {
+  CelebrationModalProps,
+  CelebrationType,
+  MiniSuccessProps,
+  ModuleTheme,
+} from "./CelebrationModal";
+
+export { StreakCelebration, useStreakCelebration } from "./StreakCelebration";
+export type { StreakCelebrationProps } from "./StreakCelebration";
