@@ -1,99 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
-import { cn } from "@shared/lib/cn";
-import { Icon } from "@shared/components/ui/Icon";
 import { Button } from "@shared/components/ui/Button";
 import { useToast } from "@shared/hooks/useToast";
-import {
-  ALL_MODULES,
-  DASHBOARD_MODULE_LABELS as SHARED_DASHBOARD_MODULE_LABELS,
-  DASHBOARD_DENSITIES,
-  DASHBOARD_DENSITY_LABELS,
-  DASHBOARD_DENSITY_DESCRIPTIONS,
-  DEFAULT_DASHBOARD_DENSITY,
-  normalizeDashboardDensity,
-  STORAGE_KEYS,
-  getActiveModules,
-  getHideInactiveModules,
-  resetOnboardingState,
-  setActiveModules,
-  setHideInactiveModules,
-  type DashboardDensity,
-  type DashboardModuleId,
-  type KVStore,
-  type User,
-} from "@sergeant/shared";
-import { HubBackupPanel } from "../hub/HubBackupPanel";
-import {
-  swClearCaches,
-  swGetDebugSnapshot,
-  swSetDebug,
-} from "../app/swControl";
-import {
-  DASHBOARD_MODULE_LABELS,
-  loadDashboardOrder,
-  resetDashboardOrder,
-  saveDashboardOrder,
-} from "../hub/HubDashboard";
-import {
-  SettingsGroup,
-  SettingsSubGroup,
-  ToggleRow,
-} from "./SettingsPrimitives";
-import { useHubPref } from "./hubPrefs";
-
-type ModuleId = keyof typeof DASHBOARD_MODULE_LABELS;
-
-interface ModuleReorderListProps {
-  order: ModuleId[];
-  onMove: (index: number, direction: -1 | 1) => void;
-}
-
-function ModuleReorderList({ order, onMove }: ModuleReorderListProps) {
-  return (
-    <ul className="rounded-xl border border-line divide-y divide-line/60 overflow-hidden">
-      {order.map((id, index) => {
-        const isFirst = index === 0;
-        const isLast = index === order.length - 1;
-        return (
-          <li key={id} className="flex items-center gap-2 px-3 py-2 bg-panel">
-            <span className="text-xs font-semibold text-muted tabular-nums w-4">
-              {index + 1}
-            </span>
-            <span className="flex-1 text-sm text-text truncate">
-              {DASHBOARD_MODULE_LABELS[id]}
-            </span>
-            <button
-              type="button"
-              onClick={() => onMove(index, -1)}
-              disabled={isFirst}
-              aria-label={`Підняти ${DASHBOARD_MODULE_LABELS[id]} вище`}
-              className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center",
-                "text-muted hover:text-text hover:bg-panelHi transition-colors",
-                "disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed",
-              )}
-            >
-              <Icon name="chevron-up" size={16} strokeWidth={2.5} />
-            </button>
-            <button
-              type="button"
-              onClick={() => onMove(index, 1)}
-              disabled={isLast}
-              aria-label={`Опустити ${DASHBOARD_MODULE_LABELS[id]} нижче`}
-              className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center",
-                "text-muted hover:text-text hover:bg-panelHi transition-colors",
-                "disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed",
-              )}
-            >
-              <Icon name="chevron-down" size={16} strokeWidth={2.5} />
-            </button>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
+import { webKVStore } from "@shared/lib/storage";
+import { resetOnboardingState, type User } from "@sergeant/shared";
+import { SettingsGroup, SettingsSubGroup } from "./SettingsPrimitives";
 
 export interface GeneralSectionProps {
   syncing: boolean;
@@ -108,150 +17,10 @@ export function GeneralSection({
   onPull,
   user,
 }: GeneralSectionProps) {
-  const [orderReset, setOrderReset] = useState(false);
-  const [showHints, setShowHints] = useHubPref<boolean>("showHints", true);
-  const [density, setDensityState] = useState<DashboardDensity>(() => {
-    try {
-      return normalizeDashboardDensity(
-        localStorage.getItem(STORAGE_KEYS.DASHBOARD_DENSITY),
-      );
-    } catch {
-      return DEFAULT_DASHBOARD_DENSITY;
-    }
-  });
-  const handleDensityChange = useCallback((next: DashboardDensity) => {
-    setDensityState(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.DASHBOARD_DENSITY, next);
-    } catch {
-      /* noop */
-    }
-  }, []);
-  const [order, setOrder] = useState<ModuleId[]>(
-    () => loadDashboardOrder() as ModuleId[],
-  );
   const toast = useToast();
-  const [swBusy, setSwBusy] = useState(false);
-
-  const localStorageStore: KVStore = useMemo(
-    () => ({
-      getString(key) {
-        try {
-          return localStorage.getItem(key);
-        } catch {
-          return null;
-        }
-      },
-      setString(key, value) {
-        try {
-          localStorage.setItem(key, value);
-        } catch {
-          /* noop */
-        }
-      },
-      remove(key) {
-        try {
-          localStorage.removeItem(key);
-        } catch {
-          /* noop */
-        }
-      },
-    }),
-    [],
-  );
-  const [activeModules, setActiveModulesState] = useState<DashboardModuleId[]>(
-    () => getActiveModules(localStorageStore),
-  );
-  const [hideInactive, setHideInactiveState] = useState(() =>
-    getHideInactiveModules(localStorageStore),
-  );
-  const toggleActive = useCallback(
-    (id: DashboardModuleId) => {
-      setActiveModulesState((prev) => {
-        const isActive = prev.includes(id);
-        // Keep at least one module active so the dashboard never
-        // collapses to an empty grid.
-        if (isActive && prev.length === 1) {
-          toast.error("Щонайменше один модуль має бути активним");
-          return prev;
-        }
-        const next = isActive
-          ? prev.filter((x) => x !== id)
-          : ALL_MODULES.filter((x) => prev.includes(x) || x === id);
-        setActiveModules(localStorageStore, next);
-        return next;
-      });
-    },
-    [localStorageStore, toast],
-  );
-  const toggleHideInactive = useCallback(
-    (next: boolean) => {
-      setHideInactiveState(next);
-      setHideInactiveModules(localStorageStore, next);
-    },
-    [localStorageStore],
-  );
-
-  const handleMove = useCallback((index: number, direction: -1 | 1) => {
-    setOrder((prev) => {
-      const next = prev.slice();
-      const target = index + direction;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
-      saveDashboardOrder(next);
-      return next;
-    });
-  }, []);
-
-  const handleResetOrder = () => {
-    resetDashboardOrder();
-    setOrder(loadDashboardOrder() as ModuleId[]);
-    setOrderReset(true);
-    setTimeout(() => setOrderReset(false), 2000);
-  };
 
   return (
     <SettingsGroup title="Загальні" emoji="⚙️">
-      <SettingsSubGroup title="Дашборд">
-        <ToggleRow
-          label="Показувати підказки"
-          description="Короткі підказки в моменті (без спаму)."
-          checked={showHints !== false}
-          onChange={setShowHints}
-        />
-      </SettingsSubGroup>
-      <SettingsSubGroup title="Щільність дашборду">
-        <p className="text-xs text-subtle leading-snug">
-          Скільки простору між картками на головному екрані.
-        </p>
-        <div className="flex gap-2">
-          {DASHBOARD_DENSITIES.map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => handleDensityChange(d)}
-              className={cn(
-                "flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors",
-                d === density
-                  ? "border-brand bg-brand/8 ring-1 ring-brand/30"
-                  : "border-line bg-panel hover:bg-panelHi",
-              )}
-            >
-              <span
-                className={cn(
-                  "block text-sm font-medium",
-                  d === density ? "text-brand-strong" : "text-text",
-                )}
-              >
-                {DASHBOARD_DENSITY_LABELS[d]}
-              </span>
-              <span className="block text-xs text-muted mt-0.5">
-                {DASHBOARD_DENSITY_DESCRIPTIONS[d]}
-              </span>
-            </button>
-          ))}
-        </div>
-      </SettingsSubGroup>
       <SettingsSubGroup title="Онбординг">
         <p className="text-xs text-subtle leading-snug">
           Перезапуск не видаляє твої дані — лише повертає вітальний екран та
@@ -263,7 +32,7 @@ export function GeneralSection({
           size="sm"
           className="h-10 w-full"
           onClick={() => {
-            resetOnboardingState(localStorageStore);
+            resetOnboardingState(webKVStore);
             toast.success("Онбординг перезапущено");
             try {
               window.location.assign("/welcome");
@@ -275,110 +44,12 @@ export function GeneralSection({
           Перезапустити онбординг
         </Button>
       </SettingsSubGroup>
-      <SettingsSubGroup title="PWA та офлайн">
-        <p className="text-xs text-subtle leading-snug">
-          Якщо після оновлення щось «застрягло» (стара версія або дивні дані),
-          можна скинути кеш Service Worker і перезавантажити застосунок.
-        </p>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-10 flex-1"
-            disabled={swBusy || !("serviceWorker" in navigator)}
-            onClick={async () => {
-              setSwBusy(true);
-              try {
-                await swSetDebug(true);
-                const snap = await swGetDebugSnapshot();
-                console.log("[sw] snapshot", snap);
-                toast.success("SW-діагностика виведена в консоль");
-              } catch (err) {
-                toast.error("Не вдалося отримати діагностику SW");
-                console.warn("[sw] debug failed", err);
-              } finally {
-                setSwBusy(false);
-              }
-            }}
-          >
-            Діагностика SW
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-10 flex-1"
-            disabled={swBusy || !("serviceWorker" in navigator)}
-            onClick={async () => {
-              setSwBusy(true);
-              try {
-                const res = await swClearCaches();
-                console.log("[sw] caches cleared", res);
-                toast.success("Кеш PWA скинуто. Перезавантажуємо…", 4000);
-                setTimeout(() => window.location.reload(), 300);
-              } catch (err) {
-                toast.error("Не вдалося скинути кеш PWA");
-                console.warn("[sw] clear caches failed", err);
-              } finally {
-                setSwBusy(false);
-              }
-            }}
-          >
-            Скинути кеш PWA
-          </Button>
-        </div>
-      </SettingsSubGroup>
-      <SettingsSubGroup title="Активні модулі">
-        <p className="text-xs text-subtle leading-snug">
-          Неактивні модулі відображаються на дашборді приглушено — без кнопки
-          швидкого додавання. Чонайменше один модуль має залишатися активним.
-        </p>
-        <ul className="rounded-xl border border-line divide-y divide-line/60 overflow-hidden">
-          {ALL_MODULES.map((id) => {
-            const checked = activeModules.includes(id);
-            return (
-              <li key={id} className="px-3 py-2 bg-panel">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleActive(id)}
-                    className="h-4 w-4 accent-primary"
-                  />
-                  <span className="flex-1 text-sm text-text">
-                    {SHARED_DASHBOARD_MODULE_LABELS[id]}
-                  </span>
-                </label>
-              </li>
-            );
-          })}
-        </ul>
-        <ToggleRow
-          label="Приховати неактивні модулі"
-          description="Повністю ховає неактивні плитки з дашборду."
-          checked={hideInactive}
-          onChange={toggleHideInactive}
-        />
-      </SettingsSubGroup>
-      <SettingsSubGroup title="Упорядкувати модулі">
-        <p className="text-xs text-subtle leading-snug">
-          Порядок модулів у списку «Сьогодні» на дашборді.
-        </p>
-        <ModuleReorderList order={order} onMove={handleMove} />
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-10 w-full"
-          onClick={handleResetOrder}
-          disabled={orderReset}
-        >
-          {orderReset ? "✓ Порядок скинуто" : "Скинути до за промовчання"}
-        </Button>
-      </SettingsSubGroup>
       {user && (
-        <SettingsSubGroup title="Хмарна синхронізація">
+        <SettingsSubGroup title="Хмарна синхронізація" defaultOpen>
+          <p className="text-xs text-subtle leading-snug">
+            Основний спосіб зберегти дані — синхронізація з твоїм акаунтом.
+            Покриває Фінік, Фізрук, Рутину та Харчування.
+          </p>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -403,9 +74,6 @@ export function GeneralSection({
           </div>
         </SettingsSubGroup>
       )}
-      <SettingsSubGroup title="Резервна копія Hub" defaultOpen>
-        <HubBackupPanel className="" />
-      </SettingsSubGroup>
     </SettingsGroup>
   );
 }
