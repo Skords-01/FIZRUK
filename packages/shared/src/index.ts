@@ -24,6 +24,9 @@ export * from "./lib/kvStore";
 // Onboarding "vibe picks" state + FTUX time-to-value helpers.
 export * from "./lib/vibePicks";
 
+// Active-modules helpers (derived from vibe picks) + hide-inactive toggle.
+export * from "./lib/activeModules";
+
 // Onboarding gate helpers (first-launch detection, done flag, splash taxonomy).
 export * from "./lib/onboarding";
 
