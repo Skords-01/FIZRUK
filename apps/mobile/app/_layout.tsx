@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "nativewind";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -70,6 +71,13 @@ function RootShell() {
   );
 }
 
+function DynamicStatusBar() {
+  const { colorScheme } = useColorScheme();
+  // In dark mode the status bar content must be light (white text/icons),
+  // in light mode it must be dark (dark text/icons).
+  return <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />;
+}
+
 export default function RootLayout() {
   useEffect(() => {
     initObservability();
@@ -83,7 +91,7 @@ export default function RootLayout() {
             <CloudSyncProvider>
               <ToastProvider>
                 <ColorSchemeBridge />
-                <StatusBar style="light" />
+                <DynamicStatusBar />
                 <RootShell />
                 <ToastContainer />
                 <PushRegistrar />

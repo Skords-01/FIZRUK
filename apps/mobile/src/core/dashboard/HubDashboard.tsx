@@ -287,7 +287,7 @@ export function HubDashboard() {
     !firstActionVisible && hasFirstRealEntry && !softAuthDismissed && !signedIn;
 
   return (
-    <SafeAreaView className="flex-1 bg-cream-50" edges={["top", "bottom"]}>
+    <SafeAreaView className="flex-1 bg-bg dark:bg-bg" edges={["top", "bottom"]}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 16 }}
@@ -371,15 +371,15 @@ export function HubDashboard() {
               className="mt-1 self-center px-2 py-1 active:opacity-70"
               testID="dashboard-toggle-hide-inactive"
             >
-              <Text className="text-[11px] text-fg-muted underline">
+              <Text className="text-xs text-fg-muted underline">
                 {hideInactive
                   ? "Показати неактивні модулі"
                   : "Приховати неактивні модулі"}
               </Text>
             </Pressable>
           ) : null}
-          <Text className="mt-1 text-[11px] leading-snug text-fg-subtle">
-            Утримай і потягни, щоб змін��ти порядок модулів. Порядок
+          <Text className="mt-1 text-xs leading-relaxed text-fg-subtle">
+            Утримай і потягни, щоб змінити порядок модулів. Порядок
             синхронізується з вебом.
           </Text>
         </View>
