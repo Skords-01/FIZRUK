@@ -40,10 +40,10 @@ Preview-деплої на Vercel тепер працюють коректно п
   не no-op-ив reducer після 2026-04-22). `check` job зеленіший.
 - Bundle artefact: `vendor-zxing` (411kB) і `vendor` (345kB). **ZXing
   вже lazy** — `NutritionApp` загорнутий у `React.lazy` у
-  `src/core/App.tsx:64`, а всередині `useBarcodeScanner.ts:94` йде
+  `apps/web/src/core/App.tsx:64`, а всередині `apps/web/src/modules/nutrition/hooks/useBarcodeScanner.ts:94` йде
   `await import("@zxing/browser")`. У `apps/server/dist/index.html`
   chunk не preload-иться. На Chrome/Edge/Android Chrome спрацьовує
-  нативний `BarcodeDetector` (`useBarcodeScanner.ts:219-282`), zxing-chunk
+  нативний `BarcodeDetector` (`apps/web/src/modules/nutrition/hooks/useBarcodeScanner.ts:219-282`), zxing-chunk
   не завантажується взагалі. 411 kB платять тільки Safari/Firefox
   користувачі і тільки якщо реально відкривають сканер штрихкоду.
   `vendor` (345kB) — react-runtime + основні бібліотеки, preload-иться
@@ -69,13 +69,13 @@ CloudSync + MMKV-офлайн-черга + React Query warm-start, усі **чо
 модулі в табах; Hub-картка «Харчування» досі прихована в порядку
 dashboard (див. `apps/mobile/src/core/dashboard/dashboardModuleConfig.ts`).
 
-- `src/modules/finyk/*` — pages (Overview, Transactions, Analytics,
+- `apps/mobile/src/modules/finyk/*` — pages (Overview, Transactions, Analytics,
   Budgets, Assets), components, hooks, lib + `__tests__`.
-- `src/modules/fizruk/*` — pages, components (workouts, programs, body,
+- `apps/mobile/src/modules/fizruk/*` — pages, components (workouts, programs, body,
   progress, measurements, exercise, dashboard), hooks + `__tests__`.
-- `src/modules/routine/*` — pages (Habits, Heatmap), components,
+- `apps/mobile/src/modules/routine/*` — pages (Habits, Heatmap), components,
   hooks, lib + `__tests__`.
-- `src/modules/nutrition/*` — `NutritionApp` (Сьогодні / Журнал / Вода /
+- `apps/mobile/src/modules/nutrition/*` — `NutritionApp` (Сьогодні / Журнал / Вода /
   **Покупки**), `AddMealSheet` (ручний ввід + сканер), `expo-camera` +
   `/api/barcode` на `scan.tsx`, `useShoppingList` + `pages/Shopping`, комора
   `useNutritionPantries` + `pages/Pantry` + stack `pantry` (вхід з Dashboard);
