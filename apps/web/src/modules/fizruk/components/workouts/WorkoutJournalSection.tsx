@@ -86,7 +86,6 @@ export function WorkoutJournalSection({
   removeItem,
   setFinishFlash,
   endWorkout,
-  setDeleteWorkoutConfirm,
   summarizeWorkoutForFinish,
   submitRetroWorkout,
   deleteWorkout,
@@ -209,7 +208,22 @@ export function WorkoutJournalSection({
                 finishingRef.current = false;
               }, 0);
             }}
-            onDeleteWorkout={() => setDeleteWorkoutConfirm(true)}
+            onDeleteWorkout={() => {
+              // Unified undo: snapshot the active workout, run the
+              // soft-delete immediately, then surface a 5 s undo toast
+              // that re-inserts via `restoreWorkout`. Replaces the old
+              // `ConfirmDialog` step — the toast is the only safety
+              // net. Per the unified undo policy, `ConfirmDialog` is
+              // reserved for non-reversible actions.
+              if (!activeWorkout) return;
+              const snapshot = activeWorkout;
+              deleteWorkout(snapshot.id);
+              setActiveWorkoutId?.(null);
+              showUndoToast(toast, {
+                msg: "Тренування видалено",
+                onUndo: () => restoreWorkout(snapshot),
+              });
+            }}
             onCollapse={() => setActiveWorkoutId(null)}
           />
         </SectionErrorBoundary>
