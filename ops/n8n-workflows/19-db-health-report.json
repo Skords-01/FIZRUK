@@ -1,0 +1,111 @@
+{
+  "name": "19 — DB Health Report (Mon 07:00 Kyiv → Telegram #ops)",
+  "nodes": [
+    {
+      "parameters": {
+        "interval": [{ "field": "cronExpression", "expression": "0 7 * * 1" }]
+      },
+      "id": "cron-monday",
+      "name": "Cron Mon 07:00 Kyiv",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  pg_size_pretty(pg_database_size(current_database())) AS db_size,\n  current_database() AS db_name,\n  (SELECT COUNT(*) FROM mono_transaction) AS tx_count,\n  (SELECT COUNT(*) FROM push_subscriptions WHERE deleted_at IS NULL) AS active_push_subs,\n  (SELECT COUNT(*) FROM \"user\") AS user_count",
+        "options": {}
+      },
+      "id": "query-db-size",
+      "name": "DB size & counts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 200],
+      "credentials": {
+        "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  relname AS table_name,\n  pg_size_pretty(pg_total_relation_size(relid)) AS total_size,\n  n_live_tup AS row_count\nFROM pg_stat_user_tables\nORDER BY pg_total_relation_size(relid) DESC\nLIMIT 5",
+        "options": {}
+      },
+      "id": "query-top-tables",
+      "name": "Top 5 tables by size",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 380],
+      "credentials": {
+        "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  calls,\n  ROUND(mean_exec_time::numeric, 1) AS avg_ms,\n  LEFT(query, 80) AS query_preview\nFROM pg_stat_statements\nWHERE query NOT LIKE '%pg_stat%'\nORDER BY mean_exec_time DESC\nLIMIT 3",
+        "options": { "continueOnFail": true }
+      },
+      "id": "query-slow",
+      "name": "Slow queries (pg_stat_statements)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 560],
+      "credentials": {
+        "postgres": { "id": "CONFIGURE_ME", "name": "Sergeant Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const dbInfo = $('DB size & counts').first()?.json ?? {};\nconst tables = $('Top 5 tables by size').all().map(i => i.json);\nconst slow = $('Slow queries (pg_stat_statements)').all().map(i => i.json).filter(r => !r.error);\n\nconst tableLines = tables.map(t =>\n  `  \\`${t.table_name}\\` — ${t.total_size} (${Number(t.row_count).toLocaleString()} rows)`\n).join('\\n') || '  —';\n\nconst slowLines = slow.length\n  ? slow.map(q => `  ${q.avg_ms}ms (×${q.calls}) \\`${q.query_preview}\\``).join('\\n')\n  : '  pg\\_stat\\_statements не встановлено або немає даних';\n\nconst text = [\n  `🗄 *DB: ${dbInfo.db_name}*`,\n  `📦 Розмір: \\`${dbInfo.db_size}\\``,\n  `👥 Користувачів: ${dbInfo.user_count}`,\n  `💳 Транзакцій Mono: ${Number(dbInfo.tx_count).toLocaleString()}`,\n  `🔔 Push-підписок: ${dbInfo.active_push_subs}`,\n  ``,\n  `📋 *Топ таблиці:*`,\n  tableLines,\n  ``,\n  `🐢 *Повільні запити:*`,\n  slowLines,\n].join('\\n');\n\nreturn [{ json: { text } }];"
+      },
+      "id": "format-report",
+      "name": "Format DB report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 380]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ALERT_CHAT_ID }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "telegram-db",
+      "name": "Telegram → #ops",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 380],
+      "credentials": {
+        "telegramApi": { "id": "CONFIGURE_ME", "name": "Sergeant Ops Bot" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Mon 07:00 Kyiv": {
+      "main": [
+        [
+          { "node": "DB size & counts", "type": "main", "index": 0 },
+          { "node": "Top 5 tables by size", "type": "main", "index": 0 },
+          { "node": "Slow queries (pg_stat_statements)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "DB size & counts": {
+      "main": [[{ "node": "Format DB report", "type": "main", "index": 0 }]]
+    },
+    "Top 5 tables by size": {
+      "main": [[{ "node": "Format DB report", "type": "main", "index": 0 }]]
+    },
+    "Slow queries (pg_stat_statements)": {
+      "main": [[{ "node": "Format DB report", "type": "main", "index": 0 }]]
+    },
+    "Format DB report": {
+      "main": [[{ "node": "Telegram → #ops", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Europe/Kyiv" },
+  "tags": [{ "name": "sergeant" }, { "name": "db" }, { "name": "ops" }],
+  "active": false
+}
