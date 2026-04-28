@@ -3,27 +3,16 @@
  *
  * Single row in the mobile dashboard's module list. Visual layout
  * mirrors the web `StatusRow` inside `apps/web/src/core/hub/HubDashboard.tsx`:
- * accent bar → icon tile → label + description → **quick-stats preview**
- * → chevron. The preview section renders:
- *   - `main` — a primary figure rendered bold-right of the label/body,
- *   - `sub`  — a secondary caption rendered under `main`,
- *   - optional `progress` (0–100) — a thin bar below the text pair,
- *     only shown for goal-bearing modules (`routine`, `nutrition`).
- *
- * The preview object itself is computed upstream (see
- * `HubDashboard.useModulePreviews`) by the pure `selectModulePreview`
- * helper from `@sergeant/shared`, so this component stays presentational
- * and testable with plain prop fixtures.
- *
- * Rendering is memoised because the dashboard re-renders on every
- * MMKV-backed write to the order key and each row's render cost
- * includes a small tree of native views.
+ * accent bar -> icon tile -> label + description -> quick-stats preview
+ * -> chevron. Uses Lucide icons instead of emoji for consistency.
  */
 
 import { memo } from "react";
 import { Pressable, Text, View } from "react-native";
+import { ChevronRight } from "lucide-react-native";
 
 import type { DashboardModuleId, ModulePreview } from "@sergeant/shared";
+import { colors } from "@/theme";
 
 import { DASHBOARD_MODULE_RENDER } from "./dashboardModuleConfig";
 
@@ -32,16 +21,9 @@ export interface StatusRowProps {
   onPress?: (id: DashboardModuleId) => void;
   disabled?: boolean;
   testID?: string;
-  /**
-   * Preview stats for this row (or `null` if none available / writers
-   * haven't landed yet). The component gracefully renders only the
-   * non-null parts so a half-populated payload doesn't leave visual
-   * gaps.
-   */
   preview?: ModulePreview | null;
 }
 
-/** Clamp a loose percentage to the [0, 100] bounds used by the bar. */
 function clampProgress(value: number): number {
   if (!Number.isFinite(value)) return 0;
   if (value < 0) return 0;
@@ -76,14 +58,14 @@ export const StatusRow = memo(function StatusRow({
       onPress={() => onPress?.(id)}
       disabled={disabled}
       testID={testID ?? `dashboard-row-${id}`}
-      className="flex-row items-stretch overflow-hidden rounded-2xl border border-cream-300 bg-cream-50 active:opacity-80"
+      className="flex-row items-stretch overflow-hidden rounded-2xl border border-cream-300 bg-cream-50 active:opacity-80 active:scale-[0.98]"
     >
       <View className={`w-1.5 ${config.accentClass}`} />
       <View className="flex-1 flex-row items-center gap-3 px-3 py-3">
         <View
           className={`h-11 w-11 items-center justify-center rounded-xl ${config.iconBgClass}`}
         >
-          <Text className="text-xl">{config.glyph}</Text>
+          <config.Icon size={22} color={config.iconColor} strokeWidth={2} />
         </View>
         <View className="flex-1">
           <Text className="text-base font-semibold text-fg" numberOfLines={1}>
@@ -127,7 +109,7 @@ export const StatusRow = memo(function StatusRow({
             ) : null}
           </View>
         ) : null}
-        <Text className="text-fg-subtle text-lg">›</Text>
+        <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
       </View>
     </Pressable>
   );

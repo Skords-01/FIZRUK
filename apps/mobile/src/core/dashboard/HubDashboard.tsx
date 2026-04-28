@@ -33,6 +33,9 @@ import { router, type Href } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Settings } from "lucide-react-native";
+
+import { colors } from "@/theme";
 
 import { useUser } from "@sergeant/api-client/react";
 import {
@@ -229,10 +232,10 @@ export function HubDashboard() {
             accessibilityRole="button"
             accessibilityLabel="Відкрити налаштування"
             onPress={openSettings}
-            className="h-10 w-10 items-center justify-center rounded-full bg-cream-100 active:opacity-70"
+            className="h-10 w-10 items-center justify-center rounded-full bg-cream-100 active:opacity-70 active:scale-95"
             testID="dashboard-settings-button"
           >
-            <Text className="text-lg">⚙️</Text>
+            <Settings size={20} color={colors.textMuted} strokeWidth={2} />
           </Pressable>
         </View>
 
@@ -271,7 +274,7 @@ export function HubDashboard() {
             previews={previews}
           />
           <Text className="mt-1 text-[11px] leading-snug text-fg-subtle">
-            Утримай і потягни, щоб змінити порядок модулів. Порядок
+            Утримай і потягни, щоб змін��ти порядок модулів. Порядок
             синхронізується з вебом.
           </Text>
         </View>
