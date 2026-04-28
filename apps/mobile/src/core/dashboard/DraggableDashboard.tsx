@@ -24,7 +24,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
-  Animated,
+  Animated as RNAnimated,
   Pressable,
   Text,
   View,
@@ -32,7 +32,7 @@ import {
 } from "react-native";
 import { GripVertical, X } from "lucide-react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
+import Reanimated, {
   LinearTransition,
   runOnJS,
   useAnimatedStyle,
@@ -69,18 +69,18 @@ function DragReorderCoachMark({
   visible: boolean;
   onDismiss: () => void;
 }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(-8)).current;
+  const opacity = useRef(new RNAnimated.Value(0)).current;
+  const translateY = useRef(new RNAnimated.Value(-8)).current;
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(opacity, {
+      RNAnimated.parallel([
+        RNAnimated.timing(opacity, {
           toValue: 1,
           duration: 200,
           useNativeDriver: true,
         }),
-        Animated.spring(translateY, {
+        RNAnimated.spring(translateY, {
           toValue: 0,
           damping: 15,
           stiffness: 150,
@@ -88,7 +88,7 @@ function DragReorderCoachMark({
         }),
       ]).start();
     } else {
-      Animated.timing(opacity, {
+      RNAnimated.timing(opacity, {
         toValue: 0,
         duration: 150,
         useNativeDriver: true,
@@ -99,7 +99,7 @@ function DragReorderCoachMark({
   if (!visible) return null;
 
   return (
-    <Animated.View
+    <RNAnimated.View
       style={{ opacity, transform: [{ translateY }] }}
       className="mb-3 px-4 py-3 bg-brand rounded-2xl flex-row items-center gap-3"
       accessibilityRole="alert"
@@ -124,7 +124,7 @@ function DragReorderCoachMark({
       >
         <X size={14} color="#fff" strokeWidth={2.5} />
       </Pressable>
-    </Animated.View>
+    </RNAnimated.View>
   );
 }
 
@@ -283,7 +283,7 @@ const DraggableRow = memo(function DraggableRow({
 
   return (
     <GestureDetector gesture={pan}>
-      <Animated.View
+      <Reanimated.View
         layout={LinearTransition.duration(SNAP_DURATION_MS)}
         style={animatedStyle}
         onLayout={onLayout}
@@ -295,7 +295,7 @@ const DraggableRow = memo(function DraggableRow({
           inactive={inactive}
           testID={testID ? `${testID}-${id}` : undefined}
         />
-      </Animated.View>
+      </Reanimated.View>
     </GestureDetector>
   );
 });
