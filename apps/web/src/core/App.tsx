@@ -19,6 +19,7 @@ import { apiClient } from "@shared/api";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { useCloudSync } from "./cloudSync/useCloudSync";
 import { PageLoader } from "./app/PageLoader";
+import { ModulePageLoader } from "@shared/components/ui/ModulePageLoader";
 import { OfflineBanner } from "./app/OfflineBanner";
 import { MigrationPrompt } from "./app/MigrationPrompt";
 import { usePwaInstall } from "./app/usePwaInstall";
@@ -487,7 +488,15 @@ function AppInner() {
           requirement: switching modules mid-set must not bury the
           workout. */}
       {activeModule !== "fizruk" && <ActiveWorkoutBanner />}
-      <Suspense fallback={<PageLoader />}>
+      <Suspense
+        fallback={
+          <ModulePageLoader
+            module={
+              activeModule as "finyk" | "fizruk" | "routine" | "nutrition"
+            }
+          />
+        }
+      >
         {/* Skip-link target. We render `<main>` by default so every screen
             exposes a `main` landmark for AT users. One exception: the
             Routine module renders its own `<main id="routine-main">`

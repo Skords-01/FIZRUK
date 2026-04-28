@@ -148,12 +148,7 @@ const RoutineLoader = memo(function RoutineLoader() {
       {/* Date selector */}
       <div className="flex justify-center gap-2 pb-4">
         {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <Skeleton
-            key={i}
-            shimmer
-            className="w-10 h-14 rounded-xl"
-            style={{ animationDelay: `${i * 30}ms` }}
-          />
+          <Skeleton key={i} shimmer className="w-10 h-14 rounded-xl" />
         ))}
       </div>
 

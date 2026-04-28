@@ -1,3 +1,10 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   PARTIALS — Animations & module surfaces extracted for maintainability.
+   @import statements MUST precede all other rules (CSS spec requirement).
+   ═══════════════════════════════════════════════════════════════════════ */
+@import "./styles/animations.css";
+@import "./styles/module-surfaces.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -324,7 +331,7 @@
 
   /* ═══════════════════════════════════════════════════════════════════════
      SAFE AREA PADDING — iOS notch & home indicator
-     ══��════════════════════════════════════════════════════════════════════ */
+     ══���════════════════════════════════════════════════════════════════════ */
   .page-tabbar-pad {
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
@@ -536,12 +543,6 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PARTIALS — Animations & module surfaces extracted for maintainability.
-   ═══════════════════════════════════════════════════════════════════════ */
-@import "./styles/animations.css";
-@import "./styles/module-surfaces.css";
-
-/* ═══════════════════════════════════════════════════════════════════════
    iOS INPUT ZOOM FIX — Keep 16px minimum on touch devices only.
    Uses `hover: none` media query so desktop inputs keep their intended
    font size from the typographic scale.
@@ -705,7 +706,7 @@
 
 /* ═══════════════════════════════════════════════════════════════════════
    FLOATING ACTION BUTTON — Quick actions
-   ═════════════════════════════════════════════��═════════════════════════ */
+   ═════════════════════════════════════════════����═════════════════════════ */
 .fab {
   @apply fixed z-50 flex items-center justify-center
          w-14 h-14 rounded-full

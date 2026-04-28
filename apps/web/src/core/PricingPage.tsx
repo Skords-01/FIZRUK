@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Icon } from "@shared/components/ui/Icon";
 import { ANALYTICS_EVENTS, trackEvent } from "./observability/analytics";
@@ -142,15 +143,19 @@ export function PricingPage() {
           className="grid grid-cols-1 md:grid-cols-3 gap-4"
           aria-label="Тарифні плани"
         >
-          {TIERS.map((tier) => (
+          {TIERS.map((tier, idx) => (
             <article
               key={tier.id}
-              className={
-                "rounded-3xl border p-6 flex flex-col gap-4 " +
-                (tier.highlight
+              className={cn(
+                "rounded-3xl border p-6 flex flex-col gap-4",
+                "transition-all duration-300 ease-out",
+                "[@media(pointer:fine)]:hover:shadow-float [@media(pointer:fine)]:hover:-translate-y-1",
+                "motion-safe:animate-stagger-in",
+                tier.highlight
                   ? "border-brand-500 bg-panel shadow-glow"
-                  : "border-line bg-panel")
-              }
+                  : "border-line bg-panel [@media(pointer:fine)]:hover:border-brand-200/50",
+              )}
+              style={{ animationDelay: `${idx * 100}ms` }}
             >
               <header className="space-y-1">
                 <div className="flex items-center justify-between">
