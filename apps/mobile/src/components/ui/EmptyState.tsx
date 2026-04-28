@@ -77,11 +77,13 @@ export function EmptyState({
   className,
   compact = false,
   disableAnimation = false,
-  iconColor, // uses colors.subtle by default
+  iconColor, // uses the muted text colour by default
 }: EmptyStateProps) {
   const reduceMotion = useReduceMotion();
   const shouldAnimate = !disableAnimation && !reduceMotion;
-  const resolvedIconColor = iconColor ?? colors.subtle;
+  // `MobileColor` exposes `textMuted`, not `subtle` — see
+  // `packages/design-tokens/mobile.d.ts`.
+  const resolvedIconColor = iconColor ?? colors.textMuted;
 
   // Animation values for staggered entrance
   const containerOpacity = useRef(

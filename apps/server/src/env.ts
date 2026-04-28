@@ -69,6 +69,13 @@ export const env = {
   ),
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Internal API (machine-to-machine, used by n8n workflows)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Bearer token that n8n must include when calling /api/internal/* routes. */
+  INTERNAL_API_KEY: process.env.INTERNAL_API_KEY || "",
+
+  // ─────────────────────────────────────────────────────────────────────────
   // AI / Anthropic
   // ─────────────────────────────────────────────────────────────────────────
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "",

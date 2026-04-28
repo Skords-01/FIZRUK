@@ -21,9 +21,9 @@ services:
       - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
       - N8N_PORT=5678
       - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678/}
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:?Set N8N_PASSWORD in .env.ops}
+      # Auth: User Management (n8n 1.0+). Basic auth removed — deprecated.
+      # On first start, n8n will prompt you to create an owner account in the UI.
+      # Enable MFA per-user via Settings → Two-factor Authentication.
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in .env.ops}
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=n8n-db
@@ -33,9 +33,15 @@ services:
       - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD:?Set N8N_DB_PASSWORD in .env.ops}
       - GENERIC_TIMEZONE=Europe/Kyiv
       - TZ=Europe/Kyiv
+      # Expose Prometheus metrics at /metrics
+      - N8N_METRICS=true
+      - N8N_METRICS_INCLUDE_DEFAULT_METRICS=true
       # Telegram (used by workflows)
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_ALERT_CHAT_ID=${TELEGRAM_ALERT_CHAT_ID:-}
+      # Internal API — n8n workflows use this to call apps/server
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env.ops}
+      - SERVER_INTERNAL_URL=${SERVER_INTERNAL_URL:-http://host.docker.internal:3000}
     volumes:
       - n8n-data:/home/node/.n8n
     depends_on:

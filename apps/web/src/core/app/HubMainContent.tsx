@@ -9,6 +9,28 @@ import { HubReports } from "../hub/HubReports";
 import { HubSettingsPage } from "../hub/HubSettingsPage";
 import type { OpenModuleOptions } from "../hooks/useHubNavigation";
 import { IOSInstallBanner } from "./IOSInstallBanner";
+import type { HubView } from "../hooks/useHubUIState";
+import type { OpenModuleOptions } from "../hooks/useHubNavigation";
+import type { User } from "@sergeant/shared";
+
+interface HubMainContentProps {
+  updateAvailable: boolean;
+  onApplyUpdate: () => void;
+  canInstall: boolean;
+  onInstall: () => Promise<void>;
+  onDismissInstall: () => void;
+  onOpenModule: (id: string, opts?: OpenModuleOptions) => void;
+  iosVisible: boolean;
+  onDismissIos: () => void;
+  hubView: HubView;
+  onOpenChat: () => void;
+  syncing: boolean;
+  onSync: () => void;
+  onPull: () => void;
+  user: User | null;
+  onShowAuth: () => void;
+  inFtuxSession?: boolean;
+}
 
 export type HubView = "dashboard" | "reports" | "settings";
 
