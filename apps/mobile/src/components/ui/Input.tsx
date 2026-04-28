@@ -237,9 +237,9 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           secureTextEntry={resolvedSecure}
           spellCheck={resolvedSpellCheck}
           placeholderTextColor="#a8a29e"
-          accessibilityState={
-            error ? { disabled: !editable, busy: false } : undefined
-          }
+          accessibilityState={{
+            disabled: !editable,
+          }}
           aria-invalid={error ? true : undefined}
           onFocus={(event) => {
             setFocused(true);

@@ -47,10 +47,10 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
+import { X } from "lucide-react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -301,7 +301,7 @@ export function Sheet({
                     accessibilityLabel={closeLabel}
                     className="bg-cream-100 dark:bg-cream-800"
                   >
-                    <Text className="text-fg-muted text-lg font-bold">X</Text>
+                    <X size={18} strokeWidth={2.5} />
                   </Button>
                 </View>
 

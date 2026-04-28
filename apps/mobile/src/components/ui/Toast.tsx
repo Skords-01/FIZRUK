@@ -168,10 +168,10 @@ export function useToast(): ToastContextValue {
 }
 
 const VARIANT_BG: Record<ToastType, string> = {
-  success: "bg-emerald-600",
-  error: "bg-red-600",
-  warning: "bg-amber-500",
-  info: "bg-sky-500",
+  success: "bg-success",
+  error: "bg-danger",
+  warning: "bg-warning",
+  info: "bg-info",
 };
 
 const VARIANT_ICON: Record<ToastType, typeof CheckCircle> = {
