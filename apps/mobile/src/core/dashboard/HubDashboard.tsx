@@ -362,29 +362,26 @@ export function HubDashboard() {
       </ScrollView>
 
       {/* Assistant FAB — thumb-reach entry to AI chat.
-          Hidden during FTUX so the one-tap FirstActionHero path stays
-          the sole CTA on screen (matches web HubFloatingActions logic). */}
-      {!firstActionVisible ? (
-        <View
-          style={{
-            position: "absolute",
-            right: 20,
-            bottom: 24,
-            pointerEvents: "box-none",
-          }}
+          Always visible so user can reach assistant from anywhere. */}
+      <View
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: 24,
+          pointerEvents: "box-none",
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Відкрити AI-асистента"
+          onPress={openAssistant}
+          className="h-14 flex-row items-center gap-2 rounded-full bg-brand-700 pl-4 pr-5 shadow-lg active:scale-95 active:opacity-90"
+          testID="dashboard-assistant-fab"
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Відкрити AI-асистента"
-            onPress={openAssistant}
-            className="h-14 flex-row items-center gap-2 rounded-full bg-brand-700 pl-4 pr-5 shadow-lg active:scale-95 active:opacity-90"
-            testID="dashboard-assistant-fab"
-          >
-            <Sparkles size={20} color="#fff" strokeWidth={2.2} />
-            <Text className="text-sm font-semibold text-white">Асистент</Text>
-          </Pressable>
-        </View>
-      ) : null}
+          <Sparkles size={20} color="#fff" strokeWidth={2.2} />
+          <Text className="text-sm font-semibold text-white">Асистент</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
