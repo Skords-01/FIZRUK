@@ -49,7 +49,7 @@
 
 ## 1.1. `AGENTS.md` (новий файл у корені репо)
 
-**Статус:** ✅ створено у [PR #714](https://github.com/Skords-01/Sergeant/pull/714). Файл живе у `/AGENTS.md`. Факти верифіковані проти реального стану репо (pnpm 9, Turbo, 4 apps, 9 packages, RQ keys factories `finykKeys`/`hubKeys`/`nutritionKeys`/`coachKeys`/`digestKeys`/`pushKeys` у `apps/web/src/shared/lib/queryKeys.ts`, міграції 001–008). Має бути reviewed quarterly (last-reviewed-line у самому файлі).
+**Статус:** ✅ створено у [PR #714](https://github.com/Skords-01/Sergeant/pull/714). Файл живе у `/AGENTS.md`. Факти верифіковані проти реального стану репо (pnpm 9, Turbo, 4 apps, 10 packages, RQ keys factories `finykKeys`/`hubKeys`/`nutritionKeys`/`coachKeys`/`digestKeys`/`pushKeys` у `apps/web/src/shared/lib/queryKeys.ts`, міграції 001–010). Має бути reviewed quarterly (last-reviewed-line у самому файлі).
 
 **Що це:** конвенція Anthropic / Cursor / Devin — markdown-файл у корені репо з правилами **тільки для AI-агентів**. Усі сучасні coding-AI його читають автоматично.
 

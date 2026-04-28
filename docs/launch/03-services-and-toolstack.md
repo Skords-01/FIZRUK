@@ -14,7 +14,7 @@
               | apps/web          |    HTTPS    | apps/server         |         | PostgreSQL     |
               | Vite + React 18   |------------>| Express + Node 20   |-------->| Railway managed|
               | PWA (Workbox)     |   API       | Better Auth         |         | Migrations     |
-              | Tailwind CSS      |             | Pino logging        |         | 001-008        |
+              | Tailwind CSS      |             | Pino logging        |         | 001-010        |
               | Sentry (@sentry/  |             | Helmet + CSP        |         +----------------+
               |   react)          |             | Sentry (@sentry/    |                |
               | TanStack Query    |             |   node)             |         +----------------+
