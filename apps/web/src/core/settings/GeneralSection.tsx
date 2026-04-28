@@ -216,7 +216,7 @@ export function GeneralSection({
           label="Показувати підказки"
           description="Короткі підказки в моменті (без спаму)."
           checked={showHints !== false}
-          onChange={(checked) => setShowHints(checked)}
+          onChange={setShowHints}
         />
       </SettingsSubGroup>
       <SettingsSubGroup title="Щільність дашборду">
@@ -357,7 +357,7 @@ export function GeneralSection({
           label="Приховати неактивні модулі"
           description="Повністю ховає неактивні плитки з дашборду."
           checked={hideInactive}
-          onChange={(checked) => toggleHideInactive(checked)}
+          onChange={toggleHideInactive}
         />
       </SettingsSubGroup>
       <SettingsSubGroup title="Упорядкувати модулі">

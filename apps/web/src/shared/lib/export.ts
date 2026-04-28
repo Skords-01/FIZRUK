@@ -35,13 +35,10 @@ export function arrayToCSV<T extends Record<string, unknown>>(
 
   for (const row of data) {
     const values = columns.map((col) => {
+      const value = getColumnValue(row, col.key);
       if (col.format) {
-        return escapeCSV(col.format(row[col.key as keyof T], row));
+        return escapeCSV(col.format(value, row));
       }
-      const keyStr = String(col.key);
-      const value = keyStr.includes(".")
-        ? getNestedValue(row, keyStr)
-        : row[col.key as keyof T];
       return escapeCSV(value);
     });
     lines.push(values.join(separator));
@@ -60,6 +57,16 @@ function getNestedValue<T extends Record<string, unknown>>(
     }
     return undefined;
   }, obj);
+}
+
+function getColumnValue<T extends Record<string, unknown>>(
+  row: T,
+  key: ExportColumn<T>["key"],
+): unknown {
+  if (typeof key === "string" && key.includes(".")) {
+    return getNestedValue(row, key);
+  }
+  return row[key as keyof T];
 }
 
 /**
@@ -283,16 +290,9 @@ export function dataToHTMLTable<T extends Record<string, unknown>>(
 
   const rows = data.map((row) => {
     const cells = columns.map((col) => {
-      let value: unknown;
+      const value = getColumnValue(row, col.key);
       if (col.format) {
-        value = col.format(row[col.key as keyof T], row);
-      } else {
-        const keyStr = String(col.key);
-        if (keyStr.includes(".")) {
-          value = getNestedValue(row, keyStr);
-        } else {
-          value = row[col.key as keyof T];
-        }
+        return `<td>${col.format(value, row)}</td>`;
       }
       return `<td>${value ?? ""}</td>`;
     });

@@ -1100,36 +1100,12 @@ export function DesignShowcase() {
 
           <Group label="ProgressRing">
             <div className="flex flex-wrap items-end gap-6">
-              {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
-                <ProgressRing
-                  key={size}
-                  size={size}
-                  value={65}
-                  max={100}
-                  showValue
-                />
+              {(["sm", "md", "lg", "xl"] as const).map((size) => (
+                <ProgressRing key={size} size={size} value={65} max={100} />
               ))}
-              <ProgressRing
-                size="lg"
-                value={100}
-                max={100}
-                variant="success"
-                showValue
-              />
-              <ProgressRing
-                size="lg"
-                value={30}
-                max={100}
-                variant="warning"
-                showValue
-              />
-              <ProgressRing
-                size="lg"
-                value={15}
-                max={100}
-                variant="danger"
-                showValue
-              />
+              <ProgressRing size="lg" value={100} max={100} variant="success" />
+              <ProgressRing size="lg" value={30} max={100} variant="warning" />
+              <ProgressRing size="lg" value={15} max={100} variant="danger" />
             </div>
           </Group>
 
@@ -1158,22 +1134,22 @@ export function DesignShowcase() {
 
           <Group label="Tooltip">
             <div className="flex flex-wrap items-center gap-4">
-              <Tooltip content="Підказка зверху" placement="top">
+              <Tooltip content="Підказка зверху" placement="top-center">
                 <Button variant="secondary" size="sm">
                   Top
                 </Button>
               </Tooltip>
-              <Tooltip content="Підказка знизу" placement="bottom">
+              <Tooltip content="Підказка знизу" placement="bottom-center">
                 <Button variant="secondary" size="sm">
                   Bottom
                 </Button>
               </Tooltip>
-              <Tooltip content="Підказка зліва" placement="left">
+              <Tooltip content="Підказка зліва" placement="left-center">
                 <Button variant="secondary" size="sm">
                   Left
                 </Button>
               </Tooltip>
-              <Tooltip content="Підказка справа" placement="right">
+              <Tooltip content="Підказка справа" placement="right-center">
                 <Button variant="secondary" size="sm">
                   Right
                 </Button>
@@ -1244,7 +1220,7 @@ export function DesignShowcase() {
                 id="demo-spotlight-top"
                 title="Підказка зверху"
                 description="Це демо підказки з позицією top"
-                position="top"
+                placement="top"
               >
                 <Button variant="secondary" size="sm">
                   Hover me (top)
@@ -1254,7 +1230,7 @@ export function DesignShowcase() {
                 id="demo-spotlight-bottom"
                 title="Підказка знизу"
                 description="Це демо підказки з позицією bottom"
-                position="bottom"
+                placement="bottom"
               >
                 <Button variant="secondary" size="sm">
                   Hover me (bottom)
