@@ -38,8 +38,9 @@ export function arrayToCSV<T extends Record<string, unknown>>(
       if (col.format) {
         return escapeCSV(col.format(row[col.key as keyof T], row));
       }
-      const value = col.key.includes(".")
-        ? getNestedValue(row, col.key)
+      const keyStr = String(col.key);
+      const value = keyStr.includes(".")
+        ? getNestedValue(row, keyStr)
         : row[col.key as keyof T];
       return escapeCSV(value);
     });
@@ -285,10 +286,13 @@ export function dataToHTMLTable<T extends Record<string, unknown>>(
       let value: unknown;
       if (col.format) {
         value = col.format(row[col.key as keyof T], row);
-      } else if (col.key.includes(".")) {
-        value = getNestedValue(row, col.key);
       } else {
-        value = row[col.key as keyof T];
+        const keyStr = String(col.key);
+        if (keyStr.includes(".")) {
+          value = getNestedValue(row, keyStr);
+        } else {
+          value = row[col.key as keyof T];
+        }
       }
       return `<td>${value ?? ""}</td>`;
     });

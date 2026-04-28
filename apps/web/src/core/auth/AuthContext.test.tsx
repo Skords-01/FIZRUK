@@ -111,7 +111,14 @@ function makeWrapper() {
   return { Wrapper, client, invalidateSpy };
 }
 
-const SAMPLE_USER = {
+const SAMPLE_USER: {
+  id: string;
+  email: string;
+  name: string;
+  image: string | null;
+  emailVerified: boolean;
+  createdAt: string;
+} = {
   id: "u-1",
   email: "a@b.c",
   name: "A",

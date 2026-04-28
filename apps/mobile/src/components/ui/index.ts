@@ -31,11 +31,7 @@ export {
   CardFooter,
   type CardProps,
 } from "./Card";
-export {
-  ConfirmDialog,
-  useConfirmDialog,
-  type ConfirmDialogProps,
-} from "./ConfirmDialog";
+export { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
 export { Input, type InputProps } from "./Input";
 export { ListItem, type ListItemProps } from "./ListItem";
 export { SectionHeading, type SectionHeadingProps } from "./SectionHeading";
@@ -44,10 +40,11 @@ export { Stat, type StatProps } from "./Stat";
 export { SwipeToAction, type SwipeToActionProps } from "./SwipeToAction";
 export {
   Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
   type TabsProps,
+  type TabsItem,
+  type TabsVariant,
+  type TabsStyle,
+  type TabsSize,
 } from "./Tabs";
 
 // UX Enhanced Components
