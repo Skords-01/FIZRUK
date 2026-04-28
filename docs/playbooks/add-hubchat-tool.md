@@ -1,5 +1,7 @@
 # Playbook: Add HubChat Tool
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 **Trigger:** «Дай асистенту нову дію X» / «Додай tool в HubChat» / новий tool-call для Anthropic-асистента (наприклад `log_water`, `log_set`, `mark_habit_done`).
 
 ---

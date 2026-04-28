@@ -1,5 +1,7 @@
 # Error-Budget Policy
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 > Автор: obs-team. Огляд щокварталу (див. [`docs/governance/policy-review.md`](../governance/policy-review.md)).
 >
 > Натхнення: [Google SRE Workbook, Ch. 5 — Alerting on SLOs](https://sre.google/workbook/alerting-on-slos/)

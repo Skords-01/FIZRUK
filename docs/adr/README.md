@@ -42,6 +42,8 @@ Proposed → Accepted → (Deprecated | Superseded by ADR-XXXX)
 
 Зміна статусу — **окремим PR-ом** (щоб бачити чому і коли рішення було переглянуто).
 
+> **Immutability:** ADR-и не входять у freshness-allowlist і не оновлюються періодично. ADR — історичний запис рішення на момент його ухвалення. Якщо рішення змінилось — пиши **новий** ADR зі статусом `Accepted` і `Supersedes: ADR-NNNN`, а старий перепиши на `Superseded by ADR-NNNN`. Деталі: [`docs/governance/doc-freshness.md`](../governance/doc-freshness.md#excluded-by-design-architecture-decision-records-docsadr).
+
 ## Як створити новий ADR
 
 1. Скопіюй [`TEMPLATE.md`](./TEMPLATE.md), перейменуй у `NNNN-kebab-case-title.md` (інкрементуй номер).

@@ -11,7 +11,7 @@
  * Mount once at the root of the app. Use `announce()` imperatively
  * from anywhere via the exported ref or `useAnnounce()` hook.
  *
- * @see docs/ux-enhancement-plan.md — Section 7.2 (Screen reader support)
+ * @see docs/planning/ux-enhancement-plan.md — Section 7.2 (Screen reader support)
  * @see https://www.w3.org/WAI/WCAG21/Understanding/status-messages.html
  */
 

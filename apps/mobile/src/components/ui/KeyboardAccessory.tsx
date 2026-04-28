@@ -13,7 +13,7 @@
  * a bottom-anchored `Animated.View` on Android (since `InputAccessoryView`
  * is iOS-only). Both implementations share the same chip rendering.
  *
- * @see docs/ux-enhancement-plan.md — Section 4.3 (Keyboard & Input)
+ * @see docs/planning/ux-enhancement-plan.md — Section 4.3 (Keyboard & Input)
  */
 
 import { useCallback, type ReactNode } from "react";

@@ -1,5 +1,7 @@
 # Playbook: Cleanup Dead Code
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+
 **Trigger:** "Remove X and all its usages" / deleting a deprecated module, component, utility, or feature flag.
 
 ---
