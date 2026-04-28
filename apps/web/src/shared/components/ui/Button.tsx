@@ -101,6 +101,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   iconOnly?: boolean;
   loading?: boolean;
+  /** Progress value 0-100 for determinate loading state */
+  progress?: number;
   children?: ReactNode;
 }
 
@@ -113,6 +115,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       type = "button",
       iconOnly = false,
       loading = false,
+      progress,
       disabled,
       children,
       ...props
@@ -120,6 +123,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) {
     const isDisabled = disabled || loading;
+    const hasProgress = typeof progress === "number" && progress >= 0;
     const needsCoarseMinTarget = iconOnly || size === "xs" || size === "sm";
 
     return (
@@ -149,13 +153,21 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <>
-            <LoadingSpinner className="motion-safe:animate-spin" />
+            {hasProgress ? (
+              <ProgressSpinner progress={progress} className="shrink-0" />
+            ) : (
+              <LoadingSpinner className="motion-safe:animate-spin" />
+            )}
             {!iconOnly && (
               <span className="opacity-0" aria-hidden="true">
                 {children}
               </span>
             )}
-            <span className="sr-only">Завантаження…</span>
+            <span className="sr-only">
+              {hasProgress
+                ? `Завантаження ${Math.round(progress)}%`
+                : "Завантаження…"}
+            </span>
           </>
         ) : (
           children
@@ -180,6 +192,53 @@ function LoadingSpinner({ className }: { className?: string }) {
       strokeLinecap="round"
     >
       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    </svg>
+  );
+}
+
+// Determinate progress spinner with circular progress ring
+function ProgressSpinner({
+  progress,
+  className,
+}: {
+  progress: number;
+  className?: string;
+}) {
+  const radius = 7;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn("h-4 w-4", className)}
+      viewBox="0 0 18 18"
+    >
+      {/* Background circle */}
+      <circle
+        cx="9"
+        cy="9"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        opacity="0.25"
+      />
+      {/* Progress circle */}
+      <circle
+        cx="9"
+        cy="9"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={strokeDashoffset}
+        transform="rotate(-90 9 9)"
+        className="transition-[stroke-dashoffset] duration-200 ease-out"
+      />
     </svg>
   );
 }

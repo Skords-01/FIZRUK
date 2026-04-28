@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Button } from "@shared/components/ui/Button";
@@ -9,6 +9,7 @@ import { SectionErrorBoundary } from "@shared/components/ui/SectionErrorBoundary
 import { Card } from "@shared/components/ui/Card";
 import { useToast } from "@shared/hooks/useToast";
 import { hapticSuccess } from "@shared/lib/haptic";
+import { showUndoToast } from "@shared/lib/undoToast";
 
 function WorkoutRow({ w, activeWorkoutId, setActiveWorkoutId }) {
   // An ended workout is always "Завершене" — even if it happens to be the
@@ -89,9 +90,22 @@ export function WorkoutJournalSection({
   summarizeWorkoutForFinish,
   submitRetroWorkout,
   deleteWorkout,
+  restoreWorkout,
 }) {
   const toast = useToast();
   const workoutList = workouts || [];
+  const handleSwipeDelete = useCallback(
+    (id) => {
+      const snapshot = (workouts || []).find((w) => w.id === id);
+      if (!snapshot) return;
+      deleteWorkout(id);
+      showUndoToast(toast, {
+        msg: "Тренування видалено",
+        onUndo: () => restoreWorkout?.(snapshot),
+      });
+    },
+    [workouts, deleteWorkout, restoreWorkout, toast],
+  );
   const listHeight = Math.min(
     workoutList.length * JOURNAL_ITEM_HEIGHT,
     MAX_JOURNAL_HEIGHT,
@@ -295,7 +309,7 @@ export function WorkoutJournalSection({
                 key={w.id}
                 onSwipeLeft={
                   deleteWorkout && w.id !== activeWorkoutId
-                    ? () => deleteWorkout(w.id)
+                    ? () => handleSwipeDelete(w.id)
                     : undefined
                 }
                 rightLabel="🗑 Видалити"

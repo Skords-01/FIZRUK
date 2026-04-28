@@ -1,4 +1,5 @@
 import { Icon } from "@shared/components/ui/Icon";
+import { FeatureSpotlight } from "@shared/components/ui/FeatureSpotlight";
 import { cn } from "@shared/lib/cn";
 
 /**
@@ -28,25 +29,34 @@ export function HubFloatingActions({ hidden = false, onOpenChat }) {
       className="fixed right-5 z-40 flex flex-col items-end gap-2 pointer-events-none"
       style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
     >
-      <button
-        type="button"
-        onClick={() => onOpenChat()}
-        aria-label="Відкрити AI-асистента"
-        title="Асистент"
-        className={cn(
-          "pointer-events-auto h-14 pl-4 pr-5 flex items-center justify-center gap-2 rounded-full",
-          // brand-700 (not brand-500) — needed for WCAG AA contrast against
-          // `text-white` at 14px regular weight (≥4.5:1).
-          "bg-brand-700 text-white shadow-float",
-          "hover:bg-brand-800 hover:shadow-glow active:scale-95 transition-[background-color,box-shadow,opacity,transform]",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-        )}
+      <FeatureSpotlight
+        id="hub-assistant-fab"
+        title="AI-асистент"
+        description="Запитай будь-що про фінанси, тренування, харчування чи рутину"
+        placement="left"
+        showOnce
+        delay={3000}
       >
-        <Icon name="sparkle" size={22} strokeWidth={2.2} />
-        <span className="text-sm font-semibold whitespace-nowrap">
-          Асистент
-        </span>
-      </button>
+        <button
+          type="button"
+          onClick={() => onOpenChat()}
+          aria-label="Відкрити AI-асистента"
+          title="Асистент"
+          className={cn(
+            "pointer-events-auto h-14 pl-4 pr-5 flex items-center justify-center gap-2 rounded-full",
+            // brand-700 (not brand-500) — needed for WCAG AA contrast against
+            // `text-white` at 14px regular weight (≥4.5:1).
+            "bg-brand-700 text-white shadow-float",
+            "hover:bg-brand-800 hover:shadow-glow active:scale-95 transition-[background-color,box-shadow,opacity,transform]",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+          )}
+        >
+          <Icon name="sparkle" size={22} strokeWidth={2.2} />
+          <span className="text-sm font-semibold whitespace-nowrap">
+            Асистент
+          </span>
+        </button>
+      </FeatureSpotlight>
     </div>
   );
 }

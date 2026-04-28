@@ -58,6 +58,20 @@ export function useDailyLog() {
     [entries, persist],
   );
 
+  /**
+   * Re-insert a previously deleted entry, preserving the original `id`,
+   * `at` timestamp and field values. Used by undo flows after `deleteEntry`.
+   */
+  const restoreEntry = useCallback(
+    (entry) => {
+      if (!entry || !entry.id) return;
+      persist(
+        entries.some((e) => e.id === entry.id) ? entries : [entry, ...entries],
+      );
+    },
+    [entries, persist],
+  );
+
   const sorted = useMemo(
     () => [...entries].sort((a, b) => (b.at || "").localeCompare(a.at || "")),
     [entries],
@@ -76,5 +90,12 @@ export function useDailyLog() {
   /** Latest single entry. */
   const latest = sorted[0] || null;
 
-  return { entries: sorted, latest, addEntry, deleteEntry, recentWith };
+  return {
+    entries: sorted,
+    latest,
+    addEntry,
+    deleteEntry,
+    restoreEntry,
+    recentWith,
+  };
 }

@@ -198,3 +198,104 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
 - Drawer з історією сесій HubChat (наразі одна активна сесія у
   `hub_chat_history`).
 - A11y audit legacy focus rings.
+
+---
+
+## 11. Оновлення квітень 2026
+
+### 11.1 Celebration System
+
+Інтегровано `CelebrationModal` в ключові флоу:
+
+| Флоу                 | Тип celebration   | AutoClose |
+| -------------------- | ----------------- | --------- |
+| Успішна реєстрація   | `achievement`     | 6s        |
+| Завершення онбординг | `confetti` (high) | 5.5s      |
+| Досягнення цілі      | `goalCompleted`   | 5.5s      |
+| Streak milestone     | `streak`          | 5s        |
+
+**Зміни:**
+
+- Збільшено `autoCloseMs` з 3s до 4.5-6s для кращого UX
+- Інтегровано `useFocusTrap` для accessibility
+- Додано confetti particles з physics simulation
+
+### 11.2 Progressive Header
+
+`HubHeader` тепер використовує `useScrollHeader`:
+
+- **Shrink mode** (scroll > 40px): зменшується padding, ховаються subtitle та greeting
+- **Hide mode** (scroll down > 120px): повністю ховається з translate
+- **Blur backdrop**: з'являється при scroll для візуального розділення
+
+### 11.3 Module-Specific Loaders
+
+Замінено generic `PageLoader` на `ModulePageLoader` в lazy-loaded modules:
+
+| Модуль    | Skeleton layout                 |
+| --------- | ------------------------------- |
+| Finyk     | Balance card + transaction list |
+| Fizruk    | Stats grid + workout cards      |
+| Routine   | Habit grid + week calendar      |
+| Nutrition | Macro rings + meal cards        |
+
+### 11.4 Form Validation UX
+
+Новий `useFormValidation` hook:
+
+- **Shake animation** на полях з помилками
+- **Haptic feedback** при validation failure
+- **Inline error messages** з плавним fade-in
+- **Built-in rules**: email, required, minLength, pattern, etc.
+
+### 11.5 Visual Polish
+
+- **PricingPage**: hover-lift ефект на tier cards, stagger entrance animation
+- **AuthPage**: slide-in animation на форму
+- **Animations**: shake, stagger-in, confetti-fall keyframes
+
+### 11.6 Accessibility
+
+- `useFocusTrap` hook для modal focus management
+- Focus trap інтегровано в `CelebrationModal`
+- Всі нові анімації мають `motion-safe:` prefix
+
+### 11.7 Нові компоненти
+
+| Компонент                | Призначення                                 |
+| ------------------------ | ------------------------------------------- |
+| `CelebrationModal`       | Achievement/success celebrations з confetti |
+| `FeatureSpotlight`       | Contextual onboarding hints                 |
+| `ModulePageLoader`       | Module-specific skeleton loaders            |
+| `PullToRefreshIndicator` | Native-like pull-to-refresh                 |
+
+### 11.8 Нові хуки
+
+| Hook                | Призначення                    |
+| ------------------- | ------------------------------ |
+| `useScrollHeader`   | Progressive header shrink/hide |
+| `useFormValidation` | Form validation з shake        |
+| `useFocusTrap`      | Modal focus management         |
+| `usePullToRefresh`  | Pull-to-refresh gesture        |
+
+---
+
+## 12. Roadmap (наступні кроки)
+
+### Високий пріоритет
+
+- [ ] Profile page з avatar upload
+- [ ] Push notification opt-in flow
+- [ ] Charts анімації в Finyk
+
+### Середній пріоритет
+
+- [ ] Інтеграція `FeatureSpotlight` в onboarding touchpoints
+- [ ] Bottom navigation замість tabs на mobile
+- [ ] Більше haptic feedback
+
+### Низький пріоритет
+
+- [ ] Keyboard shortcuts guide (? hotkey)
+- [ ] Dark mode scheduled toggle
+- [ ] Custom theme colors

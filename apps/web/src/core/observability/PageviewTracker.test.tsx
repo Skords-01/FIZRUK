@@ -39,7 +39,7 @@ describe("PageviewTracker", () => {
   });
 
   it("шле новий $pageview на зміну pathname", () => {
-    function Nav() {
+    function Nav(): null {
       const navigate = useNavigate();
       useEffect(() => {
         navigate("/hub");
@@ -64,7 +64,7 @@ describe("PageviewTracker", () => {
   });
 
   it("НЕ шле pageview на зміну тільки query-string", () => {
-    function Nav() {
+    function Nav(): null {
       const navigate = useNavigate();
       useEffect(() => {
         navigate("/hub?filter=week");

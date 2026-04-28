@@ -167,6 +167,48 @@ When you add a new component, pick the value that matches its role:
   **Default `"brand"`** — see §2.
 - `style`: `"solid" | "soft"`. Default `"soft"`.
 
+### `CelebrationModal` (via `useCelebration`)
+
+```tsx
+const { success, achievement, confetti, goalCompleted, levelUp, streak } =
+  useCelebration();
+
+success("Збережено!", "Опис");
+achievement("Досягнення!", "Опис", [{ icon: "🏆", label: "Badge" }]);
+confetti("Вітаю!", "Опис", "high");
+```
+
+- `type`: `"success" | "achievement" | "goal" | "levelUp" | "streak" | "confetti"`.
+- `confettiIntensity`: `"low" | "medium" | "high"`. Default `"medium"`.
+- `autoCloseMs`: Auto-set per type (4500-6000ms).
+- `theme`: Optional module theme for goal celebrations.
+
+### `FeatureSpotlight`
+
+```tsx
+<FeatureSpotlight
+  id="feature-id"
+  title="Title"
+  description="Description"
+  position="bottom"
+  showOnce
+>
+  <TargetElement />
+</FeatureSpotlight>
+```
+
+- `position`: `"top" | "bottom" | "left" | "right"`. Default `"bottom"`.
+- `showOnce`: Boolean — persist dismissed state in localStorage.
+- `delay`: Number (ms) — delay before showing.
+
+### `ModulePageLoader`
+
+```tsx
+<ModulePageLoader module="finyk" />
+```
+
+- `module`: `"finyk" | "fizruk" | "routine" | "nutrition"`. Required.
+
 ---
 
 ## 4. When designing a new component

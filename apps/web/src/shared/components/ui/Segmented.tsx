@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@shared/lib/cn";
+import { hapticTap } from "@shared/lib/haptic";
 
 /**
  * Sergeant Design System — Segmented
@@ -115,7 +116,12 @@ export function Segmented<V extends string = string>({
             aria-selected={isActive}
             aria-label={item.ariaLabel}
             title={item.title}
-            onClick={() => onChange(item.value)}
+            onClick={() => {
+              if (item.value !== value) {
+                hapticTap();
+                onChange(item.value);
+              }
+            }}
             className={cn(
               "rounded-full border font-semibold transition-[background-color,border-color,color,box-shadow,opacity]",
               SIZE[size],

@@ -19,6 +19,7 @@ import { apiClient } from "@shared/api";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { useCloudSync } from "./cloudSync/useCloudSync";
 import { PageLoader } from "./app/PageLoader";
+import { ModulePageLoader } from "@shared/components/ui/ModulePageLoader";
 import { OfflineBanner } from "./app/OfflineBanner";
 import { MigrationPrompt } from "./app/MigrationPrompt";
 import { usePwaInstall } from "./app/usePwaInstall";
@@ -41,6 +42,10 @@ import { usePwaActions, type PwaAction } from "./hooks/usePwaActions";
 import { ShellDeepLinkBridge } from "./app/ShellDeepLinkBridge";
 import { PageviewTracker } from "./observability/PageviewTracker";
 import { HintsOrchestrator } from "./hints/HintsOrchestrator";
+import {
+  KeyboardShortcutsModal,
+  useKeyboardShortcutsModal,
+} from "@shared/components/ui/KeyboardShortcutsModal";
 
 const AuthPage = lazy(() =>
   import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),
@@ -179,6 +184,7 @@ function AppInner() {
   const { pwaAction, setPwaAction, clearPwaAction, validActions } =
     usePwaActions(searchParams);
   const { dark, toggle: toggleDark } = useDarkMode();
+  const keyboardShortcuts = useKeyboardShortcutsModal();
   const { canInstall, install, dismiss } = usePwaInstall();
   const { visible: iosVisible, dismiss: iosDismiss } = useIosInstallBanner();
   const online = useOnlineStatus();
@@ -444,14 +450,9 @@ function AppInner() {
           inFtuxSession={inFtuxSession}
         />
 
-        {/* Thumb-reach entry to the AI assistant. Module quick-add is
-            handled above by `TodayFocusCard`'s chips (+ Витрата / + Їжа /
-            + Звичка / + Тренування), so a separate add-speed-dial FAB
-            would be a pure duplicate. Hidden during the FTUX session so
-            the only interactive surface in view is the FirstActionHero
-            → PresetSheet one-tap path; the FAB returns the moment the
-            first real entry lands. */}
-        <HubFloatingActions hidden={inFtuxSession} onOpenChat={ui.openChat} />
+        {/* Thumb-reach entry to the AI assistant. Always visible so the
+            user can reach the assistant from anywhere on the hub. */}
+        <HubFloatingActions onOpenChat={ui.openChat} />
 
         {/* Persistent shortcut back to an in-progress Fizruk workout.
             Hidden during FTUX so the splash stays single-CTA; otherwise
@@ -472,6 +473,10 @@ function AppInner() {
           onCloseSearch={ui.closeSearch}
           onOpenModule={openModule}
         />
+        <KeyboardShortcutsModal
+          open={keyboardShortcuts.open}
+          onClose={keyboardShortcuts.onClose}
+        />
       </div>
     );
   }
@@ -487,7 +492,15 @@ function AppInner() {
           requirement: switching modules mid-set must not bury the
           workout. */}
       {activeModule !== "fizruk" && <ActiveWorkoutBanner />}
-      <Suspense fallback={<PageLoader />}>
+      <Suspense
+        fallback={
+          <ModulePageLoader
+            module={
+              activeModule as "finyk" | "fizruk" | "routine" | "nutrition"
+            }
+          />
+        }
+      >
         {/* Skip-link target. We render `<main>` by default so every screen
             exposes a `main` landmark for AT users. One exception: the
             Routine module renders its own `<main id="routine-main">`
@@ -544,6 +557,26 @@ function AppInner() {
           );
         })()}
       </Suspense>
+      {/* Assistant FAB — available in all module views so the user can
+          reach the AI chat without navigating back to the hub first. */}
+      <HubFloatingActions onOpenChat={ui.openChat} />
+      <HubModals
+        chatOpen={ui.chatOpen}
+        onCloseChat={ui.closeChat}
+        chatInitialMessage={ui.chatInitialMessage}
+        chatAutoSend={ui.chatAutoSend}
+        onOpenCatalogue={() => {
+          ui.closeChat();
+          navigate(ASSISTANT_PATH);
+        }}
+        searchOpen={ui.searchOpen}
+        onCloseSearch={ui.closeSearch}
+        onOpenModule={openModule}
+      />
+      <KeyboardShortcutsModal
+        open={keyboardShortcuts.open}
+        onClose={keyboardShortcuts.onClose}
+      />
     </div>
   );
 }

@@ -82,7 +82,7 @@ Back-compat: старі токени `panel` / `panelHi` / `line` продовж
 
 ### 2.5 Data-viz (графіки)
 
-Канонічний набір у `src/shared/charts/chartTheme.ts`:
+Канонічний набір у `apps/web/src/shared/charts/chartTheme.ts`:
 
 - `chartSeries.finyk / .fizruk / .routine / .nutrition` — бренд-акценти
   серій для модуля (primary + secondary + surface).
@@ -316,7 +316,7 @@ Home/End, `role="tablist"`.
 
 - `icon` · `title` · `description` · `action`.
 - `compact` режим для in-card плейсхолдерів.
-- Використовуй для всіх «немає даних» станів — не роби ad-hoc.
+- Використовуй для всіх «немає да��их» станів — не роби ad-hoc.
 
 ### Spinner
 
@@ -432,9 +432,157 @@ Dark-override потрібен тільки коли ефект несиметр
 
 ---
 
-## 12. Що далі
+## 12. Нові компоненти (2026-04)
+
+### CelebrationModal
+
+Універсальний модал для святкування досягнень з confetti та анімаціями.
+
+```tsx
+import { useCelebration } from "@shared/components/ui/CelebrationModal";
+
+const { success, achievement, confetti, goalCompleted, levelUp, streak } =
+  useCelebration();
+
+// Простий success toast
+success("Збережено!", "Дані оновлено");
+
+// Achievement з rewards
+achievement("Перша транзакція!", "Ти зробив перший крок", [
+  { icon: "💰", label: "Фінансист" },
+]);
+
+// Full confetti celebration
+confetti("Готово!", "Онбординг завершено", "high");
+```
+
+**Типи:** `success` | `achievement` | `goal` | `levelUp` | `streak` | `confetti`
+**AutoClose:** 4.5-6 секунд залежно від типу
+**Accessibility:** Focus trap, Escape to close, reduced-motion safe
+
+### FeatureSpotlight
+
+Contextual onboarding hints з spotlight overlay.
+
+```tsx
+import { FeatureSpotlight } from "@shared/components/ui/FeatureSpotlight";
+
+<FeatureSpotlight
+  id="first-transaction"
+  title="Додай першу витрату"
+  description="Натисни + щоб записати витрату"
+  position="bottom"
+  showOnce
+>
+  <FABButton />
+</FeatureSpotlight>;
+```
+
+**Position:** `top` | `bottom` | `left` | `right`
+**Storage:** localStorage persist dismissed state per ID
+**Hooks:** `useSpotlightDismissed(id)`, `useResetSpotlight()`
+
+### ModulePageLoader
+
+Module-specific skeleton loader для lazy-loaded modules.
+
+```tsx
+import { ModulePageLoader } from "@shared/components/ui/ModulePageLoader";
+
+<Suspense fallback={<ModulePageLoader module="finyk" />}>
+  <FinykApp />
+</Suspense>;
+```
+
+**Modules:** `finyk` | `fizruk` | `routine` | `nutrition`
+Показує релевантні skeleton елементи для кожного модуля.
+
+### PullToRefreshIndicator
+
+Native-like pull-to-refresh для PWA.
+
+```tsx
+import { usePullToRefresh } from "@shared/hooks/usePullToRefresh";
+
+const { state, PullIndicator } = usePullToRefresh({
+  onRefresh: async () => {
+    await refetch();
+  },
+  scrollRef,
+});
+
+<PullToRefreshIndicator state={state} />;
+```
+
+---
+
+## 13. Нові хуки (2026-04)
+
+### useScrollHeader
+
+Progressive header behavior — shrink/hide on scroll.
+
+```tsx
+const { isHidden, isShrunk, hasBlur } = useScrollHeader({
+  shrinkThreshold: 40,
+  hideThreshold: 120,
+  minDelta: 8,
+});
+```
+
+### useFormValidation
+
+Form validation з shake animation та haptic feedback.
+
+```tsx
+const { values, errors, touched, shaking, handleChange, handleBlur, validate } =
+  useFormValidation(
+    {
+      email: "",
+      password: "",
+    },
+    {
+      email: [validationRules.required(), validationRules.email()],
+      password: [validationRules.required(), validationRules.minLength(8)],
+    },
+  );
+```
+
+**Built-in rules:** `required`, `email`, `minLength`, `maxLength`, `pattern`, `numeric`, `matches`
+
+### useFocusTrap
+
+Accessibility focus trap для модалів.
+
+```tsx
+const modalRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
+<div ref={modalRef}>...</div>;
+```
+
+---
+
+## 14. Animations (2026-04)
+
+Нові анімації в `styles/animations.css`:
+
+| Class                      | Keyframes        | Використання                  |
+| -------------------------- | ---------------- | ----------------------------- |
+| `animate-shake`            | shake            | Form validation errors        |
+| `animate-confetti-fall`    | confetti-fall    | CelebrationModal particles    |
+| `animate-streak-milestone` | streak-milestone | Achievement/celebration cards |
+| `animate-scale-out`        | scale-out        | Modal exit animation          |
+| `animate-stagger-in`       | stagger-in       | List item stagger entrance    |
+
+Всі анімації поважають `prefers-reduced-motion` через `motion-safe:` prefix.
+
+---
+
+## 15. Що далі
 
 - Догнати всі модулі (ФІНІК / ФІЗРУК / Рутина / Харчування) під єдині
   примітиви — окремими PR'ами, по модулю.
 - Додати Storybook-подібну сторінку `/design` з живими прикладами.
 - Розширити WCAG-audit автотестом (axe) у CI.
+- Інтегрувати `FeatureSpotlight` в ключові onboarding touchpoints.
+- Додати більше haptic feedback у key interactions.
+- Profile page з avatar upload.

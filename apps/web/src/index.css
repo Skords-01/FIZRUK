@@ -1,3 +1,10 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   PARTIALS — Animations & module surfaces extracted for maintainability.
+   @import statements MUST precede all other rules (CSS spec requirement).
+   ═══════════════════════════════════════════════════════════════════════ */
+@import "./styles/animations.css";
+@import "./styles/module-surfaces.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -122,6 +129,41 @@
     --c-danger-soft: 254 226 226; /* red-100 */
     --c-info-soft: 224 242 254; /* sky-100 */
 
+    /* Celebration / gamification tokens */
+    --c-celebration: 251 191 36; /* amber-400 — confetti, stars, rewards */
+    --c-streak-glow: 249 112 102; /* coral-500 — streak flame glow */
+    --c-xp: 139 92 246; /* violet-500 — XP / level-up accent */
+
+    /* Module hero card gradients — delicate accent washes for top-of-page
+       hero cards. Semi-transparent so they layer over `bg-panel` or
+       module surfaces. */
+    --gradient-finyk: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.08) 0%,
+      rgba(20, 184, 166, 0.06) 100%
+    );
+    --gradient-fizruk: linear-gradient(
+      135deg,
+      rgba(20, 184, 166, 0.08) 0%,
+      rgba(200, 242, 100, 0.05) 100%
+    );
+    --gradient-routine: linear-gradient(
+      135deg,
+      rgba(249, 112, 102, 0.08) 0%,
+      rgba(255, 140, 120, 0.05) 100%
+    );
+    --gradient-nutrition: linear-gradient(
+      135deg,
+      rgba(146, 204, 23, 0.08) 0%,
+      rgba(176, 230, 54, 0.05) 100%
+    );
+
+    /* Enhanced focus ring — thicker, warmer, with offset for visibility.
+       Used via `focus-visible:ring` utilities that read the custom property. */
+    --focus-ring-width: 3px;
+    --focus-ring-offset: 2px;
+    --focus-ring-color: rgba(16, 185, 129, 0.4);
+
     /* Motion tokens — single source of truth for duration/easing. */
     --motion-duration-fast: 150ms;
     --motion-duration: 200ms;
@@ -130,6 +172,11 @@
     --motion-ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --motion-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
     --motion-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    /* Easing presets from the UX plan (Dodatok B) */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -264,12 +311,27 @@
      token so light & dark themes stay in sync automatically.
      ═══════════════════════════════════════════════════════════════════════ */
   .focus-ring {
-    @apply outline-none focus-visible:ring-2 focus-visible:ring-accent/60
-           focus-visible:ring-offset-2 focus-visible:ring-offset-surface;
+    @apply outline-none focus-visible:ring-accent/60
+           focus-visible:ring-offset-surface;
+    --tw-ring-offset-width: var(--focus-ring-offset, 2px);
+  }
+  .focus-ring:focus-visible {
+    --tw-ring-shadow: 0 0 0 var(--focus-ring-width, 3px)
+      var(--focus-ring-color, rgba(16, 185, 129, 0.4));
+  }
+
+  /* Enhanced focus ring — thicker, with animation on keyboard focus.
+     Applies to all interactive elements that don't define their own ring. */
+  .focus-ring-enhanced {
+    @apply outline-none;
+    transition: box-shadow 0.15s ease-out;
+  }
+  .focus-ring-enhanced:focus-visible {
+    box-shadow: var(--shadow-focus-ring, 0 0 0 3px rgba(16, 185, 129, 0.4));
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
-     INPUT FOCUS — ring без offset (краще читається всередині заповненого
+     INPUT FOCUS — ring без offset (краще читається в��ередині заповненого
      input-а), лишає existing border-transition інтактним. Варіанти беруть
      module tone; базовий `.input-focus` — для загальних (brand) інпутів.
      Завжди `focus-visible:` щоб не дратувати користувачів миші.
@@ -305,6 +367,65 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
+     TYPOGRAPHY HIERARCHY — Consistent heading scale across the app.
+     Usage: apply `.text-h1` / `.text-h2` etc. to heading elements.
+     Letter-spacing and font-weight are baked in; colour inherits from
+     the surrounding context so dark-mode works automatically.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Display — hero numbers, large stat values (e.g. ₴ 12 400) */
+  .text-display {
+    @apply text-[2.25rem] leading-none font-bold tracking-tight tabular-nums;
+  }
+
+  /* H1 — page / screen title */
+  .text-h1 {
+    @apply text-[1.5rem] leading-tight font-bold tracking-tight;
+  }
+
+  /* H2 — section heading */
+  .text-h2 {
+    @apply text-[1.125rem] leading-snug font-semibold tracking-[-0.01em];
+  }
+
+  /* H3 — card title, subsection label */
+  .text-h3 {
+    @apply text-[0.9375rem] leading-snug font-semibold;
+  }
+
+  /* Body — default prose */
+  .text-body {
+    @apply text-[0.9375rem] leading-relaxed font-normal;
+  }
+
+  /* Body Small — secondary text, descriptions */
+  .text-body-sm {
+    @apply text-[0.8125rem] leading-relaxed font-normal;
+  }
+
+  /* Caption — labels, timestamps, meta copy */
+  .text-caption {
+    @apply text-[0.75rem] leading-snug font-normal tracking-[0.01em];
+  }
+
+  /* Eyebrow — overline / section prefix ("ФІНІК", "СЬОГОДНІ") */
+  .text-eyebrow {
+    @apply text-[0.6875rem] leading-none font-semibold tracking-[0.08em] uppercase;
+  }
+
+  /* Celebration — achievement moments: XP gains, streaks, confetti title */
+  .text-celebration {
+    @apply text-[1.25rem] leading-tight font-bold tracking-[0.02em];
+    color: rgb(var(--c-celebration));
+  }
+
+  /* XP / level chip */
+  .text-xp {
+    @apply text-[0.8125rem] leading-none font-bold tracking-[0.02em] tabular-nums;
+    color: rgb(var(--c-xp));
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
      PANELS & CARDS — Core UI surfaces
      ═══════════════════════════════════════════════════════════════════════ */
   .panel {
@@ -324,7 +445,7 @@
 
   /* ═══════════════════════════════════════════════════════════════════════
      SAFE AREA PADDING — iOS notch & home indicator
-     ═══════════════════════════════════════════════════════════════════════ */
+     ══���════════════════════════════════════════════════════════════════════ */
   .page-tabbar-pad {
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
@@ -488,7 +609,7 @@
     height: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════════════���════════════════════
      SCROLLBAR UTILITIES
      ═══════════════════════════════════════════════════════════════════════ */
   .no-scrollbar::-webkit-scrollbar {
@@ -534,12 +655,6 @@
     @apply bg-gradient-to-r from-coral-500 to-coral-600 bg-clip-text text-transparent;
   }
 }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   PARTIALS — Animations & module surfaces extracted for maintainability.
-   ═══════════════════════════════════════════════════════════════════════ */
-@import "./styles/animations.css";
-@import "./styles/module-surfaces.css";
 
 /* ═══════════════════════════════════════════════════════════════════════
    iOS INPUT ZOOM FIX — Keep 16px minimum on touch devices only.
@@ -705,7 +820,7 @@
 
 /* ═══════════════════════════════════════════════════════════════════════
    FLOATING ACTION BUTTON — Quick actions
-   ═══════════════════════════════════════════════════════════════════════ */
+   ═════════════════════════════════════════════����═════════════════════════ */
 .fab {
   @apply fixed z-50 flex items-center justify-center
          w-14 h-14 rounded-full
@@ -775,4 +890,123 @@
   @apply opacity-100;
   visibility: visible;
   transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATION UTILITIES
+   Touch-friendly spacing, improved readability, and responsive helpers.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Touch target helper — ensures minimum 44x44px on touch devices */
+.touch-target {
+  @apply relative;
+}
+.touch-target::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Mobile-optimized list items with larger touch targets */
+.mobile-list-item {
+  @apply min-h-[56px] flex items-center px-4 py-3
+         active:bg-panelHi transition-colors;
+}
+
+@media (pointer: coarse) {
+  .mobile-list-item {
+    @apply min-h-[60px] py-4;
+  }
+}
+
+/* Swipeable container for mobile gestures */
+.swipeable {
+  @apply overflow-x-auto snap-x snap-mandatory scroll-smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.swipeable::-webkit-scrollbar {
+  display: none;
+}
+.swipeable > * {
+  @apply snap-center;
+}
+
+/* Mobile-first card grid — 1 column on mobile, 2 on tablet+ */
+.card-grid-mobile {
+  @apply grid grid-cols-1 gap-3;
+}
+@media (min-width: 480px) {
+  .card-grid-mobile {
+    @apply grid-cols-2;
+  }
+}
+
+/* Improved text readability on small screens */
+.mobile-readable {
+  @apply text-base leading-relaxed;
+  /* Slightly larger text on mobile for better readability */
+}
+@media (min-width: 640px) {
+  .mobile-readable {
+    @apply text-sm leading-normal;
+  }
+}
+
+/* Bottom sheet safe area padding */
+.sheet-safe-bottom {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Sticky header with safe area */
+.sticky-header-safe {
+  @apply sticky top-0 z-40 bg-bg/95 backdrop-blur-sm;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Hide on touch devices */
+@media (pointer: coarse) {
+  .hide-touch {
+    display: none !important;
+  }
+}
+
+/* Show only on touch devices */
+@media (pointer: fine) {
+  .show-touch-only {
+    display: none !important;
+  }
+}
+
+/* Optimized button spacing for mobile */
+.mobile-button-group {
+  @apply flex flex-col gap-3;
+}
+@media (min-width: 480px) {
+  .mobile-button-group {
+    @apply flex-row gap-2;
+  }
+}
+
+/* Loading placeholder with reduced motion support */
+.loading-placeholder {
+  @apply bg-line/30 rounded-lg;
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-placeholder {
+    animation: none;
+    @apply bg-line/50;
+  }
+}
+
+/* Improved focus visibility for mobile */
+@media (pointer: coarse) {
+  :focus-visible {
+    outline-offset: 4px;
+  }
 }

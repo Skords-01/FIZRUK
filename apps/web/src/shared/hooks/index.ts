@@ -53,3 +53,29 @@ export type {
 } from "./useToast";
 
 export { useWebVisualKeyboardInset } from "./useVisualKeyboardInset";
+
+export { useScrollHeader } from "./useScrollHeader";
+export type {
+  ScrollHeaderState,
+  UseScrollHeaderOptions,
+} from "./useScrollHeader";
+
+export { usePullToRefresh } from "./usePullToRefresh";
+export type {
+  PullToRefreshState,
+  UsePullToRefreshOptions,
+} from "./usePullToRefresh";
+
+export { useFocusTrap } from "./useFocusTrap";
+
+export { useFormValidation, validationRules } from "./useFormValidation";
+export type { UseFormValidationReturn } from "./useFormValidation";
+
+export { useCountUp, useFormattedCountUp } from "./useCountUp";
+
+export type { DarkModeSchedule, UseDarkModeReturn } from "./useDarkMode";
+
+export { useHaptic } from "./useHaptic";
+export type { UseHapticReturn } from "./useHaptic";
+
+export { useReducedMotion } from "./useReducedMotion";

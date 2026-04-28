@@ -33,18 +33,28 @@ import { router, type Href } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Settings, Sparkles } from "lucide-react-native";
+
+import { colors } from "@/theme";
 
 import { useUser } from "@sergeant/api-client/react";
 import {
+  getActiveModules,
+  getHideInactiveModules,
+  isActiveModule,
   isFirstActionPending,
   isFirstRealEntryDone,
   isSoftAuthDismissed,
+  setHideInactiveModules,
   type DashboardModuleId,
   type KVStore,
 } from "@sergeant/shared";
 
 import { DraggableDashboard } from "./DraggableDashboard";
-import { DASHBOARD_MODULE_ROUTES } from "./dashboardModuleConfig";
+import {
+  DASHBOARD_MODULE_ROUTES,
+  VISIBLE_DASHBOARD_MODULES,
+} from "./dashboardModuleConfig";
 import { FirstActionHeroCard } from "./FirstActionHeroCard";
 import { HubInsightsPanel, type InsightItem } from "./HubInsightsPanel";
 import { SoftAuthPromptCard } from "./SoftAuthPromptCard";
@@ -121,9 +131,51 @@ export function HubDashboard() {
     enabled: signedIn,
   });
 
-  const { visibleOrder, reorderVisible } = useDashboardOrder();
+  // Active vs. inactive modules — driven by the user's onboarding
+  // "vibe picks". Inactive modules render greyed-out (or hidden when
+  // the user has flipped the `hideInactive` toggle below). Computed
+  // before `useDashboardOrder` so the visibility filter can drop
+  // inactive ids when the toggle is on.
+  const activeModules = useMemo(() => getActiveModules(mmkvStore), []);
+  const [hideInactive, setHideInactive] = useState(() =>
+    getHideInactiveModules(mmkvStore),
+  );
+  const toggleHideInactive = useCallback(() => {
+    setHideInactive((prev) => {
+      const next = !prev;
+      setHideInactiveModules(mmkvStore, next);
+      return next;
+    });
+  }, []);
+  const dashboardVisibleIds = useMemo(
+    () =>
+      hideInactive
+        ? VISIBLE_DASHBOARD_MODULES.filter((id) =>
+            isActiveModule(activeModules, id),
+          )
+        : VISIBLE_DASHBOARD_MODULES,
+    [hideInactive, activeModules],
+  );
+
+  const { visibleOrder, reorderVisible } =
+    useDashboardOrder(dashboardVisibleIds);
   const { focus, rest, dismiss: dismissFocus } = useDashboardFocus();
   const previews = useModulePreviews();
+
+  const inactiveModuleSet = useMemo(
+    () =>
+      new Set<DashboardModuleId>(
+        visibleOrder.filter((id) => !isActiveModule(activeModules, id)),
+      ),
+    [visibleOrder, activeModules],
+  );
+  const hasInactive = useMemo(
+    () =>
+      VISIBLE_DASHBOARD_MODULES.some(
+        (id) => !isActiveModule(activeModules, id),
+      ),
+    [activeModules],
+  );
 
   const runDigest = useCallback(() => {
     void generate();
@@ -158,6 +210,10 @@ export function HubDashboard() {
 
   const openSettings = useCallback(() => {
     router.push("/settings" as Href);
+  }, []);
+
+  const openAssistant = useCallback(() => {
+    router.push("/assistant" as Href);
   }, []);
 
   const bumpHero = useCallback(() => setHeroTick((t) => t + 1), []);
@@ -211,7 +267,7 @@ export function HubDashboard() {
     <SafeAreaView className="flex-1 bg-cream-50" edges={["top", "bottom"]}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 16 }}
       >
         <View className="flex-row items-start justify-between gap-3">
           <View className="flex-1 gap-1">
@@ -229,10 +285,10 @@ export function HubDashboard() {
             accessibilityRole="button"
             accessibilityLabel="Відкрити налаштування"
             onPress={openSettings}
-            className="h-10 w-10 items-center justify-center rounded-full bg-cream-100 active:opacity-70"
+            className="h-10 w-10 items-center justify-center rounded-full bg-cream-100 active:opacity-70 active:scale-95"
             testID="dashboard-settings-button"
           >
-            <Text className="text-lg">⚙️</Text>
+            <Settings size={20} color={colors.textMuted} strokeWidth={2} />
           </Pressable>
         </View>
 
@@ -269,9 +325,29 @@ export function HubDashboard() {
             onReorder={reorderVisible}
             onOpenModule={openModule}
             previews={previews}
+            inactiveModules={inactiveModuleSet}
           />
+          {hasInactive ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                hideInactive
+                  ? "Показати неактивні модулі"
+                  : "Приховати неактивні модулі"
+              }
+              onPress={toggleHideInactive}
+              className="mt-1 self-center px-2 py-1 active:opacity-70"
+              testID="dashboard-toggle-hide-inactive"
+            >
+              <Text className="text-[11px] text-fg-muted underline">
+                {hideInactive
+                  ? "Показати неактивні модулі"
+                  : "Приховати неактивні модулі"}
+              </Text>
+            </Pressable>
+          ) : null}
           <Text className="mt-1 text-[11px] leading-snug text-fg-subtle">
-            Утримай і потягни, щоб змінити порядок модулів. Порядок
+            Утримай і потягни, щоб змін��ти порядок модулів. Порядок
             синхронізується з вебом.
           </Text>
         </View>
@@ -284,6 +360,28 @@ export function HubDashboard() {
 
         <WeeklyDigestFooter />
       </ScrollView>
+
+      {/* Assistant FAB — thumb-reach entry to AI chat.
+          Always visible so user can reach assistant from anywhere. */}
+      <View
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: 24,
+          pointerEvents: "box-none",
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Відкрити AI-асистента"
+          onPress={openAssistant}
+          className="h-14 flex-row items-center gap-2 rounded-full bg-brand-700 pl-4 pr-5 shadow-lg active:scale-95 active:opacity-90"
+          testID="dashboard-assistant-fab"
+        >
+          <Sparkles size={20} color="#fff" strokeWidth={2.2} />
+          <Text className="text-sm font-semibold text-white">Асистент</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }

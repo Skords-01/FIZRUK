@@ -1,9 +1,26 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Button } from "@shared/components/ui/Button";
 import { useToast } from "@shared/hooks/useToast";
-import { resetOnboardingState, type KVStore } from "@sergeant/shared";
+import {
+  ALL_MODULES,
+  DASHBOARD_MODULE_LABELS as SHARED_DASHBOARD_MODULE_LABELS,
+  DASHBOARD_DENSITIES,
+  DASHBOARD_DENSITY_LABELS,
+  DASHBOARD_DENSITY_DESCRIPTIONS,
+  DEFAULT_DASHBOARD_DENSITY,
+  normalizeDashboardDensity,
+  STORAGE_KEYS,
+  getActiveModules,
+  getHideInactiveModules,
+  resetOnboardingState,
+  setActiveModules,
+  setHideInactiveModules,
+  type DashboardDensity,
+  type DashboardModuleId,
+  type KVStore,
+} from "@sergeant/shared";
 import { HubBackupPanel } from "../hub/HubBackupPanel";
 import {
   swClearCaches,
@@ -92,35 +109,87 @@ export function GeneralSection({
 }: GeneralSectionProps) {
   const [orderReset, setOrderReset] = useState(false);
   const [showHints, setShowHints] = useHubPref<boolean>("showHints", true);
+  const [density, setDensityState] = useState<DashboardDensity>(() => {
+    try {
+      return normalizeDashboardDensity(
+        localStorage.getItem(STORAGE_KEYS.DASHBOARD_DENSITY),
+      );
+    } catch {
+      return DEFAULT_DASHBOARD_DENSITY;
+    }
+  });
+  const handleDensityChange = useCallback((next: DashboardDensity) => {
+    setDensityState(next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.DASHBOARD_DENSITY, next);
+    } catch {
+      /* noop */
+    }
+  }, []);
   const [order, setOrder] = useState<ModuleId[]>(
     () => loadDashboardOrder() as ModuleId[],
   );
   const toast = useToast();
   const [swBusy, setSwBusy] = useState(false);
 
-  const localStorageStore: KVStore = {
-    getString(key) {
-      try {
-        return localStorage.getItem(key);
-      } catch {
-        return null;
-      }
+  const localStorageStore: KVStore = useMemo(
+    () => ({
+      getString(key) {
+        try {
+          return localStorage.getItem(key);
+        } catch {
+          return null;
+        }
+      },
+      setString(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch {
+          /* noop */
+        }
+      },
+      remove(key) {
+        try {
+          localStorage.removeItem(key);
+        } catch {
+          /* noop */
+        }
+      },
+    }),
+    [],
+  );
+  const [activeModules, setActiveModulesState] = useState<DashboardModuleId[]>(
+    () => getActiveModules(localStorageStore),
+  );
+  const [hideInactive, setHideInactiveState] = useState(() =>
+    getHideInactiveModules(localStorageStore),
+  );
+  const toggleActive = useCallback(
+    (id: DashboardModuleId) => {
+      setActiveModulesState((prev) => {
+        const isActive = prev.includes(id);
+        // Keep at least one module active so the dashboard never
+        // collapses to an empty grid.
+        if (isActive && prev.length === 1) {
+          toast.error("Щонайменше один модуль має бути активним");
+          return prev;
+        }
+        const next = isActive
+          ? prev.filter((x) => x !== id)
+          : ALL_MODULES.filter((x) => prev.includes(x) || x === id);
+        setActiveModules(localStorageStore, next);
+        return next;
+      });
     },
-    setString(key, value) {
-      try {
-        localStorage.setItem(key, value);
-      } catch {
-        /* noop */
-      }
+    [localStorageStore, toast],
+  );
+  const toggleHideInactive = useCallback(
+    (next: boolean) => {
+      setHideInactiveState(next);
+      setHideInactiveModules(localStorageStore, next);
     },
-    remove(key) {
-      try {
-        localStorage.removeItem(key);
-      } catch {
-        /* noop */
-      }
-    },
-  };
+    [localStorageStore],
+  );
 
   const handleMove = useCallback((index: number, direction: -1 | 1) => {
     setOrder((prev) => {
@@ -147,8 +216,40 @@ export function GeneralSection({
           label="Показувати підказки"
           description="Короткі підказки в моменті (без спаму)."
           checked={showHints !== false}
-          onChange={(e) => setShowHints(e.target.checked)}
+          onChange={setShowHints}
         />
+      </SettingsSubGroup>
+      <SettingsSubGroup title="Щільність дашборду">
+        <p className="text-xs text-subtle leading-snug">
+          Скільки простору між картками на головному екрані.
+        </p>
+        <div className="flex gap-2">
+          {DASHBOARD_DENSITIES.map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => handleDensityChange(d)}
+              className={cn(
+                "flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                d === density
+                  ? "border-brand bg-brand/8 ring-1 ring-brand/30"
+                  : "border-line bg-panel hover:bg-panelHi",
+              )}
+            >
+              <span
+                className={cn(
+                  "block text-sm font-medium",
+                  d === density ? "text-brand-strong" : "text-text",
+                )}
+              >
+                {DASHBOARD_DENSITY_LABELS[d]}
+              </span>
+              <span className="block text-xs text-muted mt-0.5">
+                {DASHBOARD_DENSITY_DESCRIPTIONS[d]}
+              </span>
+            </button>
+          ))}
+        </div>
       </SettingsSubGroup>
       <SettingsSubGroup title="Онбординг">
         <p className="text-xs text-subtle leading-snug">
@@ -226,6 +327,38 @@ export function GeneralSection({
             Скинути кеш PWA
           </Button>
         </div>
+      </SettingsSubGroup>
+      <SettingsSubGroup title="Активні модулі">
+        <p className="text-xs text-subtle leading-snug">
+          Неактивні модулі відображаються на дашборді приглушено — без кнопки
+          швидкого додавання. Чонайменше один модуль має залишатися активним.
+        </p>
+        <ul className="rounded-xl border border-line divide-y divide-line/60 overflow-hidden">
+          {ALL_MODULES.map((id) => {
+            const checked = activeModules.includes(id);
+            return (
+              <li key={id} className="px-3 py-2 bg-panel">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleActive(id)}
+                    className="h-4 w-4 accent-primary"
+                  />
+                  <span className="flex-1 text-sm text-text">
+                    {SHARED_DASHBOARD_MODULE_LABELS[id]}
+                  </span>
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+        <ToggleRow
+          label="Приховати неактивні модулі"
+          description="Повністю ховає неактивні плитки з дашборду."
+          checked={hideInactive}
+          onChange={toggleHideInactive}
+        />
       </SettingsSubGroup>
       <SettingsSubGroup title="Упорядкувати модулі">
         <p className="text-xs text-subtle leading-snug">

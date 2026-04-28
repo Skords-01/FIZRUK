@@ -104,6 +104,29 @@ export function Workouts() {
     updateItem,
     removeItem,
   } = useWorkouts();
+  const removeItemWithUndo = useCallback(
+    (workoutId, itemId) => {
+      const w = workouts.find((x) => x.id === workoutId);
+      if (!w) {
+        removeItem(workoutId, itemId);
+        return;
+      }
+      const snapshot = {
+        items: w.items || [],
+        groups: w.groups || [],
+      };
+      removeItem(workoutId, itemId);
+      showUndoToast(toast, {
+        msg: "Вправу видалено з тренування",
+        onUndo: () =>
+          updateWorkout(workoutId, {
+            items: snapshot.items,
+            groups: snapshot.groups,
+          }),
+      });
+    },
+    [workouts, removeItem, updateWorkout, toast],
+  );
   const templateApi = useWorkoutTemplates();
   const [q, setQ] = useState("");
   const [equipmentFilter, setEquipmentFilter] = useState<string[]>([]);
@@ -525,13 +548,14 @@ export function Workouts() {
             setRestTimer={setRestTimer}
             updateWorkout={updateWorkout}
             updateItem={updateItem}
-            removeItem={removeItem}
+            removeItem={removeItemWithUndo}
             setFinishFlash={setFinishFlash}
             endWorkout={endWorkout}
             setDeleteWorkoutConfirm={setDeleteWorkoutConfirm}
             summarizeWorkoutForFinish={summarizeWorkoutForFinish}
             submitRetroWorkout={submitRetroWorkout}
             deleteWorkout={deleteWorkout}
+            restoreWorkout={restoreWorkout}
           />
         )}
 

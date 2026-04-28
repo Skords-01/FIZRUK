@@ -2,9 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import {
   countRealEntries,
+  getActiveModules,
   getActiveNudge,
+  getHideInactiveModules,
   getVibePicks,
+  isActiveModule,
   recordLastActiveDate,
+  setHideInactiveModules,
   shouldShowReengagement,
   type User,
 } from "@sergeant/shared";
@@ -119,6 +123,32 @@ export function HubDashboard({
     });
   }, [sessionDays, nudgeDismissed]);
 
+  // Active vs. inactive modules — driven by the user's onboarding
+  // "vibe picks". Inactive modules render greyed-out (or hidden when
+  // the user has flipped the `hideInactive` toggle below).
+  const activeModules = useMemo(() => getActiveModules(localStorageStore), []);
+  const [hideInactive, setHideInactive] = useState(() =>
+    getHideInactiveModules(localStorageStore),
+  );
+  const toggleHideInactive = useCallback(() => {
+    setHideInactive((prev) => {
+      const next = !prev;
+      setHideInactiveModules(localStorageStore, next);
+      return next;
+    });
+  }, []);
+  const hasInactive = useMemo(
+    () => order.some((id) => !isActiveModule(activeModules, id)),
+    [order, activeModules],
+  );
+  const visibleOrder = useMemo(
+    () =>
+      hideInactive
+        ? order.filter((id) => isActiveModule(activeModules, id))
+        : order,
+    [order, activeModules, hideInactive],
+  );
+
   const { focus, rest, dismiss } = useDashboardFocus();
 
   // Insights з deep-link (`actionHash`) повинні відкрити модуль рівно
@@ -161,7 +191,12 @@ export function HubDashboard({
   const quickAddByModule = useMemo(() => {
     const map: Record<string, { label: string; run: () => void } | undefined> =
       {};
+    const activeSet = new Set<string>(activeModules);
     for (const id of modulesWithSignal) {
+      // Suppress quick-add for inactive modules — the BentoCard
+      // already hides the affordance, but skipping here keeps the
+      // registry tidy and avoids accidental wiring downstream.
+      if (!activeSet.has(id)) continue;
       const quick = getModulePrimaryAction(id);
       if (!quick) continue;
       map[id] = {
@@ -174,7 +209,7 @@ export function HubDashboard({
       };
     }
     return map;
-  }, [modulesWithSignal]);
+  }, [modulesWithSignal, activeModules]);
 
   const handleDragEnd = useCallback(
     (event: {
@@ -287,19 +322,35 @@ export function HubDashboard({
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={order} strategy={rectSortingStrategy}>
+            <SortableContext
+              items={visibleOrder}
+              strategy={rectSortingStrategy}
+            >
               <div className="grid grid-cols-2 gap-3">
-                {order.map((id) => (
+                {visibleOrder.map((id) => (
                   <SortableCard
                     key={id}
                     id={id as ModuleId}
                     onOpenModule={onOpenModule}
                     quickAdd={quickAddByModule[id] || null}
+                    inactive={!isActiveModule(activeModules, id)}
                   />
                 ))}
               </div>
             </SortableContext>
           </DndContext>
+
+          {hasInactive && (
+            <button
+              type="button"
+              onClick={toggleHideInactive}
+              className="mx-auto mt-2 block text-2xs text-muted underline-offset-2 hover:text-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              {hideInactive
+                ? "Показати неактивні модулі"
+                : "Приховати неактивні модулі"}
+            </button>
+          )}
         </section>
       </StaggerChild>
 

@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { cn } from "@shared/lib/cn";
 import {
+  Avatar,
   Badge,
   Banner,
   Button,
@@ -16,6 +17,7 @@ import {
   ICON_NAMES,
   IconButton,
   Input,
+  ProgressRing,
   SectionHeading,
   Segmented,
   Select,
@@ -23,8 +25,12 @@ import {
   SkeletonText,
   Spinner,
   Stat,
+  Switch,
   Tabs,
   Textarea,
+  Tooltip,
+  useCelebration,
+  FeatureSpotlight,
 } from "@shared/components/ui";
 import { Modal } from "@shared/components/ui/Modal";
 import { Sheet } from "@shared/components/ui/Sheet";
@@ -107,6 +113,8 @@ const NAV_SECTIONS = [
   { id: "navigation", label: "Навігація" },
   { id: "overlays", label: "Overlays" },
   { id: "feedback", label: "Фідбек" },
+  { id: "celebration", label: "Святкування" },
+  { id: "onboarding", label: "Онбординг" },
 ] as const;
 
 // ─── Main ──────────────────────────────────────────────────────────────────
@@ -119,6 +127,9 @@ export function DesignShowcase() {
   const [modal, setModal] = useState<"sm" | "md" | "lg" | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [switchOn, setSwitchOn] = useState(false);
+  const { success, achievement, confetti, goalCompleted, streak } =
+    useCelebration();
 
   return (
     <div className="min-h-dvh bg-bg">
@@ -1073,6 +1084,158 @@ export function DesignShowcase() {
                 </div>
                 <span className="text-xs text-muted font-mono">check-pop</span>
               </div>
+            </div>
+          </Group>
+
+          <Group label="Avatar">
+            <div className="flex flex-wrap items-end gap-4">
+              {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+                <Avatar key={size} size={size} name="Сергій Коваленко" src="" />
+              ))}
+              <Avatar size="lg" name="Онлайн" status="online" />
+              <Avatar size="lg" name="Офлайн" status="offline" />
+              <Avatar size="lg" name="Зайнятий" status="busy" />
+            </div>
+          </Group>
+
+          <Group label="ProgressRing">
+            <div className="flex flex-wrap items-end gap-6">
+              {(["sm", "md", "lg", "xl"] as const).map((size) => (
+                <ProgressRing key={size} size={size} value={65} max={100} />
+              ))}
+              <ProgressRing size="lg" value={100} max={100} variant="success" />
+              <ProgressRing size="lg" value={30} max={100} variant="warning" />
+              <ProgressRing size="lg" value={15} max={100} variant="danger" />
+            </div>
+          </Group>
+
+          <Group label="Switch">
+            <div className="flex flex-wrap items-center gap-6">
+              <Switch
+                checked={switchOn}
+                onChange={setSwitchOn}
+                label="Увімкнено"
+              />
+              <Switch checked={false} onChange={() => {}} label="Вимкнено" />
+              <Switch
+                checked={true}
+                onChange={() => {}}
+                disabled
+                label="Disabled on"
+              />
+              <Switch
+                checked={false}
+                onChange={() => {}}
+                disabled
+                label="Disabled off"
+              />
+            </div>
+          </Group>
+
+          <Group label="Tooltip">
+            <div className="flex flex-wrap items-center gap-4">
+              <Tooltip content="Підказка зверху" placement="top-center">
+                <Button variant="secondary" size="sm">
+                  Top
+                </Button>
+              </Tooltip>
+              <Tooltip content="Підказка знизу" placement="bottom-center">
+                <Button variant="secondary" size="sm">
+                  Bottom
+                </Button>
+              </Tooltip>
+              <Tooltip content="Підказка зліва" placement="left-center">
+                <Button variant="secondary" size="sm">
+                  Left
+                </Button>
+              </Tooltip>
+              <Tooltip content="Підказка справа" placement="right-center">
+                <Button variant="secondary" size="sm">
+                  Right
+                </Button>
+              </Tooltip>
+            </div>
+          </Group>
+        </Sec>
+
+        {/* ── 11. CELEBRATION ─────────────────────────────────────── */}
+        <Sec id="celebration" title="Святкування">
+          <Group label="CelebrationModal">
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="success"
+                size="sm"
+                onClick={() => success("Збережено!", "Дані успішно оновлено")}
+              >
+                Success
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() =>
+                  achievement(
+                    "Перша транзакція!",
+                    "Ти зробив перший крок до фінансової свободи",
+                    [
+                      { icon: "💰", label: "Фінансист" },
+                      { icon: "📊", label: "Аналітик" },
+                    ],
+                  )
+                }
+              >
+                Achievement
+              </Button>
+              <Button
+                variant="finyk"
+                size="sm"
+                onClick={() =>
+                  confetti("Вітаю!", "Ти досяг нового рівня!", "high")
+                }
+              >
+                Confetti
+              </Button>
+              <Button
+                variant="fizruk"
+                size="sm"
+                onClick={() => goalCompleted("Тренування", 45, "хв", "fizruk")}
+              >
+                Goal
+              </Button>
+              <Button
+                variant="routine"
+                size="sm"
+                onClick={() => streak(7, "7 днів поспіль!")}
+              >
+                Streak
+              </Button>
+            </div>
+          </Group>
+        </Sec>
+
+        {/* ── 12. ONBOARDING ──────────────────────────────────────── */}
+        <Sec id="onboarding" title="Онбординг">
+          <Group label="FeatureSpotlight">
+            <div className="flex flex-wrap gap-4">
+              <FeatureSpotlight
+                id="demo-spotlight-top"
+                title="Підказка зверху"
+                description="Це демо підказки з позицією top"
+                placement="top"
+              >
+                <Button variant="secondary" size="sm">
+                  Hover me (top)
+                </Button>
+              </FeatureSpotlight>
+              <FeatureSpotlight
+                id="demo-spotlight-bottom"
+                title="Підказка знизу"
+                description="Це демо підказки з позицією bottom"
+                placement="bottom"
+              >
+                <Button variant="secondary" size="sm">
+                  Hover me (bottom)
+                </Button>
+              </FeatureSpotlight>
             </div>
           </Group>
         </Sec>
