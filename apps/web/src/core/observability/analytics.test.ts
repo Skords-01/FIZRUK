@@ -77,4 +77,20 @@ describe("trackEvent", () => {
 
     expect(capturePostHogEvent).toHaveBeenCalledWith("weird_payload", {});
   });
+
+  it("викид із PostHog transport не пропагується у викликача", () => {
+    // `trackEvent` контракт у шапці файлу: "ніколи не кидає". Якщо
+    // `capturePostHogEvent` чомусь throw-не — onboarding/finyk hooks не
+    // мають впасти. Регресія на Devin Review finding на #972.
+    capturePostHogEvent.mockImplementationOnce(() => {
+      throw new Error("posthog explosion");
+    });
+    return import("./analytics").then(({ trackEvent }) => {
+      expect(() => trackEvent("safe_event", { foo: 1 })).not.toThrow();
+      // localStorage-шлях лишається працездатним і пише подію навіть
+      // коли PostHog transport вибухнув.
+      const raw = localStorage.getItem("hub_analytics_log_v1");
+      expect(raw).toBeTruthy();
+    });
+  });
 });

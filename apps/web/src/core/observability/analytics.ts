@@ -70,5 +70,15 @@ export function trackEvent(
     };
     analyticsWindow.__hubAnalytics = [...current, event].slice(-MAX_LOG);
   } catch {}
-  capturePostHogEvent(eventName, event.payload as Record<string, unknown>);
+  // Окремий try/catch — `trackEvent` контракт каже "ніколи не кидає"
+  // (див. шапку файлу). `capturePostHogEvent` сам по собі захищений
+  // від throw усередині `posthog.capture`, але `enqueue` /
+  // `import.meta.env` шляхи теоретично можуть зловити edge-кейс — щит
+  // тримаємо у викликача, бо ~10 call-sites покладаються на
+  // fire-and-forget (див. Devin Review on #972).
+  try {
+    capturePostHogEvent(eventName, event.payload as Record<string, unknown>);
+  } catch {
+    /* PostHog transport never breaks trackEvent callers */
+  }
 }
