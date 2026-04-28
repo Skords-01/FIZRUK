@@ -37,7 +37,10 @@
       "typeVersion": 4.2,
       "position": [460, 300],
       "credentials": {
-        "httpHeaderAuth": { "id": "CONFIGURE_ME", "name": "Anthropic (x-api-key)" }
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_ME",
+          "name": "Anthropic (x-api-key)"
+        }
       }
     },
     {
@@ -121,5 +124,10 @@
     }
   },
   "settings": { "executionOrder": "v1", "timezone": "Europe/Kyiv" },
-  "tags": [{ "name": "finyk" }, { "name": "mono" }, { "name": "ai" }, { "name": "budget" }]
+  "tags": [
+    { "name": "finyk" },
+    { "name": "mono" },
+    { "name": "ai" },
+    { "name": "budget" }
+  ]
 }
