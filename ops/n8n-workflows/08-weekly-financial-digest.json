@@ -94,7 +94,9 @@
   ],
   "connections": {
     "Cron Sun 20:00 Kyiv": {
-      "main": [[{ "node": "Weekly spending by category", "type": "main", "index": 0 }]]
+      "main": [
+        [{ "node": "Weekly spending by category", "type": "main", "index": 0 }]
+      ]
     },
     "Weekly spending by category": {
       "main": [[{ "node": "Format spending data", "type": "main", "index": 0 }]]
@@ -110,6 +112,11 @@
     }
   },
   "settings": { "executionOrder": "v1", "timezone": "Europe/Kyiv" },
-  "tags": [{ "name": "sergeant" }, { "name": "finyk" }, { "name": "ai" }, { "name": "digest" }],
+  "tags": [
+    { "name": "sergeant" },
+    { "name": "finyk" },
+    { "name": "ai" },
+    { "name": "digest" }
+  ],
   "active": false
 }

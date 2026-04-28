@@ -88,7 +88,9 @@
   ],
   "connections": {
     "Cron 04:00 UTC": {
-      "main": [[{ "node": "GitHub → nightly-audit runs", "type": "main", "index": 0 }]]
+      "main": [
+        [{ "node": "GitHub → nightly-audit runs", "type": "main", "index": 0 }]
+      ]
     },
     "GitHub → nightly-audit runs": {
       "main": [[{ "node": "Check audit status", "type": "main", "index": 0 }]]
@@ -104,6 +106,10 @@
     }
   },
   "settings": { "executionOrder": "v1", "timezone": "UTC" },
-  "tags": [{ "name": "sergeant" }, { "name": "security" }, { "name": "github" }],
+  "tags": [
+    { "name": "sergeant" },
+    { "name": "security" },
+    { "name": "github" }
+  ],
   "active": false
 }

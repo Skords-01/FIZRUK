@@ -39,7 +39,13 @@
  *    a folder with `_layout.tsx` Stack without touching this file.
  */
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { View } from "react-native";
 import Animated, {
   useSharedValue,

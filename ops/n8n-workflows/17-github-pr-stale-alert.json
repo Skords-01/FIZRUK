@@ -3,7 +3,9 @@
   "nodes": [
     {
       "parameters": {
-        "interval": [{ "field": "cronExpression", "expression": "0 10 * * 1-5" }]
+        "interval": [
+          { "field": "cronExpression", "expression": "0 10 * * 1-5" }
+        ]
       },
       "id": "cron-weekday",
       "name": "Cron 10:00 Mon–Fri",
@@ -91,7 +93,9 @@
       "main": [[{ "node": "GitHub → open PRs", "type": "main", "index": 0 }]]
     },
     "GitHub → open PRs": {
-      "main": [[{ "node": "Filter stale PRs (>48h)", "type": "main", "index": 0 }]]
+      "main": [
+        [{ "node": "Filter stale PRs (>48h)", "type": "main", "index": 0 }]
+      ]
     },
     "Filter stale PRs (>48h)": {
       "main": [[{ "node": "Has stale PRs?", "type": "main", "index": 0 }]]

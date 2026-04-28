@@ -180,13 +180,13 @@ railway up --detach
 
 Додай у n8n → Settings → Environment Variables:
 
-| Змінна                    | Використовується в   | Де взяти                                             |
-| ------------------------- | -------------------- | ---------------------------------------------------- |
-| `API_SECRET`              | 07, 09, 10           | `.env` сервера (той самий `API_SECRET`)              |
-| `PUBLIC_API_BASE_URL`     | 07, 09, 10           | `https://your-api.railway.app`                       |
-| `POSTHOG_PERSONAL_API_KEY`| 16                   | PostHog → Settings → Personal API Keys              |
-| `POSTHOG_PROJECT_ID`      | 16                   | PostHog → Settings → Project → ID у URL             |
-| `GITHUB_PAT`              | 17, 18               | GitHub → Settings → Developer settings → PAT (classic), scope: `repo` |
+| Змінна                     | Використовується в | Де взяти                                                              |
+| -------------------------- | ------------------ | --------------------------------------------------------------------- |
+| `API_SECRET`               | 07, 09, 10         | `.env` сервера (той самий `API_SECRET`)                               |
+| `PUBLIC_API_BASE_URL`      | 07, 09, 10         | `https://your-api.railway.app`                                        |
+| `POSTHOG_PERSONAL_API_KEY` | 16                 | PostHog → Settings → Personal API Keys                                |
+| `POSTHOG_PROJECT_ID`       | 16                 | PostHog → Settings → Project → ID у URL                               |
+| `GITHUB_PAT`               | 17, 18             | GitHub → Settings → Developer settings → PAT (classic), scope: `repo` |
 
 ### Railway Webhook (для воркфлоу 15)
 

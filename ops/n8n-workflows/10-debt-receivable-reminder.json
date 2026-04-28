@@ -107,10 +107,14 @@
       ]
     },
     "POST /api/push/send": {
-      "main": [[{ "node": "Format Telegram summary", "type": "main", "index": 0 }]]
+      "main": [
+        [{ "node": "Format Telegram summary", "type": "main", "index": 0 }]
+      ]
     },
     "Format Telegram summary": {
-      "main": [[{ "node": "Telegram → debt summary", "type": "main", "index": 0 }]]
+      "main": [
+        [{ "node": "Telegram → debt summary", "type": "main", "index": 0 }]
+      ]
     }
   },
   "settings": { "executionOrder": "v1", "timezone": "Europe/Kyiv" },
