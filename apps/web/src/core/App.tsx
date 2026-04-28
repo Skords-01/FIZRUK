@@ -450,14 +450,9 @@ function AppInner() {
           inFtuxSession={inFtuxSession}
         />
 
-        {/* Thumb-reach entry to the AI assistant. Module quick-add is
-            handled above by `TodayFocusCard`'s chips (+ Витрата / + Їжа /
-            + Звичка / + Тренування), so a separate add-speed-dial FAB
-            would be a pure duplicate. Hidden during the FTUX session so
-            the only interactive surface in view is the FirstActionHero
-            → PresetSheet one-tap path; the FAB returns the moment the
-            first real entry lands. */}
-        <HubFloatingActions hidden={inFtuxSession} onOpenChat={ui.openChat} />
+        {/* Thumb-reach entry to the AI assistant. Always visible so the
+            user can reach the assistant from anywhere on the hub. */}
+        <HubFloatingActions onOpenChat={ui.openChat} />
 
         {/* Persistent shortcut back to an in-progress Fizruk workout.
             Hidden during FTUX so the splash stays single-CTA; otherwise
