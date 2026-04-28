@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import type { Pool } from "pg";
+import { createInternalRouter } from "./internal/index.js";
 import { createAuthRouter } from "./auth.js";
 import { createBanksRouter } from "./banks.js";
 import { createMonoWebhookRouter } from "./mono-webhook.js";
@@ -28,6 +29,9 @@ import { createWeeklyDigestRouter } from "./weekly-digest.js";
  * `app.js`), потім решта доменних роутерів.
  */
 export function registerRoutes(app: Express, { pool }: { pool: Pool }): void {
+  // Internal machine-to-machine routes (n8n → server). Registered first so
+  // they are never accidentally matched by a wildcard further down.
+  app.use(createInternalRouter({ pool }));
   app.use(createHealthRouter({ pool }));
   app.use(createAuthRouter());
   app.use(createMeRouter());
