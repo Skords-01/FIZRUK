@@ -54,7 +54,11 @@ export function HubFloatingActions({
         // `text-white` at 14px regular weight (≥4.5:1).
         "bg-brand-700 text-white shadow-float",
         "hover:bg-brand-800 hover:shadow-glow active:scale-95 transition-[background-color,box-shadow,opacity,transform]",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        // Focus-ring: суцільний brand-500 (без /45 альфи) — гарантовано ≥3:1
+        // контраст проти bg в dark-mode (alpha-варіант просідала на panelHi).
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        // FAB compact-варіант — 48×48 пкс (Material 3 / iOS HIG thumb-baseline);
+        // повний варіант — pill 56 пкс заввишки.
         compact ? "h-12 w-12" : "h-14 pl-4 pr-5 gap-2",
       )}
     >
