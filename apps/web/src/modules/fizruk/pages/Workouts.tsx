@@ -25,6 +25,15 @@ import {
 } from "@sergeant/fizruk-domain";
 import { computeWorkoutSummary } from "@sergeant/fizruk-domain/domain";
 
+// Legacy Safari (< 14) ships `AudioContext` only as prefixed
+// `webkitAudioContext`. Not in `lib.dom.d.ts`, so we attach it to `Window`
+// via module augmentation rather than relying on a double-cast.
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
 // Shared AudioContext reused across beeps. Creating/closing one per call
 // races with quick successive rest-timer completions and fights iOS' audio
 // session. Lazily created on first call (after a user gesture) and kept open
@@ -34,10 +43,8 @@ function getAudioCtx(): AudioContext | null {
   try {
     if (sharedAudioCtx && sharedAudioCtx.state !== "closed")
       return sharedAudioCtx;
-    const Ctor =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext;
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
     sharedAudioCtx = new Ctor();
     return sharedAudioCtx;
   } catch {

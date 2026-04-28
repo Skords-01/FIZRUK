@@ -384,8 +384,6 @@ export default [
       // ── Existing `as unknown as` call-sites (do not add new ones) ──
       // Web app
       "apps/web/src/shared/components/ui/VoiceMicButton.tsx",
-      "apps/web/src/modules/fizruk/pages/Workouts.tsx",
-      "apps/web/src/modules/nutrition/hooks/useBarcodeScanner.ts",
       "apps/web/src/modules/nutrition/hooks/useNutritionRemoteActions.ts",
       "apps/web/src/modules/finyk/hooks/useFinykPersonalization.ts",
       "apps/web/src/core/lib/hubChatUtils.ts",
