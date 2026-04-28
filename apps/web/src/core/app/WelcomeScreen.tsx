@@ -111,17 +111,22 @@ function PeekBackdrop() {
   );
 }
 
+interface WelcomeScreenProps {
+  /** Called when onboarding completes. Receives the selected start module and optional wizard options. */
+  onDone: (
+    startModuleId: string | null,
+    opts?: { intent: string; picks: string[] },
+  ) => void;
+  /** Navigate to the sign-in route for users who already have an account. */
+  onOpenAuth: () => void;
+}
+
 /**
  * Full-page cold-start at `/welcome`. Owns the page chrome + peek
  * backdrop and delegates the splash card to `OnboardingWizard` in
  * `fullPage` mode.
- *
- * @param {object} props
- * @param {(startModuleId: string | null, opts?: { intent: string, picks: string[] }) => void} props.onDone
- * @param {() => void} props.onOpenAuth - Navigate to the sign-in route for
- *   users who already have an account.
  */
-export function WelcomeScreen({ onDone, onOpenAuth }) {
+export function WelcomeScreen({ onDone, onOpenAuth }: WelcomeScreenProps) {
   return (
     <div className="relative min-h-dvh bg-bg text-text overflow-hidden page-enter">
       <PeekBackdrop />

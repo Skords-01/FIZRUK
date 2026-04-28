@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Redirect, Tabs } from "expo-router";
-import { DeviceEventEmitter, Text } from "react-native";
+import { DeviceEventEmitter, View } from "react-native";
+import {
+  Home,
+  Wallet,
+  Dumbbell,
+  CheckSquare,
+  UtensilsCrossed,
+} from "lucide-react-native";
+import type { LucideIcon } from "lucide-react-native";
+
 import { useUser } from "@sergeant/api-client/react";
 import { shouldShowOnboarding } from "@sergeant/shared";
 import { OnboardingWizard, getOnboardingStore } from "@/core/OnboardingWizard";
@@ -11,18 +20,12 @@ type TabIconProps = {
   focused: boolean;
 };
 
-function TabIcon({ emoji }: { emoji: string }) {
-  return function Icon({ color, focused }: TabIconProps) {
+function createTabIcon(Icon: LucideIcon) {
+  return function TabIcon({ color, focused }: TabIconProps) {
     return (
-      <Text
-        style={{
-          fontSize: 22,
-          opacity: focused ? 1 : 0.6,
-          color,
-        }}
-      >
-        {emoji}
-      </Text>
+      <View style={{ opacity: focused ? 1 : 0.6 }}>
+        <Icon size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+      </View>
     );
   };
 }
@@ -82,13 +85,13 @@ export default function TabsLayout() {
       >
         <Tabs.Screen
           name="index"
-          options={{ title: "Хаб", tabBarIcon: TabIcon({ emoji: "🏠" }) }}
+          options={{ title: "Хаб", tabBarIcon: createTabIcon(Home) }}
         />
         <Tabs.Screen
           name="finyk"
           options={{
             title: "ФІНІК",
-            tabBarIcon: TabIcon({ emoji: "💰" }),
+            tabBarIcon: createTabIcon(Wallet),
             tabBarButtonTestID: "tab-finyk",
           }}
         />
@@ -96,7 +99,7 @@ export default function TabsLayout() {
           name="fizruk"
           options={{
             title: "ФІЗРУК",
-            tabBarIcon: TabIcon({ emoji: "🏋" }),
+            tabBarIcon: createTabIcon(Dumbbell),
             // The Fizruk tab hosts a nested Expo Router `Stack` (see
             // `app/(tabs)/fizruk/_layout.tsx`) that draws its own headers
             // per screen. Hiding the Tabs header prevents a double bar.
@@ -107,13 +110,13 @@ export default function TabsLayout() {
           name="routine"
           options={{
             title: "Рутина",
-            tabBarIcon: TabIcon({ emoji: "✅" }),
+            tabBarIcon: createTabIcon(CheckSquare),
             tabBarButtonTestID: "tab-routine",
           }}
         />
         <Tabs.Screen
           name="nutrition"
-          options={{ title: "Їжа", tabBarIcon: TabIcon({ emoji: "🍽" }) }}
+          options={{ title: "Їжа", tabBarIcon: createTabIcon(UtensilsCrossed) }}
         />
       </Tabs>
     </>
