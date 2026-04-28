@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { Analytics } from "@vercel/analytics/react";
 import App from "./core/App";
 import "./index.css";
 import { storageManager } from "@shared/lib/storageManager.js";
@@ -20,6 +21,7 @@ import "@shared/lib/fileImport";
 // effects only.
 import "@shared/hooks/useVisualKeyboardInset";
 import { ErrorBoundary } from "./core/ErrorBoundary.jsx";
+import { installChunkLoadRecover } from "./core/lib/chunkReload.js";
 import { initSentry } from "./core/observability/sentry.js";
 import { initWebVitals } from "./core/observability/webVitals.js";
 import { initPostHog } from "./core/observability/posthog.js";
@@ -45,6 +47,12 @@ const ReactQueryDevtools = import.meta.env.DEV
 // reloads onto `/`. `?demo=reset` wipes it. Called BEFORE storage
 // migrations / the legacy demo-cleanup pass so the seeded payload is
 // visible to both and survives the boot.
+// Stale-bundle recovery: глобальні слухачі `vite:preloadError` /
+// `unhandledrejection` / `error`, що роблять одноразовий `location.reload()`
+// на `Failed to fetch dynamically imported module`. Має стояти максимально
+// рано — щоб упіймати rejection-и на найперших lazy-import-ах.
+installChunkLoadRecover();
+
 runDemoSeedFromUrl();
 storageManager.runAll();
 runDemoCleanupOnce();
@@ -76,6 +84,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <App />
       </BrowserRouter>
+      <Analytics />
       {ReactQueryDevtools ? (
         <Suspense fallback={null}>
           <ReactQueryDevtools

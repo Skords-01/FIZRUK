@@ -6,6 +6,8 @@ import {
   monoWebhookReceivedTotal,
   monoWebhookDurationMs,
 } from "../../obs/metrics.js";
+import { sendToUserQuietly } from "../../push/send.js";
+import type { PushPayload } from "../../push/types.js";
 
 /**
  * POST /api/mono/webhook/:secret — public Monobank delivery endpoint.
@@ -50,6 +52,71 @@ interface WebhookPayload {
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
+/**
+ * Currency symbols for the most common ISO-4217 codes Monobank issues.
+ * Falls back to an empty prefix for unknown codes — the user will still see
+ * the signed amount, which is the high-signal part. Kept inline (rather than
+ * pulled from `@sergeant/shared`) because the push-payload formatter is the
+ * only consumer; widening the surface would tempt over-localization.
+ */
+const CURRENCY_SYMBOL_BY_CODE: Record<number, string> = {
+  980: "₴",
+  840: "$",
+  978: "€",
+  826: "£",
+  985: "zł",
+};
+
+/**
+ * Format a signed kopeck/cent amount into a localized money string with a
+ * leading sign glyph. Negative spends use the minus-sign character `−`
+ * (U+2212) so the push displays the same glyph as Monobank's own
+ * notifications instead of the ASCII hyphen.
+ */
+function formatMonoMoney(amountMinor: number, currencyCode: number): string {
+  const symbol = CURRENCY_SYMBOL_BY_CODE[currencyCode] ?? "";
+  const major = amountMinor / 100;
+  const sign = major < 0 ? "−" : "+";
+  const abs = Math.abs(major).toLocaleString("uk-UA", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return symbol ? `${sign}${abs} ${symbol}` : `${sign}${abs}`;
+}
+
+/**
+ * Build the push payload for a freshly-inserted Monobank statement item.
+ * Mirrors Monobank's own native notification shape: the headline is the
+ * signed amount, the body carries the merchant/description + remaining
+ * balance. Only called on first INSERT — see `inserted` flag in
+ * `webhookHandler`.
+ */
+function buildMonoPushPayload(
+  item: StatementItem,
+  monoAccountId: string,
+): PushPayload {
+  const amountStr = formatMonoMoney(item.amount, item.currencyCode);
+  const description = (item.description || "Транзакція").trim().slice(0, 80);
+  const balanceStr =
+    typeof item.balance === "number"
+      ? formatMonoMoney(item.balance, item.currencyCode).replace(/^[+−]/, "")
+      : null;
+  const holdMarker = item.hold ? "(резерв) " : "";
+  const body = balanceStr
+    ? `${holdMarker}${description} · доступно ${balanceStr}`
+    : `${holdMarker}${description}`;
+  return {
+    title: amountStr,
+    body,
+    data: {
+      kind: "mono_tx",
+      monoTxId: item.id,
+      monoAccountId,
+    },
+    url: "/?module=finyk",
+  };
 }
 
 export async function webhookHandler(
@@ -107,7 +174,12 @@ export async function webhookHandler(
   const { account: monoAccountId, statementItem: item } = payload.data;
 
   try {
-    await query(
+    // RETURNING (xmax = 0) AS inserted is a Postgres trick: on a fresh INSERT
+    // `xmax` is 0, on the UPDATE branch of ON CONFLICT it is the txid of the
+    // updating transaction (non-zero). We use this to fire push notifications
+    // only on first delivery and stay silent on retries — Monobank can re-send
+    // the same statement item if our 200 response is lost. See AI-DANGER below.
+    const upsertResult = await query<{ inserted: boolean }>(
       `INSERT INTO mono_transaction
          (user_id, mono_account_id, mono_tx_id, time, amount, operation_amount,
           currency_code, mcc, original_mcc, hold, description, comment,
@@ -123,7 +195,8 @@ export async function webhookHandler(
          description = EXCLUDED.description,
          comment = EXCLUDED.comment,
          raw = EXCLUDED.raw,
-         received_at = NOW()`,
+         received_at = NOW()
+       RETURNING (xmax = 0) AS inserted`,
       [
         userId,
         monoAccountId,
@@ -172,13 +245,30 @@ export async function webhookHandler(
     monoWebhookReceivedTotal.inc({ status: "ok" });
     monoWebhookDurationMs.observe({ status: "ok" }, ms);
 
+    const inserted = upsertResult.rows[0]?.inserted === true;
+
     logger.info({
       msg: "mono_webhook_processed",
       monoAccountId,
       monoTxId: item.id,
+      inserted,
     });
 
     res.status(200).json({ ok: true });
+
+    // Fan-out push notification AFTER the 200 response — sendToUserQuietly
+    // never throws (logs internally on failure), but we still defer until
+    // after `res.json()` so a slow APNs/FCM round-trip can't extend the
+    // webhook latency window. Skip on duplicate deliveries (`inserted` is
+    // false on the UPDATE branch of ON CONFLICT) so Monobank's retries
+    // don't spam the user.
+    if (inserted) {
+      void sendToUserQuietly(
+        userId,
+        buildMonoPushPayload(item, monoAccountId),
+        { module: "mono" },
+      );
+    }
   } catch (err) {
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     monoWebhookReceivedTotal.inc({ status: "error" });
