@@ -1,9 +1,17 @@
+import type { CSSProperties } from "react";
+
 import { cn } from "../../lib/cn";
 
 export interface SkeletonProps {
   className?: string;
   /** Use shimmer effect instead of pulse (more premium feel) */
   shimmer?: boolean;
+  /**
+   * Inline style — primarily used for staggered `animationDelay` on rows
+   * of skeletons (see `ModulePageLoader.RoutineLoader`). Forwarded to the
+   * outer `<div>` only.
+   */
+  style?: CSSProperties;
 }
 
 /**
@@ -11,7 +19,7 @@ export interface SkeletonProps {
  * `motion-safe:animate-pulse` respects `prefers-reduced-motion: reduce`
  * (WCAG 2.3.3 + Apple HIG reduced motion compliance).
  */
-export function Skeleton({ className, shimmer = false }: SkeletonProps) {
+export function Skeleton({ className, shimmer = false, style }: SkeletonProps) {
   return (
     <div
       className={cn(
@@ -19,6 +27,7 @@ export function Skeleton({ className, shimmer = false }: SkeletonProps) {
         shimmer ? "relative overflow-hidden" : "motion-safe:animate-pulse",
         className,
       )}
+      style={style}
       aria-hidden="true"
     >
       {shimmer && (
@@ -31,7 +40,11 @@ export function Skeleton({ className, shimmer = false }: SkeletonProps) {
   );
 }
 
-export function SkeletonText({ className, shimmer = false }: SkeletonProps) {
+export function SkeletonText({
+  className,
+  shimmer = false,
+  style,
+}: SkeletonProps) {
   return (
     <div
       className={cn(
@@ -39,6 +52,7 @@ export function SkeletonText({ className, shimmer = false }: SkeletonProps) {
         shimmer ? "relative overflow-hidden" : "motion-safe:animate-pulse",
         className,
       )}
+      style={style}
       aria-hidden="true"
     >
       {shimmer && (
