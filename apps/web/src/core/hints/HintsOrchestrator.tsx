@@ -9,6 +9,7 @@ import {
   type HintId,
 } from "@sergeant/shared";
 import { useToast } from "@shared/hooks/useToast";
+import { webKVStore } from "@shared/lib/storage";
 import { ANALYTICS_EVENTS, trackEvent } from "../observability/analytics";
 import { useHubPref } from "../settings/hubPrefs";
 
@@ -65,14 +66,14 @@ export function HintsOrchestrator({
     function showHintIfEligible() {
       // ── Retention hints (Day 1 / 3 / 7) take priority over general hints
       if (hasFirstRealEntry) {
-        const startedAt = getFirstActionStartedAt(localStorageStore);
+        const startedAt = getFirstActionStartedAt(webKVStore);
         if (startedAt) {
           const retentionId = getRetentionHintId(startedAt);
           if (retentionId) {
-            const res = canShowHint(localStorageStore, retentionId, ctx);
+            const res = canShowHint(webKVStore, retentionId, ctx);
             if (res.ok) {
               shownThisMount.current = retentionId;
-              recordHintShown(localStorageStore, retentionId);
+              recordHintShown(webKVStore, retentionId);
               const def = {
                 retention_day_1:
                   "Перший день — вже здобуток! Поверніться завтра — звичка формується з трьох повторень.",
@@ -91,11 +92,11 @@ export function HintsOrchestrator({
       }
 
       if (candidates.length === 0) return;
-      const next = pickNextHint(localStorageStore, candidates, ctx);
+      const next = pickNextHint(webKVStore, candidates, ctx);
       if (!next) return;
 
       shownThisMount.current = next;
-      recordHintShown(localStorageStore, next);
+      recordHintShown(webKVStore, next);
       trackEvent(ANALYTICS_EVENTS.HINT_SHOWN, {
         id: next,
         surface: ctx.surface,
