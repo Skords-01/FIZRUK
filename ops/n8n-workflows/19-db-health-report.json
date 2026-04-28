@@ -88,7 +88,11 @@
         [
           { "node": "DB size & counts", "type": "main", "index": 0 },
           { "node": "Top 5 tables by size", "type": "main", "index": 0 },
-          { "node": "Slow queries (pg_stat_statements)", "type": "main", "index": 0 }
+          {
+            "node": "Slow queries (pg_stat_statements)",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },

@@ -111,7 +111,10 @@ export function HubHeader({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <Tooltip content="Пошук по всіх модулях (⌘K)" placement="bottom-center">
+          <Tooltip
+            content="Пошук по всіх модулях (⌘K)"
+            placement="bottom-center"
+          >
             <button
               type="button"
               onClick={onOpenSearch}

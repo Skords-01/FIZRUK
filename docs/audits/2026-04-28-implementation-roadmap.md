@@ -26,14 +26,14 @@
 
 Проект **Sergeant** — зріла платформа з оцінкою **7.5/10**. Основні проблеми зосереджені у:
 
-| Категорія | Критичних | Важливих | Nice-to-have |
-|-----------|-----------|----------|--------------|
-| Type Safety | 1 | 2 | 0 |
-| Code Quality | 2 | 4 | 2 |
-| Testing | 1 | 2 | 1 |
-| Mobile | 0 | 3 | 1 |
-| Observability | 0 | 2 | 2 |
-| **Всього** | **4** | **13** | **6** |
+| Категорія     | Критичних | Важливих | Nice-to-have |
+| ------------- | --------- | -------- | ------------ |
+| Type Safety   | 1         | 2        | 0            |
+| Code Quality  | 2         | 4        | 2            |
+| Testing       | 1         | 2        | 1            |
+| Mobile        | 0         | 3        | 1            |
+| Observability | 0         | 2        | 2            |
+| **Всього**    | **4**     | **13**   | **6**        |
 
 ### 1.2. Ключові Виграші від Реалізації
 
@@ -48,31 +48,31 @@
 
 ### 2.1. Критичні (P0) - Блокують Production Quality
 
-| ID | Проблема | Файлів | Поточний Прогрес |
-|----|----------|--------|------------------|
-| **P0-1** | `apps/web` strict: false | ~495 TS errors | Phase 1 done (shared/) |
-| **P0-2** | localStorage без safe wrappers | 52 файли | 3 файли мігровано |
-| **P0-3** | Mobile flaky tests | 2 тести | 1 з 3 виправлено |
-| **P0-4** | Mobile APM відсутній | 0% coverage | Не почато |
+| ID       | Проблема                       | Файлів         | Поточний Прогрес       |
+| -------- | ------------------------------ | -------------- | ---------------------- |
+| **P0-1** | `apps/web` strict: false       | ~495 TS errors | Phase 1 done (shared/) |
+| **P0-2** | localStorage без safe wrappers | 52 файли       | 3 файли мігровано      |
+| **P0-3** | Mobile flaky tests             | 2 тести        | 1 з 3 виправлено       |
+| **P0-4** | Mobile APM відсутній           | 0% coverage    | Не почато              |
 
 ### 2.2. Високі (P1) - Значний Tech Debt
 
-| ID | Проблема | Деталі | Статус |
-|----|----------|--------|--------|
-| **P1-1** | Великі файли (>600 LOC) | 25 файлів | 2 decomposed |
-| **P1-2** | TypeScript 6.0.3 bleeding edge | Tooling ризики | Monitoring |
-| **P1-3** | Capacitor без boundary tests | 0 тестів | Не почато |
-| **P1-4** | Prompt cache не активовано | $$ waste | Ready to enable |
-| **P1-5** | Немає distributed tracing | Debug складність | Не почато |
+| ID       | Проблема                       | Деталі           | Статус          |
+| -------- | ------------------------------ | ---------------- | --------------- |
+| **P1-1** | Великі файли (>600 LOC)        | 25 файлів        | 2 decomposed    |
+| **P1-2** | TypeScript 6.0.3 bleeding edge | Tooling ризики   | Monitoring      |
+| **P1-3** | Capacitor без boundary tests   | 0 тестів         | Не почато       |
+| **P1-4** | Prompt cache не активовано     | $$ waste         | Ready to enable |
+| **P1-5** | Немає distributed tracing      | Debug складність | Не почато       |
 
 ### 2.3. Середні (P2) - DX Improvements
 
-| ID | Проблема | Деталі |
-|----|----------|--------|
-| **P2-1** | TODO/FIXME без трекінгу | 10 файлів |
-| **P2-2** | No Sentry integration | Error context loss |
-| **P2-3** | Mobile debt tracker missing | Hidden accumulation |
-| **P2-4** | `as unknown as X` patterns | 9 файлів в allowlist |
+| ID       | Проблема                    | Деталі               |
+| -------- | --------------------------- | -------------------- |
+| **P2-1** | TODO/FIXME без трекінгу     | 10 файлів            |
+| **P2-2** | No Sentry integration       | Error context loss   |
+| **P2-3** | Mobile debt tracker missing | Hidden accumulation  |
+| **P2-4** | `as unknown as X` patterns  | 9 файлів в allowlist |
 
 ---
 
@@ -100,6 +100,7 @@ EFFORT                  │                   EFFORT
 ```
 
 **Рекомендований порядок:**
+
 1. Quick Wins: P1-4, P2-1, P0-3
 2. High Impact/Low Effort: P0-1, P0-2
 3. High Impact/High Effort: P1-1, P1-5
@@ -131,17 +132,18 @@ Estimated TS errors by module:
 
 **Виконання:**
 
-| Day | Задача | Файлів | Effort |
-|-----|--------|--------|--------|
-| 1-2 | Enable strictNullChecks для core/lib | ~8 | 4h |
-| 3-4 | Fix core/hub TS errors | ~12 | 6h |
-| 5-6 | Fix core/settings TS errors | ~8 | 4h |
-| 7-8 | Fix fizruk module | ~15 | 8h |
-| 9-10 | Fix finyk module | ~12 | 6h |
-| 11-12 | Fix nutrition module | ~18 | 8h |
-| 13-14 | Fix routine + final strict: true | ~10 | 4h |
+| Day   | Задача                               | Файлів | Effort |
+| ----- | ------------------------------------ | ------ | ------ |
+| 1-2   | Enable strictNullChecks для core/lib | ~8     | 4h     |
+| 3-4   | Fix core/hub TS errors               | ~12    | 6h     |
+| 5-6   | Fix core/settings TS errors          | ~8     | 4h     |
+| 7-8   | Fix fizruk module                    | ~15    | 8h     |
+| 9-10  | Fix finyk module                     | ~12    | 6h     |
+| 11-12 | Fix nutrition module                 | ~18    | 8h     |
+| 13-14 | Fix routine + final strict: true     | ~10    | 4h     |
 
 **Definition of Done:**
+
 - [ ] `apps/web/tsconfig.json` має `"strict": true`
 - [ ] `pnpm typecheck` проходить без помилок
 - [ ] CI strict-coverage metric = 100%
@@ -154,40 +156,41 @@ Estimated TS errors by module:
 
 **Файли для міграції (за частотою використання):**
 
-| # | Файл | Виклики | Пріоритет |
-|---|------|---------|-----------|
-| 1 | `useOfflineQueue.ts` | 12 | Critical |
-| 2 | `useCloudSync.ts` | 8 | Critical |
-| 3 | `useTypedStore.ts` | 6 | High |
-| 4 | `SettingsPage.tsx` | 5 | High |
-| 5 | `OnboardingWizard.tsx` | 4 | Medium |
-| 6 | `HubDashboard.tsx` | 4 | Medium |
-| 7 | `useFinykCategories.ts` | 3 | Medium |
-| 8 | `useRoutineReminders.ts` | 3 | Medium |
-| 9 | `useFizrukProgress.ts` | 3 | Medium |
-| 10 | `useNutritionHistory.ts` | 3 | Medium |
+| #   | Файл                     | Виклики | Пріоритет |
+| --- | ------------------------ | ------- | --------- |
+| 1   | `useOfflineQueue.ts`     | 12      | Critical  |
+| 2   | `useCloudSync.ts`        | 8       | Critical  |
+| 3   | `useTypedStore.ts`       | 6       | High      |
+| 4   | `SettingsPage.tsx`       | 5       | High      |
+| 5   | `OnboardingWizard.tsx`   | 4       | Medium    |
+| 6   | `HubDashboard.tsx`       | 4       | Medium    |
+| 7   | `useFinykCategories.ts`  | 3       | Medium    |
+| 8   | `useRoutineReminders.ts` | 3       | Medium    |
+| 9   | `useFizrukProgress.ts`   | 3       | Medium    |
+| 10  | `useNutritionHistory.ts` | 3       | Medium    |
 
 **Патерн міграції:**
 
 ```typescript
 // BEFORE (unsafe)
-const value = localStorage.getItem('key');
-localStorage.setItem('key', JSON.stringify(data));
+const value = localStorage.getItem("key");
+localStorage.setItem("key", JSON.stringify(data));
 
 // AFTER (safe)
-import { safeReadLS, safeWriteLS } from '@/shared/storage';
-const value = safeReadLS<MyType>('key', defaultValue);
-safeWriteLS('key', data);
+import { safeReadLS, safeWriteLS } from "@/shared/storage";
+const value = safeReadLS<MyType>("key", defaultValue);
+safeWriteLS("key", data);
 
 // OR for typed stores
-import { typedStore } from '@/shared/typedStore';
-const store = typedStore('myFeature', schema, defaults);
+import { typedStore } from "@/shared/typedStore";
+const store = typedStore("myFeature", schema, defaults);
 ```
 
 **Definition of Done:**
+
 - [ ] 10 файлів мігровано на safe wrappers
 - [ ] ESLint allowlist зменшено з 52 до 42
-- [ ] Жодних нових localStorage.* викликів у PR
+- [ ] Жодних нових localStorage.\* викликів у PR
 
 ---
 
@@ -196,6 +199,7 @@ const store = typedStore('myFeature', schema, defaults);
 **Scope:** 2 залишкові flaky тести
 
 **Файли:**
+
 1. `apps/mobile/src/core/dashboard/WeeklyDigestFooter.test.tsx`
 2. `apps/mobile/src/core/settings/HubSettingsPage.test.tsx`
 
@@ -203,14 +207,14 @@ const store = typedStore('myFeature', schema, defaults);
 
 ```typescript
 // Problem: AccessibilityInfo.isReduceMotionEnabled never resolves
-jest.mock('react-native', () => ({
+jest.mock("react-native", () => ({
   AccessibilityInfo: {
     isReduceMotionEnabled: jest.fn(), // Missing mockResolvedValue
   },
 }));
 
 // Solution (from OnboardingWizard fix - commit 53853e00):
-jest.mock('react-native', () => ({
+jest.mock("react-native", () => ({
   AccessibilityInfo: {
     isReduceMotionEnabled: jest.fn().mockResolvedValue(false),
   },
@@ -218,6 +222,7 @@ jest.mock('react-native', () => ({
 ```
 
 **Definition of Done:**
+
 - [ ] 0 flaky tests на main branch
 - [ ] CI mobile job має 100% pass rate (last 20 runs)
 
@@ -241,6 +246,7 @@ apps/web/src/core/profile/
 ```
 
 **Definition of Done:**
+
 - [ ] ProfilePage.tsx < 200 LOC
 - [ ] Усі тести проходять
 - [ ] Жодних circular dependencies
@@ -253,14 +259,15 @@ apps/web/src/core/profile/
 
 **Scope:** Наступні 20 файлів із allowlist
 
-| Batch | Файли | Module |
-|-------|-------|--------|
-| 2a | 5 файлів | finyk/* |
-| 2b | 5 файлів | fizruk/* |
-| 2c | 5 файлів | nutrition/* |
-| 2d | 5 файлів | routine/* |
+| Batch | Файли    | Module       |
+| ----- | -------- | ------------ |
+| 2a    | 5 файлів | finyk/\*     |
+| 2b    | 5 файлів | fizruk/\*    |
+| 2c    | 5 файлів | nutrition/\* |
+| 2d    | 5 файлів | routine/\*   |
 
 **Definition of Done:**
+
 - [ ] ESLint allowlist зменшено з 42 до 22
 - [ ] Жодних quota exceeded помилок у Sentry
 
@@ -293,30 +300,30 @@ apps/web/src/core/hub/
 **Test Coverage Plan:**
 
 ```typescript
-describe('HubReports', () => {
-  describe('Data Aggregation', () => {
-    it('aggregates finyk transactions correctly');
-    it('aggregates fizruk workouts correctly');
-    it('aggregates routine completions correctly');
-    it('aggregates nutrition entries correctly');
-    it('handles missing module data gracefully');
+describe("HubReports", () => {
+  describe("Data Aggregation", () => {
+    it("aggregates finyk transactions correctly");
+    it("aggregates fizruk workouts correctly");
+    it("aggregates routine completions correctly");
+    it("aggregates nutrition entries correctly");
+    it("handles missing module data gracefully");
   });
-  
-  describe('Date Range Filtering', () => {
-    it('filters by week correctly');
-    it('filters by month correctly');
-    it('filters by custom range correctly');
+
+  describe("Date Range Filtering", () => {
+    it("filters by week correctly");
+    it("filters by month correctly");
+    it("filters by custom range correctly");
   });
-  
-  describe('Export Functionality', () => {
-    it('exports to CSV with correct format');
-    it('exports to PDF with correct layout');
+
+  describe("Export Functionality", () => {
+    it("exports to CSV with correct format");
+    it("exports to PDF with correct layout");
   });
-  
-  describe('Edge Cases', () => {
-    it('handles empty data state');
-    it('handles loading state');
-    it('handles error state');
+
+  describe("Edge Cases", () => {
+    it("handles empty data state");
+    it("handles loading state");
+    it("handles error state");
   });
 });
 ```
@@ -331,22 +338,22 @@ describe('HubReports', () => {
 
 ```typescript
 // apps/mobile-shell/tests/boundary.test.ts
-describe('Capacitor Boundary Tests', () => {
-  describe('Web Compatibility', () => {
-    it('web bundle loads without errors');
-    it('no unsupported APIs are called');
-    it('service worker registration works');
+describe("Capacitor Boundary Tests", () => {
+  describe("Web Compatibility", () => {
+    it("web bundle loads without errors");
+    it("no unsupported APIs are called");
+    it("service worker registration works");
   });
-  
-  describe('Native Bridge', () => {
-    it('Filesystem plugin accessible');
-    it('Storage plugin accessible');
-    it('Network plugin accessible');
+
+  describe("Native Bridge", () => {
+    it("Filesystem plugin accessible");
+    it("Storage plugin accessible");
+    it("Network plugin accessible");
   });
-  
-  describe('Deep Links', () => {
-    it('handles sergeant:// scheme');
-    it('handles universal links');
+
+  describe("Deep Links", () => {
+    it("handles sergeant:// scheme");
+    it("handles universal links");
   });
 });
 ```
@@ -360,6 +367,7 @@ describe('Capacitor Boundary Tests', () => {
 **Scope:** Залишкові 22 файли
 
 **Definition of Done:**
+
 - [ ] ESLint allowlist = 0 файлів
 - [ ] `no-raw-local-storage` rule enforcement = error (not warn)
 
@@ -371,12 +379,12 @@ describe('Capacitor Boundary Tests', () => {
 
 **Дублікати для усунення:**
 
-| Pattern | Файли | Рішення |
-|---------|-------|---------|
-| `elapsedMs(start)` | 4+ файли | Extract to `lib/timing.ts` |
-| OFF/USDA normalizers | barcode.ts, food-search.ts | Already done (PR #882) |
-| `pantry → prompt` | 3 файли | Extract to `lib/prompt-builders.ts` |
-| FNV-1a hashing | 2 файли | Extract to `lib/hash.ts` |
+| Pattern              | Файли                      | Рішення                             |
+| -------------------- | -------------------------- | ----------------------------------- |
+| `elapsedMs(start)`   | 4+ файли                   | Extract to `lib/timing.ts`          |
+| OFF/USDA normalizers | barcode.ts, food-search.ts | Already done (PR #882)              |
+| `pantry → prompt`    | 3 файли                    | Extract to `lib/prompt-builders.ts` |
+| FNV-1a hashing       | 2 файли                    | Extract to `lib/hash.ts`            |
 
 ---
 
@@ -384,13 +392,13 @@ describe('Capacitor Boundary Tests', () => {
 
 **Scope:** 9 файлів у ESLint allowlist
 
-| Файл | Кількість | Причина | Рішення |
-|------|-----------|---------|---------|
-| `useFinykPersonalization.ts` | 6 | API response typing | Add proper Zod schemas |
-| `App.tsx` | 3 | Router typing | Use typed router |
-| `VoiceMicButton.tsx` | 2 | Web Audio API | Add proper types |
-| `hubChatUtils.ts` | 2 | Tool definitions | Type guard functions |
-| Server files (5) | 1 each | Various | Case-by-case |
+| Файл                         | Кількість | Причина             | Рішення                |
+| ---------------------------- | --------- | ------------------- | ---------------------- |
+| `useFinykPersonalization.ts` | 6         | API response typing | Add proper Zod schemas |
+| `App.tsx`                    | 3         | Router typing       | Use typed router       |
+| `VoiceMicButton.tsx`         | 2         | Web Audio API       | Add proper types       |
+| `hubChatUtils.ts`            | 2         | Tool definitions    | Type guard functions   |
+| Server files (5)             | 1 each    | Various             | Case-by-case           |
 
 ---
 
@@ -398,13 +406,13 @@ describe('Capacitor Boundary Tests', () => {
 
 **Файли:**
 
-| Файл | LOC | Структура |
-|------|-----|-----------|
-| `ActiveWorkoutPanel.tsx` | 949 | Split by phase (warmup/main/cooldown) |
-| `HubChat.tsx` | ~800 | Split by concern (input/messages/tools) |
-| `Overview.tsx` | ~750 | Split by section |
-| `Workouts.tsx` | 894 | Split by view (list/detail/create) |
-| `DesignShowcase.tsx` | 1064 | Split by component category |
+| Файл                     | LOC  | Структура                               |
+| ------------------------ | ---- | --------------------------------------- |
+| `ActiveWorkoutPanel.tsx` | 949  | Split by phase (warmup/main/cooldown)   |
+| `HubChat.tsx`            | ~800 | Split by concern (input/messages/tools) |
+| `Overview.tsx`           | ~750 | Split by section                        |
+| `Workouts.tsx`           | 894  | Split by view (list/detail/create)      |
+| `DesignShowcase.tsx`     | 1064 | Split by component category             |
 
 ---
 
@@ -443,7 +451,7 @@ const response = await anthropic.messages.create({
 
 ```typescript
 // apps/web/src/lib/sentry.ts
-import * as Sentry from '@sentry/react';
+import * as Sentry from "@sentry/react";
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -467,7 +475,7 @@ Sentry.init({
 
 ```typescript
 // apps/mobile/src/lib/monitoring.ts
-import * as Sentry from '@sentry/react-native';
+import * as Sentry from "@sentry/react-native";
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -485,12 +493,12 @@ Sentry.init({
 
 **Strategies:**
 
-| Strategy | Potential Savings |
-|----------|-------------------|
-| Lazy load Recharts | ~30 KB |
-| Tree-shake date-fns | ~15 KB |
-| Split code by route | ~20 KB |
-| Remove unused icons | ~10 KB |
+| Strategy            | Potential Savings |
+| ------------------- | ----------------- |
+| Lazy load Recharts  | ~30 KB            |
+| Tree-shake date-fns | ~15 KB            |
+| Split code by route | ~20 KB            |
+| Remove unused icons | ~10 KB            |
 
 ---
 
@@ -509,7 +517,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: treosh/lighthouse-ci-action@v12
         with:
-          configPath: './lighthouserc.json'
+          configPath: "./lighthouserc.json"
           uploadArtifacts: true
 ```
 
@@ -523,12 +531,12 @@ jobs:
 // Step 1: Identify nullable types
 // BEFORE
 function getUser(id: string) {
-  return users.find(u => u.id === id);
+  return users.find((u) => u.id === id);
 }
 
 // AFTER
 function getUser(id: string): User | undefined {
-  return users.find(u => u.id === id);
+  return users.find((u) => u.id === id);
 }
 
 // Step 2: Add null checks
@@ -541,19 +549,19 @@ if (!user) throw new UserNotFoundError(id);
 const userName = user.name;
 
 // Step 3: Use optional chaining where appropriate
-const userName = getUser(id)?.name ?? 'Unknown';
+const userName = getUser(id)?.name ?? "Unknown";
 ```
 
 ### 5.2. localStorage Safe Wrapper Pattern
 
 ```typescript
 // packages/shared/src/storage/safeStorage.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 export function safeReadLS<T>(
   key: string,
   schema: z.ZodSchema<T>,
-  fallback: T
+  fallback: T,
 ): T {
   try {
     const raw = localStorage.getItem(key);
@@ -571,7 +579,7 @@ export function safeWriteLS<T>(key: string, value: T): boolean {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+    if (error instanceof DOMException && error.name === "QuotaExceededError") {
       // Handle quota exceeded
       cleanupOldEntries();
       try {
@@ -601,7 +609,7 @@ export function ProfilePage() {
 // ProfilePage.tsx (~150 LOC)
 export function ProfilePage() {
   const { user, updateUser } = useProfileData();
-  
+
   return (
     <div className="profile-page">
       <ProfileHeader user={user} />
@@ -626,22 +634,23 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
 graph TD
     A[Sprint 1.1: TS Strict] --> B[Sprint 2.2: Decompose Dashboard]
     A --> C[Sprint 2.3: Tests for Reports]
-    
+
     D[Sprint 1.2: localStorage Batch 1] --> E[Sprint 2.1: localStorage Batch 2]
     E --> F[Sprint 3.1: localStorage Final]
-    
+
     G[Sprint 1.3: Flaky Tests] --> H[Sprint 2.4: Mobile Boundary Tests]
     H --> I[Sprint 4.3: Mobile APM]
-    
+
     J[Sprint 1.4: ProfilePage] --> B
     B --> K[Sprint 3.4: Large Files Batch 2]
-    
+
     L[Sprint 3.2: Backend Dedupe] --> M[Sprint 4.1: Prompt Cache]
-    
+
     N[Sprint 3.3: as unknown] --> A
 ```
 
 **Критичний Шлях:**
+
 1. TS Strict (1.1) — блокує якісні тести
 2. localStorage (1.2 → 2.1 → 3.1) — послідовна міграція
 3. Flaky Tests (1.3) — блокує mobile stability
@@ -652,39 +661,39 @@ graph TD
 
 ### 7.1. Sprint 1 Completion Criteria
 
-| Метрика | Поточне | Ціль |
-|---------|---------|------|
-| TS errors (apps/web) | ~495 | 0 |
-| localStorage allowlist | 52 | 42 |
-| Flaky tests | 2 | 0 |
-| ProfilePage LOC | 1060 | <200 |
+| Метрика                | Поточне | Ціль |
+| ---------------------- | ------- | ---- |
+| TS errors (apps/web)   | ~495    | 0    |
+| localStorage allowlist | 52      | 42   |
+| Flaky tests            | 2       | 0    |
+| ProfilePage LOC        | 1060    | <200 |
 
 ### 7.2. Sprint 2 Completion Criteria
 
-| Метрика | Поточне | Ціль |
-|---------|---------|------|
-| localStorage allowlist | 42 | 22 |
-| HubDashboard LOC | 902 | <150 |
-| HubReports test coverage | 0% | 80% |
-| Capacitor boundary tests | 0 | 10+ |
+| Метрика                  | Поточне | Ціль |
+| ------------------------ | ------- | ---- |
+| localStorage allowlist   | 42      | 22   |
+| HubDashboard LOC         | 902     | <150 |
+| HubReports test coverage | 0%      | 80%  |
+| Capacitor boundary tests | 0       | 10+  |
 
 ### 7.3. Sprint 3 Completion Criteria
 
-| Метрика | Поточне | Ціль |
-|---------|---------|------|
-| localStorage allowlist | 22 | 0 |
-| `as unknown` allowlist | 9 | 0 |
-| Backend duplicate code | 4 patterns | 0 |
-| Large files (>600 LOC) | 25 | 15 |
+| Метрика                | Поточне    | Ціль |
+| ---------------------- | ---------- | ---- |
+| localStorage allowlist | 22         | 0    |
+| `as unknown` allowlist | 9          | 0    |
+| Backend duplicate code | 4 patterns | 0    |
+| Large files (>600 LOC) | 25         | 15   |
 
 ### 7.4. Sprint 4+ Success Metrics
 
-| Метрика | Поточне | Ціль |
-|---------|---------|------|
-| Bundle size | 615 KB | 550 KB |
-| LCP | ~2.5s | <2.0s |
-| Sentry coverage | 0% | 100% |
-| Prompt cache savings | $0 | $50+/month |
+| Метрика              | Поточне | Ціль       |
+| -------------------- | ------- | ---------- |
+| Bundle size          | 615 KB  | 550 KB     |
+| LCP                  | ~2.5s   | <2.0s      |
+| Sentry coverage      | 0%      | 100%       |
+| Prompt cache savings | $0      | $50+/month |
 
 ---
 
@@ -692,27 +701,27 @@ graph TD
 
 ### 8.1. TypeScript Migration Risks
 
-| Ризик | Ймовірність | Вплив | Мітігація |
-|-------|-------------|-------|-----------|
-| Breaking changes у runtime | Medium | High | Extensive test coverage before |
-| CI slowdown | Low | Medium | Incremental adoption |
-| Developer productivity drop | Medium | Medium | Phased rollout, training |
+| Ризик                       | Ймовірність | Вплив  | Мітігація                      |
+| --------------------------- | ----------- | ------ | ------------------------------ |
+| Breaking changes у runtime  | Medium      | High   | Extensive test coverage before |
+| CI slowdown                 | Low         | Medium | Incremental adoption           |
+| Developer productivity drop | Medium      | Medium | Phased rollout, training       |
 
 ### 8.2. localStorage Migration Risks
 
-| Ризик | Ймовірність | Вплив | Мітігація |
-|-------|-------------|-------|-----------|
-| Data loss during migration | Low | Critical | Backup + migration scripts |
-| Quota issues | Medium | Medium | Cleanup utilities |
-| Breaking existing features | Medium | High | Feature flags |
+| Ризик                      | Ймовірність | Вплив    | Мітігація                  |
+| -------------------------- | ----------- | -------- | -------------------------- |
+| Data loss during migration | Low         | Critical | Backup + migration scripts |
+| Quota issues               | Medium      | Medium   | Cleanup utilities          |
+| Breaking existing features | Medium      | High     | Feature flags              |
 
 ### 8.3. Mobile Stability Risks
 
-| Ризик | Ймовірність | Вплив | Мітігація |
-|-------|-------------|-------|-----------|
-| New flaky tests | Medium | Low | Retry logic + quarantine |
-| Capacitor breaking changes | Low | High | Version pinning |
-| APM overhead | Low | Medium | Sampling configuration |
+| Ризик                      | Ймовірність | Вплив  | Мітігація                |
+| -------------------------- | ----------- | ------ | ------------------------ |
+| New flaky tests            | Medium      | Low    | Retry logic + quarantine |
+| Capacitor breaking changes | Low         | High   | Version pinning          |
+| APM overhead               | Low         | Medium | Sampling configuration   |
 
 ---
 
@@ -765,19 +774,19 @@ apps/web/src/routine/
 <details>
 <summary>Click to expand full list</summary>
 
-| # | File | LOC | Priority |
-|---|------|-----|----------|
-| 1 | seedFoodsUk.ts | 1614 | ✅ Done |
-| 2 | Assets.tsx | 1147 | ✅ Done |
-| 3 | DesignShowcase.tsx | 1064 | High |
-| 4 | ProfilePage.tsx | 1060 | Sprint 1 |
-| 5 | ActiveWorkoutPanel.tsx | 949 | Sprint 3 |
-| 6 | seedDemoData.ts | 907 | Low (data file) |
-| 7 | HubDashboard.tsx | 902 | Sprint 2 |
-| 8 | Workouts.tsx | 894 | Sprint 3 |
-| 9 | HubChat.tsx | ~800 | Sprint 3 |
-| 10 | Overview.tsx | ~750 | Sprint 3 |
-| ... | (15 more files) | 610-700 | Ongoing |
+| #   | File                   | LOC     | Priority        |
+| --- | ---------------------- | ------- | --------------- |
+| 1   | seedFoodsUk.ts         | 1614    | ✅ Done         |
+| 2   | Assets.tsx             | 1147    | ✅ Done         |
+| 3   | DesignShowcase.tsx     | 1064    | High            |
+| 4   | ProfilePage.tsx        | 1060    | Sprint 1        |
+| 5   | ActiveWorkoutPanel.tsx | 949     | Sprint 3        |
+| 6   | seedDemoData.ts        | 907     | Low (data file) |
+| 7   | HubDashboard.tsx       | 902     | Sprint 2        |
+| 8   | Workouts.tsx           | 894     | Sprint 3        |
+| 9   | HubChat.tsx            | ~800    | Sprint 3        |
+| 10  | Overview.tsx           | ~750    | Sprint 3        |
+| ... | (15 more files)        | 610-700 | Ongoing         |
 
 </details>
 

@@ -93,10 +93,16 @@ function NavTab({
       onPress={onPress}
       className="flex-1 items-center justify-center py-2 min-h-[56px] gap-1"
     >
-      <item.Icon size={22} color={iconColor} strokeWidth={selected ? 2.2 : 1.8} />
+      <item.Icon
+        size={22}
+        color={iconColor}
+        strokeWidth={selected ? 2.2 : 1.8}
+      />
       <Text
         className={`text-xs ${
-          selected ? "text-coral-700 font-semibold" : "text-fg-muted font-normal"
+          selected
+            ? "text-coral-700 font-semibold"
+            : "text-fg-muted font-normal"
         }`}
       >
         {item.label}
