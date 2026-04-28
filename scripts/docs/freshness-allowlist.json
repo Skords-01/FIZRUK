@@ -108,10 +108,6 @@
     "cadenceDays": 90
   },
   {
-    "path": "docs/observability/ci-pipeline-duration.md",
-    "cadenceDays": 90
-  },
-  {
     "path": "docs/observability/dashboards.md",
     "cadenceDays": 90
   },
@@ -124,15 +120,7 @@
     "cadenceDays": 90
   },
   {
-    "path": "docs/observability/flaky-tests-dashboard.md",
-    "cadenceDays": 90
-  },
-  {
     "path": "docs/observability/runbook.md",
-    "cadenceDays": 60
-  },
-  {
-    "path": "docs/ops/n8n-recovery.md",
     "cadenceDays": 60
   },
   {
@@ -141,14 +129,6 @@
   },
   {
     "path": "docs/planning/dev-stack-roadmap.md",
-    "cadenceDays": 90
-  },
-  {
-    "path": "docs/planning/structure-refactor-plan.md",
-    "cadenceDays": 90
-  },
-  {
-    "path": "docs/planning/ux-enhancement-plan.md",
     "cadenceDays": 90
   },
   {
@@ -169,10 +149,6 @@
   },
   {
     "path": "docs/playbooks/add-monobank-event-handler.md",
-    "cadenceDays": 90
-  },
-  {
-    "path": "docs/playbooks/add-n8n-workflow.md",
     "cadenceDays": 90
   },
   {
@@ -197,10 +173,6 @@
   },
   {
     "path": "docs/playbooks/bump-dep-safely.md",
-    "cadenceDays": 90
-  },
-  {
-    "path": "docs/playbooks/ci-e2e-split.md",
     "cadenceDays": 90
   },
   {
@@ -249,10 +221,6 @@
   },
   {
     "path": "docs/playbooks/stabilize-flaky-test.md",
-    "cadenceDays": 90
-  },
-  {
-    "path": "docs/playbooks/tsconfig-strict-guard.md",
     "cadenceDays": 90
   },
   {

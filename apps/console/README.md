@@ -4,12 +4,12 @@
 
 ## Стек
 
-| Шар     | Технологія                     |
-| ------- | ------------------------------ |
-| Runtime | Node 20, TypeScript            |
-| Bot     | grammy (Telegram Bot API)      |
+| Шар     | Технологія                             |
+| ------- | -------------------------------------- |
+| Runtime | Node 20, TypeScript                    |
+| Bot     | grammy (Telegram Bot API)              |
 | AI      | Anthropic Claude (`@anthropic-ai/sdk`) |
-| Тести   | Vitest                         |
+| Тести   | Vitest                                 |
 
 ## Структура
 

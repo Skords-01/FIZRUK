@@ -4,19 +4,19 @@
 
 ## Що всередині
 
-| Файл                   | Призначення                                          |
-| ---------------------- | ---------------------------------------------------- |
-| `tsconfig.base.json`   | Базовий tsconfig — strict, target ES2022             |
-| `tsconfig.node.json`   | Для Node-only коду (scripts, server)                 |
-| `tsconfig.react.json`  | Для React-апок (JSX transform, DOM lib)              |
-| `vitest.base.js`       | Базовий vitest config (shared presets)               |
+| Файл                  | Призначення                              |
+| --------------------- | ---------------------------------------- |
+| `tsconfig.base.json`  | Базовий tsconfig — strict, target ES2022 |
+| `tsconfig.node.json`  | Для Node-only коду (scripts, server)     |
+| `tsconfig.react.json` | Для React-апок (JSX transform, DOM lib)  |
+| `vitest.base.js`      | Базовий vitest config (shared presets)   |
 
 ## Використання
 
 ```jsonc
 // apps/web/tsconfig.json
 {
-  "extends": "@sergeant/config/tsconfig.react.json"
+  "extends": "@sergeant/config/tsconfig.react.json",
 }
 ```
 

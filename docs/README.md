@@ -13,14 +13,14 @@
 | [`api/`](./api/README.md)             | OpenAPI 3.1 spec (`openapi.json`), згенерований із zod-схем `packages/shared`. |
 | [`architecture/`](./architecture)     | Огляд системи: статус-матриця, фронтенд-overview, API-контракт, платформи.     |
 | [`audits/`](./audits)                 | Періодичні аудити коду / архітектури.                                          |
-| [`design/`](./design)                 | Брендбук, дизайн-токени, palette / WCAG, component API.                     |
+| [`design/`](./design)                 | Брендбук, дизайн-токени, palette / WCAG proposal.                              |
 | [`governance/`](./governance)         | Cadence policies (freshness, policy review).                                   |
 | [`integrations/`](./integrations)     | Сторонні сервіси: Railway+Vercel, Renovate, Monobank.                          |
 | [`launch/`](./launch/README.md)       | Запуск продукту: монетизація, GTM, операції.                                   |
 | [`mobile/`](./mobile)                 | Мобільні додатки: Expo overview, Capacitor shell, deep-links, RN-міграція.     |
-| [`observability/`](./observability)   | SLO, runbook, dashboards, prometheus rules, on-call.                           |
-| [`ops/`](./ops)                       | Ops-рецепти: n8n recovery та ін.                                                |
-| [`planning/`](./planning)             | Roadmap-и: dev-stack, AI-coding, structure-refactor, optimization plans.       |
+| [`observability/`](./observability)   | SLO, runbook, dashboards, prometheus rules, logging, metrics.                  |
+| [`ops/`](./ops)                       | Ops-рецепти та інструменти (n8n, Grafana, Prometheus).                         |
+| [`planning/`](./planning)             | Roadmap-и: dev-stack, AI-coding.                                               |
 | [`playbooks/`](./playbooks/README.md) | Покрокові how-to для типових змін у репо.                                      |
 | [`postmortems/`](./postmortems)       | Постмортеми інцидентів.                                                        |
 | [`security/`](./security)             | Аудит-винятки, vulnerability SLA, нічний скан.                                 |

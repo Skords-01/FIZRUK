@@ -6,6 +6,7 @@
 > **Аудитор:** v0 AI Assistant
 > **Скоуп:** Повний репозиторій `Skords-01/Sergeant`
 > **Наступна ревалідація:** 2026-07-28
+> **План реалізації:** [2026-04-28-implementation-roadmap.md](./2026-04-28-implementation-roadmap.md)
 
 ---
 
