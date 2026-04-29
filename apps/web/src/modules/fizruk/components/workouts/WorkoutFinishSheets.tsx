@@ -9,6 +9,7 @@ import {
   recordCrossModulePromptAccepted,
 } from "@shared/lib/crossModulePrompt";
 import { formatDurShort } from "@sergeant/fizruk-domain";
+import { WorkoutStatTile } from "./WorkoutStatTile";
 
 export function WorkoutFinishSheets({
   finishFlash,
@@ -171,7 +172,7 @@ export function WorkoutFinishSheets({
                 </div>
                 <button
                   type="button"
-                  className="w-9 h-9 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-teal-800/10 dark:bg-white/10 text-teal-700 dark:text-white/70 hover:text-teal-900 dark:hover:text-white text-lg"
+                  className="w-9 h-9 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-fizruk-tile/10 text-teal-700 dark:text-white/70 hover:text-teal-900 dark:hover:text-white text-lg"
                   aria-label="Закрити"
                   onClick={() => setFinishFlash(null)}
                 >
@@ -179,39 +180,23 @@ export function WorkoutFinishSheets({
                 </button>
               </div>
               <div className="grid grid-cols-3 gap-2 mt-3">
-                <div className="rounded-xl bg-teal-800/10 dark:bg-white/10 border border-teal-800/15 dark:border-white/15 p-2.5 text-center">
-                  {/* eslint-disable-next-line sergeant-design/no-eyebrow-drift --
-                      Summary-sheet stat caption on hero background —
-                      `text-white/60` isn't expressed by SectionHeading tones. */}
-                  <div className="text-2xs uppercase tracking-wide text-teal-600 dark:text-white/60">
-                    Час
-                  </div>
-                  <div className="text-sm font-black text-teal-900 dark:text-white tabular-nums mt-0.5">
-                    {formatDurShort(finishFlash.durationSec)}
-                  </div>
-                </div>
-                <div className="rounded-xl bg-teal-800/10 dark:bg-white/10 border border-teal-800/15 dark:border-white/15 p-2.5 text-center">
-                  {/* eslint-disable-next-line sergeant-design/no-eyebrow-drift --
-                      Sibling caption; same rationale as above. */}
-                  <div className="text-2xs uppercase tracking-wide text-teal-600 dark:text-white/60">
-                    Вправ
-                  </div>
-                  <div className="text-lg font-black text-teal-900 dark:text-white tabular-nums">
-                    {finishFlash.items}
-                  </div>
-                </div>
-                <div className="rounded-xl bg-teal-800/10 dark:bg-white/10 border border-teal-800/15 dark:border-white/15 p-2.5 text-center">
-                  {/* eslint-disable-next-line sergeant-design/no-eyebrow-drift --
-                      Sibling caption; same rationale as above. */}
-                  <div className="text-2xs uppercase tracking-wide text-teal-600 dark:text-white/60">
-                    Обʼєм
-                  </div>
-                  <div className="text-sm font-black text-teal-900 dark:text-white tabular-nums mt-0.5">
-                    {finishFlash.tonnageKg > 0
+                <WorkoutStatTile
+                  label="Час"
+                  value={formatDurShort(finishFlash.durationSec)}
+                />
+                <WorkoutStatTile
+                  label="Вправ"
+                  value={finishFlash.items}
+                  size="lg"
+                />
+                <WorkoutStatTile
+                  label="Обʼєм"
+                  value={
+                    finishFlash.tonnageKg > 0
                       ? `${Math.round(finishFlash.tonnageKg)} кг`
-                      : "—"}
-                  </div>
-                </div>
+                      : "—"
+                  }
+                />
               </div>
             </div>
             {finishFlash.savedWellbeing &&

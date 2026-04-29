@@ -109,11 +109,18 @@ export const chartHeatmap = {
   routine: {
     empty: "bg-panelHi dark:bg-line/25",
     future: "bg-line/15 dark:bg-line/10",
+    /**
+     * Level scale (0 → 3). Levels 1–3 reference theme-aware CSS classes
+     * defined in `apps/web/src/styles/module-surfaces.css` so this module
+     * does not carry `dark:` overrides for chart palette pairs (Wave 2b
+     * of the dark-mode audit; see `docs/design/DARK-MODE-AUDIT.md` →
+     * "→ chart-palette refactor (chartTheme)").
+     */
     levels: [
       "bg-panelHi dark:bg-line/25",
-      "bg-coral-200/80 dark:bg-coral-900/55",
-      "bg-coral-400/75 dark:bg-coral-600/70",
-      "bg-coral-500/90 dark:bg-coral-500/80",
+      "bg-routine-heat-l1",
+      "bg-routine-heat-l2",
+      "bg-routine-heat-l3",
     ] as const,
     ring: "ring-coral-400/80 dark:ring-coral-300/70",
     outline: "outline-coral-400",
