@@ -11,13 +11,14 @@ import { SkipLink } from "@shared/components/ui/SkipLink";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
 import { useDarkMode } from "@shared/hooks/useDarkMode";
 import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
-import { ToastProvider } from "@shared/hooks/useToast";
+import { ToastProvider, useToast } from "@shared/hooks/useToast";
 import { ToastContainer } from "@shared/components/ui/Toast";
 import { HUB_OPEN_MODULE_EVENT } from "@shared/lib/hubNav";
 import { ApiClientProvider } from "@sergeant/api-client/react";
 import { apiClient } from "@shared/api";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { useCloudSync } from "./cloudSync/useCloudSync";
+import { useSyncErrorToast } from "./cloudSync/hook/useSyncErrorToast";
 import { PageLoader } from "./app/PageLoader";
 import { ModulePageLoader } from "@shared/components/ui/ModulePageLoader";
 import { OfflineBanner } from "./app/OfflineBanner";
@@ -201,6 +202,8 @@ function AppInner() {
   const { updateAvailable, applyUpdate } = useSWUpdate();
   const { user, isLoading: authLoading, logout } = useAuth();
   const sync = useCloudSync(user);
+  const toast = useToast();
+  useSyncErrorToast(sync.syncErrorDetail, toast, sync.pushAll);
 
   // Prefetch critical module chunks on idle after initial render
   useEffect(() => {
