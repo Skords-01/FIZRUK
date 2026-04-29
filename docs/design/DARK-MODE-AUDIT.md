@@ -199,6 +199,14 @@ stops owning them.
    (20 cases) and exempted on the plugin's own files
    (`packages/eslint-plugin-sergeant-design/**/*.{js,mjs}`) so
    in-source examples in rule documentation do not self-flag.
+   **Scope: `apps/web/**/_.{ts,tsx,js,jsx}` only.** The semantic
+replacements (`bg-{family}-soft`, `border-{module}-soft-border`,
+`text-{family}-strong`) resolve through the
+`--c-{family}-soft_`/`--c-{family}-strong*`CSS variables
+defined in`apps/web/src/index.css`. NativeWind (`apps/mobile`)
+compiles classNames into React Native inline styles and does
+not consume those CSS variables — running the rule there would
+force authors toward tokens that resolve to `rgb(undefined)`on mobile, so the rule is registered scoped to`apps/web/\*\*/*.{ts,tsx,js,jsx}` only.
 
 ## Legitimate `dark:` uses that STAY
 

@@ -358,7 +358,7 @@ What the rule **never** flags (these stay):
 - Dark-side-only "patches" where the light side is already semantic (`bg-success-soft text-success-strong dark:text-emerald-100`) — these document gaps in the WCAG-AA `-strong` companion scale on dark panels (rule #9).
 - Semantic tokens that happen to carry a `dark:` prefix (`dark:bg-surface`, `dark:text-fg`, `dark:border-border`).
 
-Enforced by `sergeant-design/no-raw-dark-palette` (`error`). Promoted from absent → `error` in PR [#1154](https://github.com/Skords-01/Sergeant/pulls/1154) once the audit's inventory hit zero (Wave 2a + 2b in PR [#1153](https://github.com/Skords-01/Sergeant/pull/1153), Wave 1b in [#1149](https://github.com/Skords-01/Sergeant/pull/1149)) and the 40 additional paired call-sites surfaced by the rule were migrated to the canonical Wave 1b shape.
+Enforced by `sergeant-design/no-raw-dark-palette` (`error`), scoped to `apps/web/**/*.{ts,tsx,js,jsx}` — the semantic replacements (`bg-{family}-soft`, `border-{module}-soft-border`, …) resolve through `--c-{family}-soft*` CSS variables that live only in `apps/web/src/index.css`. NativeWind (`apps/mobile`) renders classNames into React Native inline styles and does not consume those CSS variables, so the rule does not apply there. Promoted from absent → `error` in PR [#1155](https://github.com/Skords-01/Sergeant/pull/1155) once the audit's inventory hit zero (Wave 2a + 2b in PR [#1153](https://github.com/Skords-01/Sergeant/pull/1153), Wave 1b in [#1149](https://github.com/Skords-01/Sergeant/pull/1149)) and the 40 additional paired call-sites surfaced by the rule were migrated to the canonical Wave 1b shape.
 
 ### 14. Read governance before coding; update docs alongside code
 

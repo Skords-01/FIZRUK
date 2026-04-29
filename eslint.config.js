@@ -98,21 +98,15 @@ export default [
       // call-sites — the codebase is now clean against this rule, and
       // any new violation must be intentional.
       "sergeant-design/no-low-contrast-text-on-fill": "error",
-      // Dark-mode anti-pattern guardrail — fires on a className that
-      // pairs a raw-palette light utility (`bg-amber-50`, `text-coral-100`,
-      // `border-teal-200/50`, …) with a `dark:` raw-palette override
-      // (`dark:bg-amber-500/15`, `dark:text-coral-900/30`,
-      // `dark:border-teal-800/30`). Both halves encode palette knowledge
-      // at the call-site, so the next palette migration silently drops
-      // one half (this is exactly bug #814). The fix is always the
-      // same: lift the light/dark pair into the design-system token
-      // layer (`bg-success-soft`, `bg-finyk-surface`,
-      // `border-routine-soft-border`, …). Shipped at "error" once the
-      // dark-mode audit's inventory closed (Wave 2c of
-      // docs/design/DARK-MODE-AUDIT.md) — every existing pair has
-      // been migrated, so any new violation is intentional and must
-      // be opted out with an `eslint-disable-next-line` + comment.
-      "sergeant-design/no-raw-dark-palette": "error",
+      // `sergeant-design/no-raw-dark-palette` is intentionally NOT
+      // registered in this top-level rule block — the rule depends on
+      // the `--c-{family}-soft*` / `--c-{family}-strong*` CSS variable
+      // theme system that lives in `apps/web/src/index.css`. NativeWind
+      // (`apps/mobile`) does not consume those CSS variables, and the
+      // server / scripts have no Tailwind classNames. The rule is
+      // registered scoped to `apps/web/**/*.{ts,tsx}` further down so
+      // it only fires where the semantic-token replacement actually
+      // resolves to the intended colour.
       "no-empty": ["error", { allowEmptyCatch: true }],
       "no-unused-vars": [
         "error",
@@ -151,6 +145,33 @@ export default [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+    },
+  },
+  // Dark-mode anti-pattern guardrail — fires on a className that
+  // pairs a raw-palette light utility (`bg-amber-50`, `text-coral-100`,
+  // `border-teal-200/50`, …) with a `dark:` raw-palette override
+  // (`dark:bg-amber-500/15`, `dark:text-coral-900/30`,
+  // `dark:border-teal-800/30`). Both halves encode palette knowledge
+  // at the call-site, so the next palette migration silently drops
+  // one half (this is exactly bug #814). The fix is always the
+  // same: lift the light/dark pair into the design-system token
+  // layer (`bg-success-soft`, `bg-finyk-surface`,
+  // `border-routine-soft-border`, …). Shipped at "error" once the
+  // dark-mode audit's inventory closed (Wave 2c of
+  // docs/design/DARK-MODE-AUDIT.md) — every existing pair has
+  // been migrated, so any new violation is intentional and must
+  // be opted out with an `eslint-disable-next-line` + comment.
+  //
+  // Web-only: the semantic replacements (`bg-{family}-soft`, etc.)
+  // resolve through `--c-{family}-soft*` CSS variables defined in
+  // `apps/web/src/index.css`. NativeWind (apps/mobile) renders
+  // classNames into RN inline styles and does NOT consume those
+  // CSS variables, so applying the rule there would force authors
+  // toward tokens that resolve to `rgb(undefined)` on mobile.
+  {
+    files: ["apps/web/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "sergeant-design/no-raw-dark-palette": "error",
     },
   },
   // DS primitives that legitimately define the eyebrow treatment.
