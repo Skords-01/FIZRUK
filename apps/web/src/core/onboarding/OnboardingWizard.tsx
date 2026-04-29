@@ -11,6 +11,11 @@ import { Button } from "@shared/components/ui/Button";
 import { Card, type CardVariant } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
 import { useCelebration } from "@shared/components/ui/CelebrationModal";
+import {
+  safeReadStringLS,
+  safeRemoveLS,
+  safeWriteLS,
+} from "@shared/lib/storage";
 import { BrandLogo } from "../app/BrandLogo";
 import { trackEvent, ANALYTICS_EVENTS } from "../observability/analytics";
 import {
@@ -55,6 +60,59 @@ interface WizardState {
   picks: string[];
   goals: OnboardingGoals;
   stepStartedAt: number;
+}
+
+// Персистентний сліпк wizard-state-у. v1 — резерв на майбутнє: якщо
+// форма `WizardState` змінюється, бампаємо ключ в v2/v3, щоб легасі-
+// кеш не поламав візард.
+const ONBOARDING_WIZARD_STATE_KEY = "sergeant.onboarding.wizardState.v1";
+
+interface PersistedWizardState {
+  step: OnboardingStepId;
+  picks: string[];
+  goals: OnboardingGoals;
+}
+
+// Не пишемо `stepStartedAt` в localStorage — він релевантний лише в межах
+// поточного маунту (міряє час на степ для аналітики; посля рефрешу це
+// була б неправдива тривалість «від відкривання вкладки»).
+function loadPersistedWizardState(defaultState: WizardState): WizardState {
+  const raw = safeReadStringLS(ONBOARDING_WIZARD_STATE_KEY);
+  if (!raw) return defaultState;
+  try {
+    const data = JSON.parse(raw) as PersistedWizardState;
+    if (
+      !data ||
+      typeof data !== "object" ||
+      !ONBOARDING_STEPS.includes(data.step) ||
+      !Array.isArray(data.picks) ||
+      !data.goals ||
+      typeof data.goals !== "object"
+    ) {
+      return defaultState;
+    }
+    return {
+      step: data.step,
+      picks: data.picks.filter((p): p is string => typeof p === "string"),
+      goals: { ...EMPTY_GOALS, ...data.goals },
+      stepStartedAt: Date.now(),
+    };
+  } catch {
+    return defaultState;
+  }
+}
+
+function persistWizardState(state: WizardState): void {
+  const payload: PersistedWizardState = {
+    step: state.step,
+    picks: state.picks,
+    goals: state.goals,
+  };
+  safeWriteLS(ONBOARDING_WIZARD_STATE_KEY, payload);
+}
+
+function clearPersistedWizardState(): void {
+  safeRemoveLS(ONBOARDING_WIZARD_STATE_KEY);
 }
 
 type WizardAction =
@@ -642,12 +700,26 @@ export function OnboardingWizard({
   ) => void;
   variant?: "modal" | "fullPage";
 }) {
-  const [state, dispatch] = useReducer(wizardReducer, {
-    step: "welcome",
-    picks: [],
-    goals: { ...EMPTY_GOALS },
-    stepStartedAt: Date.now(),
-  });
+  // Ледача ініціалізація з localStorage: якщо юзер вже починав візард і рефрешнув
+  // вкладку / прийшов знову пізніше — відновлюємо step + picks + goals,
+  // щоб не було «старт з нуля». Раніше рефреш фактично ресетив візард,
+  // роблячи їх лопатою професійної фрустрації.
+  const [state, dispatch] = useReducer(
+    wizardReducer,
+    {
+      step: "welcome",
+      picks: [],
+      goals: { ...EMPTY_GOALS },
+      stepStartedAt: Date.now(),
+    } as WizardState,
+    loadPersistedWizardState,
+  );
+
+  // Пишемо на кожну зміну. Обсяг даних малий (3 фільди) — писати без
+  // дебаунсу безпечно і не впливає на perf-якість.
+  useEffect(() => {
+    persistWizardState(state);
+  }, [state]);
   const [showPermissions, setShowPermissions] = useState(false);
   const { confetti, CelebrationComponent } = useCelebration();
 
@@ -744,6 +816,7 @@ export function OnboardingWizard({
     markFirstActionStartedAt();
     markFirstActionPending();
     markOnboardingDone();
+    clearPersistedWizardState();
 
     // Show celebration before navigating
     confetti("Готово!", "Твій Sergeant налаштовано. Час діяти!", "high");
@@ -753,6 +826,26 @@ export function OnboardingWizard({
       onDone(null, { intent: "vibe_empty", picks: chosen });
     }, 800);
   }, [state.picks, state.goals, onDone, confetti]);
+
+  // «Пропустити онбординг» — хуткий вихід для юзерів, що вже знають
+  // Sergeant або відкрили додаток вдруге (інший браузер / приватний вікно),
+  // єй не варто проходити весь flow знову. Зберігаємо всі модулі (як fallback
+  // в `finish()` при порожньому picks), не пишемо goals, позначаємо
+  // first-action-pending і markOnboardingDone. Без конфетті: юзер вибрав skip
+  // — celebration була б dissonance.
+  const handleSkip = useCallback(() => {
+    saveVibePicks([...ALL_MODULES] as never[]);
+    trackEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED, {
+      intent: "skip",
+      picksCount: ALL_MODULES.length,
+      hasGoals: false,
+    });
+    markFirstActionStartedAt();
+    markFirstActionPending();
+    markOnboardingDone();
+    clearPersistedWizardState();
+    onDone(null, { intent: "skip", picks: [...ALL_MODULES] });
+  }, [onDone]);
 
   const stepIdx = ONBOARDING_STEPS.indexOf(state.step);
 
@@ -805,7 +898,23 @@ export function OnboardingWizard({
   const currentStepIdx = showPermissions ? ONBOARDING_STEPS.length : stepIdx;
   const content = (
     <div className="space-y-4">
-      <StepIndicator current={currentStepIdx} total={totalSteps} />
+      <div className="flex items-center justify-between gap-3">
+        <StepIndicator current={currentStepIdx} total={totalSteps} />
+        {/* Skip-CTA: прибирає 3-крокову опору, дає юзеру вийти у дашборд
+         * за один тап. Зберігає всі модулі (як fallback `finish()`),
+         * але без goals і без celebration. Показ — на всіх степах,
+         * крім останнього (permissions): там є власний onComplete,
+         * skip туди б додав 3-й конкуруючий CTA. */}
+        {!showPermissions && (
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="text-xs font-medium text-muted hover:text-text underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-md px-1.5 py-0.5"
+          >
+            Пропустити
+          </button>
+        )}
+      </div>
       <div key={stepKeyRef.current} className={transitionClass}>
         {!showPermissions && state.step === "welcome" && (
           <WelcomeStep onContinue={animatedNext} />
