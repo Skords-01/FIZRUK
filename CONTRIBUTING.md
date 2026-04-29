@@ -1,6 +1,7 @@
 # Contributing to Sergeant
 
-> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
 
 > **Ціль:** zero-to-running за ≤ 5 хвилин на будь-якій машині з Docker.
 
@@ -297,6 +298,9 @@ These are non-negotiable. Read `AGENTS.md` for full context.
 8. **Tailwind opacity steps** must be on the registered scale (`0,5,8,10,15,…,100`). Off-scale values silently drop.
 9. **Saturated brand fills behind `text-white`** must use the `-strong` companion for WCAG AA compliance.
 10. **Lifecycle markers** — every file declares its status. New components/hooks committed ahead of integration MUST carry a `@scaffolded` JSDoc block with `@owner` + `@nextStep`. Docs add `> **Status:** Active | Scaffolded | Deprecated | Archived`. Dead-code cleanup PRs MUST run `pnpm dead-code:files` (which honours markers) — never delete a `@scaffolded` file just because it has no importers.
+11. **No arbitrary hex colors in `className`** — raw `<utility>-[#hex]` values bypass the design-system token layer. Use semantic tokens (`bg-success-soft`, `text-fg`, etc.) instead. Add new shades to the preset, not inline at call-site. Enforced by `sergeant-design/no-hex-in-classname` (`error`).
+12. **Module-accent containment** — inside `apps/<app>/src/modules/<X>/`, only `<X>`'s accent utilities may appear. Cross-module shells (`core/`, `shared/`, `stories/`) are exempt. Enforced by `sergeant-design/no-foreign-module-accent` (`error`).
+13. **Read governance before coding; update docs alongside code** — read `AGENTS.md`, `CONTRIBUTING.md`, `CLAUDE.md`, and the matching playbook before writing code. Documentation is part of the change set: when code/contracts move, update the corresponding docs in the same PR (api-client types, design-system, playbooks, freshness headers). See `AGENTS.md` § Hard Rule #13 for the full must-update table.
 
 ---
 
