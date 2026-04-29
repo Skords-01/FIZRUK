@@ -17,6 +17,7 @@ import type {
   WorkoutItem,
   Workout,
   ChatAction,
+  ChatActionResult,
 } from "./types";
 
 function readWorkouts(): Workout[] {
@@ -33,7 +34,9 @@ function readWorkouts(): Workout[] {
   return [];
 }
 
-export function handleFizrukAction(action: ChatAction): string | undefined {
+export function handleFizrukAction(
+  action: ChatAction,
+): ChatActionResult | undefined {
   switch (action.name) {
     case "plan_workout": {
       const { date, time, note, exercises } =

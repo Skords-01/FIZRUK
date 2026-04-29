@@ -433,6 +433,24 @@ function HubChat({
           content: handlerResults[idx]?.result ?? "",
         }));
 
+        // Mutator-handler-и (`create_transaction`, `mark_habit_done`,
+        // `log_meal`, `create_habit`, …) повертають `{ undo }` поряд з
+        // текстовим результатом. Показуємо стандартний 5-секундний
+        // undo-toast для кожного — `showUndoToast` сам повертає taimer
+        // (overlap-stack тут прийнятний: один tool-call на 99 % турнів,
+        // у дуже рідкісному випадку 2-3 одночасних змін юзер бачить
+        // окремий toast на кожну). Read-only handler-и (search,
+        // підрахунки, summaries) `undo` не мають — toast не показується.
+        for (const hr of handlerResults) {
+          if (hr.undo) {
+            const undoFn = hr.undo;
+            showUndoToast(toast, {
+              msg: hr.result,
+              onUndo: undoFn,
+            });
+          }
+        }
+
         const actionsText = toolResults
           .map((r) => `✅ ${r.content}`)
           .join("\n");

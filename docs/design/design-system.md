@@ -664,8 +664,36 @@ CloudSync помилки — `useSyncErrorToast(syncErrorDetail, toast, pushAll)
 ### Інші toast-патерни
 
 - **`showUndoToast`** (`@shared/lib/undoToast`) — деструктивні дії
-  (видалення звички / транзакції): 5 c, кнопка «Повернути». Не плутати з
-  retry-toast: `undo` повертає минулий стан, `retry` повторює невдалу дію.
+  (видалення звички / транзакції) АБО **mutator-tool-call у HubChat**: 5 c,
+  кнопка «Повернути». Не плутати з retry-toast: `undo` повертає минулий
+  стан, `retry` повторює невдалу дію.
+
+#### HubChat tool-call undo
+
+Mutator-handler-и в `apps/web/src/core/lib/chatActions/` повертають
+`{ result: string; undo: () => void }` замість простого `string`. Контракт
+у `types.ts → ChatActionResult`. `HubChat.tsx` після `executeActions` ітерує
+по результатам і для кожного, який має `undo`, кидає
+`showUndoToast(toast, { msg: result, onUndo: undo })`. Read-only handler-и
+(`find_transaction`, `weekly_summary`, …) залишаються `string` — нема що
+реверсити.
+
+Правила для нових mutator-handler-ів:
+
+1. **`undo` має бути ідемпотентним.** Користувач не повторить дію — але
+   паралельні UI-зміни (видалення з іншого екрану) можуть зробити стан
+   таким, що скасовувати нема чого. У такому разі — `return` без throw.
+2. **Тримай у замиканні `id` створеної сутності, а не повний snapshot
+   стану.** Snapshot переписує паралельні правки; `id`-філтр прибирає
+   тільки свою мутацію.
+3. **Якщо мутація — no-op** (напр., `mark_habit_done` для дати, де галочка
+   вже стоїть) — повертай простий `string`, не `{ undo }`. Toast «Повернути
+   на нічого» збиває з пантелику.
+4. **Зміни тестів:** хелпер `call()` у `*.test.ts` приймає обидві форми
+   (`typeof out === "string" ? out : out.result`). Додай окремий
+   `describe("<tool> · undo")`-блок з тестами на видалення, ідемпотентність
+   та no-op гілку.
+
 - **`tryShowCrossModulePrompt`** (`@shared/lib/crossModulePrompt`) — нудж із
   модуля в модуль («витрата в ресторані → запиши прийом їжі?»). Має
   fatigue-suppression на дисмиси.

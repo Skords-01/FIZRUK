@@ -14,9 +14,12 @@ import type {
   NutritionMeal,
   NutritionDay,
   ChatAction,
+  ChatActionResult,
 } from "./types";
 
-export function handleNutritionAction(action: ChatAction): string | undefined {
+export function handleNutritionAction(
+  action: ChatAction,
+): ChatActionResult | undefined {
   switch (action.name) {
     case "log_meal": {
       const { name, kcal, protein_g, fat_g, carbs_g } = (
@@ -38,8 +41,9 @@ export function handleNutritionAction(action: ChatAction): string | undefined {
       const meals: NutritionMeal[] = Array.isArray(dayData.meals)
         ? dayData.meals.slice()
         : [];
+      const mealId = `m_${Date.now()}`;
       meals.push({
-        id: `m_${Date.now()}`,
+        id: mealId,
         name: name || "Без назви",
         macros: {
           kcal: Number(kcal) || 0,
@@ -51,7 +55,27 @@ export function handleNutritionAction(action: ChatAction): string | undefined {
       });
       nutritionLog[todayKey] = { ...dayData, meals };
       lsSet("nutrition_log_v1", nutritionLog);
-      return `Прийом їжі "${name || "Без назви"}" записано: ${Math.round(Number(kcal) || 0)} ккал`;
+      const result = `Прийом їжі "${name || "Без назви"}" записано: ${Math.round(Number(kcal) || 0)} ккал`;
+      return {
+        result,
+        undo: () => {
+          const cur = ls<Record<string, NutritionDay>>("nutrition_log_v1", {});
+          const day = cur[todayKey];
+          if (!day || !Array.isArray(day.meals)) return;
+          const next = day.meals.filter((m) => m.id !== mealId);
+          if (next.length === day.meals.length) return;
+          if (next.length === 0) {
+            const { [todayKey]: _removed, ...rest } = cur;
+            void _removed;
+            lsSet("nutrition_log_v1", rest);
+          } else {
+            lsSet("nutrition_log_v1", {
+              ...cur,
+              [todayKey]: { ...day, meals: next },
+            });
+          }
+        },
+      };
     }
     case "log_water": {
       const { amount_ml, date: waterDate } = (action as LogWaterAction).input;

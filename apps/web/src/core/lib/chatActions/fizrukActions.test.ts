@@ -15,10 +15,10 @@ afterEach(() => {
 
 function call(action: ChatAction): string {
   const out = handleFizrukAction(action);
-  if (typeof out !== "string") {
-    throw new Error(`handler returned ${typeof out}, expected string`);
+  if (out == null) {
+    throw new Error(`handler returned ${typeof out}, expected string|object`);
   }
-  return out;
+  return typeof out === "string" ? out : out.result;
 }
 
 // ---------------------------------------------------------------------------
