@@ -12,6 +12,14 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/adr/0001-monetization-architecture.md",
+    "cadenceDays": 180
+  },
+  {
+    "path": "docs/api/README.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/architecture/api-v1.md",
     "cadenceDays": 90
   },
@@ -28,6 +36,10 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/architecture/hosting-evolution.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/architecture/platforms.md",
     "cadenceDays": 90
   },
@@ -36,11 +48,51 @@
     "cadenceDays": 180
   },
   {
+    "path": "docs/audits/2026-04-28-implementation-roadmap.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/audits/2026-04-28-sergeant-comprehensive-audit.md",
+    "cadenceDays": 180
+  },
+  {
+    "path": "docs/audits/UX-IMPROVEMENT-PLAN.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/audits/UX-UI-AUDIT-2026.md",
+    "cadenceDays": 180
+  },
+  {
+    "path": "docs/audits/ux-audit-2025.md",
+    "cadenceDays": 365
+  },
+  {
     "path": "docs/design/BRANDBOOK.md",
     "cadenceDays": 90
   },
   {
+    "path": "docs/design/EMPTY-STATES.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/RADIUS-RHYTHM.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/UNDO-PATTERN.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/brand-palette-wcag-aa-proposal.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/design/design-system.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/governance/doc-freshness.md",
     "cadenceDays": 90
   },
   {
@@ -120,6 +172,18 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/observability/frontend.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/logging.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/metrics.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/observability/runbook.md",
     "cadenceDays": 60
   },
@@ -192,6 +256,10 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/playbooks/fix-failing-ci.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/playbooks/hotfix-prod-regression.md",
     "cadenceDays": 60
   },
@@ -212,6 +280,10 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/playbooks/prettier-pass-on-docs.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/playbooks/pre-merge-migration-checklist.md",
     "cadenceDays": 60
   },
@@ -224,12 +296,32 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/playbooks/sync-rn-migration-progress.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/playbooks/tune-system-prompt.md",
     "cadenceDays": 90
   },
   {
     "path": "docs/security/audit-exceptions.md",
     "cadenceDays": 90
+  },
+  {
+    "path": "docs/security/nightly-audit.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/security/vulnerability-sla.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/superpowers/specs/2026-04-24-assistant-quick-actions-v1-design.md",
+    "cadenceDays": 180
+  },
+  {
+    "path": "docs/superpowers/specs/2026-04-25-assistant-capability-catalogue-design.md",
+    "cadenceDays": 180
   },
   {
     "path": "docs/tech-debt/backend.md",

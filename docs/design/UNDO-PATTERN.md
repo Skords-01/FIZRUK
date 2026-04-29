@@ -1,5 +1,7 @@
 # Undo pattern — soft-delete + 5 s undo toast
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > Sergeant's unified destructive-action pattern. Use `showUndoToast`
 > instead of `window.confirm()`, instead of a custom "Are you sure?"
 > dialog, instead of a silent delete. Confirmation dialogs are
@@ -201,5 +203,5 @@ When adopting this pattern in a new module:
 
 - [`apps/web/src/shared/lib/undoToast.tsx`](../../apps/web/src/shared/lib/undoToast.tsx) — implementation.
 - [`apps/web/src/shared/lib/undoToast.test.tsx`](../../apps/web/src/shared/lib/undoToast.test.tsx) — contract tests.
-- [`packages/shared/src/constants/undoToast.ts`](../../packages/shared/src/constants/undoToast.ts) — defaults shared with mobile.
+- [`packages/shared/src/lib/undoToast.ts`](../../packages/shared/src/lib/undoToast.ts) — defaults shared with mobile.
 - `AGENTS.md` § Soft rules — "Destructive UX defaults".

@@ -1,5 +1,7 @@
 # Border-radius rhythm
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Audience:** anyone writing UI in `apps/web` or `apps/mobile`.
 > **Goal:** prevent border-radius drift — pick the right radius from a small,
 > size-driven scale instead of inventing a one-off value.
