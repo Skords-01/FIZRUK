@@ -290,11 +290,12 @@ Raw `<utility>-[#hex]` values in Tailwind `className` (`bg-[#10b981]`, `text-[#f
 // ❌ BAD — off-palette emerald that dark-mode cannot touch
 <div className="bg-[#10b981] text-[#fff]/50" />
 
-// ✅ GOOD — semantic token; `dark:` + `-strong` work automatically
-<div className="bg-brand-soft text-on-brand" />
+// ✅ GOOD — status soft token; both `bg-` and `text-` adapt per theme
+// via CSS variables owned by the preset.
+<div className="bg-success-soft text-success-strong" />
 
-// ✅ GOOD — module accent; covered by the `-surface` / `-strong` pair
-<div className="bg-finyk-surface text-finyk-strong" />
+// ✅ GOOD — page-level surface + foreground; semantic and theme-aware.
+<div className="bg-surface text-fg" />
 ```
 
 The rule covers every colour-aware utility (`bg-`, `text-`, `border-`, `ring-`, `fill-`, `stroke-`, `from-`, `to-`, `via-`, `shadow-`, `outline-`, `divide-`, `placeholder-`, `caret-`, `decoration-`, `accent-`) and validates hex length (3 / 4 / 6 / 8 digits). Non-hex arbitrary values (`bg-[oklch(…)]`, `border-[var(--foo)]`, `bg-[rgb(…)]`) are **intentionally left alone** — they can reference CSS variables owned by the preset and are occasionally necessary for one-off interop.
