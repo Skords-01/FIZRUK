@@ -1,4 +1,4 @@
-# Мінімальні Grafana dashboards (Prometheus)
+# Мінімальні Grafana-дашборди (Prometheus)
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
 > **Status:** Active
