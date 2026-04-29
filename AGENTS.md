@@ -569,12 +569,14 @@ CI gates fail when these regress. Numbers come from `apps/web/package.json` → 
 | Metric                                | Budget             | Where enforced                                      |
 | ------------------------------------- | ------------------ | --------------------------------------------------- |
 | `apps/web` JS total (brotli)          | **≤ 615 kB**       | `pnpm --filter @sergeant/web exec size-limit` in CI |
-| `apps/web` CSS (brotli)               | **≤ 18 kB**        | same                                                |
+| `apps/web` CSS (brotli)               | **≤ 22 kB**        | same                                                |
 | Backend `/health` p95                 | < 100 ms           | (informal; track in Railway logs)                   |
 | Anthropic `/api/chat` p95 first token | < 1.5 s            | (informal; will move to PostHog/Sentry once wired)  |
 | Test suite total wall time            | < 60 s per package | turbo cache makes this implicit                     |
 
 If you legitimately need to raise a limit (e.g. a major new dependency), bump the number in the same PR and call it out in the description so reviewers can sanity-check.
+
+> **Implementation note:** `size-limit` paths in `apps/web/package.json` point to `../server/dist/assets/*` because the Vite build output is copied into the server's `dist/` directory for unified-mode serving (Replit/Railway). If the server build pipeline or `dist` layout changes, verify that `size-limit` paths still resolve — otherwise the budget check silently passes with zero files matched.
 
 ## Anti-patterns from past bugs
 

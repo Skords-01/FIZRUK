@@ -108,5 +108,6 @@ export type {
   SyncEndpoints,
   TokenProvider,
   WeeklyDigestPayload,
+  WeeklyDigestReport,
   WeeklyDigestResponse,
 } from "@sergeant/api-client";

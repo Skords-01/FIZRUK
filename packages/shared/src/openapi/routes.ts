@@ -513,7 +513,47 @@ export const paths: ZodOpenApiPathsObject = {
       summary: "Підключити Mono-token та зареєструвати webhook",
       tags: ["mono"],
       security: cookieOrBearer,
-      responses: { "200": okEmpty, "401": unauthorized },
+      responses: {
+        "200": {
+          description: "Mono integration активовано.",
+          content: {
+            "application/json": { schema: namedSchemas.MonoConnectResponse },
+          },
+        },
+        "401": unauthorized,
+      },
+    },
+  },
+  "/api/mono/disconnect": {
+    post: {
+      summary: "Відключити Mono-token + забути webhook secret",
+      tags: ["mono"],
+      security: cookieOrBearer,
+      responses: {
+        "200": {
+          description: "Mono integration вимкнено.",
+          content: {
+            "application/json": { schema: namedSchemas.MonoDisconnectResponse },
+          },
+        },
+        "401": unauthorized,
+      },
+    },
+  },
+  "/api/mono/sync-state": {
+    get: {
+      summary: "Статус Mono-інтеграції + лічильники webhook events",
+      tags: ["mono"],
+      security: cookieOrBearer,
+      responses: {
+        "200": {
+          description: "Поточний стан синхронізації.",
+          content: {
+            "application/json": { schema: namedSchemas.MonoSyncState },
+          },
+        },
+        "401": unauthorized,
+      },
     },
   },
   "/api/mono/accounts": {
@@ -521,7 +561,33 @@ export const paths: ZodOpenApiPathsObject = {
       summary: "Список Mono-рахунків поточного користувача",
       tags: ["mono"],
       security: cookieOrBearer,
-      responses: { "200": okEmpty, "401": unauthorized },
+      responses: {
+        "200": {
+          description: "Нормалізовані рядки `mono_accounts`.",
+          content: {
+            "application/json": { schema: namedSchemas.MonoAccountsResponse },
+          },
+        },
+        "401": unauthorized,
+      },
+    },
+  },
+  "/api/mono/transactions": {
+    get: {
+      summary: "Cursor-paginated історія Mono-транзакцій",
+      tags: ["mono"],
+      security: cookieOrBearer,
+      requestParams: { query: namedSchemas.MonoTransactionsQuery },
+      responses: {
+        "200": {
+          description: "Сторінка транзакцій + nextCursor.",
+          content: {
+            "application/json": { schema: namedSchemas.MonoTransactionsPage },
+          },
+        },
+        "400": validationError,
+        "401": unauthorized,
+      },
     },
   },
   "/api/mono/backfill": {
@@ -529,8 +595,16 @@ export const paths: ZodOpenApiPathsObject = {
       summary: "Бекфіл історії транзакцій у Mono integration",
       tags: ["mono"],
       security: cookieOrBearer,
-      requestParams: { query: namedSchemas.MonoTransactionsQuery },
-      responses: { "200": okEmpty, "401": unauthorized },
+      responses: {
+        "200": {
+          description:
+            "Бекфіл запущено синхронно — виконується в фоновому режимі.",
+          content: {
+            "application/json": { schema: namedSchemas.MonoBackfillResponse },
+          },
+        },
+        "401": unauthorized,
+      },
     },
   },
 
