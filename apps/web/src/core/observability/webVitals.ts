@@ -1,5 +1,9 @@
 import { apiUrl } from "@shared/lib/apiUrl";
-import { isCapacitor } from "@sergeant/shared";
+import {
+  isCapacitor,
+  type WebVitalsMetricName,
+  type WebVitalsMetricRating,
+} from "@sergeant/shared";
 
 /**
  * Збір Core Web Vitals (LCP / INP / CLS / FCP / TTFB) і відправка батчем
@@ -22,10 +26,13 @@ import { isCapacitor } from "@sergeant/shared";
 const ENDPOINT_PATH = "/api/metrics/web-vitals";
 export const MAX_BATCH = 10;
 
+// Shape локальних буферних записів похідна від SSOT-схеми
+// `WebVitalsPayloadSchema` у `@sergeant/shared`. Якщо додати нову метрику
+// у шарі schemas, TS одразу підсвітить необхідні зміни тут.
 interface WebVitalReport {
-  name: string;
+  name: WebVitalsMetricName;
   value: number;
-  rating?: string;
+  rating?: WebVitalsMetricRating;
 }
 
 const buffer: WebVitalReport[] = [];
@@ -113,15 +120,42 @@ interface MetricInput {
   rating?: string;
 }
 
+const SUPPORTED_METRIC_NAMES = new Set<WebVitalsMetricName>([
+  "LCP",
+  "INP",
+  "FCP",
+  "TTFB",
+  "CLS",
+]);
+
+const SUPPORTED_RATINGS = new Set<WebVitalsMetricRating>([
+  "good",
+  "needs-improvement",
+  "poor",
+]);
+
+function isSupportedName(value: string): value is WebVitalsMetricName {
+  return SUPPORTED_METRIC_NAMES.has(value as WebVitalsMetricName);
+}
+
+function isSupportedRating(value: string): value is WebVitalsMetricRating {
+  return SUPPORTED_RATINGS.has(value as WebVitalsMetricRating);
+}
+
 export function enqueue(metric: MetricInput | null | undefined) {
   if (
     !metric ||
     typeof metric.value !== "number" ||
     !Number.isFinite(metric.value) ||
-    metric.value < 0
+    metric.value < 0 ||
+    !isSupportedName(metric.name)
   ) {
     return;
   }
+  const rating =
+    metric.rating && isSupportedRating(metric.rating)
+      ? metric.rating
+      : undefined;
   buffer.push({
     name: metric.name,
     value:
@@ -129,7 +163,7 @@ export function enqueue(metric: MetricInput | null | undefined) {
       metric.name === "CLS"
         ? Number(metric.value.toFixed(4))
         : Math.round(metric.value),
-    rating: metric.rating,
+    rating,
   });
   if (buffer.length >= MAX_BATCH) {
     flush();

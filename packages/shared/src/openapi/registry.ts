@@ -194,6 +194,21 @@ const WaitlistSubmitResponse = schemas.WaitlistSubmitResponseSchema.meta({
   description:
     "Відповідь на POST /api/v1/waitlist — `created` розрізняє новий запис vs duplicate.",
 });
+const TranscribeQuery = schemas.TranscribeQuerySchema.meta({
+  id: "TranscribeQuery",
+  description:
+    "Query для POST /api/transcribe (Groq Whisper proxy): мова + prompt.",
+});
+const TranscribeResponse = schemas.TranscribeResponseSchema.meta({
+  id: "TranscribeResponse",
+  description:
+    "Відповідь на POST /api/transcribe — розпізнаний текст + тривалість аудіо.",
+});
+const WebVitalsPayload = schemas.WebVitalsPayloadSchema.meta({
+  id: "WebVitalsPayload",
+  description:
+    "POST /api/metrics/web-vitals — батч Core Web Vitals (LCP/INP/FCP/TTFB/CLS).",
+});
 
 /** Стандартна 400-помилка для validateBody. */
 const ApiError = z
@@ -256,6 +271,9 @@ export const namedSchemas = {
   Pagination,
   WaitlistSubmit,
   WaitlistSubmitResponse,
+  TranscribeQuery,
+  TranscribeResponse,
+  WebVitalsPayload,
   ApiError,
 } as const;
 

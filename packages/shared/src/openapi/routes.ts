@@ -132,8 +132,8 @@ export const paths: ZodOpenApiPathsObject = {
     },
   },
 
-  // ────────────────────── /api/digest/weekly ──────────────────────
-  "/api/digest/weekly": {
+  // ────────────────────── /api/weekly-digest ──────────────────────
+  "/api/weekly-digest": {
     post: {
       summary: "Згенерувати тижневий digest по агрегатах модулів",
       tags: ["digest"],
@@ -296,6 +296,24 @@ export const paths: ZodOpenApiPathsObject = {
         "200": okEmpty,
         "400": validationError,
         "401": unauthorized,
+      },
+    },
+  },
+  "/api/nutrition/backup-download": {
+    post: {
+      summary: "Отримати останній зашифрований backup nutrition-blob",
+      description:
+        "Token-authenticated через header `x-token`. Повертає 404, якщо " +
+        "для наданого токена бекапів ще немає.",
+      tags: ["nutrition"],
+      responses: {
+        "200": okEmpty,
+        "404": {
+          description: "Backup для наданого x-token не знайдено.",
+          content: {
+            "application/json": { schema: namedSchemas.ApiError },
+          },
+        },
       },
     },
   },
@@ -609,7 +627,11 @@ export const paths: ZodOpenApiPathsObject = {
   },
 
   // ────────────────────── Waitlist (Phase 0 monetization) ───────────────────
-  "/api/v1/waitlist": {
+  // Сервер монтує обидва префікси (`/api/waitlist` + `/api/v1/waitlist`), щоб
+  // pricing-page CTA працював незалежно від стадії API-versioning shim-у.
+  // Обидва шляхи документуємо однаково — щоб консюмери бачили спеку що б вони
+  // не кликнули.
+  "/api/waitlist": {
     post: {
       summary: "Sign-up на waitlist для майбутнього Pro-тіру (анонімний)",
       tags: ["monetization"],
@@ -632,6 +654,106 @@ export const paths: ZodOpenApiPathsObject = {
           content: {
             "application/json": { schema: namedSchemas.ApiError },
           },
+        },
+      },
+    },
+  },
+  "/api/v1/waitlist": {
+    post: {
+      summary:
+        "Sign-up на waitlist для майбутнього Pro-тіру (v1 alias для /api/waitlist)",
+      tags: ["monetization"],
+      requestBody: {
+        content: {
+          "application/json": { schema: namedSchemas.WaitlistSubmit },
+        },
+      },
+      responses: {
+        "200": {
+          description:
+            "Submitted (created=true) або уже був у списку (created=false)",
+          content: {
+            "application/json": { schema: namedSchemas.WaitlistSubmitResponse },
+          },
+        },
+        "400": validationError,
+        "429": {
+          description: "Too many requests — rate-limit перевищено.",
+          content: {
+            "application/json": { schema: namedSchemas.ApiError },
+          },
+        },
+      },
+    },
+  },
+
+  // ────────────────────── Transcribe / Observability ────────────────────────
+  "/api/transcribe": {
+    post: {
+      summary: "Голосова транскрипція через Groq Whisper (audio/* → текст)",
+      description:
+        "Body — сирий аудіо-блоб (`Content-Type: audio/webm | audio/ogg | audio/mp4 | …`), " +
+        "ліміт 10 MB. Query визначає мову (auto-detect якщо порожньо) та prompt для " +
+        "доменних термінів. Потребує активну сесію + сконфігурований GROQ_API_KEY (503 інакше).",
+      tags: ["transcribe"],
+      security: cookieOrBearer,
+      requestParams: { query: namedSchemas.TranscribeQuery },
+      requestBody: {
+        content: {
+          "audio/webm": { schema: { type: "string", format: "binary" } },
+          "audio/ogg": { schema: { type: "string", format: "binary" } },
+          "audio/mp4": { schema: { type: "string", format: "binary" } },
+          "audio/mpeg": { schema: { type: "string", format: "binary" } },
+          "audio/wav": { schema: { type: "string", format: "binary" } },
+        },
+      },
+      responses: {
+        "200": {
+          description: "Транскрипція успішна.",
+          content: {
+            "application/json": { schema: namedSchemas.TranscribeResponse },
+          },
+        },
+        "400": validationError,
+        "401": unauthorized,
+        "413": {
+          description: "Payload завеликий (>10 MB).",
+          content: {
+            "application/json": { schema: namedSchemas.ApiError },
+          },
+        },
+        "415": {
+          description: "Непідтримуваний Content-Type (очікуємо audio/*).",
+          content: {
+            "application/json": { schema: namedSchemas.ApiError },
+          },
+        },
+        "503": {
+          description: "GROQ_API_KEY не сконфігурований на сервері.",
+          content: {
+            "application/json": { schema: namedSchemas.ApiError },
+          },
+        },
+      },
+    },
+  },
+  "/api/metrics/web-vitals": {
+    post: {
+      summary: "Ingest Core Web Vitals (LCP / INP / FCP / TTFB / CLS)",
+      description:
+        "Анонімний beacon-endpoint для `navigator.sendBeacon` при pagehide / " +
+        "visibilitychange=hidden. Завжди відповідає 204 No Content — навіть на " +
+        "malformed payload (sendBeacon ігнорує відповідь, не даємо feedback-у зондам).",
+      tags: ["observability"],
+      requestBody: {
+        content: {
+          "application/json": { schema: namedSchemas.WebVitalsPayload },
+        },
+      },
+      responses: {
+        "204": {
+          description:
+            "Accepted (завжди 204, незалежно від валідності payload).",
         },
       },
     },
