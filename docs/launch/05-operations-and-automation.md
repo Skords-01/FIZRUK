@@ -1,4 +1,4 @@
-# 05. Operations & Automation: як контролювати, відстежувати, організовувати
+# 05. Operations і автоматизація: як контролювати, відстежувати, організовувати
 
 > **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
 > **Status:** Active
@@ -1138,7 +1138,7 @@ OpenClaw weekly report → GitHub Issue (label: weekly-action-items)
 
 ---
 
-## 11. Вартість operations stack
+## 11. Вартість operations-стеку
 
 ### Базовий сценарій (solo founder)
 
@@ -1171,7 +1171,7 @@ OpenClaw weekly report → GitHub Issue (label: weekly-action-items)
 
 ---
 
-## Pointers
+## Пов'язані документи
 
 - Каталог сервісів і фази впровадження → [03-services-and-toolstack.md](./03-services-and-toolstack.md).
 - Метрики, алерти, incident response → [04-launch-readiness.md §3](./04-launch-readiness.md#3-operations-support-monitoring-incidents).
