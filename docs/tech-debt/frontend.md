@@ -1,13 +1,15 @@
 # Frontend Tech Debt — Sergeant Web
 
-> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-06-28.
 > **Status:** Active
 
 Аналіз кодової бази `apps/web/src` (434 source файли, 87k рядків).
 
-> **Оновлено 2026-04-27.** Базові cifri (allowlist size, file
-> sizes, countи) переперевірені відносно поточного `eslint.config.js`
-> і вмісту `apps/web/src/`.
+> **Оновлено 2026-04-29.** Розділ 11 (Strict TS rollout) промарковано Phase 2:
+> `tsconfig.strict.json` розширено з `src/shared/**` до всього `src/test`,
+> `src/core/{auth,cloudSync,components,hints,hooks,observability,pricing,profile}`
+> (10 директорій всього). Окремо виправлено cross-file SpeechRecognition
+> type-collision (`useSpeech.ts` більше не augment-ить глобальний `Window`).
 
 > **Як читати:** позначки в стовпчику «Статус» оновлюються в момент злиття PR.
 > Це жива сторінка — не «звіт», а контроль міграцій. Кожен запис стандартизує:
@@ -248,13 +250,14 @@ Production код чистий. Тестові `any` — фабрики фікт
 
 **Триетапний план:**
 
-| Phase | Прапор                                      | Скоуп                          | Статус      |
-| ----- | ------------------------------------------- | ------------------------------ | ----------- |
-| 1     | `strictNullChecks`                          | `src/shared/**`                | ✅ Виконано |
-| 2     | `strictNullChecks`                          | `src/core/lib/**` + розширення | TODO        |
-| 3     | повний `strict: true` + видалення `allowJs` | всі файли                      | TODO        |
+| Phase | Прапор                                      | Скоуп                                                                                                         | Статус      |
+| ----- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------- |
+| 1     | `strictNullChecks`                          | `src/shared/**`                                                                                               | ✅ Виконано |
+| 2     | `strictNullChecks`                          | + `src/test/**`, `src/core/{auth,cloudSync,components,hints,hooks,observability,pricing,profile}/**` (10 дир) | ✅ Виконано |
+| 3     | `strictNullChecks`                          | + `src/modules/{routine,nutrition,finyk,fizruk}/**`, `src/core/{app,hub,insights,onboarding,settings,lib}/**` | TODO        |
+| 4     | повний `strict: true` + видалення `allowJs` | всі файли                                                                                                     | TODO        |
 
-**Phase 1 деталі (цей PR — PR-6.A):**
+**Phase 1 деталі (PR-6.A):**
 
 - Додано `apps/web/tsconfig.strict.json` — extends основний tsconfig,
   додає `strictNullChecks: true`, includes тільки `src/shared/**`.
@@ -262,16 +265,32 @@ Production код чистий. Тестові `any` — фабрики фікт
   до pipeline.
 - **Baseline error count (з `strictNullChecks` на весь `apps/web`):** 518 помилок.
   - `src/shared/**` — 7 помилок → виправлено (non-null assertions у тестах).
-  - `src/core/lib/**` — 16 помилок → TODO Phase 2.
-  - Інші модулі (`modules/`, `core/` без lib) — ~495 помилок → Phase 3.
+  - `src/core/lib/**` — 16 помилок → TODO Phase 3 (було Phase 2 у первісному плані).
+  - Інші модулі (`modules/`, `core/` без lib) — ~495 помилок → Phase 3+.
 - Жодних `@ts-expect-error` або runtime-змін не додано.
 
-**Phase 2 (наступний PR):** розширити `tsconfig.strict.json` include на
-`src/core/lib/**`. Виправити 16 помилок (4 у production-коді
-`hubChatContext.ts`, решта в тестах).
+**Phase 2 деталі (PR — audit high-priority #1 крок 1):**
 
-**Phase 3:** увімкнути `strict: true` у головному `tsconfig.json`, видалити
-`allowJs`, виправити всі залишкові помилки.
+- `tsconfig.strict.json` розширено до 10 директорій:
+  `src/shared`, `src/test`, `src/core/{auth, cloudSync, components, hints, hooks, observability, pricing, profile}`.
+- **Виправлено cross-file SpeechRecognition type-collision** між
+  `useSpeech.ts` (`declare global Window`) і `VoiceMicButton.tsx` (локальна
+  форма). Глобальну augmentation знято — `useSpeech.ts` читає `window`
+  через приватний cast (`WindowWithSpeech`), що не навʼязує єдиної
+  сигнатури іншим call-сайтам.
+- **1 null-check error виправлено** у `useCloudSync.behavior.test.ts`
+  (`localStorage.getItem(...)` → додано `expect(...).not.toBeNull()`
+  - `as string` перед `JSON.parse`).
+- Жодних змін у runtime-коді (лише типи + один тест assertion).
+
+**Phase 3 (наступний PR):** розширити `tsconfig.strict.json` на
+`src/modules/{routine,nutrition,finyk,fizruk}/**` (~25 strict-null помилок
+по поточному виміру) і `src/core/lib/**` (16 помилок). Можна
+паралелити як 4 під-PR-и (по одному на модуль).
+
+**Phase 4:** увімкнути `strict: true` у головному `tsconfig.json`, видалити
+`allowJs`, виправити всі залишкові помилки (основний ROI — на `noImplicitAny`,
+`strictPropertyInitialization`).
 
 ---
 
