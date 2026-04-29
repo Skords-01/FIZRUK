@@ -4,7 +4,11 @@ import {
   extractAnthropicText,
 } from "../../lib/anthropic.js";
 import { validateBody } from "../../http/validate.js";
-import { WeeklyDigestSchema } from "../../http/schemas.js";
+import {
+  WeeklyDigestSchema,
+  WeeklyDigestReportSchema,
+  WeeklyDigestSuccessSchema,
+} from "../../http/schemas.js";
 import { ExternalServiceError, ValidationError } from "../../obs/errors.js";
 
 type WithAnthropicKey = Request & { anthropicKey?: string };
@@ -200,13 +204,32 @@ ${dataContext}`;
 
   const text = extractAnthropicText(aiData);
 
-  const report = extractJsonObject(text);
-  if (!report) {
+  const rawReport = extractJsonObject(text);
+  if (!rawReport) {
     throw new ExternalServiceError("Не вдалося розпарсити відповідь AI", {
       status: 502,
       code: "ANTHROPIC_PARSE_ERROR",
     });
   }
 
-  res.status(200).json({ report, generatedAt: new Date().toISOString() });
+  // Validate Claude's output against the schema (SSOT in
+  // `@sergeant/shared/schemas/api`; Hard Rule #3). Shape drift from the
+  // LLM becomes a 502 at the edge rather than typed lies reaching the UI.
+  const reportParse = WeeklyDigestReportSchema.safeParse(rawReport);
+  if (!reportParse.success) {
+    throw new ExternalServiceError(
+      "Відповідь AI не відповідає очікуваній структурі звіту",
+      {
+        status: 502,
+        code: "ANTHROPIC_SHAPE_MISMATCH",
+      },
+    );
+  }
+
+  res.status(200).json(
+    WeeklyDigestSuccessSchema.parse({
+      report: reportParse.data,
+      generatedAt: new Date().toISOString(),
+    }),
+  );
 }
