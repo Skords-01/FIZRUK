@@ -297,6 +297,7 @@ These are non-negotiable. Read `AGENTS.md` for full context.
 8. **Tailwind opacity steps** must be on the registered scale (`0,5,8,10,15,…,100`). Off-scale values silently drop.
 9. **Saturated brand fills behind `text-white`** must use the `-strong` companion for WCAG AA compliance.
 10. **Lifecycle markers** — every file declares its status. New components/hooks committed ahead of integration MUST carry a `@scaffolded` JSDoc block with `@owner` + `@nextStep`. Docs add `> **Status:** Active | Scaffolded | Deprecated | Archived`. Dead-code cleanup PRs MUST run `pnpm dead-code:files` (which honours markers) — never delete a `@scaffolded` file just because it has no importers.
+11. **Read governance before coding; update docs alongside code.** Pre-flight: `AGENTS.md` Hard Rules, `CONTRIBUTING.md`, `CLAUDE.md`, the matching playbook in `docs/playbooks/`, freshness header of any doc you cite. While coding: don't work around rules — raise them. Before PR: update docs that the change invalidates (api-client types, design-system, audits, playbooks, `CLAUDE.md` commands, freshness header) — docs are part of the change set, not a follow-up. Tick the PR-template "AGENTS.md updated?" + "Docs updated?" boxes.
 
 ---
 

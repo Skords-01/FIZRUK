@@ -9,7 +9,7 @@
 
 ## Step 0. Verify the file isn't scaffolding
 
-> Added 2026-04-29 in response to PR [#1143](https://github.com/Skords-01/Sergeant/pull/1143). See AGENTS.md → Hard Rule #10.
+> Added 2026-04-29 in response to PR [#1143](https://github.com/Skords-01/Sergeant/pull/1143). See AGENTS.md → Hard Rule #10 (lifecycle markers) and Hard Rule #11 (read governance / update docs alongside code).
 
 Before deleting **anything** flagged by `pnpm knip`, check whether it carries a lifecycle marker:
 

@@ -26,10 +26,14 @@ pnpm gen                 # Plop code generators (migration, rq-hook, hubchat-too
 
 ## Before you write code
 
-1. Read the relevant playbook in `docs/playbooks/` — pick by trigger phrase (e.g. "нова API-функціональність" → `add-api-endpoint.md`).
-2. Check `AGENTS.md` § Hard rules — especially bigint coercion (#1), RQ keys (#2), migration numbering (#4).
-3. New HubChat tool? Needs **3 coordinated edits** — see `docs/playbooks/add-hubchat-tool.md`.
-4. New migration? Use `pnpm gen migration --name <desc>` — auto-numbers from last migration (`015`).
+> Hard Rule #11 in `AGENTS.md` applies to AI agents: complete this pre-flight before implementing.
+
+1. Read the relevant playbook in `docs/playbooks/` — pick by trigger phrase (e.g. "нова API-функціональність" → `add-api-endpoint.md`; "remove dead code" → `cleanup-dead-code.md`).
+2. Check `AGENTS.md` § Hard rules — especially bigint coercion (#1), RQ keys (#2), migration numbering (#4), lifecycle markers (#10), governance + docs discipline (#11).
+3. Before deleting any file, run `pnpm dead-code:files` (which honours `@scaffolded`/`@deprecated` markers) — never delete a `@scaffolded` file just because knip says it's unused.
+4. New HubChat tool? Needs **3 coordinated edits** — see `docs/playbooks/add-hubchat-tool.md`.
+5. New migration? Use `pnpm gen migration --name <desc>` — auto-numbers from last migration (`015`).
+6. Before opening the PR, update docs that the change invalidates (api-client types, design-system, audits, playbooks, the freshness header). Docs are part of the change set.
 
 ## Verification before PR
 
