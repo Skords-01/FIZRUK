@@ -1736,11 +1736,19 @@ const RX_LIGHT_RAW_PALETTE = new RegExp(
   "g",
 );
 
-// Match `dark:<utility>-<palette>-<step>[/<opacity>]`. We use a
-// negative-lookbehind on `:` to avoid matching `lg:dark:bg-…` weirdness
-// while still allowing the `dark:` prefix.
+// Match `dark:<utility>-<palette>-<step>[/<opacity>]`. The negative
+// lookbehind `(?<![\w:-])` excludes any token where `dark:` itself is
+// preceded by another variant (`lg:dark:bg-amber-500/15`,
+// `hover:dark:text-coral-300`, …) — those tokens carry an extra
+// breakpoint / state condition that the rule's pair-only contract does
+// not model, and treating them as bare `dark:` matches produced
+// false-positive pair reports against unrelated bare light utilities
+// elsewhere in the same className. The light-side regex already uses
+// the same lookbehind, so the pair logic stays symmetric: only
+// genuinely bare `<utility>-<palette>-<step>` and bare
+// `dark:<utility>-<palette>-<step>` tokens contribute to a match.
 const RX_DARK_RAW_PALETTE = new RegExp(
-  String.raw`\bdark:(` +
+  String.raw`(?<![\w:-])dark:(` +
     RAW_DARK_PALETTE_UTILITIES.join("|") +
     String.raw`)-(` +
     RAW_DARK_PALETTE_FAMILIES.join("|") +

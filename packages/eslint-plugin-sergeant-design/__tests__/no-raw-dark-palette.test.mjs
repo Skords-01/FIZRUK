@@ -184,4 +184,49 @@ describe("no-raw-dark-palette", () => {
     );
     assert.equal(messages.length, 1);
   });
+
+  it("does NOT match `dark:` when prefixed by another variant (lg:dark:…)", () => {
+    // Regression test for cubic finding on PR #1155 — `lg:dark:bg-amber-500/15`
+    // tokens carry an extra breakpoint condition that the rule's
+    // pair-only contract does not model. Treating them as bare `dark:`
+    // matches produced false-positive pair reports against unrelated
+    // bare light utilities (`bg-amber-50`) elsewhere in the same
+    // className. The dark-side regex now uses the same `(?<![\w:-])`
+    // lookbehind as the light-side regex.
+    const messages = lint(`const c = "bg-amber-50 lg:dark:bg-amber-500/15";`);
+    assert.equal(
+      messages.length,
+      0,
+      "lg:dark: prefixed dark utility must not pair with bare bg-amber-50",
+    );
+  });
+
+  it("does NOT match `dark:` when prefixed by a hover state (hover:dark:…)", () => {
+    // Same family of false-positives: `hover:dark:text-coral-300` is
+    // a stateful + dark-mode override, not a bare dark pair.
+    const messages = lint(
+      `const c = "text-coral-700 hover:dark:text-coral-300 underline";`,
+    );
+    assert.equal(messages.length, 0);
+  });
+
+  it("does NOT match `dark:` when prefixed by a focus state (focus-visible:dark:…)", () => {
+    const messages = lint(
+      `const c = "border-teal-200 focus-visible:dark:border-teal-700";`,
+    );
+    assert.equal(messages.length, 0);
+  });
+
+  it("still flags a bare `dark:` pair even when the same className has a `lg:dark:` variant on a different family", () => {
+    // The bare `text-brand-600 dark:text-brand-400` pair must still
+    // fire even when an unrelated `lg:dark:bg-amber-500/15` token
+    // appears in the same className — the variant-prefix dark token
+    // is invisible to the rule, but the bare pair is unambiguous.
+    const messages = lint(
+      `const c = "text-brand-600 dark:text-brand-400 lg:dark:bg-amber-500/15";`,
+    );
+    assert.equal(messages.length, 1);
+    assert.match(messages[0].message, /text-brand-600/);
+    assert.match(messages[0].message, /dark:text-brand-400/);
+  });
 });
