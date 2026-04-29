@@ -4,6 +4,8 @@ import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
+import { EmptyState } from "@shared/components/ui/EmptyState";
+import { Icon } from "@shared/components/ui/Icon";
 import { Tooltip } from "@shared/components/ui/Tooltip";
 import { useToast } from "@shared/hooks/useToast";
 import { showUndoToast } from "@shared/lib/undoToast";
@@ -376,9 +378,13 @@ export function WorkoutTemplatesSection({
           </SectionHeading>
         </div>
         {(templates || []).length === 0 ? (
-          <div className="p-6 text-center text-sm text-subtle">
-            Поки немає шаблонів
-          </div>
+          <EmptyState
+            compact
+            module="fizruk"
+            icon={<Icon name="dumbbell" size={20} />}
+            title="Поки немає шаблонів"
+            description="Створи свій перший — кнопка вище."
+          />
         ) : (
           (templates || []).map((t) => (
             <div
