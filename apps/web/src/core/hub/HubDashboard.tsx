@@ -342,25 +342,31 @@ export function HubDashboard({
         <TodaySummaryStrip onOpenModule={onOpenModule} />
       </StaggerChild>
 
-      {/* Assistant advice — hide error state */}
+      {/* «Підказки» секція: AssistantAdvice + DailyNudge — обидві
+       * картки показували пораду на день, але рендерились як два
+       * незалежних блоки з різним візуальним chrome. Об’єднання під
+       * одним SectionHeading знижує card-density і дає зрозуміти,
+       * що ці елементи логічно одного класу — пораджу-стрічка. */}
       <StaggerChild index={si++}>
-        <AssistantAdviceCard
-          insight={coachInsightText}
-          loading={coachLoading}
-          error={coachError}
-          onRefresh={coachRefresh}
-        />
-      </StaggerChild>
-
-      {activeNudge && !reengagement.show && (
-        <StaggerChild index={si++}>
-          <DailyNudge
-            nudge={activeNudge}
-            sessionDays={sessionDays}
-            onDismiss={() => setNudgeDismissed(true)}
+        <section className="space-y-2">
+          <SectionHeading as="h2" size="xs" className="!px-0">
+            Підказки
+          </SectionHeading>
+          <AssistantAdviceCard
+            insight={coachInsightText}
+            loading={coachLoading}
+            error={coachError}
+            onRefresh={coachRefresh}
           />
-        </StaggerChild>
-      )}
+          {activeNudge && !reengagement.show && (
+            <DailyNudge
+              nudge={activeNudge}
+              sessionDays={sessionDays}
+              onDismiss={() => setNudgeDismissed(true)}
+            />
+          )}
+        </section>
+      </StaggerChild>
 
       {/* MODULE CARDS — 2×2 bento grid */}
       <StaggerChild index={si++}>
@@ -429,9 +435,16 @@ export function HubDashboard({
         </section>
       </StaggerChild>
 
-      {/* Secondary content */}
+      {/* «Аналітика» секція: insights-panel + weekly-digest. Обидва —
+       * data-driven блоки на історії, які раніше рендерились без
+       * групувального заголовка і виглядали як ще «дві картки» серед
+       * ~6 інших. Один SectionHeading робить очевидним, що це окремий
+       * шар, на відміну від одноразової «Підказки». */}
       <StaggerChild index={si++}>
-        <div className="space-y-2">
+        <section className="space-y-2">
+          <SectionHeading as="h2" size="xs" className="!px-0">
+            Аналітика
+          </SectionHeading>
           <HubInsightsPanel
             items={rest}
             onOpenModule={openInsightTarget}
@@ -446,7 +459,7 @@ export function HubDashboard({
               onExpand={() => setDigestExpanded(true)}
             />
           ) : null}
-        </div>
+        </section>
       </StaggerChild>
 
       {/* Motivational footer */}
