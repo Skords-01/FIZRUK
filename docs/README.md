@@ -7,25 +7,24 @@
 
 ## Структура
 
-| Розділ                                | Призначення                                                                    |
-| ------------------------------------- | ------------------------------------------------------------------------------ |
-| [`adr/`](./adr/README.md)             | Architecture Decision Records — `чому` обрано конкретні архітектурні рішення.  |
-| [`api/`](./api/README.md)             | OpenAPI 3.1 spec (`openapi.json`), згенерований із zod-схем `packages/shared`. |
-| [`architecture/`](./architecture)     | Огляд системи: статус-матриця, фронтенд-overview, API-контракт, платформи.     |
-| [`audits/`](./audits)                 | Періодичні аудити коду / архітектури.                                          |
-| [`design/`](./design)                 | Брендбук, дизайн-токени, palette / WCAG proposal.                              |
-| [`governance/`](./governance)         | Cadence policies (freshness, policy review).                                   |
-| [`integrations/`](./integrations)     | Сторонні сервіси: Railway+Vercel, Renovate, Monobank.                          |
-| [`launch/`](./launch/README.md)       | Запуск продукту: монетизація, GTM, операції.                                   |
-| [`mobile/`](./mobile)                 | Мобільні додатки: Expo overview, Capacitor shell, deep-links, RN-міграція.     |
-| [`observability/`](./observability)   | SLO, runbook, dashboards, prometheus rules, logging, metrics.                  |
-| [`ops/`](./ops)                       | Ops-рецепти та інструменти (n8n, Grafana, Prometheus).                         |
-| [`planning/`](./planning)             | Roadmap-и: dev-stack, AI-coding.                                               |
-| [`playbooks/`](./playbooks/README.md) | Покрокові how-to для типових змін у репо.                                      |
-| [`postmortems/`](./postmortems)       | Постмортеми інцидентів.                                                        |
-| [`security/`](./security)             | Аудит-винятки, vulnerability SLA, нічний скан.                                 |
-| [`superpowers/`](./superpowers)       | Specs та hotfix-нотатки для Devin Superpowers.                                 |
-| [`tech-debt/`](./tech-debt)           | Frontend / Backend tech-debt registries.                                       |
+| Розділ                                        | Призначення                                                                    |
+| --------------------------------------------- | ------------------------------------------------------------------------------ |
+| [`adr/`](./adr/README.md)                     | Architecture Decision Records — `чому` обрано конкретні архітектурні рішення.  |
+| [`api/`](./api/README.md)                     | OpenAPI 3.1 spec (`openapi.json`), згенерований із zod-схем `packages/shared`. |
+| [`architecture/`](./architecture/README.md)   | Огляд системи: статус-матриця, фронтенд-overview, API-контракт, платформи.     |
+| [`audits/`](./audits/README.md)               | Періодичні аудити коду / архітектури.                                          |
+| [`design/`](./design/README.md)               | Брендбук, дизайн-токени, palette / WCAG proposal.                              |
+| [`governance/`](./governance/README.md)       | Cadence policies (freshness, policy review).                                   |
+| [`integrations/`](./integrations/README.md)   | Сторонні сервіси: Railway+Vercel, Renovate, Monobank.                          |
+| [`launch/`](./launch/README.md)               | Запуск продукту: монетизація, GTM, операції.                                   |
+| [`mobile/`](./mobile/README.md)               | Мобільні додатки: Expo overview, Capacitor shell, deep-links, RN-міграція.     |
+| [`observability/`](./observability/README.md) | SLO, runbook, dashboards, prometheus rules, logging, metrics.                  |
+| [`planning/`](./planning/README.md)           | Roadmap-и: dev-stack, AI-coding.                                               |
+| [`playbooks/`](./playbooks/README.md)         | Покрокові how-to для типових змін у репо.                                      |
+| [`postmortems/`](./postmortems/README.md)     | Постмортеми інцидентів.                                                        |
+| [`security/`](./security/README.md)           | Аудит-винятки, vulnerability SLA, нічний скан.                                 |
+| [`superpowers/`](./superpowers/README.md)     | Specs та нотатки для Devin Superpowers.                                        |
+| [`tech-debt/`](./tech-debt/README.md)         | Frontend / Backend tech-debt registries.                                       |
 
 ## Швидкі лінки
 
