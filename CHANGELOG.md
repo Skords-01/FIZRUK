@@ -14,4 +14,16 @@
 
 ## [Unreleased]
 
-_Нові зміни з'являться тут перед наступним релізом._
+### Changed
+
+- **Web: strict TS rollout — Phase 2.** `apps/web/tsconfig.strict.json`
+  розширено з `src/shared/**` до 10 директорій
+  (`src/shared`, `src/test`, `src/core/{auth, cloudSync, components,
+hints, hooks, observability, pricing, profile}`). Cross-file
+  SpeechRecognition type-collision між `useSpeech.ts` та
+  `VoiceMicButton.tsx` виправлено зняттям глобальної
+  `declare global Window` augmentation на користь приватного
+  `WindowWithSpeech` cast у `useSpeech.ts`. Жодних змін у runtime-коді,
+  лише типи + один тестовий null-guard у
+  `useCloudSync.behavior.test.ts`. Деталі — у
+  [`docs/tech-debt/frontend.md`](./docs/tech-debt/frontend.md) §11.

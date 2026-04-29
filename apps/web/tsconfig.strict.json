@@ -4,6 +4,17 @@
     "strictNullChecks": true,
     "noEmit": true
   },
-  "include": ["src/shared/**/*"],
+  "include": [
+    "src/shared/**/*",
+    "src/test/**/*",
+    "src/core/auth/**/*",
+    "src/core/cloudSync/**/*",
+    "src/core/components/**/*",
+    "src/core/hints/**/*",
+    "src/core/hooks/**/*",
+    "src/core/observability/**/*",
+    "src/core/pricing/**/*",
+    "src/core/profile/**/*"
+  ],
   "exclude": ["node_modules", "dist"]
 }
