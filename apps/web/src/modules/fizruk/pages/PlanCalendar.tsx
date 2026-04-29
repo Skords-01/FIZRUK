@@ -31,7 +31,7 @@ export function PlanCalendar({
             <button
               type="button"
               onClick={onOpenRoutine}
-              className="block w-full text-xs text-subtle hover:text-text text-center leading-snug min-h-[44px] px-2 py-2 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-routine"
+              className="block w-full text-xs text-subtle hover:text-text text-center leading-snug min-h-[44px] px-2 py-2 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fizruk"
             >
               Заплановані тренування відображатимуться у{" "}
               <span className="underline underline-offset-2">

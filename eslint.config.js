@@ -73,6 +73,22 @@ export default [
       // surrounding `dark:` / `hover:` override falls through to the
       // light-mode background — this is what bug #814 was.
       "sergeant-design/valid-tailwind-opacity": "error",
+      // Design-system token guardrail — arbitrary hex in className
+      // (`bg-[#10b981]`, `text-[#fff]/50`) bypasses the token layer:
+      // dark-mode adaptation, WCAG-AA `-strong` promotion and future
+      // palette migration all stop working for those literals. Every
+      // color must come from the preset (`bg-surface`, `text-muted`,
+      // `bg-finyk-surface`, `text-brand-strong`, `bg-success-soft`, …)
+      // — if a genuinely new shade is needed, add it to
+      // `packages/design-tokens/tailwind-preset.js` first.
+      "sergeant-design/no-hex-in-classname": "error",
+      // Module-accent containment — inside `apps/<app>/src/modules/<X>/`
+      // subtrees only `<X>`'s accent utilities may appear. A fizruk
+      // component rendering a coral `ring-routine` reads to the user
+      // as "Рутина" — it's a design bug, not stylistic preference.
+      // Cross-module shells (`core/`, `shared/`, `stories/`) remain
+      // free to reference all four module accents.
+      "sergeant-design/no-foreign-module-accent": "error",
       // WCAG-AA `-strong` tier guardrail — every saturated brand `bg-*`
       // utility paired with `text-white` regresses to ~2.4–2.8 : 1
       // contrast (the bug class fixed in PRs #854 / #855). The fix is
@@ -150,12 +166,16 @@ export default [
   // (`bg-finyk/7`, `text-danger/18`, …) into the linter as fixtures — the
   // rule would otherwise self-flag every fixture. The same applies to
   // `no-low-contrast-text-on-fill`, whose test fixtures contain the
-  // very `bg-brand text-white` patterns the rule is meant to flag.
+  // very `bg-brand text-white` patterns the rule is meant to flag, and
+  // to `no-hex-in-classname` / `no-foreign-module-accent`, whose
+  // fixtures are `bg-[#10b981]` / `ring-routine` literals.
   {
     files: ["packages/eslint-plugin-sergeant-design/**/*.{js,mjs}"],
     rules: {
       "sergeant-design/valid-tailwind-opacity": "off",
       "sergeant-design/no-low-contrast-text-on-fill": "off",
+      "sergeant-design/no-hex-in-classname": "off",
+      "sergeant-design/no-foreign-module-accent": "off",
     },
   },
   // Jest setup / test files need jest globals.
