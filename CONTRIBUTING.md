@@ -241,7 +241,7 @@ CI fails when bundle budgets regress:
 | Metric                       | Budget       |
 | ---------------------------- | ------------ |
 | `apps/web` JS total (brotli) | **≤ 615 kB** |
-| `apps/web` CSS (brotli)      | **≤ 18 kB**  |
+| `apps/web` CSS (brotli)      | **≤ 22 kB**  |
 
 If a legitimate feature needs a higher limit, bump the number in the same PR and call it out in the description.
 

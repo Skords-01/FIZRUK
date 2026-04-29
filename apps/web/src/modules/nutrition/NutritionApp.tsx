@@ -25,6 +25,7 @@ import { usePhotoAnalysis } from "./hooks/usePhotoAnalysis";
 import { useShoppingList } from "./hooks/useShoppingList";
 import { useNutritionUiState } from "./hooks/useNutritionUiState";
 import { useNutritionHashRoute } from "./hooks/useNutritionHashRoute";
+import type { NutritionPage } from "./lib/nutritionRouter";
 import { useNutritionReminders } from "./hooks/useNutritionReminders";
 import { usePantryBarcodeScan } from "./hooks/usePantryBarcodeScan";
 import { useNutritionCloudBackup } from "./hooks/useNutritionCloudBackup";
@@ -581,7 +582,7 @@ export default function NutritionApp({
 
       <NutritionBottomNav
         activePage={activePage}
-        setActivePage={setActivePageAndHash}
+        setActivePage={(id) => setActivePageAndHash(id as NutritionPage)}
       />
 
       <NutritionOverlays
