@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
+import { CollapsibleSection } from "@shared/components/ui/CollapsibleSection";
 import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
 import {
@@ -354,12 +355,13 @@ export function HubDashboard({
           {/* «Підказки» секція: AssistantAdvice + DailyNudge — обидві
            * картки показували пораду на день, але рендерились як два
            * незалежних блоки з різним візуальним chrome. Обʼєднання
-           * під одним SectionHeading знижує card-density (#1130). */}
+           * під одним SectionHeading знижує card-density (#1130).
+           * Collapsible so users with many modules can reduce scroll depth. */}
           <StaggerChild index={si++}>
-            <section className="space-y-2">
-              <SectionHeading as="h2" size="xs" className="!px-0">
-                Підказки
-              </SectionHeading>
+            <CollapsibleSection
+              storageKey="sergeant:hub.hints.open"
+              title="Підказки"
+            >
               <AssistantAdviceCard
                 insight={coachInsightText}
                 loading={coachLoading}
@@ -373,7 +375,7 @@ export function HubDashboard({
                   onDismiss={() => setNudgeDismissed(true)}
                 />
               )}
-            </section>
+            </CollapsibleSection>
           </StaggerChild>
         </>
       )}
@@ -416,7 +418,7 @@ export function HubDashboard({
               items={visibleOrder}
               strategy={rectSortingStrategy}
             >
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {visibleOrder.map((id) => (
                   <SortableCard
                     key={id}
@@ -448,14 +450,14 @@ export function HubDashboard({
       {/* «Аналітика» секція (FTUX-гейт): insights-panel + weekly-digest —
        * обидва data-driven блоки на історії. До першого реального запису
        * insights пусті, а digest промовляє «нічого не було за тиждень».
-       * Гейтимо за hasRealEntry. SectionHeading з #1130 знижує
-       * card-density, а гейт — FTUX-noise. */}
+       * Гейтимо за hasRealEntry. Collapsible per UX audit — users who
+       * check analytics weekly can collapse the section to cut scroll depth. */}
       {hasRealEntry && (
         <StaggerChild index={si++}>
-          <section className="space-y-2">
-            <SectionHeading as="h2" size="xs" className="!px-0">
-              Аналітика
-            </SectionHeading>
+          <CollapsibleSection
+            storageKey="sergeant:hub.analytics.open"
+            title="Аналітика"
+          >
             <HubInsightsPanel
               items={rest}
               onOpenModule={openInsightTarget}
@@ -470,7 +472,7 @@ export function HubDashboard({
                 onExpand={() => setDigestExpanded(true)}
               />
             ) : null}
-          </section>
+          </CollapsibleSection>
         </StaggerChild>
       )}
 
