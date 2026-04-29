@@ -36,8 +36,8 @@ Forbids arbitrary `<utility>-[#hex]` colors in Tailwind classNames (`bg-[#10b981
 // ❌ BAD — hex bypasses the token layer
 <div className="bg-[#10b981] text-[#fff]/50" />
 
-// ✅ GOOD — semantic token
-<div className="bg-brand-soft text-on-brand" />
+// ✅ GOOD — semantic token; both `bg-` and `text-` adapt per theme
+<div className="bg-success-soft text-success-strong" />
 ```
 
 ### `sergeant-design/no-foreign-module-accent`

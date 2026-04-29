@@ -262,4 +262,6 @@ it("публікує --module-accent-rgb + strong для finyk", () => {
 - `AGENTS.md` hard rule #12 — module-accent containment.
 - [`docs/design/DARK-MODE-AUDIT.md`](./DARK-MODE-AUDIT.md) — pending
   migration plan from 28 raw-palette `dark:` patches to semantic tokens
-  (bg-{module}-surface / bg-brand-soft / bg-{status}-soft / etc.).
+  (`bg-{module}-surface`, `bg-{status}-soft`, and the Wave-1b target
+  tokens `bg-brand-soft` / `border-brand-soft-border` / `-soft-hover`
+  which will ship in the preset at the same time as the migration).

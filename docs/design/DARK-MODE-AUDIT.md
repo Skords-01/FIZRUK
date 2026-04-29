@@ -57,9 +57,18 @@ end up using once migrated.
 
 ### → `bg-{module}-surface` (module-tinted hero / list surfaces)
 
-Existing token: `bg-{finyk,fizruk,routine,nutrition}-surface` already
-adapts per theme via the preset. Each of these rows is hand-rolling
-an ad-hoc equivalent.
+**Target tokens (Wave 1b will add the dark-mode auto-adapt):** today
+`bg-{finyk,fizruk,routine,nutrition}-surface` resolves to a fixed
+light color (`moduleColors.{module}.surface`) and its dark-mode
+counterpart lives in a separate `{module}-surface-dark` token that
+callers must pair with an explicit `dark:` variant. Wave 1b will
+either (a) back each `{module}-surface` utility with a CSS variable
+that flips per-theme (`--c-{module}-surface-light` / `-dark`), or
+(b) ship a single `{module}-surface-soft` alias that already bundles
+the `dark:` override — tracked in
+[`docs/planning/dev-stack-roadmap.md`](../planning/dev-stack-roadmap.md).
+The rows below are hand-rolling the light/dark pair at the call-site
+— they become one-token lines after the preset change.
 
 | File                                                   | Line | Current                                                                                                 | Target                                         |
 | ------------------------------------------------------ | ---- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
@@ -76,9 +85,13 @@ an ad-hoc equivalent.
 
 ### → `bg-brand-soft` (brand accent background)
 
-Existing token: `bg-brand-soft` (light 8 % / dark 15 % wash) ships in
-the preset and is what `Segmented`, `Tabs`, `Button`, `Badge` variants
-should all reuse.
+**Target token (Wave 1b will add it):** `bg-brand-soft` (light 8 % /
+dark 15 % wash) is **not yet in the preset** — today the call-sites
+below hand-roll `bg-brand-50 dark:bg-brand-500/15`. Wave 1b will add
+`--c-brand-soft`, `--c-brand-soft-border`, `--c-brand-soft-hover` to
+`apps/web/src/index.css` and register matching Tailwind utilities in
+`packages/design-tokens/tailwind-preset.js` so `Segmented`, `Tabs`,
+`Button`, `Badge` variants can all reuse them.
 
 | File                                                 | Line | Current                                                                                                                                        | Target                                                                               |
 | ---------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
