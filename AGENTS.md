@@ -1,6 +1,7 @@
 # Agents in Sergeant
 
-> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
 
 ## Repo overview
 
@@ -322,6 +323,63 @@ The rule handles variant prefixes (`dark:`, `hover:`, `lg:`), shade suffixes (`-
 - `__tests__/*.{ts,tsx,mjs}` — test fixtures naturally reference all four for coverage.
 
 Enforced by `sergeant-design/no-foreign-module-accent` (`error`). See `docs/design/MODULE-ACCENT.md` for the "one accent = one module" design principle.
+
+### 13. Read governance before coding; update docs alongside code
+
+> Why a hard rule? Because rules are useless if no one reads them, and docs are dangerous if they describe behaviour the code no longer has. Both failure modes have shipped here ([#1143](https://github.com/Skords-01/Sergeant/pull/1143) deleted scaffolded code partly because the AI agent skipped the playbook; multiple Tailwind-opacity bugs survived because the design-system doc still listed deprecated tokens). This rule closes both gaps.
+
+#### Before writing any code
+
+Both AI agents and human contributors **must** read the relevant governance up front, in this order:
+
+1. **`AGENTS.md`** — Hard Rules (#1–#13), Module ownership map for the path you're touching, AI-marker conventions, Domain invariants.
+2. **`CONTRIBUTING.md`** — branch/commit conventions, pre-commit hooks, PR checklist.
+3. **`CLAUDE.md`** — Claude/AI-specific commands and guardrails (sister file to AGENTS.md).
+4. **The matching playbook** in `docs/playbooks/` — pick by trigger phrase. New API endpoint → `add-api-endpoint.md`. New HubChat tool → `add-hubchat-tool.md`. Removing code → `cleanup-dead-code.md`. Migrations → `add-migration.md`.
+5. **The freshness header** of every doc you cite or change (`> Last validated: YYYY-MM-DD by @owner`). If the doc is stale (`Next review` date passed), flag it in the PR — don't blindly trust it, but don't silently ignore it either.
+
+If you're an AI agent, treat steps 1–4 as a **pre-flight checklist**: do not begin implementation until you can name (a) the Hard Rules that apply, (b) the playbook(s) you'll follow, (c) the owner of the path. If no playbook exists for the task type, write a one-paragraph mini-plan and link it in the PR.
+
+#### During the work
+
+- Do not work around a rule because it's inconvenient. If you genuinely believe a rule is wrong, raise it in the PR description (or open an `AGENTS.md` PR first) — don't ship code that violates it.
+- If you discover the rule is unclear or contradictory, fix it in the same PR (one paragraph in `AGENTS.md` is cheaper than the next confused agent).
+- Honour `@scaffolded` / `@deprecated` / `@experimental` markers (Hard Rule #10).
+
+#### Before opening the PR — update docs alongside code
+
+Documentation is part of the change set, not a follow-up. Treat any of the following as **must-update** when the underlying code/contract moves:
+
+| Code change                                       | Docs that must move with it                                                                                                                                            |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New / changed JSON response shape                 | `packages/api-client/**` types **+** the matching contract test (Hard Rule #3). If the response is documented in `docs/api/*.md`, update there too.                    |
+| New SQL migration                                 | `apps/server/src/migrations/README.md` (if present), and any ER-diagram in `docs/architecture/`.                                                                       |
+| New / removed npm script                          | `CONTRIBUTING.md § Everyday Commands`, `CLAUDE.md § Quick commands`.                                                                                                   |
+| New Hard Rule, lint rule, or convention           | `AGENTS.md` § Hard Rules (the canonical entry) **+** mirror summary in `CONTRIBUTING.md § Hard rules`. PR template's "AGENTS.md updated?" checkbox **must** be ticked. |
+| New design token, palette, or component           | `docs/design/design-system.md`, `docs/design/BRANDBOOK.md`, and the relevant audit (`docs/audits/*-audit-*.md`) if it changes status.                                  |
+| Deprecating a behaviour                           | Add `@deprecated` JSDoc with `@removeBy YYYY-MM-DD` (Hard Rule #10) **+** update the consuming doc to mark the section `> **Status:** Deprecated`.                     |
+| New playbook trigger or HubChat tool              | `docs/playbooks/<name>.md` (or update the existing playbook). Cross-link from `CLAUDE.md § Before you write code` if it's a frequent trigger.                          |
+| Anything that invalidates an existing doc's claim | Update the doc in the same PR, or move it to `docs/<area>/archive/` with a `> **Status:** Archived` badge if the claim is no longer relevant.                          |
+
+In every doc you touch, also bump the freshness header:
+
+```md
+> **Last validated:** 2026-04-29 by @your-handle. **Next review:** 2026-07-29.
+> **Status:** Active
+```
+
+If you genuinely change nothing in the doc but its claims still hold, leave the header alone — _do not_ touch the date just to silence freshness warnings. The freshness checker (`scripts/check-tech-debt-freshness.mjs`) accepts unchanged dates.
+
+#### What this rule blocks
+
+- Silent contract drift (server changed, `api-client` didn't).
+- Stale design-system docs that still document deprecated tokens / removed components.
+- AI agents shipping code that violates a Hard Rule because they didn't read AGENTS.md.
+- "Just a one-line change" PRs that quietly remove behaviour the docs still promise.
+
+#### Verification
+
+The PR template includes the relevant boxes (`AGENTS.md updated?`, "Docs updated alongside code?"). CI doesn't fail on missing doc updates today (it's hard to detect mechanically), so this is reviewer- and self-discipline-enforced. If a reviewer spots an unchecked-but-required doc update, that's a request-changes signal — not a "follow-up issue".
 
 ## AI markers
 

@@ -1,8 +1,12 @@
-# ADR 0026: n8n Workflow Source of Truth
+# ADR-0026: n8n Workflow Source of Truth
 
-## Status
+- **Status:** accepted
+- **Date:** 2026-04-27
+- **Reviewers:** @Skords-01
+- **Supersedes:** —
+- **Related:** —
 
-Accepted
+---
 
 ## Context
 

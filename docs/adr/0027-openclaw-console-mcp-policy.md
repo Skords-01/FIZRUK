@@ -1,8 +1,12 @@
-# ADR 0027: OpenClaw, Console, and MCP Policy
+# ADR-0027: OpenClaw, Console, and MCP Policy
 
-## Status
+- **Status:** accepted
+- **Date:** 2026-04-27
+- **Reviewers:** @Skords-01
+- **Supersedes:** —
+- **Related:** —
 
-Accepted
+---
 
 ## Context
 
