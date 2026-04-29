@@ -152,5 +152,6 @@ export {
   createWeeklyDigestEndpoints,
   type WeeklyDigestEndpoints,
   type WeeklyDigestPayload,
+  type WeeklyDigestReport,
   type WeeklyDigestResponse,
 } from "./endpoints/weeklyDigest";

@@ -312,6 +312,79 @@ export const WeeklyDigestSchema = z.object({
   nutrition: NutritionDigestSchema.nullish(),
   routine: RoutineDigestSchema.nullish(),
 });
+/**
+ * Request payload type for `POST /api/weekly-digest`. Both the server handler
+ * and the api-client derive their types from `WeeklyDigestSchema` per Hard
+ * Rule #3 — the api-client's historical `WeeklyDigestPayload` typed every
+ * field as `unknown`, which was only a way to silence TypeScript rather than
+ * describe the contract.
+ */
+export type WeeklyDigestRequest = z.infer<typeof WeeklyDigestSchema>;
+
+// ── Weekly digest response ─────────────────────────────────────────────
+//
+// Response from `POST /api/weekly-digest`. The server prompts Claude for a
+// JSON blob with four module-specific analysis blocks + an overall
+// recommendations array (see the prompt template in
+// `apps/server/src/modules/digest/weekly-digest.ts`). The blob is the
+// contract with Claude; after `extractJsonObject` succeeds, we validate it
+// against `WeeklyDigestReportSchema` so a shape drift from the LLM becomes
+// a 502 `ANTHROPIC_PARSE_ERROR` at the edge rather than a typed lie going
+// all the way to the UI.
+//
+// Each module block is `.partial()` — Claude is explicitly instructed to
+// return `null` for modules with no input data, and `.nullable()` captures
+// that. `recommendations` is always an array of strings (the prompt asks
+// for it; an empty array is the "no recommendation" encoding).
+
+const DigestModuleBlockSchema = z
+  .object({
+    summary: z.string().max(500),
+    comment: z.string().max(2000),
+    recommendations: z.array(z.string().max(500)).max(20),
+  })
+  .nullable();
+
+/**
+ * The AI-generated digest body. Lives under `report` in the HTTP response.
+ * Shape is fixed by the system prompt in the server handler; if the prompt
+ * changes, update this schema in the same PR (Hard Rule #3).
+ */
+export const WeeklyDigestReportSchema = z.object({
+  finyk: DigestModuleBlockSchema,
+  fizruk: DigestModuleBlockSchema,
+  nutrition: DigestModuleBlockSchema,
+  routine: DigestModuleBlockSchema,
+  overallRecommendations: z.array(z.string().max(500)).max(30),
+});
+export type WeeklyDigestReport = z.infer<typeof WeeklyDigestReportSchema>;
+
+/**
+ * Success envelope: the parsed `report` plus an ISO timestamp used by the
+ * client as a "when was this generated" marker (persisted to localStorage
+ * alongside the report so the UI can show a relative time like "6h ago").
+ */
+export const WeeklyDigestSuccessSchema = z.object({
+  report: WeeklyDigestReportSchema,
+  generatedAt: z.string().min(1),
+});
+export type WeeklyDigestSuccess = z.infer<typeof WeeklyDigestSuccessSchema>;
+
+/** Error envelope — validation / Anthropic upstream / parse failures. */
+export const WeeklyDigestErrorSchema = z.object({
+  error: z.string().min(1),
+});
+export type WeeklyDigestErrorResponse = z.infer<typeof WeeklyDigestErrorSchema>;
+
+/**
+ * Discriminated response. Same `{ data } | { error }` shape as the other
+ * AI-backed endpoints in this file.
+ */
+export const WeeklyDigestResponseSchema = z.union([
+  WeeklyDigestSuccessSchema,
+  WeeklyDigestErrorSchema,
+]);
+export type WeeklyDigestResponse = z.infer<typeof WeeklyDigestResponseSchema>;
 
 // AI-NOTE: `dateContext` обов'язковий для адекватного темпорального
 // обрамлення інсайту (без нього модель імпровізує "середина тижня" в неділю).
