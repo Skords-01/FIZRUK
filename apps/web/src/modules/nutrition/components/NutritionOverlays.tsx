@@ -71,9 +71,7 @@ export function NutritionOverlays({
         pantryForm={pantry.pantryForm}
         setPantryForm={pantry.setPantryForm}
         busy={busy}
-        onSavePantryForm={(name, mode) =>
-          pantry.onSavePantryForm(name, mode as "create" | "rename")
-        }
+        onSavePantryForm={pantry.onSavePantryForm}
         onBeginCreate={pantry.beginCreatePantry}
         onBeginRename={pantry.beginRenamePantry}
         onBeginDelete={pantry.beginDeletePantry}
