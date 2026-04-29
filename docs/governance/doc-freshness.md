@@ -1,24 +1,21 @@
-# Document Freshness Tracking
+# Відстеження свіжості документації
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
 > **Status:** Active
 
-This system ensures critical documentation stays up-to-date by embedding
-freshness headers and running a nightly check that opens GitHub issues for
-overdue docs.
+Ця система гарантує, що критична документація лишається актуальною — у документах вшиваються freshness-заголовки, а нічний джоб відкриває GitHub-issue для протермінованих файлів.
 
 ---
 
-## How it works
+## Як це працює
 
-1. **Freshness header** — each tracked document has a blockquote near the top:
+1. **Freshness-заголовок** — у кожному відстежуваному документі біля початку є blockquote:
 
    ```markdown
    > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
    ```
 
-2. **Allowlist** — `scripts/docs/freshness-allowlist.json` lists every tracked
-   file with its review cadence (days):
+2. **Allowlist** — `scripts/docs/freshness-allowlist.json` перелічує всі відстежувані файли разом із cadence-ом рев'ю (у днях):
 
    ```json
    [
@@ -27,110 +24,89 @@ overdue docs.
    ]
    ```
 
-3. **Nightly workflow** — `.github/workflows/docs-freshness.yml` runs
-   `scripts/docs/check-freshness.mjs` daily at 07:00 UTC. For each file whose
-   **Next review** date has passed, it opens a GitHub issue with labels
-   `documentation` and `freshness-overdue`.
+3. **Нічний workflow** — `.github/workflows/docs-freshness.yml` запускає `scripts/docs/check-freshness.mjs` щодня о 07:00 UTC. Для кожного файлу, у якого минула дата **Next review**, скрипт відкриває GitHub-issue з лейблами `documentation` і `freshness-overdue`.
 
-4. **Idempotency** — the script embeds a marker comment
-   (`<!-- doc-freshness:<path> -->`) in the issue body. Before creating a new
-   issue it searches for an existing open issue with the same marker and skips
-   if found.
+4. **Ідемпотентність** — скрипт вшиває коментар-маркер (`<!-- doc-freshness:<path> -->`) у тіло issue. Перед створенням нової issue він шукає вже відкриту з таким маркером і пропускає, якщо знайшов.
 
 ---
 
-## Supported header formats
+## Підтримувані формати заголовка
 
-| Format    | Example                                                                   | Notes                                                  |
-| --------- | ------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Canonical | `> **Last validated:** 2026-04-27 by @user. **Next review:** 2026-07-26.` | Preferred. Contains explicit next-review date.         |
-| Legacy    | `> Last reviewed: 2026-04-27. Reviewer: @user`                            | AGENTS.md style before PR-11.A. No explicit next date. |
+| Формат     | Приклад                                                                   | Нотатки                                               |
+| ---------- | ------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Канонічний | `> **Last validated:** 2026-04-27 by @user. **Next review:** 2026-07-26.` | Бажаний. Містить явну дату наступного рев'ю.          |
+| Legacy     | `> Last reviewed: 2026-04-27. Reviewer: @user`                            | Стиль AGENTS.md до PR-11.A. Без явної наступної дати. |
 
-When a legacy header is found, the script computes the next review date as
-`lastValidated + cadenceDays` from the allowlist.
+Коли знайдено legacy-заголовок, скрипт обчислює дату наступного рев'ю як `lastValidated + cadenceDays` з allowlist-а.
 
 ---
 
-## Adding a document to the freshness list
+## Як додати документ у freshness-список
 
-1. Add the freshness header to the document (right after the title):
+1. Додайте freshness-заголовок до документа (одразу після title):
 
    ```markdown
-   # My Document
+   # Мій документ
 
    > **Last validated:** YYYY-MM-DD by @yourhandle. **Next review:** YYYY-MM-DD.
    ```
 
-   Compute the next-review date as `today + cadenceDays`.
+   Дата наступного рев'ю — `today + cadenceDays`.
 
-2. Add an entry to `scripts/docs/freshness-allowlist.json`:
+2. Додайте запис у `scripts/docs/freshness-allowlist.json`:
 
    ```json
    { "path": "docs/my-document.md", "cadenceDays": 90 }
    ```
 
-3. Commit both changes in the same PR.
+3. Закомітьте обидві зміни в одному PR.
 
 ---
 
-## Changing cadence
+## Зміна cadence-у
 
-Edit the `cadenceDays` field in `scripts/docs/freshness-allowlist.json`. Update
-the **Next review** date in the document header to match. Recommended cadences:
+Поправте поле `cadenceDays` у `scripts/docs/freshness-allowlist.json`. Оновіть дату **Next review** у заголовку документа, щоб вона збігалася. Рекомендовані cadence-и:
 
-| Cadence | Use for                                                      |
-| ------- | ------------------------------------------------------------ |
-| 60 days | High-criticality ops docs (runbook, hotfix, secret rotation) |
-| 90 days | Standard docs (README, CONTRIBUTING, SLO, playbooks index)   |
-
----
-
-## Excluded by design: Architecture Decision Records (`docs/adr/**`)
-
-ADRs are **deliberately excluded** from the freshness allowlist. An ADR captures
-the context, alternatives, and rationale of a decision **at the moment it was
-made**. It is a historical record, not a living document — once accepted, an
-ADR is immutable.
-
-When the underlying decision changes, the workflow is:
-
-1. Write a new ADR that describes the new decision with current context.
-2. Set `Status: Accepted` on the new ADR and `Status: Superseded by ADR-NNNN`
-   on the old one.
-3. Add a `Supersedes: ADR-MMMM` line in the new ADR header.
-
-This is the standard pattern from Michael Nygard's
-[original ADR proposal](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
-and the [adr.github.io](https://adr.github.io/) community.
-
-Reviewing every ADR on a 90-day cadence would either (a) produce trivial "still
-accurate" updates that bury real changes, or (b) tempt editors to silently
-rewrite history. Both outcomes defeat the purpose of an ADR.
-
-The `Last reviewed:` line found in some ADRs (legacy `Date:` companion in the
-header) is informational only — the freshness check script does **not** scan
-ADR files, and the nightly workflow will not open issues against them.
-
-If an ADR ever needs operational metadata that should be re-validated on a
-cadence (e.g. a quota table, a price list), extract that data into a regular
-doc under `docs/integrations/`, `docs/launch/`, or `docs/observability/` and
-add **that** file to the allowlist — leave the ADR itself untouched.
+| Cadence | Для чого                                                        |
+| ------- | --------------------------------------------------------------- |
+| 60 днів | Високо-критичні ops-доки (runbook, hotfix, ротація секретів)    |
+| 90 днів | Стандартні доки (README, CONTRIBUTING, SLO, індекс playbook-ів) |
 
 ---
 
-## Running locally
+## Свідомо виключено: Architecture Decision Records (`docs/adr/**`)
+
+ADR-и **навмисно виключені** з freshness-allowlist-а. ADR фіксує контекст, альтернативи та обґрунтування рішення **на момент його прийняття**. Це історичний запис, а не «живий» документ — щойно ADR прийнято, він іммутабельний.
+
+Коли базове рішення змінюється, workflow такий:
+
+1. Написати новий ADR, який описує нове рішення з актуальним контекстом.
+2. Виставити `Status: Accepted` на новому ADR і `Status: Superseded by ADR-NNNN` на старому.
+3. Додати рядок `Supersedes: ADR-MMMM` у заголовок нового ADR.
+
+Це стандартний патерн із [оригінальної пропозиції Майкла Найгарда](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) та спільноти [adr.github.io](https://adr.github.io/).
+
+Перегляд кожного ADR за 90-денним cadence-ом або (а) генеруватиме тривіальні «все ще актуально»-апдейти, які ховають справжні зміни, або (б) спокушатиме редакторів тихо переписувати історію. Обидва результати знищують сенс ADR.
+
+Рядок `Last reviewed:` у деяких ADR (legacy-компаньйон до `Date:` у заголовку) — суто інформаційний; freshness-чек не сканує ADR-файли, і нічний workflow не відкриватиме issue проти них.
+
+Якщо ADR коли-небудь потребує операційних метаданих, які треба перевалідовувати за cadence-ом (наприклад, таблиця квот, прайс-лист), винесіть ці дані в окремий док під `docs/integrations/`, `docs/launch/` або `docs/observability/` і додайте **його** в allowlist — а сам ADR не чіпайте.
+
+---
+
+## Локальний запуск
 
 ```bash
-# Dry run (no issues created)
+# Dry-run (issue не створюються)
 DRY_RUN=1 node scripts/docs/check-freshness.mjs
 
-# Real run (requires GITHUB_TOKEN with issues:write)
+# Реальний запуск (потрібен GITHUB_TOKEN з issues:write)
 GITHUB_TOKEN=ghp_... node scripts/docs/check-freshness.mjs
 ```
 
 ---
 
-## Running tests
+## Тести
 
 ```bash
 node --test scripts/docs/__tests__/check-freshness.test.mjs

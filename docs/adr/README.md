@@ -1,4 +1,4 @@
-# Architecture Decision Records (ADR)
+# Architecture Decision Records (ADR) — реєстр рішень
 
 > **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
 > **Status:** Active
@@ -15,7 +15,7 @@ ADR (Architecture Decision Record) — короткий документ, яки
 
 Заводимо ADR коли рішення стосується архітектури, вибору технології, зовнішніх інтеграцій, або суттєво впливає на структуру коду / DX / operational процеси. Не заводимо для дрібних рефакторингів, bug-фіксів або стилістичних змін.
 
-## Naming convention
+## Конвенція неймінгу
 
 ```
 docs/adr/
@@ -30,7 +30,7 @@ docs/adr/
 - Для нового ADR: скопіюй [`TEMPLATE.md`](./TEMPLATE.md), перейменуй у `NNNN-kebab-case-title.md`, заповни секції.
 - ADR ніколи не видаляються — лише `deprecated`.
 
-## Lifecycle
+## Життєвий цикл
 
 ```
 Proposed → Accepted → (Deprecated | Superseded by ADR-XXXX)

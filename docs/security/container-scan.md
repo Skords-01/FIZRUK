@@ -1,4 +1,4 @@
-# Container image scan — Trivy
+# Сканування container-image — Trivy
 
 > **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
 > **Status:** Active
@@ -23,7 +23,7 @@ Workflow [`.github/workflows/container-scan.yml`](../../.github/workflows/contai
 | `workflow_dispatch` | Ручний запуск через Actions UI.                                                                                 |
 |                     |                                                                                                                 |
 
-### Output
+### Результат
 
 - **GitHub Code Scanning** — SARIF завантажується з `category: trivy-image`,
   тренди видно в `Security > Code Scanning > Trivy image`.
