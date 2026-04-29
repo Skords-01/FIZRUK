@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import type { ModuleAccent } from "@sergeant/design-tokens";
 import { cn } from "../../lib/cn";
 
 /**
@@ -53,7 +54,7 @@ const variants: Record<ButtonVariant, string> = {
   destructive:
     "bg-danger-strong text-white shadow-sm hover:brightness-110 hover:shadow-[0_0_0_3px_rgba(239,68,68,0.15)] active:scale-[0.98]",
   success:
-    "bg-brand-50 text-brand-700 border border-brand-200/50 hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:border-brand-500/30 dark:hover:bg-brand-500/25 active:scale-[0.98]",
+    "bg-brand-soft text-brand-strong border border-brand-soft-border/50 hover:bg-brand-soft-hover dark:text-brand-300 active:scale-[0.98]",
 
   // Module-specific branded buttons
   finyk:
@@ -103,7 +104,42 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   /** Progress value 0-100 for determinate loading state */
   progress?: number;
+  /**
+   * When set, redirects the *neutral* `primary` / `secondary` variants to
+   * the host module's branded equivalent (e.g. `module="finyk"` +
+   * `variant="primary"` → renders the `finyk` solid variant; `+
+   * variant="secondary"` → renders the `finyk-soft` variant).
+   *
+   * Other variants (`ghost`, `danger`, `destructive`, `success`, the
+   * already-branded module variants) are passed through unchanged — a
+   * destructive Delete button stays red even inside a Fizruk screen.
+   *
+   * Use this when a CTA lives inside a single module's screen and should
+   * inherit that module's accent without forcing every call-site to
+   * pick the right variant string. Hub-level chrome (HubHeader,
+   * HubChat, dashboard) should leave `module` unset — it's intentionally
+   * brand-emerald so the four modules share a neutral parent.
+   */
+  module?: ModuleAccent;
   children?: ReactNode;
+}
+
+const MODULE_VARIANT_OVERRIDE: Record<
+  ModuleAccent,
+  Partial<Record<ButtonVariant, ButtonVariant>>
+> = {
+  finyk: { primary: "finyk", secondary: "finyk-soft" },
+  fizruk: { primary: "fizruk", secondary: "fizruk-soft" },
+  routine: { primary: "routine", secondary: "routine-soft" },
+  nutrition: { primary: "nutrition", secondary: "nutrition-soft" },
+};
+
+function resolveVariant(
+  variant: ButtonVariant,
+  module: ModuleAccent | undefined,
+): ButtonVariant {
+  if (!module) return variant;
+  return MODULE_VARIANT_OVERRIDE[module][variant] ?? variant;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -116,6 +152,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly = false,
       loading = false,
       progress,
+      module,
       disabled,
       children,
       ...props
@@ -125,6 +162,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const isDisabled = disabled || loading;
     const hasProgress = typeof progress === "number" && progress >= 0;
     const needsCoarseMinTarget = iconOnly || size === "xs" || size === "sm";
+    const resolvedVariant = resolveVariant(variant, module);
 
     return (
       <button
@@ -143,8 +181,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           // Touch / coarse pointer: WCAG 2.5.5 / HIG ≥44×44px for compact controls.
           needsCoarseMinTarget &&
             "[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]",
-          // Variant
-          variants[variant],
+          // Variant (potentially redirected by `module` prop — see
+          // resolveVariant for the mapping table).
+          variants[resolvedVariant],
           // Size
           iconOnly ? iconSizes[size] : sizes[size],
           className,

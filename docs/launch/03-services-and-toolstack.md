@@ -1,5 +1,8 @@
 # 03. Сервіси та тулстек
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
+
 > Повний аудит зовнішніх сервісів, інфраструктури, dev-інструментів: що є, що додати, що змінити.
 > Кожен запис — з офіційним посиланням, фактичною ціною (Date checked: 2026-04), статусом у Sergeant.
 > Джерело: `sergeant-services-audit.md` + `sergeant-toolstack.md` + перевірка `package.json`, `railway.toml`, `vercel.json`, `apps/server/src/lib/**`.

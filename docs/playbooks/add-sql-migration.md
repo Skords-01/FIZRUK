@@ -1,6 +1,7 @@
 # Playbook: Add SQL Migration
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 **Trigger:** "Додати нове поле / таблицю в БД" / зміна схеми PostgreSQL / нова колонка для існуючої таблиці.
 
@@ -120,5 +121,5 @@ Script: [`scripts/lint-migrations.mjs`](../../scripts/lint-migrations.mjs) | Tes
 
 - [pre-merge-migration-checklist.md](pre-merge-migration-checklist.md) — **обов'язковий чек-лист** для рев'ю PR-у з міграцією перед merge.
 - [AGENTS.md](../../AGENTS.md) — rule #1 (bigint), rule #3 (API contract), rule #4 (migrations)
-- [monobank-webhook-migration.md](../monobank-webhook-migration.md) — приклад великої міграції (008)
+- [monobank-roadmap.md](../integrations/monobank-roadmap.md) — приклад великої міграції (Monobank 008)
 - [backend-tech-debt.md](../tech-debt/backend.md) — §Database & migrations review

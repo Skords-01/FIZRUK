@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { z } from "zod";
+import { TranscribeQuerySchema } from "@sergeant/shared";
 import { validateQuery } from "../../http/validate.js";
 import { transcribeAudio, GroqTranscribeError } from "../../lib/groq.js";
 import { logger } from "../../obs/logger.js";
@@ -20,23 +20,8 @@ const SUPPORTED_AUDIO_MIME = [
 ];
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB
-const MAX_PROMPT_LENGTH = 1024;
 
-export const TranscribeQuerySchema = z.object({
-  language: z
-    .string()
-    .trim()
-    .min(2)
-    .max(8)
-    .optional()
-    .describe("ISO-код мови, напр. uk або en. Якщо порожньо — auto-detect."),
-  prompt: z
-    .string()
-    .trim()
-    .max(MAX_PROMPT_LENGTH)
-    .optional()
-    .describe("Доменна підказка (списки вправ, продуктів тощо)."),
-});
+export { TranscribeQuerySchema };
 
 function pickMimeType(req: Request): string | null {
   const raw = req.headers["content-type"];

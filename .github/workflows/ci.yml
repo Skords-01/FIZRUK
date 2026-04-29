@@ -88,6 +88,12 @@ jobs:
         # changes sit next to the generator they govern).
         run: pnpm licenses:check
 
+      - name: Validate n8n workflow definitions
+        run: pnpm ops:n8n:validate
+
+      - name: Governance sync (Hard Rules + Status badges + dangling refs)
+        run: pnpm lint:governance-sync
+
       - name: Format, lint, test, build
         run: pnpm check
 

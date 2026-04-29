@@ -43,6 +43,12 @@ export interface SkeletonProps {
   className?: string;
   /** Use shimmer effect instead of pulse. Default: true */
   shimmer?: boolean;
+  /**
+   * Optional explicit pixel size. When set on `SkeletonAvatar`, drives both
+   * width and height (and the matching half-circle radius). Plain `Skeleton`
+   * / `SkeletonText` ignore this and rely on `className`.
+   */
+  size?: number;
 }
 
 export interface SkeletonCardProps {
@@ -234,18 +240,32 @@ export function SkeletonText({ className, shimmer = true }: SkeletonProps) {
 
 /**
  * SkeletonAvatar — circular skeleton for profile pictures and icons.
+ *
+ * Use either `size` (pixel value, drives width/height/radius via inline
+ * style) or `className` (Tailwind utilities) — not both.
  */
-export function SkeletonAvatar({ className, shimmer = true }: SkeletonProps) {
+export function SkeletonAvatar({
+  className,
+  shimmer = true,
+  size,
+}: SkeletonProps) {
   const opacity = usePulse();
   const reduceMotion = useReduceMotion();
+  const sizeStyle =
+    typeof size === "number"
+      ? { width: size, height: size, borderRadius: size / 2 }
+      : undefined;
+  const fallbackClass = sizeStyle
+    ? "bg-cream-200 rounded-full"
+    : "bg-cream-200 rounded-full w-12 h-12";
 
   if (shimmer && !reduceMotion) {
     return (
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={shimmerStyles.shimmerContainer}
-        className={cx("bg-cream-200 rounded-full w-12 h-12", className)}
+        style={[shimmerStyles.shimmerContainer, sizeStyle]}
+        className={cx(fallbackClass, className)}
       >
         <ShimmerOverlay />
       </View>
@@ -256,8 +276,8 @@ export function SkeletonAvatar({ className, shimmer = true }: SkeletonProps) {
     <Animated.View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={{ opacity }}
-      className={cx("bg-cream-200 rounded-full w-12 h-12", className)}
+      style={[{ opacity }, sizeStyle]}
+      className={cx(fallbackClass, className)}
     />
   );
 }

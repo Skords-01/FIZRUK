@@ -78,33 +78,33 @@ const variantConfig: Record<
 > = {
   default: {
     icon: Lightbulb,
-    bgClass: "bg-amber-50",
+    bgClass: "bg-amber-50 dark:bg-amber-950/30",
     iconColor: "#f59e0b",
-    borderClass: "border-amber-200",
+    borderClass: "border-amber-200 dark:border-amber-800",
   },
   suggestion: {
     icon: Sparkles,
-    bgClass: "bg-violet-50",
+    bgClass: "bg-violet-50 dark:bg-violet-950/30",
     iconColor: "#8b5cf6",
-    borderClass: "border-violet-200",
+    borderClass: "border-violet-200 dark:border-violet-800",
   },
   insight: {
     icon: TrendingUp,
-    bgClass: "bg-sky-50",
+    bgClass: "bg-sky-50 dark:bg-sky-950/30",
     iconColor: "#0ea5e9",
-    borderClass: "border-sky-200",
+    borderClass: "border-sky-200 dark:border-sky-800",
   },
   goal: {
     icon: Target,
-    bgClass: "bg-emerald-50",
+    bgClass: "bg-emerald-50 dark:bg-emerald-950/30",
     iconColor: "#10b981",
-    borderClass: "border-emerald-200",
+    borderClass: "border-emerald-200 dark:border-emerald-800",
   },
   celebration: {
     icon: Sparkles,
-    bgClass: "bg-orange-50",
+    bgClass: "bg-orange-50 dark:bg-orange-950/30",
     iconColor: "#f97316",
-    borderClass: "border-orange-200",
+    borderClass: "border-orange-200 dark:border-orange-800",
   },
 };
 
@@ -224,11 +224,9 @@ export function CoachTip({
         {/* Content */}
         <View className="flex-1 gap-1">
           {title && (
-            <Text className="text-sm font-semibold text-slate-800">
-              {title}
-            </Text>
+            <Text className="text-sm font-semibold text-fg">{title}</Text>
           )}
-          <Text className="text-sm text-slate-600 leading-relaxed">
+          <Text className="text-sm text-fg-muted leading-relaxed">
             {message}
           </Text>
 
@@ -255,9 +253,9 @@ export function CoachTip({
             onPress={handleDismiss}
             accessibilityLabel="Закрити підказку"
             accessibilityRole="button"
-            className="w-6 h-6 items-center justify-center rounded-full bg-slate-200/50 active:bg-slate-200"
+            className="w-6 h-6 items-center justify-center rounded-full bg-cream-200/50 dark:bg-cream-700/50 active:bg-cream-300 dark:active:bg-cream-600"
           >
-            <X size={14} color="#64748b" strokeWidth={2} />
+            <X size={14} className="text-fg-muted" strokeWidth={2} />
           </Pressable>
         )}
       </View>
@@ -430,7 +428,7 @@ export function SmartCoachTip({
       />
       {suggestions.length > 1 && currentIndex < suggestions.length - 1 && (
         <Pressable onPress={handleNext} className="mt-2 py-2 items-center">
-          <Text className="text-sm text-slate-500">
+          <Text className="text-sm text-fg-muted">
             Показати наступну пораду
           </Text>
         </Pressable>

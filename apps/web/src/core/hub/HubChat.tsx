@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, chatApi, isApiError } from "@shared/api";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
+import { Popover } from "@shared/components/ui/Popover";
 import { Tooltip } from "@shared/components/ui/Tooltip";
 import { perfMark, perfEnd } from "@shared/lib/perf";
 import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
@@ -50,12 +51,36 @@ import { ChatMessage, TypingIndicator } from "../components/ChatMessage";
 import { ChatInput } from "../components/ChatInput";
 import { ChatQuickActions } from "../components/ChatQuickActions";
 
+interface HubChatProps {
+  onClose: () => void;
+  initialMessage?: string;
+  autoSendInitial?: boolean;
+  onOpenCatalogue?: () => void;
+  /**
+   * When provided, the chat header gains a "minimize" button that hides
+   * the dialog without unmounting it (so messages, draft input and any
+   * in-flight request are preserved). The host renders a floating FAB
+   * to restore the chat.
+   */
+  isMinimized?: boolean;
+  onMinimize?: () => void;
+  /**
+   * Called whenever `messages` changes while `isMinimized` is true so
+   * the host can drive the unseen-message badge on the FAB. Only the
+   * count delta matters — the host owns the actual counter state.
+   */
+  onUnseenChange?: (count: number) => void;
+}
+
 function HubChat({
   onClose,
   initialMessage,
   autoSendInitial,
   onOpenCatalogue,
-}) {
+  isMinimized = false,
+  onMinimize,
+  onUnseenChange,
+}: HubChatProps) {
   const toast = useToast();
 
   // Multi-session state. `sessions` is the full list shown in the
@@ -96,6 +121,32 @@ function HubChat({
   useEffect(() => {
     lastMessagesRef.current = messages;
   }, [messages]);
+
+  // Unseen-while-minimized tracking. We snapshot the assistant-message
+  // count on the transition `open → minimized`, and on every subsequent
+  // change to `messages` we report `current - snapshot` to the host so
+  // it can render a numeric badge on the restore FAB. The snapshot is
+  // cleared on the transition back to visible (`open`) so re-minimizing
+  // starts fresh.
+  const minimizedBaselineRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (isMinimized) {
+      if (minimizedBaselineRef.current === null) {
+        minimizedBaselineRef.current = messages.filter(
+          (m) => m.role === "assistant",
+        ).length;
+      }
+    } else {
+      minimizedBaselineRef.current = null;
+      onUnseenChange?.(0);
+    }
+  }, [isMinimized, messages, onUnseenChange]);
+  useEffect(() => {
+    if (!isMinimized) return;
+    const baseline = minimizedBaselineRef.current ?? 0;
+    const current = messages.filter((m) => m.role === "assistant").length;
+    onUnseenChange?.(Math.max(0, current - baseline));
+  }, [messages, isMinimized, onUnseenChange]);
 
   // Debounced session write — replaces the previous single-key
   // `hub_chat_history` writer. Title is re-derived on every flush so
@@ -183,7 +234,7 @@ function HubChat({
   // Context cache
   const contextRef = useRef({ text: "", ts: 0 });
   const [contextState, setContextState] = useState({ status: "idle", ts: 0 });
-  const idleJobRef = useRef(null);
+  const idleJobRef = useRef<ReturnType<typeof requestIdle> | null>(null);
 
   const scheduleContextBuild = useCallback((reason = "auto", force = false) => {
     const now = Date.now();
@@ -245,7 +296,10 @@ function HubChat({
   // Focus trap + Escape + restore focus to trigger on close. Shared
   // with Sheet / ConfirmDialog / InputDialog so every modal surface
   // gets the same WCAG 2.4.3 focus-order guarantees in one place.
-  useDialogFocusTrap(true, panelRef, { onEscape: onClose });
+  // Focus trap is suppressed while minimized so the user can interact
+  // with the rest of the hub. Esc still routes to `onClose` when the
+  // dialog is visible.
+  useDialogFocusTrap(!isMinimized, panelRef, { onEscape: onClose });
 
   // On-screen keyboard handling. Without this, when a mobile user taps
   // the chat input, the browser's virtual keyboard covers the field
@@ -263,12 +317,14 @@ function HubChat({
     return () => clearInterval(id);
   }, [speaking]);
 
-  const sendRef = useRef(null);
+  const sendRef = useRef<
+    ((text?: string, fromVoice?: boolean) => Promise<void>) | null
+  >(null);
   // Callback ref на `.focus()` ChatInput — використовується після
   // prefill з ChatQuickActions, щоб фокус приходив на input одразу.
   const focusInputRef = useRef<(() => void) | null>(null);
 
-  const maybeSpeak = useCallback((text) => {
+  const maybeSpeak = useCallback((text: string) => {
     speak(text);
     setSpeaking(true);
   }, []);
@@ -362,11 +418,38 @@ function HubChat({
       }
 
       if (data.tool_calls && data.tool_calls.length > 0) {
-        const handlerResults = await executeActions(data.tool_calls);
-        const toolResults = data.tool_calls.map((tc, idx) => ({
+        // Cast tool_calls to ChatAction[] - the API guarantees name+id+input shape
+        type ToolCall = {
+          id: string;
+          name: string;
+          input: Record<string, unknown>;
+        };
+        const toolCalls = data.tool_calls as ToolCall[];
+        const handlerResults = await executeActions(
+          toolCalls as Parameters<typeof executeActions>[0],
+        );
+        const toolResults = toolCalls.map((tc, idx) => ({
           tool_use_id: tc.id,
           content: handlerResults[idx]?.result ?? "",
         }));
+
+        // Mutator-handler-и (`create_transaction`, `mark_habit_done`,
+        // `log_meal`, `create_habit`, …) повертають `{ undo }` поряд з
+        // текстовим результатом. Показуємо стандартний 5-секундний
+        // undo-toast для кожного — `showUndoToast` сам повертає taimer
+        // (overlap-stack тут прийнятний: один tool-call на 99 % турнів,
+        // у дуже рідкісному випадку 2-3 одночасних змін юзер бачить
+        // окремий toast на кожну). Read-only handler-и (search,
+        // підрахунки, summaries) `undo` не мають — toast не показується.
+        for (const hr of handlerResults) {
+          if (hr.undo) {
+            const undoFn = hr.undo;
+            showUndoToast(toast, {
+              msg: hr.result,
+              onUndo: undoFn,
+            });
+          }
+        }
 
         const actionsText = toolResults
           .map((r) => `✅ ${r.content}`)
@@ -375,11 +458,11 @@ function HubChat({
 
         // Будуємо action-картки для відомих tool-ів.
         // Якщо tool невідомий — повертається null, лишається лише текст.
-        const cards: ChatActionCard[] = data.tool_calls
+        const cards: ChatActionCard[] = toolCalls
           .map((tc, idx) =>
             buildActionCard({
-              name: tc.name,
-              input: tc.input,
+              name: tc.name as string,
+              input: tc.input as Record<string, unknown>,
               result: toolResults[idx]?.content || "",
             }),
           )
@@ -607,7 +690,16 @@ function HubChat({
   }, [messages]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col safe-area-pt-pb">
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex flex-col safe-area-pt-pb",
+        // Visually collapse the dialog while minimized but keep the
+        // subtree mounted so messages, draft input, and any in-flight
+        // request survive across hide/restore cycles.
+        isMinimized && "pointer-events-none opacity-0",
+      )}
+      aria-hidden={isMinimized}
+    >
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
@@ -628,14 +720,34 @@ function HubChat({
           <div className="w-10 h-1 bg-line rounded-full" />
         </div>
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 px-4 pb-3 shrink-0 border-b border-line">
-          <div className="flex items-start gap-3 min-w-0">
+        {/* Header — compact: avatar + title + 1-line subtitle.
+            Context status, history counters, and the privacy
+            disclaimer collapse into the "Деталі" popover so the header
+            stays single-row on narrow phones. */}
+        <div className="flex items-center justify-between gap-3 px-4 pb-3 shrink-0 border-b border-line">
+          <div className="flex items-center gap-3 min-w-0">
             <div
-              className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0 mt-0.5"
+              className={cn(
+                "relative w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0",
+                contextState.status === "building" &&
+                  "motion-safe:animate-pulse",
+              )}
               aria-hidden
             >
               <Icon name="sparkle" size={18} className="text-brand-500" />
+              {/* Context-status dot anchored on the avatar — replaces the
+                  full pill that used to live below the title. */}
+              <span
+                className={cn(
+                  "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-bg",
+                  contextState.status === "ready"
+                    ? "bg-brand-500"
+                    : contextState.status === "building"
+                      ? "bg-warning"
+                      : "bg-line",
+                )}
+                aria-hidden
+              />
             </div>
             <div className="min-w-0">
               <div
@@ -646,7 +758,7 @@ function HubChat({
               </div>
               <div
                 className={cn(
-                  "text-2xs leading-snug mt-0.5",
+                  "text-2xs leading-snug truncate",
                   hasData ? "text-subtle" : "text-warning",
                 )}
               >
@@ -654,69 +766,99 @@ function HubChat({
                   ? "Фінік · Фізрук · Рутина · Харчування"
                   : "Mono не підключено"}
               </div>
-              <div className="inline-flex items-center gap-1.5 text-2xs text-subtle mt-1.5 px-2 py-0.5 rounded-full bg-panelHi/60 border border-line/60">
-                <span
-                  className={cn(
-                    "inline-block w-1.5 h-1.5 rounded-full",
-                    contextState.status === "ready"
-                      ? "bg-brand-500"
-                      : contextState.status === "building"
-                        ? "bg-warning motion-safe:animate-pulse"
-                        : "bg-line",
-                  )}
-                />
-                <span>
-                  {contextState.status === "building"
-                    ? "Готую контекст…"
-                    : contextState.status === "ready"
-                      ? "Контекст готовий"
-                      : "Очікую"}
-                </span>
-                <span className="text-line" aria-hidden>
-                  ·
-                </span>
-                <span>
-                  {sessionInfo.historyCount}/10 · ~
-                  {Math.round(sessionInfo.chars / 100) / 10}k
-                </span>
-              </div>
-              <p
-                id="hub-chat-privacy"
-                className="text-2xs text-muted/70 mt-1.5 leading-snug max-w-[min(100%,280px)]"
-              >
-                Контекст (фінанси, тренування, звички, харчування)
-                відправляється до AI.
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
+            <Popover
+              placement="bottom-end"
+              className="!min-w-[260px] p-3"
+              trigger={
+                <Tooltip content="Деталі контексту" placement="bottom-center">
+                  <button
+                    type="button"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                    aria-label="Деталі контексту"
+                  >
+                    <Icon name="info" size={16} />
+                  </button>
+                </Tooltip>
+              }
+            >
+              <div
+                role="status"
+                className="space-y-2 text-left"
+                id="hub-chat-privacy"
+              >
+                <div className="flex items-center gap-2 text-xs text-text">
+                  <span
+                    className={cn(
+                      "inline-block w-2 h-2 rounded-full",
+                      contextState.status === "ready"
+                        ? "bg-brand-500"
+                        : contextState.status === "building"
+                          ? "bg-warning motion-safe:animate-pulse"
+                          : "bg-line",
+                    )}
+                    aria-hidden
+                  />
+                  <span className="font-semibold">
+                    {contextState.status === "building"
+                      ? "Готую контекст…"
+                      : contextState.status === "ready"
+                        ? "Контекст готовий"
+                        : "Очікую"}
+                  </span>
+                </div>
+                <p className="text-2xs text-subtle leading-snug">
+                  В контексті: {sessionInfo.historyCount} з останніх 10
+                  повідомлень · ~{Math.round(sessionInfo.chars / 100) / 10}k
+                  символів.
+                </p>
+                <p className="text-2xs text-muted leading-snug">
+                  Контекст (фінанси, тренування, звички, харчування)
+                  відправляється до AI.
+                </p>
+              </div>
+            </Popover>
             <Tooltip content="Усі бесіди" placement="bottom-center">
               <button
                 type="button"
                 onClick={() => setHistoryOpen(true)}
-                className="h-8 w-8 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
                 aria-label={`Відкрити список бесід (${sessions.length})`}
                 aria-haspopup="dialog"
                 aria-expanded={historyOpen}
               >
-                <Icon name="list" size={14} />
+                <Icon name="list" size={15} />
               </button>
             </Tooltip>
             <Tooltip content="Почати нову бесіду" placement="bottom-center">
               <button
                 type="button"
                 onClick={clearChat}
-                className="h-8 px-2.5 flex items-center gap-1.5 rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors text-2xs font-semibold"
+                className="h-9 px-2.5 flex items-center gap-1.5 rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors text-2xs font-semibold"
                 aria-label="Нова бесіда"
               >
-                <Icon name="plus" size={13} />
+                <Icon name="plus" size={14} />
                 Нова
               </button>
             </Tooltip>
+            {onMinimize && (
+              <Tooltip content="Згорнути в FAB" placement="bottom-center">
+                <button
+                  type="button"
+                  onClick={onMinimize}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+                  aria-label="Згорнути асистента"
+                >
+                  <Icon name="minus" size={16} />
+                </button>
+              </Tooltip>
+            )}
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-muted hover:text-text hover:bg-panelHi transition-colors"
               aria-label="Закрити асистента"
             >
               <Icon name="close" size={16} />

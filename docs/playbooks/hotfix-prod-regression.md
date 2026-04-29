@@ -1,6 +1,7 @@
 # Playbook: Hotfix Production Regression
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+> **Status:** Active
 
 **Trigger:** "Прод впав" / користувачі скаржаться / HTTP 500 на `/health` / Sentry alert / Railway logs показують panic.
 
@@ -181,5 +182,5 @@ curl -sS https://<prod-domain>/health | jq .
 ## See also
 
 - [AGENTS.md](../../AGENTS.md) — hard rules
-- [monobank-webhook-migration.md](../monobank-webhook-migration.md) — якщо регресія пов'язана з Monobank webhook pipeline
+- [monobank-roadmap.md](../integrations/monobank-roadmap.md) — якщо регресія пов'язана з Monobank webhook pipeline
 - [cleanup-dead-code.md](cleanup-dead-code.md) — якщо hotfix виявить мертвий код що заважав

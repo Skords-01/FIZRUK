@@ -38,3 +38,6 @@ ops/.env.ops
 
 # Sandbox / experimental prototypes
 artifacts/
+
+# CI-local caches
+.cache/

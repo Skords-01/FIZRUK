@@ -420,12 +420,12 @@ export const CelebrationModal = memo(function CelebrationModal({
       <Animated.View
         style={{
           flex: 1,
-          backgroundColor: "rgba(0,0,0,0.5)",
           opacity: backdropOpacity,
           justifyContent: "center",
           alignItems: "center",
           padding: 24,
         }}
+        className="bg-overlay"
       >
         <Pressable
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
@@ -460,16 +460,14 @@ export const CelebrationModal = memo(function CelebrationModal({
                 {typeof value === "number" ? (
                   <AnimatedCounter
                     value={value}
-                    className="text-4xl font-black text-slate-800"
+                    className="text-4xl font-black text-fg"
                     haptic
                   />
                 ) : (
-                  <Text className="text-4xl font-black text-slate-800">
-                    {value}
-                  </Text>
+                  <Text className="text-4xl font-black text-fg">{value}</Text>
                 )}
                 {unit && (
-                  <Text className="text-lg font-semibold text-slate-500">
+                  <Text className="text-lg font-semibold text-fg-muted">
                     {unit}
                   </Text>
                 )}
@@ -477,13 +475,13 @@ export const CelebrationModal = memo(function CelebrationModal({
             )}
 
             {/* Title */}
-            <Text className="text-xl font-bold text-slate-800 text-center">
+            <Text className="text-xl font-bold text-fg text-center">
               {title}
             </Text>
 
             {/* Description */}
             {description && (
-              <Text className="text-sm text-slate-500 text-center leading-relaxed max-w-[280px]">
+              <Text className="text-sm text-fg-muted text-center leading-relaxed max-w-[280px]">
                 {description}
               </Text>
             )}
@@ -501,7 +499,7 @@ export const CelebrationModal = memo(function CelebrationModal({
                       : (theme as ProgressRingVariant)
                   }
                 />
-                <Text className="text-xs text-slate-500 mt-2">
+                <Text className="text-xs text-fg-muted mt-2">
                   {progress.current} / {progress.max}
                 </Text>
               </View>
@@ -513,10 +511,10 @@ export const CelebrationModal = memo(function CelebrationModal({
                 {rewards.map((reward, idx) => (
                   <View
                     key={idx}
-                    className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200"
+                    className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface dark:bg-cream-800 border border-line"
                   >
                     {reward.icon}
-                    <Text className="text-sm font-medium text-slate-700">
+                    <Text className="text-sm font-medium text-fg">
                       {reward.label}
                     </Text>
                   </View>

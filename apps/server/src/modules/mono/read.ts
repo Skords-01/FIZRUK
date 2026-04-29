@@ -1,7 +1,11 @@
 import type { Request, Response } from "express";
 import { query } from "../../db.js";
 import { validateQuery } from "../../http/validate.js";
-import { MonoTransactionsQuerySchema } from "../../http/schemas.js";
+import {
+  MonoAccountsResponseSchema,
+  MonoTransactionsPageSchema,
+  MonoTransactionsQuerySchema,
+} from "../../http/schemas.js";
 import {
   normalizeMonoAccount,
   normalizeMonoTransaction,
@@ -50,7 +54,15 @@ export async function accountsHandler(
     { op: "mono_accounts_read" },
   );
 
-  res.json(rows.map((r) => normalizeMonoAccount(r as MonoAccountRow)));
+  // Validate response shape against the SSOT before emitting (Hard Rule #3).
+  // Drift between DB columns / normalizer output and the api-client `z.infer<>`
+  // type now throws here, which surfaces in tests and CI rather than silently
+  // shipping a typed lie to the client.
+  res.json(
+    MonoAccountsResponseSchema.parse(
+      rows.map((r) => normalizeMonoAccount(r as MonoAccountRow)),
+    ),
+  );
 }
 
 /**
@@ -182,11 +194,16 @@ export async function transactionsHandler(
     normalizeMonoTransaction(r as MonoTransactionRow),
   );
 
+  // Same SSOT validation as `accountsHandler`: ensures `MonoTransactionDto`
+  // (after `normalizeMonoTransaction`) really matches the `z.infer<>` type
+  // shipped to the api-client.
   if (hasMore) {
     const last = result[result.length - 1];
     const nextCursor = `${last.time}:${last.monoTxId}`;
-    res.json({ data: result, nextCursor });
+    res.json(MonoTransactionsPageSchema.parse({ data: result, nextCursor }));
   } else {
-    res.json({ data: result, nextCursor: null });
+    res.json(
+      MonoTransactionsPageSchema.parse({ data: result, nextCursor: null }),
+    );
   }
 }

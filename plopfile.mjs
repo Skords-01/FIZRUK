@@ -15,6 +15,18 @@ function nextMigrationNumber() {
   return String(max + 1).padStart(3, "0");
 }
 
+/** Returns the next zero-padded 4-digit ADR number. */
+function nextAdrNumber() {
+  const adrDir = resolve(__dirname, "docs/adr");
+  const files = readdirSync(adrDir);
+  const nums = files
+    .filter((f) => /^\d{4}-.+\.md$/.test(f))
+    .map((f) => parseInt(f.slice(0, 4), 10))
+    .filter((n) => !isNaN(n));
+  const max = nums.length ? Math.max(...nums) : 0;
+  return String(max + 1).padStart(4, "0");
+}
+
 export default function (plop) {
   plop.setHelper("timestamp", () => new Date().toISOString().slice(0, 10));
 
@@ -162,5 +174,46 @@ export default function (plop) {
         templateFile: "plop-templates/endpoint/api-client.ts.hbs",
       },
     ],
+  });
+
+  // ── adr ────────────────────────────────────────────────────────────────────
+  plop.setGenerator("adr", {
+    description:
+      "New Architecture Decision Record (auto-numbered from docs/adr/)",
+    prompts: [
+      {
+        type: "input",
+        name: "title",
+        message:
+          "ADR title (kebab-case, e.g. rq-keys-factory or event-sourcing-queue):",
+        validate: (v) =>
+          /^[a-z][a-z0-9-]*[a-z0-9]$/.test(v) ||
+          "kebab-case only (lowercase letters, digits, hyphens)",
+      },
+      {
+        type: "input",
+        name: "humanTitle",
+        message:
+          "Human-readable title (for the H1 heading, e.g. RQ keys factory):",
+        validate: (v) => v.trim().length > 0 || "required",
+      },
+      {
+        type: "input",
+        name: "deciders",
+        message: "Deciders (GitHub handles, comma-separated):",
+        default: "@Skords-01",
+      },
+    ],
+    actions: (data) => {
+      const num = nextAdrNumber();
+      data.num = num;
+      return [
+        {
+          type: "add",
+          path: `docs/adr/${num}-${data.title}.md`,
+          templateFile: "plop-templates/adr/adr.md.hbs",
+        },
+      ];
+    },
   });
 }

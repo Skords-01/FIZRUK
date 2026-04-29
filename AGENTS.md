@@ -1,15 +1,17 @@
 # Agents in Sergeant
 
-> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
 
 ## Repo overview
 
 - **pnpm 9** + **Turborepo** monorepo, **Node 20**, **TypeScript 6**.
-- **Apps** (4):
+- **Apps** (5):
   - `apps/web` — Vite + React 18 SPA (frontend).
   - `apps/server` — Express + PostgreSQL (`pg`) + Better Auth (API).
   - `apps/mobile` — Expo 52 + React Native 0.76.
   - `apps/mobile-shell` — Capacitor wrapper for the web app.
+  - `apps/console` — Telegram bot (grammy + Anthropic), internal ops/marketing.
 - **Packages** (10): `@sergeant/shared`, `@sergeant/api-client`, `@sergeant/config`, `@sergeant/design-tokens`, `@sergeant/insights`, `eslint-plugin-sergeant-design`, and 4 domain packages (`@sergeant/finyk-domain`, `@sergeant/fizruk-domain`, `@sergeant/nutrition-domain`, `@sergeant/routine-domain`).
 - Pre-commit: **Husky** runs `lint-staged` (ESLint --fix + Prettier).
 
@@ -28,10 +30,11 @@ Quick lookup before editing: which path uses which test stack and which conventi
 | `apps/web/src/shared/**`                              | `@Skords-01` | Vitest                                  | factories defined here                | Pure utils. No React.                                                                                                                                           |
 | `apps/server/src/modules/**`                          | `@Skords-01` | Vitest + Testcontainers (real Postgres) | n/a                                   | Always coerce bigint→number in serializers (rule #1). Update `api-client` types.                                                                                |
 | `apps/server/src/modules/chat/**`                     | `@Skords-01` | Vitest                                  | n/a                                   | Anthropic tool defs split per domain in `toolDefs/`. See Architecture section.                                                                                  |
-| `apps/server/src/migrations/**`                       | `@Skords-01` | n/a                                     | n/a                                   | Sequential `NNN_*.sql` (currently 001–010). No gaps. Two-phase for DROP — see rule #4.                                                                          |
+| `apps/server/src/migrations/**`                       | `@Skords-01` | n/a                                     | n/a                                   | Sequential `NNN_*.sql` (currently 001–015). No gaps. Two-phase for DROP — see rule #4.                                                                          |
 | `apps/mobile/src/core/**`                             | `@Skords-01` | Jest                                    | (mobile RQ uses module-local keys)    | NativeWind (not Tailwind). MMKV (not localStorage). No DOM.                                                                                                     |
 | `apps/mobile/app/**`                                  | `@Skords-01` | Jest                                    | n/a                                   | Expo Router routes. Each `_layout.tsx` is a navigator.                                                                                                          |
 | `apps/mobile-shell/**`                                | `@Skords-01` | none                                    | n/a                                   | Capacitor wrapper around `apps/web`. No app code lives here, only build glue.                                                                                   |
+| `apps/console/**`                                     | `@Skords-01` | Vitest                                  | n/a                                   | Telegram bot (grammy + Anthropic). Multi-agent: ops + marketing. Internal only.                                                                                 |
 | `packages/shared/**`                                  | `@Skords-01` | Vitest                                  | n/a                                   | Zod schemas, types, business logic. Used by all apps — change with care.                                                                                        |
 | `packages/api-client/**`                              | `@Skords-01` | Vitest                                  | n/a                                   | HTTP clients + types. Must mirror `apps/server/src/modules/*` response shapes.                                                                                  |
 | `packages/insights/**`                                | `@Skords-01` | Vitest                                  | n/a                                   | Cross-module analytics. Pure functions over normalized data.                                                                                                    |
@@ -117,7 +120,7 @@ If you change only one — CI will pass but consumers break. Always do all three
 
 ### 4. SQL migrations: sequential, no gaps, two-phase for DROP
 
-Files in `apps/server/src/migrations/` use the pattern `NNN_description.sql` (currently 001–010). Pre-deploy: `pnpm db:migrate` (Railway). The build step copies them via `apps/server/build.mjs` (fixed in [#704](https://github.com/Skords-01/Sergeant/issues/704)).
+Files in `apps/server/src/migrations/` use the pattern `NNN_description.sql` (currently 001–015). Pre-deploy: `pnpm db:migrate` (Railway). The build step copies them via `apps/server/build.mjs` (fixed in [#704](https://github.com/Skords-01/Sergeant/issues/704)).
 
 - **Adding a column:** single file `NNN_add_foo.sql`. Make it `NULL`-able or `DEFAULT`-ed so old code keeps working.
 - **Renaming/removing a column:** **two phases**, deployed **separately**:
@@ -148,6 +151,7 @@ Format: `<type>(<scope>): <subject>`. Allowed types: `feat`, `fix`, `docs`, `cho
 | `server`           | `apps/server/**` (excluding migrations alone)                     |
 | `mobile`           | `apps/mobile/**`                                                  |
 | `mobile-shell`     | `apps/mobile-shell/**`                                            |
+| `console`          | `apps/console/**`                                                 |
 | `shared`           | `packages/shared/**`                                              |
 | `api-client`       | `packages/api-client/**`                                          |
 | `finyk-domain`     | `packages/finyk-domain/**`                                        |
@@ -217,11 +221,234 @@ The rule deliberately does **not** fire on:
 - `bg-{family}-strong text-white` — the canonical fix.
 - `bg-{family}-{700,800,900}` — explicit dark steps already clear AA.
 - `bg-{family}/N` — opacity-tinted soft washes; the foreground is `text-{family}-strong`, not white.
-- `bg-[#hex] text-white` — arbitrary values; deliberate one-off opt-out.
+- `bg-[#hex] text-white` — arbitrary hex values, now separately forbidden by rule #11 (`sergeant-design/no-hex-in-classname`).
 - `dark:bg-{family} text-white` — on dark surfaces emerald-500 vs. white passes ~5.4 : 1; the strong tier would actually regress contrast.
 - `hover:bg-{family} text-white` — hover-only saturated bg if the base state is fine.
 
 Enforced by `sergeant-design/no-low-contrast-text-on-fill` (`error`). The four saturated `*-500` brand-identity tokens in `packages/design-tokens/tokens.js` remain unchanged — they're still the canonical brand colours for logos, marketing assets, and dark-mode bento surfaces. The strong tier is purely additive and only required for text/fill-behind-text contexts.
+
+### 10. Lifecycle markers — every file/doc declares its status
+
+> Why a hard rule? Because PR [#1143](https://github.com/Skords-01/Sergeant/pull/1143) silently merged a "dead-code cleanup" that deleted scaffolded-but-not-yet-wired components (`PullToRefreshIndicator`, `usePullToRefresh`, `EmptyStateIllustrations`, `OptimizedImage`). They were dropped in by a `feat(web)` commit ahead of integration and `pnpm knip` correctly reported "no importers" — but cleaning them up was wrong, because they were the next-step UI scaffolding, not legacy. We need a way to tell intentional-zero-importers apart from real dead code.
+
+Every non-trivial source file and every published doc declares **one** of these statuses. If a file/doc has no marker, treat it as `Active` (the default) — but if `pnpm knip` flags it as unused, you must check git log and possibly add a `@scaffolded` marker before deleting.
+
+#### Code: JSDoc lifecycle tags
+
+Place the marker in the **first JSDoc block of the file** (above imports is fine). Tags compose with TS-LSP — `@deprecated` shows strikethrough in editors automatically.
+
+| Tag             | Meaning                                                                                   | When to add                                                         | When to remove                                                                       |
+| --------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `@scaffolded`   | Ready for use but no live consumer yet. Intentional zero-importer. Knip MUST NOT flag it. | When you commit a component/hook ahead of its first wiring PR.      | In the PR that wires it into a page/route/registry — also delete the tag in that PR. |
+| `@experimental` | API may change or be reverted. Live consumers exist but we are not promising stability.   | When shipping a feature flag or A/B candidate that may be reverted. | When stabilizing (delete tag), or when removing (replace with `@deprecated`).        |
+| `@deprecated`   | Live consumers must migrate away. Will be removed by a target date.                       | When introducing a replacement.                                     | After the deletion PR lands and consumers are migrated.                              |
+| _(no tag)_      | Active. Default for everything else.                                                      | —                                                                   | —                                                                                    |
+
+Each non-Active marker is followed by a **machine-readable block** with the same shape:
+
+```ts
+/**
+ * @scaffolded
+ * @owner @Skords-01
+ * @addedIn <commit-sha>  # short SHA of the commit that introduced the file
+ * @nextStep <one-line plan> — link to a doc/issue describing the integration
+ *
+ * Scaffolded but not yet imported by any consumer. Do NOT delete as part of
+ * dead-code cleanup — see Hard Rule #10 in AGENTS.md.
+ */
+```
+
+`@deprecated` blocks add `@removeBy YYYY-MM-DD` (target removal date) and `@migration <link>` (where consumers learn how to switch).
+
+Knip respects `@scaffolded` and `@deprecated` files via `knip.json` `ignore` glob entries that include the markers (see `scripts/knip-respects-scaffolded.mjs` for the regex list). When you add a marker, no knip config change is needed.
+
+#### Docs: status badge under the freshness marker
+
+Right after the existing `> **Last validated:** YYYY-MM-DD …` line, add:
+
+```md
+> **Status:** Active | Scaffolded | Deprecated | Archived
+```
+
+- `Active` — current source of truth. Default.
+- `Scaffolded` — describes a feature/component that exists in code but isn't wired yet. Do NOT cite it as live behaviour. Pair with the matching `@scaffolded` JSDoc tag in code.
+- `Deprecated` — describes a behaviour we're replacing; reference the replacement.
+- `Archived` — historical artefact, lives in `docs/<area>/archive/`. CI freshness checks ignore.
+
+`scripts/check-tech-debt-freshness.mjs` accepts the new `Status:` line and refuses to run on `Archived` docs (so we don't churn timestamps on archives).
+
+#### What this rule blocks
+
+- **Dead-code PRs** — agent/human MUST check for `@scaffolded`/`@deprecated` markers before deleting a "knip-says-unused" file. If a marker exists, leave the file. If knip flags an unmarked file, prefer to add `@scaffolded` (with owner + next step) rather than delete, unless `git log --follow` makes it obvious the file is truly orphaned (e.g. last touched > 12 months ago, no `feat(...)` commit). Document the reasoning in the PR description.
+- **Doc cleanup PRs** — `Archived` docs may be moved to `archive/`, but their content is not edited.
+- **AI agents** — when surfacing files for review, group by status. A file with `@scaffolded` is NOT a candidate for the "remove dead code" task type.
+
+### 11. No arbitrary hex colors in `className`
+
+Raw `<utility>-[#hex]` values in Tailwind `className` (`bg-[#10b981]`, `text-[#fff]/50`, `border-[#abc]`, `ring-[#1234ab]`) bypass the design-system token layer entirely. Dark-mode adaptation, the WCAG-AA `-strong` promotion from rule #9, the module-accent containment from rule #12, and future palette migrations all stop working for those literals — you get a hard-coded colour that no other system in the repo can reason about.
+
+```tsx
+// ❌ BAD — off-palette emerald that dark-mode cannot touch
+<div className="bg-[#10b981] text-[#fff]/50" />
+
+// ✅ GOOD — status soft token; both `bg-` and `text-` adapt per theme
+// via CSS variables owned by the preset.
+<div className="bg-success-soft text-success-strong" />
+
+// ✅ GOOD — page-level surface + foreground; semantic and theme-aware.
+<div className="bg-surface text-fg" />
+```
+
+The rule covers every colour-aware utility (`bg-`, `text-`, `border-`, `ring-`, `fill-`, `stroke-`, `from-`, `to-`, `via-`, `shadow-`, `outline-`, `divide-`, `placeholder-`, `caret-`, `decoration-`, `accent-`) and validates hex length (3 / 4 / 6 / 8 digits). Non-hex arbitrary values (`bg-[oklch(…)]`, `border-[var(--foo)]`, `bg-[rgb(…)]`) are **intentionally left alone** — they can reference CSS variables owned by the preset and are occasionally necessary for one-off interop.
+
+If you genuinely need a new shade, add it to `packages/design-tokens/tailwind-preset.js` (alongside a `-soft` / `-strong` companion per rule #9) instead of inlining hex at the call-site. Enforced by `sergeant-design/no-hex-in-classname` (`error`).
+
+### 12. Module-accent containment — no foreign accents inside a module subtree
+
+Sergeant's four module accents (`finyk`/emerald, `fizruk`/teal, `routine`/coral, `nutrition`/lime) are deliberately close in saturation. A fizruk screen that accidentally renders a coral `ring-routine` reads to the user as "Рутина" — it's a semantic design bug, not a stylistic choice. Inside the `apps/<app>/src/modules/<X>/` subtree, only `<X>`'s accent utilities (`bg-<X>-surface`, `text-<X>-strong`, `ring-<X>`, `bg-<X>-500/15`, …) may appear.
+
+```tsx
+// apps/web/src/modules/fizruk/pages/PlanCalendar.tsx
+// ❌ BAD — coral focus ring inside a Fizruk page
+<button className="focus-visible:ring-routine" />
+
+// ✅ GOOD — module-consistent focus ring
+<button className="focus-visible:ring-fizruk" />
+```
+
+The rule handles variant prefixes (`dark:`, `hover:`, `lg:`), shade suffixes (`-500`, `-soft`, `-strong`), and opacity suffixes (`/15`) transparently. Cross-module shells remain **exempt** so the Hub / HubChat / shared widgets can still reference every accent:
+
+- `apps/*/src/core/**`, `apps/*/src/shared/**`, `apps/*/src/stories/**`
+- `apps/*/src/modules/shared/**` (non-canonical module folder — a cross-module utility, not an accent owner)
+- `__tests__/*.{ts,tsx,mjs}` — test fixtures naturally reference all four for coverage.
+
+Enforced by `sergeant-design/no-foreign-module-accent` (`error`). See `docs/design/MODULE-ACCENT.md` for the "one accent = one module" design principle.
+
+### 13. No raw-palette light/dark `className` pairs
+
+A `className` that pairs a raw-palette light utility with a `dark:` raw-palette override encodes both themes by hand at the call-site. The next palette migration (or the next opacity-step renaming — bug [#814](https://github.com/Skords-01/Sergeant/pull/814)) silently drops one half and the surrounding override falls through to the wrong colour. Lift the (light, dark) pair into the design-system token layer (`bg-success-soft`, `bg-finyk-surface`, `text-brand-strong`, `border-routine-soft-border`, …) so the preset owns the swap and the call-site keeps zero `dark:` palette overrides. The full migration history (Wave 1b → 2a → 2b → 2c) lives in [`docs/design/DARK-MODE-AUDIT.md`](docs/design/DARK-MODE-AUDIT.md).
+
+```tsx
+// ❌ BAD — both halves are raw `brand-*` palette steps; the next
+// emerald retune silently drops one of them.
+<a className="text-brand-600 dark:text-brand-400">…</a>
+
+// ✅ GOOD — `text-brand-strong` is the WCAG-AA companion (no numeric
+// step), `dark:text-brand` is the saturated DEFAULT for dark panels.
+<a className="text-brand-strong dark:text-brand">…</a>
+
+// ❌ BAD — paired raw-palette borders on a hero card.
+<Card className="border border-teal-200/50 dark:border-teal-800/30 …" />
+
+// ✅ GOOD — `border-fizruk-soft-border` is theme-adaptive via
+// `--c-fizruk-soft-border` (light = teal-200-ish, dark = teal-900-ish).
+<Card className="border border-fizruk-soft-border/50 …" />
+```
+
+The rule fires only when **both** halves are present on the same className value:
+
+- a bare `<utility>-<PALETTE>-<SHADE>[/<opacity>]`, AND
+- a `dark:<utility>-<PALETTE>-<SHADE>[/<opacity>]`,
+
+where `<utility> ∈ { bg, text, border }` and `<PALETTE>` is one of the 24 raw Tailwind families (`gray`, `slate`, `zinc`, `neutral`, `stone`, `red`, `orange`, `amber`, `yellow`, `lime`, `green`, `emerald`, `teal`, `cyan`, `sky`, `blue`, `indigo`, `violet`, `purple`, `fuchsia`, `pink`, `rose`, plus Sergeant's `brand` / `coral` aliases — both are theme-inert raw palettes despite the brand-y names). `<SHADE>` is a numeric step (`50`, `100`, …, `950`), so semantic suffixes (`brand-soft`, `brand-strong`, `routine-soft-border`) are NOT flagged.
+
+What the rule **never** flags (these stay):
+
+- `dark:bg-white/10`, `dark:bg-black/40`, `dark:border-white/15` — bare-colour glass washes.
+- Dark-side-only "patches" where the light side is already semantic (`bg-success-soft text-success-strong dark:text-emerald-100`) — these document gaps in the WCAG-AA `-strong` companion scale on dark panels (rule #9).
+- Semantic tokens that happen to carry a `dark:` prefix (`dark:bg-surface`, `dark:text-fg`, `dark:border-border`).
+
+Enforced by `sergeant-design/no-raw-dark-palette` (`error`), scoped to `apps/web/**/*.{ts,tsx,js,jsx}` — the semantic replacements (`bg-{family}-soft`, `border-{module}-soft-border`, …) resolve through `--c-{family}-soft*` CSS variables that live only in `apps/web/src/index.css`. NativeWind (`apps/mobile`) renders classNames into React Native inline styles and does not consume those CSS variables, so the rule does not apply there. Promoted from absent → `error` in PR [#1155](https://github.com/Skords-01/Sergeant/pull/1155) once the audit's inventory hit zero (Wave 2a + 2b in PR [#1153](https://github.com/Skords-01/Sergeant/pull/1153), Wave 1b in [#1149](https://github.com/Skords-01/Sergeant/pull/1149)) and the 40 additional paired call-sites surfaced by the rule were migrated to the canonical Wave 1b shape. Refined in [#1157](https://github.com/Skords-01/Sergeant/pull/1157) to skip variant-prefixed dark utilities (`lg:dark:bg-amber-500/15`, `hover:dark:text-coral-300`, …) — those carry an extra breakpoint or state condition that the rule's bare-pair contract does not model.
+
+### 14. Visible focus indicators must use `focus-visible:`, not `focus:`
+
+> Why a hard rule? `focus:ring-*` and `focus:bg-*` fire on every focus event — including a pointer click, which produces a flashing ring on every mouse interaction with a button or input. `focus-visible:` is the modern primitive that only fires when the user is navigating with the keyboard or assistive tech. Sergeant's design-system contract (`docs/design/design-system.md`) explicitly lists `focus-visible:ring-2 ring-brand-500/45 ring-offset-2 ring-offset-surface` as the canonical focus indicator and notes "**Focus — `focus-visible:ring-brand-500/30`, а не `focus:`, аби pointer-клік не блимав кільцем**". Every `focus:` colour utility shipped to date predates that rule and is a regression that needs to be migrated.
+
+```tsx
+// ❌ BAD — pointer click on the input flashes the brand ring
+<input className="focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/30" />
+
+// ✅ GOOD — only keyboard / assistive-tech focus paints the ring;
+//          pointer click leaves the input untouched
+<input className="focus:outline-none focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30" />
+
+// ❌ BAD — paired raw `focus:` rules duplicate `focus-visible:` (legacy
+//          fallback for pre-2022 browsers); modern targets don't need them
+<input className="focus-visible:border-brand-400 focus:border-brand-400" />
+
+// ✅ GOOD — `focus-visible:` is supported by Chrome 86+, Safari 15.4+,
+//          Firefox 85+; the legacy fallback is dead weight
+<input className="focus-visible:border-brand-400" />
+```
+
+The single legitimate `focus:` utility is **`focus:outline-none`** — the canonical reset that pairs with `focus-visible:ring-*` so the user-agent outline doesn't double up with the design-system ring.
+
+What the rule **never** flags (these stay):
+
+- `focus:outline-none`, `focus:outline-hidden`, `focus:outline-transparent` — outline resets that pair with `focus-visible:ring-*`.
+- `focus:not-sr-only`, `focus:fixed`, `focus:px-4`, `focus:rounded-xl`, … — non-colour layout / sizing utilities. Skip-links use these legitimately to promote a sr-only element to a visible pinned pill on focus, and that's intentional UX.
+- `focus:text-sm`, `focus:text-base`, `focus:text-mini`, `focus:text-center`, … — `text-` size / alignment / transform tails that aren't colours.
+- `focus:font-semibold` and other typography utilities outside the colour/border/ring/shadow set.
+- `lg:focus:bg-panel`, `hover:focus:text-brand-strong`, `dark:focus:border-brand-400`, `group-focus:bg-panel`, `peer-focus:ring-2`, `focus-within:bg-panel`, `focus-visible:ring-brand-500/45` — variant-prefixed `focus:` and the unrelated `:focus-visible` / `:focus-within` / `:group-focus` / `:peer-focus` pseudo-classes.
+
+Enforced by `sergeant-design/prefer-focus-visible` (`error`), scoped to `apps/web/**/*.{ts,tsx,js,jsx}` — React Native (`apps/mobile`, NativeWind) doesn't expose a `:focus-visible` pseudo-class equivalent; mobile uses `onFocus` handlers and the ring concept is web-only. Promoted from absent → `error` in PR [#1158](https://github.com/Skords-01/Sergeant/pull/1158) once the existing 14 paired `focus:` colour utilities (in `Input`, `Select`, `SkipLink`, `InputDialog`, `AssistantCataloguePage`) were migrated to `focus-visible:`.
+
+### 15. Read governance before coding; update docs alongside code
+
+> Why a hard rule? Because rules are useless if no one reads them, and docs are dangerous if they describe behaviour the code no longer has. Both failure modes have shipped here ([#1143](https://github.com/Skords-01/Sergeant/pull/1143) deleted scaffolded code partly because the AI agent skipped the playbook; multiple Tailwind-opacity bugs survived because the design-system doc still listed deprecated tokens). This rule closes both gaps.
+
+#### Before writing any code
+
+Both AI agents and human contributors **must** read the relevant governance up front, in this order:
+
+1. **`AGENTS.md`** — Hard Rules (#1–#15), Module ownership map for the path you're touching, AI-marker conventions, Domain invariants.
+2. **`CONTRIBUTING.md`** — branch/commit conventions, pre-commit hooks, PR checklist.
+3. **`CLAUDE.md`** — Claude/AI-specific commands and guardrails (sister file to AGENTS.md).
+4. **The matching playbook** in `docs/playbooks/` — pick by trigger phrase. New API endpoint → `add-api-endpoint.md`. New HubChat tool → `add-hubchat-tool.md`. Removing code → `cleanup-dead-code.md`. Migrations → `add-migration.md`.
+5. **The freshness header** of every doc you cite or change (`> Last validated: YYYY-MM-DD by @owner`). If the doc is stale (`Next review` date passed), flag it in the PR — don't blindly trust it, but don't silently ignore it either.
+
+If you're an AI agent, treat steps 1–4 as a **pre-flight checklist**: do not begin implementation until you can name (a) the Hard Rules that apply, (b) the playbook(s) you'll follow, (c) the owner of the path. If no playbook exists for the task type, write a one-paragraph mini-plan and link it in the PR.
+
+#### During the work
+
+- Do not work around a rule because it's inconvenient. If you genuinely believe a rule is wrong, raise it in the PR description (or open an `AGENTS.md` PR first) — don't ship code that violates it.
+- If you discover the rule is unclear or contradictory, fix it in the same PR (one paragraph in `AGENTS.md` is cheaper than the next confused agent).
+- Honour `@scaffolded` / `@deprecated` / `@experimental` markers (Hard Rule #10).
+
+#### Before opening the PR — update docs alongside code
+
+Documentation is part of the change set, not a follow-up. Treat any of the following as **must-update** when the underlying code/contract moves:
+
+| Code change                                       | Docs that must move with it                                                                                                                                            |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New / changed JSON response shape                 | `packages/api-client/**` types **+** the matching contract test (Hard Rule #3). If the response is documented in `docs/api/*.md`, update there too.                    |
+| New SQL migration                                 | `apps/server/src/migrations/README.md` (if present), and any ER-diagram in `docs/architecture/`.                                                                       |
+| New / removed npm script                          | `CONTRIBUTING.md § Everyday Commands`, `CLAUDE.md § Quick commands`.                                                                                                   |
+| New Hard Rule, lint rule, or convention           | `AGENTS.md` § Hard Rules (the canonical entry) **+** mirror summary in `CONTRIBUTING.md § Hard rules`. PR template's "AGENTS.md updated?" checkbox **must** be ticked. |
+| New design token, palette, or component           | `docs/design/design-system.md`, `docs/design/BRANDBOOK.md`, and the relevant audit (`docs/audits/*-audit-*.md`) if it changes status.                                  |
+| Deprecating a behaviour                           | Add `@deprecated` JSDoc with `@removeBy YYYY-MM-DD` (Hard Rule #10) **+** update the consuming doc to mark the section `> **Status:** Deprecated`.                     |
+| New playbook trigger or HubChat tool              | `docs/playbooks/<name>.md` (or update the existing playbook). Cross-link from `CLAUDE.md § Before you write code` if it's a frequent trigger.                          |
+| Anything that invalidates an existing doc's claim | Update the doc in the same PR, or move it to `docs/<area>/archive/` with a `> **Status:** Archived` badge if the claim is no longer relevant.                          |
+
+In every doc you touch, also bump the freshness header:
+
+```md
+> **Last validated:** 2026-04-29 by @your-handle. **Next review:** 2026-07-29.
+> **Status:** Active
+```
+
+If you genuinely change nothing in the doc but its claims still hold, leave the header alone — _do not_ touch the date just to silence freshness warnings. The freshness checker (`scripts/check-tech-debt-freshness.mjs`) accepts unchanged dates.
+
+#### What this rule blocks
+
+- Silent contract drift (server changed, `api-client` didn't).
+- Stale design-system docs that still document deprecated tokens / removed components.
+- AI agents shipping code that violates a Hard Rule because they didn't read AGENTS.md.
+- "Just a one-line change" PRs that quietly remove behaviour the docs still promise.
+
+#### Verification
+
+The PR template includes the relevant boxes (`AGENTS.md updated?`, "Docs updated alongside code?"). CI doesn't fail on missing doc updates today (it's hard to detect mechanically), so this is reviewer- and self-discipline-enforced. If a reviewer spots an unchecked-but-required doc update, that's a request-changes signal — not a "follow-up issue".
 
 ## AI markers
 
@@ -342,12 +569,14 @@ CI gates fail when these regress. Numbers come from `apps/web/package.json` → 
 | Metric                                | Budget             | Where enforced                                      |
 | ------------------------------------- | ------------------ | --------------------------------------------------- |
 | `apps/web` JS total (brotli)          | **≤ 615 kB**       | `pnpm --filter @sergeant/web exec size-limit` in CI |
-| `apps/web` CSS (brotli)               | **≤ 18 kB**        | same                                                |
+| `apps/web` CSS (brotli)               | **≤ 22 kB**        | same                                                |
 | Backend `/health` p95                 | < 100 ms           | (informal; track in Railway logs)                   |
 | Anthropic `/api/chat` p95 first token | < 1.5 s            | (informal; will move to PostHog/Sentry once wired)  |
 | Test suite total wall time            | < 60 s per package | turbo cache makes this implicit                     |
 
 If you legitimately need to raise a limit (e.g. a major new dependency), bump the number in the same PR and call it out in the description so reviewers can sanity-check.
+
+> **Implementation note:** `size-limit` paths in `apps/web/package.json` point to `../server/dist/assets/*` because the Vite build output is copied into the server's `dist/` directory for unified-mode serving (Replit/Railway). If the server build pipeline or `dist` layout changes, verify that `size-limit` paths still resolve — otherwise the budget check silently passes with zero files matched.
 
 ## Anti-patterns from past bugs
 

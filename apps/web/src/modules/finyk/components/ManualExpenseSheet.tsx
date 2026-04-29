@@ -254,7 +254,7 @@ export function ManualExpenseSheet({
   const handleSubmit = () => {
     const amt = parseFloat(form.amount);
     if (!form.amount || isNaN(amt) || amt <= 0) {
-      setError("Вкажіть суму більше 0");
+      setError("Вкажи суму більше 0");
       return;
     }
     // Description is now optional: if empty we fall back to the category
@@ -322,7 +322,7 @@ export function ManualExpenseSheet({
                     }
                     className={
                       personal
-                        ? "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/15 transition-colors tabular-nums"
+                        ? "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-success/10 text-success-strong dark:text-success border border-success/30 hover:bg-success/15 transition-colors tabular-nums"
                         : "px-2.5 py-1 rounded-full text-xs font-medium bg-panelHi text-muted border border-line hover:border-muted/50 transition-colors tabular-nums"
                     }
                     aria-label={

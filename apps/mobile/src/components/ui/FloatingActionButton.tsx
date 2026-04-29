@@ -74,6 +74,8 @@ export interface FloatingActionButtonProps {
   disabled?: boolean;
   /** Additional classes */
   className?: string;
+  /** Auto-collapse after ms when expanded (default: 5000, 0 = no auto-collapse) */
+  autoCollapseMs?: number;
 }
 
 const variantColors: Record<FABVariant, { bg: string; text: string }> = {
@@ -127,9 +129,11 @@ export function FloatingActionButton({
   right = 24,
   disabled = false,
   className,
+  autoCollapseMs = 5000,
 }: FloatingActionButtonProps) {
   const reduceMotion = useReduceMotion();
   const [isExpanded, setIsExpanded] = useState(false);
+  const autoCollapseTimer = useRef<NodeJS.Timeout | null>(null);
 
   const colors = variantColors[variant];
   const dimensions = sizePx[size];
@@ -149,6 +153,29 @@ export function FloatingActionButton({
       scale: new Animated.Value(0.8),
     })),
   ).current;
+
+  // Auto-collapse timer
+  useEffect(() => {
+    if (isExpanded && autoCollapseMs > 0) {
+      autoCollapseTimer.current = setTimeout(() => {
+        setIsExpanded(false);
+        // Reset animations
+        actionAnimations.forEach((anim) => {
+          anim.opacity.setValue(0);
+          anim.translateY.setValue(20);
+          anim.scale.setValue(0.8);
+        });
+        rotation.setValue(0);
+        backdropOpacity.setValue(0);
+      }, autoCollapseMs);
+    }
+
+    return () => {
+      if (autoCollapseTimer.current) {
+        clearTimeout(autoCollapseTimer.current);
+      }
+    };
+  }, [isExpanded, autoCollapseMs, actionAnimations, rotation, backdropOpacity]);
 
   const toggleExpanded = useCallback(() => {
     const toExpanded = !isExpanded;
@@ -295,7 +322,7 @@ export function FloatingActionButton({
         <Pressable onPress={toggleExpanded} className="absolute inset-0">
           <Animated.View
             style={{ opacity: backdropOpacity }}
-            className="absolute inset-0 bg-black/30"
+            className="absolute inset-0 bg-overlay"
           />
         </Pressable>
       )}
@@ -325,8 +352,8 @@ export function FloatingActionButton({
                 className="flex-row items-center gap-3"
               >
                 {/* Label */}
-                <View className="px-3 py-1.5 rounded-lg bg-white shadow-sm">
-                  <Text className="text-sm font-medium text-slate-700">
+                <View className="px-3 py-1.5 rounded-lg bg-surface dark:bg-cream-800 shadow-sm">
+                  <Text className="text-sm font-medium text-fg">
                     {action.label}
                   </Text>
                 </View>

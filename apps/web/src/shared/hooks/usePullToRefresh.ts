@@ -1,3 +1,13 @@
+/**
+ * @scaffolded
+ * @owner @Skords-01
+ * @addedIn 1d443ac1 (feat(web): add UI/UX improvements and new components)
+ * @nextStep Pair with `<PullToRefreshIndicator>` and wire into module
+ *           pages. See docs/design/design-system.md § PullToRefreshIndicator.
+ *
+ * Scaffolded but not yet imported by any consumer. Do NOT delete as part of
+ * dead-code cleanup — see Hard Rule #15 in AGENTS.md.
+ */
 import { useState, useRef, useCallback, useEffect } from "react";
 
 export interface PullToRefreshState {

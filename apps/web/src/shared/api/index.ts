@@ -40,6 +40,8 @@ export const monoWebhookApi = apiClient.monoWebhook;
 export const privatApi = apiClient.privat;
 export const waitlistApi = apiClient.waitlist;
 export const weeklyDigestApi = apiClient.weeklyDigest;
+export const transcribeApi = apiClient.transcribe;
+export const webVitalsApi = apiClient.webVitals;
 
 // Errors, types, HTTP primitives
 export { ApiError, isApiError, createHttpClient } from "@sergeant/api-client";
@@ -108,5 +110,6 @@ export type {
   SyncEndpoints,
   TokenProvider,
   WeeklyDigestPayload,
+  WeeklyDigestReport,
   WeeklyDigestResponse,
 } from "@sergeant/api-client";

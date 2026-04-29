@@ -109,4 +109,81 @@ describe("Button", () => {
     expect(cls).toMatch(/\bh-11\b/);
     expect(cls).toMatch(/\bw-11\b/);
   });
+
+  describe("module prop redirects neutral variants", () => {
+    it.each([
+      ["finyk", "bg-finyk-strong"],
+      ["fizruk", "bg-fizruk-strong"],
+      ["routine", "bg-routine-strong"],
+      ["nutrition", "bg-nutrition-strong"],
+    ] as const)(
+      "module=%s + variant=primary → renders %s solid",
+      (module, expectedBg) => {
+        const { getByRole } = render(
+          <Button module={module} variant="primary">
+            Go
+          </Button>,
+        );
+        expect(getByRole("button").className).toContain(expectedBg);
+      },
+    );
+
+    it.each([
+      ["finyk", "text-finyk-strong"],
+      ["fizruk", "text-fizruk-strong"],
+      ["routine", "text-routine-strong"],
+      ["nutrition", "text-nutrition-strong"],
+    ] as const)(
+      "module=%s + variant=secondary → renders %s soft",
+      (module, expectedFg) => {
+        const { getByRole } = render(
+          <Button module={module} variant="secondary">
+            Cancel
+          </Button>,
+        );
+        expect(getByRole("button").className).toContain(expectedFg);
+      },
+    );
+
+    it("destructive variant is NOT redirected even when module is set", () => {
+      // Delete buttons stay red inside any module — destructive intent
+      // overrides module branding.
+      const { getByRole } = render(
+        <Button module="fizruk" variant="destructive">
+          Delete
+        </Button>,
+      );
+      const cls = getByRole("button").className;
+      expect(cls).toContain("bg-danger-strong");
+      expect(cls).not.toContain("bg-fizruk");
+    });
+
+    it("ghost / danger variants are pass-through (not redirected)", () => {
+      const { getByRole, rerender } = render(
+        <Button module="routine" variant="ghost">
+          Skip
+        </Button>,
+      );
+      expect(getByRole("button").className).toContain("bg-transparent");
+
+      rerender(
+        <Button module="routine" variant="danger">
+          Remove
+        </Button>,
+      );
+      expect(getByRole("button").className).toContain("bg-danger-soft");
+    });
+
+    it("explicit module variant ignores the `module` prop entirely", () => {
+      // If a caller already wrote `variant="finyk"`, the `module` prop is
+      // a no-op (no double-mapping or surprise inversion).
+      const { getByRole } = render(
+        <Button module="fizruk" variant="finyk">
+          X
+        </Button>,
+      );
+      expect(getByRole("button").className).toContain("bg-finyk-strong");
+      expect(getByRole("button").className).not.toContain("bg-fizruk-strong");
+    });
+  });
 });

@@ -28,6 +28,7 @@ import type {
   BudgetGoal,
   MonthlyPlan,
   ChatAction,
+  ChatActionResult,
 } from "./types";
 
 type FinykSearchTx = {
@@ -182,7 +183,9 @@ function formatTxList(items: FinykSearchTx[]): string {
     .join("; ");
 }
 
-export function handleFinykAction(action: ChatAction): string | undefined {
+export function handleFinykAction(
+  action: ChatAction,
+): ChatActionResult | undefined {
   switch (action.name) {
     case "change_category": {
       const { tx_id, category_id } = (action as ChangeCategoryAction).input;
@@ -386,7 +389,24 @@ export function handleFinykAction(action: ChatAction): string | undefined {
       lsSet("finyk_manual_expenses_v1", manualExpenses);
       const label = categoryLabel ? ` (${categoryLabel})` : "";
       const human = txType === "income" ? "Дохід" : "Витрату";
-      return `${human} ${amt} грн${description ? ` "${description.trim()}"` : ""}${label} записано (id:${manualId})`;
+      const result = `${human} ${amt} грн${description ? ` "${description.trim()}"` : ""}${label} записано (id:${manualId})`;
+      // Undo видаляє щойно додану транзакцію за `manualId`. Якщо юзер
+      // паралельно встиг видалити її іншим шляхом — ідемпотентно
+      // нічого не робимо (а не throw): двічі натиснений undo не має
+      // дати "не вдалось повернути".
+      return {
+        result,
+        undo: () => {
+          const current = ls<Array<{ id: string }>>(
+            "finyk_manual_expenses_v1",
+            [],
+          );
+          const next = current.filter((tx) => tx.id !== manualId);
+          if (next.length !== current.length) {
+            lsSet("finyk_manual_expenses_v1", next);
+          }
+        },
+      };
     }
     case "delete_transaction": {
       const { tx_id } = (action as DeleteTransactionAction).input;

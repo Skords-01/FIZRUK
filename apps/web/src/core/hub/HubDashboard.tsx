@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
+import { Icon } from "@shared/components/ui/Icon";
+import { cn } from "@shared/lib/cn";
 import {
   countRealEntries,
   getActiveModules,
@@ -35,6 +37,7 @@ import { useFirstEntryCelebration } from "../onboarding/useFirstEntryCelebration
 import { CelebrationModal } from "../onboarding/CelebrationModal";
 import { DailyNudge } from "../onboarding/DailyNudge";
 import { ReEngagementCard } from "../onboarding/ReEngagementCard";
+import { ModuleChecklist } from "../onboarding/ModuleChecklist";
 import {
   DndContext,
   PointerSensor,
@@ -99,6 +102,14 @@ export function HubDashboard({
     setSessionDays(recordSessionDay() || getSessionDays());
   }, []);
   const SOFT_AUTH_SESSION_DAYS_THRESHOLD = 3;
+  // Скільки сеансів-днів має минути після першого реального запису, перш
+  // ніж показати SoftAuth. `1` означає «не на тому ж дні»: користувач,
+  // що щойно завершив `FirstActionHeroCard` → `CelebrationModal`, не
+  // отримує одразу прохання створити акаунт. Картка чекає наступного
+  // повернення (sessionDays ≥ 2). Це зберігає «win-момент» цілим, а
+  // самій картці дає вищий signal-to-noise: якщо юзер повернувся —
+  // він уже залучений.
+  const SOFT_AUTH_AFTER_ENTRY_MIN_SESSION_DAYS = 2;
   const [softAuthDismissed, setSoftAuthDismissed] = useState(() =>
     isSoftAuthDismissed(),
   );
@@ -107,7 +118,8 @@ export function HubDashboard({
     !user &&
     !softAuthDismissed &&
     typeof onShowAuth === "function" &&
-    (hasRealEntry || sessionDays >= SOFT_AUTH_SESSION_DAYS_THRESHOLD);
+    ((hasRealEntry && sessionDays >= SOFT_AUTH_AFTER_ENTRY_MIN_SESSION_DAYS) ||
+      sessionDays >= SOFT_AUTH_SESSION_DAYS_THRESHOLD);
 
   const [reengagement, setReengagement] = useState(() =>
     shouldShowReengagement(localStorageStore),
@@ -142,6 +154,12 @@ export function HubDashboard({
     () => order.some((id) => !isActiveModule(activeModules, id)),
     [order, activeModules],
   );
+  // Bento "edit mode" — toggled by the explicit "Налаштувати" button next
+  // to the Modules heading. Drives the wiggle animation, the visible drag
+  // handle on each card, and gates dnd-kit listeners to the handle so the
+  // card body can keep navigating to the module on tap.
+  const [editMode, setEditMode] = useState(false);
+  const toggleEditMode = useCallback(() => setEditMode((p) => !p), []);
   const visibleOrder = useMemo(
     () =>
       hideInactive
@@ -239,6 +257,15 @@ export function HubDashboard({
   const isMondayOrTuesday = now.getDay() === 1 || now.getDay() === 2;
   const showDigestFooter = digestFresh || isMondayOrTuesday;
 
+  // Show checklist for first active module (only if user has no real entry yet)
+  const primaryModule = activeModules[0] as
+    | "finyk"
+    | "fizruk"
+    | "routine"
+    | "nutrition"
+    | undefined;
+  const showChecklist = primaryModule && !hasRealEntry && sessionDays <= 7;
+
   // ONE-HERO RULE
   let hero: React.ReactNode;
   if (firstActionVisible) {
@@ -266,9 +293,18 @@ export function HubDashboard({
   // Stagger index counter
   let si = 0;
 
+  // ONE-HERO + ONE-SECONDARY RULE:
+  // • Returning user (7+ days inactive) → ReEngagementCard acts as the
+  //   hero, suppressing the regular TodayFocus / FirstAction / SoftAuth
+  //   candidates so we never stack two "primary" cards.
+  // • DailyNudge is the optional secondary nudge; it already hides when
+  //   re-engagement is showing (see below), and now supports a 7-day
+  //   snooze via `snoozeNudge()` on top of permanent dismiss.
+  const reengagementIsHero = reengagement.show;
+
   return (
     <div className="space-y-4">
-      {reengagement.show && (
+      {reengagementIsHero && (
         <StaggerChild index={si++}>
           <ReEngagementCard
             daysInactive={reengagement.daysInactive}
@@ -283,40 +319,93 @@ export function HubDashboard({
         <StreakIndicator />
       </StaggerChild>
 
-      {/* Hero card */}
-      <StaggerChild index={si++}>{hero}</StaggerChild>
+      {/* Hero card — suppressed while re-engagement takes the hero slot */}
+      {!reengagementIsHero && <StaggerChild index={si++}>{hero}</StaggerChild>}
 
-      {/* "Твій день" summary strip */}
-      <StaggerChild index={si++}>
-        <TodaySummaryStrip onOpenModule={onOpenModule} />
-      </StaggerChild>
-
-      {/* Assistant advice — hide error state */}
-      <StaggerChild index={si++}>
-        <AssistantAdviceCard
-          insight={coachInsightText}
-          loading={coachLoading}
-          error={coachError}
-          onRefresh={coachRefresh}
-        />
-      </StaggerChild>
-
-      {activeNudge && !reengagement.show && (
+      {/* Module onboarding checklist */}
+      {showChecklist && primaryModule && (
         <StaggerChild index={si++}>
-          <DailyNudge
-            nudge={activeNudge}
-            sessionDays={sessionDays}
-            onDismiss={() => setNudgeDismissed(true)}
+          <ModuleChecklist
+            moduleId={primaryModule}
+            onAction={(action) => {
+              openHubModuleWithAction(
+                primaryModule as Parameters<typeof openHubModuleWithAction>[0],
+                action as Parameters<typeof openHubModuleWithAction>[1],
+              );
+            }}
           />
         </StaggerChild>
+      )}
+
+      {/* FTUX-гейт: до першого реального запису всі data-driven блоки
+       * приховуємо, бо вони порожні / сигнал «advice без даних».
+       * - TodaySummaryStrip — нулі по всіх модулях.
+       * - AssistantAdviceCard — coach працює на історії; нічого корисного.
+       * - DailyNudge — нудж за сценаріями, які ще не існують.
+       * Лишаємо: hero, checklist, module-bento (навігація), digest-fter.
+       * Після `hasRealEntry === true` блок з’являється цілісним пакетом. */}
+      {hasRealEntry && (
+        <>
+          {/* "Твій день" summary strip */}
+          <StaggerChild index={si++}>
+            <TodaySummaryStrip onOpenModule={onOpenModule} />
+          </StaggerChild>
+
+          {/* «Підказки» секція: AssistantAdvice + DailyNudge — обидві
+           * картки показували пораду на день, але рендерились як два
+           * незалежних блоки з різним візуальним chrome. Обʼєднання
+           * під одним SectionHeading знижує card-density (#1130). */}
+          <StaggerChild index={si++}>
+            <section className="space-y-2">
+              <SectionHeading as="h2" size="xs" className="!px-0">
+                Підказки
+              </SectionHeading>
+              <AssistantAdviceCard
+                insight={coachInsightText}
+                loading={coachLoading}
+                error={coachError}
+                onRefresh={coachRefresh}
+              />
+              {activeNudge && !reengagement.show && (
+                <DailyNudge
+                  nudge={activeNudge}
+                  sessionDays={sessionDays}
+                  onDismiss={() => setNudgeDismissed(true)}
+                />
+              )}
+            </section>
+          </StaggerChild>
+        </>
       )}
 
       {/* MODULE CARDS — 2×2 bento grid */}
       <StaggerChild index={si++}>
         <section className="space-y-2">
-          <SectionHeading as="h2" size="xs" className="px-0.5">
-            Модулі
-          </SectionHeading>
+          <div className="flex items-center justify-between gap-2 px-0.5">
+            <SectionHeading as="h2" size="xs" className="!px-0">
+              Модулі
+            </SectionHeading>
+            <button
+              type="button"
+              onClick={toggleEditMode}
+              aria-pressed={editMode}
+              className={cn(
+                "inline-flex items-center gap-1.5 text-2xs font-medium rounded-lg px-2 py-1 transition-colors",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                editMode
+                  ? "bg-primary text-bg"
+                  : "text-muted hover:text-text hover:bg-panelHi",
+              )}
+            >
+              <Icon
+                name="grip-vertical"
+                size={12}
+                strokeWidth={2}
+                aria-hidden
+              />
+              {editMode ? "Готово" : "Налаштувати"}
+            </button>
+          </div>
 
           <DndContext
             sensors={sensors}
@@ -335,6 +424,7 @@ export function HubDashboard({
                     onOpenModule={onOpenModule}
                     quickAdd={quickAddByModule[id] || null}
                     inactive={!isActiveModule(activeModules, id)}
+                    editMode={editMode}
                   />
                 ))}
               </div>
@@ -355,25 +445,34 @@ export function HubDashboard({
         </section>
       </StaggerChild>
 
-      {/* Secondary content */}
-      <StaggerChild index={si++}>
-        <div className="space-y-2">
-          <HubInsightsPanel
-            items={rest}
-            onOpenModule={openInsightTarget}
-            onDismiss={dismiss}
-          />
-
-          {digestExpanded ? (
-            <WeeklyDigestCard onCollapse={() => setDigestExpanded(false)} />
-          ) : showDigestFooter ? (
-            <WeeklyDigestFooter
-              fresh={digestFresh}
-              onExpand={() => setDigestExpanded(true)}
+      {/* «Аналітика» секція (FTUX-гейт): insights-panel + weekly-digest —
+       * обидва data-driven блоки на історії. До першого реального запису
+       * insights пусті, а digest промовляє «нічого не було за тиждень».
+       * Гейтимо за hasRealEntry. SectionHeading з #1130 знижує
+       * card-density, а гейт — FTUX-noise. */}
+      {hasRealEntry && (
+        <StaggerChild index={si++}>
+          <section className="space-y-2">
+            <SectionHeading as="h2" size="xs" className="!px-0">
+              Аналітика
+            </SectionHeading>
+            <HubInsightsPanel
+              items={rest}
+              onOpenModule={openInsightTarget}
+              onDismiss={dismiss}
             />
-          ) : null}
-        </div>
-      </StaggerChild>
+
+            {digestExpanded ? (
+              <WeeklyDigestCard onCollapse={() => setDigestExpanded(false)} />
+            ) : showDigestFooter ? (
+              <WeeklyDigestFooter
+                fresh={digestFresh}
+                onExpand={() => setDigestExpanded(true)}
+              />
+            ) : null}
+          </section>
+        </StaggerChild>
+      )}
 
       {/* Motivational footer */}
       <MotivationalFooter />

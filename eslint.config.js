@@ -73,6 +73,22 @@ export default [
       // surrounding `dark:` / `hover:` override falls through to the
       // light-mode background — this is what bug #814 was.
       "sergeant-design/valid-tailwind-opacity": "error",
+      // Design-system token guardrail — arbitrary hex in className
+      // (`bg-[#10b981]`, `text-[#fff]/50`) bypasses the token layer:
+      // dark-mode adaptation, WCAG-AA `-strong` promotion and future
+      // palette migration all stop working for those literals. Every
+      // color must come from the preset (`bg-surface`, `text-muted`,
+      // `bg-finyk-surface`, `text-brand-strong`, `bg-success-soft`, …)
+      // — if a genuinely new shade is needed, add it to
+      // `packages/design-tokens/tailwind-preset.js` first.
+      "sergeant-design/no-hex-in-classname": "error",
+      // Module-accent containment — inside `apps/<app>/src/modules/<X>/`
+      // subtrees only `<X>`'s accent utilities may appear. A fizruk
+      // component rendering a coral `ring-routine` reads to the user
+      // as "Рутина" — it's a design bug, not stylistic preference.
+      // Cross-module shells (`core/`, `shared/`, `stories/`) remain
+      // free to reference all four module accents.
+      "sergeant-design/no-foreign-module-accent": "error",
       // WCAG-AA `-strong` tier guardrail — every saturated brand `bg-*`
       // utility paired with `text-white` regresses to ~2.4–2.8 : 1
       // contrast (the bug class fixed in PRs #854 / #855). The fix is
@@ -82,6 +98,15 @@ export default [
       // call-sites — the codebase is now clean against this rule, and
       // any new violation must be intentional.
       "sergeant-design/no-low-contrast-text-on-fill": "error",
+      // `sergeant-design/no-raw-dark-palette` is intentionally NOT
+      // registered in this top-level rule block — the rule depends on
+      // the `--c-{family}-soft*` / `--c-{family}-strong*` CSS variable
+      // theme system that lives in `apps/web/src/index.css`. NativeWind
+      // (`apps/mobile`) does not consume those CSS variables, and the
+      // server / scripts have no Tailwind classNames. The rule is
+      // registered scoped to `apps/web/**/*.{ts,tsx}` further down so
+      // it only fires where the semantic-token replacement actually
+      // resolves to the intended colour.
       "no-empty": ["error", { allowEmptyCatch: true }],
       "no-unused-vars": [
         "error",
@@ -122,6 +147,42 @@ export default [
       ],
     },
   },
+  // Dark-mode anti-pattern guardrail — fires on a className that
+  // pairs a raw-palette light utility (`bg-amber-50`, `text-coral-100`,
+  // `border-teal-200/50`, …) with a `dark:` raw-palette override
+  // (`dark:bg-amber-500/15`, `dark:text-coral-900/30`,
+  // `dark:border-teal-800/30`). Both halves encode palette knowledge
+  // at the call-site, so the next palette migration silently drops
+  // one half (this is exactly bug #814). The fix is always the
+  // same: lift the light/dark pair into the design-system token
+  // layer (`bg-success-soft`, `bg-finyk-surface`,
+  // `border-routine-soft-border`, …). Shipped at "error" once the
+  // dark-mode audit's inventory closed (Wave 2c of
+  // docs/design/DARK-MODE-AUDIT.md) — every existing pair has
+  // been migrated, so any new violation is intentional and must
+  // be opted out with an `eslint-disable-next-line` + comment.
+  //
+  // Web-only: the semantic replacements (`bg-{family}-soft`, etc.)
+  // resolve through `--c-{family}-soft*` CSS variables defined in
+  // `apps/web/src/index.css`. NativeWind (apps/mobile) renders
+  // classNames into RN inline styles and does NOT consume those
+  // CSS variables, so applying the rule there would force authors
+  // toward tokens that resolve to `rgb(undefined)` on mobile.
+  {
+    files: ["apps/web/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "sergeant-design/no-raw-dark-palette": "error",
+      // `prefer-focus-visible` (Wave 2e of the dark-mode audit's
+      // accessibility companion track — see `docs/design/design-system.md`
+      // → "Focus — focus-visible:ring-…, а не focus:, аби pointer-клік
+      // не блимав кільцем"). The rule bans `focus:` colour/border/ring/
+      // shadow utilities; only `focus:outline-none` (the canonical reset
+      // that pairs with `focus-visible:ring-*`) is allowed. Web-only —
+      // React Native (NativeWind) doesn't expose a `:focus-visible`
+      // pseudo-class equivalent.
+      "sergeant-design/prefer-focus-visible": "error",
+    },
+  },
   // DS primitives that legitimately define the eyebrow treatment.
   // SectionHeading owns the uppercase+tracking+text size tokens, Label
   // owns the field-label eyebrow variant, and chartTheme defines the
@@ -150,12 +211,18 @@ export default [
   // (`bg-finyk/7`, `text-danger/18`, …) into the linter as fixtures — the
   // rule would otherwise self-flag every fixture. The same applies to
   // `no-low-contrast-text-on-fill`, whose test fixtures contain the
-  // very `bg-brand text-white` patterns the rule is meant to flag.
+  // very `bg-brand text-white` patterns the rule is meant to flag, and
+  // to `no-hex-in-classname` / `no-foreign-module-accent`, whose
+  // fixtures are `bg-[#10b981]` / `ring-routine` literals.
   {
     files: ["packages/eslint-plugin-sergeant-design/**/*.{js,mjs}"],
     rules: {
       "sergeant-design/valid-tailwind-opacity": "off",
       "sergeant-design/no-low-contrast-text-on-fill": "off",
+      "sergeant-design/no-hex-in-classname": "off",
+      "sergeant-design/no-foreign-module-accent": "off",
+      "sergeant-design/no-raw-dark-palette": "off",
+      "sergeant-design/prefer-focus-visible": "off",
     },
   },
   // Jest setup / test files need jest globals.

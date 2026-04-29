@@ -84,15 +84,10 @@ export const DASHBOARD_MODULE_RENDER: Record<
   },
 };
 
-/**
- * Modules rendered on the mobile dashboard in this phase. Nutrition
- * is deliberately hidden until Phase 7 (see
- * `docs/mobile/react-native-migration.md`). The persisted order still holds
- * all four ids so a web client opening the same account sees the
- * full list — see `reorderWithHidden` in `@sergeant/shared`.
- */
+/** Modules rendered on the mobile dashboard. */
 export const VISIBLE_DASHBOARD_MODULES: readonly DashboardModuleId[] = [
   "finyk",
   "fizruk",
   "routine",
+  "nutrition",
 ];

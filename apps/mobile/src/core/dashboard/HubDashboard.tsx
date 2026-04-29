@@ -16,10 +16,8 @@
  *      current digest is live.
  *
  * Scope notes:
- *   - Nutrition is hidden until Phase 7 (Food & Water). The persisted
- *     order still contains all four ids so a web session opening the
- *     same account keeps Nutrition in its slot — see
- *     `reorderWithHidden` in `@sergeant/shared`.
+ *   - Nutrition now renders in the Hub status stack alongside the other
+ *     native module tabs.
  *   - `onShowAuth` navigates to the `(auth)/sign-in` modal via
  *     `router.push`. The `(auth)` group is presented as a modal in
  *     `app/_layout.tsx`; after successful sign-in the modal closes
@@ -30,8 +28,9 @@
  */
 
 import { router, type Href } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -105,6 +104,122 @@ const mmkvStore: KVStore = {
     }
   },
 };
+
+/**
+ * AssistantFab — floating action button with pulse glow animation.
+ */
+function AssistantFab({ onPress }: { onPress: () => void }) {
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.4)).current;
+  const shadowOpacity = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    // Subtle pulse animation for the glow ring
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulseScale, {
+            toValue: 1.15,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseOpacity, {
+            toValue: 0,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(pulseScale, {
+            toValue: 1,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseOpacity, {
+            toValue: 0.4,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+    );
+
+    // Shadow breathing animation
+    const shadowAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shadowOpacity, {
+          toValue: 0.6,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shadowOpacity, {
+          toValue: 0.3,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    pulseAnimation.start();
+    shadowAnimation.start();
+
+    return () => {
+      pulseAnimation.stop();
+      shadowAnimation.stop();
+    };
+  }, [pulseScale, pulseOpacity, shadowOpacity]);
+
+  return (
+    <View
+      style={{
+        position: "absolute",
+        right: 20,
+        bottom: 24,
+        pointerEvents: "box-none",
+      }}
+    >
+      {/* Pulse glow ring */}
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: -4,
+          left: -4,
+          right: -4,
+          bottom: -4,
+          borderRadius: 32,
+          backgroundColor: colors.accent,
+          opacity: pulseOpacity,
+          transform: [{ scale: pulseScale }],
+        }}
+        pointerEvents="none"
+      />
+      {/* Shadow layer */}
+      <Animated.View
+        style={{
+          position: "absolute",
+          top: 2,
+          left: 2,
+          right: -2,
+          bottom: -2,
+          borderRadius: 28,
+          backgroundColor: colors.accent,
+          opacity: shadowOpacity,
+        }}
+        pointerEvents="none"
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Відкрити AI-асистента"
+        onPress={onPress}
+        className="h-14 flex-row items-center gap-2 rounded-full bg-brand-700 pl-4 pr-5 shadow-xl active:scale-95 active:opacity-90"
+        testID="dashboard-assistant-fab"
+      >
+        <Sparkles size={20} color="#fff" strokeWidth={2.2} />
+        <Text className="text-sm font-semibold text-white">Асистент</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 function formatToday(now: Date): string {
   try {
@@ -229,19 +344,17 @@ export function HubDashboard() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Refresh all module previews and coach insight
+    // `useModulePreviews` is fed by `useSyncExternalStore` over MMKV — it
+    // re-renders automatically whenever the underlying quick-stats keys
+    // change, so we only need to bump the hero tick to re-evaluate
+    // FTUX/coach state. There's no imperative `refresh()` to call.
     try {
-      await Promise.all([
-        // Re-trigger module preview fetches
-        previews.refresh?.(),
-        // Bump hero tick to re-evaluate FTUX states
-        bumpHero(),
-      ]);
+      bumpHero();
     } finally {
       setRefreshing(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  }, [previews, bumpHero]);
+  }, [bumpHero]);
 
   const handleShowAuth = useCallback(() => {
     router.push("/(auth)/sign-in" as Href);
@@ -289,7 +402,7 @@ export function HubDashboard() {
     !firstActionVisible && hasFirstRealEntry && !softAuthDismissed && !signedIn;
 
   return (
-    <SafeAreaView className="flex-1 bg-cream-50" edges={["top", "bottom"]}>
+    <SafeAreaView className="flex-1 bg-bg dark:bg-bg" edges={["top", "bottom"]}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 100, gap: 16 }}
@@ -373,15 +486,15 @@ export function HubDashboard() {
               className="mt-1 self-center px-2 py-1 active:opacity-70"
               testID="dashboard-toggle-hide-inactive"
             >
-              <Text className="text-[11px] text-fg-muted underline">
+              <Text className="text-xs text-fg-muted underline">
                 {hideInactive
                   ? "Показати неактивні модулі"
                   : "Приховати неактивні модулі"}
               </Text>
             </Pressable>
           ) : null}
-          <Text className="mt-1 text-[11px] leading-snug text-fg-subtle">
-            Утримай і потягни, щоб змін��ти порядок модулів. Порядок
+          <Text className="mt-1 text-xs leading-relaxed text-fg-subtle">
+            Утримай і потягни, щоб змінити порядок модулів. Порядок
             синхронізується з вебом.
           </Text>
         </View>
@@ -395,27 +508,9 @@ export function HubDashboard() {
         <WeeklyDigestFooter />
       </ScrollView>
 
-      {/* Assistant FAB — thumb-reach entry to AI chat.
+      {/* Assistant FAB — thumb-reach entry to AI chat with pulse glow.
           Always visible so user can reach assistant from anywhere. */}
-      <View
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: 24,
-          pointerEvents: "box-none",
-        }}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Відкрити AI-асистента"
-          onPress={openAssistant}
-          className="h-14 flex-row items-center gap-2 rounded-full bg-brand-700 pl-4 pr-5 shadow-lg active:scale-95 active:opacity-90"
-          testID="dashboard-assistant-fab"
-        >
-          <Sparkles size={20} color="#fff" strokeWidth={2.2} />
-          <Text className="text-sm font-semibold text-white">Асистент</Text>
-        </Pressable>
-      </View>
+      <AssistantFab onPress={openAssistant} />
     </SafeAreaView>
   );
 }

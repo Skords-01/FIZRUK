@@ -14,6 +14,17 @@
  *     what Web Interface Guidelines recommend for truncation cues
  *     ("Loading…", "Пошук…", etc.). Auto-fixable.
  *
+ *   - no-hex-in-classname: forbid arbitrary-value hex colors in
+ *     className (`bg-[#10b981]`, `text-[#fff]/50`, …). Every color must
+ *     come from the design-system token layer so dark-mode, palette
+ *     migration, and WCAG tiers apply uniformly.
+ *
+ *   - no-foreign-module-accent: inside `apps/[app]/src/modules/[X]/`
+ *     subtrees, only `[X]`'s accent utilities (`bg-[X]-surface`,
+ *     `text-[X]-strong`, `ring-[X]`, …) are allowed. Cross-module
+ *     shells (`core/`, `shared/`, `stories/`) remain free to reference
+ *     all four module accents.
+ *
  * Motion / reduced-motion (convention — not auto-enforced yet):
  *   - Prefer `motion-safe:` on `animate-*` and decorative transitions so
  *     `prefers-reduced-motion: reduce` users get calmer UI; pair with
@@ -1415,6 +1426,598 @@ const noStrictBypass = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// `no-hex-in-classname` — forbid arbitrary hex colors in Tailwind className
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Tailwind's arbitrary-value syntax (`bg-[#10b981]`, `text-[#fff]/50`,
+// `border-[#123]`) bypasses the design-system tokens entirely. A raw hex
+// in a className means: (a) dark-mode won't adapt, (b) the value doesn't
+// re-theme when the palette evolves, (c) it can't be grep'd from a single
+// place when we need to migrate. The Sergeant rule is simple: every color
+// in a className comes from the token scale (`bg-surface`, `text-muted`,
+// `border-border`, `bg-finyk-surface`, `text-brand-strong`, `bg-success-soft`,
+// …). If a colour is truly one-off (chart series, illustration fill), put
+// it in the token layer (CSS var + preset alias) — not inline.
+//
+// The rule only flags hex inside the arbitrary-value brackets of
+// Tailwind's color-aware utilities (`bg-`, `text-`, `border-`, `ring-`,
+// `fill-`, `stroke-`, `from-`, `to-`, `via-`, `shadow-`, `outline-`,
+// `divide-`, `placeholder-`, `caret-`, `decoration-`, `accent-`). Plain
+// hex literals outside className context (e.g. chart config passing a
+// hex to recharts) are NOT this rule's concern — those are a code review
+// issue for `shared/charts/chartPalette.ts`.
+
+const HEX_IN_CLASSNAME_MESSAGE =
+  "Raw hex `{{utility}}-[#{{hex}}]` bypasses the design-system tokens — use a semantic utility (e.g. `bg-surface`, `text-fg`, `bg-finyk-surface`, `text-brand-strong`, `bg-success-soft`) or extend the palette in `packages/design-tokens/tailwind-preset.js` if a new token is genuinely needed.";
+
+// Match `[variants:]<utility>-[#HEX]` with optional `/OPACITY` suffix.
+//   • utility ∈ TAILWIND_OPACITY_UTILITIES (the color-aware set reused from
+//     valid-tailwind-opacity so we keep one list).
+//   • `<HEX>` is 3, 4, 6, or 8 hex digits.
+//   • `\b` anchor lets variant prefixes (`dark:`, `hover:`, `lg:`) sit in
+//     front of the utility without tripping the regex.
+const RX_HEX_IN_CLASSNAME = new RegExp(
+  String.raw`\b(` +
+    TAILWIND_OPACITY_UTILITIES.join("|") +
+    String.raw`)-\[#([0-9a-fA-F]{3,8})\]`,
+  "g",
+);
+
+function findHexInClassName(value) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  if (!value.includes("[#")) return [];
+  const hits = [];
+  let match;
+  RX_HEX_IN_CLASSNAME.lastIndex = 0;
+  while ((match = RX_HEX_IN_CLASSNAME.exec(value)) !== null) {
+    const [, utility, hex] = match;
+    // Validate hex length so `bg-[#12]` or `bg-[#1234567]` don't trigger.
+    if (![3, 4, 6, 8].includes(hex.length)) continue;
+    hits.push({ utility, hex });
+  }
+  return hits;
+}
+
+const noHexInClassname = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid arbitrary `<utility>-[#hex]` colors in className — every color must come from the design-system token layer.",
+    },
+    schema: [],
+    messages: { hex: HEX_IN_CLASSNAME_MESSAGE },
+  },
+  create(context) {
+    function report(node, value) {
+      const hits = findHexInClassName(value);
+      for (const hit of hits) {
+        context.report({
+          node,
+          messageId: "hex",
+          data: { utility: hit.utility, hex: hit.hex },
+        });
+      }
+    }
+    return {
+      Literal(node) {
+        if (typeof node.value === "string") report(node, node.value);
+      },
+      TemplateElement(node) {
+        const cooked = node.value && node.value.cooked;
+        if (typeof cooked === "string") report(node, cooked);
+      },
+    };
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// `no-foreign-module-accent` — keep module colors within their module
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Sergeant has 4 module brand colors: `finyk` (emerald), `fizruk` (teal),
+// `routine` (coral), `nutrition` (lime). They're tuned close in saturation,
+// so accidental cross-module use reads as a design bug — a fizruk button
+// rendering coral `ring-routine` says "Рутина" to the user. The rule:
+//
+//   Files under `apps/web/src/modules/<X>/**` may only use `<X>`'s accent
+//   utilities. Cross-module shells (`core/**`, `shared/**`, `stories/**`)
+//   are free to use all four, because that's their job.
+//
+// Accent utilities matched: `(bg|text|border|ring|from|to|via|fill|stroke|
+// shadow|outline|divide|placeholder|caret|decoration|accent)-<module>`
+// with optional `-<shade>` suffix (e.g. `-strong`, `-soft`, `-500`,
+// `-surface`) and optional `/<opacity>` suffix. Variant prefixes
+// (`dark:`, `hover:`, `lg:`) are allowed in front.
+
+const MODULE_ACCENTS = ["finyk", "fizruk", "routine", "nutrition"];
+
+const FOREIGN_MODULE_ACCENT_MESSAGE =
+  "`{{match}}` is a `{{foreign}}` accent inside a `{{home}}` module — modules must only use their own accent. Use `{{home}}` equivalents or move this to a cross-module surface (`core/**`, `shared/**`).";
+
+// Match `[variants:]<utility>-<module>[-<shade>][/<opacity>]`.
+const RX_MODULE_ACCENT = new RegExp(
+  String.raw`\b(` +
+    TAILWIND_OPACITY_UTILITIES.join("|") +
+    String.raw`)-(` +
+    MODULE_ACCENTS.join("|") +
+    String.raw`)(-[a-z0-9]+(?:-[a-z0-9]+)?)?(\/\d{1,3})?\b`,
+  "g",
+);
+
+// Derive the "home" module from an absolute or repo-relative file path.
+// Accepts web and mobile source trees; returns null for non-module paths
+// and for `modules/shared/` (a cross-module utility folder that hosts
+// primitives rendering any of the four accents — e.g.
+// `apps/mobile/src/modules/shared/ModuleErrorBoundary.tsx`).
+function homeModuleFromFilename(filename) {
+  if (typeof filename !== "string") return null;
+  // Normalize path separators for Windows; tests feed a unix-style mock.
+  const norm = filename.replace(/\\/g, "/");
+  const m = norm.match(
+    /\/(?:apps\/(?:web|mobile)\/src|apps\/mobile\/app)\/modules\/([a-z]+)\//,
+  );
+  if (!m) return null;
+  const home = m[1];
+  // Only the four canonical modules own their accent palette — any
+  // other folder under `modules/` is a cross-module utility and must
+  // stay free to render every accent.
+  return MODULE_ACCENTS.includes(home) ? home : null;
+}
+
+function findForeignModuleAccents(value, home) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  if (!home) return [];
+  // Cheap prefilter so we don't regex every unrelated literal.
+  let maybe = false;
+  for (const m of MODULE_ACCENTS) {
+    if (m !== home && value.includes(`-${m}`)) {
+      maybe = true;
+      break;
+    }
+  }
+  if (!maybe) return [];
+  const hits = [];
+  let match;
+  RX_MODULE_ACCENT.lastIndex = 0;
+  while ((match = RX_MODULE_ACCENT.exec(value)) !== null) {
+    const [full, , mod] = match;
+    if (mod !== home) hits.push({ match: full, foreign: mod });
+  }
+  return hits;
+}
+
+const noForeignModuleAccent = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid cross-module accent utilities inside `apps/*/src/modules/<X>/**` — a fizruk component must not render `ring-routine` etc.",
+    },
+    schema: [],
+    messages: { foreign: FOREIGN_MODULE_ACCENT_MESSAGE },
+  },
+  create(context) {
+    const filename =
+      (context.filename != null ? context.filename : context.getFilename()) ||
+      "";
+    const home = homeModuleFromFilename(filename);
+    if (!home) return {};
+    // Cross-module accent rule doesn't apply to the module-accent system
+    // itself (the map literals that declare every accent) or to module-
+    // scoped tests (they naturally reference all four for coverage).
+    if (/\.(test|spec)\.[jt]sx?$/.test(filename)) return {};
+
+    function report(node, value) {
+      const hits = findForeignModuleAccents(value, home);
+      for (const hit of hits) {
+        context.report({
+          node,
+          messageId: "foreign",
+          data: { match: hit.match, foreign: hit.foreign, home },
+        });
+      }
+    }
+    return {
+      Literal(node) {
+        if (typeof node.value === "string") report(node, node.value);
+      },
+      TemplateElement(node) {
+        const cooked = node.value && node.value.cooked;
+        if (typeof cooked === "string") report(node, cooked);
+      },
+    };
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// `no-raw-dark-palette` — forbid the raw-palette light/dark anti-pattern
+// ─────────────────────────────────────────────────────────────────────────
+//
+// The dark-mode audit (`docs/design/DARK-MODE-AUDIT.md`) catalogues a
+// recurring shape: a className that encodes both themes by hand by
+// pairing a raw Tailwind palette utility on the light side with a
+// `dark:` raw-palette override —
+//
+//   bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300
+//   bg-coral-100 dark:bg-coral-900/30
+//   border-teal-200/50 ... dark:border-teal-800/30
+//
+// Both halves of the pair encode palette knowledge at the call-site, so
+// the next palette migration (or the next `theme.opacity` step renaming
+// — bug #814) silently drops one half and the surrounding override
+// falls through to the wrong colour. The fix is always the same: lift
+// the (light, dark) pair into the design-system token layer
+// (`bg-success-soft`, `bg-finyk-surface`, `border-routine-soft-border`,
+// …) so the preset owns the swap and the call-site has zero `dark:`
+// overrides.
+//
+// The rule fires on a className **only** when *both* halves of the
+// pair are present:
+//
+//   • a bare `<utility>-<PALETTE>-<SHADE>` (or `…/<opacity>`), AND
+//   • a `dark:<utility>-<PALETTE>-<SHADE>` (or `…/<opacity>`),
+//
+// where `<utility>` ∈ { bg, text, border } and `<PALETTE>` is one of
+// the 24 raw Tailwind palette names (24 = 22 default Tailwind families
+// + Sergeant's `brand` and `coral` aliases — both are theme-inert raw
+// palettes despite the brand-y names; the per-theme aware utilities
+// are `bg-brand-soft`, `bg-routine-surface`, etc.). `<SHADE>` is a
+// numeric step (`50`, `100`, …, `950`), so semantic suffixes
+// (`brand-soft`, `brand-strong`, `coral-soft-border`) do NOT match.
+//
+// Patterns that intentionally STAY (do NOT fire):
+//
+//   • `dark:bg-white/10`, `dark:border-white/15`, `dark:bg-black/40` —
+//     bare colour washes (no palette name), per
+//     `docs/design/design-system.md` § 2.1.
+//   • `dark:bg-surface`, `dark:text-fg`, `dark:border-border` —
+//     semantic tokens that simply happen to carry a `dark:` prefix
+//     because a stacked surface needs an explicit override.
+//   • Dark-side-only "patches" where the *light* half is already a
+//     semantic token (e.g. `Banner.tsx` line 22:
+//     `bg-success-soft text-success-strong dark:text-emerald-100` —
+//     light is the semantic `text-success-strong`, dark patches a
+//     lighter shade because the `-strong` companion does not adapt
+//     well on dark panels). These are documented gaps in the
+//     `-strong` companion scale, not raw-palette pairs.
+//
+// Promotion path: this rule ships at `error` level once the audit's
+// inventory hits zero (Wave 2c of `docs/design/DARK-MODE-AUDIT.md`).
+// Any future violation must be intentional — either extend the token
+// layer in `packages/design-tokens/tailwind-preset.js` or, in the rare
+// case where an inline raw-palette override is justified (e.g. a
+// chart-series fallback), add an `// eslint-disable-next-line
+// sergeant-design/no-raw-dark-palette` with a comment explaining why
+// the token layer cannot own the pair.
+
+const RAW_DARK_PALETTE_FAMILIES = [
+  "gray",
+  "slate",
+  "zinc",
+  "neutral",
+  "stone",
+  "red",
+  "orange",
+  "amber",
+  "yellow",
+  "lime",
+  "green",
+  "emerald",
+  "teal",
+  "cyan",
+  "sky",
+  "blue",
+  "indigo",
+  "violet",
+  "purple",
+  "fuchsia",
+  "pink",
+  "rose",
+  // Sergeant aliases that map to raw Tailwind palettes (not theme-aware).
+  "brand",
+  "coral",
+];
+
+const RAW_DARK_PALETTE_UTILITIES = ["bg", "text", "border"];
+
+const RAW_DARK_PALETTE_MESSAGE =
+  "Raw-palette light/dark pair (`{{light}}` + `{{dark}}`) — the call-site encodes both themes by hand. Use a single semantic utility (e.g. `bg-{family}-soft`, `bg-{module}-surface`, `border-{module}-soft-border`, `text-{status}-strong`) so the preset owns the light/dark swap. See `docs/design/DARK-MODE-AUDIT.md` for the migration recipe.";
+
+// Match `<utility>-<palette>-<step>[/<opacity>]` where step is numeric
+// (so `brand-soft`, `brand-strong`, `coral-soft-border` do NOT match).
+const RX_LIGHT_RAW_PALETTE = new RegExp(
+  String.raw`(?<![\w:-])(` +
+    RAW_DARK_PALETTE_UTILITIES.join("|") +
+    String.raw`)-(` +
+    RAW_DARK_PALETTE_FAMILIES.join("|") +
+    String.raw`)-(\d{2,3})(\/\d{1,3})?\b`,
+  "g",
+);
+
+// Match `dark:<utility>-<palette>-<step>[/<opacity>]`. The negative
+// lookbehind `(?<![\w:-])` excludes any token where `dark:` itself is
+// preceded by another variant (`lg:dark:bg-amber-500/15`,
+// `hover:dark:text-coral-300`, …) — those tokens carry an extra
+// breakpoint / state condition that the rule's pair-only contract does
+// not model, and treating them as bare `dark:` matches produced
+// false-positive pair reports against unrelated bare light utilities
+// elsewhere in the same className. The light-side regex already uses
+// the same lookbehind, so the pair logic stays symmetric: only
+// genuinely bare `<utility>-<palette>-<step>` and bare
+// `dark:<utility>-<palette>-<step>` tokens contribute to a match.
+const RX_DARK_RAW_PALETTE = new RegExp(
+  String.raw`(?<![\w:-])dark:(` +
+    RAW_DARK_PALETTE_UTILITIES.join("|") +
+    String.raw`)-(` +
+    RAW_DARK_PALETTE_FAMILIES.join("|") +
+    String.raw`)-(\d{2,3})(\/\d{1,3})?\b`,
+  "g",
+);
+
+function findRawDarkPalettePairs(value) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  // Cheap prefilter: must contain both `dark:` and a palette family
+  // name. Without this every literal in the codebase pays a regex tax.
+  if (!value.includes("dark:")) return [];
+  let hasFamily = false;
+  for (const f of RAW_DARK_PALETTE_FAMILIES) {
+    if (value.includes(`-${f}-`)) {
+      hasFamily = true;
+      break;
+    }
+  }
+  if (!hasFamily) return [];
+
+  const lightHits = [];
+  let m;
+  RX_LIGHT_RAW_PALETTE.lastIndex = 0;
+  while ((m = RX_LIGHT_RAW_PALETTE.exec(value)) !== null) {
+    // Skip `dark:`-prefixed matches — the lookbehind catches `:`,
+    // but a regex engine without lookbehind support would still need
+    // this guard. Confirm the char before the match isn't `:`.
+    const start = m.index;
+    if (start > 0 && value[start - 1] === ":") continue;
+    lightHits.push(m[0]);
+  }
+  if (lightHits.length === 0) return [];
+
+  const darkHits = [];
+  RX_DARK_RAW_PALETTE.lastIndex = 0;
+  while ((m = RX_DARK_RAW_PALETTE.exec(value)) !== null) {
+    darkHits.push(m[0]);
+  }
+  if (darkHits.length === 0) return [];
+
+  // One report per className value — pair the first light hit with
+  // the first dark hit so the message stays focused. Reporting every
+  // (light, dark) pair would spam call-sites that already migrate as
+  // a single edit.
+  return [{ light: lightHits[0], dark: darkHits[0] }];
+}
+
+const noRawDarkPalette = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid raw-palette light/dark pairs in className — both halves of the (light, dark) swap must come from the design-system token layer.",
+    },
+    schema: [],
+    messages: { pair: RAW_DARK_PALETTE_MESSAGE },
+  },
+  create(context) {
+    function report(node, value) {
+      const hits = findRawDarkPalettePairs(value);
+      for (const hit of hits) {
+        context.report({
+          node,
+          messageId: "pair",
+          data: { light: hit.light, dark: hit.dark },
+        });
+      }
+    }
+    return {
+      Literal(node) {
+        if (typeof node.value === "string") report(node, node.value);
+      },
+      TemplateElement(node) {
+        const cooked = node.value && node.value.cooked;
+        if (typeof cooked === "string") report(node, cooked);
+      },
+    };
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// `prefer-focus-visible` — ban `focus:` color utilities, require
+//                          `focus-visible:` for visible focus rings
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Sergeant's design-system contract (see `docs/design/design-system.md`):
+//
+//   | Стан             | Поведінка                                                    |
+//   | :focus-visible   | ring-2 ring-brand-500/45 ring-offset-2 ring-offset-surface   |
+//
+//   "Focus — focus-visible:ring-brand-500/30, а не focus:, аби pointer-клік
+//    не блимав кільцем."
+//
+// `focus:` fires for any focus state, including pointer click — which
+// produces a flashing ring on every mouse interaction. `focus-visible:`
+// only fires when the user is navigating with the keyboard (or assistive
+// tech) and is the correct primitive for a visible focus indicator.
+//
+// The single legitimate `focus:` utility is `focus:outline-none`: it
+// resets the user-agent outline so the design-system ring (rendered via
+// `focus-visible:ring-*`) takes over. The rule therefore allows
+// `focus:outline-none` and bans every `focus:` color/border/ring/shadow
+// utility — those must be `focus-visible:` instead.
+//
+// Scope: `apps/web/**/*.{ts,tsx,js,jsx}`. Mobile (NativeWind) doesn't
+// have a `:focus-visible` pseudo-class equivalent; React Native uses
+// `onFocus` handlers and the ring concept is web-only. Registering the
+// rule on mobile would force authors to use a primitive that doesn't
+// exist in their target runtime.
+
+const FOCUS_COLOR_UTILITIES = [
+  "bg",
+  "text",
+  "border",
+  "ring",
+  "ring-offset",
+  "shadow",
+  "fill",
+  "stroke",
+  "divide",
+  "placeholder",
+  "caret",
+  "decoration",
+  "accent",
+  "outline-offset",
+];
+
+const PREFER_FOCUS_VISIBLE_MESSAGE =
+  "`{{match}}` uses the `focus:` variant — pointer clicks blink the colour. Replace with `focus-visible:{{tail}}` so only keyboard/assistive-tech focus shows the indicator. The single legitimate `focus:` utility is `focus:outline-none` (resets the user-agent outline so the design-system ring takes over).";
+
+// Match a bare `focus:<utility>-...` token. We intentionally exclude
+// `focus:outline-none` (the canonical reset that pairs with
+// `focus-visible:ring-*`) and any token where `focus:` itself is
+// preceded by another variant — `lg:focus:bg-…`, `hover:focus:…`,
+// `dark:focus:…`, `group-focus:…`, `peer-focus:…`. The lookbehind
+// `(?<![\w:-])` keeps the contract tight.
+//
+// `<utility>-<rest>` covers the colour/visual utilities listed in
+// `FOCUS_COLOR_UTILITIES`. `<rest>` is `[\w/.\-[\]#%]+` so we capture
+// arbitrary values (`bg-[#fff]`), opacity suffixes (`/45`), and dotted
+// shades (`text-brand-strong`). `outline-` itself isn't in the list
+// because the only legit `focus:outline-*` is `focus:outline-none`,
+// which is excluded by the explicit guard below; everything else
+// (`focus:outline-2`, `focus:outline-brand-500`, …) falls through to
+// the regex via `outline-offset` (intentionally) plus a separate
+// `outline-` arm below.
+const RX_PREFER_FOCUS_VISIBLE = new RegExp(
+  String.raw`(?<![\w:-])focus:(` +
+    FOCUS_COLOR_UTILITIES.join("|") +
+    String.raw`)-([\w/.\-#%[\]]+)`,
+  "g",
+);
+
+// Separate arm for `focus:outline-*` so we can exempt
+// `focus:outline-none` (and the inert `focus:outline-hidden`,
+// `focus:outline-transparent`) without uglifying the colour-utility
+// regex above.
+const RX_PREFER_FOCUS_VISIBLE_OUTLINE = new RegExp(
+  String.raw`(?<![\w:-])focus:outline-([\w/.\-#%[\]]+)`,
+  "g",
+);
+
+const FOCUS_OUTLINE_ALLOWED_TAILS = new Set(["none", "hidden", "transparent"]);
+
+// `text-` is overloaded in Tailwind: `text-{color}` is a colour
+// (`text-brand-strong`, `text-danger`), but `text-{size|alignment|
+// transform|opacity}` are unrelated dimensions (`text-sm`, `text-base`,
+// `text-center`, `text-left`, `text-uppercase`, …). The rule's intent
+// is to ban *colour* blinks on pointer focus, so we explicitly exempt
+// the non-colour `text-` tails that Sergeant uses (size scale + the
+// `text-mini` / `text-dialog` tokens added in Wave 2d, plus alignment
+// + transform). A `focus:text-sm` on a skip-link that grows on focus
+// is intentional UX, not a regression.
+const FOCUS_TEXT_NON_COLOR_TAILS = new Set([
+  // Tailwind default size scale
+  "xs",
+  "sm",
+  "base",
+  "lg",
+  "xl",
+  "2xl",
+  "3xl",
+  "4xl",
+  "5xl",
+  "6xl",
+  "7xl",
+  "8xl",
+  "9xl",
+  // Sergeant custom size tokens (Wave 2d)
+  "mini",
+  "dialog",
+  // Alignment / wrap / overflow / transform
+  "left",
+  "right",
+  "center",
+  "justify",
+  "start",
+  "end",
+  "wrap",
+  "nowrap",
+  "balance",
+  "pretty",
+  "ellipsis",
+  "clip",
+  "uppercase",
+  "lowercase",
+  "capitalize",
+  "normal-case",
+]);
+
+function findPreferFocusVisibleHits(value) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  if (!value.includes("focus:")) return [];
+  const hits = [];
+  let m;
+  RX_PREFER_FOCUS_VISIBLE.lastIndex = 0;
+  while ((m = RX_PREFER_FOCUS_VISIBLE.exec(value)) !== null) {
+    const [full, util, rest] = m;
+    if (util === "text" && FOCUS_TEXT_NON_COLOR_TAILS.has(rest)) continue;
+    hits.push({ match: full, tail: `${util}-${rest}` });
+  }
+  RX_PREFER_FOCUS_VISIBLE_OUTLINE.lastIndex = 0;
+  while ((m = RX_PREFER_FOCUS_VISIBLE_OUTLINE.exec(value)) !== null) {
+    const [full, tail] = m;
+    if (FOCUS_OUTLINE_ALLOWED_TAILS.has(tail)) continue;
+    // The colour-utility arm above already covers `focus:outline-offset-N`
+    // (because `outline-offset` is in `FOCUS_COLOR_UTILITIES`); the outline
+    // arm's broader regex also matches the same token. Dedup by `match`
+    // so each token produces a single report.
+    if (hits.some((h) => h.match === full)) continue;
+    hits.push({ match: full, tail: `outline-${tail}` });
+  }
+  return hits;
+}
+
+const preferFocusVisible = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid `focus:` color/ring/shadow utilities — visible focus indicators must use `focus-visible:` so pointer clicks don't blink the ring.",
+    },
+    schema: [],
+    messages: { focus: PREFER_FOCUS_VISIBLE_MESSAGE },
+  },
+  create(context) {
+    function report(node, value) {
+      const hits = findPreferFocusVisibleHits(value);
+      for (const hit of hits) {
+        context.report({
+          node,
+          messageId: "focus",
+          data: { match: hit.match, tail: hit.tail },
+        });
+      }
+    }
+    return {
+      Literal(node) {
+        if (typeof node.value === "string") report(node, node.value);
+      },
+      TemplateElement(node) {
+        const cooked = node.value && node.value.cooked;
+        if (typeof cooked === "string") report(node, cooked);
+      },
+    };
+  },
+};
+
 const plugin = {
   rules: {
     "no-eyebrow-drift": noEyebrowDrift,
@@ -1423,11 +2026,15 @@ const plugin = {
     "no-raw-local-storage": noRawLocalStorage,
     "ai-marker-syntax": aiMarkerSyntax,
     "valid-tailwind-opacity": validTailwindOpacity,
+    "no-hex-in-classname": noHexInClassname,
+    "no-foreign-module-accent": noForeignModuleAccent,
     "no-low-contrast-text-on-fill": noLowContrastTextOnFill,
     "no-bigint-string": noBigintString,
     "rq-keys-only-from-factory": rqKeysOnlyFromFactory,
     "no-anthropic-key-in-logs": noAnthropicKeyInLogs,
     "no-strict-bypass": noStrictBypass,
+    "no-raw-dark-palette": noRawDarkPalette,
+    "prefer-focus-visible": preferFocusVisible,
   },
 };
 
@@ -1445,6 +2052,12 @@ export {
   NO_ANTHROPIC_KEY_MESSAGE,
   NO_STRICT_BYPASS_MESSAGES,
   DEFAULT_FORBID_PATTERNS,
+  RAW_DARK_PALETTE_FAMILIES,
+  RAW_DARK_PALETTE_UTILITIES,
+  RAW_DARK_PALETTE_MESSAGE,
+  FOCUS_COLOR_UTILITIES,
+  FOCUS_OUTLINE_ALLOWED_TAILS,
+  PREFER_FOCUS_VISIBLE_MESSAGE,
 };
 
 export default plugin;

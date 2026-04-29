@@ -12,6 +12,7 @@ import { SectionHeading } from "@shared/components/ui/SectionHeading";
 import { Skeleton } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { cn } from "@shared/lib/cn";
+import { signedDeltaClass } from "@shared/lib";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { CategoryPieChart } from "../components/charts/lazy";
 import { ChartFallback } from "../components/charts/ChartFallback";
@@ -175,7 +176,7 @@ const ComparisonRow = memo(function ComparisonRow({
               good === null
                 ? "text-muted"
                 : good
-                  ? "text-emerald-600 dark:text-emerald-400"
+                  ? "text-success-strong dark:text-success"
                   : "text-danger",
             )}
           >
@@ -342,7 +343,7 @@ export function Analytics({ mono, storage }: AnalyticsProps) {
               </div>
               <div className="text-center">
                 <div className="text-2xs text-subtle mb-1">Дохід</div>
-                <div className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                <div className="text-sm font-bold tabular-nums text-success-strong dark:text-success">
                   {summary.income.toLocaleString("uk-UA")} ₴
                 </div>
               </div>
@@ -351,9 +352,7 @@ export function Analytics({ mono, storage }: AnalyticsProps) {
                 <div
                   className={cn(
                     "text-sm font-bold tabular-nums",
-                    summary.balance >= 0
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-danger",
+                    signedDeltaClass(summary.balance),
                   )}
                 >
                   {summary.balance >= 0 ? "+" : ""}

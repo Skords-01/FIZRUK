@@ -1,6 +1,23 @@
 import { Icon } from "@shared/components/ui/Icon";
-import { FeatureSpotlight } from "@shared/components/ui/FeatureSpotlight";
 import { cn } from "@shared/lib/cn";
+
+interface HubFloatingActionsProps {
+  /**
+   * When true the FAB is not rendered at all. Used during the FTUX session
+   * so the only interactive surface in view is `FirstActionHeroCard` →
+   * `PresetSheet` (the one-tap "real entry" path). A chat FAB would otherwise
+   * pull users into a conversational flow before they've logged anything.
+   */
+  hidden?: boolean;
+  /** Opens the hub AI chat panel (resolves to `ui.openChat()`). */
+  onOpenChat: () => void;
+  /**
+   * When true, renders a small circular icon-only FAB instead of the full pill.
+   * Used in module views to minimize screen real estate usage while still
+   * providing quick access to the assistant.
+   */
+  compact?: boolean;
+}
 
 /**
  * Thumb-reach entry point to the AI assistant. A single FAB that opens
@@ -11,25 +28,12 @@ import { cn } from "@shared/lib/cn";
  *
  * This is the only chat entry point in the hub chrome; the header no
  * longer duplicates the action next to search/dark-mode.
- *
- * @param {object} props
- * @param {boolean} [props.hidden=false] - When true the FAB is not
- *   rendered at all. Used during the FTUX session so the only
- *   interactive surface in view is `FirstActionHeroCard` → `PresetSheet`
- *   (the one-tap "real entry" path). A chat FAB would otherwise pull
- *   users into a conversational flow before they've logged anything.
- * @param {() => void} props.onOpenChat - Opens the hub AI chat panel
- *   (resolves to `ui.openChat()`).
- * @param {boolean} [props.compact=false] - When true, renders a small
- *   circular icon-only FAB instead of the full pill. Used in module
- *   views to minimize screen real estate usage while still providing
- *   quick access to the assistant.
  */
 export function HubFloatingActions({
   hidden = false,
   onOpenChat,
   compact = false,
-}) {
+}: HubFloatingActionsProps) {
   if (hidden || !onOpenChat) return null;
 
   // Compact mode positions FAB above bottom nav; full mode uses safe-area only
@@ -50,7 +54,11 @@ export function HubFloatingActions({
         // `text-white` at 14px regular weight (≥4.5:1).
         "bg-brand-700 text-white shadow-float",
         "hover:bg-brand-800 hover:shadow-glow active:scale-95 transition-[background-color,box-shadow,opacity,transform]",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        // Focus-ring: суцільний brand-500 (без /45 альфи) — гарантовано ≥3:1
+        // контраст проти bg в dark-mode (alpha-варіант просідала на panelHi).
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        // FAB compact-варіант — 48×48 пкс (Material 3 / iOS HIG thumb-baseline);
+        // повний варіант — pill 56 пкс заввишки.
         compact ? "h-12 w-12" : "h-14 pl-4 pr-5 gap-2",
       )}
     >
@@ -71,20 +79,7 @@ export function HubFloatingActions({
       )}
       style={{ bottom: bottomOffset }}
     >
-      {compact ? (
-        fabButton
-      ) : (
-        <FeatureSpotlight
-          id="hub-assistant-fab"
-          title="AI-асистент"
-          description="Запитай будь-що про фінанси, тренування, харчування чи рутину"
-          placement="left"
-          showOnce
-          delay={3000}
-        >
-          {fabButton}
-        </FeatureSpotlight>
-      )}
+      {fabButton}
     </div>
   );
 }

@@ -39,7 +39,13 @@
  *   2.3.3 / Apple HIG. Same approach as `Skeleton` (PR #423).
  */
 
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   AccessibilityInfo,
   KeyboardAvoidingView,
@@ -50,7 +56,10 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from "react-native";
+import { X } from "lucide-react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -82,6 +91,10 @@ export interface SheetProps {
   maxHeight?: number;
   /** Disable gesture dismiss. Defaults to false. */
   disableGestureDismiss?: boolean;
+  /** Remember scroll position between opens. Defaults to false. */
+  rememberScrollPosition?: boolean;
+  /** Unique key for persisting scroll position when rememberScrollPosition is true. */
+  scrollPositionKey?: string;
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -107,10 +120,14 @@ export function Sheet({
   closeLabel = "Закрити",
   maxHeight = 0.9,
   disableGestureDismiss = false,
+  rememberScrollPosition = false,
+  scrollPositionKey: _scrollPositionKey,
 }: SheetProps) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const savedScrollPosition = useRef<number>(0);
 
   // Reanimated shared values
   const translateY = useSharedValue(0);
@@ -136,13 +153,32 @@ export function Sheet({
     };
   }, []);
 
-  // Reset animation values when sheet opens
+  // Reset animation values when sheet opens and restore scroll position
   useEffect(() => {
     if (open) {
       translateY.value = 0;
       scrimOpacity.value = withTiming(1, { duration: 200 });
+      // Restore scroll position after a small delay to let the ScrollView render
+      if (rememberScrollPosition && savedScrollPosition.current > 0) {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            y: savedScrollPosition.current,
+            animated: false,
+          });
+        }, 100);
+      }
     }
-  }, [open, translateY, scrimOpacity]);
+  }, [open, translateY, scrimOpacity, rememberScrollPosition]);
+
+  // Save scroll position when scrolling
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (rememberScrollPosition) {
+        savedScrollPosition.current = event.nativeEvent.contentOffset.y;
+      }
+    },
+    [rememberScrollPosition],
+  );
 
   // Percentage `maxHeight` on a RN View resolves against its parent's
   // height. Our panel sits inside a `KeyboardAvoidingView` that wraps
@@ -173,24 +209,30 @@ export function Sheet({
       ) * scrimOpacity.value,
   }));
 
-  const animatedIndicatorStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        scaleX: interpolate(
-          translateY.value,
-          [0, DISMISS_THRESHOLD],
-          [1, 1.2],
-          Extrapolation.CLAMP,
-        ),
-      },
-    ],
-    opacity: interpolate(
+  const animatedIndicatorStyle = useAnimatedStyle(() => {
+    const progress = interpolate(
       translateY.value,
       [0, DISMISS_THRESHOLD],
-      [0.5, 1],
+      [0, 1],
       Extrapolation.CLAMP,
-    ),
-  }));
+    );
+
+    return {
+      width: interpolate(progress, [0, 1], [40, 56]),
+      height: interpolate(progress, [0, 1], [4, 6]),
+      opacity: interpolate(progress, [0, 0.5, 1], [0.4, 0.7, 1]),
+      backgroundColor:
+        interpolate(
+          progress,
+          [0, 1],
+          [1, 1], // Keep same color, just for the structure
+        ) > 0
+          ? progress > 0.5
+            ? "rgb(16, 185, 129)" // brand color when near dismiss
+            : "rgb(168, 162, 158)" // cream-400
+          : "rgb(168, 162, 158)",
+    };
+  });
 
   // Gesture handler for swipe-to-dismiss
   const panGesture = Gesture.Pan()
@@ -273,10 +315,9 @@ export function Sheet({
                 <View className="flex items-center pt-3 pb-1">
                   <GestureDetector gesture={panGesture}>
                     <Animated.View
-                      style={animatedIndicatorStyle}
+                      style={[animatedIndicatorStyle, { borderRadius: 3 }]}
                       accessibilityLabel="Потягніть вниз щоб закрити"
                       accessibilityHint="Проведіть пальцем вниз для закриття панелі"
-                      className="w-10 h-1 bg-cream-400 dark:bg-cream-600 rounded-full"
                     />
                   </GestureDetector>
                 </View>
@@ -301,15 +342,18 @@ export function Sheet({
                     accessibilityLabel={closeLabel}
                     className="bg-cream-100 dark:bg-cream-800"
                   >
-                    <Text className="text-fg-muted text-lg font-bold">X</Text>
+                    <X size={18} strokeWidth={2.5} />
                   </Button>
                 </View>
 
                 {/* Scrollable Content */}
                 <ScrollView
+                  ref={scrollViewRef}
                   keyboardShouldPersistTaps="handled"
                   className="px-5 pb-4"
                   bounces={false}
+                  onScroll={handleScroll}
+                  scrollEventThrottle={16}
                 >
                   {children}
                 </ScrollView>

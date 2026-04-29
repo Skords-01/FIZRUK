@@ -1,5 +1,7 @@
 # Assistant Capability Catalogue — дизайн-спек
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Status:** shipped (PR [#795](https://github.com/Skords-01/Sergeant/pull/795) +
 > follow-ups [#798](https://github.com/Skords-01/Sergeant/pull/798),
 > [#799](https://github.com/Skords-01/Sergeant/pull/799),
@@ -506,7 +508,7 @@ E2E (Playwright smoke):
 
 1. **Чи групувати «Аналітика» окремо від «Кросмодульні» у UI**, навіть якщо в `toolDefs/crossModule.ts` вони разом? Поточна пропозиція — так, бо юзер мислить «графіки і тренди» окремо від «брифінг і підсумок». Але це вимагає `module: "analytics"` явно у реджистрі.
 2. **Tail-секція «Все інше / експериментальне»** для capabilities, що не вписуються в 8 груп. Поки нема таких — но залишимо ментально на майбутнє.
-3. **Feature flag для catalogue?** Не плануємо в v1 — запуск тривіальний, відкат через PR-revert. Якщо хочеш — додамо `assistant_catalogue_enabled` flag через [`featureFlags.ts`](../../apps/web/src/core/lib/featureFlags.ts) у impl-плані.
+3. **Feature flag для catalogue?** Не плануємо в v1 — запуск тривіальний, відкат через PR-revert. Якщо хочеш — додамо `assistant_catalogue_enabled` flag через [`featureFlags.ts`](../../../apps/web/src/core/lib/featureFlags.ts) у impl-плані.
 
 ## See also
 

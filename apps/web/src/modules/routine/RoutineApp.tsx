@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Banner } from "@shared/components/ui/Banner";
 import {
+  ModuleAccentProvider,
   ModuleHeader,
   ModuleHeaderBackButton,
 } from "@shared/components/layout";
@@ -503,7 +504,7 @@ export default function RoutineApp({
   const listIsEmpty = grouped.length === 0;
 
   return (
-    <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
+    <ModuleAccentProvider module="routine" asShellRoot>
       <ModuleHeader
         module="routine"
         left={
@@ -692,6 +693,6 @@ export default function RoutineApp({
         onClose={() => setQuickAddHabitOpen(false)}
         focusTick={quickAddFocusTick}
       />
-    </div>
+    </ModuleAccentProvider>
   );
 }
