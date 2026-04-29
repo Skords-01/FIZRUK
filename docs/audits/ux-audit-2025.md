@@ -264,12 +264,11 @@ HubChat, HubSearch, онбординг, a11y, PWA). Цей документ — 
 
 ### 11.7 Нові компоненти
 
-| Компонент                | Призначення                                 |
-| ------------------------ | ------------------------------------------- |
-| `CelebrationModal`       | Achievement/success celebrations з confetti |
-| `FeatureSpotlight`       | Contextual onboarding hints                 |
-| `ModulePageLoader`       | Module-specific skeleton loaders            |
-| `PullToRefreshIndicator` | Native-like pull-to-refresh                 |
+| Компонент          | Призначення                                 |
+| ------------------ | ------------------------------------------- |
+| `CelebrationModal` | Achievement/success celebrations з confetti |
+| `FeatureSpotlight` | Contextual onboarding hints                 |
+| `ModulePageLoader` | Module-specific skeleton loaders            |
 
 ### 11.8 Нові хуки
 
