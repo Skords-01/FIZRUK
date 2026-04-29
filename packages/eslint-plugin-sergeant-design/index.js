@@ -1830,6 +1830,189 @@ const noRawDarkPalette = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// `prefer-focus-visible` — ban `focus:` color utilities, require
+//                          `focus-visible:` for visible focus rings
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Sergeant's design-system contract (see `docs/design/design-system.md`):
+//
+//   | Стан             | Поведінка                                                    |
+//   | :focus-visible   | ring-2 ring-brand-500/45 ring-offset-2 ring-offset-surface   |
+//
+//   "Focus — focus-visible:ring-brand-500/30, а не focus:, аби pointer-клік
+//    не блимав кільцем."
+//
+// `focus:` fires for any focus state, including pointer click — which
+// produces a flashing ring on every mouse interaction. `focus-visible:`
+// only fires when the user is navigating with the keyboard (or assistive
+// tech) and is the correct primitive for a visible focus indicator.
+//
+// The single legitimate `focus:` utility is `focus:outline-none`: it
+// resets the user-agent outline so the design-system ring (rendered via
+// `focus-visible:ring-*`) takes over. The rule therefore allows
+// `focus:outline-none` and bans every `focus:` color/border/ring/shadow
+// utility — those must be `focus-visible:` instead.
+//
+// Scope: `apps/web/**/*.{ts,tsx,js,jsx}`. Mobile (NativeWind) doesn't
+// have a `:focus-visible` pseudo-class equivalent; React Native uses
+// `onFocus` handlers and the ring concept is web-only. Registering the
+// rule on mobile would force authors to use a primitive that doesn't
+// exist in their target runtime.
+
+const FOCUS_COLOR_UTILITIES = [
+  "bg",
+  "text",
+  "border",
+  "ring",
+  "ring-offset",
+  "shadow",
+  "fill",
+  "stroke",
+  "divide",
+  "placeholder",
+  "caret",
+  "decoration",
+  "accent",
+  "outline-offset",
+];
+
+const PREFER_FOCUS_VISIBLE_MESSAGE =
+  "`{{match}}` uses the `focus:` variant — pointer clicks blink the colour. Replace with `focus-visible:{{tail}}` so only keyboard/assistive-tech focus shows the indicator. The single legitimate `focus:` utility is `focus:outline-none` (resets the user-agent outline so the design-system ring takes over).";
+
+// Match a bare `focus:<utility>-...` token. We intentionally exclude
+// `focus:outline-none` (the canonical reset that pairs with
+// `focus-visible:ring-*`) and any token where `focus:` itself is
+// preceded by another variant — `lg:focus:bg-…`, `hover:focus:…`,
+// `dark:focus:…`, `group-focus:…`, `peer-focus:…`. The lookbehind
+// `(?<![\w:-])` keeps the contract tight.
+//
+// `<utility>-<rest>` covers the colour/visual utilities listed in
+// `FOCUS_COLOR_UTILITIES`. `<rest>` is `[\w/.\-[\]#%]+` so we capture
+// arbitrary values (`bg-[#fff]`), opacity suffixes (`/45`), and dotted
+// shades (`text-brand-strong`). `outline-` itself isn't in the list
+// because the only legit `focus:outline-*` is `focus:outline-none`,
+// which is excluded by the explicit guard below; everything else
+// (`focus:outline-2`, `focus:outline-brand-500`, …) falls through to
+// the regex via `outline-offset` (intentionally) plus a separate
+// `outline-` arm below.
+const RX_PREFER_FOCUS_VISIBLE = new RegExp(
+  String.raw`(?<![\w:-])focus:(` +
+    FOCUS_COLOR_UTILITIES.join("|") +
+    String.raw`)-([\w/.\-#%[\]]+)`,
+  "g",
+);
+
+// Separate arm for `focus:outline-*` so we can exempt
+// `focus:outline-none` (and the inert `focus:outline-hidden`,
+// `focus:outline-transparent`) without uglifying the colour-utility
+// regex above.
+const RX_PREFER_FOCUS_VISIBLE_OUTLINE = new RegExp(
+  String.raw`(?<![\w:-])focus:outline-([\w/.\-#%[\]]+)`,
+  "g",
+);
+
+const FOCUS_OUTLINE_ALLOWED_TAILS = new Set(["none", "hidden", "transparent"]);
+
+// `text-` is overloaded in Tailwind: `text-{color}` is a colour
+// (`text-brand-strong`, `text-danger`), but `text-{size|alignment|
+// transform|opacity}` are unrelated dimensions (`text-sm`, `text-base`,
+// `text-center`, `text-left`, `text-uppercase`, …). The rule's intent
+// is to ban *colour* blinks on pointer focus, so we explicitly exempt
+// the non-colour `text-` tails that Sergeant uses (size scale + the
+// `text-mini` / `text-dialog` tokens added in Wave 2d, plus alignment
+// + transform). A `focus:text-sm` on a skip-link that grows on focus
+// is intentional UX, not a regression.
+const FOCUS_TEXT_NON_COLOR_TAILS = new Set([
+  // Tailwind default size scale
+  "xs",
+  "sm",
+  "base",
+  "lg",
+  "xl",
+  "2xl",
+  "3xl",
+  "4xl",
+  "5xl",
+  "6xl",
+  "7xl",
+  "8xl",
+  "9xl",
+  // Sergeant custom size tokens (Wave 2d)
+  "mini",
+  "dialog",
+  // Alignment / wrap / overflow / transform
+  "left",
+  "right",
+  "center",
+  "justify",
+  "start",
+  "end",
+  "wrap",
+  "nowrap",
+  "balance",
+  "pretty",
+  "ellipsis",
+  "clip",
+  "uppercase",
+  "lowercase",
+  "capitalize",
+  "normal-case",
+]);
+
+function findPreferFocusVisibleHits(value) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  if (!value.includes("focus:")) return [];
+  const hits = [];
+  let m;
+  RX_PREFER_FOCUS_VISIBLE.lastIndex = 0;
+  while ((m = RX_PREFER_FOCUS_VISIBLE.exec(value)) !== null) {
+    const [full, util, rest] = m;
+    if (util === "text" && FOCUS_TEXT_NON_COLOR_TAILS.has(rest)) continue;
+    hits.push({ match: full, tail: `${util}-${rest}` });
+  }
+  RX_PREFER_FOCUS_VISIBLE_OUTLINE.lastIndex = 0;
+  while ((m = RX_PREFER_FOCUS_VISIBLE_OUTLINE.exec(value)) !== null) {
+    const [full, tail] = m;
+    if (FOCUS_OUTLINE_ALLOWED_TAILS.has(tail)) continue;
+    hits.push({ match: full, tail: `outline-${tail}` });
+  }
+  return hits;
+}
+
+const preferFocusVisible = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid `focus:` color/ring/shadow utilities — visible focus indicators must use `focus-visible:` so pointer clicks don't blink the ring.",
+    },
+    schema: [],
+    messages: { focus: PREFER_FOCUS_VISIBLE_MESSAGE },
+  },
+  create(context) {
+    function report(node, value) {
+      const hits = findPreferFocusVisibleHits(value);
+      for (const hit of hits) {
+        context.report({
+          node,
+          messageId: "focus",
+          data: { match: hit.match, tail: hit.tail },
+        });
+      }
+    }
+    return {
+      Literal(node) {
+        if (typeof node.value === "string") report(node, node.value);
+      },
+      TemplateElement(node) {
+        const cooked = node.value && node.value.cooked;
+        if (typeof cooked === "string") report(node, cooked);
+      },
+    };
+  },
+};
+
 const plugin = {
   rules: {
     "no-eyebrow-drift": noEyebrowDrift,
@@ -1846,6 +2029,7 @@ const plugin = {
     "no-anthropic-key-in-logs": noAnthropicKeyInLogs,
     "no-strict-bypass": noStrictBypass,
     "no-raw-dark-palette": noRawDarkPalette,
+    "prefer-focus-visible": preferFocusVisible,
   },
 };
 
@@ -1866,6 +2050,9 @@ export {
   RAW_DARK_PALETTE_FAMILIES,
   RAW_DARK_PALETTE_UTILITIES,
   RAW_DARK_PALETTE_MESSAGE,
+  FOCUS_COLOR_UTILITIES,
+  FOCUS_OUTLINE_ALLOWED_TAILS,
+  PREFER_FOCUS_VISIBLE_MESSAGE,
 };
 
 export default plugin;
