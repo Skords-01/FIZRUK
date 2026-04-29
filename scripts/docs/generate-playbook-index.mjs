@@ -83,11 +83,17 @@ if (CHECK_MODE) {
     process.exit(1);
   }
 
-  // Compare ignoring the date line (it changes daily)
+  // Compare ignoring the date line (changes daily) and table whitespace
+  // (prettier pads table cells, our generator doesn't).
   const normalize = (s) =>
     s
       .split("\n")
       .filter((l) => !l.startsWith("> **Last validated:**"))
+      .map((l) =>
+        l.startsWith("|")
+          ? l.replace(/\s*\|\s*/g, "|").replace(/^(\|[-|]+\|)$/, "|---|---|")
+          : l,
+      )
       .join("\n");
 
   if (normalize(existing) !== normalize(content)) {
