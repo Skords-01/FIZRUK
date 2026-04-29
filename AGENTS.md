@@ -220,11 +220,51 @@ The rule deliberately does **not** fire on:
 - `bg-{family}-strong text-white` — the canonical fix.
 - `bg-{family}-{700,800,900}` — explicit dark steps already clear AA.
 - `bg-{family}/N` — opacity-tinted soft washes; the foreground is `text-{family}-strong`, not white.
-- `bg-[#hex] text-white` — arbitrary values; deliberate one-off opt-out.
+- `bg-[#hex] text-white` — arbitrary hex values, now separately forbidden by rule #10 (`sergeant-design/no-hex-in-classname`).
 - `dark:bg-{family} text-white` — on dark surfaces emerald-500 vs. white passes ~5.4 : 1; the strong tier would actually regress contrast.
 - `hover:bg-{family} text-white` — hover-only saturated bg if the base state is fine.
 
 Enforced by `sergeant-design/no-low-contrast-text-on-fill` (`error`). The four saturated `*-500` brand-identity tokens in `packages/design-tokens/tokens.js` remain unchanged — they're still the canonical brand colours for logos, marketing assets, and dark-mode bento surfaces. The strong tier is purely additive and only required for text/fill-behind-text contexts.
+
+### 10. No arbitrary hex colors in `className`
+
+Raw `<utility>-[#hex]` values in Tailwind `className` (`bg-[#10b981]`, `text-[#fff]/50`, `border-[#abc]`, `ring-[#1234ab]`) bypass the design-system token layer entirely. Dark-mode adaptation, the WCAG-AA `-strong` promotion from rule #9, the module accent containment from rule #11, and future palette migrations all stop working for those literals — you get a hard-coded colour that no other system in the repo can reason about.
+
+```tsx
+// ❌ BAD — off-palette emerald that dark-mode cannot touch
+<div className="bg-[#10b981] text-[#fff]/50" />
+
+// ✅ GOOD — semantic token; `dark:` + `-strong` work automatically
+<div className="bg-brand-soft text-on-brand" />
+
+// ✅ GOOD — module accent; covered by the `-surface` / `-strong` pair
+<div className="bg-finyk-surface text-finyk-strong" />
+```
+
+The rule covers every colour-aware utility (`bg-`, `text-`, `border-`, `ring-`, `fill-`, `stroke-`, `from-`, `to-`, `via-`, `shadow-`, `outline-`, `divide-`, `placeholder-`, `caret-`, `decoration-`, `accent-`) and validates hex length (3 / 4 / 6 / 8 digits). Non-hex arbitrary values (`bg-[oklch(…)]`, `border-[var(--foo)]`, `bg-[rgb(…)]`) are **intentionally left alone** — they can reference CSS variables owned by the preset and are occasionally necessary for one-off interop.
+
+If you genuinely need a new shade, add it to `packages/design-tokens/tailwind-preset.js` (alongside a `-soft` / `-strong` companion per rule #9) instead of inlining hex at the call-site. Enforced by `sergeant-design/no-hex-in-classname` (`error`).
+
+### 11. Module-accent containment — no foreign accents inside a module subtree
+
+Sergeant's four module accents (`finyk`/emerald, `fizruk`/teal, `routine`/coral, `nutrition`/lime) are deliberately close in saturation. A fizruk screen that accidentally renders a coral `ring-routine` reads to the user as "Рутина" — it's a semantic design bug, not a stylistic choice. Inside the `apps/<app>/src/modules/<X>/` subtree, only `<X>`'s accent utilities (`bg-<X>-surface`, `text-<X>-strong`, `ring-<X>`, `bg-<X>-500/15`, …) may appear.
+
+```tsx
+// apps/web/src/modules/fizruk/pages/PlanCalendar.tsx
+// ❌ BAD — coral focus ring inside a Fizruk page
+<button className="focus-visible:ring-routine" />
+
+// ✅ GOOD — module-consistent focus ring
+<button className="focus-visible:ring-fizruk" />
+```
+
+The rule handles variant prefixes (`dark:`, `hover:`, `lg:`), shade suffixes (`-500`, `-soft`, `-strong`), and opacity suffixes (`/15`) transparently. Cross-module shells remain **exempt** so the Hub / HubChat / shared widgets can still reference every accent:
+
+- `apps/*/src/core/**`, `apps/*/src/shared/**`, `apps/*/src/stories/**`
+- `apps/*/src/modules/shared/**` (non-canonical module folder — a cross-module utility, not an accent owner)
+- `__tests__/*.{ts,tsx,mjs}` — test fixtures naturally reference all four for coverage.
+
+Enforced by `sergeant-design/no-foreign-module-accent` (`error`). See `docs/design/MODULE-ACCENT.md` for the "one accent = one module" design principle.
 
 ## AI markers
 
