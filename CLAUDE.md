@@ -34,14 +34,14 @@ pnpm docs:freshness-dashboard      # Build dist/freshness-dashboard.html
 
 ## Before you write code
 
-> Hard Rule #13 in `AGENTS.md` applies to AI agents: complete this pre-flight before implementing.
+> Hard Rule #15 in `AGENTS.md` applies to AI agents: complete this pre-flight before implementing.
 
 1. Read the relevant playbook in `docs/playbooks/` — pick by trigger phrase (e.g. "нова API-функціональність" → `add-api-endpoint.md`; "remove dead code" → `cleanup-dead-code.md`).
-2. Check `AGENTS.md` § Hard rules — especially bigint coercion (#1), RQ keys (#2), migration numbering (#4), lifecycle markers (#10), governance + docs discipline (#13).
+2. Check `AGENTS.md` § Hard rules — especially bigint coercion (#1), RQ keys (#2), migration numbering (#4), lifecycle markers (#10), governance + docs discipline (#15).
 3. Before deleting any file, run `pnpm dead-code:files` (which honours `@scaffolded` markers — Hard Rule #10). Never delete a scaffolded file just because it has zero importers.
 4. New HubChat tool? Needs **3 coordinated edits** — see `docs/playbooks/add-hubchat-tool.md`.
 5. New migration? Use `pnpm gen migration --name <desc>` — auto-numbers from last migration (`015`).
-6. Before opening the PR, update docs alongside code (Hard Rule #13): api-client types, design-system docs, playbooks, freshness headers — see the must-update table in `AGENTS.md` § Hard Rule #13.
+6. Before opening the PR, update docs alongside code (Hard Rule #15): api-client types, design-system docs, playbooks, freshness headers — see the must-update table in `AGENTS.md` § Hard Rule #15.
 
 ## Verification before PR
 
