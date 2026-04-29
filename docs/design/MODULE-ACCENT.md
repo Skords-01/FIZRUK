@@ -136,12 +136,57 @@ const TINT = {
   <div className="bg-module-accent/10" />  {/* ← no ambient accent */}
 </HubDashboard>
 
+// ❌ BAD — foreign module accent inside another module's subtree
+// apps/web/src/modules/fizruk/pages/PlanCalendar.tsx
+<button className="focus-visible:ring-routine">…</button>
+// (coral focus ring reads to the user as "Рутина", not "Фізрук")
+// Enforced by `sergeant-design/no-foreign-module-accent` (error).
+
 // ✅ GOOD — ambient accent inside a module surface
 <ModuleShell module="routine">
   <Card className="bg-module-accent/8 border-module-accent/20" />
   <Button className="bg-module-accent-strong text-white">Зберегти</Button>
 </ModuleShell>
 ```
+
+### Module-accent containment (`sergeant-design/no-foreign-module-accent`)
+
+Inside `apps/<app>/src/modules/<X>/` only `<X>`'s accent utilities
+(`bg-<X>-surface`, `text-<X>-strong`, `ring-<X>`, `bg-<X>-500/15`, …)
+may appear. The rule handles variant prefixes (`dark:`, `hover:`,
+`lg:`), shade suffixes (`-500`, `-soft`, `-strong`), and opacity
+suffixes (`/15`) transparently.
+
+Exempt subtrees (free to reference every accent):
+
+- `apps/*/src/core/**`, `apps/*/src/shared/**`, `apps/*/src/stories/**`
+  — cross-module shell / Hub / HubChat.
+- `apps/*/src/modules/shared/**` — non-canonical module folder;
+  cross-module utility, not an accent owner.
+- `__tests__/*.{ts,tsx,mjs}` — test fixtures naturally reference all
+  four for coverage.
+
+`AGENTS.md` hard rule #12 is the full spec. The file-at-a-time
+anti-pattern above — a `fizruk` page reaching for `ring-routine` — is
+exactly what the rule catches:
+
+```tsx
+// ❌ BAD
+<button className="focus-visible:ring-routine" />
+// ✅ GOOD
+<button className="focus-visible:ring-fizruk" />
+```
+
+### No arbitrary hex colors (`sergeant-design/no-hex-in-classname`)
+
+Do not write `bg-[#10b981]` / `text-[#fff]/50` / `ring-[#1234ab]` inside
+`className`. A raw hex literal bypasses the whole three-layer system
+above — `--module-accent-rgb` cannot tint it, the `-strong` companion
+does not exist for it, and dark-mode cannot adapt it. If you genuinely
+need a new shade, add it to `packages/design-tokens/tailwind-preset.js`
+(alongside a `-soft` / `-strong` companion per `AGENTS.md` rule #9).
+Enforced by `sergeant-design/no-hex-in-classname` (error); see
+`AGENTS.md` hard rule #11.
 
 ## API
 
@@ -213,3 +258,8 @@ it("публікує --module-accent-rgb + strong для finyk", () => {
 - [`docs/design/brand-palette-wcag-aa-proposal.md`](./brand-palette-wcag-aa-proposal.md) — migration history (PRs #854 / #855 / #857).
 - `AGENTS.md` hard rule #8 — Tailwind opacity scale.
 - `AGENTS.md` hard rule #9 — `-strong` companion behind `text-white`.
+- `AGENTS.md` hard rule #11 — no arbitrary hex colors in `className`.
+- `AGENTS.md` hard rule #12 — module-accent containment.
+- [`docs/design/DARK-MODE-AUDIT.md`](./DARK-MODE-AUDIT.md) — pending
+  migration plan from 28 raw-palette `dark:` patches to semantic tokens
+  (bg-{module}-surface / bg-brand-soft / bg-{status}-soft / etc.).

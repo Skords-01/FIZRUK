@@ -17,13 +17,22 @@
 ## 1. Принципи
 
 1. **Семантичні токени → Tailwind-утиліти → примітиви.** Ніяких hex-кодів в
-   `className`. Якщо потрібен новий колір — додай CSS-змінну в
-   `src/index.css` і алиас у `tailwind.config.js`, не в компонент.
+   `className` (`bg-[#10b981]`, `text-[#fff]/50` — заборонено правилом
+   `sergeant-design/no-hex-in-classname` на рівні `error`; див.
+   `AGENTS.md` hard rule #11). Якщо потрібен новий колір — додай його
+   у `packages/design-tokens/tailwind-preset.js` разом із
+   `-soft` / `-strong` компаньйонами, не inline в компонент.
 2. **Темна тема — first-class.** Всі токени живуть у CSS-змінних
    `:root` та `.dark`; теми перемикаються класом без перезапису стилів.
+   Парні `dark:` override з сирою палітрою (`bg-teal-100 dark:bg-teal-900/30`)
+   — це міграційний борг: [`DARK-MODE-AUDIT.md`](./DARK-MODE-AUDIT.md)
+   ведe інвентар 28 таких сайтів і план переносу в семантичні токени.
 3. **Модулі діляться токенами, а не стилями.** `bg-finyk-surface`,
    `text-fizruk`, `border-routine/30` — це семантичні аксенти; вся базова
-   типографіка, spacing, радіуси одні для всіх.
+   типографіка, spacing, радіуси одні для всіх. Всередині
+   `apps/<app>/src/modules/<X>/` дозволені лише акценти модуля `<X>` —
+   див. `AGENTS.md` hard rule #12 + [`MODULE-ACCENT.md`](./MODULE-ACCENT.md),
+   enforced by `sergeant-design/no-foreign-module-accent` (`error`).
 4. **Accessibility не опція.** Клавіатурний фокус завжди видимий
    (`focus-visible:ring-2 ring-brand-500/45`), touch-targets ≥44×44 px,
    контраст ≥4.5:1 для тексту, ≥3:1 для UI-елементів (WCAG AA).

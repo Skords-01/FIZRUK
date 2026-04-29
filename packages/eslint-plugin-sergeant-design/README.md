@@ -28,6 +28,31 @@ Validates AI code-marker comments follow the canonical syntax (`// AI-NOTE:`, `/
 
 Flags Tailwind `<color>/<N>` opacity modifiers where `N` is not registered in `theme.opacity`. Unregistered steps are silently dropped by Tailwind, breaking `dark:` / `hover:` overrides. Severity: **error**.
 
+### `sergeant-design/no-hex-in-classname`
+
+Forbids arbitrary `<utility>-[#hex]` colors in Tailwind classNames (`bg-[#10b981]`, `text-[#fff]/50`, `border-[#abc]`). Raw hex bypasses the design-system token layer — dark-mode adaptation, WCAG-AA `-strong` promotion, and future palette migration all stop working for those literals. Covers every color-aware utility (`bg-`, `text-`, `border-`, `ring-`, `fill-`, `stroke-`, `from-`, `to-`, `via-`, `shadow-`, `outline-`, `divide-`, `placeholder-`, `caret-`, `decoration-`, `accent-`) and validates hex length (3 / 4 / 6 / 8 digits). Non-hex arbitrary values (`bg-[oklch(…)]`, `border-[var(--foo)]`, `bg-[rgb(…)]`) are intentionally left alone — extend the preset if a truly one-off color is needed. See [AGENTS.md rule #11](../../AGENTS.md). Severity: **error**.
+
+```tsx
+// ❌ BAD — hex bypasses the token layer
+<div className="bg-[#10b981] text-[#fff]/50" />
+
+// ✅ GOOD — semantic token
+<div className="bg-brand-soft text-on-brand" />
+```
+
+### `sergeant-design/no-foreign-module-accent`
+
+Inside `apps/<app>/src/modules/<X>/` subtrees only `<X>`'s accent utilities (`bg-<X>-surface`, `text-<X>-strong`, `ring-<X>`, `bg-<X>-500/15`, …) may appear. Sergeant's four module accents (`finyk`/emerald, `fizruk`/teal, `routine`/coral, `nutrition`/lime) are deliberately close in saturation — a fizruk screen accidentally rendering a coral `ring-routine` reads to the user as "Рутина" and is a design bug, not a stylistic choice. Cross-module shells (`core/`, `shared/`, `modules/shared/`, `stories/`, test files) remain free to reference all four. Variant prefixes (`dark:`, `hover:`, `lg:`), shade suffixes (`-500`, `-soft`, `-strong`), and opacity suffixes (`/15`) are handled transparently. See [AGENTS.md rule #12](../../AGENTS.md) and [`docs/design/MODULE-ACCENT.md`](../../docs/design/MODULE-ACCENT.md). Severity: **error**.
+
+```tsx
+// apps/web/src/modules/fizruk/pages/PlanCalendar.tsx
+// ❌ BAD — coral focus ring inside a Fizruk page
+<button className="focus-visible:ring-routine" />
+
+// ✅ GOOD — module-consistent focus ring
+<button className="focus-visible:ring-fizruk" />
+```
+
 ### `sergeant-design/no-low-contrast-text-on-fill`
 
 Forbids saturated brand `bg-*` utilities behind `text-white` — use the `-strong` companion (= 700/800 step) so the pairing clears WCAG AA 4.5 : 1. Severity: **error**.
