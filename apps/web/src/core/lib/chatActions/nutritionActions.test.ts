@@ -15,10 +15,10 @@ afterEach(() => {
 
 function call(action: ChatAction): string {
   const out = handleNutritionAction(action);
-  if (typeof out !== "string") {
-    throw new Error(`handler returned ${typeof out}, expected string`);
+  if (out == null) {
+    throw new Error(`handler returned ${typeof out}, expected string|object`);
   }
-  return out;
+  return typeof out === "string" ? out : out.result;
 }
 
 // ---------------------------------------------------------------------------
@@ -441,5 +441,63 @@ describe("plan_meals_for_day", () => {
     expect(typeof out).toBe("string");
     expect(out).toContain("вегетаріанська");
     expect(out).toContain("Рекомендацію");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// log_meal · undo
+// ---------------------------------------------------------------------------
+describe("log_meal · undo", () => {
+  it("повертає {undo} що видаляє щойно доданий прийом", () => {
+    const out = handleNutritionAction({
+      name: "log_meal",
+      input: { name: "Сніданок", kcal: 450 },
+    });
+    if (typeof out === "string" || out == null) {
+      throw new Error(`expected undoable result, got ${typeof out}`);
+    }
+    expect(out.result).toContain("Сніданок");
+    const before = JSON.parse(localStorage.getItem("nutrition_log_v1") || "{}");
+    expect(before["2026-04-22"].meals).toHaveLength(1);
+
+    out.undo();
+
+    const after = JSON.parse(localStorage.getItem("nutrition_log_v1") || "{}");
+    // Day is removed entirely коли meals = 0 (cleanup empty days).
+    expect(after["2026-04-22"]).toBeUndefined();
+  });
+
+  it("undo прибирає тільки свій прийом, інші лишаються", () => {
+    const first = handleNutritionAction({
+      name: "log_meal",
+      input: { name: "Перший", kcal: 100 },
+    });
+    if (typeof first === "string" || first == null)
+      throw new Error("expected object");
+
+    // Просуваємо час щоб другий meal отримав інший id
+    vi.advanceTimersByTime(1000);
+    handleNutritionAction({
+      name: "log_meal",
+      input: { name: "Другий", kcal: 200 },
+    });
+
+    first.undo();
+
+    const after = JSON.parse(localStorage.getItem("nutrition_log_v1") || "{}");
+    expect(after["2026-04-22"].meals).toHaveLength(1);
+    expect(after["2026-04-22"].meals[0].name).toBe("Другий");
+  });
+
+  it("undo ідемпотентний — повторний виклик не кидає", () => {
+    const out = handleNutritionAction({
+      name: "log_meal",
+      input: { name: "Обід", kcal: 600 },
+    });
+    if (typeof out === "string" || out == null)
+      throw new Error("expected object");
+
+    out.undo();
+    expect(() => out.undo()).not.toThrow();
   });
 });
