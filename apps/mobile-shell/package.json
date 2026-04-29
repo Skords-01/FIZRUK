@@ -23,6 +23,7 @@
     "build:web": "pnpm --filter @sergeant/web build:capacitor",
     "build:android": "pnpm build:web && pnpm sync android",
     "build:ios": "pnpm build:web && pnpm sync ios",
+    "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
