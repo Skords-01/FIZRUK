@@ -14,4 +14,12 @@
 
 ## [Unreleased]
 
-_Нові зміни з'являться тут перед наступним релізом._
+### Added
+
+- **CI: container image scan (Trivy).** Новий workflow
+  `.github/workflows/container-scan.yml` збирає `Dockerfile.api` і
+  сканує отриманий образ на CVE рівнів CRITICAL/HIGH; SARIF
+  завантажується в GitHub Code Scanning (`category: trivy-image`) і
+  доступний як артефакт. Тригери: PR (на зміни Dockerfile / serverside
+  пакетів), push to main, schedule (04:00 UTC) і workflow_dispatch.
+  Триаж — див. [`docs/security/container-scan.md`](./docs/security/container-scan.md).
