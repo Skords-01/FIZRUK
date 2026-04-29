@@ -29,7 +29,7 @@ pnpm gen                 # Plop code generators (migration, rq-hook, hubchat-too
 1. Read the relevant playbook in `docs/playbooks/` — pick by trigger phrase (e.g. "нова API-функціональність" → `add-api-endpoint.md`).
 2. Check `AGENTS.md` § Hard rules — especially bigint coercion (#1), RQ keys (#2), migration numbering (#4).
 3. New HubChat tool? Needs **3 coordinated edits** — see `docs/playbooks/add-hubchat-tool.md`.
-4. New migration? Use `pnpm gen migration --name <desc>` — auto-numbers from last migration (`010`).
+4. New migration? Use `pnpm gen migration --name <desc>` — auto-numbers from last migration (`015`).
 
 ## Verification before PR
 
