@@ -236,7 +236,21 @@ const preset = {
       },
 
       // ═══════════════════════════════════════════════════════════════════
-      // BORDER RADIUS — Soft, organic, friendly shapes
+      // BORDER RADIUS — size-driven rhythm (see docs/design/RADIUS-RHYTHM.md)
+      //
+      // The active scale is intentionally short:
+      //   sm   →  2 px   swatch  (heatmap cells, chart legend dots)
+      //   md   →  6 px   marker  (checkbox squares, badge chips, <kbd>)
+      //   xl   → 12 px   control sm (Button xs/sm, icon-buttons ≤ 40 px)
+      //   2xl  → 16 px   control md / card (Button md/lg, Card default)
+      //   3xl  → 24 px   hero / sheet (Button xl, Card xl, Modal, sheets)
+      //   full →  ∞       pill (FAB, avatars, status dots)
+      //
+      // 4xl / 5xl exist for one-off illustration surfaces (onboarding
+      // hero blob); they are NOT part of the regular rhythm.
+      //
+      // Avoid `rounded-lg` (8 px) in new code — it sits between marker
+      // and control with no clear semantic role.
       // ═══════════════════════════════════════════════════════════════════
       borderRadius: {
         "2xl": "16px",
