@@ -1,4 +1,8 @@
 import type { Request, Response } from "express";
+import {
+  BarcodeLookupSuccessSchema,
+  type BarcodeProduct,
+} from "@sergeant/shared/schemas";
 import { recordExternalHttp } from "../../lib/externalHttp.js";
 import { elapsedMs } from "../../lib/timing.js";
 import { BarcodeQuerySchema } from "../../http/schemas.js";
@@ -13,18 +17,11 @@ import {
   type USDAFood,
 } from "../../lib/normalizers/index.js";
 
-interface NormalizedProduct {
-  name: string;
-  brand: string | null;
-  kcal_100g: number | null;
-  protein_100g: number | null;
-  fat_100g: number | null;
-  carbs_100g: number | null;
-  servingSize: string | null;
-  servingGrams: number | null;
-  source: "off" | "usda" | "upcitemdb";
-  partial?: boolean;
-}
+// SSOT for the barcode response shape lives in `@sergeant/shared/schemas`
+// (AGENTS.md Hard Rule #3). The server derives its internal type via
+// `z.infer<>` and asserts the outgoing payload against the schema before
+// `res.json()` so drift from the api-client types becomes a test failure.
+type NormalizedProduct = BarcodeProduct;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // In-memory TTL cache for cascade results.
@@ -321,7 +318,9 @@ export default async function handler(
   const cached = cacheGet(barcode);
   if (cached) {
     if (cached.product) {
-      res.status(200).json({ product: cached.product });
+      res
+        .status(200)
+        .json(BarcodeLookupSuccessSchema.parse({ product: cached.product }));
     } else {
       res.status(404).json({ error: "Продукт не знайдено" });
     }
@@ -363,7 +362,7 @@ export default async function handler(
     }
 
     cacheSet(barcode, product);
-    res.status(200).json({ product });
+    res.status(200).json(BarcodeLookupSuccessSchema.parse({ product }));
   } catch (e: unknown) {
     if (hasErrorName(e, "TimeoutError") || hasErrorName(e, "AbortError")) {
       res
