@@ -667,7 +667,15 @@ export const BarcodeQuerySchema = z.object({
   barcode: z.string().trim().min(1, "Штрихкод не може бути порожнім").max(32),
 });
 
-// ────────────────────── Mono webhook integration (Track B) ──────────────────
+// ────────────────────── Mono webhook integration (Track A/B/C) ──────────────
+//
+// SSOT for the `/api/mono/*` HTTP contract per AGENTS.md Hard Rule #3.
+// Server handlers in `apps/server/src/modules/mono/{connection,read,backfill}`
+// derive their response shapes from these schemas, validate via `.parse()`
+// before `res.json()`, and the api-client (`packages/api-client/src/endpoints/
+// mono.ts`) re-exports `z.infer<>` so the three artefacts (server, client
+// types, tests) cannot drift again silently.
+
 export const MonoTransactionsQuerySchema = z.object({
   from: z.string().optional(),
   to: z.string().optional(),
@@ -675,6 +683,176 @@ export const MonoTransactionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   cursor: z.string().min(3).optional(),
 });
+
+/**
+ * Lifecycle of the per-user `mono_connection` row. Webhook flips
+ * `active`→`invalid` when Monobank rejects a delivery (e.g. token revoked);
+ * UI then prompts the user to reconnect. `pending` exists for a short
+ * window between `connect` and the first webhook delivery / accounts
+ * upsert (currently unused — `connect` immediately sets `active`).
+ */
+export const MonoConnectionStatusSchema = z.enum([
+  "pending",
+  "active",
+  "invalid",
+  "disconnected",
+]);
+export type MonoConnectionStatus = z.infer<typeof MonoConnectionStatusSchema>;
+
+/**
+ * `transaction.source` — `'webhook'` for live deliveries from Monobank,
+ * `'backfill'` for rows ingested by `POST /api/mono/backfill` (last 31d
+ * statement window). Used by the upsert-conflict CASE so a webhook row
+ * never gets its `received_at` overwritten by a later backfill.
+ */
+export const MonoTransactionSourceSchema = z.enum(["webhook", "backfill"]);
+export type MonoTransactionSource = z.infer<typeof MonoTransactionSourceSchema>;
+
+/**
+ * Row from `GET /api/mono/accounts`. Mirrors the columns of `mono_account`
+ * after `normalizeMonoAccount()` coerces `bigint`→`number` (Hard Rule #1)
+ * and `Date`→ISO-8601 string. `lastSeenAt` is always present — DB column
+ * is `NOT NULL` and the normalizer renders `null` to a string only via
+ * `.toISOString()`, never null.
+ */
+export const MonoAccountDtoSchema = z.object({
+  userId: z.string().min(1),
+  monoAccountId: z.string().min(1),
+  sendId: z.string().nullable(),
+  type: z.string().nullable(),
+  currencyCode: z.number().int(),
+  cashbackType: z.string().nullable(),
+  // Monobank can return up to 4 PANs per account (multi-card). Empty array
+  // is the "no cards" encoding (e.g. FOP accounts).
+  maskedPan: z.array(z.string()).max(8),
+  iban: z.string().nullable(),
+  // bigint columns coerced to number by `normalizeMonoAccount`; `null` when
+  // Monobank hadn't reported a balance yet.
+  balance: z.number().nullable(),
+  creditLimit: z.number().nullable(),
+  lastSeenAt: z.string().min(1),
+});
+export type MonoAccountDto = z.infer<typeof MonoAccountDtoSchema>;
+
+/** Response of `GET /api/mono/accounts` — array of accounts, no envelope. */
+export const MonoAccountsResponseSchema = z.array(MonoAccountDtoSchema);
+export type MonoAccountsResponse = z.infer<typeof MonoAccountsResponseSchema>;
+
+/**
+ * Row from `GET /api/mono/transactions`. Mirrors the columns of
+ * `mono_transaction` after `normalizeMonoTransaction()`. Bigint money
+ * columns (`amount`, `operationAmount`, `cashbackAmount`,
+ * `commissionRate`, `balance`) are coerced to `number`; `time` and
+ * `receivedAt` are ISO-8601 strings.
+ */
+export const MonoTransactionDtoSchema = z.object({
+  userId: z.string().min(1),
+  monoAccountId: z.string().min(1),
+  monoTxId: z.string().min(1),
+  time: z.string().min(1),
+  // Monobank denominates in the smallest currency unit (kopecks for UAH);
+  // negative values are debits, positive are credits.
+  amount: z.number(),
+  operationAmount: z.number(),
+  currencyCode: z.number().int(),
+  // MCC / original-MCC / hold are missing for jar-to-jar internal transfers
+  // and a few legacy rows; UI must handle null.
+  mcc: z.number().int().nullable(),
+  originalMcc: z.number().int().nullable(),
+  hold: z.boolean().nullable(),
+  description: z.string().nullable(),
+  comment: z.string().nullable(),
+  cashbackAmount: z.number().nullable(),
+  commissionRate: z.number().nullable(),
+  balance: z.number().nullable(),
+  receiptId: z.string().nullable(),
+  invoiceId: z.string().nullable(),
+  counterEdrpou: z.string().nullable(),
+  counterIban: z.string().nullable(),
+  counterName: z.string().nullable(),
+  /**
+   * Server-resolved expense-category slug derived from `mcc` via the
+   * `MCC_CATEGORIES` map in `@sergeant/finyk-domain/constants`. `null` when
+   * the MCC is unknown / 0 / missing — UI then falls back to its own
+   * client-side categorisation (description keywords, user override).
+   */
+  categorySlug: z.string().nullable(),
+  /**
+   * Sticky latch set by the (forthcoming) `PATCH /api/mono/transactions/:id/
+   * category` endpoint and the data-migrations. Once `true`, subsequent
+   * webhook deliveries (e.g. Monobank refunds with a different MCC) do not
+   * silently undo the user's manual correction.
+   */
+  categoryOverridden: z.boolean(),
+  source: MonoTransactionSourceSchema,
+  receivedAt: z.string().min(1),
+});
+export type MonoTransactionDto = z.infer<typeof MonoTransactionDtoSchema>;
+
+/**
+ * Cursor-paginated response from `GET /api/mono/transactions`. Server
+ * returns up to `limit` items (default 50, max 200) ordered by
+ * `(time DESC, monoTxId DESC)`; `nextCursor` is non-null when more rows
+ * are available and is consumed by `fetchAllMonoTransactions`.
+ */
+export const MonoTransactionsPageSchema = z.object({
+  data: z.array(MonoTransactionDtoSchema),
+  nextCursor: z.string().nullable(),
+});
+export type MonoTransactionsPage = z.infer<typeof MonoTransactionsPageSchema>;
+
+/**
+ * Response of `GET /api/mono/sync-state`. UI uses this to decide whether
+ * to render the "Connect Monobank" form or the connected dashboard.
+ * `webhookActive=true` means the row is `active` and Monobank has
+ * confirmed registration (`webhook_registered_at != NULL`).
+ */
+export const MonoSyncStateSchema = z.object({
+  status: MonoConnectionStatusSchema,
+  webhookActive: z.boolean(),
+  lastEventAt: z.string().nullable(),
+  lastBackfillAt: z.string().nullable(),
+  accountsCount: z.number().int().nonnegative(),
+});
+export type MonoSyncState = z.infer<typeof MonoSyncStateSchema>;
+
+/**
+ * Response of `POST /api/mono/connect`. After token validation +
+ * webhook registration with Monobank succeeded, the connection is
+ * persisted as `active` and the response carries the count of accounts
+ * upserted from `client-info` (used by UI to confirm "X accounts
+ * connected").
+ */
+export const MonoConnectResponseSchema = z.object({
+  status: z.literal("active"),
+  accountsCount: z.number().int().nonnegative(),
+});
+export type MonoConnectResponse = z.infer<typeof MonoConnectResponseSchema>;
+
+/**
+ * Response of `POST /api/mono/disconnect`. Server best-efforts deregister
+ * the webhook with Monobank, then deletes `mono_connection`. The `ok:
+ * true` envelope mirrors the rest of the boolean-result write endpoints
+ * in this codebase.
+ */
+export const MonoDisconnectResponseSchema = z.object({
+  ok: z.literal(true),
+});
+export type MonoDisconnectResponse = z.infer<
+  typeof MonoDisconnectResponseSchema
+>;
+
+/**
+ * Response of `POST /api/mono/backfill`. The handler returns `started`
+ * synchronously and runs the per-account 31-day statement pull in the
+ * background; clients poll `sync-state.lastBackfillAt` to detect
+ * completion.
+ */
+export const MonoBackfillResponseSchema = z.object({
+  status: z.literal("started"),
+  accountsCount: z.number().int().nonnegative(),
+});
+export type MonoBackfillResponse = z.infer<typeof MonoBackfillResponseSchema>;
 
 // ────────────────────── Waitlist (Phase 0 monetization rails) ───────────────
 // Простий sign-up для майбутнього Pro-тіру. Валідується тут, щоб і клієнт
