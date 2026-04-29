@@ -358,9 +358,42 @@ What the rule **never** flags (these stay):
 - Dark-side-only "patches" where the light side is already semantic (`bg-success-soft text-success-strong dark:text-emerald-100`) — these document gaps in the WCAG-AA `-strong` companion scale on dark panels (rule #9).
 - Semantic tokens that happen to carry a `dark:` prefix (`dark:bg-surface`, `dark:text-fg`, `dark:border-border`).
 
-Enforced by `sergeant-design/no-raw-dark-palette` (`error`), scoped to `apps/web/**/*.{ts,tsx,js,jsx}` — the semantic replacements (`bg-{family}-soft`, `border-{module}-soft-border`, …) resolve through `--c-{family}-soft*` CSS variables that live only in `apps/web/src/index.css`. NativeWind (`apps/mobile`) renders classNames into React Native inline styles and does not consume those CSS variables, so the rule does not apply there. Promoted from absent → `error` in PR [#1155](https://github.com/Skords-01/Sergeant/pull/1155) once the audit's inventory hit zero (Wave 2a + 2b in PR [#1153](https://github.com/Skords-01/Sergeant/pull/1153), Wave 1b in [#1149](https://github.com/Skords-01/Sergeant/pull/1149)) and the 40 additional paired call-sites surfaced by the rule were migrated to the canonical Wave 1b shape.
+Enforced by `sergeant-design/no-raw-dark-palette` (`error`), scoped to `apps/web/**/*.{ts,tsx,js,jsx}` — the semantic replacements (`bg-{family}-soft`, `border-{module}-soft-border`, …) resolve through `--c-{family}-soft*` CSS variables that live only in `apps/web/src/index.css`. NativeWind (`apps/mobile`) renders classNames into React Native inline styles and does not consume those CSS variables, so the rule does not apply there. Promoted from absent → `error` in PR [#1155](https://github.com/Skords-01/Sergeant/pull/1155) once the audit's inventory hit zero (Wave 2a + 2b in PR [#1153](https://github.com/Skords-01/Sergeant/pull/1153), Wave 1b in [#1149](https://github.com/Skords-01/Sergeant/pull/1149)) and the 40 additional paired call-sites surfaced by the rule were migrated to the canonical Wave 1b shape. Refined in [#1157](https://github.com/Skords-01/Sergeant/pull/1157) to skip variant-prefixed dark utilities (`lg:dark:bg-amber-500/15`, `hover:dark:text-coral-300`, …) — those carry an extra breakpoint or state condition that the rule's bare-pair contract does not model.
 
-### 14. Read governance before coding; update docs alongside code
+### 14. Visible focus indicators must use `focus-visible:`, not `focus:`
+
+> Why a hard rule? `focus:ring-*` and `focus:bg-*` fire on every focus event — including a pointer click, which produces a flashing ring on every mouse interaction with a button or input. `focus-visible:` is the modern primitive that only fires when the user is navigating with the keyboard or assistive tech. Sergeant's design-system contract (`docs/design/design-system.md`) explicitly lists `focus-visible:ring-2 ring-brand-500/45 ring-offset-2 ring-offset-surface` as the canonical focus indicator and notes "**Focus — `focus-visible:ring-brand-500/30`, а не `focus:`, аби pointer-клік не блимав кільцем**". Every `focus:` colour utility shipped to date predates that rule and is a regression that needs to be migrated.
+
+```tsx
+// ❌ BAD — pointer click on the input flashes the brand ring
+<input className="focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/30" />
+
+// ✅ GOOD — only keyboard / assistive-tech focus paints the ring;
+//          pointer click leaves the input untouched
+<input className="focus:outline-none focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30" />
+
+// ❌ BAD — paired raw `focus:` rules duplicate `focus-visible:` (legacy
+//          fallback for pre-2022 browsers); modern targets don't need them
+<input className="focus-visible:border-brand-400 focus:border-brand-400" />
+
+// ✅ GOOD — `focus-visible:` is supported by Chrome 86+, Safari 15.4+,
+//          Firefox 85+; the legacy fallback is dead weight
+<input className="focus-visible:border-brand-400" />
+```
+
+The single legitimate `focus:` utility is **`focus:outline-none`** — the canonical reset that pairs with `focus-visible:ring-*` so the user-agent outline doesn't double up with the design-system ring.
+
+What the rule **never** flags (these stay):
+
+- `focus:outline-none`, `focus:outline-hidden`, `focus:outline-transparent` — outline resets that pair with `focus-visible:ring-*`.
+- `focus:not-sr-only`, `focus:fixed`, `focus:px-4`, `focus:rounded-xl`, … — non-colour layout / sizing utilities. Skip-links use these legitimately to promote a sr-only element to a visible pinned pill on focus, and that's intentional UX.
+- `focus:text-sm`, `focus:text-base`, `focus:text-mini`, `focus:text-center`, … — `text-` size / alignment / transform tails that aren't colours.
+- `focus:font-semibold` and other typography utilities outside the colour/border/ring/shadow set.
+- `lg:focus:bg-panel`, `hover:focus:text-brand-strong`, `dark:focus:border-brand-400`, `group-focus:bg-panel`, `peer-focus:ring-2`, `focus-within:bg-panel`, `focus-visible:ring-brand-500/45` — variant-prefixed `focus:` and the unrelated `:focus-visible` / `:focus-within` / `:group-focus` / `:peer-focus` pseudo-classes.
+
+Enforced by `sergeant-design/prefer-focus-visible` (`error`), scoped to `apps/web/**/*.{ts,tsx,js,jsx}` — React Native (`apps/mobile`, NativeWind) doesn't expose a `:focus-visible` pseudo-class equivalent; mobile uses `onFocus` handlers and the ring concept is web-only. Promoted from absent → `error` in PR [#1158](https://github.com/Skords-01/Sergeant/pull/1158) once the existing 14 paired `focus:` colour utilities (in `Input`, `Select`, `SkipLink`, `InputDialog`, `AssistantCataloguePage`) were migrated to `focus-visible:`.
+
+### 15. Read governance before coding; update docs alongside code
 
 > Why a hard rule? Because rules are useless if no one reads them, and docs are dangerous if they describe behaviour the code no longer has. Both failure modes have shipped here ([#1143](https://github.com/Skords-01/Sergeant/pull/1143) deleted scaffolded code partly because the AI agent skipped the playbook; multiple Tailwind-opacity bugs survived because the design-system doc still listed deprecated tokens). This rule closes both gaps.
 
@@ -368,7 +401,7 @@ Enforced by `sergeant-design/no-raw-dark-palette` (`error`), scoped to `apps/web
 
 Both AI agents and human contributors **must** read the relevant governance up front, in this order:
 
-1. **`AGENTS.md`** — Hard Rules (#1–#14), Module ownership map for the path you're touching, AI-marker conventions, Domain invariants.
+1. **`AGENTS.md`** — Hard Rules (#1–#15), Module ownership map for the path you're touching, AI-marker conventions, Domain invariants.
 2. **`CONTRIBUTING.md`** — branch/commit conventions, pre-commit hooks, PR checklist.
 3. **`CLAUDE.md`** — Claude/AI-specific commands and guardrails (sister file to AGENTS.md).
 4. **The matching playbook** in `docs/playbooks/` — pick by trigger phrase. New API endpoint → `add-api-endpoint.md`. New HubChat tool → `add-hubchat-tool.md`. Removing code → `cleanup-dead-code.md`. Migrations → `add-migration.md`.

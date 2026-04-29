@@ -61,6 +61,24 @@ The rule fires only when **both** halves are present on the same className value
 <Card className="border border-fizruk-soft-border/50" />
 ```
 
+### `sergeant-design/prefer-focus-visible`
+
+Forbids `focus:` colour / border / ring / shadow utilities (`focus:bg-panel`, `focus:border-brand-400`, `focus:ring-2`, `focus:ring-brand-500/45`, `focus:shadow-float`, `focus:text-text`, `focus:text-brand-strong`, …). Visible focus indicators must use the `focus-visible:` variant instead — `focus:` fires for any focus state including pointer click, which produces a flashing colour every time the user clicks a button or input; `focus-visible:` only fires for keyboard / assistive-tech focus. Sergeant's design-system contract ([`docs/design/design-system.md`](../../docs/design/design-system.md)) explicitly lists `focus-visible:ring-2 ring-brand-500/45 ring-offset-2 ring-offset-surface` as the canonical focus indicator. The rule is scoped to colour / border / ring / shadow / fill / stroke / divide / placeholder / caret / decoration / accent / outline-offset utilities; non-colour `text-` tails (font sizes `text-xs`–`text-9xl`, the Sergeant `text-mini` / `text-dialog` tokens, alignment `text-center`, transform `text-uppercase`, …) are intentionally exempted because they are not colour blinks. Variant-prefixed tokens (`lg:focus:bg-panel`, `hover:focus:text-brand-strong`, `dark:focus:border-brand-400`, `group-focus:bg-panel`, `peer-focus:ring-2`) carry an extra condition the rule's bare-token contract does not model and are skipped. The single legitimate `focus:` utility is **`focus:outline-none`** (and the inert `focus:outline-hidden` / `focus:outline-transparent`) — the canonical user-agent outline reset that pairs with `focus-visible:ring-*` so the design-system ring takes over. See [AGENTS.md rule #14](../../AGENTS.md) and [`docs/design/DARK-MODE-AUDIT.md`](../../docs/design/DARK-MODE-AUDIT.md). Severity: **error** (scoped to `apps/web/**/*.{ts,tsx,js,jsx}` only — React Native (`apps/mobile`, NativeWind) does not expose a `:focus-visible` pseudo-class equivalent).
+
+```tsx
+// ❌ BAD — pointer click on the input flashes the brand ring
+<input className="focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/30" />
+
+// ✅ GOOD — only keyboard / assistive-tech focus paints the ring
+<input className="focus:outline-none focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30" />
+
+// ❌ BAD — paired raw `focus:` rules duplicate `focus-visible:`
+<input className="focus-visible:border-brand-400 focus:border-brand-400" />
+
+// ✅ GOOD — `focus-visible:` is supported by every modern browser
+<input className="focus-visible:border-brand-400" />
+```
+
 ### `sergeant-design/no-foreign-module-accent`
 
 Inside `apps/<app>/src/modules/<X>/` subtrees only `<X>`'s accent utilities (`bg-<X>-surface`, `text-<X>-strong`, `ring-<X>`, `bg-<X>-500/15`, …) may appear. Sergeant's four module accents (`finyk`/emerald, `fizruk`/teal, `routine`/coral, `nutrition`/lime) are deliberately close in saturation — a fizruk screen accidentally rendering a coral `ring-routine` reads to the user as "Рутина" and is a design bug, not a stylistic choice. Cross-module shells (`core/`, `shared/`, `modules/shared/`, `stories/`, test files) remain free to reference all four. Variant prefixes (`dark:`, `hover:`, `lg:`), shade suffixes (`-500`, `-soft`, `-strong`), and opacity suffixes (`/15`) are handled transparently. See [AGENTS.md rule #12](../../AGENTS.md) and [`docs/design/MODULE-ACCENT.md`](../../docs/design/MODULE-ACCENT.md). Severity: **error**.

@@ -172,6 +172,15 @@ export default [
     files: ["apps/web/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "sergeant-design/no-raw-dark-palette": "error",
+      // `prefer-focus-visible` (Wave 2e of the dark-mode audit's
+      // accessibility companion track — see `docs/design/design-system.md`
+      // → "Focus — focus-visible:ring-…, а не focus:, аби pointer-клік
+      // не блимав кільцем"). The rule bans `focus:` colour/border/ring/
+      // shadow utilities; only `focus:outline-none` (the canonical reset
+      // that pairs with `focus-visible:ring-*`) is allowed. Web-only —
+      // React Native (NativeWind) doesn't expose a `:focus-visible`
+      // pseudo-class equivalent.
+      "sergeant-design/prefer-focus-visible": "error",
     },
   },
   // DS primitives that legitimately define the eyebrow treatment.
@@ -213,6 +222,7 @@ export default [
       "sergeant-design/no-hex-in-classname": "off",
       "sergeant-design/no-foreign-module-accent": "off",
       "sergeant-design/no-raw-dark-palette": "off",
+      "sergeant-design/prefer-focus-visible": "off",
     },
   },
   // Jest setup / test files need jest globals.

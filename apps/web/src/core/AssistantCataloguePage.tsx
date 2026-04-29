@@ -180,7 +180,7 @@ export function AssistantCataloguePage({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Пошук — наприклад, «витрата», «звичка», «1RM»…"
-            className="w-full bg-panel border border-line rounded-2xl pl-9 pr-3 py-3 text-sm text-text placeholder:text-subtle focus:outline-none focus:border-brand-500/50 shadow-card"
+            className="w-full bg-panel border border-line rounded-2xl pl-9 pr-3 py-3 text-sm text-text placeholder:text-subtle focus:outline-none focus-visible:border-brand-500/50 focus-visible:ring-2 focus-visible:ring-brand-500/30 shadow-card"
             aria-label="Пошук можливостей"
           />
         </div>
