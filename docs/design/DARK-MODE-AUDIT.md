@@ -22,14 +22,14 @@
   `hover:bg-*-soft-hover`). The `--c-{brand,module,status}-soft*`
   CSS variables in `apps/web/src/index.css` now carry the light/dark
   swap, so the call-sites need no `dark:` override at all.
-- **7** sites are intentionally **deferred** to Wave 2 because they
-  need a _primitive_ rather than a token swap:
-  - 4 × `WorkoutFinishSheets.tsx` rows → become a
-    `<WorkoutStatTile>` primitive (same `bg-teal-800/10 dark:bg-white/10`
-    soup every stat card reuses).
-  - 3 × `chartTheme.ts` coral gradient rows → move into a
-    `chartGradients` CSS-variable layer so the JS module stops owning
-    light/dark pairs.
+- **Wave 2a + 2b** migrated the remaining **7 / 28** via two
+  refactor moves: the `WorkoutFinishSheets.tsx` four-row pattern
+  collapsed into a `<WorkoutStatTile>` primitive backed by the new
+  `--c-fizruk-tile{,-border}` token (light = teal-800 wash,
+  dark = white wash), and the `chartTheme.ts` coral heatmap rows
+  moved into `bg-routine-heat-l{1,2,3}` CSS classes whose
+  `.dark .X` override owns the per-theme colour. **Audit count
+  hits 0.**
 - Every remaining anti-pattern is one `dark:` override away from
   silently falling through on the next palette migration — exactly
   the class of bug [#814](https://github.com/Skords-01/Sergeant/pull/814)
@@ -156,12 +156,19 @@ stops owning them.
    `apps/web/src/index.css` that flip between light and dark themes
    automatically. 21 / 28 call-sites migrated; each drops ≥ 1
    `dark:` override, net reduction ≈ 40 `dark:` occurrences.
-2. **Wave 2**: the `WorkoutFinishSheets` four-row pattern becomes a
-   real `<WorkoutStatTile>` primitive; the `chartTheme` coral pairs
-   move into `chartGradients` CSS variables. After those two moves
-   land, the audit's anti-pattern count hits zero and total `dark:`
-   occurrences in `apps/web` drop under `250`.
-3. **Final step**: promote a lint rule in
+2. **Wave 2a — DONE.** The four `WorkoutFinishSheets.tsx` rows now
+   resolve through a `<WorkoutStatTile>` primitive in
+   `apps/web/src/modules/fizruk/components/workouts/WorkoutStatTile.tsx`,
+   backed by the new `--c-fizruk-tile{,-border}` CSS variables (light =
+   teal-800 wash, dark = white wash). The summary-sheet close button
+   reuses the same token (`bg-fizruk-tile/10`) so its raw-palette
+   `dark:bg-white/10` override is also gone.
+3. **Wave 2b — DONE.** The three `chartTheme.ts` heatmap rows now
+   resolve through `bg-routine-heat-l{1,2,3}` CSS classes defined in
+   `apps/web/src/styles/module-surfaces.css`. The `.dark .X` override
+   owns the per-theme RGB+opacity pair; the JS module references one
+   class name per level. Audit count = 0.
+4. **Final step (Wave 2c)**: promote a lint rule in
    `packages/eslint-plugin-sergeant-design` that forbids any
    `dark:bg-<palette>-<N>` / `dark:text-<palette>-<N>` pattern — the
    anti-pattern is then zero, so the rule promotes to `error` without

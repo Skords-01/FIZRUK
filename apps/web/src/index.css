@@ -165,6 +165,14 @@
     --c-fizruk-soft-border: 153 246 228; /* teal-200 */
     --c-fizruk-soft-hover: 204 251 241; /* teal-100 */
 
+    /* `tile` + `tile-border` — subtle stat-tile wash on the fizruk hero
+       gradient (`bg-hero-teal`). Used by `<WorkoutStatTile>` and the
+       fizruk summary-sheet close button. Light=teal-800 (so a 10% wash
+       reads as a slightly darker tile on the bright teal gradient);
+       dark=white (10% wash on dark panel reads as a subtle bright tile). */
+    --c-fizruk-tile: 17 94 89; /* teal-800 */
+    --c-fizruk-tile-border: 17 94 89; /* teal-800 */
+
     --c-routine-soft: 255 245 243; /* coral-50 — parity with `brandColors.coral[50]` */
     --c-routine-soft-border: 255 210 200; /* coral-200 */
     --c-routine-soft-hover: 255 232 227; /* coral-100 */
@@ -286,6 +294,12 @@
     --c-fizruk-soft: 19 78 74; /* teal-900 */
     --c-fizruk-soft-border: 17 94 89; /* teal-800 */
     --c-fizruk-soft-hover: 17 94 89; /* teal-800 */
+
+    /* Dark-mode flip of the stat-tile token: white wash reads as a
+       subtle bright tile on dark panel (matches the legacy
+       `dark:bg-white/10 dark:border-white/15` hand-rolling). */
+    --c-fizruk-tile: 255 255 255; /* white */
+    --c-fizruk-tile-border: 255 255 255; /* white */
 
     --c-routine-soft: 159 36 30; /* coral-900 (≈ red-900 tuned) */
     --c-routine-soft-border: 185 54 48; /* coral-800 */

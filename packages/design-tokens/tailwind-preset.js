@@ -179,6 +179,13 @@ const preset = {
           soft: "rgb(var(--c-fizruk-soft) / <alpha-value>)",
           "soft-border": "rgb(var(--c-fizruk-soft-border) / <alpha-value>)",
           "soft-hover": "rgb(var(--c-fizruk-soft-hover) / <alpha-value>)",
+          // `tile` + `tile-border` — subtle stat-tile wash on the
+          // fizruk hero gradient (Wave 2a). Light=teal-800,
+          // dark=white. Apply with the registered opacity scale,
+          // typically `bg-fizruk-tile/10` and
+          // `border-fizruk-tile-border/15`.
+          tile: "rgb(var(--c-fizruk-tile) / <alpha-value>)",
+          "tile-border": "rgb(var(--c-fizruk-tile-border) / <alpha-value>)",
         },
 
         /** Рутина — Soft coral habit tracker */
