@@ -98,6 +98,8 @@ export {
   pushKeys,
 } from "./queryKeys";
 
+export { signedDeltaClass, transactionAmountClass } from "./amountTone";
+
 export {
   safeReadLS,
   safeReadStringLS,
