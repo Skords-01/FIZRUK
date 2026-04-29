@@ -83,7 +83,6 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
-        onPointerDown={(e) => e.stopPropagation()}
         style={
           swipe.dragging
             ? ({
@@ -95,7 +94,17 @@ export function ConfirmDialog({
                 transition: "transform 200ms cubic-bezier(0.32, 0.72, 0, 1)",
               } satisfies CSSProperties)
         }
-        {...swipe.bind}
+        // Stop propagation so a pointerdown on the panel doesn't fall
+        // through to the scrim button beneath. We forward the swipe
+        // hook's handlers explicitly (rather than spreading) so we can
+        // also call stopPropagation on the down event.
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          swipe.bind.onPointerDown(e);
+        }}
+        onPointerMove={swipe.bind.onPointerMove}
+        onPointerUp={swipe.bind.onPointerUp}
+        onPointerCancel={swipe.bind.onPointerCancel}
         className={cn(
           "relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0 overscroll-contain touch-pan-y",
           "bg-panel rounded-3xl shadow-float border border-line p-6",
