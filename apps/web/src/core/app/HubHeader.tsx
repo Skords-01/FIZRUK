@@ -169,27 +169,15 @@ export function HubHeader({
         </div>
       </div>
 
-      {/* ── Row 2: Vertical bar + subtitle (hidden when shrunk) ── */}
-      <div
-        className={cn(
-          "flex items-center gap-1.5 mt-1.5 ml-[3px]",
-          "transition-all duration-300",
-          isShrunk && "opacity-0 h-0 mt-0 overflow-hidden",
-        )}
-      >
-        <span
-          aria-hidden="true"
-          className="inline-block w-[3px] h-[14px] rounded-full bg-brand-500"
-        />
-        <span className="text-[11px] font-bold tracking-[0.12em] uppercase text-brand-700 dark:text-brand-400 select-none">
-          Оперативний центр
-        </span>
-      </div>
-
-      {/* ── Row 3: Greeting · date (hidden when shrunk) ───────── */}
+      {/* ── Row 2: Greeting · date (hidden when shrunk) ───────── */}
+      {/* Раніше тут було ще rows-2 з підписом «ОПЕРАТИВНИЙ ЦЕНТР» — */}
+      {/* він дублював wordmark «Sergeant» зверху. Лишаємо лише */}
+      {/* greeting+date, бо це справжній сигнальний шар (час доби, */}
+      {/* персональне звернення), а тег «оперативний центр» — */}
+      {/* брендовий шум, який забирав вертикальний простір. */}
       <p
         className={cn(
-          "mt-1.5 ml-[3px] text-[13px] leading-snug text-muted truncate",
+          "mt-2 ml-[3px] text-[13px] leading-snug text-muted truncate",
           "transition-all duration-300",
           isShrunk && "opacity-0 h-0 mt-0 overflow-hidden",
         )}
