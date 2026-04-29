@@ -8,5 +8,6 @@
 | Документ                                         | Опис                                     |
 | ------------------------------------------------ | ---------------------------------------- |
 | [`audit-exceptions.md`](./audit-exceptions.md)   | Винятки із security audit (обґрунтовані) |
+| [`container-scan.md`](./container-scan.md)       | Trivy CVE-скан Docker-образу `hub-api`   |
 | [`nightly-audit.md`](./nightly-audit.md)         | Nightly audit: triage flow               |
 | [`vulnerability-sla.md`](./vulnerability-sla.md) | SLA на реакцію і усунення вразливостей   |

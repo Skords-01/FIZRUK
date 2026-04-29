@@ -158,3 +158,21 @@ export {
   type WeeklyDigestReport,
   type WeeklyDigestResponse,
 } from "./endpoints/weeklyDigest";
+
+export {
+  createTranscribeEndpoints,
+  TranscribeQuerySchema,
+  TranscribeResponseSchema,
+  type TranscribeBody,
+  type TranscribeEndpoints,
+  type TranscribeOutcome,
+  type TranscribeQuery,
+  type TranscribeResponse,
+} from "./endpoints/transcribe";
+
+export {
+  createWebVitalsEndpoints,
+  WebVitalsPayloadSchema,
+  type WebVitalsEndpoints,
+  type WebVitalsPayload,
+} from "./endpoints/webVitals";
