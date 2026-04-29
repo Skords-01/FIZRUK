@@ -27,7 +27,7 @@ import { useIosInstallBanner } from "./app/useIosInstallBanner";
 import { useSWUpdate } from "./app/useSWUpdate";
 import { PWA_ACTION_KEY } from "./app/pwaAction";
 import { HubHeader } from "./app/HubHeader";
-import { HubTabs } from "./app/HubTabs";
+import { HubBottomNav } from "./app/HubBottomNav";
 import { HubMainContent } from "./app/HubMainContent";
 import { HubFloatingActions } from "./app/HubFloatingActions";
 import { HubModals } from "./app/HubModals";
@@ -426,7 +426,7 @@ function AppInner() {
     const inFtuxSession =
       shouldShowOnboarding() && !user && !isFirstRealEntryDone();
     return (
-      <div className="min-h-dvh bg-bg flex flex-col safe-area-pt-pb page-enter">
+      <div className="h-dvh bg-bg flex flex-col overflow-hidden safe-area-pt page-enter">
         <SkipLink />
         <HintsOrchestrator
           inFtuxSession={inFtuxSession}
@@ -449,16 +449,6 @@ function AppInner() {
           hideAuthButton={inFtuxSession}
         />
 
-        <HubTabs
-          hubView={ui.hubView}
-          onChange={ui.setHubView}
-          // «Звіти» — пустий екран без даних, тому ховаємо tab до
-          // першого реального запису. Якщо юзер уже обрав «Звіти» і
-          // потім стер дані — повертаємо його на дашборд, щоб не
-          // лишався на неіснуючому табі.
-          showReports={hasAnyRealEntry()}
-        />
-
         <HubMainContent
           updateAvailable={updateAvailable}
           onApplyUpdate={applyUpdate}
@@ -478,9 +468,21 @@ function AppInner() {
           inFtuxSession={inFtuxSession}
         />
 
+        <HubBottomNav
+          hubView={ui.hubView}
+          onChange={ui.setHubView}
+          // «Звіти» — пустий екран без даних, тому ховаємо tab до
+          // першого реального запису. Якщо юзер уже обрав «Звіти» і
+          // потім стер дані — повертаємо його на дашборд, щоб не
+          // лишався на неіснуючому табі.
+          showReports={hasAnyRealEntry()}
+        />
+
         {/* Thumb-reach entry to the AI assistant. Always visible so the
-            user can reach the assistant from anywhere on the hub. */}
-        <HubFloatingActions onOpenChat={ui.openChat} />
+            user can reach the assistant from anywhere on the hub. The
+            `compact` variant is used here so the FAB offsets above the
+            hub bottom nav identically to the module bottom nav. */}
+        <HubFloatingActions onOpenChat={ui.openChat} compact />
 
         {/* Persistent shortcut back to an in-progress Fizruk workout.
             Hidden during FTUX so the splash stays single-CTA; otherwise

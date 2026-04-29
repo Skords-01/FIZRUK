@@ -1,63 +1,45 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { useToast } from "@shared/hooks/useToast";
 import { safeReadStringLS, safeWriteLS } from "@shared/lib/storage";
 import type { HubView } from "../hooks/useHubUIState";
 
-// Прапор у localStorage: «звіти-таб уже разово розкривався». Зберігаємо
-// timestamp (а не bool), щоб у логах було видно дату розблокування —
-// зручно для аналітики FTUX-воронки і для діагностики «чому юзер не
-// побачив підказку».
+/**
+ * Sergeant Design System — `HubBottomNav`
+ *
+ * Hub-level bottom navigation. Replaces the earlier top-positioned
+ * `HubTabs` so the whole app lives under a single navigation pattern:
+ * everything (hub + 4 modules) reads bottom-up, not bottom-down for
+ * modules and top-down for the hub.
+ *
+ * Shape mirrors `ModuleBottomNav` for visual consistency:
+ * - 60 px height (64 px on coarse-pointer devices).
+ * - `safe-area-pb` so iOS home-indicator clears.
+ * - Active indicator pill (`w-10 h-1`) at the top, brand-colored
+ *   instead of module-colored (the hub is module-agnostic).
+ * - `role="tablist"` + `aria-selected` for AT.
+ *
+ * Layout contract:
+ * - Rendered at the bottom of the hub `<div h-dvh flex-col>` shell, so
+ *   FABs (`HubFloatingActions`) and `ActiveWorkoutBanner` must offset
+ *   their `bottom:` by 76 px + safe-area-inset-bottom to sit above it.
+ *
+ * The reports-tab reveal behavior (animate + one-time toast) is
+ * preserved from the old `HubTabs` — see comments on `safeReadStringLS`
+ * usage below. Storage key is unchanged so existing users aren't
+ * re-onboarded through the reveal toast.
+ */
+
 const REPORTS_TAB_REVEALED_AT_KEY = "sergeant.hub.reportsTabRevealedAt";
 
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-  iconName?: string;
-  iconBody?: ReactNode;
-  className?: string;
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-  iconName,
-  iconBody,
-  className,
-}: TabButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      role="tab"
-      aria-selected={active}
-      className={cn(
-        // WCAG 2.5.5 AAA: 48 пкс на мобільному (thumb-zone), 44 пкс на ≥1sm — для desktop вводу
-        // достатньо. Focus-ring без альфи, щоб холдити ≥3:1 контраст до bg.
-        "flex-1 flex items-center justify-center gap-1.5 min-h-[48px] sm:min-h-[44px] py-2 rounded-xl text-sm font-medium transition-[background-color,color,opacity]",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
-        active
-          ? "bg-panel text-text shadow-card"
-          : "text-muted hover:text-text",
-        className,
-      )}
-    >
-      {iconName ? <Icon name={iconName} size={15} strokeWidth={2} /> : iconBody}
-      {children}
-    </button>
-  );
-}
-
-// "dashboard" icon is bespoke (2x2 grid of squares) so we render it inline
-// here rather than adding a one-off entry to the shared Icon map.
-function DashboardIcon() {
+// "dashboard" icon is bespoke (2×2 grid of squares) so we render it
+// inline here rather than adding a one-off entry to the shared Icon map.
+function DashboardIcon({ size = 20 }: { size?: number }) {
   return (
     <svg
-      width="15"
-      height="15"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -74,7 +56,75 @@ function DashboardIcon() {
   );
 }
 
-interface HubTabsProps {
+interface HubBottomNavTabProps {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  iconName?: string;
+  iconBody?: React.ReactNode;
+  className?: string;
+  panelId: string;
+  id: string;
+}
+
+function HubBottomNavTab({
+  active,
+  onClick,
+  label,
+  iconName,
+  iconBody,
+  className,
+  panelId,
+  id,
+}: HubBottomNavTabProps) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      id={`hub-tab-${id}`}
+      aria-selected={active}
+      aria-controls={panelId}
+      tabIndex={active ? 0 : -1}
+      onClick={onClick}
+      className={cn(
+        "relative flex-1 flex flex-col items-center justify-center gap-1",
+        "transition-all duration-200 min-h-[48px] [@media(pointer:coarse)]:min-h-[52px]",
+        "active:scale-95 [@media(pointer:coarse)]:active:bg-panelHi/50",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-panel",
+        active ? "text-text" : "text-muted hover:text-text/70",
+        className,
+      )}
+    >
+      {active && (
+        <span
+          className={cn(
+            "absolute top-0 left-1/2 -translate-x-1/2",
+            "w-10 h-1 rounded-full shadow-sm",
+            // Brand accent (hub is module-agnostic — never module-colored).
+            "bg-gradient-to-r from-brand-400 to-brand-500",
+          )}
+          aria-hidden
+        />
+      )}
+      <span
+        className={cn(
+          "relative transition-all duration-200",
+          active && "text-brand-strong",
+        )}
+        aria-hidden
+      >
+        {iconName ? (
+          <Icon name={iconName} size={20} strokeWidth={2} />
+        ) : (
+          iconBody
+        )}
+      </span>
+      <span className="text-2xs font-semibold leading-none">{label}</span>
+    </button>
+  );
+}
+
+export interface HubBottomNavProps {
   hubView: HubView;
   onChange: (view: HubView) => void;
   /**
@@ -86,11 +136,11 @@ interface HubTabsProps {
   showReports?: boolean;
 }
 
-export function HubTabs({
+export function HubBottomNav({
   hubView,
   onChange,
   showReports = true,
-}: HubTabsProps) {
+}: HubBottomNavProps) {
   const toast = useToast();
   // Чи був перехід `showReports: false → true` в межах поточного маунту.
   // Тільки в цьому випадку ми вмикаємо bounce-анімацію + one-time toast.
@@ -138,38 +188,45 @@ export function HubTabs({
   return (
     <nav
       aria-label="Розділи хабу"
-      className="px-5 max-w-lg mx-auto w-full mb-1"
+      className={cn(
+        "shrink-0 relative z-30 safe-area-pb",
+        "bg-panel/95 backdrop-blur-xl",
+        "border-t border-line",
+      )}
     >
       <div
         role="tablist"
-        className="flex rounded-2xl overflow-hidden border border-line bg-panelHi/40 p-0.5 gap-0.5"
+        className="flex h-[60px] [@media(pointer:coarse)]:h-[64px]"
       >
-        <TabButton
+        <HubBottomNavTab
+          id="dashboard"
+          panelId="hub-panel-dashboard"
           active={hubView === "dashboard"}
           onClick={() => onChange("dashboard")}
           iconBody={<DashboardIcon />}
-        >
-          Головна
-        </TabButton>
+          label="Головна"
+        />
 
         {showReports && (
-          <TabButton
+          <HubBottomNavTab
+            id="reports"
+            panelId="hub-panel-reports"
             active={hubView === "reports"}
             onClick={() => onChange("reports")}
             iconName="bar-chart"
+            label="Звіти"
             className={animateReveal ? "animate-bounce-in" : undefined}
-          >
-            Звіти
-          </TabButton>
+          />
         )}
 
-        <TabButton
+        <HubBottomNavTab
+          id="settings"
+          panelId="hub-panel-settings"
           active={hubView === "settings"}
           onClick={() => onChange("settings")}
           iconName="settings"
-        >
-          Налаштування
-        </TabButton>
+          label="Налаштування"
+        />
       </div>
     </nav>
   );
