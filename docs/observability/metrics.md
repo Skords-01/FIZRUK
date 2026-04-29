@@ -1,6 +1,6 @@
 # Prometheus Metrics Reference
 
-> Last reviewed: 2026-04-27. Reviewer: Devin (automated).
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
 
 Каталог усіх Prometheus-метрик бекенду Sergeant (`GET /metrics`, bearer `METRICS_TOKEN`).
 Джерело істини — [`metrics.ts`](../../apps/server/src/obs/metrics.ts).

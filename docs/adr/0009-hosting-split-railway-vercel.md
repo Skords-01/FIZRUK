@@ -10,7 +10,7 @@
   - [`vercel.json`](../../vercel.json) — `installCommand`, `outputDirectory`, headers, rewrites.
   - [`railway.toml`](../../railway.toml), [`Dockerfile.api`](../../Dockerfile.api) — build-контракт Railway.
   - [`apps/web/middleware.ts`](../../apps/web/middleware.ts) — Edge middleware, що проксіює `/api/*` → Railway.
-  - [`apps/server/src/lib/trustedOrigins.ts`](../../apps/server/src/lib/trustedOrigins.ts) — CORS + Better Auth origin whitelist.
+  - [`apps/server/src/auth.ts`](../../apps/server/src/auth.ts) — CORS + Better Auth origin whitelist (`trustedOrigins`).
 
 ---
 
@@ -249,7 +249,7 @@ Edge proxy — **boundary для cookie-same-origin трюку**, **не** secur
 сервері — перевірка Better Auth session незалежна від того, як запит дійшов.
 Edge не фільтрує payload, не додає auth, не робить rate-limit (rate-limit живе
 в Express-middleware на Railway, див.
-[`apps/server/src/lib/rateLimit.ts`](../../apps/server/src/lib/rateLimit.ts)).
+[`apps/server/src/http/rateLimit.ts`](../../apps/server/src/http/rateLimit.ts)).
 
 ### Consequences
 
