@@ -48,6 +48,7 @@
     "licenses:check": "node scripts/generate-licenses.mjs check",
     "strict:coverage": "node scripts/strict-coverage.mjs",
     "dead-code:packages": "node scripts/ts-prune-packages.mjs",
+    "dead-code:files": "node scripts/knip-respects-scaffolded.mjs",
     "knip": "knip",
     "depcheck:all": "pnpm -r exec depcheck --ignore-patterns=dist,dist-server,coverage,.turbo",
     "prepare": "husky",
