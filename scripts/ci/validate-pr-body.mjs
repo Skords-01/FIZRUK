@@ -144,8 +144,62 @@ function loadBody() {
   return process.env.PR_BODY || "";
 }
 
-function main() {
-  const body = loadBody();
+/**
+ * GitHub's `pull_request` webhook can fire with an empty `body` field on
+ * `opened` events — the server processes the webhook faster than it commits
+ * the body to storage. When that happens the `PR_BODY` env passed to us is
+ * empty, which would falsely fail the validator. Fall back to fetching the
+ * body via the REST API, which reads committed state.
+ */
+async function fetchBodyFromApi() {
+  const token = process.env.GITHUB_TOKEN;
+  const repo = process.env.GITHUB_REPOSITORY;
+  const prNumber =
+    process.env.PR_NUMBER ||
+    process.env.GITHUB_REF?.match(/refs\/pull\/(\d+)\/merge/)?.[1];
+  if (!token || !repo || !prNumber) return null;
+  const res = await fetch(
+    `https://api.github.com/repos/${repo}/pulls/${prNumber}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+      },
+    },
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.body || "";
+}
+
+async function main() {
+  let body = loadBody();
+
+  // Surface what we actually received so CI failures are debuggable
+  // (GitHub Actions has occasionally delivered an empty
+  // `github.event.pull_request.body` when the webhook fires before the body
+  // is persisted; we want that visible in the step log, not a mystery).
+  const preview = (body || "").slice(0, 160).replace(/\n/g, "\\n");
+  console.log(
+    `→ PR body length: ${body ? body.length : 0} chars (preview: "${preview}…")`,
+  );
+
+  // Fall back to the REST API when the env-provided body is empty/absent.
+  if (!body || body.trim().length < 20) {
+    console.log(
+      `→ Env-provided body is empty; fetching via REST API as fallback.`,
+    );
+    const fetched = await fetchBodyFromApi();
+    if (fetched) {
+      body = fetched;
+      console.log(`→ REST API body length: ${body.length} chars.`);
+    } else {
+      console.log(
+        `→ REST API fallback unavailable (no GITHUB_TOKEN / repo / PR number).`,
+      );
+    }
+  }
+
   const { ok, errors, warnings } = validate(body);
 
   for (const w of warnings) console.warn(`⚠  ${w}`);
@@ -165,4 +219,9 @@ function main() {
 const isMain =
   process.argv[1] &&
   resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
-if (isMain) main();
+if (isMain) {
+  main().catch((err) => {
+    console.error(`❌Unexpected error:`, err);
+    process.exit(2);
+  });
+}
