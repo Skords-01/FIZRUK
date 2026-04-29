@@ -60,12 +60,6 @@ export type {
   UseScrollHeaderOptions,
 } from "./useScrollHeader";
 
-export { usePullToRefresh } from "./usePullToRefresh";
-export type {
-  PullToRefreshState,
-  UsePullToRefreshOptions,
-} from "./usePullToRefresh";
-
 export { useFocusTrap } from "./useFocusTrap";
 
 export { useFormValidation, validationRules } from "./useFormValidation";
