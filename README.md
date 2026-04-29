@@ -1,6 +1,12 @@
 # Sergeant
 
-> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+[![CI](https://github.com/Skords-01/Sergeant/actions/workflows/ci.yml/badge.svg)](https://github.com/Skords-01/Sergeant/actions/workflows/ci.yml)
+![Node 20](https://img.shields.io/badge/node-20.x-brightgreen)
+![pnpm 9](https://img.shields.io/badge/pnpm-9.15.1-orange)
+![TypeScript 6](https://img.shields.io/badge/TypeScript-6-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
 > **Status:** Active
 
 Персональна платформа-хаб із модулями: **ФІНІК** (фінанси), **ФІЗРУК** (спорт), **Рутина** (календар, звички, план) та **Харчування** (лог їжі, AI-аналіз фото, рецепти). PWA — встановлюється на телефон, працює офлайн. Акаунти та хмарна синхронізація між пристроями через Better Auth + PostgreSQL.
