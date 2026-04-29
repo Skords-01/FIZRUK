@@ -29,12 +29,12 @@ Fixes #123 — users saw 500s on /api/foo.
 pnpm test --filter foo
 \`\`\`
 
-## Pre-flight (Hard Rule #13)
+## Pre-flight (Hard Rule #15)
 
 - [x] Read AGENTS.md Hard Rules for the touched paths.
 - [ ] Checked freshness headers.
 
-## Docs updated alongside code? (Hard Rule #13)
+## Docs updated alongside code? (Hard Rule #15)
 
 - [x] N/A — no docs invalidated by this change.
 `;
