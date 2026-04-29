@@ -11,14 +11,29 @@
 ## TL;DR
 
 - **306** `dark:` overrides across `apps/web/src/**/*.{ts,tsx}` (excluding tests).
-- **28** of them are the anti-pattern this audit targets: a _raw
+- **28** of them were the anti-pattern this audit targets: a _raw
   palette_ background in light mode paired with a hand-tuned _raw
   palette_ (or ad-hoc `-soft`/`/15`) dark variant —
   `bg-teal-100 dark:bg-teal-900/30`, `bg-amber-50 … dark:bg-amber-500/15`,
   `bg-teal-800/10 dark:bg-white/10`, etc.
-- Every anti-pattern is one `dark:` override away from silently falling
-  through on the next palette migration — exactly the class of bug
-  [#814](https://github.com/Skords-01/Sergeant/pull/814) fixed.
+- **Wave 1b** migrated **21 / 28** of those to the preset-owned
+  `{brand,module,status}-soft` family (`bg-brand-soft`,
+  `bg-finyk-soft`, `bg-warning-soft`, `border-*-soft-border`,
+  `hover:bg-*-soft-hover`). The `--c-{brand,module,status}-soft*`
+  CSS variables in `apps/web/src/index.css` now carry the light/dark
+  swap, so the call-sites need no `dark:` override at all.
+- **7** sites are intentionally **deferred** to Wave 2 because they
+  need a _primitive_ rather than a token swap:
+  - 4 × `WorkoutFinishSheets.tsx` rows → become a
+    `<WorkoutStatTile>` primitive (same `bg-teal-800/10 dark:bg-white/10`
+    soup every stat card reuses).
+  - 3 × `chartTheme.ts` coral gradient rows → move into a
+    `chartGradients` CSS-variable layer so the JS module stops owning
+    light/dark pairs.
+- Every remaining anti-pattern is one `dark:` override away from
+  silently falling through on the next palette migration — exactly
+  the class of bug [#814](https://github.com/Skords-01/Sergeant/pull/814)
+  fixed.
 
 ## The anti-pattern, concretely
 
@@ -121,26 +136,22 @@ stops owning them.
 
 ## What happens next
 
-1. **Wave 1b** (this PR family, next up): extend the preset with the
-   tokens that are _referenced_ in the "Target" columns above but not
-   yet in the preset — `bg-brand-soft-border`,
-   `bg-warning-soft-border`, `bg-info-soft-border`,
-   `bg-success-soft-border`, `bg-danger-soft-border`,
-   `bg-finyk-border`, `bg-fizruk-border`, `bg-routine-border`,
-   `bg-nutrition-border`. Verify each clears WCAG AA against
-   body copy.
-2. **Wave 1c**: migrate the 28 call-sites above to the semantic tokens
-   in small, reviewable batches (one file per commit). Each commit
-   removes a pair of `dark:` overrides — net reduction
-   `~2 × 28 = 56` `dark:` occurrences (~18 %).
-3. **Wave 2+**: the `WorkoutFinishSheets` four-row pattern becomes a
+1. **Wave 1b — DONE.** The preset now ships the `-soft` /
+   `-soft-border` / `-soft-hover` trio for `brand` and all four
+   modules (`finyk`, `fizruk`, `routine`, `nutrition`) — backed by
+   `--c-{family}-soft*` CSS variables in
+   `apps/web/src/index.css` that flip between light and dark themes
+   automatically. 21 / 28 call-sites migrated; each drops ≥ 1
+   `dark:` override, net reduction ≈ 40 `dark:` occurrences.
+2. **Wave 2**: the `WorkoutFinishSheets` four-row pattern becomes a
    real `<WorkoutStatTile>` primitive; the `chartTheme` coral pairs
-   move into CSS variables. After those two moves land, expect to be
-   under `250` total `dark:` occurrences in `apps/web`.
-4. **Final step**: promote a lint rule in
+   move into `chartGradients` CSS variables. After those two moves
+   land, the audit's anti-pattern count hits zero and total `dark:`
+   occurrences in `apps/web` drop under `250`.
+3. **Final step**: promote a lint rule in
    `packages/eslint-plugin-sergeant-design` that forbids any
    `dark:bg-<palette>-<N>` / `dark:text-<palette>-<N>` pattern — the
-   anti-pattern is now zero, so the rule promotes to `error` without
+   anti-pattern is then zero, so the rule promotes to `error` without
    breaking anything.
 
 ## Legitimate `dark:` uses that STAY

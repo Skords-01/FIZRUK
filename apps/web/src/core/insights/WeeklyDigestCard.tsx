@@ -17,34 +17,40 @@ import { WeeklyDigestStories } from "./WeeklyDigestStories";
 // path without touching either module.
 export { hasLiveWeeklyDigest } from "@shared/lib/weeklyDigestStorage";
 
+// Wave 1b: `bgClass` / `borderClass` consolidated onto the
+// `{module}-soft` / `{module}-soft-border` token family (preset-owned
+// light/dark pair via `--c-{module}-soft*`). `colorClass` keeps the
+// explicit `-600 / dark:-400` pair because the module accent text uses
+// the saturated `-500` family (not the `-soft` wash) and does not have
+// a theme-adaptive semantic token today.
 const MODULE_CONFIG = {
   finyk: {
     icon: "💳",
     label: "Фінанси",
     colorClass: "text-brand-600 dark:text-brand-400",
-    bgClass: "bg-brand-100 dark:bg-brand-900/30",
-    borderClass: "border-brand-200/60 dark:border-brand-700/30",
+    bgClass: "bg-finyk-soft",
+    borderClass: "border-finyk-soft-border/60",
   },
   fizruk: {
     icon: "🏋️",
     label: "Тренування",
     colorClass: "text-teal-600 dark:text-teal-400",
-    bgClass: "bg-teal-100 dark:bg-teal-900/30",
-    borderClass: "border-teal-200/60 dark:border-teal-700/30",
+    bgClass: "bg-fizruk-soft",
+    borderClass: "border-fizruk-soft-border/60",
   },
   nutrition: {
     icon: "🥗",
     label: "Харчування",
     colorClass: "text-lime-600 dark:text-lime-400",
-    bgClass: "bg-lime-100 dark:bg-lime-900/30",
-    borderClass: "border-lime-200/60 dark:border-lime-700/30",
+    bgClass: "bg-nutrition-soft",
+    borderClass: "border-nutrition-soft-border/60",
   },
   routine: {
     icon: "✅",
     label: "Звички",
     colorClass: "text-coral-600 dark:text-coral-400",
-    bgClass: "bg-coral-100 dark:bg-coral-900/30",
-    borderClass: "border-coral-200/60 dark:border-coral-700/30",
+    bgClass: "bg-routine-soft",
+    borderClass: "border-routine-soft-border/60",
   },
 };
 

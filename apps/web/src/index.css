@@ -142,6 +142,37 @@
     --c-danger-soft: 254 226 226; /* red-100 */
     --c-info-soft: 224 242 254; /* sky-100 */
 
+    /* ───────────────────────────────────────────────────────────────────
+       SOFT BRAND & MODULE TINTS — Wave 1b
+       Same contract as `--c-success-soft`: the `-soft` token is the
+       surface wash, `-soft-border` is the paired hairline, `-soft-hover`
+       is the subtle hover tint. All three resolve automatically between
+       light and dark themes so call-sites never need
+       `dark:bg-{family}-500/15` gymnastics. Used by `Segmented`, `Tabs`,
+       `Button[variant=soft]`, `Badge`, `Banner`, `Card[variant=tint]`,
+       `WeeklyDigestCard`, `AssistantAdviceCard`, etc.
+       See docs/design/DARK-MODE-AUDIT.md for the migration targets.
+       ─────────────────────────────────────────────────────────────────── */
+    --c-brand-soft: 236 253 245; /* emerald-50 — matches legacy `bg-brand-50` */
+    --c-brand-soft-border: 167 243 208; /* emerald-200 — matches legacy ring */
+    --c-brand-soft-hover: 209 250 229; /* emerald-100 — one step deeper for hover */
+
+    --c-finyk-soft: 236 253 245; /* emerald-50 — parity with `brandColors.emerald[50]` */
+    --c-finyk-soft-border: 167 243 208; /* emerald-200 */
+    --c-finyk-soft-hover: 209 250 229; /* emerald-100 */
+
+    --c-fizruk-soft: 240 253 250; /* teal-50 — parity with `brandColors.teal[50]` */
+    --c-fizruk-soft-border: 153 246 228; /* teal-200 */
+    --c-fizruk-soft-hover: 204 251 241; /* teal-100 */
+
+    --c-routine-soft: 255 245 243; /* coral-50 — parity with `brandColors.coral[50]` */
+    --c-routine-soft-border: 255 210 200; /* coral-200 */
+    --c-routine-soft-hover: 255 232 227; /* coral-100 */
+
+    --c-nutrition-soft: 248 254 231; /* lime-50 — parity with `brandColors.lime[50]` */
+    --c-nutrition-soft-border: 217 249 157; /* lime-200 */
+    --c-nutrition-soft-hover: 239 252 203; /* lime-100 */
+
     /* Celebration / gamification tokens */
     --c-celebration: 251 191 36; /* amber-400 — confetti, stars, rewards */
     --c-streak-glow: 249 112 102; /* coral-500 — streak flame glow */
@@ -237,6 +268,32 @@
     --c-warning-soft: 146 64 14; /* slightly brighter amber-900 */
     --c-danger-soft: 153 27 27; /* red-800 — brighter than red-900 */
     --c-info-soft: 7 89 133; /* sky-800 — brighter than sky-900 */
+
+    /* Dark-theme overrides for the soft brand/module tints (Wave 1b).
+       Values are deliberately deep (`-900` family) so tinted surfaces
+       like `bg-brand-soft` read as *accent* rather than bright fill on
+       the dark panel background. `-soft-border` matches the
+       corresponding `-800`; `-soft-hover` is one step brighter than
+       `-soft` for a visible but subtle hover lift. */
+    --c-brand-soft: 6 78 59; /* emerald-900 */
+    --c-brand-soft-border: 6 95 70; /* emerald-800 */
+    --c-brand-soft-hover: 6 95 70; /* emerald-800 */
+
+    --c-finyk-soft: 6 78 59; /* emerald-900 */
+    --c-finyk-soft-border: 6 95 70; /* emerald-800 */
+    --c-finyk-soft-hover: 6 95 70; /* emerald-800 */
+
+    --c-fizruk-soft: 19 78 74; /* teal-900 */
+    --c-fizruk-soft-border: 17 94 89; /* teal-800 */
+    --c-fizruk-soft-hover: 17 94 89; /* teal-800 */
+
+    --c-routine-soft: 159 36 30; /* coral-900 (≈ red-900 tuned) */
+    --c-routine-soft-border: 185 54 48; /* coral-800 */
+    --c-routine-soft-hover: 185 54 48; /* coral-800 */
+
+    --c-nutrition-soft: 54 83 20; /* lime-900 */
+    --c-nutrition-soft-border: 63 98 18; /* lime-800 */
+    --c-nutrition-soft-hover: 63 98 18; /* lime-800 */
 
     /* ───────────────────────────────────────────────────────────────────
        MODULE DARK SURFACES & BORDERS

@@ -16,18 +16,19 @@ export const ROUTINE_THEME = {
   statCardHighlight:
     "rounded-2xl bg-routine-surface/80 border border-routine-ring/50 dark:border-routine-border-dark/30 p-3 text-center shadow-card",
 
-  // Empty state
+  // Empty state — Wave 1b: `border-routine-soft-border` +
+  // `bg-routine-soft` are preset-owned, light/dark pair lives in
+  // `--c-routine-soft*` (apps/web/src/index.css).
   emptyStateWarm:
-    "rounded-2xl border border-coral-100/60 dark:border-routine-border-dark/25 bg-coral-50/50 dark:bg-routine-surface-dark/8 p-6 text-center shadow-card",
+    "rounded-2xl border border-routine-soft-border/60 bg-routine-soft/50 p-6 text-center shadow-card",
 
   // Links & accents
   linkAccent:
     "font-semibold text-routine-strong dark:text-routine hover:text-routine-hover underline decoration-routine-ring/60 dark:decoration-routine/50 transition-colors",
 
-  // Habit list items
+  // Habit list items — Wave 1b: `bg-routine-soft` carries both themes.
   habitRowAccent: "border-l-routine",
-  habitRowDone:
-    "border-l-routine bg-coral-50/50 dark:bg-routine-surface-dark/10",
+  habitRowDone: "border-l-routine bg-routine-soft/50",
 
   // Icon containers
   iconBox:
