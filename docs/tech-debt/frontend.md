@@ -1,11 +1,11 @@
 # Frontend Tech Debt — Sergeant Web
 
-> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+> **Last validated:** 2026-04-28 by Devin. **Next review:** 2026-06-26.
 > **Status:** Active
 
 Аналіз кодової бази `apps/web/src` (434 source файли, 87k рядків).
 
-> **Оновлено 2026-04-27.** Базові cifri (allowlist size, file
+> **Оновлено 2026-04-28.** Базові cifri (allowlist size, file
 > sizes, countи) переперевірені відносно поточного `eslint.config.js`
 > і вмісту `apps/web/src/`.
 
@@ -64,7 +64,7 @@ try/catch крашить на quota exceeded, corrupted storage або private b
 - **TODO-список немігрованих файлів** — кожен файл, що ще
   читає/пише напряму, перерахований у `eslint.config.js` явно. Міграція
   файла = видалення рядка зі списку. На 2026-04-28 TODO-список
-  містить 49 файлів (базовий рівень при введенні був 49; оновиться вниз
+  містить 44 файли (базовий рівень при введенні був 49; оновиться вниз
   після чергових міграцій).
   Фактичних raw `localStorage.*` production-файлів
   (включно з wrappers) — ~78 (`rg -l "\blocalStorage\." apps/web/src` = 119
@@ -84,6 +84,15 @@ greppable в одному місці.
 - Реактивне джерело істини в компоненті: хук
   `useLocalStorageState<T>(key, initial)` з `@shared/hooks/useLocalStorageState`.
 - Цілий модуль зі своїм префіксом ключів: `createModuleStorage(prefix)`.
+
+**Recently completed (2026-04-28, 52 → 46):**
+
+- `core/lib/hubChatContext.ts` — `localStorage.getItem` → `safeReadStringLS`.
+- `core/onboarding/seedDemoData.ts` — local `writeJSON`/`writeRaw`/`removeKey` → `safeWriteLS`/`safeRemoveLS`.
+- `core/hub/HubReports.tsx` — `localStorage.getItem` → `safeReadStringLS`.
+- `core/settings/GeneralSection.tsx` — inline `KVStore` + density read/write → `safeReadStringLS`/`safeWriteLS`/`safeRemoveLS`.
+- `core/onboarding/OnboardingWizard.tsx` — inline `KVStore` → `safeReadStringLS`/`safeWriteLS`/`safeRemoveLS`.
+- `core/hub/HubChat.tsx` — already clean (0 raw calls), removed stale allowlist entry.
 
 ---
 
