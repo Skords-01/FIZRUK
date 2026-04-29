@@ -84,16 +84,23 @@ pnpm db:down                # stop & remove the Postgres container (data persist
 
 ## Everyday Commands
 
-| Command              | What it does                                                                         |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| `pnpm lint`          | ESLint (all apps + packages) + import checker + plugin tests                         |
-| `pnpm typecheck`     | TypeScript type-check across the monorepo                                            |
-| `pnpm test`          | Vitest for all packages                                                              |
-| `pnpm test:coverage` | Vitest with per-package coverage floors                                              |
-| `pnpm format`        | Prettier — auto-fix                                                                  |
-| `pnpm format:check`  | Prettier — check only (CI uses this)                                                 |
-| `pnpm build`         | Turbo build (all apps)                                                               |
-| `pnpm check`         | `format:check` + `lint` + `typecheck` + `test` + `build` — the full CI suite locally |
+| Command                          | What it does                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
+| `pnpm lint`                      | ESLint (all apps + packages) + import checker + plugin tests                         |
+| `pnpm typecheck`                 | TypeScript type-check across the monorepo                                            |
+| `pnpm test`                      | Vitest for all packages                                                              |
+| `pnpm test:coverage`             | Vitest with per-package coverage floors                                              |
+| `pnpm format`                    | Prettier — auto-fix                                                                  |
+| `pnpm format:check`              | Prettier — check only (CI uses this)                                                 |
+| `pnpm build`                     | Turbo build (all apps)                                                               |
+| `pnpm check`                     | `format:check` + `lint` + `typecheck` + `test` + `build` — the full CI suite locally |
+| `pnpm gen`                       | Plop generators (`migration`, `rq-hook`, `hubchat-tool`, `endpoint`, `adr`)          |
+| `pnpm gen:adr`                   | New ADR — auto-numbers from `docs/adr/NNNN-*.md`                                     |
+| `pnpm docs:check-links`          | Scan every `*.md` file for broken `[text](target)` links (internal + external cache) |
+| `pnpm docs:gen-playbook-index`   | Rewrite `docs/playbooks/INDEX.md` from each playbook's `**Trigger:**` line           |
+| `pnpm docs:check-playbook-index` | CI mode — fail if `INDEX.md` is stale (add `--check` locally too)                    |
+| `pnpm docs:freshness-dashboard`  | Build `dist/freshness-dashboard.html` report (colour-coded, sortable)                |
+| `pnpm ci:validate-pr-body`       | Validate `$PR_BODY` against `.github/PULL_REQUEST_TEMPLATE.md`                       |
 
 ### Scoped commands
 

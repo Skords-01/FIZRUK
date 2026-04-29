@@ -53,7 +53,13 @@
     "knip": "knip",
     "depcheck:all": "pnpm -r exec depcheck --ignore-patterns=dist,dist-server,coverage,.turbo",
     "prepare": "husky",
-    "gen": "plop"
+    "gen": "plop",
+    "gen:adr": "plop adr",
+    "docs:check-links": "node scripts/docs/check-markdown-links.mjs",
+    "docs:gen-playbook-index": "node scripts/docs/generate-playbook-index.mjs",
+    "docs:check-playbook-index": "node scripts/docs/generate-playbook-index.mjs --check",
+    "docs:freshness-dashboard": "node scripts/docs/generate-freshness-dashboard.mjs",
+    "ci:validate-pr-body": "node scripts/ci/validate-pr-body.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.2",
