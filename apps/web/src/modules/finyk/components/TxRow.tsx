@@ -209,7 +209,7 @@ function TxRowImpl({
             </span>
           )}
           {tx._source === "privatbank" && (
-            <span className="text-3xs bg-green-500/10 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded-full font-semibold shrink-0">
+            <span className="text-3xs bg-success/10 text-success-strong dark:text-success px-1.5 py-0.5 rounded-full font-semibold shrink-0">
               П24
             </span>
           )}
