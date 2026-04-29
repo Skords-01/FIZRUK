@@ -6,19 +6,26 @@ const PWA_DISMISSED_KEY = "pwa_install_dismissed";
 const INSTALL_DELAY_MS = 30000;
 const MIN_SESSIONS = 2;
 
+// BeforeInstallPromptEvent is not yet standardized
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 export function usePwaInstall() {
-  const [prompt, setPrompt] = useState(null);
+  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [ready, setReady] = useState(false);
-  const deferredRef = useRef(null);
+  const deferredRef = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     const count = parseInt(safeReadStringLS(PWA_SESSIONS_KEY) || "0", 10) + 1;
     safeWriteLS(PWA_SESSIONS_KEY, String(count));
 
-    const handler = (e) => {
+    const handler = (e: Event) => {
       e.preventDefault();
-      deferredRef.current = e;
-      setPrompt(e);
+      const evt = e as BeforeInstallPromptEvent;
+      deferredRef.current = evt;
+      setPrompt(evt);
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);

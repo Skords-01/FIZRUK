@@ -1,5 +1,7 @@
 # Brand palette → WCAG AA — proposal
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+
 > **Status:** Proposal. No tokens are changed by this PR — this document
 > is the design contract that the implementation PR will follow.
 >

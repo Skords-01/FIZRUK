@@ -72,6 +72,20 @@ const preset = {
         accent: "rgb(var(--c-accent) / <alpha-value>)",
         ring: "rgb(var(--c-accent) / <alpha-value>)",
 
+        // Ambient module accent — picks up the current module's brand
+        // color from `--module-accent-rgb` published by
+        // `ModuleAccentProvider` / `ModuleShell`. Inside a module, use
+        // `bg-module-accent/10`, `text-module-accent`, `border-module-accent-strong`
+        // etc. — no hardcoded `bg-finyk` / `bg-fizruk` per surface.
+        // The `-strong` variant is the WCAG-AA companion for solid
+        // fills behind `text-white`. Outside the provider both vars
+        // are undefined and the utility falls back to `rgb()` with
+        // empty channels (effectively transparent); only use inside a
+        // module subtree. See docs/design/MODULE-ACCENT.md.
+        "module-accent": "rgb(var(--module-accent-rgb) / <alpha-value>)",
+        "module-accent-strong":
+          "rgb(var(--module-accent-strong-rgb) / <alpha-value>)",
+
         // ═══════════════════════════════════════════════════════════════════
         // BRAND COLORS — Soft & Organic palette with Emerald/Teal accent
         // ═══════════════════════════════════════════════════════════════════
@@ -110,6 +124,13 @@ const preset = {
         "warning-soft": "rgb(var(--c-warning-soft) / <alpha-value>)",
         "danger-soft": "rgb(var(--c-danger-soft) / <alpha-value>)",
         "info-soft": "rgb(var(--c-info-soft) / <alpha-value>)",
+        // Brand soft tint trio (Wave 1b). Theme-adaptive via `--c-brand-soft*`
+        // in `apps/web/src/index.css`. Call-sites that previously wrote
+        // `bg-brand-50 dark:bg-brand-500/15` collapse to a single
+        // `bg-brand-soft` (see docs/design/DARK-MODE-AUDIT.md).
+        "brand-soft": "rgb(var(--c-brand-soft) / <alpha-value>)",
+        "brand-soft-border": "rgb(var(--c-brand-soft-border) / <alpha-value>)",
+        "brand-soft-hover": "rgb(var(--c-brand-soft-hover) / <alpha-value>)",
         // WCAG-AA companions: `text-{c}-strong` on cream / soft surfaces,
         // `bg-{c}-strong text-white` on solid fills (Buttons, Badges, Tabs).
         "success-strong": brandColors.emerald[700], // #047857 — 5.23:1 on cream / 5.48:1 on white
@@ -135,7 +156,14 @@ const preset = {
           hover: brandColors.emerald[600],
           strong: brandColors.emerald[700],
           ring: brandColors.emerald[200],
-          soft: brandColors.emerald[50],
+          // `soft` / `soft-border` / `soft-hover` are now theme-adaptive
+          // via `--c-finyk-soft*` (Wave 1b). Light values mirror the
+          // legacy hex (`emerald[50]` / `[200]` / `[100]`); dark values
+          // flip to the `-900` / `-800` family so dark mode stops showing
+          // a bright pale fill on the warm-charcoal panel.
+          soft: "rgb(var(--c-finyk-soft) / <alpha-value>)",
+          "soft-border": "rgb(var(--c-finyk-soft-border) / <alpha-value>)",
+          "soft-hover": "rgb(var(--c-finyk-soft-hover) / <alpha-value>)",
         },
 
         /** Фізрук — Teal fitness tracker */
@@ -147,7 +175,17 @@ const preset = {
           hover: brandColors.teal[600],
           strong: brandColors.teal[700],
           ring: brandColors.teal[200],
-          soft: brandColors.teal[50],
+          // Theme-adaptive soft tint trio (Wave 1b).
+          soft: "rgb(var(--c-fizruk-soft) / <alpha-value>)",
+          "soft-border": "rgb(var(--c-fizruk-soft-border) / <alpha-value>)",
+          "soft-hover": "rgb(var(--c-fizruk-soft-hover) / <alpha-value>)",
+          // `tile` + `tile-border` — subtle stat-tile wash on the
+          // fizruk hero gradient (Wave 2a). Light=teal-800,
+          // dark=white. Apply with the registered opacity scale,
+          // typically `bg-fizruk-tile/10` and
+          // `border-fizruk-tile-border/15`.
+          tile: "rgb(var(--c-fizruk-tile) / <alpha-value>)",
+          "tile-border": "rgb(var(--c-fizruk-tile-border) / <alpha-value>)",
         },
 
         /** Рутина — Soft coral habit tracker */
@@ -167,6 +205,10 @@ const preset = {
           ring: brandColors.coral[300],
           done: brandColors.coral[700],
           nav: brandColors.coral[500],
+          // Theme-adaptive soft tint trio (Wave 1b).
+          soft: "rgb(var(--c-routine-soft) / <alpha-value>)",
+          "soft-border": "rgb(var(--c-routine-soft-border) / <alpha-value>)",
+          "soft-hover": "rgb(var(--c-routine-soft-hover) / <alpha-value>)",
         },
 
         /** Харчування — Fresh lime nutrition tracker */
@@ -178,7 +220,10 @@ const preset = {
           hover: brandColors.lime[600],
           strong: brandColors.lime[800],
           ring: brandColors.lime[200],
-          soft: brandColors.lime[50],
+          // Theme-adaptive soft tint trio (Wave 1b).
+          soft: "rgb(var(--c-nutrition-soft) / <alpha-value>)",
+          "soft-border": "rgb(var(--c-nutrition-soft-border) / <alpha-value>)",
+          "soft-hover": "rgb(var(--c-nutrition-soft-hover) / <alpha-value>)",
         },
 
         // ═══════════════════════════════════════════════════════════════════
@@ -215,6 +260,11 @@ const preset = {
           "rgb(var(--c-nutrition-surface-dark) / <alpha-value>)",
         "nutrition-border-dark":
           "rgb(var(--c-nutrition-border-dark) / <alpha-value>)",
+
+        // ─── Celebration / Gamification ──────────────────────────────────
+        celebration: "rgb(var(--c-celebration) / <alpha-value>)",
+        "streak-glow": "rgb(var(--c-streak-glow) / <alpha-value>)",
+        xp: "rgb(var(--c-xp) / <alpha-value>)",
       },
 
       // ═══════════════════════════════════════════════════════════════════
@@ -231,7 +281,21 @@ const preset = {
       },
 
       // ═══════════════════════════════════════════════════════════════════
-      // BORDER RADIUS — Soft, organic, friendly shapes
+      // BORDER RADIUS — size-driven rhythm (see docs/design/RADIUS-RHYTHM.md)
+      //
+      // The active scale is intentionally short:
+      //   sm   →  2 px   swatch  (heatmap cells, chart legend dots)
+      //   md   →  6 px   marker  (checkbox squares, badge chips, <kbd>)
+      //   xl   → 12 px   control sm (Button xs/sm, icon-buttons ≤ 40 px)
+      //   2xl  → 16 px   control md / card (Button md/lg, Card default)
+      //   3xl  → 24 px   hero / sheet (Button xl, Card xl, Modal, sheets)
+      //   full →  ∞       pill (FAB, avatars, status dots)
+      //
+      // 4xl / 5xl exist for one-off illustration surfaces (onboarding
+      // hero blob); they are NOT part of the regular rhythm.
+      //
+      // Avoid `rounded-lg` (8 px) in new code — it sits between marker
+      // and control with no clear semantic role.
       // ═══════════════════════════════════════════════════════════════════
       borderRadius: {
         "2xl": "16px",
@@ -259,6 +323,15 @@ const preset = {
           "0 2px 4px rgba(13, 23, 38, 0.06), 0 12px 32px rgba(13, 23, 38, 0.12)",
         // Inner shadows for depth
         inner: "inset 0 2px 4px rgba(0, 0, 0, 0.05)",
+        // Celebration glow — warm amber for achievement moments
+        "celebration-glow":
+          "0 0 24px rgba(251, 191, 36, 0.3), 0 0 8px rgba(251, 191, 36, 0.2)",
+        // Streak glow — pulsing coral for active streaks
+        "streak-glow":
+          "0 0 16px rgba(249, 112, 102, 0.25), 0 0 4px rgba(249, 112, 102, 0.15)",
+        // Enhanced focus ring
+        "focus-ring":
+          "0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, rgba(16, 185, 129, 0.4))",
       },
 
       // ═══════════════════════════════════════════════════════════════════
@@ -378,6 +451,15 @@ const preset = {
         // Stagger enter — children use animation-delay: ${index * 50}ms
         "stagger-in":
           "fadeSlideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both",
+        // Celebration modal animations
+        "fade-out": "fadeOut 0.2s ease-out forwards",
+        "scale-out": "scaleOut 0.2s ease-out forwards",
+        "draw-check": "drawCheck 0.4s ease-out 0.2s forwards",
+        // iOS-style "edit mode" wiggle for sortable bento cards. Looped,
+        // very subtle (±0.6°) so it signals "I am draggable" without
+        // becoming an attention sink. `motion-safe:` variants in
+        // consumers handle the reduced-motion case.
+        wiggle: "wiggle 0.45s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -430,6 +512,18 @@ const preset = {
           "0%": { strokeDashoffset: "100" },
           "100%": { strokeDashoffset: "var(--progress-offset, 0)" },
         },
+        fadeOut: {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+        scaleOut: {
+          "0%": { opacity: "1", transform: "scale(1)" },
+          "100%": { opacity: "0", transform: "scale(0.95)" },
+        },
+        drawCheck: {
+          "0%": { strokeDashoffset: "24" },
+          "100%": { strokeDashoffset: "0" },
+        },
         bounceIn: {
           "0%": { opacity: "0", transform: "scale(0.3)" },
           "50%": { transform: "scale(1.05)" },
@@ -439,6 +533,10 @@ const preset = {
         fadeSlideUp: {
           "0%": { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        wiggle: {
+          "0%, 100%": { transform: "rotate(-0.6deg)" },
+          "50%": { transform: "rotate(0.6deg)" },
         },
       },
 

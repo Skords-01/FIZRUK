@@ -41,8 +41,8 @@ export type {
 export { Avatar } from "./Avatar";
 export type { AvatarProps, AvatarSize, AvatarStatus } from "./Avatar";
 
-export { EmptyState } from "./EmptyState";
-export type { EmptyStateProps } from "./EmptyState";
+export { EmptyState, ModuleEmptyState } from "./EmptyState";
+export type { EmptyStateProps, ModuleEmptyStateProps } from "./EmptyState";
 
 export {
   FeatureSpotlight,
@@ -127,7 +127,15 @@ export type {
   ProgressRingVariant,
 } from "./ProgressRing";
 
-export { Skeleton, SkeletonText } from "./Skeleton";
+export {
+  Skeleton,
+  SkeletonText,
+  SkeletonTransactionRow,
+  SkeletonBudgetBar,
+  SkeletonHabitRow,
+  SkeletonWorkoutSet,
+  SkeletonMealCard,
+} from "./Skeleton";
 export type { SkeletonProps } from "./Skeleton";
 
 export { SkeletonCard, SkeletonList } from "./SkeletonCard";
@@ -175,3 +183,56 @@ export type {
 
 export { StreakCelebration, useStreakCelebration } from "./StreakCelebration";
 export type { StreakCelebrationProps } from "./StreakCelebration";
+
+export { AnimatedCheckbox, HabitCheckbox } from "./AnimatedCheckbox";
+export type {
+  AnimatedCheckboxProps,
+  CheckboxSize,
+  CheckboxVariant,
+  HabitCheckboxProps,
+} from "./AnimatedCheckbox";
+
+export { StreakFlame, StreakBadge } from "./StreakFlame";
+export type {
+  StreakFlameProps,
+  StreakFlameSize,
+  StreakBadgeProps,
+} from "./StreakFlame";
+
+export {
+  AnimatedList,
+  AnimatedFadeIn,
+  AnimatedSlideIn,
+  AnimatedScale,
+} from "./AnimatedList";
+export type {
+  AnimatedListProps,
+  AnimatedFadeInProps,
+  AnimationStyle,
+} from "./AnimatedList";
+
+export { FloatingActionButton } from "./FloatingActionButton";
+export type {
+  FloatingActionButtonProps,
+  FABAction,
+  FABSize,
+  FABVariant,
+} from "./FloatingActionButton";
+
+export {
+  KeyboardAccessory,
+  AMOUNT_CHIPS_UAH,
+  PORTION_CHIPS_GRAM,
+  WEIGHT_CHIPS_KG,
+  REP_CHIPS,
+  WATER_CHIPS_ML,
+} from "./KeyboardAccessory";
+export type {
+  KeyboardAccessoryProps,
+  QuickFillChip,
+} from "./KeyboardAccessory";
+
+export {
+  ScreenReaderAnnouncerProvider,
+  useAnnounce,
+} from "./ScreenReaderAnnouncer";

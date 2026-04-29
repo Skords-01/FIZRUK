@@ -154,8 +154,11 @@ describe("webhookHandler", () => {
       expect.any(Number),
     );
 
-    // 4 DB calls: lookup + tx upsert + balance update + event update
-    expect(dbQuery).toHaveBeenCalledTimes(4);
+    // 5 DB calls: lookup + tx upsert + balance update + event update + enrichment outbox
+    expect(dbQuery).toHaveBeenCalledTimes(5);
+    expect(dbQuery.mock.calls[4][0]).toMatch(
+      /INSERT INTO mono_ai_enrichment_queue/,
+    );
   });
 
   it("fires push (fire-and-forget) on first INSERT with formatted amount + balance", async () => {
@@ -381,5 +384,68 @@ describe("webhookHandler", () => {
     );
 
     expect(counter.inc).toHaveBeenCalledWith({ status: "error" });
+  });
+
+  it("FK violation (23503) on tx upsert → autocreates mono_account stub and retries", async () => {
+    // Lookup connection
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    // First tx upsert attempt fails with FK violation (unknown account)
+    const fkErr = Object.assign(new Error("FK violation"), { code: "23503" });
+    dbQuery.mockRejectedValueOnce(fkErr);
+    // Stub-INSERT into mono_account
+    dbQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
+    // Retry tx upsert succeeds
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ inserted: true }],
+      rowCount: 1,
+    });
+    // UPDATE balance
+    dbQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
+    // UPDATE last_event_at
+    dbQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
+
+    const res = makeRes();
+    await webhookHandler(makeReq(VALID_SECRET), res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(counter.inc).toHaveBeenCalledWith({ status: "account_autocreated" });
+    expect(counter.inc).toHaveBeenCalledWith({ status: "ok" });
+
+    // 7 DB calls: lookup + failed tx upsert + account stub + retry tx upsert
+    //           + balance update + event update + enrichment outbox
+    expect(dbQuery).toHaveBeenCalledTimes(7);
+
+    // Verify the stub uses StatementItem currency + balance fields.
+    const stubCall = dbQuery.mock.calls[2];
+    expect(stubCall[0]).toMatch(/INSERT INTO mono_account/);
+    expect(stubCall[0]).toMatch(/ON CONFLICT[\s\S]*DO NOTHING/);
+    expect(stubCall[1]).toEqual(["user_1", "acc_uah", 980, 1500000]);
+    expect(stubCall[2]).toEqual({ op: "mono_account_autocreate" });
+  });
+
+  it("non-FK errors are NOT retried (only 23503 triggers autocreate)", async () => {
+    dbQuery.mockResolvedValueOnce({
+      rows: [{ user_id: "user_1", webhook_secret: VALID_SECRET }],
+    });
+    // Some other DB error — must propagate without autocreate retry.
+    const otherErr = Object.assign(new Error("connection lost"), {
+      code: "08006",
+    });
+    dbQuery.mockRejectedValueOnce(otherErr);
+
+    const res = makeRes();
+    await expect(webhookHandler(makeReq(VALID_SECRET), res)).rejects.toThrow(
+      "connection lost",
+    );
+
+    // Only 2 DB calls: lookup + failed tx upsert. No autocreate, no retry.
+    expect(dbQuery).toHaveBeenCalledTimes(2);
+    expect(counter.inc).toHaveBeenCalledWith({ status: "error" });
+    expect(counter.inc).not.toHaveBeenCalledWith({
+      status: "account_autocreated",
+    });
   });
 });

@@ -1,6 +1,7 @@
 # Monobank integration — план покращень після webhook-міграції
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 **Статус документа:** plan / draft. Створено 2026-04-25 одразу після cutover (#705 → #708).
 **Поточний стан:** Webhook-pipeline у проді, `mono_webhook` дефолтом `true`, проблеми «`T.data.map`» (#706), silent-50-truncation (#707) і `bigint`-as-string (#708) пофіксені.

@@ -188,8 +188,7 @@ export async function webhookHandler(
     // user's correction.
     const categorySlug = categorizeMcc(item.mcc);
 
-    const upsertResult = await query<{ inserted: boolean }>(
-      `INSERT INTO mono_transaction
+    const txUpsertSql = `INSERT INTO mono_transaction
          (user_id, mono_account_id, mono_tx_id, time, amount, operation_amount,
           currency_code, mcc, original_mcc, hold, description, comment,
           cashback_amount, commission_rate, balance, receipt_id, invoice_id,
@@ -211,33 +210,77 @@ export async function webhookHandler(
            ELSE EXCLUDED.category_slug
          END,
          received_at = NOW()
-       RETURNING (xmax = 0) AS inserted`,
-      [
+       RETURNING (xmax = 0) AS inserted`;
+    const txUpsertParams = [
+      userId,
+      monoAccountId,
+      item.id,
+      new Date(item.time * 1000).toISOString(),
+      item.amount,
+      item.operationAmount,
+      item.currencyCode,
+      item.mcc ?? null,
+      item.originalMcc ?? null,
+      item.hold ?? null,
+      item.description ?? null,
+      item.comment ?? null,
+      item.cashbackAmount ?? null,
+      item.commissionRate ?? null,
+      item.balance ?? null,
+      item.receiptId ?? null,
+      item.invoiceId ?? null,
+      item.counterEdrpou ?? null,
+      item.counterIban ?? null,
+      item.counterName ?? null,
+      JSON.stringify(item),
+      categorySlug,
+    ];
+
+    let upsertResult: { rows: Array<{ inserted: boolean }> };
+    try {
+      upsertResult = await query<{ inserted: boolean }>(
+        txUpsertSql,
+        txUpsertParams,
+        { op: "mono_tx_upsert" },
+      );
+    } catch (err) {
+      // Postgres SQLSTATE 23503 = foreign_key_violation. На цьому FK тільки
+      // один зовнішній ключ — `(user_id, mono_account_id)` → `mono_account`.
+      // Падає, коли Monobank доставляє транзакцію по рахунку, який ми ще не
+      // зареєстрували (юзер відкрив нову банку/картку/jar після останнього
+      // `/api/mono/connect` snapshot-у `client-info`). Раніше це валило
+      // вебхук у 500 і Monobank деактивував webhook через ~5 хв ретраїв.
+      // Тепер створюємо stub-запис з полів самого StatementItem (currency
+      // + balance) і ретраїмо upsert один раз. Решта полів (type, masked_pan,
+      // iban, ...) лишаються NULL — наступний `/connect` reconcile або
+      // окремий backfill підтягне їх з `client-info`.
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? (err as { code?: unknown }).code
+          : undefined;
+      if (code !== "23503") throw err;
+      logger.warn({
+        msg: "mono_webhook_account_autocreate",
         userId,
         monoAccountId,
-        item.id,
-        new Date(item.time * 1000).toISOString(),
-        item.amount,
-        item.operationAmount,
-        item.currencyCode,
-        item.mcc ?? null,
-        item.originalMcc ?? null,
-        item.hold ?? null,
-        item.description ?? null,
-        item.comment ?? null,
-        item.cashbackAmount ?? null,
-        item.commissionRate ?? null,
-        item.balance ?? null,
-        item.receiptId ?? null,
-        item.invoiceId ?? null,
-        item.counterEdrpou ?? null,
-        item.counterIban ?? null,
-        item.counterName ?? null,
-        JSON.stringify(item),
-        categorySlug,
-      ],
-      { op: "mono_tx_upsert" },
-    );
+        currencyCode: item.currencyCode,
+        monoTxId: item.id,
+      });
+      await query(
+        `INSERT INTO mono_account
+           (user_id, mono_account_id, currency_code, balance, last_seen_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (user_id, mono_account_id) DO NOTHING`,
+        [userId, monoAccountId, item.currencyCode, item.balance ?? null],
+        { op: "mono_account_autocreate" },
+      );
+      monoWebhookReceivedTotal.inc({ status: "account_autocreated" });
+      upsertResult = await query<{ inserted: boolean }>(
+        txUpsertSql,
+        txUpsertParams,
+        { op: "mono_tx_upsert" },
+      );
+    }
 
     if (item.balance != null) {
       await query(
@@ -257,11 +300,21 @@ export async function webhookHandler(
       { op: "mono_connection_event" },
     );
 
+    const inserted = upsertResult.rows[0]?.inserted === true;
+
+    if (inserted) {
+      await query(
+        `INSERT INTO mono_ai_enrichment_queue (user_id, mono_tx_id)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id, mono_tx_id) DO NOTHING`,
+        [userId, item.id],
+        { op: "mono_ai_enrichment_enqueue" },
+      );
+    }
+
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     monoWebhookReceivedTotal.inc({ status: "ok" });
     monoWebhookDurationMs.observe({ status: "ok" }, ms);
-
-    const inserted = upsertResult.rows[0]?.inserted === true;
 
     logger.info({
       msg: "mono_webhook_processed",

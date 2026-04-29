@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { hapticTap } from "@shared/lib/haptic";
-import { apiUrl } from "@shared/lib/apiUrl";
+import { transcribeApi } from "@shared/api";
 
 /* -------------------------------------------------------------------------- *
  *  Web Speech API (browser-native) — fallback path.
@@ -96,7 +96,7 @@ export function useVoiceInput({
       if (e.error === "not-allowed") {
         onError?.("Немає дозволу на використання мікрофону.");
       } else if (e.error === "no-speech") {
-        onError?.("Не вдалося розпізнати мову. Спробуйте ще раз.");
+        onError?.("Не вдалося розпізнати мову. Спробуй ще раз.");
       } else if (e.error !== "aborted") {
         onError?.(`Помилка розпізнавання: ${e.error}`);
       }
@@ -246,51 +246,55 @@ function useGroqVoiceInput({
       abortRef.current = controller;
       setUploading(true);
       try {
-        const params = new URLSearchParams();
         // Whisper бере 2-літерний ISO-код (`uk-UA` → `uk`).
         const isoLang = lang.split("-")[0]?.trim();
-        if (isoLang) params.set("language", isoLang);
+        const query: { language?: string; prompt?: string } = {};
+        if (isoLang) query.language = isoLang;
         if (promptHint && promptHint.trim()) {
-          params.set("prompt", promptHint.trim().slice(0, 1024));
+          query.prompt = promptHint.trim().slice(0, 1024);
         }
-        const url = `${apiUrl("/api/transcribe")}${
-          params.toString() ? `?${params.toString()}` : ""
-        }`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": mimeType },
-          body: blob,
-          credentials: "include",
-          signal: controller.signal,
-        });
-        if (res.status === 503) {
-          onProviderUnavailable?.();
-          onError?.(
-            "Голосовий сервер тимчасово недоступний — перемикаюсь на браузерне розпізнавання.",
-          );
-          return;
+        const result = await transcribeApi.send(
+          { audio: blob, mimeType },
+          query,
+          { signal: controller.signal },
+        );
+        switch (result.outcome) {
+          case "ok": {
+            const text = result.data.text.trim();
+            if (text) onResult?.(text);
+            else onError?.("Не вдалося розпізнати мову. Спробуй ще раз.");
+            return;
+          }
+          case "provider_unavailable":
+            onProviderUnavailable?.();
+            onError?.(
+              "Голосовий сервер тимчасово недоступний — перемикаюсь на браузерне розпізнавання.",
+            );
+            return;
+          case "unauthorized":
+            onError?.(
+              "Сесія завершилась. Увійди знову, щоб користуватись голосом.",
+            );
+            return;
+          case "rate_limited":
+            onError?.("Забагато голосових запитів — спробуйте за хвилину.");
+            return;
+          case "payload_too_large":
+            onError?.("Запис задовгий. Зроби коротшим і повтори.");
+            return;
+          case "unsupported_media_type":
+            onError?.("Браузер записав невідомий формат. Оновись і повтори.");
+            return;
+          case "error":
+            onError?.(
+              `Помилка розпізнавання (${result.status}). Спробуй ще раз.`,
+            );
+            return;
         }
-        if (res.status === 401) {
-          onError?.(
-            "Сесія завершилась. Увійдіть знову, щоб користуватись голосом.",
-          );
-          return;
-        }
-        if (res.status === 429) {
-          onError?.("Забагато голосових запитів — спробуйте за хвилину.");
-          return;
-        }
-        if (!res.ok) {
-          onError?.(`Помилка розпізнавання (${res.status}). Спробуйте ще раз.`);
-          return;
-        }
-        const data = (await res.json()) as { text?: string };
-        const text = (data.text || "").trim();
-        if (text) onResult?.(text);
-        else onError?.("Не вдалося розпізнати мову. Спробуйте ще раз.");
       } catch (err) {
         if ((err as { name?: string })?.name === "AbortError") return;
-        onError?.("Не вдалося надіслати аудіо. Перевірте інтернет.");
+        if ((err as { kind?: string })?.kind === "aborted") return;
+        onError?.("Не вдалося надіслати аудіо. Перевір інтернет.");
       } finally {
         setUploading(false);
         abortRef.current = null;

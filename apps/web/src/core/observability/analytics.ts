@@ -18,6 +18,7 @@
 
 import { ANALYTICS_EVENTS } from "@sergeant/shared";
 import { capturePostHogEvent } from "./posthog";
+import { safeReadLS, safeWriteLS } from "@shared/lib/storage";
 
 export { ANALYTICS_EVENTS };
 export { initPostHog, identifyPostHogUser, resetPostHog } from "./posthog";
@@ -26,22 +27,12 @@ const LOG_KEY = "hub_analytics_log_v1";
 const MAX_LOG = 200;
 
 function safeReadLog(): unknown[] {
-  try {
-    const raw = localStorage.getItem(LOG_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  const parsed = safeReadLS<unknown[]>(LOG_KEY);
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 function safeWriteLog(events: unknown[]): void {
-  try {
-    localStorage.setItem(LOG_KEY, JSON.stringify(events.slice(-MAX_LOG)));
-  } catch {
-    /* quota — ignore */
-  }
+  safeWriteLS(LOG_KEY, events.slice(-MAX_LOG));
 }
 
 /**
@@ -51,7 +42,10 @@ function safeWriteLog(events: unknown[]): void {
  * @param {string} eventName - Canonical event name, see `ANALYTICS_EVENTS`.
  * @param {object} [payload] - Minimal, non-sensitive metadata.
  */
-export function trackEvent(eventName, payload = {}) {
+export function trackEvent(
+  eventName: string,
+  payload: Record<string, unknown> = {},
+) {
   if (!eventName || typeof eventName !== "string") return;
   const event = {
     eventName,
@@ -67,5 +61,15 @@ export function trackEvent(eventName, payload = {}) {
     };
     analyticsWindow.__hubAnalytics = [...current, event].slice(-MAX_LOG);
   } catch {}
-  capturePostHogEvent(eventName, event.payload as Record<string, unknown>);
+  // Окремий try/catch — `trackEvent` контракт каже "ніколи не кидає"
+  // (див. шапку файлу). `capturePostHogEvent` сам по собі захищений
+  // від throw усередині `posthog.capture`, але `enqueue` /
+  // `import.meta.env` шляхи теоретично можуть зловити edge-кейс — щит
+  // тримаємо у викликача, бо ~10 call-sites покладаються на
+  // fire-and-forget (див. Devin Review on #972).
+  try {
+    capturePostHogEvent(eventName, event.payload as Record<string, unknown>);
+  } catch {
+    /* PostHog transport never breaks trackEvent callers */
+  }
 }

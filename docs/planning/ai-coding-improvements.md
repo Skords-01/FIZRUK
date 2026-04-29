@@ -1,6 +1,7 @@
 # AI-coding improvements roadmap
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 **Статус:** in progress. Створено 2026-04-25 з ідей розмови про вайб-кодинг. Останнє оновлення: 2026-04-28 (Блок 6 Visual regression закрито — Argos CI підключено; лише Vercel paid (#4) і Storybook (#7) залишилися).
 **Скоуп:** репо-конвенції, playbooks, code markers, testing/preview infra. Це **не** про конкретні фічі продукту — це про **інфраструктуру для AI-агентів** (Devin, Cursor, Claude Code), які пишуть код у Sergeant.
@@ -49,7 +50,7 @@
 
 ## 1.1. `AGENTS.md` (новий файл у корені репо)
 
-**Статус:** ✅ створено у [PR #714](https://github.com/Skords-01/Sergeant/pull/714). Файл живе у `/AGENTS.md`. Факти верифіковані проти реального стану репо (pnpm 9, Turbo, 4 apps, 9 packages, RQ keys factories `finykKeys`/`hubKeys`/`nutritionKeys`/`coachKeys`/`digestKeys`/`pushKeys` у `apps/web/src/shared/lib/queryKeys.ts`, міграції 001–008). Має бути reviewed quarterly (last-reviewed-line у самому файлі).
+**Статус:** ✅ створено у [PR #714](https://github.com/Skords-01/Sergeant/pull/714). Файл живе у `/AGENTS.md`. Факти верифіковані проти реального стану репо (pnpm 9, Turbo, 4 apps, 10 packages, RQ keys factories `finykKeys`/`hubKeys`/`nutritionKeys`/`coachKeys`/`digestKeys`/`pushKeys` у `apps/web/src/shared/lib/queryKeys.ts`, міграції 001–010). Має бути reviewed quarterly (last-reviewed-line у самому файлі).
 
 **Що це:** конвенція Anthropic / Cursor / Devin — markdown-файл у корені репо з правилами **тільки для AI-агентів**. Усі сучасні coding-AI його читають автоматично.
 

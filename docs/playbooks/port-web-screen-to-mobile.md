@@ -1,5 +1,8 @@
 # Playbook: Port Web Screen to Mobile
 
+> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
+
 **Trigger:** "Перенести екран X з apps/web в apps/mobile" / чергова фаза React Native міграції / `react-native-migration.md`.
 
 ---

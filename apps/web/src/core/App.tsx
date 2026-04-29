@@ -12,13 +12,14 @@ import { SkipLink } from "@shared/components/ui/SkipLink";
 import ModuleErrorBoundary from "./ModuleErrorBoundary";
 import { useDarkMode } from "@shared/hooks/useDarkMode";
 import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
-import { ToastProvider } from "@shared/hooks/useToast";
+import { ToastProvider, useToast } from "@shared/hooks/useToast";
 import { ToastContainer } from "@shared/components/ui/Toast";
 import { HUB_OPEN_MODULE_EVENT } from "@shared/lib/hubNav";
 import { ApiClientProvider } from "@sergeant/api-client/react";
 import { apiClient } from "@shared/api";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { useCloudSync } from "./cloudSync/useCloudSync";
+import { useSyncErrorToast } from "./cloudSync/hook/useSyncErrorToast";
 import { PageLoader } from "./app/PageLoader";
 import { ModulePageLoader } from "@shared/components/ui/ModulePageLoader";
 import { OfflineBanner } from "./app/OfflineBanner";
@@ -28,7 +29,7 @@ import { useIosInstallBanner } from "./app/useIosInstallBanner";
 import { useSWUpdate } from "./app/useSWUpdate";
 import { PWA_ACTION_KEY } from "./app/pwaAction";
 import { HubHeader } from "./app/HubHeader";
-import { HubTabs } from "./app/HubTabs";
+import { HubBottomNav } from "./app/HubBottomNav";
 import { HubMainContent } from "./app/HubMainContent";
 import { HubFloatingActions } from "./app/HubFloatingActions";
 import { HubModals } from "./app/HubModals";
@@ -47,6 +48,7 @@ import {
   KeyboardShortcutsModal,
   useKeyboardShortcutsModal,
 } from "@shared/components/ui/KeyboardShortcutsModal";
+import { prefetchCriticalModules } from "./lib/useRoutePrefetch";
 
 const AuthPage = lazy(() =>
   import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),
@@ -72,8 +74,8 @@ const PricingPage = lazy(() =>
 );
 interface ModuleAppProps {
   onBackToHub: () => void;
-  pwaAction?: PwaAction;
-  onPwaActionConsumed?: () => void;
+  pwaAction: PwaAction | null;
+  onPwaActionConsumed: () => void;
   onOpenModule?: (module: string) => void;
 }
 
@@ -163,17 +165,26 @@ function AppInner() {
     navigate(SIGN_IN_PATH);
   }, [navigate]);
 
-  // «Продовжити без акаунту» на /sign-in для cold-start користувача має
-  // завести його у FTUX splash (/welcome), а не на порожній дашборд.
-  // Інакше тап «Вже маю акаунт» → назад стає тихим dead-end-ом, який
-  // пропускає онбординг назавжди.
+  // «Поки що пропустити» на /sign-in:
+  // 1. cold-start (онбординг не завершений) → /welcome (replace) — як раніше,
+  //    щоб не «з’їсти» FTUX splash.
+  // 2. warm-start, юзер прийшов з застосунку (натиснув user-icon у HubHeader,
+  //    `location.key !== "default"`) → `navigate(-1)`. Це повертає на ту саму
+  //    сторінку, з якої прийшов (наприклад, дашборд або сторінку модуля),
+  //    а не до replace-/, який для повторного юзера виглядає як no-op.
+  // 3. fallback (deep-link або refresh на /sign-in, `location.key === "default"`):
+  //    `navigate("/", { replace: true })` — як раніше.
   const leaveAuth = useCallback(() => {
     if (shouldShowOnboarding()) {
       navigate(WELCOME_PATH, { replace: true });
-    } else {
-      navigate("/", { replace: true });
+      return;
     }
-  }, [navigate]);
+    if (location.key !== "default") {
+      navigate(-1);
+      return;
+    }
+    navigate("/", { replace: true });
+  }, [navigate, location.key]);
 
   const leaveWelcome = useCallback(() => {
     navigate("/", { replace: true });
@@ -192,8 +203,20 @@ function AppInner() {
   const { updateAvailable, applyUpdate } = useSWUpdate();
   const { user, isLoading: authLoading, logout } = useAuth();
   const sync = useCloudSync(user);
+  const toast = useToast();
+  useSyncErrorToast(sync.syncErrorDetail, toast, sync.pushAll);
+
+  // Prefetch critical module chunks on idle after initial render
   useEffect(() => {
-    const onMessage = (event) => {
+    // Wait for initial paint, then prefetch modules
+    const timer = setTimeout(() => {
+      prefetchCriticalModules();
+    }, 2000); // 2s delay to prioritize initial render
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
       if (event.data?.type === "OPEN_MODULE") {
         openModule(event.data.module);
       }
@@ -241,8 +264,16 @@ function AppInner() {
   }, [ui]);
 
   useEffect(() => {
-    const onHubOpen = (ev) => {
-      const { module, hash, action } = ev.detail || {};
+    const onHubOpen = (ev: Event) => {
+      const detail =
+        (
+          ev as CustomEvent<{
+            module?: string;
+            hash?: string;
+            action?: PwaAction;
+          }>
+        ).detail || {};
+      const { module, hash, action } = detail;
       if (action && validActions.has(action)) {
         safeWriteLS(PWA_ACTION_KEY, action);
         setPwaAction(action);
@@ -395,7 +426,7 @@ function AppInner() {
     const inFtuxSession =
       shouldShowOnboarding() && !user && !isFirstRealEntryDone();
     return (
-      <div className="min-h-dvh bg-bg flex flex-col safe-area-pt-pb page-enter">
+      <div className="h-dvh bg-bg flex flex-col overflow-hidden safe-area-pt page-enter">
         <SkipLink />
         <HintsOrchestrator
           inFtuxSession={inFtuxSession}
@@ -418,16 +449,6 @@ function AppInner() {
           hideAuthButton={inFtuxSession}
         />
 
-        <HubTabs
-          hubView={ui.hubView}
-          onChange={ui.setHubView}
-          // «Звіти» — пустий екран без даних, тому ховаємо tab до
-          // першого реального запису. Якщо юзер уже обрав «Звіти» і
-          // потім стер дані — повертаємо його на дашборд, щоб не
-          // лишався на неіснуючому табі.
-          showReports={hasAnyRealEntry()}
-        />
-
         <HubMainContent
           updateAvailable={updateAvailable}
           onApplyUpdate={applyUpdate}
@@ -447,14 +468,21 @@ function AppInner() {
           inFtuxSession={inFtuxSession}
         />
 
-        {/* Thumb-reach entry to the AI assistant. Module quick-add is
-            handled above by `TodayFocusCard`'s chips (+ Витрата / + Їжа /
-            + Звичка / + Тренування), so a separate add-speed-dial FAB
-            would be a pure duplicate. Hidden during the FTUX session so
-            the only interactive surface in view is the FirstActionHero
-            → PresetSheet one-tap path; the FAB returns the moment the
-            first real entry lands. */}
-        <HubFloatingActions hidden={inFtuxSession} onOpenChat={ui.openChat} />
+        <HubBottomNav
+          hubView={ui.hubView}
+          onChange={ui.setHubView}
+          // «Звіти» — пустий екран без даних, тому ховаємо tab до
+          // першого реального запису. Якщо юзер уже обрав «Звіти» і
+          // потім стер дані — повертаємо його на дашборд, щоб не
+          // лишався на неіснуючому табі.
+          showReports={hasAnyRealEntry()}
+        />
+
+        {/* Thumb-reach entry to the AI assistant. Always visible so the
+            user can reach the assistant from anywhere on the hub. The
+            `compact` variant is used here so the FAB offsets above the
+            hub bottom nav identically to the module bottom nav. */}
+        <HubFloatingActions onOpenChat={ui.openChat} compact />
 
         {/* Persistent shortcut back to an in-progress Fizruk workout.
             Hidden during FTUX so the splash stays single-CTA; otherwise
@@ -464,7 +492,12 @@ function AppInner() {
 
         <HubModals
           chatOpen={ui.chatOpen}
+          chatMinimized={ui.chatMinimized}
+          chatUnseenCount={ui.chatUnseenCount}
           onCloseChat={ui.closeChat}
+          onMinimizeChat={ui.minimizeChat}
+          onRestoreChat={ui.restoreChat}
+          onUnseenChange={ui.setChatUnseenCount}
           chatInitialMessage={ui.chatInitialMessage}
           chatAutoSend={ui.chatAutoSend}
           onOpenCatalogue={() => {
@@ -559,6 +592,28 @@ function AppInner() {
           );
         })()}
       </Suspense>
+      {/* Assistant FAB — available in all module views so the user can
+          reach the AI chat without navigating back to the hub first.
+          Compact mode uses a small icon-only button to minimize overlap. */}
+      <HubFloatingActions onOpenChat={ui.openChat} compact />
+      <HubModals
+        chatOpen={ui.chatOpen}
+        chatMinimized={ui.chatMinimized}
+        chatUnseenCount={ui.chatUnseenCount}
+        onCloseChat={ui.closeChat}
+        onMinimizeChat={ui.minimizeChat}
+        onRestoreChat={ui.restoreChat}
+        onUnseenChange={ui.setChatUnseenCount}
+        chatInitialMessage={ui.chatInitialMessage}
+        chatAutoSend={ui.chatAutoSend}
+        onOpenCatalogue={() => {
+          ui.closeChat();
+          navigate(ASSISTANT_PATH);
+        }}
+        searchOpen={ui.searchOpen}
+        onCloseSearch={ui.closeSearch}
+        onOpenModule={openModule}
+      />
       <KeyboardShortcutsModal
         open={keyboardShortcuts.open}
         onClose={keyboardShortcuts.onClose}

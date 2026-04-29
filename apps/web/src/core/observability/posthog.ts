@@ -13,7 +13,7 @@ import { getPlatform, isCapacitor } from "@sergeant/shared";
  *
  * Контракт:
  *   - `initPostHog()` — викликається один раз після hydration з
- *     `main.jsx` через `requestIdleCallback`. Ідемпотентний.
+ *     `main.tsx` через `requestIdleCallback`. Ідемпотентний.
  *   - `capturePostHogEvent(name, payload)` — fire-and-forget. Події, які
  *     прилетіли ДО завершення init, буферизуються і flush-ються після.
  *   - `identifyPostHogUser(userId)` / `resetPostHog()` — після login /

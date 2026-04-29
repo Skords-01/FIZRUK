@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "nativewind";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -42,17 +43,39 @@ function RootShell() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "fade",
+          animationDuration: 250,
+        }}
+      >
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(auth)" options={{ presentation: "modal" }} />
-        <Stack.Screen name="settings" options={{ presentation: "modal" }} />
-        <Stack.Screen name="assistant" options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="(auth)"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="settings"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="assistant"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
         <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <SyncStatusOverlay />
     </View>
   );
+}
+
+function DynamicStatusBar() {
+  const { colorScheme } = useColorScheme();
+  // In dark mode the status bar content must be light (white text/icons),
+  // in light mode it must be dark (dark text/icons).
+  return <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />;
 }
 
 export default function RootLayout() {
@@ -68,7 +91,7 @@ export default function RootLayout() {
             <CloudSyncProvider>
               <ToastProvider>
                 <ColorSchemeBridge />
-                <StatusBar style="light" />
+                <DynamicStatusBar />
                 <RootShell />
                 <ToastContainer />
                 <PushRegistrar />

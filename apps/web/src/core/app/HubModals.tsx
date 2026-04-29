@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { ErrorBoundary } from "../ErrorBoundary";
+import type { OpenModuleOptions } from "../hooks/useHubNavigation";
+import { HubChatFab } from "../hub/HubChatFab";
 
 const HubSearch = lazy(() =>
   import("../hub/HubSearch").then((m) => ({ default: m.HubSearch })),
@@ -25,16 +27,40 @@ function CloseOnError({ onClose }: { onClose: () => void }) {
   return null;
 }
 
+export interface HubModalsProps {
+  chatOpen: boolean;
+  chatMinimized: boolean;
+  chatUnseenCount: number;
+  onCloseChat: () => void;
+  onMinimizeChat: () => void;
+  onRestoreChat: () => void;
+  onUnseenChange: (count: number) => void;
+  chatInitialMessage: string;
+  chatAutoSend: boolean;
+  onOpenCatalogue: () => void;
+  searchOpen: boolean;
+  onCloseSearch: () => void;
+  onOpenModule: (
+    id: string | null | undefined,
+    opts?: OpenModuleOptions,
+  ) => void;
+}
+
 export function HubModals({
   chatOpen,
+  chatMinimized,
+  chatUnseenCount,
   onCloseChat,
+  onMinimizeChat,
+  onRestoreChat,
+  onUnseenChange,
   chatInitialMessage,
   chatAutoSend,
   onOpenCatalogue,
   searchOpen,
   onCloseSearch,
   onOpenModule,
-}) {
+}: HubModalsProps) {
   return (
     <>
       {chatOpen && (
@@ -45,9 +71,16 @@ export function HubModals({
               initialMessage={chatInitialMessage}
               autoSendInitial={chatAutoSend}
               onOpenCatalogue={onOpenCatalogue}
+              isMinimized={chatMinimized}
+              onMinimize={onMinimizeChat}
+              onUnseenChange={onUnseenChange}
             />
           </Suspense>
         </ErrorBoundary>
+      )}
+
+      {chatOpen && chatMinimized && (
+        <HubChatFab onRestore={onRestoreChat} unseenCount={chatUnseenCount} />
       )}
 
       {searchOpen && (

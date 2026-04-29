@@ -2,15 +2,19 @@ import { useMemo } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
 import { Tooltip } from "@shared/components/ui/Tooltip";
-import { FeatureSpotlight } from "@shared/components/ui/FeatureSpotlight";
 import { useScrollHeader } from "@shared/hooks/useScrollHeader";
 import { BrandLogo } from "./BrandLogo";
 import { DarkModeToggle } from "./DarkModeToggle";
 import { UserMenuButton } from "./UserMenuButton";
 import type { User } from "@sergeant/shared";
 
+// WCAG 2.5.5 AAA «Target Size (Enhanced)» рекомендує ≥44×44 пкс для hit-areas;
+// Material 3 / iOS HIG — 48 dp / 44 pt як thumb-comfort бейзлайн. На мобільному
+// (палець, без хіт-зони курсору) робимо 48 пкс; ≥sm — 44 пкс достатньо.
+// Focus-ring: суцільний brand-500 (без /45 альфи), щоб гарантовано холдити
+// ≥3:1 контраст до bg в dark-mode (alpha на panelHi-підкладках просідала).
 const ICON_BUTTON_CLS =
-  "w-11 h-11 flex items-center justify-center rounded-2xl text-muted hover:text-text hover:bg-panelHi transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
+  "w-12 h-12 sm:w-11 sm:h-11 flex items-center justify-center rounded-2xl text-muted hover:text-text hover:bg-panelHi transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
 
 const GREETINGS: Record<string, string> = {
   morning: "Доброго ранку",
@@ -112,41 +116,43 @@ export function HubHeader({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <FeatureSpotlight
-            id="hub-search-button"
-            title="Глобальний пошук"
-            description="Знаходь транзакції, тренування та їжу. Також Cmd+K"
-            placement="bottom"
-            showOnce
-            delay={5000}
+          <Tooltip
+            content="Пошук по всіх модулях (⌘K)"
+            placement="bottom-center"
           >
-            <Tooltip content="Пошук по всіх модулях" placement="bottom-center">
-              <button
-                type="button"
-                onClick={onOpenSearch}
-                aria-label="Пошук"
-                className={ICON_BUTTON_CLS}
-              >
-                <Icon name="search" size={20} />
-              </button>
-            </Tooltip>
-          </FeatureSpotlight>
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              aria-label="Пошук"
+              className={ICON_BUTTON_CLS}
+            >
+              <Icon name="search" size={20} />
+            </button>
+          </Tooltip>
 
-          {user ? (
+          {user && onSync && onPull && onLogout && onToggleDark ? (
             <UserMenuButton
               user={user}
-              syncing={syncing}
-              lastSync={lastSync}
+              syncing={syncing ?? false}
+              lastSync={
+                lastSync instanceof Date
+                  ? lastSync
+                  : lastSync
+                    ? new Date(lastSync)
+                    : null
+              }
               onSync={onSync}
               onPull={onPull}
               onLogout={onLogout}
-              dark={dark}
+              dark={dark ?? false}
               onToggleDark={onToggleDark}
             />
           ) : (
             <>
-              <DarkModeToggle dark={dark} onToggle={onToggleDark} />
-              {!authLoading && !hideAuthButton && (
+              {dark !== undefined && onToggleDark && (
+                <DarkModeToggle dark={dark} onToggle={onToggleDark} />
+              )}
+              {!authLoading && !hideAuthButton && onShowAuth && (
                 <Tooltip content="Увійти" placement="bottom-center">
                   <button
                     type="button"
@@ -163,27 +169,15 @@ export function HubHeader({
         </div>
       </div>
 
-      {/* ── Row 2: Vertical bar + subtitle (hidden when shrunk) ── */}
-      <div
-        className={cn(
-          "flex items-center gap-1.5 mt-1.5 ml-[3px]",
-          "transition-all duration-300",
-          isShrunk && "opacity-0 h-0 mt-0 overflow-hidden",
-        )}
-      >
-        <span
-          aria-hidden="true"
-          className="inline-block w-[3px] h-[14px] rounded-full bg-brand-500"
-        />
-        <span className="text-[11px] font-bold tracking-[0.12em] uppercase text-brand-700 dark:text-brand-400 select-none">
-          Оперативний центр
-        </span>
-      </div>
-
-      {/* ── Row 3: Greeting · date (hidden when shrunk) ───────── */}
+      {/* ── Row 2: Greeting · date (hidden when shrunk) ───────── */}
+      {/* Раніше тут було ще rows-2 з підписом «ОПЕРАТИВНИЙ ЦЕНТР» — */}
+      {/* він дублював wordmark «Sergeant» зверху. Лишаємо лише */}
+      {/* greeting+date, бо це справжній сигнальний шар (час доби, */}
+      {/* персональне звернення), а тег «оперативний центр» — */}
+      {/* брендовий шум, який забирав вертикальний простір. */}
       <p
         className={cn(
-          "mt-1.5 ml-[3px] text-[13px] leading-snug text-muted truncate",
+          "mt-2 ml-[3px] text-[13px] leading-snug text-muted truncate",
           "transition-all duration-300",
           isShrunk && "opacity-0 h-0 mt-0 overflow-hidden",
         )}

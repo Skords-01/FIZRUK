@@ -53,6 +53,10 @@ export const ANALYTICS_EVENTS = Object.freeze({
   // Celebrations (Phase 2 — enriched feedback)
   CELEBRATION_SHOWN: "celebration_shown",
 
+  // Streak milestones (Phase 2 — engagement)
+  //   STREAK_MILESTONE_REACHED { days: number, type: "toast" | "modal" }
+  STREAK_MILESTONE_REACHED: "streak_milestone_reached",
+
   // Daily nudges (Phase 3 — retention)
   DAILY_NUDGE_SHOWN: "daily_nudge_shown",
   DAILY_NUDGE_CLICKED: "daily_nudge_clicked",

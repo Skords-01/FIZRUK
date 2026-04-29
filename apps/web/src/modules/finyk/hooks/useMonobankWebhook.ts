@@ -268,7 +268,7 @@ export function useMonobankWebhook({
     async (token: string, _forceRefresh?: boolean, _remember?: boolean) => {
       const clean = (token ?? "").trim();
       if (!clean) {
-        setError("Введіть токен");
+        setError("Введи токен");
         return;
       }
       setConnecting(true);

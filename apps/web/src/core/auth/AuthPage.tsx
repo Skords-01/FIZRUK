@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent, type SyntheticEvent } from "react";
 import { cn } from "@shared/lib/cn";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
@@ -18,7 +18,7 @@ function PasswordStrengthBar({ password }: { password: string }) {
   const labelColors = [
     "text-error",
     "text-amber-500",
-    "text-brand-600 dark:text-brand-400",
+    "text-brand-strong dark:text-brand",
   ];
 
   return (
@@ -39,7 +39,11 @@ function PasswordStrengthBar({ password }: { password: string }) {
   );
 }
 
-export function AuthPage({ onContinueWithoutAccount }) {
+interface AuthPageProps {
+  onContinueWithoutAccount?: () => void;
+}
+
+export function AuthPage({ onContinueWithoutAccount }: AuthPageProps) {
   const {
     login,
     loginWithGoogle,
@@ -73,11 +77,11 @@ export function AuthPage({ onContinueWithoutAccount }) {
     setForgotEmail("");
   };
 
-  const handleForgotSubmit = async (e) => {
+  const handleForgotSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     const target = (forgotEmail || email || "").trim();
     if (!target) {
-      setAuthError("Введіть email, на який відправити лист.");
+      setAuthError("Введи email, на який відправити лист.");
       return;
     }
     setForgotState("sending");
@@ -94,7 +98,7 @@ export function AuthPage({ onContinueWithoutAccount }) {
     setGoogleLoading(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     if (mode === "login") {
@@ -164,7 +168,7 @@ export function AuthPage({ onContinueWithoutAccount }) {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={"Ваше ім'я"}
+                    placeholder={"Твоє ім'я"}
                     autoComplete="name"
                   />
                 </div>
@@ -407,7 +411,7 @@ export function AuthPage({ onContinueWithoutAccount }) {
                 className="w-full"
                 onClick={onContinueWithoutAccount}
               >
-                Продовжити без акаунту
+                Поки що пропустити
               </Button>
               <p className="text-center text-xs text-subtle leading-relaxed px-2">
                 Все працює локально. Акаунт потрібен лише для синхронізації між

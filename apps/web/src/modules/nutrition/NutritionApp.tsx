@@ -13,6 +13,7 @@ import { LogCard } from "./components/LogCard";
 import { NutritionPantrySelector } from "./components/NutritionPantrySelector";
 import { NutritionOverlays } from "./components/NutritionOverlays";
 import { Banner } from "@shared/components/ui/Banner";
+import { ModuleAccentProvider } from "@shared/components/layout";
 import { Icon } from "@shared/components/ui/Icon";
 import {
   loadNutritionPrefs,
@@ -24,6 +25,7 @@ import { usePhotoAnalysis } from "./hooks/usePhotoAnalysis";
 import { useShoppingList } from "./hooks/useShoppingList";
 import { useNutritionUiState } from "./hooks/useNutritionUiState";
 import { useNutritionHashRoute } from "./hooks/useNutritionHashRoute";
+import type { NutritionPage } from "./lib/nutritionRouter";
 import { useNutritionReminders } from "./hooks/useNutritionReminders";
 import { usePantryBarcodeScan } from "./hooks/usePantryBarcodeScan";
 import { useNutritionCloudBackup } from "./hooks/useNutritionCloudBackup";
@@ -351,7 +353,7 @@ export default function NutritionApp({
     .join(" ");
 
   return (
-    <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
+    <ModuleAccentProvider module="nutrition" asShellRoot>
       <NutritionHeader busy={busy} onBackToHub={onBackToHub} />
 
       <div className="flex-1 overflow-y-auto">
@@ -580,7 +582,7 @@ export default function NutritionApp({
 
       <NutritionBottomNav
         activePage={activePage}
-        setActivePage={setActivePageAndHash}
+        setActivePage={(id) => setActivePageAndHash(id as NutritionPage)}
       />
 
       <NutritionOverlays
@@ -603,6 +605,6 @@ export default function NutritionApp({
         applyRestorePayload={applyRestorePayload}
         onRequestMealPhoto={handleRequestMealPhoto}
       />
-    </div>
+    </ModuleAccentProvider>
   );
 }

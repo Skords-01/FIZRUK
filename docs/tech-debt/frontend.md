@@ -1,6 +1,7 @@
 # Frontend Tech Debt — Sergeant Web
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+> **Status:** Active
 
 Аналіз кодової бази `apps/web/src` (434 source файли, 87k рядків).
 
@@ -62,8 +63,8 @@ try/catch крашить на quota exceeded, corrupted storage або private b
   `modules/finyk/hooks/useStorage`, `modules/nutrition/domain/nutritionBackup`.
 - **TODO-список немігрованих файлів** — кожен файл, що ще
   читає/пише напряму, перерахований у `eslint.config.js` явно. Міграція
-  файла = видалення рядка зі списку. На 2026-04-28 TODO-список
-  містить 48 файлів після міграції PWA action/install slice
+  файла = видалення рядка зі списку. На 2026-04-29 TODO-список
+  містить 46 файлів після міграції PWA action/install slice
   (`core/App.tsx`, `core/app/pwaAction.ts`, `useIosInstallBanner.ts`,
   `usePwaInstall.ts`).
   Фактичних raw `localStorage.*` production-файлів
@@ -308,6 +309,10 @@ Ref: PR-6.F (sergeant-audit-devin.md).
   - `core/settings/FinykSection.tsx` — 20 raw calls → `safeReadStringLS`/`safeWriteLS`/`safeRemoveLS`
   - `core/lib/chatActions/fizrukActions.ts` — 7 raw calls → `safeReadLS` + `readWorkouts()` helper
   - `core/hub/HubDashboard.tsx` — вже використовував `localStorageStore` (KVStore adapter), прибрано з allowlist
+- ✅ `no-raw-local-storage` PWA + Finyk-hub burndown (52 → 49 файлів):
+  - `core/app/pwaAction.ts` — `localStorage.getItem`/`removeItem` → `safeReadStringLS` + `safeRemoveLS`
+  - `core/hooks/usePwaActions.ts` — `localStorage.setItem` у `useState` lazy-initializer → `safeWriteLS`
+  - `core/hub/useFinykHubPreview.ts` — `localStorage.getItem` + `JSON.parse` у `readHasMonoData()` → типізований `safeReadLS<{ txs?: unknown[] }>`
 
 ---
 
@@ -323,13 +328,14 @@ Ref: PR-6.F (sergeant-audit-devin.md).
 На момент введення правила (2026-04-26) в production-коді знайдено
 **11 файлів** з `as unknown as X` (інших патернів — 0). Файли додані
 до allowlist у `eslint.config.js`. Міграція файла = видалення рядка
-з allowlist.
+з allowlist. На 2026-04-28 мігровано 2 файли (`Workouts.tsx`,
+`useBarcodeScanner.ts`) — через `declare global { interface Window { … } }`
+module-augmentation для експериментальних / prefixed DOM-глобалів,
+залишилось **9 файлів**.
 
 | Файл                                                                | Патерн          | Кількість |
 | ------------------------------------------------------------------- | --------------- | --------- |
 | `apps/web/src/shared/components/ui/VoiceMicButton.tsx`              | `as unknown as` | 2         |
-| `apps/web/src/modules/fizruk/pages/Workouts.tsx`                    | `as unknown as` | 1         |
-| `apps/web/src/modules/nutrition/hooks/useBarcodeScanner.ts`         | `as unknown as` | 1         |
 | `apps/web/src/modules/nutrition/hooks/useNutritionRemoteActions.ts` | `as unknown as` | 1         |
 | `apps/web/src/modules/finyk/hooks/useFinykPersonalization.ts`       | `as unknown as` | 6         |
 | `apps/web/src/core/lib/hubChatUtils.ts`                             | `as unknown as` | 2         |

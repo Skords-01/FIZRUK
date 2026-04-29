@@ -6,18 +6,25 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
 
 # --- Залежності (кеш-шар) ---
+# `patches/` потрібен ДО `pnpm install`, бо `pnpm.patchedDependencies` у
+# package.json (наразі `@expo/cli@0.22.28`) застосовується завжди — навіть з
+# `--ignore-scripts` — і відсутність патч-файлу валить frozen-install.
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY patches ./patches
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY packages/config/package.json ./packages/config/package.json
+COPY packages/finyk-domain/package.json ./packages/finyk-domain/package.json
 COPY apps/server/package.json ./apps/server/package.json
 
 RUN pnpm install --frozen-lockfile --ignore-scripts \
       --filter @sergeant/server... \
-      --filter @sergeant/shared...
+      --filter @sergeant/shared... \
+      --filter @sergeant/finyk-domain...
 
 # --- Джерела ---
 COPY packages/shared ./packages/shared
 COPY packages/config ./packages/config
+COPY packages/finyk-domain ./packages/finyk-domain
 COPY apps/server ./apps/server
 
 WORKDIR /app/apps/server
@@ -35,9 +42,12 @@ ENV NODE_ENV=production
 RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
 
 # Install production deps only (keeps runtime small & safer).
+# `patches/` обов'язково ДО `pnpm install` — див. коментар у builder-stage.
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY patches ./patches
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY packages/config/package.json ./packages/config/package.json
+COPY packages/finyk-domain/package.json ./packages/finyk-domain/package.json
 COPY apps/server/package.json ./apps/server/package.json
 
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts \
@@ -47,5 +57,15 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts \
 COPY apps/server ./apps/server
 COPY --from=builder /app/apps/server/dist-server ./apps/server/dist-server
 
+# Non-root user for security (CIS Docker Benchmark, OWASP).
+RUN addgroup -S app && adduser -S app -G app
+USER app
+
 WORKDIR /app/apps/server
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/health || exit 1
+
 CMD ["node", "dist-server/index.js"]

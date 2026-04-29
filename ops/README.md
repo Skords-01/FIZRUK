@@ -11,12 +11,26 @@ ops/
 ├── .env.ops.example            # Шаблон env-змінних
 ├── README.md                   # Цей файл
 └── n8n-workflows/
+    │  — Revenue / Billing —
     ├── 01-billing-pipeline.json          # Stripe → DB → Telegram
     ├── 02-failed-payment-recovery.json   # Failed payment → email + downgrade
+    │  — Ops / Alerting —
     ├── 03-sentry-alert-routing.json      # Sentry → Telegram (fatal / warning)
     ├── 04-daily-backup-verification.json # Cron 03:00 → Railway → sanity SQL
     ├── 05-renovate-pr-auto-handler.json  # Renovate PR → auto-approve patch / notify
-    └── 06-mono-webhook-enrichment.json   # Mono tx → AI categorize → budget alert
+    │  — Finance —
+    ├── 06-mono-webhook-enrichment.json   # Mono tx → AI categorize → budget alert
+    │  — Product / User notifications —
+    ├── 07-morning-briefing-push.json     # Cron 07:30 Kyiv → push all subscribers
+    ├── 08-weekly-financial-digest.json   # Cron Sun 20:00 → SQL + Claude Haiku → Telegram
+    ├── 09-habit-streak-alert.json        # Cron 21:00 Kyiv → push habit reminder
+    ├── 10-debt-receivable-reminder.json  # Cron 10:00 → debts due in 3 days → push + Telegram
+    │  — Developer / Ops —
+    ├── 15-railway-deployment-notify.json # Railway webhook → Telegram #deploys
+    ├── 16-posthog-daily-metrics.json     # Cron 09:00 → PostHog API → Telegram #metrics
+    ├── 17-github-pr-stale-alert.json     # Cron 10:00 Mon–Fri → PRs >48h → Telegram
+    ├── 18-nightly-security-audit.json    # Cron 04:00 UTC → GitHub audit run → Telegram
+    └── 19-db-health-report.json          # Cron Mon 07:00 → DB size + slow queries → Telegram
 ```
 
 ## Quick start
@@ -103,19 +117,81 @@ railway up --detach
 **Тригер:** Mono webhook (нова транзакція)
 **Дія:** Save → AI categorize (Claude) → Update DB → Budget threshold check → Telegram alert
 
+### 07. Morning Briefing Push
+
+**Тригер:** Cron 07:30 Kyiv (щодня)
+**Дія:** Postgres → список юзерів з push-підписками → POST `/api/push/send` для кожного → "Доброго ранку! Відкрий Sergeant"
+
+### 08. Weekly Financial Digest
+
+**Тригер:** Cron неділя 20:00 Kyiv
+**Дія:** Postgres → витрати за 7 днів по категоріях → Claude Haiku → Telegram дайджест
+
+### 09. Habit Streak At-Risk Alert
+
+**Тригер:** Cron 21:00 Kyiv (щодня)
+**Дія:** Postgres → юзери з push-підписками → push "Не забудь звички!"
+
+### 10. Debt/Receivable Reminder
+
+**Тригер:** Cron 10:00 Kyiv (щодня)
+**Дія:** Postgres → борги/дебіторка з `dueDate` ≤ +3 дні → push для кожного + Telegram summary
+
+### 15. Railway Deployment Notify
+
+**Тригер:** Railway webhook (`deployment.success` / `deployment.failed`)
+**Дія:** Парсинг payload → Telegram `#deploys` з гілкою, хешем, статусом
+
+### 16. PostHog Daily Metrics
+
+**Тригер:** Cron 09:00 Kyiv (щодня)
+**Дія:** PostHog API → DAU + pageviews за вчора → Telegram `#metrics`
+
+### 17. GitHub PR Stale Alert
+
+**Тригер:** Cron 10:00 Kyiv (Пн–Пт)
+**Дія:** GitHub API → open PRs → фільтр >48h без активності → Telegram якщо є
+
+### 18. Nightly Security Audit Summary
+
+**Тригер:** Cron 04:00 UTC (після `nightly-audit.yml` о 03:00)
+**Дія:** GitHub API → останній запуск `nightly-audit.yml` → Telegram `#incidents` якщо `failure`
+
+### 19. DB Health Report
+
+**Тригер:** Cron понеділок 07:00 Kyiv
+**Дія:** Postgres → розмір DB, топ-5 таблиць, повільні запити (`pg_stat_statements`) → Telegram `#ops`
+
 ## Credentials у n8n
 
 Після імпорту workflows — налаштуй credentials через n8n UI:
 
-| Credential        | Тип                    | Потрібно для   |
-| ----------------- | ---------------------- | -------------- |
-| Sergeant Postgres | PostgreSQL             | 01, 02, 04, 06 |
-| Sergeant Ops Bot  | Telegram Bot API       | 01–06          |
-| Stripe            | Webhook signing secret | 01, 02         |
-| Resend            | API Key                | 02             |
-| Anthropic         | API Key                | 06             |
-| GitHub            | Token / Webhook secret | 05             |
-| Railway           | API Token              | 04             |
+| Credential        | Тип                    | Потрібно для          |
+| ----------------- | ---------------------- | --------------------- |
+| Sergeant Postgres | PostgreSQL             | 01, 02, 04, 06–10, 19 |
+| Sergeant Ops Bot  | Telegram Bot API       | 01–10, 15–19          |
+| Stripe            | Webhook signing secret | 01, 02                |
+| Resend            | API Key                | 02                    |
+| Anthropic         | API Key                | 06, 08                |
+| GitHub            | Token / Webhook secret | 05, 17, 18            |
+| Railway           | API Token              | 04                    |
+
+### Нові env-змінні для воркфлоу 07–19
+
+Додай у n8n → Settings → Environment Variables:
+
+| Змінна                     | Використовується в | Де взяти                                                              |
+| -------------------------- | ------------------ | --------------------------------------------------------------------- |
+| `API_SECRET`               | 07, 09, 10         | `.env` сервера (той самий `API_SECRET`)                               |
+| `PUBLIC_API_BASE_URL`      | 07, 09, 10         | `https://your-api.railway.app`                                        |
+| `POSTHOG_PERSONAL_API_KEY` | 16                 | PostHog → Settings → Personal API Keys                                |
+| `POSTHOG_PROJECT_ID`       | 16                 | PostHog → Settings → Project → ID у URL                               |
+| `GITHUB_PAT`               | 17, 18             | GitHub → Settings → Developer settings → PAT (classic), scope: `repo` |
+
+### Railway Webhook (для воркфлоу 15)
+
+1. n8n UI → Workflow 15 → скопіюй webhook URL (вигляд: `https://n8n.your-domain.com/webhook/railway-deploy`)
+2. Railway → твій проект → Settings → Webhooks → Add webhook → вставити URL
 
 ## Troubleshooting
 
@@ -137,6 +213,38 @@ docker compose -f ops/docker-compose.ops.yml logs n8n
 - Перевір `TELEGRAM_BOT_TOKEN` і `TELEGRAM_ALERT_CHAT_ID`
 - Бот має бути адміном каналу
 - Тест: `curl -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" -d chat_id=<ID> -d text="test"`
+
+## Моніторинг (Prometheus + Grafana)
+
+Prometheus і Grafana включені в той самий compose-файл.
+
+| Сервіс     | URL                   | Логін             |
+| ---------- | --------------------- | ----------------- |
+| Prometheus | http://localhost:9090 | —                 |
+| Grafana    | http://localhost:3001 | `admin` / `admin` |
+
+Grafana автоматично підключає Prometheus як datasource (provisioning через `ops/grafana/datasources/prometheus.yml`).
+
+Prometheus скрейпить `GET /metrics` основного сервера (захищено Bearer token `METRICS_TOKEN`).
+
+**Потрібні змінні в `.env.ops`:**
+
+```
+METRICS_TOKEN=<той самий що у .env сервера>
+SERVER_METRICS_URL=http://host.docker.internal:3000/metrics
+```
+
+**Prometheus targets:** http://localhost:9090/targets
+
+**Troubleshooting — метрики не збираються:**
+
+1. Переконайся що `pnpm dev:server` запущений
+2. Перевір збіг `METRICS_TOKEN` у `.env.ops` і `.env`
+3. `curl -H "Authorization: Bearer <token>" http://localhost:3000/metrics`
+
+## Додавання нового workflow
+
+Дивись секцію «Workflow basics» у [`docs/adr/0026-n8n-workflow-source-of-truth.md`](../docs/adr/0026-n8n-workflow-source-of-truth.md) та приклади у `ops/n8n-workflows/`.
 
 ## Вартість
 

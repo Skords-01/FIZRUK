@@ -1,9 +1,11 @@
 import { getPlatform, isCapacitor } from "@sergeant/shared";
 
-let initialized = false;
-let sentryModule = null;
+type SentryModule = typeof import("@sentry/react");
 
-function parseRate(val, fallback) {
+let initialized = false;
+let sentryModule: SentryModule | null = null;
+
+function parseRate(val: unknown, fallback: number): number {
   if (val == null || val === "") return fallback;
   const n = Number(val);
   return Number.isFinite(n) ? n : fallback;
@@ -69,7 +71,10 @@ export async function initSentry() {
  * делегує у реальний `Sentry.captureException`. Використовується
  * локальним `ErrorBoundary`, щоб не змушувати його залежати від SDK.
  */
-export function captureException(error, hint) {
+export function captureException(
+  error: unknown,
+  hint?: Parameters<SentryModule["captureException"]>[1],
+): void {
   if (!sentryModule) return;
   try {
     sentryModule.captureException(error, hint);

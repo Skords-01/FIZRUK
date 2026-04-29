@@ -28,6 +28,70 @@ Validates AI code-marker comments follow the canonical syntax (`// AI-NOTE:`, `/
 
 Flags Tailwind `<color>/<N>` opacity modifiers where `N` is not registered in `theme.opacity`. Unregistered steps are silently dropped by Tailwind, breaking `dark:` / `hover:` overrides. Severity: **error**.
 
+### `sergeant-design/no-hex-in-classname`
+
+Forbids arbitrary `<utility>-[#hex]` colors in Tailwind classNames (`bg-[#10b981]`, `text-[#fff]/50`, `border-[#abc]`). Raw hex bypasses the design-system token layer — dark-mode adaptation, WCAG-AA `-strong` promotion, and future palette migration all stop working for those literals. Covers every color-aware utility (`bg-`, `text-`, `border-`, `ring-`, `fill-`, `stroke-`, `from-`, `to-`, `via-`, `shadow-`, `outline-`, `divide-`, `placeholder-`, `caret-`, `decoration-`, `accent-`) and validates hex length (3 / 4 / 6 / 8 digits). Non-hex arbitrary values (`bg-[oklch(…)]`, `border-[var(--foo)]`, `bg-[rgb(…)]`) are intentionally left alone — extend the preset if a truly one-off color is needed. See [AGENTS.md rule #11](../../AGENTS.md). Severity: **error**.
+
+```tsx
+// ❌ BAD — hex bypasses the token layer
+<div className="bg-[#10b981] text-[#fff]/50" />
+
+// ✅ GOOD — semantic token; both `bg-` and `text-` adapt per theme
+<div className="bg-success-soft text-success-strong" />
+```
+
+### `sergeant-design/no-raw-dark-palette`
+
+Forbids a className that pairs a raw-palette light utility (`bg-amber-50`, `text-coral-100`, `border-teal-200/50`, …) with a `dark:` raw-palette override (`dark:bg-amber-500/15`, `dark:text-coral-900/30`, `dark:border-teal-800/30`). Both halves encode palette knowledge at the call-site, so the next palette migration silently drops one half and the surrounding override falls through to the wrong colour (this is exactly bug [#814](https://github.com/Skords-01/Sergeant/pull/814)). The fix is always the same: lift the (light, dark) pair into the design-system token layer (`bg-success-soft`, `bg-finyk-surface`, `text-brand-strong`, `border-routine-soft-border`, …) so the preset owns the swap and the call-site keeps zero `dark:` palette overrides.
+
+The rule fires only when **both** halves are present on the same className value: a bare `<utility>-<PALETTE>-<SHADE>[/<opacity>]` AND a `dark:<utility>-<PALETTE>-<SHADE>[/<opacity>]`, where `<utility> ∈ { bg, text, border }` and `<PALETTE>` is one of the 24 raw Tailwind families (the 22 default Tailwind palettes plus Sergeant's `brand` / `coral` aliases — both are theme-inert raw palettes despite the brand-y names; the per-theme aware utilities are `bg-brand-soft`, `bg-routine-surface`, etc.). `<SHADE>` is a numeric step (`50`, `100`, …, `950`), so semantic suffixes (`brand-soft`, `brand-strong`, `routine-soft-border`) are NOT flagged. Dark-side-only "patches" (light is already semantic) and bare-colour glass washes (`dark:bg-white/10`) intentionally stay. See [AGENTS.md rule #13](../../AGENTS.md) and [`docs/design/DARK-MODE-AUDIT.md`](../../docs/design/DARK-MODE-AUDIT.md). Severity: **error** (scoped to `apps/web/**/*.{ts,tsx,js,jsx}` only — the semantic replacements depend on `--c-{family}-soft*` CSS variables defined in `apps/web/src/index.css`, and NativeWind does not consume those variables).
+
+```tsx
+// ❌ BAD — both halves are raw `brand-*` palette steps
+<a className="text-brand-600 dark:text-brand-400" />
+
+// ✅ GOOD — `text-brand-strong` is the WCAG-AA companion, `dark:text-brand`
+// is the saturated DEFAULT for dark panels.
+<a className="text-brand-strong dark:text-brand" />
+
+// ❌ BAD — paired raw-palette borders on a hero card
+<Card className="border border-teal-200/50 dark:border-teal-800/30" />
+
+// ✅ GOOD — `border-fizruk-soft-border` is theme-adaptive
+<Card className="border border-fizruk-soft-border/50" />
+```
+
+### `sergeant-design/prefer-focus-visible`
+
+Forbids `focus:` colour / border / ring / shadow utilities (`focus:bg-panel`, `focus:border-brand-400`, `focus:ring-2`, `focus:ring-brand-500/45`, `focus:shadow-float`, `focus:text-text`, `focus:text-brand-strong`, …). Visible focus indicators must use the `focus-visible:` variant instead — `focus:` fires for any focus state including pointer click, which produces a flashing colour every time the user clicks a button or input; `focus-visible:` only fires for keyboard / assistive-tech focus. Sergeant's design-system contract ([`docs/design/design-system.md`](../../docs/design/design-system.md)) explicitly lists `focus-visible:ring-2 ring-brand-500/45 ring-offset-2 ring-offset-surface` as the canonical focus indicator. The rule is scoped to colour / border / ring / shadow / fill / stroke / divide / placeholder / caret / decoration / accent / outline-offset utilities; non-colour `text-` tails (font sizes `text-xs`–`text-9xl`, the Sergeant `text-mini` / `text-dialog` tokens, alignment `text-center`, transform `text-uppercase`, …) are intentionally exempted because they are not colour blinks. Variant-prefixed tokens (`lg:focus:bg-panel`, `hover:focus:text-brand-strong`, `dark:focus:border-brand-400`, `group-focus:bg-panel`, `peer-focus:ring-2`) carry an extra condition the rule's bare-token contract does not model and are skipped. The single legitimate `focus:` utility is **`focus:outline-none`** (and the inert `focus:outline-hidden` / `focus:outline-transparent`) — the canonical user-agent outline reset that pairs with `focus-visible:ring-*` so the design-system ring takes over. See [AGENTS.md rule #14](../../AGENTS.md) and [`docs/design/DARK-MODE-AUDIT.md`](../../docs/design/DARK-MODE-AUDIT.md). Severity: **error** (scoped to `apps/web/**/*.{ts,tsx,js,jsx}` only — React Native (`apps/mobile`, NativeWind) does not expose a `:focus-visible` pseudo-class equivalent).
+
+```tsx
+// ❌ BAD — pointer click on the input flashes the brand ring
+<input className="focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/30" />
+
+// ✅ GOOD — only keyboard / assistive-tech focus paints the ring
+<input className="focus:outline-none focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30" />
+
+// ❌ BAD — paired raw `focus:` rules duplicate `focus-visible:`
+<input className="focus-visible:border-brand-400 focus:border-brand-400" />
+
+// ✅ GOOD — `focus-visible:` is supported by every modern browser
+<input className="focus-visible:border-brand-400" />
+```
+
+### `sergeant-design/no-foreign-module-accent`
+
+Inside `apps/<app>/src/modules/<X>/` subtrees only `<X>`'s accent utilities (`bg-<X>-surface`, `text-<X>-strong`, `ring-<X>`, `bg-<X>-500/15`, …) may appear. Sergeant's four module accents (`finyk`/emerald, `fizruk`/teal, `routine`/coral, `nutrition`/lime) are deliberately close in saturation — a fizruk screen accidentally rendering a coral `ring-routine` reads to the user as "Рутина" and is a design bug, not a stylistic choice. Cross-module shells (`core/`, `shared/`, `modules/shared/`, `stories/`, test files) remain free to reference all four. Variant prefixes (`dark:`, `hover:`, `lg:`), shade suffixes (`-500`, `-soft`, `-strong`), and opacity suffixes (`/15`) are handled transparently. See [AGENTS.md rule #12](../../AGENTS.md) and [`docs/design/MODULE-ACCENT.md`](../../docs/design/MODULE-ACCENT.md). Severity: **error**.
+
+```tsx
+// apps/web/src/modules/fizruk/pages/PlanCalendar.tsx
+// ❌ BAD — coral focus ring inside a Fizruk page
+<button className="focus-visible:ring-routine" />
+
+// ✅ GOOD — module-consistent focus ring
+<button className="focus-visible:ring-fizruk" />
+```
+
 ### `sergeant-design/no-low-contrast-text-on-fill`
 
 Forbids saturated brand `bg-*` utilities behind `text-white` — use the `-strong` companion (= 700/800 step) so the pairing clears WCAG AA 4.5 : 1. Severity: **error**.

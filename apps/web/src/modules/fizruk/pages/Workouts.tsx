@@ -25,6 +25,15 @@ import {
 } from "@sergeant/fizruk-domain";
 import { computeWorkoutSummary } from "@sergeant/fizruk-domain/domain";
 
+// Legacy Safari (< 14) ships `AudioContext` only as prefixed
+// `webkitAudioContext`. Not in `lib.dom.d.ts`, so we attach it to `Window`
+// via module augmentation rather than relying on a double-cast.
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
 // Shared AudioContext reused across beeps. Creating/closing one per call
 // races with quick successive rest-timer completions and fights iOS' audio
 // session. Lazily created on first call (after a user gesture) and kept open
@@ -34,10 +43,8 @@ function getAudioCtx(): AudioContext | null {
   try {
     if (sharedAudioCtx && sharedAudioCtx.state !== "closed")
       return sharedAudioCtx;
-    const Ctor =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext;
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
     sharedAudioCtx = new Ctor();
     return sharedAudioCtx;
   } catch {
@@ -155,7 +162,6 @@ export function Workouts() {
     }
   });
   const [finishFlash, setFinishFlash] = useState(null);
-  const [deleteWorkoutConfirm, setDeleteWorkoutConfirm] = useState(false);
   const [deleteExerciseConfirm, setDeleteExerciseConfirm] = useState(false);
   const [riskyTemplateConfirm, setRiskyTemplateConfirm] = useState(null); // stores template when risky
   const [now, setNow] = useState(Date.now());
@@ -551,7 +557,6 @@ export function Workouts() {
             removeItem={removeItemWithUndo}
             setFinishFlash={setFinishFlash}
             endWorkout={endWorkout}
-            setDeleteWorkoutConfirm={setDeleteWorkoutConfirm}
             summarizeWorkoutForFinish={summarizeWorkoutForFinish}
             submitRetroWorkout={submitRetroWorkout}
             deleteWorkout={deleteWorkout}
@@ -666,30 +671,17 @@ export function Workouts() {
         />
       </div>
 
-      {/* Confirmation dialogs */}
-      <ConfirmDialog
-        open={deleteWorkoutConfirm}
-        title="Видалити тренування?"
-        description="Можна повернути одразу після видалення."
-        confirmLabel="Видалити"
-        onConfirm={() => {
-          if (activeWorkout) {
-            // Snapshot before delete so undo can re-insert with the
-            // original startedAt/items/groups intact (chronological
-            // order preserved by `restoreWorkout`).
-            const snapshot = activeWorkout;
-            deleteWorkout(snapshot.id);
-            setActiveWorkoutId((prev) => (prev === snapshot.id ? null : prev));
-            showUndoToast(toast, {
-              msg: "Тренування видалено",
-              onUndo: () => restoreWorkout(snapshot),
-            });
-          }
-          setDeleteWorkoutConfirm(false);
-        }}
-        onCancel={() => setDeleteWorkoutConfirm(false)}
-      />
+      {/*
+        Confirmation dialogs.
 
+        The "Delete active workout" `ConfirmDialog` was removed in favour
+        of the unified soft-delete flow (`onDeleteWorkout` in
+        `WorkoutJournalSection`) that calls `deleteWorkout` immediately
+        and surfaces a 5 s undo toast via `showUndoToast`. Per the
+        unified-undo policy, only non-reversible flows (e.g. exercise
+        removal that detaches the catalog entry) keep an explicit
+        confirmation step.
+      */}
       <ConfirmDialog
         open={deleteExerciseConfirm}
         title="Видалити вправу?"

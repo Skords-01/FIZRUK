@@ -49,7 +49,7 @@ export function FinykLoginScreen({
               "w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-4",
               "bg-gradient-to-br from-brand-100 to-brand-200",
               "dark:from-brand-900/40 dark:to-brand-800/30",
-              "border border-brand-200/60 dark:border-brand-700/30",
+              "border border-brand-soft-border/60",
               "shadow-card",
             )}
           >
@@ -62,7 +62,7 @@ export function FinykLoginScreen({
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-brand-600 dark:text-brand-400"
+              className="text-brand-strong dark:text-brand"
               aria-hidden
             >
               <rect x="3" y="8" width="18" height="12" rx="2" />

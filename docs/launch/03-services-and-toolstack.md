@@ -1,5 +1,8 @@
 # 03. Сервіси та тулстек
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
+
 > Повний аудит зовнішніх сервісів, інфраструктури, dev-інструментів: що є, що додати, що змінити.
 > Кожен запис — з офіційним посиланням, фактичною ціною (Date checked: 2026-04), статусом у Sergeant.
 > Джерело: `sergeant-services-audit.md` + `sergeant-toolstack.md` + перевірка `package.json`, `railway.toml`, `vercel.json`, `apps/server/src/lib/**`.
@@ -14,7 +17,7 @@
               | apps/web          |    HTTPS    | apps/server         |         | PostgreSQL     |
               | Vite + React 18   |------------>| Express + Node 20   |-------->| Railway managed|
               | PWA (Workbox)     |   API       | Better Auth         |         | Migrations     |
-              | Tailwind CSS      |             | Pino logging        |         | 001-008        |
+              | Tailwind CSS      |             | Pino logging        |         | 001-010        |
               | Sentry (@sentry/  |             | Helmet + CSP        |         +----------------+
               |   react)          |             | Sentry (@sentry/    |                |
               | TanStack Query    |             |   node)             |         +----------------+

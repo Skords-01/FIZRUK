@@ -139,7 +139,45 @@ const BarcodeQuery = schemas.BarcodeQuerySchema.meta({
 });
 const MonoTransactionsQuery = schemas.MonoTransactionsQuerySchema.meta({
   id: "MonoTransactionsQuery",
-  description: "Query для GET /api/mono/backfill.",
+  description:
+    "Query для GET /api/mono/transactions — фільтри from/to/accountId та cursor.",
+});
+const MonoAccountDto = schemas.MonoAccountDtoSchema.meta({
+  id: "MonoAccountDto",
+  description:
+    "Рядок `mono_accounts` після нормалізації (bigint coerce + masked PAN).",
+});
+const MonoAccountsResponse = schemas.MonoAccountsResponseSchema.meta({
+  id: "MonoAccountsResponse",
+  description: "Відповідь GET /api/mono/accounts — масив MonoAccountDto.",
+});
+const MonoTransactionDto = schemas.MonoTransactionDtoSchema.meta({
+  id: "MonoTransactionDto",
+  description:
+    "Рядок `mono_transactions` після нормалізації (bigint coerce, MCC ж. nullable).",
+});
+const MonoTransactionsPage = schemas.MonoTransactionsPageSchema.meta({
+  id: "MonoTransactionsPage",
+  description:
+    "Відповідь GET /api/mono/transactions — cursor-paginated `{data, nextCursor}`.",
+});
+const MonoSyncState = schemas.MonoSyncStateSchema.meta({
+  id: "MonoSyncState",
+  description:
+    "Відповідь GET /api/mono/sync-state — статус інтеграції + лічильники.",
+});
+const MonoConnectResponse = schemas.MonoConnectResponseSchema.meta({
+  id: "MonoConnectResponse",
+  description: "Відповідь POST /api/mono/connect — `status: 'active'` literal.",
+});
+const MonoDisconnectResponse = schemas.MonoDisconnectResponseSchema.meta({
+  id: "MonoDisconnectResponse",
+  description: "Відповідь POST /api/mono/disconnect — `{ ok: true }`.",
+});
+const MonoBackfillResponse = schemas.MonoBackfillResponseSchema.meta({
+  id: "MonoBackfillResponse",
+  description:
+    "Відповідь POST /api/mono/backfill — `status: 'started'` literal.",
 });
 const Pagination = schemas.PaginationSchema.meta({
   id: "Pagination",
@@ -155,6 +193,21 @@ const WaitlistSubmitResponse = schemas.WaitlistSubmitResponseSchema.meta({
   id: "WaitlistSubmitResponse",
   description:
     "Відповідь на POST /api/v1/waitlist — `created` розрізняє новий запис vs duplicate.",
+});
+const TranscribeQuery = schemas.TranscribeQuerySchema.meta({
+  id: "TranscribeQuery",
+  description:
+    "Query для POST /api/transcribe (Groq Whisper proxy): мова + prompt.",
+});
+const TranscribeResponse = schemas.TranscribeResponseSchema.meta({
+  id: "TranscribeResponse",
+  description:
+    "Відповідь на POST /api/transcribe — розпізнаний текст + тривалість аудіо.",
+});
+const WebVitalsPayload = schemas.WebVitalsPayloadSchema.meta({
+  id: "WebVitalsPayload",
+  description:
+    "POST /api/metrics/web-vitals — батч Core Web Vitals (LCP/INP/FCP/TTFB/CLS).",
 });
 
 /** Стандартна 400-помилка для validateBody. */
@@ -207,9 +260,20 @@ export const namedSchemas = {
   FoodSearchQuery,
   BarcodeQuery,
   MonoTransactionsQuery,
+  MonoAccountDto,
+  MonoAccountsResponse,
+  MonoTransactionDto,
+  MonoTransactionsPage,
+  MonoSyncState,
+  MonoConnectResponse,
+  MonoDisconnectResponse,
+  MonoBackfillResponse,
   Pagination,
   WaitlistSubmit,
   WaitlistSubmitResponse,
+  TranscribeQuery,
+  TranscribeResponse,
+  WebVitalsPayload,
   ApiError,
 } as const;
 

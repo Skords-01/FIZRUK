@@ -430,10 +430,10 @@ export function Exercise({ exerciseId }) {
           <div className="flex items-center gap-2.5 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-3">
             <span className="text-xl leading-none">🏆</span>
             <div>
-              <p className="text-sm font-bold text-yellow-700 dark:text-yellow-300">
+              <p className="text-sm font-bold text-warning-strong dark:text-warning">
                 Новий особистий рекорд!
               </p>
-              <p className="text-xs text-yellow-600/80 dark:text-yellow-400/70">
+              <p className="text-xs text-warning-strong/80 dark:text-warning/70">
                 Найкращий результат за всю історію
               </p>
             </div>

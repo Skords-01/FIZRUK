@@ -1,6 +1,7 @@
 # Contributing to Sergeant
 
-> **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
 
 > **Ціль:** zero-to-running за ≤ 5 хвилин на будь-якій машині з Docker.
 
@@ -22,6 +23,8 @@ pnpm --version  # має бути 9.15.1
 ```
 
 Repo pins `"packageManager": "pnpm@9.15.1"` — Corepack автоматично підхоплює точну версію pnpm. CI також працює на Node 20; Node 22 може давати engine warning і відрізнятися від CI.
+
+Якщо ти користуєшся [Volta](https://volta.sh/), `package.json` містить `volta` блок з точними версіями `node@20.20.2` + `pnpm@9.15.1` — `volta` автоматично перемикає toolchain при `cd` у репо. Альтернатива — `nvm use` (підхопить `.nvmrc`).
 
 ---
 
@@ -50,8 +53,8 @@ cp .env.example .env
 echo "AI_QUOTA_DISABLED=1" >> .env
 
 # 3. Database
-pnpm db:up                  # docker compose up -d (Postgres 16 on :5432)
-pnpm db:migrate             # run SQL migrations
+pnpm dev:db                 # docker compose up -d (Postgres 16 on :5432) + run SQL migrations
+# (or run them separately: `pnpm db:up` then `pnpm db:migrate`)
 
 # 4. Dev servers (two terminals)
 pnpm dev:server             # Express API  → http://localhost:3000
@@ -81,16 +84,23 @@ pnpm db:down                # stop & remove the Postgres container (data persist
 
 ## Everyday Commands
 
-| Command              | What it does                                                                         |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| `pnpm lint`          | ESLint (all apps + packages) + import checker + plugin tests                         |
-| `pnpm typecheck`     | TypeScript type-check across the monorepo                                            |
-| `pnpm test`          | Vitest for all packages                                                              |
-| `pnpm test:coverage` | Vitest with per-package coverage floors                                              |
-| `pnpm format`        | Prettier — auto-fix                                                                  |
-| `pnpm format:check`  | Prettier — check only (CI uses this)                                                 |
-| `pnpm build`         | Turbo build (all apps)                                                               |
-| `pnpm check`         | `format:check` + `lint` + `typecheck` + `test` + `build` — the full CI suite locally |
+| Command                          | What it does                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
+| `pnpm lint`                      | ESLint (all apps + packages) + import checker + plugin tests                         |
+| `pnpm typecheck`                 | TypeScript type-check across the monorepo                                            |
+| `pnpm test`                      | Vitest for all packages                                                              |
+| `pnpm test:coverage`             | Vitest with per-package coverage floors                                              |
+| `pnpm format`                    | Prettier — auto-fix                                                                  |
+| `pnpm format:check`              | Prettier — check only (CI uses this)                                                 |
+| `pnpm build`                     | Turbo build (all apps)                                                               |
+| `pnpm check`                     | `format:check` + `lint` + `typecheck` + `test` + `build` — the full CI suite locally |
+| `pnpm gen`                       | Plop generators (`migration`, `rq-hook`, `hubchat-tool`, `endpoint`, `adr`)          |
+| `pnpm gen:adr`                   | New ADR — auto-numbers from `docs/adr/NNNN-*.md`                                     |
+| `pnpm docs:check-links`          | Scan every `*.md` file for broken `[text](target)` links (internal + external cache) |
+| `pnpm docs:gen-playbook-index`   | Rewrite `docs/playbooks/INDEX.md` from each playbook's `**Trigger:**` line           |
+| `pnpm docs:check-playbook-index` | CI mode — fail if `INDEX.md` is stale (add `--check` locally too)                    |
+| `pnpm docs:freshness-dashboard`  | Build `dist/freshness-dashboard.html` report (colour-coded, sortable)                |
+| `pnpm ci:validate-pr-body`       | Validate `$PR_BODY` against `.github/PULL_REQUEST_TEMPLATE.md`                       |
 
 ### Scoped commands
 
@@ -196,29 +206,7 @@ chore(config): tune shared eslint config
 
 Allowed types: `feat`, `fix`, `docs`, `chore`, `refactor`, `perf`, `test`, `build`, `ci`.
 
-Use one of these scopes; do not invent scopes like `app`, `core`, `monorepo`, or `all`.
-
-| Scope              | When to use                                                    |
-| ------------------ | -------------------------------------------------------------- |
-| `web`              | `apps/web/**`                                                  |
-| `server`           | `apps/server/**` excluding migrations-only changes             |
-| `mobile`           | `apps/mobile/**`                                               |
-| `mobile-shell`     | `apps/mobile-shell/**`                                         |
-| `shared`           | `packages/shared/**`                                           |
-| `api-client`       | `packages/api-client/**`                                       |
-| `finyk-domain`     | `packages/finyk-domain/**`                                     |
-| `fizruk-domain`    | `packages/fizruk-domain/**`                                    |
-| `nutrition-domain` | `packages/nutrition-domain/**`                                 |
-| `routine-domain`   | `packages/routine-domain/**`                                   |
-| `insights`         | `packages/insights/**`                                         |
-| `design-tokens`    | `packages/design-tokens/**`                                    |
-| `config`           | `packages/config/**`                                           |
-| `eslint-plugins`   | `packages/eslint-plugin-sergeant-design/**`                    |
-| `migrations`       | `apps/server/src/migrations/**` only                           |
-| `deps`             | Renovate / dependency-only PRs                                 |
-| `docs`             | `docs/**`, `README.md`, `AGENTS.md`, `CONTRIBUTING.md`         |
-| `ci`               | `.github/workflows/**`, `turbo.json`, scripts under `scripts/` |
-| `root`             | Repo-level config (`pnpm-workspace.yaml`, root `package.json`) |
+Повний список дозволених scopes — у [`AGENTS.md` § Hard rules #5](AGENTS.md) (single source of truth). Також enforced через [`commitlint.config.js`](commitlint.config.js). Не вигадуй нові scopes (`app`, `core`, `monorepo`, `all`).
 
 If a PR genuinely spans multiple scopes, use the most user-visible scope and explain the rest in the PR body.
 
@@ -253,7 +241,7 @@ CI fails when bundle budgets regress:
 | Metric                       | Budget       |
 | ---------------------------- | ------------ |
 | `apps/web` JS total (brotli) | **≤ 615 kB** |
-| `apps/web` CSS (brotli)      | **≤ 18 kB**  |
+| `apps/web` CSS (brotli)      | **≤ 22 kB**  |
 
 If a legitimate feature needs a higher limit, bump the number in the same PR and call it out in the description.
 
@@ -314,6 +302,14 @@ These are non-negotiable. Read `AGENTS.md` for full context.
 5. **Conventional Commits** with the allowed type/scope set above.
 6. **No force-push to main.** `--force-with-lease` on feature branches is fine.
 7. **Never skip pre-commit hooks** (`--no-verify` is forbidden).
+8. **Tailwind opacity steps** must be on the registered scale (`0,5,8,10,15,…,100`). Off-scale values silently drop.
+9. **Saturated brand fills behind `text-white`** must use the `-strong` companion for WCAG AA compliance.
+10. **Lifecycle markers** — every file declares its status. New components/hooks committed ahead of integration MUST carry a `@scaffolded` JSDoc block with `@owner` + `@nextStep`. Docs add `> **Status:** Active | Scaffolded | Deprecated | Archived`. Dead-code cleanup PRs MUST run `pnpm dead-code:files` (which honours markers) — never delete a `@scaffolded` file just because it has no importers.
+11. **No arbitrary hex colors in `className`** — raw `<utility>-[#hex]` values bypass the design-system token layer. Use semantic tokens (`bg-success-soft`, `text-fg`, etc.) instead. Add new shades to the preset, not inline at call-site. Enforced by `sergeant-design/no-hex-in-classname` (`error`).
+12. **Module-accent containment** — inside `apps/<app>/src/modules/<X>/`, only `<X>`'s accent utilities may appear. Cross-module shells (`core/`, `shared/`, `stories/`) are exempt. Enforced by `sergeant-design/no-foreign-module-accent` (`error`).
+13. **No raw-palette light/dark `className` pairs** — a className that pairs a raw-palette light utility (`bg-amber-50`, `text-coral-100`, `border-teal-200/50`, …) with a `dark:` raw-palette override (`dark:bg-amber-500/15`, `dark:text-coral-900/30`, `dark:border-teal-800/30`) encodes both themes by hand and silently breaks on the next palette migration (bug [#814](https://github.com/Skords-01/Sergeant/pull/814)). Lift the (light, dark) pair into the design-system token layer (`bg-success-soft`, `bg-finyk-surface`, `text-brand-strong`, `border-routine-soft-border`, …). Dark-side-only "patches" on semantic light and `dark:bg-white/N` glass washes intentionally stay. Enforced by `sergeant-design/no-raw-dark-palette` (`error`, scoped to `apps/web/**/*.{ts,tsx,js,jsx}` — semantic replacements depend on the `--c-{family}-soft*` CSS variables defined in `apps/web/src/index.css`, which NativeWind does not consume). Full migration history in [`docs/design/DARK-MODE-AUDIT.md`](docs/design/DARK-MODE-AUDIT.md).
+14. **Visible focus indicators must use `focus-visible:`, not `focus:`** — `focus:ring-*` / `focus:bg-*` / `focus:border-*` fire on every focus event, including pointer click, which makes the focus indicator flash on every mouse interaction. `focus-visible:` is the modern primitive that only fires for keyboard / assistive-tech focus. The single legitimate `focus:` utility is `focus:outline-none` (the canonical reset that pairs with `focus-visible:ring-*`). Non-colour `focus:` utilities (`focus:not-sr-only`, `focus:fixed`, `focus:px-4`, `focus:text-sm`, `focus:font-semibold`, …) are fine. Enforced by `sergeant-design/prefer-focus-visible` (`error`, scoped to `apps/web/**/*.{ts,tsx,js,jsx}` — React Native does not expose a `:focus-visible` pseudo-class). See `AGENTS.md` § Hard Rule #14.
+15. **Read governance before coding; update docs alongside code** — read `AGENTS.md`, `CONTRIBUTING.md`, `CLAUDE.md`, and the matching playbook before writing code. Documentation is part of the change set: when code/contracts move, update the corresponding docs in the same PR (api-client types, design-system, playbooks, freshness headers). See `AGENTS.md` § Hard Rule #15 for the full must-update table.
 
 ---
 
@@ -325,7 +321,8 @@ Sergeant/
 │   ├── web/            # Vite + React 18 SPA (frontend)
 │   ├── server/         # Express + PostgreSQL + Better Auth (API)
 │   ├── mobile/         # Expo 52 + React Native 0.76
-│   └── mobile-shell/   # Capacitor wrapper for web app
+│   ├── mobile-shell/   # Capacitor wrapper for web app
+│   └── console/        # Telegram bot (grammy + Anthropic) — internal ops/marketing
 ├── packages/
 │   ├── shared/         # @sergeant/shared
 │   ├── api-client/     # @sergeant/api-client

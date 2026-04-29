@@ -15,10 +15,10 @@ afterEach(() => {
 
 function call(action: ChatAction): string {
   const out = handleRoutineAction(action);
-  if (typeof out !== "string") {
-    throw new Error(`handler returned ${typeof out}, expected string`);
+  if (out == null) {
+    throw new Error(`handler returned ${typeof out}, expected string|object`);
   }
-  return out;
+  return typeof out === "string" ? out : out.result;
 }
 
 function seedHabit(id: string, name: string, extra?: Record<string, unknown>) {
@@ -560,5 +560,122 @@ describe("habit_trend", () => {
     const out = call({ name: "habit_trend", input: { period_days: 14 } });
     expect(typeof out).toBe("string");
     expect(out.length).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// create_habit · undo
+// ---------------------------------------------------------------------------
+describe("create_habit · undo", () => {
+  it("повертає {undo} що видаляє створену звичку", () => {
+    const out = handleRoutineAction({
+      name: "create_habit",
+      input: { name: "Біг" },
+    });
+    if (typeof out === "string" || out == null) {
+      throw new Error(`expected undoable result, got ${typeof out}`);
+    }
+    expect(out.result).toContain("Біг");
+    const before = JSON.parse(localStorage.getItem("hub_routine_v1") || "{}");
+    expect(before.habits).toHaveLength(1);
+    const createdId = before.habits[0].id;
+
+    out.undo();
+
+    const after = JSON.parse(localStorage.getItem("hub_routine_v1") || "{}");
+    expect(
+      after.habits.find((h: { id: string }) => h.id === createdId),
+    ).toBeUndefined();
+  });
+
+  it("undo прибирає completions для видаленої звички (cleanup)", () => {
+    const out = handleRoutineAction({
+      name: "create_habit",
+      input: { name: "Йога" },
+    });
+    if (typeof out === "string" || out == null)
+      throw new Error("expected object");
+
+    // Додаємо completion вручну, щоб перевірити що undo чистить його теж.
+    const state = JSON.parse(localStorage.getItem("hub_routine_v1")!);
+    const createdId = state.habits[0].id;
+    state.completions = {
+      ...(state.completions || {}),
+      [createdId]: ["2024-06-15"],
+    };
+    localStorage.setItem("hub_routine_v1", JSON.stringify(state));
+
+    out.undo();
+
+    const after = JSON.parse(localStorage.getItem("hub_routine_v1") || "{}");
+    expect(after.completions[createdId]).toBeUndefined();
+  });
+
+  it("error path (порожня назва) повертає string без undo", () => {
+    const out = handleRoutineAction({
+      name: "create_habit",
+      input: { name: "   " },
+    });
+    expect(typeof out).toBe("string");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// mark_habit_done · undo
+// ---------------------------------------------------------------------------
+describe("mark_habit_done · undo", () => {
+  it("повертає {undo} що прибирає completion для дати", () => {
+    seedHabit("h1", "Вода");
+    const out = handleRoutineAction({
+      name: "mark_habit_done",
+      input: { habit_id: "h1", date: "2024-06-15" },
+    });
+    if (typeof out === "string" || out == null) {
+      throw new Error(`expected undoable result, got ${typeof out}`);
+    }
+    const before = JSON.parse(localStorage.getItem("hub_routine_v1")!);
+    expect(before.completions.h1).toContain("2024-06-15");
+
+    out.undo();
+
+    const after = JSON.parse(localStorage.getItem("hub_routine_v1")!);
+    expect(after.completions.h1 ?? []).not.toContain("2024-06-15");
+  });
+
+  it("якщо дата вже була виконана — повертає string без undo (no-op)", () => {
+    seedHabit("h1", "Вода");
+    // Перший виклик — вставляємо completion
+    const first = handleRoutineAction({
+      name: "mark_habit_done",
+      input: { habit_id: "h1", date: "2024-06-15" },
+    });
+    expect(typeof first).toBe("object");
+
+    // Другий виклик з тією ж датою — completion вже є, undo не потрібен
+    const second = handleRoutineAction({
+      name: "mark_habit_done",
+      input: { habit_id: "h1", date: "2024-06-15" },
+    });
+    expect(typeof second).toBe("string");
+  });
+
+  it("undo не зачіпає інші дати того ж habit-а", () => {
+    seedHabit("h1", "Вода");
+    handleRoutineAction({
+      name: "mark_habit_done",
+      input: { habit_id: "h1", date: "2024-06-13" },
+    });
+    const out = handleRoutineAction({
+      name: "mark_habit_done",
+      input: { habit_id: "h1", date: "2024-06-15" },
+    });
+    if (typeof out === "string" || out == null)
+      throw new Error("expected object");
+
+    out.undo();
+
+    const after = JSON.parse(localStorage.getItem("hub_routine_v1")!);
+    expect(after.completions.h1).toContain("2024-06-13");
+    expect(after.completions.h1).not.toContain("2024-06-15");
   });
 });

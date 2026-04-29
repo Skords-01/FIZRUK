@@ -163,16 +163,19 @@ describe("ProfilePage", () => {
     it("shows email verification banner when emailVerified is false", () => {
       mockUser.emailVerified = false;
       renderPage();
-      expect(screen.getByText("Email не підтверджено")).toBeInTheDocument();
+      // Banner copy was extended in #1067 to include the suffix
+      // "— перевірте вашу поштову скриньку"; the action button was renamed
+      // from "Надіслати лист" to "Надіслати". Match the prefix via regex.
+      expect(screen.getByText(/Email не підтверджено/)).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Надіслати лист" }),
+        screen.getByRole("button", { name: "Надіслати" }),
       ).toBeInTheDocument();
     });
 
     it("hides email verification banner when emailVerified is true", () => {
       renderPage();
       expect(
-        screen.queryByText("Email не підтверджено"),
+        screen.queryByText(/Email не підтверджено/),
       ).not.toBeInTheDocument();
     });
 
@@ -181,7 +184,9 @@ describe("ProfilePage", () => {
       renderPage();
       const links = screen.getAllByText("Видалити фото");
       fireEvent.click(links[0]);
-      expect(screen.getByText("Видалити?")).toBeInTheDocument();
+      // Confirm prompt copy changed in #1067 from "Видалити?" to
+      // "Видалити фото?".
+      expect(screen.getByText("Видалити фото?")).toBeInTheDocument();
     });
 
     it("shows change email button", () => {
@@ -249,7 +254,7 @@ describe("ProfilePage", () => {
       useOnlineStatusMock.mockReturnValue(false);
       mockUser.emailVerified = false;
       renderPage();
-      const btn = screen.getByRole("button", { name: "Надіслати лист" });
+      const btn = screen.getByRole("button", { name: "Надіслати" });
       expect(btn).toBeDisabled();
     });
 

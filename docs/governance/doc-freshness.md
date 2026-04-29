@@ -1,6 +1,7 @@
 # Document Freshness Tracking
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 This system ensures critical documentation stays up-to-date by embedding
 freshness headers and running a nightly check that opens GitHub issues for
@@ -81,6 +82,39 @@ the **Next review** date in the document header to match. Recommended cadences:
 | ------- | ------------------------------------------------------------ |
 | 60 days | High-criticality ops docs (runbook, hotfix, secret rotation) |
 | 90 days | Standard docs (README, CONTRIBUTING, SLO, playbooks index)   |
+
+---
+
+## Excluded by design: Architecture Decision Records (`docs/adr/**`)
+
+ADRs are **deliberately excluded** from the freshness allowlist. An ADR captures
+the context, alternatives, and rationale of a decision **at the moment it was
+made**. It is a historical record, not a living document — once accepted, an
+ADR is immutable.
+
+When the underlying decision changes, the workflow is:
+
+1. Write a new ADR that describes the new decision with current context.
+2. Set `Status: Accepted` on the new ADR and `Status: Superseded by ADR-NNNN`
+   on the old one.
+3. Add a `Supersedes: ADR-MMMM` line in the new ADR header.
+
+This is the standard pattern from Michael Nygard's
+[original ADR proposal](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
+and the [adr.github.io](https://adr.github.io/) community.
+
+Reviewing every ADR on a 90-day cadence would either (a) produce trivial "still
+accurate" updates that bury real changes, or (b) tempt editors to silently
+rewrite history. Both outcomes defeat the purpose of an ADR.
+
+The `Last reviewed:` line found in some ADRs (legacy `Date:` companion in the
+header) is informational only — the freshness check script does **not** scan
+ADR files, and the nightly workflow will not open issues against them.
+
+If an ADR ever needs operational metadata that should be re-validated on a
+cadence (e.g. a quota table, a price list), extract that data into a regular
+doc under `docs/integrations/`, `docs/launch/`, or `docs/observability/` and
+add **that** file to the allowlist — leave the ADR itself untouched.
 
 ---
 

@@ -135,7 +135,9 @@ export function MemoryBankSection() {
       <div className="p-4">
         {isEmpty ? (
           <div className="text-center py-6">
-            <div className="text-3xl mb-3">🧠</div>
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-3">
+              <Icon name="sparkle" size={22} className="text-brand-500" />
+            </div>
             <p className="text-sm text-muted mb-1">
               Банк пам&apos;яті порожній
             </p>
@@ -171,8 +173,8 @@ export function MemoryBankSection() {
               const meta = CATEGORY_META[cat] || { label: cat, emoji: "📝" };
               return (
                 <div key={cat}>
-                  <div className="text-xs font-semibold text-muted mb-1.5">
-                    {meta.emoji} {meta.label}
+                  <div className="text-eyebrow text-muted/70 mb-2">
+                    {meta.label}
                   </div>
                   <div className="space-y-1">
                     {items.map((entry) => (

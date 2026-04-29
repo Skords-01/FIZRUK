@@ -151,7 +151,7 @@ export function RoutineCalendarMonthGrid({
           <button
             type="button"
             onClick={() => onPlanFizruk(selectedDay)}
-            className="mt-2 w-full rounded-xl border border-sky-400/30 bg-sky-500/5 hover:bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-600 dark:text-sky-400 transition-colors text-center"
+            className="mt-2 w-full rounded-xl border border-sky-400/30 bg-sky-500/5 hover:bg-sky-500/10 px-3 py-2 text-xs font-medium text-info-strong dark:text-info transition-colors text-center"
           >
             Планувати тренування
           </button>

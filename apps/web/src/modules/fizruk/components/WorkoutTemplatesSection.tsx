@@ -4,6 +4,8 @@ import { Input } from "@shared/components/ui/Input";
 import { Button } from "@shared/components/ui/Button";
 import { Card } from "@shared/components/ui/Card";
 import { ConfirmDialog } from "@shared/components/ui/ConfirmDialog";
+import { EmptyState } from "@shared/components/ui/EmptyState";
+import { Icon } from "@shared/components/ui/Icon";
 import { Tooltip } from "@shared/components/ui/Tooltip";
 import { useToast } from "@shared/hooks/useToast";
 import { showUndoToast } from "@shared/lib/undoToast";
@@ -216,7 +218,7 @@ export function WorkoutTemplatesSection({
                     className="text-xs px-2 py-1 rounded-lg border border-success/40 text-success disabled:opacity-40"
                     disabled={groupSelected.size < 2 || groupSelected.size > 3}
                     onClick={() => handleCreateGroup("superset")}
-                    title="Виберіть 2-3 вправи"
+                    title="Обери 2-3 вправи"
                   >
                     Суперсет ({groupSelected.size}/3)
                   </button>
@@ -225,7 +227,7 @@ export function WorkoutTemplatesSection({
                     className="text-xs px-2 py-1 rounded-lg border border-fizruk/40 text-fizruk disabled:opacity-40"
                     disabled={groupSelected.size < 2 || groupSelected.size > 3}
                     onClick={() => handleCreateGroup("circuit")}
-                    title="Виберіть 2-3 вправи"
+                    title="Обери 2-3 вправи"
                   >
                     Коло ({groupSelected.size}/3)
                   </button>
@@ -376,9 +378,13 @@ export function WorkoutTemplatesSection({
           </SectionHeading>
         </div>
         {(templates || []).length === 0 ? (
-          <div className="p-6 text-center text-sm text-subtle">
-            Поки немає шаблонів
-          </div>
+          <EmptyState
+            compact
+            module="fizruk"
+            icon={<Icon name="dumbbell" size={20} />}
+            title="Поки немає шаблонів"
+            description="Створи свій перший — кнопка вище."
+          />
         ) : (
           (templates || []).map((t) => (
             <div

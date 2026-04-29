@@ -11,8 +11,7 @@
  *     `hubNav` dispatches a custom DOM event caught by each module
  *     screen; mobile uses expo-router intent params (Phase 3) so for
  *     now the CTA just navigates via `onAction`.
- *   - Nutrition chip — hidden per the Phase-7 gate; mobile shows the
- *     three remaining modules (finyk / fizruk / routine).
+ *   - Quick-add chips cover all dashboard modules, including Nutrition.
  */
 
 import { Pressable, Text, View } from "react-native";
@@ -28,11 +27,11 @@ const MODULE_ACCENT_CLASS = {
 } as const;
 
 const MODULE_WASH_CLASS = {
-  finyk: "bg-brand-50/60",
-  fizruk: "bg-teal-50/60",
-  routine: "bg-coral-50/60",
-  nutrition: "bg-lime-50/60",
-  hub: "bg-cream-100",
+  finyk: "bg-brand-50/60 hero-gradient-finyk",
+  fizruk: "bg-cyan-50/60 hero-gradient-fizruk",
+  routine: "bg-coral-50/60 hero-gradient-routine",
+  nutrition: "bg-lime-50/60 hero-gradient-nutrition",
+  hub: "bg-cream-100 hero-gradient-brand",
 } as const;
 
 const MODULE_OPEN_CTA = {
@@ -58,13 +57,12 @@ const MODULE_CHIP_TEXT_CLASS = {
 } as const;
 
 /**
- * Module-tinted quick-add chips shown in the empty state. Web renders
- * four (incl. nutrition), mobile is gated to three until Phase 7. The
- * `action` slot is preserved on the chip so future callers can still
- * derive a PWA-intent from it without recomputing here.
+ * Module-tinted quick-add chips shown in the empty state. The `action`
+ * slot is preserved on the chip so future callers can still derive a
+ * PWA-intent from it without recomputing here.
  */
 interface QuickAddChip {
-  module: "finyk" | "fizruk" | "routine";
+  module: "finyk" | "fizruk" | "routine" | "nutrition";
   label: string;
 }
 
@@ -72,6 +70,7 @@ const QUICK_ADD_CHIPS: QuickAddChip[] = [
   { module: "finyk", label: "Витрата" },
   { module: "routine", label: "Звичка" },
   { module: "fizruk", label: "Тренування" },
+  { module: "nutrition", label: "Їжа" },
 ];
 
 function EmptyFocus({

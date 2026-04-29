@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@shared/components/ui/Button";
-import { Card } from "@shared/components/ui/Card";
 import { Icon } from "@shared/components/ui/Icon";
+import { SettingsGroup } from "./SettingsPrimitives";
 
 /**
  * Settings entry that links to the Assistant capability catalogue
@@ -12,11 +12,7 @@ import { Icon } from "@shared/components/ui/Icon";
 export function AssistantCatalogueSection() {
   const navigate = useNavigate();
   return (
-    <Card radius="lg" padding="md" className="space-y-3">
-      <h3 className="text-base font-semibold text-text flex items-center gap-2">
-        <Icon name="sparkles" size={16} aria-hidden />
-        Можливості асистента
-      </h3>
+    <SettingsGroup title="Можливості асистента" emoji="✨" defaultOpen>
       <p className="text-sm text-subtle leading-relaxed">
         ~60 інструментів, які може запустити AI-асистент: фінанси, тренування,
         звички, харчування, аналітика, утиліти, пам&apos;ять. Тапни картку — і
@@ -29,8 +25,9 @@ export function AssistantCatalogueSection() {
         className="w-full"
         data-testid="open-assistant-catalogue"
       >
+        <Icon name="sparkles" size={16} className="mr-2" />
         Відкрити каталог
       </Button>
-    </Card>
+    </SettingsGroup>
   );
 }

@@ -15,7 +15,11 @@ export {
   authMetricsMiddleware,
 } from "./authMiddleware.js";
 
-export { livezHandler, createReadyzHandler } from "./health.js";
+export {
+  livezHandler,
+  createReadyzHandler,
+  createHealthzHandler,
+} from "./health.js";
 
 export { errorHandler } from "./errorHandler.js";
 
@@ -42,3 +46,5 @@ export { requireApiSecret } from "./requireApiSecret.js";
 export { requireAnthropicKey } from "./requireAnthropicKey.js";
 export { requireGroqKey } from "./requireGroqKey.js";
 export { requireAiQuota } from "./requireAiQuota.js";
+export { requestTimeout, extendedTimeout } from "./timeout.js";
+export { createCompressionMiddleware } from "./compression.js";
