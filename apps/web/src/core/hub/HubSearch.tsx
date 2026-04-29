@@ -360,11 +360,17 @@ function performSearch(query: string): Hit[] {
   ];
 }
 
+// Search-result chip wash + label per module. Each value uses the
+// module's own theme-aware tokens (`bg-{m}-soft` is the
+// `--c-{m}-soft` CSS var trio that flips per-theme; `text-{m}-strong`
+// is the WCAG-AA companion at body sizes; `dark:text-{m}` falls back
+// to the saturated DEFAULT step on dark panels). Equivalent to the
+// Wave 1b token-swap recipe in `docs/design/DARK-MODE-AUDIT.md`.
 const MODULE_COLORS: Record<string, string> = {
-  finyk: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  fizruk: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-  routine: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
-  nutrition: "bg-lime-500/10 text-lime-700 dark:text-lime-500",
+  finyk: "bg-finyk-soft text-finyk-strong dark:text-finyk",
+  fizruk: "bg-fizruk-soft text-fizruk-strong dark:text-fizruk",
+  routine: "bg-routine-soft text-routine-strong dark:text-routine",
+  nutrition: "bg-nutrition-soft text-nutrition-strong dark:text-nutrition",
 };
 
 interface HubSearchProps {

@@ -64,7 +64,7 @@ export function DailyNudge({
       aria-label="Щоденна порада"
     >
       <div className="flex items-start gap-3">
-        <div className="shrink-0 w-9 h-9 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+        <div className="shrink-0 w-9 h-9 rounded-xl bg-brand-500/10 text-brand-strong dark:text-brand flex items-center justify-center">
           <Icon name="sparkle" size={18} />
         </div>
         <div className="min-w-0 flex-1">

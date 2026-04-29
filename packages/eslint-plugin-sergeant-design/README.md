@@ -40,6 +40,27 @@ Forbids arbitrary `<utility>-[#hex]` colors in Tailwind classNames (`bg-[#10b981
 <div className="bg-success-soft text-success-strong" />
 ```
 
+### `sergeant-design/no-raw-dark-palette`
+
+Forbids a className that pairs a raw-palette light utility (`bg-amber-50`, `text-coral-100`, `border-teal-200/50`, …) with a `dark:` raw-palette override (`dark:bg-amber-500/15`, `dark:text-coral-900/30`, `dark:border-teal-800/30`). Both halves encode palette knowledge at the call-site, so the next palette migration silently drops one half and the surrounding override falls through to the wrong colour (this is exactly bug [#814](https://github.com/Skords-01/Sergeant/pull/814)). The fix is always the same: lift the (light, dark) pair into the design-system token layer (`bg-success-soft`, `bg-finyk-surface`, `text-brand-strong`, `border-routine-soft-border`, …) so the preset owns the swap and the call-site keeps zero `dark:` palette overrides.
+
+The rule fires only when **both** halves are present on the same className value: a bare `<utility>-<PALETTE>-<SHADE>[/<opacity>]` AND a `dark:<utility>-<PALETTE>-<SHADE>[/<opacity>]`, where `<utility> ∈ { bg, text, border }` and `<PALETTE>` is one of the 24 raw Tailwind families (the 22 default Tailwind palettes plus Sergeant's `brand` / `coral` aliases — both are theme-inert raw palettes despite the brand-y names; the per-theme aware utilities are `bg-brand-soft`, `bg-routine-surface`, etc.). `<SHADE>` is a numeric step (`50`, `100`, …, `950`), so semantic suffixes (`brand-soft`, `brand-strong`, `routine-soft-border`) are NOT flagged. Dark-side-only "patches" (light is already semantic) and bare-colour glass washes (`dark:bg-white/10`) intentionally stay. See [AGENTS.md rule #13](../../AGENTS.md) and [`docs/design/DARK-MODE-AUDIT.md`](../../docs/design/DARK-MODE-AUDIT.md). Severity: **error**.
+
+```tsx
+// ❌ BAD — both halves are raw `brand-*` palette steps
+<a className="text-brand-600 dark:text-brand-400" />
+
+// ✅ GOOD — `text-brand-strong` is the WCAG-AA companion, `dark:text-brand`
+// is the saturated DEFAULT for dark panels.
+<a className="text-brand-strong dark:text-brand" />
+
+// ❌ BAD — paired raw-palette borders on a hero card
+<Card className="border border-teal-200/50 dark:border-teal-800/30" />
+
+// ✅ GOOD — `border-fizruk-soft-border` is theme-adaptive
+<Card className="border border-fizruk-soft-border/50" />
+```
+
 ### `sergeant-design/no-foreign-module-accent`
 
 Inside `apps/<app>/src/modules/<X>/` subtrees only `<X>`'s accent utilities (`bg-<X>-surface`, `text-<X>-strong`, `ring-<X>`, `bg-<X>-500/15`, …) may appear. Sergeant's four module accents (`finyk`/emerald, `fizruk`/teal, `routine`/coral, `nutrition`/lime) are deliberately close in saturation — a fizruk screen accidentally rendering a coral `ring-routine` reads to the user as "Рутина" and is a design bug, not a stylistic choice. Cross-module shells (`core/`, `shared/`, `modules/shared/`, `stories/`, test files) remain free to reference all four. Variant prefixes (`dark:`, `hover:`, `lg:`), shade suffixes (`-500`, `-soft`, `-strong`), and opacity suffixes (`/15`) are handled transparently. See [AGENTS.md rule #12](../../AGENTS.md) and [`docs/design/MODULE-ACCENT.md`](../../docs/design/MODULE-ACCENT.md). Severity: **error**.

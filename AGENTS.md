@@ -324,7 +324,43 @@ The rule handles variant prefixes (`dark:`, `hover:`, `lg:`), shade suffixes (`-
 
 Enforced by `sergeant-design/no-foreign-module-accent` (`error`). See `docs/design/MODULE-ACCENT.md` for the "one accent = one module" design principle.
 
-### 13. Read governance before coding; update docs alongside code
+### 13. No raw-palette light/dark `className` pairs
+
+A `className` that pairs a raw-palette light utility with a `dark:` raw-palette override encodes both themes by hand at the call-site. The next palette migration (or the next opacity-step renaming — bug [#814](https://github.com/Skords-01/Sergeant/pull/814)) silently drops one half and the surrounding override falls through to the wrong colour. Lift the (light, dark) pair into the design-system token layer (`bg-success-soft`, `bg-finyk-surface`, `text-brand-strong`, `border-routine-soft-border`, …) so the preset owns the swap and the call-site keeps zero `dark:` palette overrides. The full migration history (Wave 1b → 2a → 2b → 2c) lives in [`docs/design/DARK-MODE-AUDIT.md`](docs/design/DARK-MODE-AUDIT.md).
+
+```tsx
+// ❌ BAD — both halves are raw `brand-*` palette steps; the next
+// emerald retune silently drops one of them.
+<a className="text-brand-600 dark:text-brand-400">…</a>
+
+// ✅ GOOD — `text-brand-strong` is the WCAG-AA companion (no numeric
+// step), `dark:text-brand` is the saturated DEFAULT for dark panels.
+<a className="text-brand-strong dark:text-brand">…</a>
+
+// ❌ BAD — paired raw-palette borders on a hero card.
+<Card className="border border-teal-200/50 dark:border-teal-800/30 …" />
+
+// ✅ GOOD — `border-fizruk-soft-border` is theme-adaptive via
+// `--c-fizruk-soft-border` (light = teal-200-ish, dark = teal-900-ish).
+<Card className="border border-fizruk-soft-border/50 …" />
+```
+
+The rule fires only when **both** halves are present on the same className value:
+
+- a bare `<utility>-<PALETTE>-<SHADE>[/<opacity>]`, AND
+- a `dark:<utility>-<PALETTE>-<SHADE>[/<opacity>]`,
+
+where `<utility> ∈ { bg, text, border }` and `<PALETTE>` is one of the 24 raw Tailwind families (`gray`, `slate`, `zinc`, `neutral`, `stone`, `red`, `orange`, `amber`, `yellow`, `lime`, `green`, `emerald`, `teal`, `cyan`, `sky`, `blue`, `indigo`, `violet`, `purple`, `fuchsia`, `pink`, `rose`, plus Sergeant's `brand` / `coral` aliases — both are theme-inert raw palettes despite the brand-y names). `<SHADE>` is a numeric step (`50`, `100`, …, `950`), so semantic suffixes (`brand-soft`, `brand-strong`, `routine-soft-border`) are NOT flagged.
+
+What the rule **never** flags (these stay):
+
+- `dark:bg-white/10`, `dark:bg-black/40`, `dark:border-white/15` — bare-colour glass washes.
+- Dark-side-only "patches" where the light side is already semantic (`bg-success-soft text-success-strong dark:text-emerald-100`) — these document gaps in the WCAG-AA `-strong` companion scale on dark panels (rule #9).
+- Semantic tokens that happen to carry a `dark:` prefix (`dark:bg-surface`, `dark:text-fg`, `dark:border-border`).
+
+Enforced by `sergeant-design/no-raw-dark-palette` (`error`). Promoted from absent → `error` in PR [#1154](https://github.com/Skords-01/Sergeant/pulls/1154) once the audit's inventory hit zero (Wave 2a + 2b in PR [#1153](https://github.com/Skords-01/Sergeant/pull/1153), Wave 1b in [#1149](https://github.com/Skords-01/Sergeant/pull/1149)) and the 40 additional paired call-sites surfaced by the rule were migrated to the canonical Wave 1b shape.
+
+### 14. Read governance before coding; update docs alongside code
 
 > Why a hard rule? Because rules are useless if no one reads them, and docs are dangerous if they describe behaviour the code no longer has. Both failure modes have shipped here ([#1143](https://github.com/Skords-01/Sergeant/pull/1143) deleted scaffolded code partly because the AI agent skipped the playbook; multiple Tailwind-opacity bugs survived because the design-system doc still listed deprecated tokens). This rule closes both gaps.
 
@@ -332,7 +368,7 @@ Enforced by `sergeant-design/no-foreign-module-accent` (`error`). See `docs/desi
 
 Both AI agents and human contributors **must** read the relevant governance up front, in this order:
 
-1. **`AGENTS.md`** — Hard Rules (#1–#13), Module ownership map for the path you're touching, AI-marker conventions, Domain invariants.
+1. **`AGENTS.md`** — Hard Rules (#1–#14), Module ownership map for the path you're touching, AI-marker conventions, Domain invariants.
 2. **`CONTRIBUTING.md`** — branch/commit conventions, pre-commit hooks, PR checklist.
 3. **`CLAUDE.md`** — Claude/AI-specific commands and guardrails (sister file to AGENTS.md).
 4. **The matching playbook** in `docs/playbooks/` — pick by trigger phrase. New API endpoint → `add-api-endpoint.md`. New HubChat tool → `add-hubchat-tool.md`. Removing code → `cleanup-dead-code.md`. Migrations → `add-migration.md`.

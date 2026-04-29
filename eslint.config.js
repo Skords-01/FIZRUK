@@ -98,6 +98,21 @@ export default [
       // call-sites — the codebase is now clean against this rule, and
       // any new violation must be intentional.
       "sergeant-design/no-low-contrast-text-on-fill": "error",
+      // Dark-mode anti-pattern guardrail — fires on a className that
+      // pairs a raw-palette light utility (`bg-amber-50`, `text-coral-100`,
+      // `border-teal-200/50`, …) with a `dark:` raw-palette override
+      // (`dark:bg-amber-500/15`, `dark:text-coral-900/30`,
+      // `dark:border-teal-800/30`). Both halves encode palette knowledge
+      // at the call-site, so the next palette migration silently drops
+      // one half (this is exactly bug #814). The fix is always the
+      // same: lift the light/dark pair into the design-system token
+      // layer (`bg-success-soft`, `bg-finyk-surface`,
+      // `border-routine-soft-border`, …). Shipped at "error" once the
+      // dark-mode audit's inventory closed (Wave 2c of
+      // docs/design/DARK-MODE-AUDIT.md) — every existing pair has
+      // been migrated, so any new violation is intentional and must
+      // be opted out with an `eslint-disable-next-line` + comment.
+      "sergeant-design/no-raw-dark-palette": "error",
       "no-empty": ["error", { allowEmptyCatch: true }],
       "no-unused-vars": [
         "error",
@@ -176,6 +191,7 @@ export default [
       "sergeant-design/no-low-contrast-text-on-fill": "off",
       "sergeant-design/no-hex-in-classname": "off",
       "sergeant-design/no-foreign-module-accent": "off",
+      "sergeant-design/no-raw-dark-palette": "off",
     },
   },
   // Jest setup / test files need jest globals.

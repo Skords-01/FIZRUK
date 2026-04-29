@@ -27,28 +27,28 @@ const MODULE_CONFIG = {
   finyk: {
     icon: "💳",
     label: "Фінанси",
-    colorClass: "text-brand-600 dark:text-brand-400",
+    colorClass: "text-brand-strong dark:text-brand",
     bgClass: "bg-finyk-soft",
     borderClass: "border-finyk-soft-border/60",
   },
   fizruk: {
     icon: "🏋️",
     label: "Тренування",
-    colorClass: "text-teal-600 dark:text-teal-400",
+    colorClass: "text-fizruk-strong dark:text-fizruk",
     bgClass: "bg-fizruk-soft",
     borderClass: "border-fizruk-soft-border/60",
   },
   nutrition: {
     icon: "🥗",
     label: "Харчування",
-    colorClass: "text-lime-600 dark:text-lime-400",
+    colorClass: "text-nutrition-strong dark:text-nutrition",
     bgClass: "bg-nutrition-soft",
     borderClass: "border-nutrition-soft-border/60",
   },
   routine: {
     icon: "✅",
     label: "Звички",
-    colorClass: "text-coral-600 dark:text-coral-400",
+    colorClass: "text-routine-strong dark:text-routine",
     bgClass: "bg-routine-soft",
     borderClass: "border-routine-soft-border/60",
   },
@@ -388,7 +388,7 @@ export function WeeklyDigestCard({ onCollapse }: WeeklyDigestCardProps = {}) {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-brand-600 dark:text-brand-400"
+            className="text-brand-strong dark:text-brand"
           >
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
