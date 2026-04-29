@@ -1975,6 +1975,11 @@ function findPreferFocusVisibleHits(value) {
   while ((m = RX_PREFER_FOCUS_VISIBLE_OUTLINE.exec(value)) !== null) {
     const [full, tail] = m;
     if (FOCUS_OUTLINE_ALLOWED_TAILS.has(tail)) continue;
+    // The colour-utility arm above already covers `focus:outline-offset-N`
+    // (because `outline-offset` is in `FOCUS_COLOR_UTILITIES`); the outline
+    // arm's broader regex also matches the same token. Dedup by `match`
+    // so each token produces a single report.
+    if (hits.some((h) => h.match === full)) continue;
     hits.push({ match: full, tail: `outline-${tail}` });
   }
   return hits;

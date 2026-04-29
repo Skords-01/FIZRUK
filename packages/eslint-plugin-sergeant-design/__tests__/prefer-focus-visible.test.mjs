@@ -84,6 +84,22 @@ describe("prefer-focus-visible", () => {
     assert.equal(messages.length, 1);
   });
 
+  it("flags `focus:outline-offset-2` once, not twice", () => {
+    // `outline-offset` is in `FOCUS_COLOR_UTILITIES`, so the colour-utility
+    // regex matches `focus:outline-offset-2` as `util="outline-offset"`,
+    // `rest="2"`. The separate `focus:outline-…` arm also matches the same
+    // token (`tail="offset-2"`, not in `FOCUS_OUTLINE_ALLOWED_TAILS`).
+    // The rule must dedup so only one report is emitted per token.
+    const messages = lint(`const c = "focus:outline-offset-2";`);
+    assert.equal(messages.length, 1);
+    assert.match(messages[0].message, /focus:outline-offset-2/);
+  });
+
+  it("flags `focus:outline-offset-4` once, not twice", () => {
+    const messages = lint(`const c = "rounded focus:outline-offset-4 mt-1";`);
+    assert.equal(messages.length, 1);
+  });
+
   it("flags inside a template literal", () => {
     const messages = lint(
       "const c = `flex items-center focus:bg-panelHi rounded-xl ${extra}`;",
