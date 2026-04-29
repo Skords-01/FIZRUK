@@ -36,5 +36,8 @@ apps/mobile/android/
 # Ops stack secrets (n8n)
 ops/.env.ops
 
+# Generated CI artifacts
+docs-freshness-dashboard.html
+
 # Sandbox / experimental prototypes
 artifacts/
