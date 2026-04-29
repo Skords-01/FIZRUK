@@ -209,7 +209,11 @@ vi.mock("../onboarding/SoftAuthPromptCard", () => ({
 }));
 
 vi.mock("../onboarding/useFirstEntryCelebration", () => ({
-  useFirstEntryCelebration: () => undefined,
+  useFirstEntryCelebration: () => ({
+    open: false,
+    ttvMs: null,
+    close: () => {},
+  }),
 }));
 
 vi.mock("../onboarding/DailyNudge", () => ({
