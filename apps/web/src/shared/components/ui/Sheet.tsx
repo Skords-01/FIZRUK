@@ -7,6 +7,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 import { useDialogFocusTrap } from "../../hooks/useDialogFocusTrap";
+import { useSwipeToDismiss } from "../../hooks/useSwipeToDismiss";
 
 /**
  * Sergeant Design System — Sheet (bottom sheet / modal)
@@ -79,6 +80,14 @@ export function Sheet({
   const titleId = useId();
   useDialogFocusTrap(open, panelRef, { onEscape: onClose });
 
+  // Swipe-down-to-dismiss gesture. Disabled when keyboard is open
+  // (sheet hugs the keyboard — swiping would fight the inset).
+  const swipe = useSwipeToDismiss({
+    onDismiss: onClose,
+    panelRef,
+    disabled: !!kbInsetPx && kbInsetPx > 0,
+  });
+
   // Lock body scroll while sheet is open. Matches the ad-hoc patterns
   // several existing sheets already implemented inconsistently.
   useEffect(() => {
@@ -124,6 +133,9 @@ export function Sheet({
         aria-labelledby={titleId}
         style={panelStyle}
         onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={swipe.onTouchStart}
+        onTouchMove={swipe.onTouchMove}
+        onTouchEnd={swipe.onTouchEnd}
         className={cn(
           "relative w-full max-w-lg bg-panel border-t border-line rounded-t-3xl shadow-soft",
           "flex flex-col max-h-[90vh]",
@@ -177,6 +189,7 @@ export function Sheet({
           </div>
         </div>
         <div
+          data-sheet-body
           className={cn(
             // `overscroll-contain` prevents rubber-band scroll from
             // leaking out to the page under the sheet — on iOS this

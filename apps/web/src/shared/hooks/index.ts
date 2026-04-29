@@ -79,3 +79,6 @@ export { useHaptic } from "./useHaptic";
 export type { UseHapticReturn } from "./useHaptic";
 
 export { useReducedMotion } from "./useReducedMotion";
+
+export { useSwipeToDismiss } from "./useSwipeToDismiss";
+export type { UseSwipeToDismissOptions } from "./useSwipeToDismiss";
