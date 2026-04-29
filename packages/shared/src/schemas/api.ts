@@ -900,4 +900,76 @@ export type WaitlistSubmitResponse = z.infer<
   typeof WaitlistSubmitResponseSchema
 >;
 
+// ────────────────────── Transcribe (Groq Whisper proxy) ─────────────────────
+// `POST /api/transcribe` приймає сире audio-тіло (Content-Type: `audio/*`),
+// query визначає мову/prompt. Schema тут — SSOT і для server-side
+// `validateQuery`, і для `@sergeant/api-client` (типізує query + response).
+
+const TRANSCRIBE_MAX_PROMPT_LENGTH = 1024;
+
+export const TranscribeQuerySchema = z.object({
+  language: z
+    .string()
+    .trim()
+    .min(2)
+    .max(8)
+    .optional()
+    .describe("ISO-код мови, напр. uk або en. Якщо порожньо — auto-detect."),
+  prompt: z
+    .string()
+    .trim()
+    .max(TRANSCRIBE_MAX_PROMPT_LENGTH)
+    .optional()
+    .describe("Доменна підказка (списки вправ, продуктів тощо)."),
+});
+export type TranscribeQuery = z.infer<typeof TranscribeQuerySchema>;
+
+export const TranscribeResponseSchema = z.object({
+  text: z.string(),
+  durationSec: z.number().nonnegative(),
+  model: z.string(),
+});
+export type TranscribeResponse = z.infer<typeof TranscribeResponseSchema>;
+
+// ────────────────────── Web Vitals ingestion ────────────────────────────────
+// `POST /api/metrics/web-vitals` — анонімний beacon-endpoint, приймає батч
+// Core Web Vitals замірів. Server завжди відповідає 204 No Content.
+
+export const WebVitalsMetricNameSchema = z.enum([
+  "LCP",
+  "INP",
+  "FCP",
+  "TTFB",
+  "CLS",
+]);
+export type WebVitalsMetricName = z.infer<typeof WebVitalsMetricNameSchema>;
+
+export const WebVitalsMetricRatingSchema = z.enum([
+  "good",
+  "needs-improvement",
+  "poor",
+]);
+export type WebVitalsMetricRating = z.infer<typeof WebVitalsMetricRatingSchema>;
+
+// CLS — безрозмірний (0..1+, 0.25 = "poor"). Таймінги (LCP/INP/FCP/TTFB) —
+// мс, upper-bound 120_000 (2 хв — будь-що більше це зламаний клієнтський
+// таймер). Окремий upper-bound для CLS не дає анонімному endpoint-у інфлейтити
+// `web_vitals_cls_sum`, що зробило б `avg = _sum / _count` беззмістовним.
+export const WebVitalsMetricSchema = z
+  .object({
+    name: WebVitalsMetricNameSchema,
+    value: z.number().finite().min(0),
+    rating: WebVitalsMetricRatingSchema,
+  })
+  .refine((m) => (m.name === "CLS" ? m.value <= 10 : m.value <= 120_000), {
+    message: "value out of range for metric",
+    path: ["value"],
+  });
+export type WebVitalsMetric = z.infer<typeof WebVitalsMetricSchema>;
+
+export const WebVitalsPayloadSchema = z.object({
+  metrics: z.array(WebVitalsMetricSchema).min(1).max(10),
+});
+export type WebVitalsPayload = z.infer<typeof WebVitalsPayloadSchema>;
+
 export { z };
