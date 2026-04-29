@@ -72,6 +72,20 @@ const preset = {
         accent: "rgb(var(--c-accent) / <alpha-value>)",
         ring: "rgb(var(--c-accent) / <alpha-value>)",
 
+        // Ambient module accent — picks up the current module's brand
+        // color from `--module-accent-rgb` published by
+        // `ModuleAccentProvider` / `ModuleShell`. Inside a module, use
+        // `bg-module-accent/10`, `text-module-accent`, `border-module-accent-strong`
+        // etc. — no hardcoded `bg-finyk` / `bg-fizruk` per surface.
+        // The `-strong` variant is the WCAG-AA companion for solid
+        // fills behind `text-white`. Outside the provider both vars
+        // are undefined and the utility falls back to `rgb()` with
+        // empty channels (effectively transparent); only use inside a
+        // module subtree. See docs/design/MODULE-ACCENT.md.
+        "module-accent": "rgb(var(--module-accent-rgb) / <alpha-value>)",
+        "module-accent-strong":
+          "rgb(var(--module-accent-strong-rgb) / <alpha-value>)",
+
         // ═══════════════════════════════════════════════════════════════════
         // BRAND COLORS — Soft & Organic palette with Emerald/Teal accent
         // ═══════════════════════════════════════════════════════════════════

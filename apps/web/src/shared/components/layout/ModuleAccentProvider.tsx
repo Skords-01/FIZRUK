@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ModuleAccent } from "@sergeant/design-tokens";
+import { moduleAccentRgb } from "@sergeant/design-tokens/tokens";
 import { cn } from "@shared/lib/cn";
 
 /**
@@ -18,13 +19,18 @@ import { cn } from "@shared/lib/cn";
  *
  * Two ways to consume:
  *
- * 1. **CSS variable** — `--module-accent-rgb` is written on the wrapper
- *    `<div>`. Use it directly in Tailwind arbitrary values:
+ * 1. **CSS variables** — two are written on the wrapper `<div>`:
+ *      • `--module-accent-rgb` — the saturated `-500` shade.
+ *      • `--module-accent-strong-rgb` — the WCAG-AA `-strong` companion
+ *        for use behind `text-white` (CTAs, Badges, Tabs).
+ *
+ *    Use them in Tailwind arbitrary values:
  *
  *        className="bg-[rgb(var(--module-accent-rgb))]"
  *        className="border-[rgb(var(--module-accent-rgb)/0.4)]"
+ *        className="bg-[rgb(var(--module-accent-strong-rgb))] text-white"
  *
- *    This works everywhere inside the provider, including portaled
+ *    Both work everywhere inside the provider, including portaled
  *    overlays that re-mount inside the same DOM subtree.
  *
  * 2. **React hook** — `useModuleAccent()` returns the active accent
@@ -35,14 +41,12 @@ import { cn } from "@shared/lib/cn";
  * The accent is intentionally `null` outside of a provider. Hub-level
  * chrome (header, dashboard, hub-chat) is module-agnostic and should
  * keep using `bg-brand-*` tokens directly.
+ *
+ * The RGB triplets are sourced from `@sergeant/design-tokens/tokens`
+ * (`moduleAccentRgb`) — the single source of truth shared with Tailwind
+ * `bg-{module}` / `bg-{module}-strong` utilities. Never hardcode RGB
+ * values here; extend `moduleAccentRgb` instead.
  */
-
-const MODULE_ACCENT_RGB: Record<ModuleAccent, string> = {
-  finyk: "16 185 129", // emerald-500
-  fizruk: "20 184 166", // teal-500
-  routine: "249 112 102", // coral-500
-  nutrition: "132 204 22", // lime-500
-};
 
 const ModuleAccentContext = createContext<ModuleAccent | null>(null);
 
@@ -61,13 +65,13 @@ export function ModuleAccentProvider({
   asShellRoot = false,
   className,
 }: ModuleAccentProviderProps) {
-  const style = useMemo<CSSProperties>(
-    () =>
-      ({
-        "--module-accent-rgb": MODULE_ACCENT_RGB[module],
-      }) as CSSProperties,
-    [module],
-  );
+  const style = useMemo<CSSProperties>(() => {
+    const rgb = moduleAccentRgb[module];
+    return {
+      "--module-accent-rgb": rgb.default,
+      "--module-accent-strong-rgb": rgb.strong,
+    } as CSSProperties;
+  }, [module]);
 
   return (
     <ModuleAccentContext.Provider value={module}>
