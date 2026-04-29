@@ -1,5 +1,12 @@
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { useDialogFocusTrap } from "@shared/hooks/useDialogFocusTrap";
+import { useSwipeToDismiss } from "@shared/hooks/useSwipeToDismiss";
 import { cn } from "@shared/lib/cn";
 import { Button } from "./Button";
 
@@ -29,6 +36,14 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const ref = useRef<HTMLDivElement>(null);
   useDialogFocusTrap(open, ref, { onEscape: onCancel });
+
+  // Pulling the sheet down to dismiss is the same gesture users already
+  // know from <Sheet>. We treat dismiss as "cancel" — destructive
+  // confirms still require an explicit tap on the danger button.
+  const swipe = useSwipeToDismiss({
+    enabled: open,
+    onDismiss: () => onCancel?.(),
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -69,8 +84,20 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-title"
         onPointerDown={(e) => e.stopPropagation()}
+        style={
+          swipe.dragging
+            ? ({
+                transform: `translate3d(0, ${swipe.dragOffset}px, 0)`,
+                transition: "none",
+              } satisfies CSSProperties)
+            : ({
+                transform: "translate3d(0, 0, 0)",
+                transition: "transform 200ms cubic-bezier(0.32, 0.72, 0, 1)",
+              } satisfies CSSProperties)
+        }
+        {...swipe.bind}
         className={cn(
-          "relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0 overscroll-contain",
+          "relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0 overscroll-contain touch-pan-y",
           "bg-panel rounded-3xl shadow-float border border-line p-6",
           "motion-safe:animate-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-200",
         )}
