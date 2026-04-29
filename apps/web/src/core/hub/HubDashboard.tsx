@@ -61,6 +61,12 @@ import {
 import { type ModuleId } from "./dashboard/moduleConfigs";
 import { SortableCard } from "./dashboard/BentoCard";
 import {
+  applyAdaptiveLift,
+  pickAdaptiveLift,
+  pickStrongestSeverity,
+} from "./dashboard/adaptiveSort";
+import { useHubPref } from "../settings/hubPrefs";
+import {
   MotivationalFooter,
   StaggerChild,
   StreakIndicator,
@@ -212,6 +218,70 @@ export function HubDashboard({
     }
     return set;
   }, [focus, rest]);
+
+  // Adaptive bento — soft re-ordering of the 2x2 grid based on context
+  // (active rec signals × time of day). Off in editMode and when the
+  // user has flipped the `adaptiveBento` pref off (default ON).
+  const [adaptivePref] = useHubPref<boolean>("adaptiveBento", true);
+
+  const severityByModule = useMemo(() => {
+    const all = focus ? [focus, ...rest] : rest;
+    const map: Partial<Record<ModuleId, "danger" | "warning" | undefined>> = {};
+    for (const r of all) {
+      if (!r.module || r.module === "hub") continue;
+      const id = r.module as ModuleId;
+      const sev =
+        r.severity === "danger" || r.severity === "warning"
+          ? r.severity
+          : undefined;
+      map[id] = pickStrongestSeverity([map[id], sev]);
+    }
+    return map;
+  }, [focus, rest]);
+
+  // Re-evaluate every minute so time-of-day windows (breakfast / lunch /
+  // evening close-out) flip on the right side of their boundaries without
+  // a manual reload.
+  const [adaptiveNow, setAdaptiveNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setAdaptiveNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const activeSet = useMemo(
+    () => new Set<string>(activeModules),
+    [activeModules],
+  );
+
+  const adaptive = useMemo(() => {
+    if (!adaptivePref || editMode) {
+      return {
+        liftedId: null as ModuleId | null,
+        reason: null as string | null,
+      };
+    }
+    const result = pickAdaptiveLift({
+      order: visibleOrder as ModuleId[],
+      modulesWithSignal,
+      severityByModule,
+      activeModules: activeSet,
+      now: adaptiveNow,
+    });
+    return { liftedId: result.liftedId, reason: result.reason };
+  }, [
+    adaptivePref,
+    editMode,
+    visibleOrder,
+    modulesWithSignal,
+    severityByModule,
+    activeSet,
+    adaptiveNow,
+  ]);
+
+  const displayOrder = useMemo(
+    () => applyAdaptiveLift(visibleOrder as ModuleId[], adaptive.liftedId),
+    [visibleOrder, adaptive.liftedId],
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -437,11 +507,11 @@ export function HubDashboard({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={visibleOrder}
+              items={displayOrder}
               strategy={rectSortingStrategy}
             >
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {visibleOrder.map((id) => (
+                {displayOrder.map((id) => (
                   <SortableCard
                     key={id}
                     id={id as ModuleId}
@@ -449,6 +519,9 @@ export function HubDashboard({
                     quickAdd={quickAddByModule[id] || null}
                     inactive={!isActiveModule(activeModules, id)}
                     editMode={editMode}
+                    adaptiveReason={
+                      id === adaptive.liftedId ? adaptive.reason : null
+                    }
                   />
                 ))}
               </div>
