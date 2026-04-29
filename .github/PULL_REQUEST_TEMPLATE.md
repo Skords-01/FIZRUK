@@ -12,7 +12,7 @@
 
 ---
 
-## Pre-flight (Hard Rule #13)
+## Pre-flight (Hard Rule #15)
 
 <!--
 Before opening this PR you should have read the relevant governance.
@@ -23,7 +23,7 @@ Tick what applies; if a box is N/A, write "n/a" inline.
 - [ ] Read the matching playbook in `docs/playbooks/` (or noted that none exists).
 - [ ] Checked freshness headers of docs cited in the change.
 
-## Docs updated alongside code? (Hard Rule #13)
+## Docs updated alongside code? (Hard Rule #15)
 
 <!--
 Documentation is part of the change set, not a follow-up. Tick what applies.

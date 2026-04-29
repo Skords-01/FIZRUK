@@ -30,15 +30,15 @@ export const REQUIRED_SECTIONS = [
   "What changed",
   "Why",
   "How to test",
-  "Pre-flight (Hard Rule #13)",
-  "Docs updated alongside code? (Hard Rule #13)",
+  "Pre-flight (Hard Rule #15)",
+  "Docs updated alongside code? (Hard Rule #15)",
 ];
 
 // Sections where at least one checkbox must be ticked. Each entry is the
 // heading text; the validator scans checkboxes until the next H2.
 export const SECTIONS_REQUIRING_TICK = [
-  "Pre-flight (Hard Rule #13)",
-  "Docs updated alongside code? (Hard Rule #13)",
+  "Pre-flight (Hard Rule #15)",
+  "Docs updated alongside code? (Hard Rule #15)",
 ];
 
 // ── Pure helpers (exported for tests) ────────────────────────────────────────
