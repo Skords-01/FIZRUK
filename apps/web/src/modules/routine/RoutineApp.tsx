@@ -13,6 +13,7 @@ import {
   ModuleHeaderBackButton,
 } from "@shared/components/layout";
 import { hapticTap } from "@shared/lib/haptic";
+import { useAnnounce } from "@shared/components/ui/ScreenReaderAnnouncer";
 import {
   loadRoutineState,
   toggleHabitCompletion,
@@ -405,6 +406,8 @@ export default function RoutineApp({
     setTimeMode("day");
   }, []);
 
+  const { announce } = useAnnounce();
+
   const onToggleHabit = useCallback(
     (habitId: string, dateKey: string) => {
       // Легкий тап на ✓ — фізичне відчуття підтверджує дію до того, як
@@ -415,10 +418,21 @@ export default function RoutineApp({
       // visual change at high priority while deferring the full list
       // re-render + localStorage persist to a lower-priority lane.
       startHabitTransition(() => {
-        setRoutine((prev) => toggleHabitCompletion(prev, habitId, dateKey));
+        setRoutine((prev) => {
+          const next = toggleHabitCompletion(prev, habitId, dateKey);
+          const wasCompleted = (prev.completions[habitId] || []).includes(
+            dateKey,
+          );
+          const habit = prev.habits.find((h) => h.id === habitId);
+          const label = habit?.name || "Звичку";
+          announce(
+            wasCompleted ? `${label} — скасовано` : `${label} — виконано`,
+          );
+          return next;
+        });
       });
     },
-    [setRoutine, startHabitTransition],
+    [setRoutine, startHabitTransition, announce],
   );
 
   const onBulkMarkDay = useCallback(() => {

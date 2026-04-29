@@ -10,6 +10,7 @@ import {
   useVisualKeyboardInset,
 } from "@sergeant/shared";
 import { hapticSuccess } from "@shared/lib/haptic";
+import { useAnnounce } from "@shared/components/ui/ScreenReaderAnnouncer";
 import { CANONICAL_TO_MANUAL_LABEL } from "@sergeant/finyk-domain/domain/personalization";
 
 // Manual-expense categories. Labels map to the MCC canonical ids used
@@ -135,6 +136,7 @@ export function ManualExpenseSheet({
   const dateId = `${formId}-date`;
   const catLabelId = `${formId}-cat-label`;
   const kbInsetPx = useVisualKeyboardInset(open);
+  const { announce } = useAnnounce();
   const isEditing = !!initialExpense?.id;
   const [form, setForm] = useState<{
     description: string;
@@ -275,6 +277,11 @@ export function ManualExpenseSheet({
         ? new Date(`${form.date}T12:00:00`).toISOString()
         : new Date().toISOString(),
     });
+    announce(
+      isEditing
+        ? `Витрату оновлено: ${amt} грн`
+        : `Витрату збережено: ${amt} грн`,
+    );
     onClose();
   };
 
