@@ -13,6 +13,8 @@ import {
 import { SectionErrorBoundary } from "@shared/components/ui/SectionErrorBoundary";
 import { cn } from "@shared/lib/cn";
 import { useToast } from "@shared/hooks/useToast";
+import { tryShowCrossModulePrompt } from "@shared/lib/crossModulePrompt";
+import { openHubModuleWithAction } from "@shared/lib/hubNav";
 import { Overview } from "./pages/Overview";
 import { Transactions } from "./pages/Transactions";
 import { Budgets } from "./pages/Budgets";
@@ -480,9 +482,34 @@ export default function App({
           if (expense?.id) {
             storage.editManualExpense?.(expense.id, expense);
             toast.success("Витрату оновлено.");
-          } else {
-            storage.addManualExpense(expense);
-            toast.success("Витрату додано.");
+            return;
+          }
+          storage.addManualExpense(expense);
+          toast.success("Витрату додано.");
+
+          // Cross-module nudge (UX wave-4 #4):
+          // After a Кафе/Ресторан/Продукти save, suggest logging the
+          // matching meal in Nutrition. Suppressed automatically after
+          // ≥3 dismissals in 14 days or 12 h after the user accepts —
+          // see `docs/design/CROSS-MODULE-PROMPTS.md`.
+          const cat = String(expense?.category || "");
+          const promptId =
+            cat === "restaurant"
+              ? "finyk-restaurant-to-meal"
+              : cat === "food"
+                ? "finyk-food-to-meal"
+                : null;
+          if (promptId) {
+            const msg =
+              promptId === "finyk-restaurant-to-meal"
+                ? "Додати прийом їжі з ресторану?"
+                : "Додати прийом їжі з продуктів?";
+            tryShowCrossModulePrompt(toast, {
+              id: promptId,
+              msg,
+              acceptLabel: "Додати →",
+              onAccept: () => openHubModuleWithAction("nutrition", "add_meal"),
+            });
           }
         }}
       />
