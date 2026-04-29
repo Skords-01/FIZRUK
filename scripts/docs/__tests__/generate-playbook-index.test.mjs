@@ -11,6 +11,7 @@ import {
   escapeTableCell,
   renderIndex,
   addDays,
+  normaliseForCompare,
 } from "../generate-playbook-index.mjs";
 
 describe("extractPlaybookMeta", () => {
@@ -112,5 +113,27 @@ describe("renderIndex", () => {
 describe("addDays", () => {
   it("adds 90 days correctly across month boundaries", () => {
     assert.equal(addDays("2026-04-29", 90), "2026-07-28");
+  });
+});
+
+describe("normaliseForCompare", () => {
+  it("ignores daily freshness dates", () => {
+    const a =
+      "> **Last validated:** 2026-04-29 by @x. **Next review:** 2026-07-28.\n\nbody";
+    const b =
+      "> **Last validated:** 2027-01-15 by @x. **Next review:** 2027-04-15.\n\nbody";
+    assert.equal(normaliseForCompare(a), normaliseForCompare(b));
+  });
+
+  it("ignores Prettier table-column padding", () => {
+    const compact = "| A | B |\n| - | - |\n| 1 | 2 |";
+    const padded = "| A   | B   |\n| --- | --- |\n| 1   | 2   |";
+    assert.equal(normaliseForCompare(compact), normaliseForCompare(padded));
+  });
+
+  it("distinguishes genuinely different tables", () => {
+    const a = "| A | B |\n| - | - |\n| 1 | 2 |";
+    const b = "| A | B |\n| - | - |\n| 1 | 3 |";
+    assert.notEqual(normaliseForCompare(a), normaliseForCompare(b));
   });
 });

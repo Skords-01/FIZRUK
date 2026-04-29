@@ -110,6 +110,38 @@ export function todayISO() {
 }
 
 /**
+ * Normalise a rendered index for equality comparison in `--check` mode.
+ * Ignores:
+ *   - daily freshness dates (Last validated / Next review)
+ *   - Prettier table-column padding (the on-disk file is re-flowed by the
+ *     repo's Prettier config, our generator emits compact tables)
+ *   - leading / trailing whitespace and blank-line differences
+ */
+export function normaliseForCompare(s) {
+  return s
+    .replace(
+      /Last validated:\*\* \d{4}-\d{2}-\d{2}[^\n]*/g,
+      "Last validated:**",
+    )
+    .replace(/Next review:\*\* \d{4}-\d{2}-\d{2}[^\n]*/g, "Next review:**")
+    .split(/\r?\n/)
+    .map((line) => {
+      // Collapse internal whitespace runs in table rows so Prettier's padding
+      // doesn't create a spurious diff; other lines keep their shape.
+      if (line.trimStart().startsWith("|")) {
+        return line
+          .replace(/-{2,}/g, "-") // `-----` → `-`
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+      return line.trimEnd();
+    })
+    .filter((line, i, arr) => !(line === "" && arr[i - 1] === ""))
+    .join("\n")
+    .trim();
+}
+
+/**
  * Scan the playbooks directory and return extracted metadata for each file.
  * { file, title, trigger, isDecisionTree }
  */
@@ -143,25 +175,19 @@ function main() {
   if (checkMode) {
     if (!existsSync(INDEX_PATH)) {
       console.error(
-        `❌docs/playbooks/INDEX.md does not exist. Run: pnpm docs:gen-playbook-index`,
+        `❌ docs/playbooks/INDEX.md does not exist. Run: pnpm docs:gen-playbook-index`,
       );
       process.exit(1);
     }
     const existing = readFileSync(INDEX_PATH, "utf8");
-    // Compare ignoring the freshness header line — that changes with today's date
-    // and regenerating on CI would always produce a diff otherwise.
-    const stripHeader = (s) =>
-      s
-        .replace(/> \*\*Last validated:\*\* [^\n]+\n/, "")
-        .replace(/> \*\*Next review:\*\* [^\n]+\n/, "");
-    if (stripHeader(existing).trim() !== stripHeader(body).trim()) {
+    if (normaliseForCompare(existing) !== normaliseForCompare(body)) {
       console.error(
-        `❌docs/playbooks/INDEX.md is out of date. Run: pnpm docs:gen-playbook-index`,
+        `❌ docs/playbooks/INDEX.md is out of date. Run: pnpm docs:gen-playbook-index`,
       );
       process.exit(1);
     }
     console.log(
-      `✅docs/playbooks/INDEX.md is up to date (${entries.length} playbooks).`,
+      `✅ docs/playbooks/INDEX.md is up to date (${entries.length} playbooks).`,
     );
     return;
   }
