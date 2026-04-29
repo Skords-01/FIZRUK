@@ -46,7 +46,7 @@ import {
   KeyboardShortcutsModal,
   useKeyboardShortcutsModal,
 } from "@shared/components/ui/KeyboardShortcutsModal";
-import { prefetchCriticalModules } from "./hooks/useRoutePrefetch";
+import { prefetchCriticalModules } from "./lib/useRoutePrefetch";
 
 const AuthPage = lazy(() =>
   import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),

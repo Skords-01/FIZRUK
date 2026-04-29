@@ -4,11 +4,15 @@
  * Canonical colour, axis, tick and tooltip tokens for all data-viz in the
  * app (ФІНІК trends, ФІЗРУК progress, Рутина heatmap, Харчування macros).
  *
- * The source-of-truth palette lives in
- * `src/modules/finyk/chartPalette/chartPalette.ts` so existing JS imports
- * keep working. This file re-exports the palette and adds shared
- * render-side primitives (Tailwind classNames + SVG attrs) so charts
- * across modules share axes, grid lines, ticks and tooltips.
+ * Source of truth: `@sergeant/design-tokens/tokens`. This file re-exports
+ * those tokens and adds shared render-side primitives (Tailwind classNames
+ * + SVG attrs) so charts across modules share axes, grid lines, ticks and
+ * tooltips. (Historical note: this used to import via
+ * `src/modules/finyk/chartPalette/chartPalette.ts`, which transitively
+ * pulled all of `src/modules/finyk/**` into the
+ * `tsconfig.noimplicitany.json` typecheck graph and produced ~800 false-
+ * positive errors. We now import the tokens directly so cross-module
+ * strictness is decoupled from per-module strictness.)
  *
  * Usage:
  *
@@ -26,7 +30,7 @@ import {
   chartPaletteList,
   moduleColors,
   statusColors,
-} from "../../modules/finyk/chartPalette/chartPalette";
+} from "@sergeant/design-tokens/tokens";
 
 export {
   brandColors,
