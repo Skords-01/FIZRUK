@@ -134,12 +134,19 @@ export interface HubBottomNavProps {
    * лише коли `hasAnyRealEntry()` повертає `true` (див. `firstRealEntry.ts`).
    */
   showReports?: boolean;
+  /**
+   * «Профіль» tab is only rendered when the user is signed in. Guests
+   * reach auth via the header button — a profile tab that bounces
+   * anonymous visitors to sign-in would clutter the FTUX strip.
+   */
+  showProfile?: boolean;
 }
 
 export function HubBottomNav({
   hubView,
   onChange,
   showReports = true,
+  showProfile = false,
 }: HubBottomNavProps) {
   const toast = useToast();
   // Чи був перехід `showReports: false → true` в межах поточного маунту.
@@ -216,6 +223,17 @@ export function HubBottomNav({
             iconName="bar-chart"
             label="Звіти"
             className={animateReveal ? "animate-bounce-in" : undefined}
+          />
+        )}
+
+        {showProfile && (
+          <HubBottomNavTab
+            id="profile"
+            panelId="hub-panel-profile"
+            active={hubView === "profile"}
+            onClick={() => onChange("profile")}
+            iconName="user"
+            label="Профіль"
           />
         )}
 

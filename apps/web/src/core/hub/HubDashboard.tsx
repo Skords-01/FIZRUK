@@ -76,6 +76,18 @@ export {
   resetDashboardOrder,
 } from "./dashboard/dashboardStore";
 
+// Ukrainian 1 / 2-4 / 5+ plural. Inline because this file is the only
+// current consumer; `AssistantCataloguePage` has its own copy with a
+// slightly different (tuple-based) signature. Kept intentionally small;
+// if a third call-site appears, promote to `@shared/lib/pluralize`.
+function pluralize(n: number, one: string, few: string, many: string): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
 interface HubDashboardProps {
   onOpenModule: (module: string) => void;
   onOpenChat?: () => void;
@@ -361,6 +373,16 @@ export function HubDashboard({
             <CollapsibleSection
               storageKey="sergeant:hub.hints.open"
               title="Підказки"
+              collapsedIcon="lightbulb"
+              collapsedSubtitle={
+                coachLoading
+                  ? "Готую AI-пораду…"
+                  : coachError
+                    ? "Не вдалось отримати AI-пораду"
+                    : activeNudge && !reengagement.show
+                      ? "AI-порада + нагадування"
+                      : "AI-порада на день"
+              }
             >
               <AssistantAdviceCard
                 insight={coachInsightText}
@@ -457,6 +479,18 @@ export function HubDashboard({
           <CollapsibleSection
             storageKey="sergeant:hub.analytics.open"
             title="Аналітика"
+            collapsedIcon="bar-chart"
+            collapsedSubtitle={
+              rest.length > 0
+                ? `${rest.length} ${pluralize(rest.length, "інсайт", "інсайти", "інсайтів")}${
+                    digestFresh ? " · свіжий дайджест" : ""
+                  }`
+                : digestFresh
+                  ? "Свіжий щотижневий дайджест"
+                  : showDigestFooter
+                    ? "Щотижневий дайджест"
+                    : "Без нових інсайтів"
+            }
           >
             <HubInsightsPanel
               items={rest}

@@ -214,6 +214,16 @@ function AppInner() {
     return () => clearTimeout(timer);
   }, []);
 
+  // If the user signs out while the «Профіль» tab is active, bounce the
+  // hub back to the dashboard — the tab itself disappears from the
+  // bottom nav (gated on `user`), and without this the main content
+  // area would render nothing for the `profile` view.
+  useEffect(() => {
+    if (!user && ui.hubView === "profile") {
+      ui.setHubView("dashboard");
+    }
+  }, [user, ui]);
+
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.data?.type === "OPEN_MODULE") {
@@ -479,6 +489,11 @@ function AppInner() {
           // потім стер дані — повертаємо його на дашборд, щоб не
           // лишався на неіснуючому табі.
           showReports={hasAnyRealEntry()}
+          // «Профіль» tab is gated on being signed in — a guest tapping
+          // it would just bounce through `/sign-in`, which clutters the
+          // FTUX strip. The header still exposes a "Sign in" button
+          // for anonymous visitors.
+          showProfile={!!user}
         />
 
         {/* Thumb-reach entry to the AI assistant. Always visible so the

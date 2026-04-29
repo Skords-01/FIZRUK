@@ -13,6 +13,18 @@ export interface CollapsibleSectionProps {
   defaultOpen?: boolean;
   /** SectionHeading size — defaults to "xs". */
   headingSize?: SectionHeadingSize;
+  /**
+   * Icon name (from the shared `Icon` set) rendered on the left of the
+   * collapsed "pill" state. When omitted, the collapsed state renders
+   * title-only — useful for sections without an obvious glyph.
+   */
+  collapsedIcon?: string;
+  /**
+   * Short preview / summary line shown inside the collapsed pill, below
+   * the title. Typical content: a live count, freshness timestamp,
+   * or a one-line CTA ("AI-порада оновлена", "3 інсайти").
+   */
+  collapsedSubtitle?: ReactNode;
   children?: ReactNode;
   className?: string;
 }
@@ -22,7 +34,14 @@ export interface CollapsibleSectionProps {
  * state in localStorage. Used on HubDashboard to let users collapse
  * the "Підказки" and "Аналітика" sections to reduce scroll depth.
  *
- * The heading row doubles as the toggle button (chevron + heading).
+ * Two visual states:
+ * - **Expanded** — minimal eyebrow heading + rotating chevron, so the
+ *   section's own content dominates the viewport.
+ * - **Collapsed** — full-width "pill" card (panel bg + border, icon,
+ *   regular-case title, optional `collapsedSubtitle` preview, right
+ *   chevron). Makes the collapsed row read as a purposeful, tappable
+ *   entry point instead of a stray eyebrow with nothing under it.
+ *
  * Collapse animation uses CSS `grid-template-rows` for smooth height
  * transitions (no JavaScript measurement needed).
  */
@@ -31,6 +50,8 @@ export function CollapsibleSection({
   title,
   defaultOpen = true,
   headingSize = "xs",
+  collapsedIcon,
+  collapsedSubtitle,
   children,
   className,
 }: CollapsibleSectionProps) {
@@ -48,26 +69,67 @@ export function CollapsibleSection({
 
   return (
     <section className={cn("space-y-2", className)}>
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="flex items-center gap-1.5 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-lg -ml-0.5 pl-0.5"
-      >
-        <Icon
-          name="chevron-right"
-          size={12}
-          strokeWidth={2.5}
+      {open ? (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          className="flex items-center gap-1.5 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-lg -ml-0.5 pl-0.5"
+        >
+          <Icon
+            name="chevron-down"
+            size={12}
+            strokeWidth={2.5}
+            className="text-subtle"
+            aria-hidden
+          />
+          <SectionHeading as="span" size={headingSize} className="!px-0">
+            {title}
+          </SectionHeading>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
           className={cn(
-            "text-subtle transition-transform duration-200",
-            open && "rotate-90",
+            "flex items-center gap-3 w-full text-left",
+            "px-3.5 py-3 rounded-2xl",
+            "bg-panel/70 hover:bg-panelHi border border-line/70",
+            "transition-colors active:scale-[0.99]",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
           )}
-          aria-hidden
-        />
-        <SectionHeading as="span" size={headingSize} className="!px-0">
-          {title}
-        </SectionHeading>
-      </button>
+        >
+          {collapsedIcon && (
+            <span
+              className={cn(
+                "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center",
+                "bg-brand-500/10 text-brand-strong dark:text-brand",
+              )}
+              aria-hidden
+            >
+              <Icon name={collapsedIcon} size={18} strokeWidth={2} />
+            </span>
+          )}
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-semibold text-text leading-tight">
+              {title}
+            </span>
+            {collapsedSubtitle && (
+              <span className="block text-2xs text-muted mt-0.5 truncate">
+                {collapsedSubtitle}
+              </span>
+            )}
+          </span>
+          <Icon
+            name="chevron-right"
+            size={16}
+            strokeWidth={2}
+            className="text-subtle shrink-0"
+            aria-hidden
+          />
+        </button>
+      )}
 
       {/* CSS grid row transition for smooth collapse */}
       <div
