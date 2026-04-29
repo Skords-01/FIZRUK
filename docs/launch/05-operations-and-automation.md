@@ -1,6 +1,7 @@
 # 05. Operations & Automation: як контролювати, відстежувати, організовувати
 
 > **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
 
 > Як адмініструвати весь стек, не вигорівши: 6 операційних зон, правило «3 вкладки», daily/weekly ритуал, автоматизація через n8n + OpenClaw.
 > Pre-MVP draft. Цифри (вартість self-host, LLM, час на task) — оцінкові.

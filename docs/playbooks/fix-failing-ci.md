@@ -1,6 +1,7 @@
 # Playbook: Fix Failing CI on a PR
 
 > **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-28.
+> **Status:** Active
 
 **Trigger:** один або кілька CI-чеків червоні на відкритому PR (`commitlint`, `check`, `coverage`, `a11y`, `smoke-e2e`, Detox/mobile-shell, bundle-size, audit, license-check). НЕ для прод-інцидентів — для них див. [`hotfix-prod-regression.md`](hotfix-prod-regression.md).
 

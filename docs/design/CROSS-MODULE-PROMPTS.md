@@ -1,5 +1,8 @@
 # Cross-module prompts — pattern, fatigue, anti-nag
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 > Sergeant — це 4 модулі (Finyk · Fizruk · Routine · Nutrition), що
 > часто зустрічаються в одному користувацькому дні. Cross-module
 > prompts перетворюють Sergeant з «4 окремих app-и» на «один інтегрований

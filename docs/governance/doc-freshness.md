@@ -1,6 +1,7 @@
 # Document Freshness Tracking
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 This system ensures critical documentation stays up-to-date by embedding
 freshness headers and running a nightly check that opens GitHub issues for

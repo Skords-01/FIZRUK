@@ -1,5 +1,8 @@
 # Unified Bottom Navigation
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 > **TL;DR:** Хаб і 4 модулі тепер живуть під **одним** навігаційним патерном —
 > `bottom-nav`. Hybrid «top-tabs у хабі + bottom-nav у модулях» більше немає.
 

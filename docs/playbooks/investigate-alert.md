@@ -1,6 +1,7 @@
 # Playbook: Investigate Alert
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+> **Status:** Active
 
 **Trigger:** Prometheus alert спрацював / Sentry повідомлення / підозрілі 5xx у логах / деградація `/health`.
 

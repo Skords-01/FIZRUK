@@ -1,6 +1,7 @@
 # 02. Go-to-market: запуск, промоутинг, growth
 
 > **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
 
 > Pre-MVP draft. Цифри traffic/CPA/reach — оцінкові, для брейнштормінгу.
 > Джерело: `sergeant-monetization-plan.md` (ч.2), `sergeant-launch-checklist.md` (§7–§9),

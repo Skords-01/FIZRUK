@@ -1,6 +1,7 @@
 # Dark-mode audit
 
 > **Last validated:** 2026-04-29 by @Skords-01.
+> **Status:** Active
 > **Audience:** anyone touching `apps/web` Tailwind class strings.
 > **Goal:** catalogue every place that expresses dark mode as an
 > explicit `dark:` override on a raw palette color, so we can migrate

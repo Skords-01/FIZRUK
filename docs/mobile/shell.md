@@ -1,6 +1,7 @@
 # Mobile builds — local dev commands
 
 > **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
 
 > Short operator-oriented reference for the Capacitor shell
 > (`@sergeant/mobile-shell`). For the design rationale, plugin list, and
