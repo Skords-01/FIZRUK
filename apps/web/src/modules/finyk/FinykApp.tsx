@@ -1,4 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import {
+  PageTransition,
+  type TransitionDirection,
+} from "@shared/components/ui/PageTransition";
 import { useMonobank } from "./hooks/useMonobank";
 import { usePrivatbank } from "./hooks/usePrivatbank";
 import { useStorage } from "./hooks/useStorage";
@@ -166,6 +170,7 @@ export default function App({
   // Свайп між вкладками (без pull-to-refresh: скрол живе всередині сторінок, зовнішній scrollTop завжди 0)
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
+  const [swipeDir, setSwipeDir] = useState<TransitionDirection>("fade");
 
   // Ascend from the touch target and bail out if any ancestor is marked as
   // a horizontal scroller (e.g. the category filter strip on Operations) or
@@ -220,7 +225,10 @@ export default function App({
     const curIdx = NAV_IDS.indexOf(page);
     if (curIdx === -1) return;
     const next = curIdx + (dx > 0 ? 1 : -1);
-    if (next >= 0 && next < NAV_IDS.length) navigate(NAV_IDS[next]);
+    if (next >= 0 && next < NAV_IDS.length) {
+      setSwipeDir(dx > 0 ? "forward" : "backward");
+      navigate(NAV_IDS[next]);
+    }
   };
 
   // ── Login screen ──────────────────────────────────────────────────────
@@ -344,9 +352,12 @@ export default function App({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div
-          key={`page-${page}`}
-          className="flex-1 overflow-hidden flex flex-col min-h-0 motion-safe:animate-fade-in"
+        <PageTransition
+          pageKey={page}
+          direction={swipeDir}
+          duration={200}
+          className="flex-1 overflow-hidden flex flex-col min-h-0"
+          onTransitionEnd={() => setSwipeDir("fade")}
         >
           {page === "overview" && (
             <SectionErrorBoundary
@@ -412,7 +423,7 @@ export default function App({
               />
             </SectionErrorBoundary>
           )}
-        </div>
+        </PageTransition>
       </div>
 
       {(page === "overview" ||
@@ -522,7 +533,14 @@ export default function App({
           icon: NAV_ICONS[item.id],
         }))}
         activeId={page}
-        onChange={navigate}
+        onChange={(nextId) => {
+          const curIdx = NAV_IDS.indexOf(page);
+          const nextIdx = NAV_IDS.indexOf(nextId);
+          if (curIdx !== -1 && nextIdx !== -1 && curIdx !== nextIdx) {
+            setSwipeDir(nextIdx > curIdx ? "forward" : "backward");
+          }
+          navigate(nextId);
+        }}
         module="finyk"
       />
     </ModuleAccentProvider>
