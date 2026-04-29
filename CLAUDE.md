@@ -24,7 +24,12 @@ pnpm test                # Vitest all
 pnpm check               # lint + typecheck + test + build (full CI)
 pnpm db:up               # Start Postgres (Docker)
 pnpm db:migrate          # Run migrations
-pnpm gen                 # Plop code generators (migration, rq-hook, hubchat-tool, endpoint)
+pnpm gen                 # Plop code generators (migration, rq-hook, hubchat-tool, endpoint, adr)
+pnpm gen:adr             # New ADR (auto-numbers from docs/adr/)
+pnpm docs:check-links    # Scan every .md for broken [text](target) links
+pnpm docs:gen-playbook-index       # Regenerate docs/playbooks/INDEX.md
+pnpm docs:check-playbook-index     # CI: fail if INDEX.md is stale
+pnpm docs:freshness-dashboard      # Build dist/freshness-dashboard.html
 ```
 
 ## Before you write code

@@ -1,0 +1,110 @@
+name: Docs automation
+
+# Guards documentation quality on every PR / push:
+#
+#   - playbook-index: regenerates docs/playbooks/INDEX.md and fails if the
+#     checked-in copy drifts from the truth in `**Trigger:**` lines.
+#   - markdown-links: walks every *.md file, verifies every internal link
+#     resolves, and soft-warns on broken external URLs (enable
+#     `--strict-external` once the external fleet is healthy).
+#   - pr-body-validator: only on pull_request; checks that the PR body
+#     follows `.github/PULL_REQUEST_TEMPLATE.md` (mandatory sections +
+#     at least one ticked box in Pre-flight / Docs-updated).
+#
+# Each step runs independently so a single failing check doesn't mask the
+# others — a PR author fixing a broken internal link shouldn't also lose
+# the signal about a missing `## Why` section.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-automation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playbook-index:
+    name: Playbook trigger index (in sync)
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v6.0.2 (SHA-pinned for supply-chain hardening)
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # actions/setup-node v6.4.0 (SHA-pinned for supply-chain hardening)
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "20"
+
+      - name: Check docs/playbooks/INDEX.md is up to date
+        run: node scripts/docs/generate-playbook-index.mjs --check
+
+  markdown-links:
+    name: Markdown link checker
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v6.0.2 (SHA-pinned for supply-chain hardening)
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # actions/setup-node v6.4.0 (SHA-pinned for supply-chain hardening)
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "20"
+
+      # actions/cache v5.0.5 (SHA-pinned for supply-chain hardening)
+      - name: Cache external-link HEAD results
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+        with:
+          path: .cache/markdown-links
+          key: markdown-links-${{ github.run_id }}
+          restore-keys: |
+            markdown-links-
+
+      - name: Check markdown links
+        # External URLs are fetched but failures downgrade to warnings by
+        # default. Promote to errors with `--strict-external` once the
+        # external fleet is stable (see `scripts/docs/check-markdown-links.mjs`).
+        run: node scripts/docs/check-markdown-links.mjs
+
+  pr-body-validator:
+    name: PR body validator
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v6.0.2 (SHA-pinned for supply-chain hardening)
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # actions/setup-node v6.4.0 (SHA-pinned for supply-chain hardening)
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "20"
+
+      - name: Validate PR body against PULL_REQUEST_TEMPLATE.md
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/ci/validate-pr-body.mjs
+
+  docs-scripts-tests:
+    name: Docs-automation scripts unit tests
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v6.0.2 (SHA-pinned for supply-chain hardening)
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # actions/setup-node v6.4.0 (SHA-pinned for supply-chain hardening)
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: "20"
+
+      - name: Run node --test for docs-automation scripts
+        run: |
+          node --test \
+            scripts/docs/__tests__/check-freshness.test.mjs \
+            scripts/docs/__tests__/generate-playbook-index.test.mjs \
+            scripts/docs/__tests__/generate-freshness-dashboard.test.mjs \
+            scripts/docs/__tests__/check-markdown-links.test.mjs \
+            scripts/ci/__tests__/validate-pr-body.test.mjs

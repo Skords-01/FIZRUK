@@ -49,12 +49,21 @@ Proposed → Accepted → (Deprecated | Superseded by ADR-XXXX)
 
 ## Як створити новий ADR
 
-1. Скопіюй [`TEMPLATE.md`](./TEMPLATE.md), перейменуй у `NNNN-kebab-case-title.md` (інкрементуй номер).
-2. Заповни секції: Context and Problem Statement / Considered Options / Decision / Rationale / Consequences / Compliance.
-3. Status = `Proposed` поки PR не змерджений.
-4. При мерджі — `Accepted` + дата.
-5. Лінкуй ADR з відповідних дизайн-документів (`docs/launch/06-*`, `docs/audits/*`).
-6. Додай рядок у таблицю «Поточні ADR» нижче.
+Рекомендований спосіб — Plop-генератор:
+
+```bash
+pnpm gen:adr
+```
+
+Він сам візьме наступний 4-значний номер (`nextAdrNumber()` у `plopfile.mjs`), попросить `kebab-case` title, human-readable H1 і список deciders, і створить `docs/adr/NNNN-<title>.md` із заповненим front-matter. Ручна копія `TEMPLATE.md` більше не потрібна.
+
+Далі:
+
+1. Заповни секції: Context and Problem Statement / Considered Options / Decision / Rationale / Consequences / Compliance.
+2. Status = `Proposed` поки PR не змерджений.
+3. При мерджі — `Accepted` + дата.
+4. Лінкуй ADR з відповідних дизайн-документів (`docs/launch/06-*`, `docs/audits/*`).
+5. Додай рядок у таблицю «Поточні ADR» нижче.
 
 ## Поточні ADR
 

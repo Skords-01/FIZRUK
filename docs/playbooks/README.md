@@ -15,6 +15,10 @@ Playbooks marked with 🌳 use the **decision tree** format: a structured `if/el
 
 New playbooks should follow the decision-tree template: [`_TEMPLATE-decision-tree.md`](_TEMPLATE-decision-tree.md).
 
+### Auto-generated trigger index
+
+For programmatic lookup «phrase → playbook» see [`INDEX.md`](./INDEX.md). It is generated from every playbook's `**Trigger:**` line by `scripts/docs/generate-playbook-index.mjs` and checked in CI (`.github/workflows/docs-automation.yml` → `playbook-index`). Regenerate locally with `pnpm docs:gen-playbook-index`.
+
 ## Available Playbooks
 
 | Playbook                                                                           | Trigger                                                                                                         |
