@@ -183,7 +183,7 @@ export function PermissionsPrompt({
               key={row.id}
               className="flex items-start gap-3 p-3 rounded-2xl border border-line bg-panelHi"
             >
-              <div className="w-10 h-10 shrink-0 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+              <div className="w-10 h-10 shrink-0 rounded-xl bg-brand-500/10 text-brand-strong dark:text-brand flex items-center justify-center">
                 {row.icon}
               </div>
               <div className="min-w-0 flex-1">

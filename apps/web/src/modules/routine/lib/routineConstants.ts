@@ -12,7 +12,7 @@ export const ROUTINE_THEME = {
 
   // Cards & surfaces
   statCard:
-    "rounded-2xl bg-panel/80 border border-coral-100/60 dark:border-coral-800/30 p-3 text-center shadow-card backdrop-blur-sm",
+    "rounded-2xl bg-panel/80 border border-routine-soft-border/60 p-3 text-center shadow-card backdrop-blur-sm",
   statCardHighlight:
     "rounded-2xl bg-routine-surface/80 border border-routine-ring/50 dark:border-routine-border-dark/30 p-3 text-center shadow-card",
 
@@ -67,7 +67,7 @@ export const ROUTINE_THEME = {
     "bg-panel hover:bg-panelHi text-text border border-line transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-200",
 
   // Progress ring colors
-  progressTrack: "text-coral-100 dark:text-coral-900/30",
+  progressTrack: "text-routine-soft",
   progressFill: "text-routine-strong dark:text-routine",
 
   // Hero card gradient

@@ -1,7 +1,7 @@
 # Dark-mode audit
 
 > **Last validated:** 2026-04-29 by @Skords-01.
-> **Status:** Active
+> **Status:** Closed (Wave 2c shipped, lint guardrail at `error`)
 > **Audience:** anyone touching `apps/web` Tailwind class strings.
 > **Goal:** catalogue every place that expresses dark mode as an
 > explicit `dark:` override on a raw palette color, so we can migrate
@@ -31,6 +31,21 @@
   moved into `bg-routine-heat-l{1,2,3}` CSS classes whose
   `.dark .X` override owns the per-theme colour. **Audit count
   hits 0.**
+- **Wave 2c** ships the lint guardrail: a new ESLint rule
+  `sergeant-design/no-raw-dark-palette` (Hard rule #13 in
+  `AGENTS.md`) fires on
+  any className that pairs a raw-palette light utility
+  (`bg-amber-50`, `text-coral-100`, `border-teal-200/50`, …) with
+  a `dark:` raw-palette override. While migrating the audit's 28
+  inventoried sites the rule surfaced **40** additional paired
+  call-sites outside the original inventory (icon containers,
+  module-strong tinted text, hero-card borders); all 40 were
+  migrated to the canonical Wave 1b shape
+  (`text-{family}-strong dark:text-{family}`,
+  `border-{module}-soft-border/{N}`, `bg-{module}-soft`, …), so
+  the rule promotes to `error` against zero violations. The
+  guardrail closes the door on this anti-pattern in CI for every
+  future change.
 - Every remaining anti-pattern is one `dark:` override away from
   silently falling through on the next palette migration — exactly
   the class of bug [#814](https://github.com/Skords-01/Sergeant/pull/814)
@@ -169,16 +184,34 @@ stops owning them.
    `apps/web/src/styles/module-surfaces.css`. The `.dark .X` override
    owns the per-theme RGB+opacity pair; the JS module references one
    class name per level. Audit count = 0.
-4. **Final step (Wave 2c)**: promote a lint rule in
-   `packages/eslint-plugin-sergeant-design` that forbids any
-   `dark:bg-<palette>-<N>` / `dark:text-<palette>-<N>` pattern — the
-   anti-pattern is then zero, so the rule promotes to `error` without
-   breaking anything.
+4. **Wave 2c — DONE.** The new ESLint rule
+   `sergeant-design/no-raw-dark-palette` ships at **`error`**
+   level (Hard rule #13 in `AGENTS.md`). Scope: pair-only —
+   the rule fires on a className that pairs both a raw-palette
+   light utility (`<utility>-<palette>-<step>`,
+   `<utility>` ∈ {`bg`, `text`, `border`}, `<palette>` ∈ the
+   24-name list above) **and** a `dark:` raw-palette override on
+   the same className. Dark-side-only "patches" (light is already
+   semantic, dark patches a missing `-strong` step) intentionally
+   stay; same for the `dark:bg-white/N` glass washes. The rule is
+   tested in
+   `packages/eslint-plugin-sergeant-design/__tests__/no-raw-dark-palette.test.mjs`
+   (20 cases) and exempted on the plugin's own files
+   (`packages/eslint-plugin-sergeant-design/**/*.{js,mjs}`) so
+   in-source examples in rule documentation do not self-flag.
+   **Scope: `apps/web/**/_.{ts,tsx,js,jsx}` only.** The semantic
+replacements (`bg-{family}-soft`, `border-{module}-soft-border`,
+`text-{family}-strong`) resolve through the
+`--c-{family}-soft_`/`--c-{family}-strong*`CSS variables
+defined in`apps/web/src/index.css`. NativeWind (`apps/mobile`)
+compiles classNames into React Native inline styles and does
+not consume those CSS variables — running the rule there would
+force authors toward tokens that resolve to `rgb(undefined)`on mobile, so the rule is registered scoped to`apps/web/\*\*/*.{ts,tsx,js,jsx}` only.
 
 ## Legitimate `dark:` uses that STAY
 
 Not every `dark:` is an anti-pattern. These patterns are fine and the
-future lint rule must NOT flag them:
+`sergeant-design/no-raw-dark-palette` rule does NOT flag them:
 
 - `dark:bg-surface`, `dark:bg-surface-muted`, `dark:text-fg`,
   `dark:border-border` — these are semantic tokens that happen to
@@ -192,9 +225,13 @@ future lint rule must NOT flag them:
   `hover:bg-surface-muted dark:hover:bg-surface-muted` — sometimes
   written explicitly to opt out of a `hover:` fallthrough.
 
-The rule we eventually ship will target the specific raw-palette
-pair: `dark:(bg|text|border)-<PALETTE_COLOR>-<SHADE>` where
-`PALETTE_COLOR ∈ {gray, slate, zinc, neutral, stone, red, orange,
-amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo,
-violet, purple, fuchsia, pink, rose, brand, coral}` — **not** the
-semantic tokens.
+The shipped rule (`sergeant-design/no-raw-dark-palette`) targets the
+specific raw-palette light/dark **pair** (both halves required on the
+same className): `<utility>-<PALETTE_COLOR>-<SHADE>` paired with
+`dark:<utility>-<PALETTE_COLOR>-<SHADE>` where
+`<utility> ∈ { bg, text, border }` and `<PALETTE_COLOR> ∈ {gray, slate,
+zinc, neutral, stone, red, orange, amber, yellow, lime, green, emerald,
+teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose,
+brand, coral}` — **not** the semantic tokens (`brand-soft`,
+`brand-strong`, `routine-soft-border`, …) and **not** the bare-colour
+washes (`dark:bg-white/10`, `dark:bg-black/40`).

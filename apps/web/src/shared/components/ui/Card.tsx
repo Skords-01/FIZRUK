@@ -70,9 +70,9 @@ const variants: Record<CardVariant, string> = {
 
   // Module hero cards — branded surface in light, subtle tinted panel in dark.
   finyk:
-    "rounded-3xl border border-brand-200/50 bg-hero-emerald shadow-card dark:border-brand-800/30 dark:bg-panel dark:bg-card-finyk-dark",
+    "rounded-3xl border border-brand-soft-border/50 bg-hero-emerald shadow-card dark:bg-panel dark:bg-card-finyk-dark",
   fizruk:
-    "rounded-3xl border border-teal-200/50 bg-hero-teal shadow-card dark:border-teal-800/30 dark:bg-panel dark:bg-card-fizruk-dark",
+    "rounded-3xl border border-fizruk-soft-border/50 bg-hero-teal shadow-card dark:bg-panel dark:bg-card-fizruk-dark",
   routine:
     "rounded-3xl border border-coral-200/50 bg-hero-coral shadow-card dark:border-[rgba(162,51,51,0.3)] dark:bg-panel dark:bg-card-routine-dark",
   nutrition:

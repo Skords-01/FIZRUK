@@ -311,7 +311,7 @@ function ModuleCard({
   const activeClasses = MODULE_ACTIVE_CLASSES[card.id] ?? {
     border: "border-brand-500/60",
     bg: "bg-brand-500/8",
-    icon: "bg-brand-500/15 text-brand-600 dark:text-brand-400",
+    icon: "bg-brand-500/15 text-brand-strong dark:text-brand",
     check: "bg-brand-strong",
   };
 
@@ -457,7 +457,7 @@ function GoalRadioGroup({
               "px-3.5 py-2 rounded-xl border text-sm font-medium transition-all duration-150",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45",
               value === opt.value
-                ? "border-brand-500/60 bg-brand-500/10 text-brand-700 dark:text-brand-300"
+                ? "border-brand-500/60 bg-brand-500/10 text-brand-strong dark:text-brand"
                 : "border-line bg-panel text-text hover:border-brand-500/30",
             )}
           >
@@ -487,7 +487,7 @@ function GoalSlider({
         <p className="text-sm font-semibold text-text text-left">
           {question.title}
         </p>
-        <span className="text-sm font-bold text-brand-600 dark:text-brand-400 tabular-nums">
+        <span className="text-sm font-bold text-brand-strong dark:text-brand tabular-nums">
           {current.toLocaleString("uk-UA")}
           {s.unit}
         </span>

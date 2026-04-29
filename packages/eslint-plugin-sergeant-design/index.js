@@ -1631,6 +1631,197 @@ const noForeignModuleAccent = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// `no-raw-dark-palette` — forbid the raw-palette light/dark anti-pattern
+// ─────────────────────────────────────────────────────────────────────────
+//
+// The dark-mode audit (`docs/design/DARK-MODE-AUDIT.md`) catalogues a
+// recurring shape: a className that encodes both themes by hand by
+// pairing a raw Tailwind palette utility on the light side with a
+// `dark:` raw-palette override —
+//
+//   bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300
+//   bg-coral-100 dark:bg-coral-900/30
+//   border-teal-200/50 ... dark:border-teal-800/30
+//
+// Both halves of the pair encode palette knowledge at the call-site, so
+// the next palette migration (or the next `theme.opacity` step renaming
+// — bug #814) silently drops one half and the surrounding override
+// falls through to the wrong colour. The fix is always the same: lift
+// the (light, dark) pair into the design-system token layer
+// (`bg-success-soft`, `bg-finyk-surface`, `border-routine-soft-border`,
+// …) so the preset owns the swap and the call-site has zero `dark:`
+// overrides.
+//
+// The rule fires on a className **only** when *both* halves of the
+// pair are present:
+//
+//   • a bare `<utility>-<PALETTE>-<SHADE>` (or `…/<opacity>`), AND
+//   • a `dark:<utility>-<PALETTE>-<SHADE>` (or `…/<opacity>`),
+//
+// where `<utility>` ∈ { bg, text, border } and `<PALETTE>` is one of
+// the 24 raw Tailwind palette names (24 = 22 default Tailwind families
+// + Sergeant's `brand` and `coral` aliases — both are theme-inert raw
+// palettes despite the brand-y names; the per-theme aware utilities
+// are `bg-brand-soft`, `bg-routine-surface`, etc.). `<SHADE>` is a
+// numeric step (`50`, `100`, …, `950`), so semantic suffixes
+// (`brand-soft`, `brand-strong`, `coral-soft-border`) do NOT match.
+//
+// Patterns that intentionally STAY (do NOT fire):
+//
+//   • `dark:bg-white/10`, `dark:border-white/15`, `dark:bg-black/40` —
+//     bare colour washes (no palette name), per
+//     `docs/design/design-system.md` § 2.1.
+//   • `dark:bg-surface`, `dark:text-fg`, `dark:border-border` —
+//     semantic tokens that simply happen to carry a `dark:` prefix
+//     because a stacked surface needs an explicit override.
+//   • Dark-side-only "patches" where the *light* half is already a
+//     semantic token (e.g. `Banner.tsx` line 22:
+//     `bg-success-soft text-success-strong dark:text-emerald-100` —
+//     light is the semantic `text-success-strong`, dark patches a
+//     lighter shade because the `-strong` companion does not adapt
+//     well on dark panels). These are documented gaps in the
+//     `-strong` companion scale, not raw-palette pairs.
+//
+// Promotion path: this rule ships at `error` level once the audit's
+// inventory hits zero (Wave 2c of `docs/design/DARK-MODE-AUDIT.md`).
+// Any future violation must be intentional — either extend the token
+// layer in `packages/design-tokens/tailwind-preset.js` or, in the rare
+// case where an inline raw-palette override is justified (e.g. a
+// chart-series fallback), add an `// eslint-disable-next-line
+// sergeant-design/no-raw-dark-palette` with a comment explaining why
+// the token layer cannot own the pair.
+
+const RAW_DARK_PALETTE_FAMILIES = [
+  "gray",
+  "slate",
+  "zinc",
+  "neutral",
+  "stone",
+  "red",
+  "orange",
+  "amber",
+  "yellow",
+  "lime",
+  "green",
+  "emerald",
+  "teal",
+  "cyan",
+  "sky",
+  "blue",
+  "indigo",
+  "violet",
+  "purple",
+  "fuchsia",
+  "pink",
+  "rose",
+  // Sergeant aliases that map to raw Tailwind palettes (not theme-aware).
+  "brand",
+  "coral",
+];
+
+const RAW_DARK_PALETTE_UTILITIES = ["bg", "text", "border"];
+
+const RAW_DARK_PALETTE_MESSAGE =
+  "Raw-palette light/dark pair (`{{light}}` + `{{dark}}`) — the call-site encodes both themes by hand. Use a single semantic utility (e.g. `bg-{family}-soft`, `bg-{module}-surface`, `border-{module}-soft-border`, `text-{status}-strong`) so the preset owns the light/dark swap. See `docs/design/DARK-MODE-AUDIT.md` for the migration recipe.";
+
+// Match `<utility>-<palette>-<step>[/<opacity>]` where step is numeric
+// (so `brand-soft`, `brand-strong`, `coral-soft-border` do NOT match).
+const RX_LIGHT_RAW_PALETTE = new RegExp(
+  String.raw`(?<![\w:-])(` +
+    RAW_DARK_PALETTE_UTILITIES.join("|") +
+    String.raw`)-(` +
+    RAW_DARK_PALETTE_FAMILIES.join("|") +
+    String.raw`)-(\d{2,3})(\/\d{1,3})?\b`,
+  "g",
+);
+
+// Match `dark:<utility>-<palette>-<step>[/<opacity>]`. We use a
+// negative-lookbehind on `:` to avoid matching `lg:dark:bg-…` weirdness
+// while still allowing the `dark:` prefix.
+const RX_DARK_RAW_PALETTE = new RegExp(
+  String.raw`\bdark:(` +
+    RAW_DARK_PALETTE_UTILITIES.join("|") +
+    String.raw`)-(` +
+    RAW_DARK_PALETTE_FAMILIES.join("|") +
+    String.raw`)-(\d{2,3})(\/\d{1,3})?\b`,
+  "g",
+);
+
+function findRawDarkPalettePairs(value) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  // Cheap prefilter: must contain both `dark:` and a palette family
+  // name. Without this every literal in the codebase pays a regex tax.
+  if (!value.includes("dark:")) return [];
+  let hasFamily = false;
+  for (const f of RAW_DARK_PALETTE_FAMILIES) {
+    if (value.includes(`-${f}-`)) {
+      hasFamily = true;
+      break;
+    }
+  }
+  if (!hasFamily) return [];
+
+  const lightHits = [];
+  let m;
+  RX_LIGHT_RAW_PALETTE.lastIndex = 0;
+  while ((m = RX_LIGHT_RAW_PALETTE.exec(value)) !== null) {
+    // Skip `dark:`-prefixed matches — the lookbehind catches `:`,
+    // but a regex engine without lookbehind support would still need
+    // this guard. Confirm the char before the match isn't `:`.
+    const start = m.index;
+    if (start > 0 && value[start - 1] === ":") continue;
+    lightHits.push(m[0]);
+  }
+  if (lightHits.length === 0) return [];
+
+  const darkHits = [];
+  RX_DARK_RAW_PALETTE.lastIndex = 0;
+  while ((m = RX_DARK_RAW_PALETTE.exec(value)) !== null) {
+    darkHits.push(m[0]);
+  }
+  if (darkHits.length === 0) return [];
+
+  // One report per className value — pair the first light hit with
+  // the first dark hit so the message stays focused. Reporting every
+  // (light, dark) pair would spam call-sites that already migrate as
+  // a single edit.
+  return [{ light: lightHits[0], dark: darkHits[0] }];
+}
+
+const noRawDarkPalette = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid raw-palette light/dark pairs in className — both halves of the (light, dark) swap must come from the design-system token layer.",
+    },
+    schema: [],
+    messages: { pair: RAW_DARK_PALETTE_MESSAGE },
+  },
+  create(context) {
+    function report(node, value) {
+      const hits = findRawDarkPalettePairs(value);
+      for (const hit of hits) {
+        context.report({
+          node,
+          messageId: "pair",
+          data: { light: hit.light, dark: hit.dark },
+        });
+      }
+    }
+    return {
+      Literal(node) {
+        if (typeof node.value === "string") report(node, node.value);
+      },
+      TemplateElement(node) {
+        const cooked = node.value && node.value.cooked;
+        if (typeof cooked === "string") report(node, cooked);
+      },
+    };
+  },
+};
+
 const plugin = {
   rules: {
     "no-eyebrow-drift": noEyebrowDrift,
@@ -1646,6 +1837,7 @@ const plugin = {
     "rq-keys-only-from-factory": rqKeysOnlyFromFactory,
     "no-anthropic-key-in-logs": noAnthropicKeyInLogs,
     "no-strict-bypass": noStrictBypass,
+    "no-raw-dark-palette": noRawDarkPalette,
   },
 };
 
@@ -1663,6 +1855,9 @@ export {
   NO_ANTHROPIC_KEY_MESSAGE,
   NO_STRICT_BYPASS_MESSAGES,
   DEFAULT_FORBID_PATTERNS,
+  RAW_DARK_PALETTE_FAMILIES,
+  RAW_DARK_PALETTE_UTILITIES,
+  RAW_DARK_PALETTE_MESSAGE,
 };
 
 export default plugin;
