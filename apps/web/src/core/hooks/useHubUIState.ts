@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type HubView = "dashboard" | "reports" | "settings";
+export type HubView = "dashboard" | "reports" | "profile" | "settings";
 
-const VALID_VIEWS = new Set<string>(["dashboard", "reports", "settings"]);
+const VALID_VIEWS = new Set<string>([
+  "dashboard",
+  "reports",
+  "profile",
+  "settings",
+]);
 
 function readViewFromURL(): HubView {
   try {

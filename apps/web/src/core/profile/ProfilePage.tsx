@@ -9,13 +9,58 @@ import { MemoryBankSection } from "./MemoryBankSection";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { SessionsSection } from "./SessionsSection";
 
-export function ProfilePage() {
+export interface ProfilePageProps {
+  /**
+   * Render the page without its own sticky top bar + page-level padding.
+   * Used when the profile is embedded inside the hub as a bottom-nav tab
+   * — the hub already owns the header + bottom-nav chrome, so an
+   * additional "Назад" button and "Профіль" label would stack two nav
+   * rows. The standalone `/profile` route keeps the default chrome so
+   * deep-links and back-button still behave as before.
+   */
+  embedded?: boolean;
+}
+
+export function ProfilePage({ embedded = false }: ProfilePageProps = {}) {
   const navigate = useNavigate();
   const { user, logout, refresh } = useAuth();
   const online = useOnlineStatus();
 
   if (!user) {
     return null;
+  }
+
+  const body = (
+    <div className="max-w-lg mx-auto px-5 pb-10 space-y-3 pt-6">
+      {!online && (
+        <div className="flex items-center gap-2 rounded-xl bg-warning/10 border border-warning/30 px-4 py-3">
+          <Icon name="wifi-off" size={16} className="text-warning shrink-0" />
+          <p className="text-sm text-warning font-medium">
+            Ви офлайн — редагування профілю тимчасово недоступне
+          </p>
+        </div>
+      )}
+
+      <PersonalInfoSection user={user} online={online} onRefresh={refresh} />
+
+      {/* Section label */}
+      <p className="text-eyebrow text-muted/60 px-1 pt-2">Пам&apos;ять</p>
+      <MemoryBankSection />
+
+      <p className="text-eyebrow text-muted/60 px-1 pt-2">Безпека</p>
+      <ChangePasswordSection online={online} />
+      <SessionsSection online={online} />
+
+      <p className="text-eyebrow text-muted/60 px-1 pt-2">Акаунт</p>
+      <DangerZoneSection online={online} onLogout={logout} />
+    </div>
+  );
+
+  if (embedded) {
+    // Embedded mode: no sticky back-bar, no page-level safe-area padding
+    // — the hub shell already owns the header + bottom-nav chrome and
+    // the main scroll container. The section just renders its body.
+    return body;
   }
 
   return (
@@ -42,29 +87,7 @@ export function ProfilePage() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-5 pb-10 space-y-3 pt-6">
-        {!online && (
-          <div className="flex items-center gap-2 rounded-xl bg-warning/10 border border-warning/30 px-4 py-3">
-            <Icon name="wifi-off" size={16} className="text-warning shrink-0" />
-            <p className="text-sm text-warning font-medium">
-              Ви офлайн — редагування профілю тимчасово недоступне
-            </p>
-          </div>
-        )}
-
-        <PersonalInfoSection user={user} online={online} onRefresh={refresh} />
-
-        {/* Section label */}
-        <p className="text-eyebrow text-muted/60 px-1 pt-2">Пам&apos;ять</p>
-        <MemoryBankSection />
-
-        <p className="text-eyebrow text-muted/60 px-1 pt-2">Безпека</p>
-        <ChangePasswordSection online={online} />
-        <SessionsSection online={online} />
-
-        <p className="text-eyebrow text-muted/60 px-1 pt-2">Акаунт</p>
-        <DangerZoneSection online={online} onLogout={logout} />
-      </div>
+      {body}
     </div>
   );
 }
