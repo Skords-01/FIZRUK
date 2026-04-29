@@ -3,6 +3,9 @@ import {
   BarcodeProductSchema,
   BarcodeLookupSuccessSchema,
   BarcodeLookupErrorSchema,
+  FoodSearchProductSchema,
+  FoodSearchSuccessSchema,
+  FoodSearchErrorSchema,
 } from "./nutrition";
 
 describe("BarcodeProductSchema", () => {
@@ -121,5 +124,97 @@ describe("BarcodeLookupErrorSchema", () => {
       BarcodeLookupErrorSchema.parse({ error: "Продукт не знайдено" }).error,
     ).toBe("Продукт не знайдено");
     expect(() => BarcodeLookupErrorSchema.parse({ error: "" })).toThrow();
+  });
+});
+
+describe("FoodSearchProductSchema", () => {
+  const VALID = {
+    id: "off_482",
+    name: "Banana",
+    brand: null,
+    source: "off" as const,
+    per100: { kcal: 89, protein_g: 1.1, fat_g: 0.3, carbs_g: 22.8 },
+    defaultGrams: 100,
+  };
+
+  it("accepts a fully-populated OFF row", () => {
+    const parsed = FoodSearchProductSchema.parse({
+      ...VALID,
+      brand: "Chiquita",
+    });
+    expect(parsed.brand).toBe("Chiquita");
+    expect(parsed.per100.kcal).toBe(89);
+  });
+
+  it("accepts null brand (USDA entries never carry one)", () => {
+    const parsed = FoodSearchProductSchema.parse({
+      ...VALID,
+      source: "usda",
+      id: "usda_173944",
+    });
+    expect(parsed.brand).toBeNull();
+  });
+
+  it("rejects an empty name", () => {
+    expect(() =>
+      FoodSearchProductSchema.parse({ ...VALID, name: "" }),
+    ).toThrow();
+  });
+
+  it("rejects unknown source (`off` / `usda` only)", () => {
+    expect(() =>
+      FoodSearchProductSchema.parse({ ...VALID, source: "upcitemdb" }),
+    ).toThrow();
+  });
+
+  it("rejects null macros — server always fills with zero", () => {
+    expect(() =>
+      FoodSearchProductSchema.parse({
+        ...VALID,
+        per100: { kcal: null, protein_g: 0, fat_g: 0, carbs_g: 0 },
+      }),
+    ).toThrow();
+  });
+
+  it("rejects undefined brand (guards against implicit absent)", () => {
+    const { brand: _brand, ...rest } = VALID;
+    void _brand;
+    expect(() => FoodSearchProductSchema.parse(rest)).toThrow();
+  });
+});
+
+describe("FoodSearchSuccessSchema", () => {
+  it("wraps an array of valid rows in `products`", () => {
+    const parsed = FoodSearchSuccessSchema.parse({
+      products: [
+        {
+          id: "off_1",
+          name: "Apple",
+          brand: null,
+          source: "off",
+          per100: { kcal: 52, protein_g: 0.3, fat_g: 0.2, carbs_g: 13.8 },
+          defaultGrams: 100,
+        },
+      ],
+    });
+    expect(parsed.products).toHaveLength(1);
+  });
+
+  it("accepts an empty products array (`{}` vs `{ products: [] }` distinction matters)", () => {
+    expect(FoodSearchSuccessSchema.parse({ products: [] }).products).toEqual(
+      [],
+    );
+    expect(() => FoodSearchSuccessSchema.parse({})).toThrow();
+  });
+});
+
+describe("FoodSearchErrorSchema", () => {
+  it("requires a non-empty error string", () => {
+    expect(
+      FoodSearchErrorSchema.parse({
+        error: "Сервіс недоступний (таймаут)",
+      }).error,
+    ).toMatch(/таймаут/);
+    expect(() => FoodSearchErrorSchema.parse({ error: "" })).toThrow();
   });
 });

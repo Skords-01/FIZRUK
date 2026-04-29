@@ -86,6 +86,10 @@ jobs:
       - name: Validate PR body against PULL_REQUEST_TEMPLATE.md
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+          # Fallback when the webhook payload's body field races ahead of
+          # GitHub's storage (observed on freshly-opened PRs).
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/ci/validate-pr-body.mjs
 
   docs-scripts-tests:
