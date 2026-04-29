@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@shared/lib/cn";
 import { Icon } from "@shared/components/ui/Icon";
+import { Skeleton, SkeletonText } from "@shared/components/ui/Skeleton";
 import { Tooltip } from "@shared/components/ui/Tooltip";
 import {
   useWeeklyDigest,
@@ -130,20 +131,41 @@ function ModuleBlock({ moduleKey, data }) {
   );
 }
 
+// Shape-aware loader: matches the real digest layout — 4 module rows
+// (icon + 2 lines of summary text). When the digest lands, only the
+// content swaps in; the rough shape is already on screen.
 function LoadingSpinner() {
   return (
-    <div className="flex items-center justify-center gap-2 py-6">
-      <svg
-        className="motion-safe:animate-spin w-4 h-4 text-primary"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        aria-hidden
-      >
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-      </svg>
-      <span className="text-xs text-muted">Генерую звіт тижня…</span>
+    <div
+      className="px-4 pb-4 space-y-2.5"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="Генеруємо звіт тижня"
+    >
+      <span className="sr-only">Генеруємо звіт тижня…</span>
+      {Array(4)
+        .fill(0)
+        .map((_, i) => (
+          <div
+            key={i}
+            className={cn(
+              "flex items-start gap-3 p-3 rounded-2xl border border-line bg-panel",
+              i === 0
+                ? "opacity-100"
+                : i === 1
+                  ? "opacity-85"
+                  : i === 2
+                    ? "opacity-65"
+                    : "opacity-45",
+            )}
+          >
+            <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
+            <div className="flex-1 min-w-0 space-y-1.5 pt-0.5">
+              <SkeletonText className="w-1/3 h-3" />
+              <SkeletonText className="w-2/3 h-2.5" />
+            </div>
+          </div>
+        ))}
     </div>
   );
 }

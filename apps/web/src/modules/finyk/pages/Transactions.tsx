@@ -5,7 +5,7 @@ import { getCategory, getIncomeCategory, fmtAmt } from "../utils";
 import { manualExpenseToTransaction } from "@sergeant/finyk-domain/domain/transactions";
 import { mergeExpenseCategoryDefinitions, CURRENCY } from "../constants";
 import { Card } from "@shared/components/ui/Card";
-import { Skeleton } from "@shared/components/ui/Skeleton";
+import { SkeletonTransactionRow } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
@@ -543,21 +543,25 @@ export function Transactions({
           </div>
         </Card>
 
-        {/* Skeleton */}
+        {/* Skeleton — shape-aware: matches a real TxRow (icon · 2-line
+            description · amount). Stagger fades down so the list feels
+            like it's "loading from the top" instead of pulsing as a slab. */}
         {activeLoading && activeTx.length === 0 && (
-          <div className="space-y-2">
+          <div className="space-y-2" aria-busy="true" aria-live="polite">
             {Array(10)
               .fill(0)
               .map((_, i) => (
-                <Skeleton
+                <SkeletonTransactionRow
                   key={i}
+                  module="finyk"
                   className={cn(
-                    "h-14",
-                    i % 3 === 0
+                    i < 3
                       ? "opacity-100"
-                      : i % 3 === 1
-                        ? "opacity-70"
-                        : "opacity-40",
+                      : i < 6
+                        ? "opacity-80"
+                        : i < 8
+                          ? "opacity-60"
+                          : "opacity-40",
                   )}
                 />
               ))}

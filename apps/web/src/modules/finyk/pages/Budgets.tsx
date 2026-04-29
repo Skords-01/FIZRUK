@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { SectionHeading } from "@shared/components/ui/SectionHeading";
-import { Skeleton } from "@shared/components/ui/Skeleton";
+import { Skeleton, SkeletonBudgetBar } from "@shared/components/ui/Skeleton";
 import { EmptyState } from "@shared/components/ui/EmptyState";
 import { Icon } from "@shared/components/ui/Icon";
 import { cn } from "@shared/lib/cn";
@@ -372,10 +372,17 @@ export function Budgets({
 
   if (loadingTx && realTx.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto px-4 pt-4 page-tabbar-pad space-y-3 max-w-4xl mx-auto w-full">
-        <Skeleton className="h-28 rounded-xl" />
-        <Skeleton className="h-20 opacity-80 rounded-xl" />
-        <Skeleton className="h-20 opacity-60 rounded-xl" />
+      <div
+        className="flex-1 overflow-y-auto px-4 pt-4 page-tabbar-pad space-y-3 max-w-4xl mx-auto w-full"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        {/* Shape-aware: header bar + 3 budget rows so the layout doesn't
+            reflow when data lands. */}
+        <Skeleton className="h-28 rounded-2xl" />
+        <SkeletonBudgetBar />
+        <SkeletonBudgetBar className="opacity-80" />
+        <SkeletonBudgetBar className="opacity-60" />
       </div>
     );
   }
