@@ -337,36 +337,46 @@ export function HubDashboard({
         </StaggerChild>
       )}
 
-      {/* "Твій день" summary strip */}
-      <StaggerChild index={si++}>
-        <TodaySummaryStrip onOpenModule={onOpenModule} />
-      </StaggerChild>
+      {/* FTUX-гейт: до першого реального запису всі data-driven блоки
+       * приховуємо, бо вони порожні / сигнал «advice без даних».
+       * - TodaySummaryStrip — нулі по всіх модулях.
+       * - AssistantAdviceCard — coach працює на історії; нічого корисного.
+       * - DailyNudge — нудж за сценаріями, які ще не існують.
+       * Лишаємо: hero, checklist, module-bento (навігація), digest-fter.
+       * Після `hasRealEntry === true` блок з’являється цілісним пакетом. */}
+      {hasRealEntry && (
+        <>
+          {/* "Твій день" summary strip */}
+          <StaggerChild index={si++}>
+            <TodaySummaryStrip onOpenModule={onOpenModule} />
+          </StaggerChild>
 
-      {/* «Підказки» секція: AssistantAdvice + DailyNudge — обидві
-       * картки показували пораду на день, але рендерились як два
-       * незалежних блоки з різним візуальним chrome. Об’єднання під
-       * одним SectionHeading знижує card-density і дає зрозуміти,
-       * що ці елементи логічно одного класу — пораджу-стрічка. */}
-      <StaggerChild index={si++}>
-        <section className="space-y-2">
-          <SectionHeading as="h2" size="xs" className="!px-0">
-            Підказки
-          </SectionHeading>
-          <AssistantAdviceCard
-            insight={coachInsightText}
-            loading={coachLoading}
-            error={coachError}
-            onRefresh={coachRefresh}
-          />
-          {activeNudge && !reengagement.show && (
-            <DailyNudge
-              nudge={activeNudge}
-              sessionDays={sessionDays}
-              onDismiss={() => setNudgeDismissed(true)}
-            />
-          )}
-        </section>
-      </StaggerChild>
+          {/* «Підказки» секція: AssistantAdvice + DailyNudge — обидві
+           * картки показували пораду на день, але рендерились як два
+           * незалежних блоки з різним візуальним chrome. Обʼєднання
+           * під одним SectionHeading знижує card-density (#1130). */}
+          <StaggerChild index={si++}>
+            <section className="space-y-2">
+              <SectionHeading as="h2" size="xs" className="!px-0">
+                Підказки
+              </SectionHeading>
+              <AssistantAdviceCard
+                insight={coachInsightText}
+                loading={coachLoading}
+                error={coachError}
+                onRefresh={coachRefresh}
+              />
+              {activeNudge && !reengagement.show && (
+                <DailyNudge
+                  nudge={activeNudge}
+                  sessionDays={sessionDays}
+                  onDismiss={() => setNudgeDismissed(true)}
+                />
+              )}
+            </section>
+          </StaggerChild>
+        </>
+      )}
 
       {/* MODULE CARDS — 2×2 bento grid */}
       <StaggerChild index={si++}>
@@ -435,32 +445,34 @@ export function HubDashboard({
         </section>
       </StaggerChild>
 
-      {/* «Аналітика» секція: insights-panel + weekly-digest. Обидва —
-       * data-driven блоки на історії, які раніше рендерились без
-       * групувального заголовка і виглядали як ще «дві картки» серед
-       * ~6 інших. Один SectionHeading робить очевидним, що це окремий
-       * шар, на відміну від одноразової «Підказки». */}
-      <StaggerChild index={si++}>
-        <section className="space-y-2">
-          <SectionHeading as="h2" size="xs" className="!px-0">
-            Аналітика
-          </SectionHeading>
-          <HubInsightsPanel
-            items={rest}
-            onOpenModule={openInsightTarget}
-            onDismiss={dismiss}
-          />
-
-          {digestExpanded ? (
-            <WeeklyDigestCard onCollapse={() => setDigestExpanded(false)} />
-          ) : showDigestFooter ? (
-            <WeeklyDigestFooter
-              fresh={digestFresh}
-              onExpand={() => setDigestExpanded(true)}
+      {/* «Аналітика» секція (FTUX-гейт): insights-panel + weekly-digest —
+       * обидва data-driven блоки на історії. До першого реального запису
+       * insights пусті, а digest промовляє «нічого не було за тиждень».
+       * Гейтимо за hasRealEntry. SectionHeading з #1130 знижує
+       * card-density, а гейт — FTUX-noise. */}
+      {hasRealEntry && (
+        <StaggerChild index={si++}>
+          <section className="space-y-2">
+            <SectionHeading as="h2" size="xs" className="!px-0">
+              Аналітика
+            </SectionHeading>
+            <HubInsightsPanel
+              items={rest}
+              onOpenModule={openInsightTarget}
+              onDismiss={dismiss}
             />
-          ) : null}
-        </section>
-      </StaggerChild>
+
+            {digestExpanded ? (
+              <WeeklyDigestCard onCollapse={() => setDigestExpanded(false)} />
+            ) : showDigestFooter ? (
+              <WeeklyDigestFooter
+                fresh={digestFresh}
+                onExpand={() => setDigestExpanded(true)}
+              />
+            ) : null}
+          </section>
+        </StaggerChild>
+      )}
 
       {/* Motivational footer */}
       <MotivationalFooter />
