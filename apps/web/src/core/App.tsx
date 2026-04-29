@@ -48,6 +48,7 @@ import {
   useKeyboardShortcutsModal,
 } from "@shared/components/ui/KeyboardShortcutsModal";
 import { prefetchCriticalModules } from "./lib/useRoutePrefetch";
+import { ScreenReaderAnnouncerProvider } from "@shared/components/ui/ScreenReaderAnnouncer";
 
 const AuthPage = lazy(() =>
   import("./auth/AuthPage").then((m) => ({ default: m.AuthPage })),
@@ -95,26 +96,28 @@ const RoutineApp = lazy(
 
 export default function App() {
   return (
-    <ToastProvider>
-      <ToastContainer />
-      {/* Capacitor deep-link bridge: монтуємо ВСЕРЕДИНІ роутера (App
+    <ScreenReaderAnnouncerProvider>
+      <ToastProvider>
+        <ToastContainer />
+        {/* Capacitor deep-link bridge: монтуємо ВСЕРЕДИНІ роутера (App
           рендериться під <BrowserRouter>), але поза AppInner, щоб
           bridge переживав ранні return-и в AppInner (/sign-in,
           /reset-password, /design тощо) — deep link може прилетіти у
           будь-який із цих станів. */}
-      <ShellDeepLinkBridge />
-      {/* PostHog `$pageview` tracker: монтуємо тут (всередині
+        <ShellDeepLinkBridge />
+        {/* PostHog `$pageview` tracker: монтуємо тут (всередині
           BrowserRouter, поза AuthProvider), щоб фіксувати pathname і
           в unauthenticated-шляхах (`/sign-in`, `/welcome`,
           `/reset-password`) — без цього onboarding / auth funnels
           у PostHog були б сліпими перед login-ом. */}
-      <PageviewTracker />
-      <ApiClientProvider client={apiClient}>
-        <AuthProvider>
-          <AppInner />
-        </AuthProvider>
-      </ApiClientProvider>
-    </ToastProvider>
+        <PageviewTracker />
+        <ApiClientProvider client={apiClient}>
+          <AuthProvider>
+            <AppInner />
+          </AuthProvider>
+        </ApiClientProvider>
+      </ToastProvider>
+    </ScreenReaderAnnouncerProvider>
   );
 }
 
