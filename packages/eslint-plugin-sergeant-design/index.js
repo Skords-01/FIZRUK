@@ -14,6 +14,17 @@
  *     what Web Interface Guidelines recommend for truncation cues
  *     ("Loading…", "Пошук…", etc.). Auto-fixable.
  *
+ *   - no-hex-in-classname: forbid arbitrary-value hex colors in
+ *     className (`bg-[#10b981]`, `text-[#fff]/50`, …). Every color must
+ *     come from the design-system token layer so dark-mode, palette
+ *     migration, and WCAG tiers apply uniformly.
+ *
+ *   - no-foreign-module-accent: inside `apps/[app]/src/modules/[X]/`
+ *     subtrees, only `[X]`'s accent utilities (`bg-[X]-surface`,
+ *     `text-[X]-strong`, `ring-[X]`, …) are allowed. Cross-module
+ *     shells (`core/`, `shared/`, `stories/`) remain free to reference
+ *     all four module accents.
+ *
  * Motion / reduced-motion (convention — not auto-enforced yet):
  *   - Prefer `motion-safe:` on `animate-*` and decorative transitions so
  *     `prefers-reduced-motion: reduce` users get calmer UI; pair with
@@ -1415,6 +1426,211 @@ const noStrictBypass = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// `no-hex-in-classname` — forbid arbitrary hex colors in Tailwind className
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Tailwind's arbitrary-value syntax (`bg-[#10b981]`, `text-[#fff]/50`,
+// `border-[#123]`) bypasses the design-system tokens entirely. A raw hex
+// in a className means: (a) dark-mode won't adapt, (b) the value doesn't
+// re-theme when the palette evolves, (c) it can't be grep'd from a single
+// place when we need to migrate. The Sergeant rule is simple: every color
+// in a className comes from the token scale (`bg-surface`, `text-muted`,
+// `border-border`, `bg-finyk-surface`, `text-brand-strong`, `bg-success-soft`,
+// …). If a colour is truly one-off (chart series, illustration fill), put
+// it in the token layer (CSS var + preset alias) — not inline.
+//
+// The rule only flags hex inside the arbitrary-value brackets of
+// Tailwind's color-aware utilities (`bg-`, `text-`, `border-`, `ring-`,
+// `fill-`, `stroke-`, `from-`, `to-`, `via-`, `shadow-`, `outline-`,
+// `divide-`, `placeholder-`, `caret-`, `decoration-`, `accent-`). Plain
+// hex literals outside className context (e.g. chart config passing a
+// hex to recharts) are NOT this rule's concern — those are a code review
+// issue for `shared/charts/chartPalette.ts`.
+
+const HEX_IN_CLASSNAME_MESSAGE =
+  "Raw hex `{{utility}}-[#{{hex}}]` bypasses the design-system tokens — use a semantic utility (e.g. `bg-surface`, `text-fg`, `bg-finyk-surface`, `text-brand-strong`, `bg-success-soft`) or extend the palette in `packages/design-tokens/tailwind-preset.js` if a new token is genuinely needed.";
+
+// Match `[variants:]<utility>-[#HEX]` with optional `/OPACITY` suffix.
+//   • utility ∈ TAILWIND_OPACITY_UTILITIES (the color-aware set reused from
+//     valid-tailwind-opacity so we keep one list).
+//   • `<HEX>` is 3, 4, 6, or 8 hex digits.
+//   • `\b` anchor lets variant prefixes (`dark:`, `hover:`, `lg:`) sit in
+//     front of the utility without tripping the regex.
+const RX_HEX_IN_CLASSNAME = new RegExp(
+  String.raw`\b(` +
+    TAILWIND_OPACITY_UTILITIES.join("|") +
+    String.raw`)-\[#([0-9a-fA-F]{3,8})\]`,
+  "g",
+);
+
+function findHexInClassName(value) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  if (!value.includes("[#")) return [];
+  const hits = [];
+  let match;
+  RX_HEX_IN_CLASSNAME.lastIndex = 0;
+  while ((match = RX_HEX_IN_CLASSNAME.exec(value)) !== null) {
+    const [, utility, hex] = match;
+    // Validate hex length so `bg-[#12]` or `bg-[#1234567]` don't trigger.
+    if (![3, 4, 6, 8].includes(hex.length)) continue;
+    hits.push({ utility, hex });
+  }
+  return hits;
+}
+
+const noHexInClassname = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid arbitrary `<utility>-[#hex]` colors in className — every color must come from the design-system token layer.",
+    },
+    schema: [],
+    messages: { hex: HEX_IN_CLASSNAME_MESSAGE },
+  },
+  create(context) {
+    function report(node, value) {
+      const hits = findHexInClassName(value);
+      for (const hit of hits) {
+        context.report({
+          node,
+          messageId: "hex",
+          data: { utility: hit.utility, hex: hit.hex },
+        });
+      }
+    }
+    return {
+      Literal(node) {
+        if (typeof node.value === "string") report(node, node.value);
+      },
+      TemplateElement(node) {
+        const cooked = node.value && node.value.cooked;
+        if (typeof cooked === "string") report(node, cooked);
+      },
+    };
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// `no-foreign-module-accent` — keep module colors within their module
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Sergeant has 4 module brand colors: `finyk` (emerald), `fizruk` (teal),
+// `routine` (coral), `nutrition` (lime). They're tuned close in saturation,
+// so accidental cross-module use reads as a design bug — a fizruk button
+// rendering coral `ring-routine` says "Рутина" to the user. The rule:
+//
+//   Files under `apps/web/src/modules/<X>/**` may only use `<X>`'s accent
+//   utilities. Cross-module shells (`core/**`, `shared/**`, `stories/**`)
+//   are free to use all four, because that's their job.
+//
+// Accent utilities matched: `(bg|text|border|ring|from|to|via|fill|stroke|
+// shadow|outline|divide|placeholder|caret|decoration|accent)-<module>`
+// with optional `-<shade>` suffix (e.g. `-strong`, `-soft`, `-500`,
+// `-surface`) and optional `/<opacity>` suffix. Variant prefixes
+// (`dark:`, `hover:`, `lg:`) are allowed in front.
+
+const MODULE_ACCENTS = ["finyk", "fizruk", "routine", "nutrition"];
+
+const FOREIGN_MODULE_ACCENT_MESSAGE =
+  "`{{match}}` is a `{{foreign}}` accent inside a `{{home}}` module — modules must only use their own accent. Use `{{home}}` equivalents or move this to a cross-module surface (`core/**`, `shared/**`).";
+
+// Match `[variants:]<utility>-<module>[-<shade>][/<opacity>]`.
+const RX_MODULE_ACCENT = new RegExp(
+  String.raw`\b(` +
+    TAILWIND_OPACITY_UTILITIES.join("|") +
+    String.raw`)-(` +
+    MODULE_ACCENTS.join("|") +
+    String.raw`)(-[a-z0-9]+(?:-[a-z0-9]+)?)?(\/\d{1,3})?\b`,
+  "g",
+);
+
+// Derive the "home" module from an absolute or repo-relative file path.
+// Accepts web and mobile source trees; returns null for non-module paths
+// and for `modules/shared/` (a cross-module utility folder that hosts
+// primitives rendering any of the four accents — e.g.
+// `apps/mobile/src/modules/shared/ModuleErrorBoundary.tsx`).
+function homeModuleFromFilename(filename) {
+  if (typeof filename !== "string") return null;
+  // Normalize path separators for Windows; tests feed a unix-style mock.
+  const norm = filename.replace(/\\/g, "/");
+  const m = norm.match(
+    /\/(?:apps\/(?:web|mobile)\/src|apps\/mobile\/app)\/modules\/([a-z]+)\//,
+  );
+  if (!m) return null;
+  const home = m[1];
+  // Only the four canonical modules own their accent palette — any
+  // other folder under `modules/` is a cross-module utility and must
+  // stay free to render every accent.
+  return MODULE_ACCENTS.includes(home) ? home : null;
+}
+
+function findForeignModuleAccents(value, home) {
+  if (typeof value !== "string" || value.length === 0) return [];
+  if (!home) return [];
+  // Cheap prefilter so we don't regex every unrelated literal.
+  let maybe = false;
+  for (const m of MODULE_ACCENTS) {
+    if (m !== home && value.includes(`-${m}`)) {
+      maybe = true;
+      break;
+    }
+  }
+  if (!maybe) return [];
+  const hits = [];
+  let match;
+  RX_MODULE_ACCENT.lastIndex = 0;
+  while ((match = RX_MODULE_ACCENT.exec(value)) !== null) {
+    const [full, , mod] = match;
+    if (mod !== home) hits.push({ match: full, foreign: mod });
+  }
+  return hits;
+}
+
+const noForeignModuleAccent = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Forbid cross-module accent utilities inside `apps/*/src/modules/<X>/**` — a fizruk component must not render `ring-routine` etc.",
+    },
+    schema: [],
+    messages: { foreign: FOREIGN_MODULE_ACCENT_MESSAGE },
+  },
+  create(context) {
+    const filename =
+      (context.filename != null ? context.filename : context.getFilename()) ||
+      "";
+    const home = homeModuleFromFilename(filename);
+    if (!home) return {};
+    // Cross-module accent rule doesn't apply to the module-accent system
+    // itself (the map literals that declare every accent) or to module-
+    // scoped tests (they naturally reference all four for coverage).
+    if (/\.(test|spec)\.[jt]sx?$/.test(filename)) return {};
+
+    function report(node, value) {
+      const hits = findForeignModuleAccents(value, home);
+      for (const hit of hits) {
+        context.report({
+          node,
+          messageId: "foreign",
+          data: { match: hit.match, foreign: hit.foreign, home },
+        });
+      }
+    }
+    return {
+      Literal(node) {
+        if (typeof node.value === "string") report(node, node.value);
+      },
+      TemplateElement(node) {
+        const cooked = node.value && node.value.cooked;
+        if (typeof cooked === "string") report(node, cooked);
+      },
+    };
+  },
+};
+
 const plugin = {
   rules: {
     "no-eyebrow-drift": noEyebrowDrift,
@@ -1423,6 +1639,8 @@ const plugin = {
     "no-raw-local-storage": noRawLocalStorage,
     "ai-marker-syntax": aiMarkerSyntax,
     "valid-tailwind-opacity": validTailwindOpacity,
+    "no-hex-in-classname": noHexInClassname,
+    "no-foreign-module-accent": noForeignModuleAccent,
     "no-low-contrast-text-on-fill": noLowContrastTextOnFill,
     "no-bigint-string": noBigintString,
     "rq-keys-only-from-factory": rqKeysOnlyFromFactory,
