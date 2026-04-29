@@ -411,7 +411,7 @@ export function AuthPage({ onContinueWithoutAccount }: AuthPageProps) {
                 className="w-full"
                 onClick={onContinueWithoutAccount}
               >
-                Продовжити без акаунту
+                Поки що пропустити
               </Button>
               <p className="text-center text-xs text-subtle leading-relaxed px-2">
                 Все працює локально. Акаунт потрібен лише для синхронізації між

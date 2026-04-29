@@ -163,17 +163,26 @@ function AppInner() {
     navigate(SIGN_IN_PATH);
   }, [navigate]);
 
-  // «Продовжити без акаунту» на /sign-in для cold-start користувача має
-  // завести його у FTUX splash (/welcome), а не на порожній дашборд.
-  // Інакше тап «Вже маю акаунт» → назад стає тихим dead-end-ом, який
-  // пропускає онбординг назавжди.
+  // «Поки що пропустити» на /sign-in:
+  // 1. cold-start (онбординг не завершений) → /welcome (replace) — як раніше,
+  //    щоб не «з’їсти» FTUX splash.
+  // 2. warm-start, юзер прийшов з застосунку (натиснув user-icon у HubHeader,
+  //    `location.key !== "default"`) → `navigate(-1)`. Це повертає на ту саму
+  //    сторінку, з якої прийшов (наприклад, дашборд або сторінку модуля),
+  //    а не до replace-/, який для повторного юзера виглядає як no-op.
+  // 3. fallback (deep-link або refresh на /sign-in, `location.key === "default"`):
+  //    `navigate("/", { replace: true })` — як раніше.
   const leaveAuth = useCallback(() => {
     if (shouldShowOnboarding()) {
       navigate(WELCOME_PATH, { replace: true });
-    } else {
-      navigate("/", { replace: true });
+      return;
     }
-  }, [navigate]);
+    if (location.key !== "default") {
+      navigate(-1);
+      return;
+    }
+    navigate("/", { replace: true });
+  }, [navigate, location.key]);
 
   const leaveWelcome = useCallback(() => {
     navigate("/", { replace: true });
