@@ -124,6 +124,13 @@ const preset = {
         "warning-soft": "rgb(var(--c-warning-soft) / <alpha-value>)",
         "danger-soft": "rgb(var(--c-danger-soft) / <alpha-value>)",
         "info-soft": "rgb(var(--c-info-soft) / <alpha-value>)",
+        // Brand soft tint trio (Wave 1b). Theme-adaptive via `--c-brand-soft*`
+        // in `apps/web/src/index.css`. Call-sites that previously wrote
+        // `bg-brand-50 dark:bg-brand-500/15` collapse to a single
+        // `bg-brand-soft` (see docs/design/DARK-MODE-AUDIT.md).
+        "brand-soft": "rgb(var(--c-brand-soft) / <alpha-value>)",
+        "brand-soft-border": "rgb(var(--c-brand-soft-border) / <alpha-value>)",
+        "brand-soft-hover": "rgb(var(--c-brand-soft-hover) / <alpha-value>)",
         // WCAG-AA companions: `text-{c}-strong` on cream / soft surfaces,
         // `bg-{c}-strong text-white` on solid fills (Buttons, Badges, Tabs).
         "success-strong": brandColors.emerald[700], // #047857 — 5.23:1 on cream / 5.48:1 on white
@@ -149,7 +156,14 @@ const preset = {
           hover: brandColors.emerald[600],
           strong: brandColors.emerald[700],
           ring: brandColors.emerald[200],
-          soft: brandColors.emerald[50],
+          // `soft` / `soft-border` / `soft-hover` are now theme-adaptive
+          // via `--c-finyk-soft*` (Wave 1b). Light values mirror the
+          // legacy hex (`emerald[50]` / `[200]` / `[100]`); dark values
+          // flip to the `-900` / `-800` family so dark mode stops showing
+          // a bright pale fill on the warm-charcoal panel.
+          soft: "rgb(var(--c-finyk-soft) / <alpha-value>)",
+          "soft-border": "rgb(var(--c-finyk-soft-border) / <alpha-value>)",
+          "soft-hover": "rgb(var(--c-finyk-soft-hover) / <alpha-value>)",
         },
 
         /** Фізрук — Teal fitness tracker */
@@ -161,7 +175,10 @@ const preset = {
           hover: brandColors.teal[600],
           strong: brandColors.teal[700],
           ring: brandColors.teal[200],
-          soft: brandColors.teal[50],
+          // Theme-adaptive soft tint trio (Wave 1b).
+          soft: "rgb(var(--c-fizruk-soft) / <alpha-value>)",
+          "soft-border": "rgb(var(--c-fizruk-soft-border) / <alpha-value>)",
+          "soft-hover": "rgb(var(--c-fizruk-soft-hover) / <alpha-value>)",
         },
 
         /** Рутина — Soft coral habit tracker */
@@ -181,6 +198,10 @@ const preset = {
           ring: brandColors.coral[300],
           done: brandColors.coral[700],
           nav: brandColors.coral[500],
+          // Theme-adaptive soft tint trio (Wave 1b).
+          soft: "rgb(var(--c-routine-soft) / <alpha-value>)",
+          "soft-border": "rgb(var(--c-routine-soft-border) / <alpha-value>)",
+          "soft-hover": "rgb(var(--c-routine-soft-hover) / <alpha-value>)",
         },
 
         /** Харчування — Fresh lime nutrition tracker */
@@ -192,7 +213,10 @@ const preset = {
           hover: brandColors.lime[600],
           strong: brandColors.lime[800],
           ring: brandColors.lime[200],
-          soft: brandColors.lime[50],
+          // Theme-adaptive soft tint trio (Wave 1b).
+          soft: "rgb(var(--c-nutrition-soft) / <alpha-value>)",
+          "soft-border": "rgb(var(--c-nutrition-soft-border) / <alpha-value>)",
+          "soft-hover": "rgb(var(--c-nutrition-soft-hover) / <alpha-value>)",
         },
 
         // ═══════════════════════════════════════════════════════════════════

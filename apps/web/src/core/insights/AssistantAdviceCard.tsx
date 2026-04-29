@@ -63,7 +63,7 @@ export function AssistantAdviceCard({
         >
           <div className="flex items-center gap-2">
             <span
-              className="w-6 h-6 rounded-full bg-brand-50 dark:bg-brand-500/15 flex items-center justify-center text-xs"
+              className="w-6 h-6 rounded-full bg-brand-soft flex items-center justify-center text-xs"
               aria-hidden
             >
               S

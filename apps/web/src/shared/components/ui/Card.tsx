@@ -78,15 +78,18 @@ const variants: Record<CardVariant, string> = {
   nutrition:
     "rounded-3xl border border-lime-200/50 bg-hero-lime shadow-card dark:border-[rgba(70,98,18,0.3)] dark:bg-panel dark:bg-card-nutrition-dark",
 
-  // Soft module cards (less prominent)
+  // Soft module cards (less prominent). Wave 1b: single `{module}-soft`
+  // token family replaces the hand-rolled `bg-<c>-50 dark:bg-<c>-500/10`
+  // pair — both sides resolve through `--c-{module}-soft*` in
+  // `apps/web/src/index.css` so theme adaptation is owned by the preset.
   "finyk-soft":
-    "rounded-2xl border border-brand-100 bg-brand-50/50 backdrop-blur-sm dark:border-brand-500/20 dark:bg-brand-500/10",
+    "rounded-2xl border border-finyk-soft-border bg-finyk-soft/50 backdrop-blur-sm",
   "fizruk-soft":
-    "rounded-2xl border border-teal-100 bg-teal-50/50 backdrop-blur-sm dark:border-teal-500/20 dark:bg-teal-500/10",
+    "rounded-2xl border border-fizruk-soft-border bg-fizruk-soft/50 backdrop-blur-sm",
   "routine-soft":
-    "rounded-2xl border border-coral-100 bg-coral-50/50 backdrop-blur-sm dark:border-coral-500/20 dark:bg-coral-500/10",
+    "rounded-2xl border border-routine-soft-border bg-routine-soft/50 backdrop-blur-sm",
   "nutrition-soft":
-    "rounded-2xl border border-lime-100 bg-lime-50/50 backdrop-blur-sm dark:border-lime-500/20 dark:bg-lime-500/10",
+    "rounded-2xl border border-nutrition-soft-border bg-nutrition-soft/50 backdrop-blur-sm",
 };
 
 const paddings: Record<CardPadding, string> = {
