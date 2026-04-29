@@ -168,10 +168,10 @@ export function useToast(): ToastContextValue {
 }
 
 const VARIANT_BG: Record<ToastType, string> = {
-  success: "bg-emerald-600",
-  error: "bg-red-600",
-  warning: "bg-amber-500",
-  info: "bg-sky-500",
+  success: "bg-success",
+  error: "bg-danger",
+  warning: "bg-warning",
+  info: "bg-info",
 };
 
 const VARIANT_ICON: Record<ToastType, typeof CheckCircle> = {
@@ -348,16 +348,19 @@ function ToastRow({ toast, duration, onDismiss }: ToastRowProps) {
             <X size={16} color="white" strokeWidth={2.5} />
           </Pressable>
         </View>
-        {/* Progress bar indicator */}
-        <Animated.View
-          style={{
-            width: progressBar.interpolate({
-              inputRange: [0, 1],
-              outputRange: ["0%", "100%"],
-            }),
-          }}
-          className="h-0.5 bg-white/40"
-        />
+        {/* Progress bar indicator - thicker and more visible */}
+        <View className="h-1.5 bg-black/10 overflow-hidden">
+          <Animated.View
+            style={{
+              width: progressBar.interpolate({
+                inputRange: [0, 1],
+                outputRange: ["0%", "100%"],
+              }),
+              height: "100%",
+            }}
+            className="bg-white/60 rounded-r-full"
+          />
+        </View>
       </Animated.View>
     </GestureDetector>
   );

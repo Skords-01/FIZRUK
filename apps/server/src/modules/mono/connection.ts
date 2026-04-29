@@ -3,6 +3,11 @@ import crypto from "node:crypto";
 import { env } from "../../env/env.js";
 import { query } from "../../db.js";
 import { logger } from "../../obs/logger.js";
+import {
+  MonoConnectResponseSchema,
+  MonoDisconnectResponseSchema,
+  MonoSyncStateSchema,
+} from "../../http/schemas.js";
 import { encryptToken, decryptToken, tokenFingerprint } from "./crypto.js";
 import type { EncryptedToken } from "./crypto.js";
 
@@ -192,7 +197,15 @@ export async function connectHandler(
     accountsCount: accounts.length,
   });
 
-  res.status(200).json({ status: "active", accountsCount: accounts.length });
+  // Validate response against the SSOT (Hard Rule #3) so any drift between
+  // server emit and `MonoConnectResponse` z.infer in the api-client throws
+  // here instead of silently shipping a typed lie.
+  res.status(200).json(
+    MonoConnectResponseSchema.parse({
+      status: "active",
+      accountsCount: accounts.length,
+    }),
+  );
 }
 
 export async function disconnectHandler(
@@ -244,7 +257,7 @@ export async function disconnectHandler(
   });
 
   logger.info({ msg: "mono_disconnected" });
-  res.status(200).json({ ok: true });
+  res.status(200).json(MonoDisconnectResponseSchema.parse({ ok: true }));
 }
 
 export async function syncStateHandler(
@@ -268,13 +281,15 @@ export async function syncStateHandler(
   );
 
   if (connResult.rows.length === 0) {
-    res.status(200).json({
-      status: "disconnected",
-      webhookActive: false,
-      lastEventAt: null,
-      lastBackfillAt: null,
-      accountsCount: 0,
-    });
+    res.status(200).json(
+      MonoSyncStateSchema.parse({
+        status: "disconnected",
+        webhookActive: false,
+        lastEventAt: null,
+        lastBackfillAt: null,
+        accountsCount: 0,
+      }),
+    );
     return;
   }
 
@@ -286,12 +301,14 @@ export async function syncStateHandler(
     { op: "mono_accounts_count" },
   );
 
-  res.status(200).json({
-    status: conn.status,
-    webhookActive:
-      conn.status === "active" && conn.webhook_registered_at != null,
-    lastEventAt: conn.last_event_at,
-    lastBackfillAt: conn.last_backfill_at,
-    accountsCount: Number(countResult.rows[0]?.count ?? 0),
-  });
+  res.status(200).json(
+    MonoSyncStateSchema.parse({
+      status: conn.status,
+      webhookActive:
+        conn.status === "active" && conn.webhook_registered_at != null,
+      lastEventAt: conn.last_event_at,
+      lastBackfillAt: conn.last_backfill_at,
+      accountsCount: Number(countResult.rows[0]?.count ?? 0),
+    }),
+  );
 }

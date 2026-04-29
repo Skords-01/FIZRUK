@@ -18,7 +18,7 @@ function PasswordStrengthBar({ password }: { password: string }) {
   const labelColors = [
     "text-error",
     "text-amber-500",
-    "text-brand-600 dark:text-brand-400",
+    "text-brand-strong dark:text-brand",
   ];
 
   return (
@@ -81,7 +81,7 @@ export function AuthPage({ onContinueWithoutAccount }: AuthPageProps) {
     e.preventDefault();
     const target = (forgotEmail || email || "").trim();
     if (!target) {
-      setAuthError("Введіть email, на який відправити лист.");
+      setAuthError("Введи email, на який відправити лист.");
       return;
     }
     setForgotState("sending");
@@ -168,7 +168,7 @@ export function AuthPage({ onContinueWithoutAccount }: AuthPageProps) {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={"Ваше ім'я"}
+                    placeholder={"Твоє ім'я"}
                     autoComplete="name"
                   />
                 </div>
@@ -411,7 +411,7 @@ export function AuthPage({ onContinueWithoutAccount }: AuthPageProps) {
                 className="w-full"
                 onClick={onContinueWithoutAccount}
               >
-                Продовжити без акаунту
+                Поки що пропустити
               </Button>
               <p className="text-center text-xs text-subtle leading-relaxed px-2">
                 Все працює локально. Акаунт потрібен лише для синхронізації між

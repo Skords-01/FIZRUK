@@ -44,7 +44,7 @@ export function FormsSection() {
 
       <Group label="Textarea">
         <Textarea
-          placeholder="Введіть текст…"
+          placeholder="Введи текст…"
           rows={3}
           className="w-full max-w-sm"
         />
@@ -70,7 +70,7 @@ export function FormsSection() {
       <Group label="FormField">
         <div className="space-y-4 max-w-sm">
           <FormField label="Стандартне поле" helperText="Підказка під полем">
-            <Input placeholder="Введіть значення" />
+            <Input placeholder="Введи значення" />
           </FormField>
           <FormField label="З помилкою" error="Поле обов'язкове">
             <Input placeholder="Помилка" error />

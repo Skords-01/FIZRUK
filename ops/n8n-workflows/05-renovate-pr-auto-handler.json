@@ -15,17 +15,65 @@
     },
     {
       "parameters": {
+        "jsCode": "// Verify GitHub webhook HMAC-SHA256 signature.\n// Header: x-hub-signature-256 (format: sha256=<hex>)\n// Docs: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries\nconst crypto = require('crypto');\n\nconst item = $input.first();\nconst rawBody = item.json.rawBody;\nconst received = (item.json.headers['x-hub-signature-256'] || '').replace('sha256=', '');\nconst secret = $env.GITHUB_WEBHOOK_SECRET;\n\nif (!secret) throw new Error('GITHUB_WEBHOOK_SECRET is not set');\nif (!received) throw new Error('Missing x-hub-signature-256 header');\n\nconst expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');\n\nconst expBuf = Buffer.from(expected, 'hex');\nconst recBuf = Buffer.from(received, 'hex');\nif (expBuf.length !== recBuf.length || !crypto.timingSafeEqual(expBuf, recBuf)) {\n  throw new Error('GitHub signature mismatch');\n}\n\nreturn $input.all();"
+      },
+      "id": "verify-signature",
+      "name": "Verify GitHub Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO webhook_events (source, event_id)\nVALUES ('github', '{{ $('GitHub Webhook').item.json.headers[\"x-github-delivery\"] || gen_random_uuid()::text }}')\nON CONFLICT (source, event_id) DO NOTHING\nRETURNING id;",
+        "options": {}
+      },
+      "id": "idempotency-check",
+      "name": "Idempotency Insert",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [680, 300],
+      "credentials": {
+        "postgres": {
+          "id": "CONFIGURE_ME",
+          "name": "Sergeant Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "already-processed",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "is-new-event",
+      "name": "New event?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
         "conditions": {
           "conditions": [
             {
               "id": "is-renovate",
-              "leftValue": "={{ $json.body.pull_request.user.login }}",
+              "leftValue": "={{ $('GitHub Webhook').item.json.body.pull_request.user.login }}",
               "rightValue": "renovate[bot]",
               "operator": { "type": "string", "operation": "equals" }
             },
             {
               "id": "is-opened",
-              "leftValue": "={{ $json.body.action }}",
+              "leftValue": "={{ $('GitHub Webhook').item.json.body.action }}",
               "rightValue": "opened",
               "operator": { "type": "string", "operation": "equals" }
             }
@@ -37,7 +85,7 @@
       "name": "Renovate PR opened?",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [1120, 300]
     },
     {
       "parameters": {
@@ -45,7 +93,7 @@
           "conditions": [
             {
               "id": "is-patch",
-              "leftValue": "={{ $json.body.pull_request.title }}",
+              "leftValue": "={{ $('GitHub Webhook').item.json.body.pull_request.title }}",
               "rightValue": "fix(deps):",
               "operator": { "type": "string", "operation": "startsWith" }
             }
@@ -56,11 +104,11 @@
       "name": "Is patch?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [1340, 300]
     },
     {
       "parameters": {
-        "url": "=https://api.github.com/repos/Skords-01/Sergeant/pulls/{{ $json.body.pull_request.number }}/reviews",
+        "url": "=https://api.github.com/repos/Skords-01/Sergeant/pulls/{{ $('GitHub Webhook').item.json.body.pull_request.number }}/reviews",
         "method": "POST",
         "sendHeaders": true,
         "headerParameters": {
@@ -80,19 +128,19 @@
       "name": "Auto-approve patch",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [900, 200]
+      "position": [1560, 200]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_ALERT_CHAT_ID }}",
-        "text": "=📦 *Renovate PR (non-patch)*\n\n[#{{ $json.body.pull_request.number }}]({{ $json.body.pull_request.html_url }}) — {{ $json.body.pull_request.title }}\n\nNeeds manual review.",
+        "text": "=📦 *Renovate PR (non-patch)*\n\n[#{{ $('GitHub Webhook').item.json.body.pull_request.number }}]({{ $('GitHub Webhook').item.json.body.pull_request.html_url }}) — {{ $('GitHub Webhook').item.json.body.pull_request.title }}\n\nNeeds manual review.",
         "additionalFields": { "parse_mode": "Markdown" }
       },
       "id": "telegram-review",
       "name": "Telegram → review needed",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [900, 400],
+      "position": [1560, 400],
       "credentials": {
         "telegramApi": { "id": "CONFIGURE_ME", "name": "Sergeant Ops Bot" }
       }
@@ -100,6 +148,17 @@
   ],
   "connections": {
     "GitHub Webhook": {
+      "main": [
+        [{ "node": "Verify GitHub Signature", "type": "main", "index": 0 }]
+      ]
+    },
+    "Verify GitHub Signature": {
+      "main": [[{ "node": "Idempotency Insert", "type": "main", "index": 0 }]]
+    },
+    "Idempotency Insert": {
+      "main": [[{ "node": "New event?", "type": "main", "index": 0 }]]
+    },
+    "New event?": {
       "main": [[{ "node": "Renovate PR opened?", "type": "main", "index": 0 }]]
     },
     "Renovate PR opened?": {

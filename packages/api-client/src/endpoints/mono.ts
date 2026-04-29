@@ -1,3 +1,13 @@
+import type {
+  MonoAccountDto as SharedMonoAccountDto,
+  MonoTransactionDto as SharedMonoTransactionDto,
+  MonoTransactionsPage as SharedMonoTransactionsPage,
+  MonoSyncState as SharedMonoSyncState,
+  MonoConnectionStatus as SharedMonoConnectionStatus,
+  MonoConnectResponse as SharedMonoConnectResponse,
+  MonoDisconnectResponse as SharedMonoDisconnectResponse,
+  MonoBackfillResponse as SharedMonoBackfillResponse,
+} from "@sergeant/shared/schemas";
 import type { HttpClient } from "../httpClient";
 
 /**
@@ -10,85 +20,23 @@ import type { HttpClient } from "../httpClient";
 
 export type MonoCashbackType = "" | "None" | "UAH" | "Miles" | string;
 
-// ── Webhook migration DTOs (Track A) ─────────────────────────────────────
+// ── Webhook migration DTOs (Track A/B/C) ─────────────────────────────────
+//
+// SSOT for the `/api/mono/*` HTTP contract lives in
+// `@sergeant/shared/schemas/api` (AGENTS.md Hard Rule #3). The server
+// validates each response via `.parse()` before `res.json()`, and these
+// `z.infer<>` re-exports are how this client stays type-locked to the
+// same Zod schemas — preventing the silent "client interface drifts past
+// server reality" bug that motivated the rule.
 
-export type MonoConnectionStatus =
-  | "pending"
-  | "active"
-  | "invalid"
-  | "disconnected";
-
-export interface MonoAccountDto {
-  userId: string;
-  monoAccountId: string;
-  sendId: string | null;
-  type: string | null;
-  currencyCode: number;
-  cashbackType: string | null;
-  maskedPan: string[];
-  iban: string | null;
-  balance: number | null;
-  creditLimit: number | null;
-  lastSeenAt: string;
-}
-
-export interface MonoTransactionDto {
-  userId: string;
-  monoAccountId: string;
-  monoTxId: string;
-  time: string;
-  amount: number;
-  operationAmount: number;
-  currencyCode: number;
-  mcc: number | null;
-  originalMcc: number | null;
-  hold: boolean | null;
-  description: string | null;
-  comment: string | null;
-  cashbackAmount: number | null;
-  commissionRate: number | null;
-  balance: number | null;
-  receiptId: string | null;
-  invoiceId: string | null;
-  counterEdrpou: string | null;
-  counterIban: string | null;
-  counterName: string | null;
-  /**
-   * Server-resolved expense-category slug derived from `mcc` via the
-   * `MCC_CATEGORIES` map in `@sergeant/finyk-domain/constants`. `null` when
-   * the MCC is unknown / 0 / missing — UI then falls back to its own
-   * client-side categorization (description keywords, user override).
-   */
-  categorySlug: string | null;
-  /**
-   * `true` once the user has manually set a category through the UI; the
-   * server keeps this latch sticky so subsequent webhook deliveries (e.g.
-   * Monobank refunds with a different MCC) do not silently undo the
-   * correction. Currently set by data-migrations and the (forthcoming)
-   * `PATCH /api/mono/transactions/:id/category` endpoint.
-   */
-  categoryOverridden: boolean;
-  source: "webhook" | "backfill";
-  receivedAt: string;
-}
-
-export interface MonoSyncState {
-  status: MonoConnectionStatus;
-  webhookActive: boolean;
-  lastEventAt: string | null;
-  lastBackfillAt: string | null;
-  accountsCount: number;
-}
-
-/**
- * Cursor-paginated response from `GET /api/mono/transactions`. Server returns
- * up to `limit` items (default 50) ordered by `(time DESC, monoTxId DESC)`;
- * `nextCursor` is non-null when more rows are available.
- */
-export interface MonoTransactionsPage {
-  data: MonoTransactionDto[];
-  nextCursor: string | null;
-}
+export type MonoConnectionStatus = SharedMonoConnectionStatus;
+export type MonoAccountDto = SharedMonoAccountDto;
+export type MonoTransactionDto = SharedMonoTransactionDto;
+export type MonoSyncState = SharedMonoSyncState;
+export type MonoTransactionsPage = SharedMonoTransactionsPage;
+export type MonoConnectResponse = SharedMonoConnectResponse;
+export type MonoDisconnectResponse = SharedMonoDisconnectResponse;
+export type MonoBackfillResponse = SharedMonoBackfillResponse;
 
 export interface MonoAccount {
   id: string;
@@ -130,8 +78,10 @@ export interface MonoWebhookEndpoints {
   connect: (
     token: string,
     opts?: { signal?: AbortSignal },
-  ) => Promise<{ status: MonoConnectionStatus; accountsCount: number }>;
-  disconnect: (opts?: { signal?: AbortSignal }) => Promise<void>;
+  ) => Promise<MonoConnectResponse>;
+  disconnect: (opts?: {
+    signal?: AbortSignal;
+  }) => Promise<MonoDisconnectResponse>;
   syncState: (opts?: { signal?: AbortSignal }) => Promise<MonoSyncState>;
   accounts: (opts?: { signal?: AbortSignal }) => Promise<MonoAccountDto[]>;
   transactions: (
@@ -144,7 +94,7 @@ export interface MonoWebhookEndpoints {
     },
     opts?: { signal?: AbortSignal },
   ) => Promise<MonoTransactionsPage>;
-  backfill: (opts?: { signal?: AbortSignal }) => Promise<void>;
+  backfill: (opts?: { signal?: AbortSignal }) => Promise<MonoBackfillResponse>;
 }
 
 export function createMonoWebhookEndpoints(
@@ -152,13 +102,13 @@ export function createMonoWebhookEndpoints(
 ): MonoWebhookEndpoints {
   return {
     connect: (token, opts) =>
-      http.post<{ status: MonoConnectionStatus; accountsCount: number }>(
+      http.post<MonoConnectResponse>(
         "/api/mono/connect",
         { token },
         { signal: opts?.signal },
       ),
     disconnect: (opts) =>
-      http.post<void>("/api/mono/disconnect", undefined, {
+      http.post<MonoDisconnectResponse>("/api/mono/disconnect", undefined, {
         signal: opts?.signal,
       }),
     syncState: (opts) =>
@@ -175,7 +125,7 @@ export function createMonoWebhookEndpoints(
         signal: opts?.signal,
       }),
     backfill: (opts) =>
-      http.post<void>("/api/mono/backfill", undefined, {
+      http.post<MonoBackfillResponse>("/api/mono/backfill", undefined, {
         signal: opts?.signal,
       }),
   };

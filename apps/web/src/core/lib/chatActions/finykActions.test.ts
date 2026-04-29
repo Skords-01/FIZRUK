@@ -15,10 +15,10 @@ afterEach(() => {
 
 function call(action: ChatAction): string {
   const out = handleFinykAction(action);
-  if (typeof out !== "string") {
-    throw new Error(`handler returned ${typeof out}, expected string`);
+  if (out == null) {
+    throw new Error(`handler returned ${typeof out}, expected string|object`);
   }
-  return out;
+  return typeof out === "string" ? out : out.result;
 }
 
 // ---------------------------------------------------------------------------
@@ -710,5 +710,79 @@ describe("export_report", () => {
     expect(typeof out).toBe("string");
     expect(out).toContain("Дохід");
     expect(out).toContain("Витрати");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// create_transaction · undo
+// ---------------------------------------------------------------------------
+describe("create_transaction · undo", () => {
+  it("повертає {undo} який видаляє щойно створену транзакцію", () => {
+    const out = handleFinykAction({
+      name: "create_transaction",
+      input: { amount: 250, description: "кава" },
+    });
+    if (typeof out === "string" || out == null) {
+      throw new Error(`expected undoable result, got ${typeof out}`);
+    }
+    expect(out.result).toContain("250");
+    const before = JSON.parse(
+      localStorage.getItem("finyk_manual_expenses_v1") || "[]",
+    );
+    expect(before).toHaveLength(1);
+
+    out.undo();
+
+    const after = JSON.parse(
+      localStorage.getItem("finyk_manual_expenses_v1") || "[]",
+    );
+    expect(after).toHaveLength(0);
+  });
+
+  it("undo не зачіпає інші транзакції що з'явились пізніше", () => {
+    const first = handleFinykAction({
+      name: "create_transaction",
+      input: { amount: 50, description: "перша" },
+    });
+    if (typeof first === "string" || first == null)
+      throw new Error("expected object");
+
+    // Емулюємо додавання другої транзакції після першої
+    handleFinykAction({
+      name: "create_transaction",
+      input: { amount: 100, description: "друга" },
+    });
+
+    first.undo();
+
+    const after = JSON.parse(
+      localStorage.getItem("finyk_manual_expenses_v1") || "[]",
+    );
+    expect(after).toHaveLength(1);
+    expect(after[0].description).toBe("друга");
+  });
+
+  it("undo ідемпотентний — другий виклик нічого не ламає", () => {
+    const out = handleFinykAction({
+      name: "create_transaction",
+      input: { amount: 250 },
+    });
+    if (typeof out === "string" || out == null)
+      throw new Error("expected object");
+
+    out.undo();
+    expect(() => out.undo()).not.toThrow();
+    const after = JSON.parse(
+      localStorage.getItem("finyk_manual_expenses_v1") || "[]",
+    );
+    expect(after).toHaveLength(0);
+  });
+
+  it("error path (некоректна сума) повертає string без undo", () => {
+    const out = handleFinykAction({
+      name: "create_transaction",
+      input: { amount: 0 },
+    });
+    expect(typeof out).toBe("string");
   });
 });

@@ -1,5 +1,8 @@
 # Статус трьох поверхонь — web / native / capacitor-shell
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
+
 Короткий репорт «що готово до запуску, що треба доробити» по трьох
 варіантах Sergeant-а. Живе поруч з `docs/mobile/overview.md` (API-контракт) і
 `docs/mobile/react-native-migration.md` (роадмап порту web → RN).
@@ -130,7 +133,7 @@ pipeline (APNs + FCM HTTP v1) — уже в коді; у проді потріб
 status-bar / splash / keyboard / deep-links ідемпотентно. Auth через
 bearer у `auth-storage.ts`, barcode через `barcodeNative.ts` — обидва
 підключаються у `apps/web` динамічним `import()` за guard-ом
-`isCapacitor()` (див. `apps/web/src/shared/lib/platform.ts`).
+`isCapacitor()` (див. `apps/mobile-shell/src/platform.ts`).
 
 Android-частина (`android/`) закомічена, `applicationId`
 = `com.sergeant.shell` (навмисно різний з `com.sergeant.app` RN-апки,

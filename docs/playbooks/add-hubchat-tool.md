@@ -1,6 +1,7 @@
 # Playbook: Add HubChat Tool
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 **Trigger:** «Дай асистенту нову дію X» / «Додай tool в HubChat» / новий tool-call для Anthropic-асистента (наприклад `log_water`, `log_set`, `mark_habit_done`).
 
@@ -129,7 +130,7 @@ const RISKY_TOOLS: ReadonlySet<string> = new Set([
 
 ### 6. Quick action chip (опціонально)
 
-Якщо tool корисно мати під одне натискання — додай у registry `apps/web/src/core/lib/hubChatQuickActions.ts`:
+Якщо tool корисно мати під одне натискання — додай у registry `apps/web/src/shared/lib/moduleQuickActions.ts` (або відповідний UI у `apps/web/src/core/components/ChatQuickActions.tsx`):
 
 ```ts
 {
@@ -155,12 +156,12 @@ const RISKY_TOOLS: ReadonlySet<string> = new Set([
 - **Tool def**: можна не тестувати окремо — Anthropic перевіряє при call.
 - **Handler**: unit-test у `chatActions/<domain>Actions.test.ts` — щоб успіх зберігав у localStorage і повертав очікуваний рядок.
 - **Action card** (якщо додав): додай у `hubChatActionCards.test.ts` — перевір title + status + summary, зокрема `failed` → `— не вийшло`.
-- **Quick action** (якщо додав): додай у `hubChatQuickActions.test.ts` — перевір що input у `pickTopQuickActions` для відповідного modul-у повертає його.
+- **Quick action** (якщо додав): додай у `ChatQuickActions.test.tsx` — перевір що input у `pickTopQuickActions` для відповідного modul-у повертає його.
 
 ```bash
 pnpm --filter @sergeant/web exec vitest run src/core/lib/chatActions
 pnpm --filter @sergeant/web exec vitest run src/core/lib/hubChatActionCards
-pnpm --filter @sergeant/web exec vitest run src/core/lib/hubChatQuickActions
+pnpm --filter @sergeant/web exec vitest run src/core/components/ChatQuickActions
 ```
 
 ### 8. Quota tuning (необов'язково, але рекомендовано)
@@ -205,7 +206,7 @@ feat(web): add HubChat tool log_water
 - [ ] Handler у `chatActions/<domain>Actions.ts`, повертає informative string.
 - [ ] Якщо user-visible — action card у `hubChatActionCards.ts` з `${failedSuffix}` в title.
 - [ ] Якщо destructive — додано у `RISKY_TOOLS`.
-- [ ] Якщо часта — quick action chip у `hubChatQuickActions.ts`.
+- [ ] Якщо часта — quick action chip у `moduleQuickActions.ts` / `ChatQuickActions.tsx`.
 - [ ] Unit tests для handler + (опційно) action card + quick action.
 - [ ] Quota tuning: якщо tool дорогий або деструктивний — додано запис у `AI_QUOTA_TOOL_LIMITS`.
 - [ ] `pnpm lint` + `pnpm typecheck` — green.
@@ -224,5 +225,5 @@ feat(web): add HubChat tool log_water
 - [tune-system-prompt.md](tune-system-prompt.md) — як міняти системний промпт без поломки tool-calling
 - [add-api-endpoint.md](add-api-endpoint.md) — якщо tool пише у БД
 - [AGENTS.md](../../AGENTS.md) — секція «Architecture: AI tool execution path»
-- `apps/web/src/core/lib/hubChatQuickActions.ts` — registry з прикладами
+- `apps/web/src/shared/lib/moduleQuickActions.ts` — registry з прикладами
 - `docs/superpowers/specs/2026-04-24-assistant-quick-actions-v1-design.md` — дизайн quick actions v1

@@ -29,6 +29,7 @@ export * from "./lib/activeModules";
 
 // Defaults shared by web/mobile undo-toast helpers.
 export * from "./lib/undoToast";
+export * from "./lib/undoTombstone";
 
 // Onboarding gate helpers (first-launch detection, done flag, splash taxonomy).
 export * from "./lib/onboarding";

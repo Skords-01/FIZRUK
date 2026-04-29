@@ -17,7 +17,13 @@
 import * as Haptics from "expo-haptics";
 import type { LucideIcon } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Pressable, Text } from "react-native";
+import {
+  AccessibilityInfo,
+  Animated,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
 
 import { colors } from "@/theme";
 
@@ -77,11 +83,55 @@ export function EmptyState({
   className,
   compact = false,
   disableAnimation = false,
-  iconColor, // uses colors.subtle by default
+  iconColor, // uses the muted text colour by default
 }: EmptyStateProps) {
   const reduceMotion = useReduceMotion();
   const shouldAnimate = !disableAnimation && !reduceMotion;
-  const resolvedIconColor = iconColor ?? colors.subtle;
+  // `MobileColor` exposes `textMuted`, not `subtle` — see
+  // `packages/design-tokens/mobile.d.ts`.
+  const resolvedIconColor = iconColor ?? colors.textMuted;
+
+  // Pulsing animation for the icon container
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.6)).current;
+
+  useEffect(() => {
+    if (!shouldAnimate || !IconComponent) return;
+
+    // Start subtle pulsing animation after entrance
+    const timeout = setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(pulseScale, {
+              toValue: 1.05,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(pulseOpacity, {
+              toValue: 0.8,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(pulseScale, {
+              toValue: 1,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(pulseOpacity, {
+              toValue: 0.6,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]),
+      ).start();
+    }, 800);
+
+    return () => clearTimeout(timeout);
+  }, [shouldAnimate, IconComponent, pulseScale, pulseOpacity]);
 
   // Animation values for staggered entrance
   const containerOpacity = useRef(
@@ -185,17 +235,34 @@ export function EmptyState({
             opacity: iconOpacity,
             transform: [{ scale: iconScale }],
           }}
-          className={cx(
-            "items-center justify-center rounded-2xl bg-surface-muted border border-line",
-            "dark:bg-cream-800 dark:border-cream-700",
-            compact ? "w-12 h-12" : "w-16 h-16",
-          )}
         >
-          <IconComponent
-            size={compact ? 24 : 32}
-            color={resolvedIconColor}
-            strokeWidth={1.5}
+          {/* Pulse ring behind icon */}
+          <Animated.View
+            style={{
+              position: "absolute",
+              top: -4,
+              left: -4,
+              right: -4,
+              bottom: -4,
+              borderRadius: 20,
+              backgroundColor: resolvedIconColor,
+              opacity: pulseOpacity,
+              transform: [{ scale: pulseScale }],
+            }}
           />
+          <View
+            className={cx(
+              "items-center justify-center rounded-2xl bg-surface-muted border border-line",
+              "dark:bg-cream-800 dark:border-cream-700",
+              compact ? "w-12 h-12" : "w-16 h-16",
+            )}
+          >
+            <IconComponent
+              size={compact ? 24 : 32}
+              color={resolvedIconColor}
+              strokeWidth={1.5}
+            />
+          </View>
         </Animated.View>
       )}
 
@@ -260,7 +327,7 @@ export function EmptyState({
  */
 export function NoDataEmptyState({
   title = "Немає даних",
-  description = "Тут поки що порожньо. Додайте перши�� запис!",
+  description = "Тут поки що порожньо. Додайте перший запис!",
   ...props
 }: Omit<EmptyStateProps, "title" | "description"> & {
   title?: string;

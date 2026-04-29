@@ -1,12 +1,15 @@
 # Sergeant — Devin context
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 > Full agent rules, hard rules, anti-patterns, and domain invariants are in **[`AGENTS.md`](./AGENTS.md)**.
 > This file adds Devin-specific context on top of it. For Claude Code see [`CLAUDE.md`](./CLAUDE.md).
 
 ## Repo snapshot
 
 - **pnpm 9** + **Turborepo** monorepo, Node 20, TypeScript 6.
-- **Apps:** `apps/web` (Vite + React 18), `apps/server` (Express + PostgreSQL), `apps/mobile` (Expo 52), `apps/mobile-shell` (Capacitor).
+- **Apps:** `apps/web` (Vite + React 18), `apps/server` (Express + PostgreSQL), `apps/mobile` (Expo 52), `apps/mobile-shell` (Capacitor), `apps/console` (Telegram bot, grammy + Anthropic).
 - **Packages:** `@sergeant/shared`, `@sergeant/api-client`, `@sergeant/config`, `@sergeant/design-tokens`, `@sergeant/insights`, `eslint-plugin-sergeant-design`, 4 domain packages (10 total).
 - Language: code in English/Ukrainian mixed; prose docs in **Ukrainian** (see `AGENTS.md` § Soft rules).
 

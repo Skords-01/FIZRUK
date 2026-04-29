@@ -1,6 +1,7 @@
 # Мінімальні Grafana dashboards (Prometheus)
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 Це "starter pack" панелей, яких достатньо, щоб швидко зрозуміти: **що саме горить**
 (HTTP / DB / Auth / Sync / AI / upstream), **де** і **чому**.

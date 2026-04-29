@@ -1,5 +1,8 @@
 # Sergeant Design System
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 Єдина візуальна мова для хаба з 4 модулями: **ФІНІК**, **ФІЗРУК**, **Рутина**,
 **Харчування**. Документ — контракт між дизайном і кодом; будь-який новий
 екран має користуватися цим набором токенів і примітивів.
@@ -15,13 +18,22 @@
 ## 1. Принципи
 
 1. **Семантичні токени → Tailwind-утиліти → примітиви.** Ніяких hex-кодів в
-   `className`. Якщо потрібен новий колір — додай CSS-змінну в
-   `src/index.css` і алиас у `tailwind.config.js`, не в компонент.
+   `className` (`bg-[#10b981]`, `text-[#fff]/50` — заборонено правилом
+   `sergeant-design/no-hex-in-classname` на рівні `error`; див.
+   `AGENTS.md` hard rule #11). Якщо потрібен новий колір — додай його
+   у `packages/design-tokens/tailwind-preset.js` разом із
+   `-soft` / `-strong` компаньйонами, не inline в компонент.
 2. **Темна тема — first-class.** Всі токени живуть у CSS-змінних
    `:root` та `.dark`; теми перемикаються класом без перезапису стилів.
+   Парні `dark:` override з сирою палітрою (`bg-teal-100 dark:bg-teal-900/30`)
+   — це міграційний борг: [`DARK-MODE-AUDIT.md`](./DARK-MODE-AUDIT.md)
+   ведe інвентар 28 таких сайтів і план переносу в семантичні токени.
 3. **Модулі діляться токенами, а не стилями.** `bg-finyk-surface`,
    `text-fizruk`, `border-routine/30` — це семантичні аксенти; вся базова
-   типографіка, spacing, радіуси одні для всіх.
+   типографіка, spacing, радіуси одні для всіх. Всередині
+   `apps/<app>/src/modules/<X>/` дозволені лише акценти модуля `<X>` —
+   див. `AGENTS.md` hard rule #12 + [`MODULE-ACCENT.md`](./MODULE-ACCENT.md),
+   enforced by `sergeant-design/no-foreign-module-accent` (`error`).
 4. **Accessibility не опція.** Клавіатурний фокус завжди видимий
    (`focus-visible:ring-2 ring-brand-500/45`), touch-targets ≥44×44 px,
    контраст ≥4.5:1 для тексту, ≥3:1 для UI-елементів (WCAG AA).
@@ -577,7 +589,118 @@ const modalRef = useFocusTrap<HTMLDivElement>(isOpen, onClose);
 
 ---
 
-## 15. Що далі
+## 15. Offline / Empty / Error
+
+Користувачам потрібен один консистентний канал для кожного стану — інакше
+вони отримують суперечливі сигнали («банер каже офлайн, а тост каже
+ретрай», «екран порожній, але форма вже летить»). Канон зведено нижче.
+
+### Empty
+
+`EmptyState` з §5 — **єдиний** примітив для «немає даних» (порожній
+дашборд, тренування без сетів, пуста історія). Не пиши власні
+"плейсхолдер-карточки" — `compact` режим закриває in-card випадки. Action
+property — це CTA-стартер потоку (наприклад, «Додати першу витрату»).
+
+```tsx
+<EmptyState
+  icon="receipt"
+  title="Поки що немає витрат"
+  description="Додай першу — і ми покажемо твій бюджет на цей місяць."
+  action={{ label: "Додати витрату", onClick: openAddTx }}
+/>
+```
+
+### Offline
+
+**Один сигнал зверху, не дві смуги.** `OfflineBanner` (`apps/web/src/core/app/OfflineBanner.tsx`)
+— це канонічна стрічка під `safe-area-pt`, висота константна, вмикається
+по `useOnlineStatus()`. Вона ж тягне `useSyncStatus()` і показує, скільки
+дій стоїть у черзі, тож юзер одразу бачить, що локальна правка не
+загубилася.
+
+Правила:
+
+1. **Не фарбуй банер у `danger`** — `bg-warning-strong` достатньо. Червоний у
+   дорослого продукту читається як «дані втрачені», а тут вони просто
+   стоять у черзі.
+2. **`role="status" + aria-live="polite"`** — оголошуємо появу/зникнення,
+   але не викрадаємо фокус.
+3. **Не дублюй банер у toast.** Поки `navigator.onLine === false`, хук
+   `useSyncErrorToast` мовчить (див. наступний підрозділ).
+4. **Не ховай за анімацією входу `> 200 ms`** — користувач має побачити
+   стан до того, як кликне по сесії, бо інакше тапи можуть пропадати в
+   ще-не-замонтований UI.
+
+### Error / Retry
+
+CloudSync помилки — `useSyncErrorToast(syncErrorDetail, toast, pushAll)` у
+`apps/web/src/core/App.tsx` поряд із `useCloudSync(user)`. Хук працює як
+маленький стейт-машина:
+
+| `syncErrorDetail`                      | Поведінка                                                                     |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
+| `null` (idle / success / dirty)        | no-op, скидає внутрішню де-дуп пам’ять                                        |
+| `{ retryable: true, type: "network" }` | error-toast, copy "перевір з'єднання", CTA «Спробувати ще» викликає `pushAll` |
+| `{ retryable: true, type: "server" }`  | error-toast, copy "сервер тимчасово", CTA «Спробувати ще»                     |
+| `{ retryable: false }` (4xx / parse)   | error-toast без CTA, copy «передивись введення»                               |
+| `navigator.onLine === false`           | suppress — `OfflineBanner` уже сигналить                                      |
+
+Тривалість тоста — `SYNC_ERROR_TOAST_DURATION_MS = 8000` (5 c дефолту мало
+для «прийняти рішення про ретрай»). Якщо помилка змінює повідомлення, хук
+сам диспозитить попередній тост, щоб черга не пухла.
+
+Правила:
+
+1. **Один error-toast на помилку**, не один-на-рендер. `useSyncErrorToast`
+   де-дуплікує по `syncErrorDetail.message`.
+2. **Retry CTA — лише коли `detail.retryable === true`.** 4xx/parse/aborted
+   — не ретраїмо: помилка ніколи не зникне сама і ми зациклимо нудьгу.
+3. **Copy — українською**, без «помилка #500». Користувач має знати, що
+   робити, а не що зламалося.
+4. **Не ставимо blocking modal** для sync-помилок — це фонове, не
+   user-initiated.
+
+### Інші toast-патерни
+
+- **`showUndoToast`** (`@shared/lib/undoToast`) — деструктивні дії
+  (видалення звички / транзакції) АБО **mutator-tool-call у HubChat**: 5 c,
+  кнопка «Повернути». Не плутати з retry-toast: `undo` повертає минулий
+  стан, `retry` повторює невдалу дію.
+
+#### HubChat tool-call undo
+
+Mutator-handler-и в `apps/web/src/core/lib/chatActions/` повертають
+`{ result: string; undo: () => void }` замість простого `string`. Контракт
+у `types.ts → ChatActionResult`. `HubChat.tsx` після `executeActions` ітерує
+по результатам і для кожного, який має `undo`, кидає
+`showUndoToast(toast, { msg: result, onUndo: undo })`. Read-only handler-и
+(`find_transaction`, `weekly_summary`, …) залишаються `string` — нема що
+реверсити.
+
+Правила для нових mutator-handler-ів:
+
+1. **`undo` має бути ідемпотентним.** Користувач не повторить дію — але
+   паралельні UI-зміни (видалення з іншого екрану) можуть зробити стан
+   таким, що скасовувати нема чого. У такому разі — `return` без throw.
+2. **Тримай у замиканні `id` створеної сутності, а не повний snapshot
+   стану.** Snapshot переписує паралельні правки; `id`-філтр прибирає
+   тільки свою мутацію.
+3. **Якщо мутація — no-op** (напр., `mark_habit_done` для дати, де галочка
+   вже стоїть) — повертай простий `string`, не `{ undo }`. Toast «Повернути
+   на нічого» збиває з пантелику.
+4. **Зміни тестів:** хелпер `call()` у `*.test.ts` приймає обидві форми
+   (`typeof out === "string" ? out : out.result`). Додай окремий
+   `describe("<tool> · undo")`-блок з тестами на видалення, ідемпотентність
+   та no-op гілку.
+
+- **`tryShowCrossModulePrompt`** (`@shared/lib/crossModulePrompt`) — нудж із
+  модуля в модуль («витрата в ресторані → запиши прийом їжі?»). Має
+  fatigue-suppression на дисмиси.
+
+---
+
+## 16. Що далі
 
 - Догнати всі модулі (ФІНІК / ФІЗРУК / Рутина / Харчування) під єдині
   примітиви — окремими PR'ами, по модулю.

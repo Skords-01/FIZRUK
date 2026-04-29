@@ -269,7 +269,7 @@
         }
       }
     },
-    "/api/digest/weekly": {
+    "/api/weekly-digest": {
       "post": {
         "summary": "Згенерувати тижневий digest по агрегатах модулів",
         "tags": [
@@ -848,6 +848,39 @@
           },
           "401": {
             "description": "Unauthorized — потрібна активна сесія.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nutrition/backup-download": {
+      "post": {
+        "summary": "Отримати останній зашифрований backup nutrition-blob",
+        "description": "Token-authenticated через header `x-token`. Повертає 404, якщо для наданого токена бекапів ще немає.",
+        "tags": [
+          "nutrition"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Backup для наданого x-token не знайдено.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1466,68 +1499,6 @@
         }
       }
     },
-    "/api/mono": {
-      "get": {
-        "summary": "Mono bank API proxy (через server-side token)",
-        "tags": [
-          "banks"
-        ],
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "path",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256,
-              "pattern": "^\\/[A-Za-z0-9\\-_/]+$"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": {}
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request — payload не пройшов zod-валідацію.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized — потрібна активна сесія.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/privat": {
       "get": {
         "summary": "PrivatBank API proxy",
@@ -1638,13 +1609,87 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Mono integration активовано.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": {}
+                  "$ref": "#/components/schemas/MonoConnectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — потрібна активна сесія.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mono/disconnect": {
+      "post": {
+        "summary": "Відключити Mono-token + забути webhook secret",
+        "tags": [
+          "mono"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mono integration вимкнено.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonoDisconnectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — потрібна активна сесія.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mono/sync-state": {
+      "get": {
+        "summary": "Статус Mono-інтеграції + лічильники webhook events",
+        "tags": [
+          "mono"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Поточний стан синхронізації.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonoSyncState"
                 }
               }
             }
@@ -1678,13 +1723,11 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Нормалізовані рядки `mono_accounts`.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": {}
+                  "$ref": "#/components/schemas/MonoAccountsResponse"
                 }
               }
             }
@@ -1702,9 +1745,9 @@
         }
       }
     },
-    "/api/mono/backfill": {
-      "post": {
-        "summary": "Бекфіл історії транзакцій у Mono integration",
+    "/api/mono/transactions": {
+      "get": {
+        "summary": "Cursor-paginated історія Mono-транзакцій",
         "tags": [
           "mono"
         ],
@@ -1759,13 +1802,21 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Сторінка транзакцій + nextCursor.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {},
-                  "additionalProperties": {}
+                  "$ref": "#/components/schemas/MonoTransactionsPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — payload не пройшов zod-валідацію.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -1783,7 +1834,45 @@
         }
       }
     },
-    "/api/v1/waitlist": {
+    "/api/mono/backfill": {
+      "post": {
+        "summary": "Бекфіл історії транзакцій у Mono integration",
+        "tags": [
+          "mono"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Бекфіл запущено синхронно — виконується в фоновому режимі.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonoBackfillResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — потрібна активна сесія.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/waitlist": {
       "post": {
         "summary": "Sign-up на waitlist для майбутнього Pro-тіру (анонімний)",
         "tags": [
@@ -1828,6 +1917,214 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/waitlist": {
+      "post": {
+        "summary": "Sign-up на waitlist для майбутнього Pro-тіру (v1 alias для /api/waitlist)",
+        "tags": [
+          "monetization"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaitlistSubmit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Submitted (created=true) або уже був у списку (created=false)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitlistSubmitResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — payload не пройшов zod-валідацію.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests — rate-limit перевищено.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transcribe": {
+      "post": {
+        "summary": "Голосова транскрипція через Groq Whisper (audio/* → текст)",
+        "description": "Body — сирий аудіо-блоб (`Content-Type: audio/webm | audio/ogg | audio/mp4 | …`), ліміт 10 MB. Query визначає мову (auto-detect якщо порожньо) та prompt для доменних термінів. Потребує активну сесію + сконфігурований GROQ_API_KEY (503 інакше).",
+        "tags": [
+          "transcribe"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "language",
+            "schema": {
+              "description": "ISO-код мови, напр. uk або en. Якщо порожньо — auto-detect.",
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 8
+            },
+            "description": "ISO-код мови, напр. uk або en. Якщо порожньо — auto-detect."
+          },
+          {
+            "in": "query",
+            "name": "prompt",
+            "schema": {
+              "description": "Доменна підказка (списки вправ, продуктів тощо).",
+              "type": "string",
+              "maxLength": 1024
+            },
+            "description": "Доменна підказка (списки вправ, продуктів тощо)."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "audio/webm": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/ogg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/mp4": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/mpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "audio/wav": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Транскрипція успішна.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscribeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — payload не пройшов zod-валідацію.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — потрібна активна сесія.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload завеликий (>10 MB).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Непідтримуваний Content-Type (очікуємо audio/*).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "GROQ_API_KEY не сконфігурований на сервері.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics/web-vitals": {
+      "post": {
+        "summary": "Ingest Core Web Vitals (LCP / INP / FCP / TTFB / CLS)",
+        "description": "Анонімний beacon-endpoint для `navigator.sendBeacon` при pagehide / visibilitychange=hidden. Завжди відповідає 204 No Content — навіть на malformed payload (sendBeacon ігнорує відповідь, не даємо feedback-у зондам).",
+        "tags": [
+          "observability"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebVitalsPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Accepted (завжди 204, незалежно від валідності payload)."
           }
         }
       }
@@ -3968,6 +4265,52 @@
         ],
         "description": "POST /api/v1/waitlist — sign-up на майбутній Pro-тір (Phase 0 monetization)."
       },
+      "WebVitalsPayload": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "minItems": 1,
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "LCP",
+                    "INP",
+                    "FCP",
+                    "TTFB",
+                    "CLS"
+                  ]
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "rating": {
+                  "type": "string",
+                  "enum": [
+                    "good",
+                    "needs-improvement",
+                    "poor"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "value",
+                "rating"
+              ]
+            }
+          }
+        },
+        "required": [
+          "metrics"
+        ],
+        "description": "POST /api/metrics/web-vitals — батч Core Web Vitals (LCP/INP/FCP/TTFB/CLS)."
+      },
       "MeResponse": {
         "type": "object",
         "properties": {
@@ -4209,6 +4552,459 @@
         "additionalProperties": false,
         "description": "POST /api/push/test response."
       },
+      "MonoConnectResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "active"
+          },
+          "accountsCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "status",
+          "accountsCount"
+        ],
+        "additionalProperties": false,
+        "description": "Відповідь POST /api/mono/connect — `status: 'active'` literal."
+      },
+      "MonoDisconnectResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "additionalProperties": false,
+        "description": "Відповідь POST /api/mono/disconnect — `{ ok: true }`."
+      },
+      "MonoSyncState": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "invalid",
+              "disconnected"
+            ]
+          },
+          "webhookActive": {
+            "type": "boolean"
+          },
+          "lastEventAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastBackfillAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "accountsCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "status",
+          "webhookActive",
+          "lastEventAt",
+          "lastBackfillAt",
+          "accountsCount"
+        ],
+        "additionalProperties": false,
+        "description": "Відповідь GET /api/mono/sync-state — статус інтеграції + лічильники."
+      },
+      "MonoAccountsResponse": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "userId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "monoAccountId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sendId": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currencyCode": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "cashbackType": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "maskedPan": {
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "iban": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "balance": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "creditLimit": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "lastSeenAt": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "userId",
+            "monoAccountId",
+            "sendId",
+            "type",
+            "currencyCode",
+            "cashbackType",
+            "maskedPan",
+            "iban",
+            "balance",
+            "creditLimit",
+            "lastSeenAt"
+          ],
+          "additionalProperties": false
+        },
+        "description": "Відповідь GET /api/mono/accounts — масив MonoAccountDto."
+      },
+      "MonoTransactionsPage": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "monoAccountId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "monoTxId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "time": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "operationAmount": {
+                  "type": "number"
+                },
+                "currencyCode": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "mcc": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "originalMcc": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "hold": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "comment": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "cashbackAmount": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "commissionRate": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "balance": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "receiptId": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "invoiceId": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "counterEdrpou": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "counterIban": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "counterName": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "categorySlug": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "categoryOverridden": {
+                  "type": "boolean"
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "webhook",
+                    "backfill"
+                  ]
+                },
+                "receivedAt": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "userId",
+                "monoAccountId",
+                "monoTxId",
+                "time",
+                "amount",
+                "operationAmount",
+                "currencyCode",
+                "mcc",
+                "originalMcc",
+                "hold",
+                "description",
+                "comment",
+                "cashbackAmount",
+                "commissionRate",
+                "balance",
+                "receiptId",
+                "invoiceId",
+                "counterEdrpou",
+                "counterIban",
+                "counterName",
+                "categorySlug",
+                "categoryOverridden",
+                "source",
+                "receivedAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "additionalProperties": false,
+        "description": "Відповідь GET /api/mono/transactions — cursor-paginated `{data, nextCursor}`."
+      },
+      "MonoBackfillResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "started"
+          },
+          "accountsCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "status",
+          "accountsCount"
+        ],
+        "additionalProperties": false,
+        "description": "Відповідь POST /api/mono/backfill — `status: 'started'` literal."
+      },
       "WaitlistSubmitResponse": {
         "type": "object",
         "properties": {
@@ -4226,6 +5022,28 @@
         ],
         "additionalProperties": false,
         "description": "Відповідь на POST /api/v1/waitlist — `created` розрізняє новий запис vs duplicate."
+      },
+      "TranscribeResponse": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "durationSec": {
+            "type": "number",
+            "minimum": 0
+          },
+          "model": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "durationSec",
+          "model"
+        ],
+        "additionalProperties": false,
+        "description": "Відповідь на POST /api/transcribe — розпізнаний текст + тривалість аудіо."
       }
     },
     "securitySchemes": {

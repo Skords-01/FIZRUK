@@ -30,6 +30,17 @@ export interface BentoCardProps {
    * Settings is shown in place of the preview numbers.
    */
   inactive?: boolean;
+  /**
+   * When `true`, the card is in dashboard "edit mode": it wiggles to
+   * signal it is draggable, exposes a visible top-right grip handle, and
+   * suppresses quick-add (since the primary affordance is now reorder).
+   * The grip handle uses `handleRef` / `handleProps` as the dnd-kit
+   * activator so the whole card body can keep navigating to the module
+   * on tap.
+   */
+  editMode?: boolean;
+  handleRef?: (node: HTMLButtonElement | null) => void;
+  handleProps?: Record<string, unknown>;
 }
 
 /**
@@ -49,6 +60,9 @@ export const BentoCard = memo(function BentoCard({
   primaryProps,
   isDragging,
   inactive,
+  editMode,
+  handleRef,
+  handleProps,
 }: BentoCardProps) {
   const preview = config.getPreview();
   const showProgress =
@@ -60,7 +74,10 @@ export const BentoCard = memo(function BentoCard({
   // Inactive modules suppress quick-add to avoid implying parity with
   // active modules — the user has to reactivate them in Hub Settings
   // before a quick-add affordance reappears.
-  const showQuickAdd = !inactive && !!onQuickAdd;
+  // In edit mode quick-add is also suppressed so the only top-right
+  // affordance is the drag handle.
+  const showQuickAdd = !inactive && !editMode && !!onQuickAdd;
+  const showHandle = !!editMode;
 
   return (
     <div
@@ -68,6 +85,9 @@ export const BentoCard = memo(function BentoCard({
         "relative",
         isDragging && "opacity-70 z-50",
         inactive && "opacity-60",
+        // Edit-mode wiggle. Suppressed while a card is being dragged so
+        // the dnd-kit transform is not fighting the rotation keyframes.
+        editMode && !isDragging && "motion-safe:animate-wiggle",
       )}
     >
       <button
@@ -105,10 +125,12 @@ export const BentoCard = memo(function BentoCard({
             {config.icon}
           </div>
 
-          {/* Layout placeholder for the absolutely-positioned quick-add
-              sibling — keeps the label centred consistently regardless of
-              whether the module exposes a quick-add action. */}
-          {showQuickAdd && <span aria-hidden className="w-6 h-6 shrink-0" />}
+          {/* Layout placeholder for the absolutely-positioned quick-add /
+              edit-handle sibling — keeps the label centred consistently
+              regardless of whether either affordance is currently rendered. */}
+          {(showQuickAdd || showHandle) && (
+            <span aria-hidden className="w-6 h-6 shrink-0" />
+          )}
         </div>
 
         <span
@@ -178,6 +200,26 @@ export const BentoCard = memo(function BentoCard({
           <Icon name="plus" size={13} strokeWidth={2.5} />
         </button>
       )}
+
+      {showHandle && (
+        <button
+          ref={handleRef}
+          type="button"
+          {...handleProps}
+          aria-label={`Перетягнути ${config.label}`}
+          title="Перетягнути для зміни порядку"
+          className={cn(
+            "absolute top-3.5 right-3.5 [@media(pointer:coarse)]:top-4 [@media(pointer:coarse)]:right-4",
+            "w-7 h-7 [@media(pointer:coarse)]:w-9 [@media(pointer:coarse)]:h-9",
+            "rounded-lg flex items-center justify-center",
+            "text-muted bg-panel/90 hover:text-text hover:bg-panelHi",
+            "transition-colors cursor-grab active:cursor-grabbing touch-none",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1",
+          )}
+        >
+          <Icon name="grip-vertical" size={14} strokeWidth={2} />
+        </button>
+      )}
     </div>
   );
 });
@@ -187,6 +229,12 @@ export interface SortableCardProps {
   onOpenModule: (id: ModuleId) => void;
   quickAdd?: { label: string; run: () => void } | null;
   inactive?: boolean;
+  /**
+   * When `true`, dnd-kit listeners attach to the visible drag handle
+   * instead of the primary card button — taps on the body still navigate
+   * to the module, while drag is gated to the explicit grip affordance.
+   */
+  editMode?: boolean;
 }
 
 /**
@@ -199,6 +247,7 @@ export const SortableCard = memo(function SortableCard({
   onOpenModule,
   quickAdd,
   inactive,
+  editMode,
 }: SortableCardProps) {
   const {
     attributes,
@@ -223,7 +272,9 @@ export const SortableCard = memo(function SortableCard({
   // would either nest interactive controls (button-in-button with quick-add)
   // or attach `role="button"` to a `<div>` whose only focusable child is the
   // primary `<button>` — both fail axe a11y rules.
-  const primaryProps = useMemo(
+  // In edit mode the same listeners move to the visible grip handle so
+  // accidental drags from the card body don't fight the explicit handle.
+  const dndProps = useMemo(
     () => ({ ...attributes, ...listeners }),
     [attributes, listeners],
   );
@@ -239,10 +290,13 @@ export const SortableCard = memo(function SortableCard({
         config={cfg}
         onClick={handleClick}
         onQuickAdd={quickAdd}
-        primaryRef={setActivatorNodeRef}
-        primaryProps={primaryProps}
+        primaryRef={editMode ? undefined : setActivatorNodeRef}
+        primaryProps={editMode ? undefined : dndProps}
+        handleRef={editMode ? setActivatorNodeRef : undefined}
+        handleProps={editMode ? dndProps : undefined}
         isDragging={isDragging}
         inactive={inactive}
+        editMode={editMode}
       />
     </div>
   );

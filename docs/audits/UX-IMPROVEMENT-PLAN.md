@@ -1,5 +1,8 @@
 # 🛠️ Технічний план покращення UI/UX
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
+
 **Базується на:** UX-UI-AUDIT-2026.md  
 **Автор:** v0 AI  
 **Дата:** 28 квітня 2026

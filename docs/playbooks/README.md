@@ -1,6 +1,7 @@
 # Playbooks
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 Repeatable step-by-step recipes for common tasks in the Sergeant monorepo.
 Each playbook is a checklist that **AI agents and human developers** can follow to reduce variance and avoid missed steps.
@@ -13,6 +14,10 @@ Each playbook is a checklist that **AI agents and human developers** can follow 
 Playbooks marked with 🌳 use the **decision tree** format: a structured `if/else` flow at the top of the file that guides you from symptom to action via explicit fork points. The original step-by-step content is preserved in a **Background** section below the tree for reference.
 
 New playbooks should follow the decision-tree template: [`_TEMPLATE-decision-tree.md`](_TEMPLATE-decision-tree.md).
+
+### Auto-generated trigger index
+
+For programmatic lookup «phrase → playbook» see [`INDEX.md`](./INDEX.md). It is generated from every playbook's `**Trigger:**` line by `scripts/docs/generate-playbook-index.mjs` and checked in CI (`.github/workflows/docs-automation.yml` → `playbook-index`). Regenerate locally with `pnpm docs:gen-playbook-index`.
 
 ## Available Playbooks
 

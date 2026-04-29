@@ -37,27 +37,43 @@ export interface ModuleHeaderProps {
 
 const MODULE_HEADER_TOKENS: Record<
   ModuleAccent,
-  { gradient: string; border: string; subtitle: string }
+  {
+    gradient: string;
+    border: string;
+    subtitle: string;
+    /** Title accent — applied as a left accent dot for module identity. */
+    accentDot: string;
+    /** Saturated accent strip below the header. */
+    accentStrip: string;
+  }
 > = {
   finyk: {
     gradient: "from-finyk/[.06]",
     border: "border-finyk/[.14]",
     subtitle: "text-finyk-strong dark:text-finyk/70",
+    accentDot: "bg-finyk",
+    accentStrip: "bg-finyk/45",
   },
   fizruk: {
     gradient: "from-fizruk/[.06]",
     border: "border-fizruk/[.14]",
     subtitle: "text-fizruk-strong dark:text-fizruk/70",
+    accentDot: "bg-fizruk",
+    accentStrip: "bg-fizruk/45",
   },
   routine: {
     gradient: "from-routine/[.06]",
     border: "border-routine/[.14]",
     subtitle: "text-routine-strong dark:text-routine/70",
+    accentDot: "bg-routine",
+    accentStrip: "bg-routine/45",
   },
   nutrition: {
     gradient: "from-nutrition/[.06]",
     border: "border-nutrition/[.14]",
     subtitle: "text-nutrition-strong dark:text-nutrition/70",
+    accentDot: "bg-nutrition",
+    accentStrip: "bg-nutrition/45",
   },
 };
 
@@ -100,8 +116,17 @@ export function ModuleHeader({
                 </span>
               ) : null}
               {title ? (
-                <span className="text-[16px] font-semibold tracking-wide text-text block leading-tight">
-                  {title}
+                <span className="text-[16px] font-semibold tracking-wide text-text leading-tight flex items-center gap-2">
+                  {mt ? (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "inline-block w-1.5 h-1.5 rounded-full shrink-0",
+                        mt.accentDot,
+                      )}
+                    />
+                  ) : null}
+                  <span className="truncate">{title}</span>
                 </span>
               ) : null}
               {subtitle ? (
@@ -119,6 +144,18 @@ export function ModuleHeader({
         </div>
         {right}
       </div>
+      {/* Saturated accent strip — pinned to the bottom edge so module
+          identity stays visible even when the header gradient is muted
+          (e.g. dark mode, contextual sub-page overrides). */}
+      {mt ? (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute left-0 right-0 -bottom-px h-px",
+            mt.accentStrip,
+          )}
+        />
+      ) : null}
     </div>
   );
 }

@@ -143,7 +143,7 @@ export function HabitsPage({ testID }: HabitsPageProps) {
 
   return (
     <SafeAreaView
-      className="flex-1 bg-cream-50"
+      className="flex-1 bg-bg dark:bg-bg"
       edges={["top"]}
       testID={testID}
     >

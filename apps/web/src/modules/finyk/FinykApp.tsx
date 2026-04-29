@@ -6,12 +6,15 @@ import { readRaw, writeRaw } from "./lib/finykStorage";
 import { FINYK_MANUAL_ONLY_KEY, enableFinykManualOnly } from "./lib/demoData";
 import { ModuleBottomNav } from "@shared/components/ui/ModuleBottomNav";
 import {
+  ModuleAccentProvider,
   ModuleHeader,
   ModuleHeaderBackButton,
 } from "@shared/components/layout";
 import { SectionErrorBoundary } from "@shared/components/ui/SectionErrorBoundary";
 import { cn } from "@shared/lib/cn";
 import { useToast } from "@shared/hooks/useToast";
+import { tryShowCrossModulePrompt } from "@shared/lib/crossModulePrompt";
+import { openHubModuleWithAction } from "@shared/lib/hubNav";
 import { Overview } from "./pages/Overview";
 import { Transactions } from "./pages/Transactions";
 import { Budgets } from "./pages/Budgets";
@@ -244,7 +247,7 @@ export default function App({
 
   // ── Main app ──────────────────────────────────────────────────────────
   return (
-    <div className="h-dvh flex flex-col bg-bg text-text overflow-hidden">
+    <ModuleAccentProvider module="finyk" asShellRoot>
       <ModuleHeader
         module="finyk"
         left={
@@ -252,7 +255,7 @@ export default function App({
             <ModuleHeaderBackButton onClick={onBackToHub} />
           ) : (
             <div
-              className="shrink-0 w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-500/15"
+              className="shrink-0 w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center text-success-strong dark:text-success border border-success/15"
               aria-hidden
             >
               <svg
@@ -479,9 +482,34 @@ export default function App({
           if (expense?.id) {
             storage.editManualExpense?.(expense.id, expense);
             toast.success("Витрату оновлено.");
-          } else {
-            storage.addManualExpense(expense);
-            toast.success("Витрату додано.");
+            return;
+          }
+          storage.addManualExpense(expense);
+          toast.success("Витрату додано.");
+
+          // Cross-module nudge (UX wave-4 #4):
+          // After a Кафе/Ресторан/Продукти save, suggest logging the
+          // matching meal in Nutrition. Suppressed automatically after
+          // ≥3 dismissals in 14 days or 12 h after the user accepts —
+          // see `docs/design/CROSS-MODULE-PROMPTS.md`.
+          const cat = String(expense?.category || "");
+          const promptId =
+            cat === "restaurant"
+              ? "finyk-restaurant-to-meal"
+              : cat === "food"
+                ? "finyk-food-to-meal"
+                : null;
+          if (promptId) {
+            const msg =
+              promptId === "finyk-restaurant-to-meal"
+                ? "Додати прийом їжі з ресторану?"
+                : "Додати прийом їжі з продуктів?";
+            tryShowCrossModulePrompt(toast, {
+              id: promptId,
+              msg,
+              acceptLabel: "Додати →",
+              onAccept: () => openHubModuleWithAction("nutrition", "add_meal"),
+            });
           }
         }}
       />
@@ -497,6 +525,6 @@ export default function App({
         onChange={navigate}
         module="finyk"
       />
-    </div>
+    </ModuleAccentProvider>
   );
 }

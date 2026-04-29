@@ -60,16 +60,14 @@ const sizes: Record<InputSize, string> = {
  * Focus treatment — mirrors `Button`'s `focus-visible:ring-2 ring-brand-500/45`
  * contract so all interactive elements share one a11y language. Keyboard
  * users always see a ring; pointer clicks on text inputs don't flash it.
- * Fallback `focus:` rules keep legacy browsers without :focus-visible on
- * par with click-visible behaviour.
  */
 const variants: Record<InputVariant, string> = {
   default:
-    "bg-panelHi border border-line focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30 focus:border-brand-400",
+    "bg-panelHi border border-line focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30",
   filled:
-    "bg-panelHi border-transparent focus-visible:bg-panel focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30 focus:bg-panel focus:border-brand-400",
+    "bg-panelHi border-transparent focus-visible:bg-panel focus-visible:border-brand-400 focus-visible:ring-2 focus-visible:ring-brand-500/30",
   ghost:
-    "bg-transparent border-transparent hover:bg-panelHi focus-visible:bg-panelHi focus-visible:ring-2 focus-visible:ring-brand-500/30 focus:bg-panelHi",
+    "bg-transparent border-transparent hover:bg-panelHi focus-visible:bg-panelHi focus-visible:ring-2 focus-visible:ring-brand-500/30",
 };
 
 export interface InputProps extends Omit<
@@ -108,9 +106,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   ref,
 ) {
   const stateClass = error
-    ? "border-danger/70 focus-visible:border-danger focus-visible:ring-danger/25 focus:border-danger"
+    ? "border-danger/70 focus-visible:border-danger focus-visible:ring-danger/25"
     : success
-      ? "border-brand-400 focus-visible:border-brand-500 focus-visible:ring-brand-500/25 focus:border-brand-500"
+      ? "border-brand-400 focus-visible:border-brand-500 focus-visible:ring-brand-500/25"
       : "";
 
   // Type-aware defaults. The caller's explicit prop always wins — these
@@ -205,7 +203,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     ref,
   ) {
     const stateClass = error
-      ? "border-danger/70 focus-visible:border-danger focus-visible:ring-danger/25 focus:border-danger"
+      ? "border-danger/70 focus-visible:border-danger focus-visible:ring-danger/25"
       : "";
 
     return (

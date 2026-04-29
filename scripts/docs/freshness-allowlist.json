@@ -12,11 +12,91 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/adr/0001-monetization-architecture.md",
+    "cadenceDays": 180
+  },
+  {
+    "path": "docs/api/README.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/api-v1.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/apps-status-matrix.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/apps-web-exhaustive-deps.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/frontend-overview.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/hosting-evolution.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/architecture/platforms.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/audits/2026-04-26-sergeant-audit-devin.md",
     "cadenceDays": 180
   },
   {
+    "path": "docs/audits/2026-04-28-implementation-roadmap.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/audits/2026-04-28-sergeant-comprehensive-audit.md",
+    "cadenceDays": 180
+  },
+  {
+    "path": "docs/audits/UX-IMPROVEMENT-PLAN.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/audits/UX-UI-AUDIT-2026.md",
+    "cadenceDays": 180
+  },
+  {
+    "path": "docs/audits/ux-audit-2025.md",
+    "cadenceDays": 365
+  },
+  {
     "path": "docs/design/BRANDBOOK.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/EMPTY-STATES.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/RADIUS-RHYTHM.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/UNDO-PATTERN.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/brand-palette-wcag-aa-proposal.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/design/design-system.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/governance/doc-freshness.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/governance/policy-review.md",
     "cadenceDays": 90
   },
   {
@@ -32,11 +112,51 @@
     "cadenceDays": 90
   },
   {
-    "path": "docs/observability/SLO.md",
+    "path": "docs/launch/01-monetization-and-pricing.md",
     "cadenceDays": 90
   },
   {
-    "path": "docs/observability/ci-pipeline-duration.md",
+    "path": "docs/launch/02-go-to-market.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/03-services-and-toolstack.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/04-launch-readiness.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/05-operations-and-automation.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/06-monetization-architecture.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/launch/README.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/mobile/capacitor-deep-links.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/mobile/overview.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/mobile/react-native-migration.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/mobile/shell.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/SLO.md",
     "cadenceDays": 90
   },
   {
@@ -52,7 +172,15 @@
     "cadenceDays": 90
   },
   {
-    "path": "docs/observability/flaky-tests-dashboard.md",
+    "path": "docs/observability/frontend.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/logging.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/observability/metrics.md",
     "cadenceDays": 90
   },
   {
@@ -65,14 +193,6 @@
   },
   {
     "path": "docs/planning/dev-stack-roadmap.md",
-    "cadenceDays": 90
-  },
-  {
-    "path": "docs/planning/structure-refactor-plan.md",
-    "cadenceDays": 90
-  },
-  {
-    "path": "docs/planning/ux-enhancement-plan.md",
     "cadenceDays": 90
   },
   {
@@ -93,10 +213,6 @@
   },
   {
     "path": "docs/playbooks/add-monobank-event-handler.md",
-    "cadenceDays": 90
-  },
-  {
-    "path": "docs/playbooks/add-n8n-workflow.md",
     "cadenceDays": 90
   },
   {
@@ -124,10 +240,6 @@
     "cadenceDays": 90
   },
   {
-    "path": "docs/playbooks/ci-e2e-split.md",
-    "cadenceDays": 90
-  },
-  {
     "path": "docs/playbooks/cleanup-dead-code.md",
     "cadenceDays": 90
   },
@@ -141,6 +253,10 @@
   },
   {
     "path": "docs/playbooks/fix-exhaustive-deps.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/playbooks/fix-failing-ci.md",
     "cadenceDays": 90
   },
   {
@@ -164,6 +280,10 @@
     "cadenceDays": 90
   },
   {
+    "path": "docs/playbooks/prettier-pass-on-docs.md",
+    "cadenceDays": 90
+  },
+  {
     "path": "docs/playbooks/pre-merge-migration-checklist.md",
     "cadenceDays": 60
   },
@@ -176,12 +296,32 @@
     "cadenceDays": 90
   },
   {
-    "path": "docs/playbooks/tsconfig-strict-guard.md",
+    "path": "docs/playbooks/sync-rn-migration-progress.md",
     "cadenceDays": 90
   },
   {
     "path": "docs/playbooks/tune-system-prompt.md",
     "cadenceDays": 90
+  },
+  {
+    "path": "docs/security/audit-exceptions.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/security/nightly-audit.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/security/vulnerability-sla.md",
+    "cadenceDays": 90
+  },
+  {
+    "path": "docs/superpowers/specs/2026-04-24-assistant-quick-actions-v1-design.md",
+    "cadenceDays": 180
+  },
+  {
+    "path": "docs/superpowers/specs/2026-04-25-assistant-capability-catalogue-design.md",
+    "cadenceDays": 180
   },
   {
     "path": "docs/tech-debt/backend.md",

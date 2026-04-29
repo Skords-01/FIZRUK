@@ -39,6 +39,7 @@ import type {
   Workout,
   NutritionDay,
   ChatAction,
+  ChatActionResult,
 } from "./types";
 
 /**
@@ -103,7 +104,9 @@ function diffLine(label: string, a: number, b: number, unit: string): string {
   return `${label}: ${a}${unit} vs ${b}${unit} (${sign}${delta}${unit})`;
 }
 
-export function handleCrossAction(action: ChatAction): string | undefined {
+export function handleCrossAction(
+  action: ChatAction,
+): ChatActionResult | undefined {
   switch (action.name) {
     case "morning_briefing": {
       const now = new Date();

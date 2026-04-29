@@ -12,6 +12,7 @@ import {
   MODULE_PRIMARY_ACTION,
   getModulePrimaryAction,
 } from "@shared/lib/moduleQuickActions";
+import { safeReadLS } from "@shared/lib/storage";
 import { generateRecommendations } from "../lib/recommendationEngine";
 import { useLocalStorageState } from "@shared/hooks/useLocalStorageState";
 
@@ -72,13 +73,8 @@ const MODULE_SHORT_LABEL: Record<HubModuleId, string> = {
   nutrition: "Харчування",
 };
 
-function readJSON(key: string) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+function readJSON<T = unknown>(key: string): T | null {
+  return safeReadLS<T>(key);
 }
 
 /**
@@ -123,12 +119,16 @@ export function useDashboardFocus() {
  * виконана ціль. Повертається маленьким chip'ом у хедері Next, замість
  * того щоб забирати окрему картку.
  */
+interface QuickStats {
+  streak?: number;
+}
+
 function deriveRewardSignal(): {
   line: string;
   module: keyof typeof MODULE_ACCENT;
 } | null {
-  const routine = readJSON("routine_quick_stats") || {};
-  const fizruk = readJSON("fizruk_quick_stats") || {};
+  const routine = readJSON<QuickStats>("routine_quick_stats") ?? {};
+  const fizruk = readJSON<QuickStats>("fizruk_quick_stats") ?? {};
 
   const streaks = [
     { module: "routine" as const, days: Number(routine.streak) || 0 },

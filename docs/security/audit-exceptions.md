@@ -1,5 +1,8 @@
 # Audit Exceptions
 
+> **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
+
 > Tracked vulnerabilities that are temporarily accepted via the `audit-exception` PR label.
 
 ## How this file works

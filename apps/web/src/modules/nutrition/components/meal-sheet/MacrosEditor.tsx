@@ -151,6 +151,7 @@ export function MacrosEditor({
             <Button
               type="button"
               variant="primary"
+              module="nutrition"
               size="sm"
               className="flex-1"
               onClick={confirmUnlink}

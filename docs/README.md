@@ -1,5 +1,8 @@
 # Sergeant Documentation
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 > **Last reviewed:** 2026-04-27 by @Skords-01.
 
 Документація Sergeant згрупована за призначенням. Цей індекс — точка входу для
@@ -7,24 +10,24 @@
 
 ## Структура
 
-| Розділ                                | Призначення                                                                    |
-| ------------------------------------- | ------------------------------------------------------------------------------ |
-| [`adr/`](./adr/README.md)             | Architecture Decision Records — `чому` обрано конкретні архітектурні рішення.  |
-| [`api/`](./api/README.md)             | OpenAPI 3.1 spec (`openapi.json`), згенерований із zod-схем `packages/shared`. |
-| [`architecture/`](./architecture)     | Огляд системи: статус-матриця, фронтенд-overview, API-контракт, платформи.     |
-| [`audits/`](./audits)                 | Періодичні аудити коду / архітектури.                                          |
-| [`design/`](./design)                 | Брендбук, дизайн-токени, UX-аудит, palette / WCAG.                             |
-| [`governance/`](./governance)         | Cadence policies (freshness, policy review).                                   |
-| [`integrations/`](./integrations)     | Сторонні сервіси: Railway+Vercel, Renovate, Monobank.                          |
-| [`launch/`](./launch/README.md)       | Запуск продукту: монетизація, GTM, операції.                                   |
-| [`mobile/`](./mobile)                 | Мобільні додатки: Expo overview, Capacitor shell, deep-links, RN-міграція.     |
-| [`observability/`](./observability)   | SLO, runbook, dashboards, prometheus rules, on-call.                           |
-| [`planning/`](./planning)             | Roadmap-и: dev-stack, AI-coding, structure-refactor.                           |
-| [`playbooks/`](./playbooks/README.md) | Покрокові how-to для типових змін у репо.                                      |
-| [`postmortems/`](./postmortems)       | Постмортеми інцидентів.                                                        |
-| [`security/`](./security)             | Аудит-винятки, vulnerability SLA, нічний скан.                                 |
-| [`superpowers/`](./superpowers)       | Specs та hotfix-нотатки для Devin Superpowers.                                 |
-| [`tech-debt/`](./tech-debt)           | Frontend / Backend tech-debt registries.                                       |
+| Розділ                                        | Призначення                                                                    |
+| --------------------------------------------- | ------------------------------------------------------------------------------ |
+| [`adr/`](./adr/README.md)                     | Architecture Decision Records — `чому` обрано конкретні архітектурні рішення.  |
+| [`api/`](./api/README.md)                     | OpenAPI 3.1 spec (`openapi.json`), згенерований із zod-схем `packages/shared`. |
+| [`architecture/`](./architecture/README.md)   | Огляд системи: статус-матриця, фронтенд-overview, API-контракт, платформи.     |
+| [`audits/`](./audits/README.md)               | Періодичні аудити коду / архітектури.                                          |
+| [`design/`](./design/README.md)               | Брендбук, дизайн-токени, palette / WCAG proposal.                              |
+| [`governance/`](./governance/README.md)       | Cadence policies (freshness, policy review).                                   |
+| [`integrations/`](./integrations/README.md)   | Сторонні сервіси: Railway+Vercel, Renovate, Monobank.                          |
+| [`launch/`](./launch/README.md)               | Запуск продукту: монетизація, GTM, операції.                                   |
+| [`mobile/`](./mobile/README.md)               | Мобільні додатки: Expo overview, Capacitor shell, deep-links, RN-міграція.     |
+| [`observability/`](./observability/README.md) | SLO, runbook, dashboards, prometheus rules, logging, metrics.                  |
+| [`planning/`](./planning/README.md)           | Roadmap-и: dev-stack, AI-coding.                                               |
+| [`playbooks/`](./playbooks/README.md)         | Покрокові how-to для типових змін у репо.                                      |
+| [`postmortems/`](./postmortems/README.md)     | Постмортеми інцидентів.                                                        |
+| [`security/`](./security/README.md)           | Аудит-винятки, vulnerability SLA, нічний скан.                                 |
+| [`superpowers/`](./superpowers/README.md)     | Specs та нотатки для Devin Superpowers.                                        |
+| [`tech-debt/`](./tech-debt/README.md)         | Frontend / Backend tech-debt registries.                                       |
 
 ## Швидкі лінки
 

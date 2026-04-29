@@ -119,9 +119,12 @@ export {
   createMonoWebhookEndpoints,
   type MonoAccount,
   type MonoAccountDto,
+  type MonoBackfillResponse,
   type MonoCashbackType,
   type MonoClientInfo,
+  type MonoConnectResponse,
   type MonoConnectionStatus,
+  type MonoDisconnectResponse,
   type MonoJar,
   type MonoSyncState,
   type MonoTransactionDto,
@@ -152,5 +155,24 @@ export {
   createWeeklyDigestEndpoints,
   type WeeklyDigestEndpoints,
   type WeeklyDigestPayload,
+  type WeeklyDigestReport,
   type WeeklyDigestResponse,
 } from "./endpoints/weeklyDigest";
+
+export {
+  createTranscribeEndpoints,
+  TranscribeQuerySchema,
+  TranscribeResponseSchema,
+  type TranscribeBody,
+  type TranscribeEndpoints,
+  type TranscribeOutcome,
+  type TranscribeQuery,
+  type TranscribeResponse,
+} from "./endpoints/transcribe";
+
+export {
+  createWebVitalsEndpoints,
+  WebVitalsPayloadSchema,
+  type WebVitalsEndpoints,
+  type WebVitalsPayload,
+} from "./endpoints/webVitals";

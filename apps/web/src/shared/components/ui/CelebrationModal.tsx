@@ -508,7 +508,7 @@ export function useCelebration() {
         title,
         description,
         confettiIntensity: intensity || "high",
-        autoCloseMs: 5500,
+        autoCloseMs: 11000,
       });
     },
     [celebrate],

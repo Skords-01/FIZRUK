@@ -1,6 +1,7 @@
 # Sergeant API — OpenAPI spec
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 [`openapi.json`](./openapi.json) — згенерований OpenAPI 3.1 specification. Single source of truth — zod-схеми у [`packages/shared/src/schemas/api.ts`](../../packages/shared/src/schemas/api.ts) + route-каталог у [`packages/shared/src/openapi/routes.ts`](../../packages/shared/src/openapi/routes.ts).
 

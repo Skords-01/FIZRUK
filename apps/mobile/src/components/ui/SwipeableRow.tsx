@@ -32,6 +32,8 @@ import {
 } from "react-native-gesture-handler";
 
 import { semanticColors, brandColors } from "@/theme";
+import { useToast } from "@/components/ui/Toast";
+import { showUndoToast } from "@/lib/showUndoToast";
 
 export interface SwipeAction {
   /** Unique key for the action */
@@ -48,6 +50,12 @@ export interface SwipeAction {
   onPress: () => void;
   /** Whether this is a destructive action (triggers on full swipe) */
   destructive?: boolean;
+  /** Enable undo support for this action */
+  undoable?: boolean;
+  /** Custom undo label (default: "Повернути") */
+  undoLabel?: string;
+  /** Undo callback — called when user taps undo in toast */
+  onUndo?: () => void;
 }
 
 export interface SwipeableRowProps {
@@ -76,6 +84,38 @@ const DEFAULT_THRESHOLD = 0.5;
 
 function cx(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
+}
+
+/**
+ * Hook for handling swipe action with optional undo support.
+ */
+function useSwipeActionHandler() {
+  const toast = useToast();
+
+  const handleAction = useCallback(
+    (action: SwipeAction, closeRow: () => void) => {
+      Haptics.impactAsync(
+        action.destructive
+          ? Haptics.ImpactFeedbackStyle.Heavy
+          : Haptics.ImpactFeedbackStyle.Medium,
+      ).catch(() => {});
+
+      if (action.undoable && action.onUndo) {
+        // Show undo toast instead of immediate action
+        showUndoToast(toast, {
+          msg: action.label || "Дію виконано",
+          onUndo: action.onUndo,
+          undoLabel: action.undoLabel || "Повернути",
+        });
+      }
+
+      action.onPress();
+      closeRow();
+    },
+    [toast],
+  );
+
+  return handleAction;
 }
 
 export function SwipeableRow({
@@ -130,17 +170,13 @@ export function SwipeableRow({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   }, [translateX, rightActionsWidth, onSwipeOpen]);
 
+  const handleSwipeAction = useSwipeActionHandler();
+
   const handleActionPress = useCallback(
     (action: SwipeAction) => {
-      Haptics.impactAsync(
-        action.destructive
-          ? Haptics.ImpactFeedbackStyle.Heavy
-          : Haptics.ImpactFeedbackStyle.Medium,
-      ).catch(() => {});
-      action.onPress();
-      closeRow();
+      handleSwipeAction(action, closeRow);
     },
-    [closeRow],
+    [handleSwipeAction, closeRow],
   );
 
   const panGesture = Gesture.Pan()

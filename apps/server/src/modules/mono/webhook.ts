@@ -300,11 +300,21 @@ export async function webhookHandler(
       { op: "mono_connection_event" },
     );
 
+    const inserted = upsertResult.rows[0]?.inserted === true;
+
+    if (inserted) {
+      await query(
+        `INSERT INTO mono_ai_enrichment_queue (user_id, mono_tx_id)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id, mono_tx_id) DO NOTHING`,
+        [userId, item.id],
+        { op: "mono_ai_enrichment_enqueue" },
+      );
+    }
+
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
     monoWebhookReceivedTotal.inc({ status: "ok" });
     monoWebhookDurationMs.observe({ status: "ok" }, ms);
-
-    const inserted = upsertResult.rows[0]?.inserted === true;
 
     logger.info({
       msg: "mono_webhook_processed",
