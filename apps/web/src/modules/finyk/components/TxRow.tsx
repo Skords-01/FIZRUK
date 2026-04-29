@@ -437,6 +437,7 @@ function TxRowImpl({
           <div className="flex gap-2 pt-1">
             <Button
               variant="primary"
+              module="finyk"
               size="xs"
               onClick={saveSplits}
               disabled={Math.abs(remaining) >= 0.01}
