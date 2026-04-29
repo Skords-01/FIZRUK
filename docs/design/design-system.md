@@ -499,6 +499,23 @@ import { ModulePageLoader } from "@shared/components/ui/ModulePageLoader";
 **Modules:** `finyk` | `fizruk` | `routine` | `nutrition`
 Показує релевантні skeleton елементи для кожного модуля.
 
+### PullToRefreshIndicator
+
+Native-like pull-to-refresh для PWA.
+
+```tsx
+import { usePullToRefresh } from "@shared/hooks/usePullToRefresh";
+
+const { state, PullIndicator } = usePullToRefresh({
+  onRefresh: async () => {
+    await refetch();
+  },
+  scrollRef,
+});
+
+<PullToRefreshIndicator state={state} />;
+```
+
 ---
 
 ## 13. Нові хуки (2026-04)

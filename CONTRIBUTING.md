@@ -296,6 +296,7 @@ These are non-negotiable. Read `AGENTS.md` for full context.
 7. **Never skip pre-commit hooks** (`--no-verify` is forbidden).
 8. **Tailwind opacity steps** must be on the registered scale (`0,5,8,10,15,…,100`). Off-scale values silently drop.
 9. **Saturated brand fills behind `text-white`** must use the `-strong` companion for WCAG AA compliance.
+10. **Lifecycle markers** — every file declares its status. New components/hooks committed ahead of integration MUST carry a `@scaffolded` JSDoc block with `@owner` + `@nextStep`. Docs add `> **Status:** Active | Scaffolded | Deprecated | Archived`. Dead-code cleanup PRs MUST run `pnpm dead-code:files` (which honours markers) — never delete a `@scaffolded` file just because it has no importers.
 
 ---
 
