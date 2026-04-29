@@ -1,6 +1,7 @@
 # Playbook: Pre-Merge Migration Checklist
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+> **Status:** Active
 
 **Trigger:** PR містить файли в `apps/server/src/migrations/` (новий `NNN_*.sql` або зміна існуючого `*.down.sql`).
 
@@ -104,7 +105,7 @@
 | `DROP COLUMN amount` у тому самому PR, що `ADD COLUMN amount_minor` | На pre-deploy stage 1 (стара версія сервера) Read падає 500 | Two-phase deploy (B-секція)                       |
 | `BIGINT` без `Number()` coercion у serializer     | Клієнт бачить `"42"` замість `42`, арифметика мовчки ламається | Snapshot test (C-секція)                           |
 | `CREATE INDEX` без `CONCURRENTLY` на таблиці > 1M рядків | Railway pre-deploy timeout (>10 хв) → rollback           | `CONCURRENTLY` + перевірка таблиці > 100k          |
-| Відсутній `RLS`-policy на новій user-scoped таблиці | Один user через model-hallucination бачить чужі дані         | G-секція + automated test у `apps/server/src/lib/rls.ts` |
+| Відсутній `RLS`-policy на новій user-scoped таблиці | Один user через model-hallucination бачить чужі дані         | G-секція + automated test (planned, not yet implemented) |
 | Numbering `008` після `008_*` (duplicate)         | `pnpm db:migrate` падає з `migration already applied`         | A-секція + `migration-lint` CI                    |
 | Drift `api-client` types після server-shape зміни | TypeScript у `apps/web` компилиться, але runtime — `undefined` | D-секція + inline-snapshot                         |
 

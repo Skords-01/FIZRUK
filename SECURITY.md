@@ -1,5 +1,8 @@
 # Security Policy
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 ## Supported Versions
 
 Only the latest version on the `main` branch is actively maintained and receives security fixes.

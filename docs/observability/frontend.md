@@ -1,6 +1,7 @@
 # Frontend Observability — Web & Mobile
 
 > **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-27.
+> **Status:** Active
 
 Observability-стек для web- і mobile-клієнтів Sergeant: error tracking,
 session replay, Core Web Vitals, product analytics, ErrorBoundary-конвенції.

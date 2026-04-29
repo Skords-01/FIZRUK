@@ -1,6 +1,7 @@
 # AI-coding improvements roadmap
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 **Статус:** in progress. Створено 2026-04-25 з ідей розмови про вайб-кодинг. Останнє оновлення: 2026-04-28 (Блок 6 Visual regression закрито — Argos CI підключено; лише Vercel paid (#4) і Storybook (#7) залишилися).
 **Скоуп:** репо-конвенції, playbooks, code markers, testing/preview infra. Це **не** про конкретні фічі продукту — це про **інфраструктуру для AI-агентів** (Devin, Cursor, Claude Code), які пишуть код у Sergeant.

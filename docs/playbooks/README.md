@@ -1,6 +1,7 @@
 # Playbooks
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 Repeatable step-by-step recipes for common tasks in the Sergeant monorepo.
 Each playbook is a checklist that **AI agents and human developers** can follow to reduce variance and avoid missed steps.

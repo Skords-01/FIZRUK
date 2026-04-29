@@ -1,6 +1,7 @@
 # Playbook: Sync RN Migration Progress
 
 > **Last validated:** 2026-04-28 by @Skords-01. **Next review:** 2026-07-28.
+> **Status:** Active
 
 **Trigger:** один або кілька PR-ів із `port-web-screen-to-mobile.md` ([#445](https://github.com/Skords-01/Sergeant/pull/445), [#446](https://github.com/Skords-01/Sergeant/pull/446), …) змерджені, треба оновити tracker [`docs/mobile/react-native-migration.md`](../mobile/react-native-migration.md).
 

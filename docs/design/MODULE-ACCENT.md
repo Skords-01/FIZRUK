@@ -1,5 +1,8 @@
 # Module accent — canonical reference
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 > Sergeant — 4 модулі з власним брендовим кольором. Замість того, щоб
 > кожен компонент отримував пропс `module="finyk"` / `module="fizruk"`
 > й мапив це у `bg-finyk` / `bg-fizruk`, ми публікуємо активний акцент

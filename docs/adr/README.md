@@ -1,5 +1,8 @@
 # Architecture Decision Records (ADR)
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 > Архітектурні рішення Sergeant. Кожен ADR фіксує **рішення з контекстом і альтернативами**, щоб через рік не довелось гадати «чому ми тут зробили так, а не інакше».
 >
 > **Last reviewed: 2026-04-27 by @Skords-01.**

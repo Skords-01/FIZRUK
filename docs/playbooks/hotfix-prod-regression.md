@@ -1,6 +1,7 @@
 # Playbook: Hotfix Production Regression
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+> **Status:** Active
 
 **Trigger:** "Прод впав" / користувачі скаржаться / HTTP 500 на `/health` / Sentry alert / Railway logs показують panic.
 

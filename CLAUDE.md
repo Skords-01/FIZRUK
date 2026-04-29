@@ -1,5 +1,8 @@
 # Sergeant — Claude Code context
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 > Full agent rules, hard rules, anti-patterns, and domain invariants are in **[`AGENTS.md`](./AGENTS.md)**.
 > This file adds Claude Code–specific context on top of it.
 

@@ -1,5 +1,8 @@
 # Sergeant Documentation
 
+> **Last validated:** 2026-04-29 by @devin-ai. **Next review:** 2026-07-29.
+> **Status:** Active
+
 > **Last reviewed:** 2026-04-27 by @Skords-01.
 
 Документація Sergeant згрупована за призначенням. Цей індекс — точка входу для

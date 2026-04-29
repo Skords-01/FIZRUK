@@ -1,6 +1,7 @@
 # Playbook: Add SQL Migration
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 **Trigger:** "Додати нове поле / таблицю в БД" / зміна схеми PostgreSQL / нова колонка для існуючої таблиці.
 

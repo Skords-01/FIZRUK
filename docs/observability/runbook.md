@@ -1,6 +1,7 @@
 # Observability Runbook
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-06-26.
+> **Status:** Active
 
 Інструкції "що робити, коли спрацював алерт" для правил з
 [`prometheus/alert_rules.yml`](./prometheus/alert_rules.yml). Тримай коротко:

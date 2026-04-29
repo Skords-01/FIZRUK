@@ -1,6 +1,7 @@
 # Error-Budget Policy
 
 > **Last validated:** 2026-04-27 by @Skords-01. **Next review:** 2026-07-26.
+> **Status:** Active
 
 > Автор: obs-team. Огляд щокварталу (див. [`docs/governance/policy-review.md`](../governance/policy-review.md)).
 >
