@@ -34,7 +34,7 @@
 - **Web Push** (`PushNotificationToggle`, `usePushNotifications`, `/api/push/*`) — реальні push-підписки через VAPID (нагадування про звички, тренування, бюджет)
 - **Hub-налаштування** (`HubSettingsPage` + `core/settings/*`) — розбита на секції: General, Finyk, Fizruk, Routine, Notifications, AIDigest
 - **Hub-звіти** (`HubReports`) — зведені звіти по всіх модулях
-- **Індикатор синхронізації** (`useSyncStatus` у `UserMenuButton` / `OfflineBanner`) — стан хмарної синхронізації в шапці
+- **Індикатор синхронізації** (`useSyncStatus` у `HubSettingsPage › Загальні` / `OfflineBanner`) — стан хмарної синхронізації
 - **Офлайн-черга** (`useCloudSync`) — синхронізація з чергою при відновленні з'єднання
 - **Щоденні AI-квоти** (`apps/server/src/modules/chat/aiQuota.ts`, таблиця `ai_usage_daily`) — ліміт викликів AI per-user / per-IP
 

@@ -9,8 +9,8 @@ export type { SyncCallbacks };
 
 export interface SyncLifecycle extends SyncCallbacks {
   // --- Legacy field names — kept because existing consumers (App.tsx,
-  // UserMenuButton, useCloudSyncHelpers tests) read them. New code should
-  // prefer `isSyncing`/`lastSyncAt`/`hasError`/`state`.
+  // useCloudSyncHelpers tests) read them. New code should prefer
+  // `isSyncing`/`lastSyncAt`/`hasError`/`state`.
   syncing: boolean;
   lastSync: Date | null;
   syncError: string | null;
