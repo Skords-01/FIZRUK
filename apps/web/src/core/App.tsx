@@ -13,6 +13,7 @@ import { useDarkMode } from "@shared/hooks/useDarkMode";
 import { useOnlineStatus } from "@shared/hooks/useOnlineStatus";
 import { ToastProvider, useToast } from "@shared/hooks/useToast";
 import { ToastContainer } from "@shared/components/ui/Toast";
+import { ScreenReaderAnnouncerProvider } from "@shared/components/ui/ScreenReaderAnnouncer";
 import { HUB_OPEN_MODULE_EVENT } from "@shared/lib/hubNav";
 import { ApiClientProvider } from "@sergeant/api-client/react";
 import { apiClient } from "@shared/api";
@@ -97,6 +98,14 @@ export default function App() {
   return (
     <ToastProvider>
       <ToastContainer />
+      {/*
+        Screen reader announcer: mounts two `aria-live` regions
+        (polite + assertive) at the app root. Any descendant can call
+        `useAnnounce()` to surface dynamic state changes (toggles,
+        expand/collapse, training completion, etc.) to assistive
+        tech. Lives outside ApiClientProvider/AuthProvider so even
+        unauthenticated screens (sign-in, onboarding) can announce.
+      */}
       {/* Capacitor deep-link bridge: монтуємо ВСЕРЕДИНІ роутера (App
           рендериться під <BrowserRouter>), але поза AppInner, щоб
           bridge переживав ранні return-и в AppInner (/sign-in,
@@ -109,11 +118,13 @@ export default function App() {
           `/reset-password`) — без цього onboarding / auth funnels
           у PostHog були б сліпими перед login-ом. */}
       <PageviewTracker />
-      <ApiClientProvider client={apiClient}>
-        <AuthProvider>
-          <AppInner />
-        </AuthProvider>
-      </ApiClientProvider>
+      <ScreenReaderAnnouncerProvider>
+        <ApiClientProvider client={apiClient}>
+          <AuthProvider>
+            <AppInner />
+          </AuthProvider>
+        </ApiClientProvider>
+      </ScreenReaderAnnouncerProvider>
     </ToastProvider>
   );
 }
