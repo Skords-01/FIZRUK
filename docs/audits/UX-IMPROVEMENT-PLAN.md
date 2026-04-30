@@ -784,7 +784,7 @@ export default function ForgotPasswordScreen() {
   - [ ] Замінити всі ← текстові кнопки на `BackButton`
 
 - [ ] **Week 2**
-  - [ ] Додати gesture dismiss в `Sheet`
+  - [x] Додати gesture dismiss в `Sheet` _(web — done у [#1181](https://github.com/Skords-01/Sergeant/pull/1181) через `useSwipeToDismiss`; також застосовано в `ConfirmDialog` і `ModuleSettingsDrawer`. Mobile RN-частина — pending.)_
   - [ ] Встановити `react-native-reanimated` якщо ще не встановлено
   - [ ] Тестувати на iOS та Android
 
