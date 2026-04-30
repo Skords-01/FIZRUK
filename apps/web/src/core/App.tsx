@@ -211,7 +211,7 @@ function AppInner() {
   const { visible: iosVisible, dismiss: iosDismiss } = useIosInstallBanner();
   const online = useOnlineStatus();
   const { updateAvailable, applyUpdate } = useSWUpdate();
-  const { user, isLoading: authLoading, logout } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const sync = useCloudSync(user);
   const toast = useToast();
   useSyncErrorToast(sync.syncErrorDetail, toast, sync.pushAll);
@@ -461,11 +461,6 @@ function AppInner() {
         <HubHeader
           onOpenSearch={() => ui.setSearchOpen(true)}
           user={user}
-          syncing={sync.syncing}
-          lastSync={sync.lastSync}
-          onSync={sync.pushAll}
-          onPull={sync.pullAll}
-          onLogout={logout}
           authLoading={authLoading}
           onShowAuth={openAuth}
           dark={dark}
