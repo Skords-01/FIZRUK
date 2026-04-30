@@ -1,6 +1,6 @@
 # Sergeant Design System
 
-> **Last validated:** 2026-04-28 by @devin-ai. **Next review:** 2026-07-28.
+> **Last validated:** 2026-04-30 by @devin-ai. **Next review:** 2026-07-30.
 > **Status:** Active
 
 Єдина візуальна мова для хаба з 4 модулями: **ФІНІК**, **ФІЗРУК**, **Рутина**,
@@ -809,8 +809,10 @@ announce("Не вдалось зберегти. Спробуй ще раз.", { 
 />
 ```
 
-Якщо `announceText` не передано — нічого не озвучується (back-compat).
-Колбек отримує **новий** стан після toggle.
+Якщо `announceText` не передано і `label` задано — `Switch` все одно
+озвучить дефолтне `"{label} увімкнено / вимкнено"`. Без `label` — нічого
+не озвучується. Щоб явно придушити озвучення при заданому `label`,
+передай `() => ""`. Колбек отримує **новий** стан після toggle.
 
 ### Finyk swipe-between-tabs — visual feedback
 
